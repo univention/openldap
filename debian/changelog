@@ -1,4 +1,4 @@
-openldap2 (2.1.30-5) unstable; urgency=low
+openldap2 (2.1.30-5) experimental; urgency=low
 
   * BEWARE: Don't upload this before openldap2.2 is there!!
   * debian/rules: Only build libldap2 and libldap2-dev for client
