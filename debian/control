@@ -24,7 +24,7 @@ Package: ldap-utils
 Section: net
 Priority: optional
 Architecture: any
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, libldap2 (= ${Source-Version})
 Conflicts: umich-ldap-utils, openldap-utils, ldap-client
 Replaces: openldap-utils, slapd (<< 2.1), openldapd
 Provides: ldap-client, openldap-utils
@@ -37,7 +37,7 @@ Package: libldap2
 Section: libs
 Priority: important
 Architecture: any
-Conflicts: libldap2-tls
+Conflicts: libldap2-tls, ldap-utils (<= 2.1.23-1)
 Replaces: libopenldap-runtime, libldap2-tls
 Provides: libldap2-tls
 Depends: ${shlibs:Depends}
