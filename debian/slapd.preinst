@@ -2,6 +2,9 @@
 
 set -e
 
+# Make the version we are upgrading from globally available
+oldver="$2"
+
 if dpkg --compare-versions "$2" lt-nl 2.1; then
   # Debconf is available when upgrading from older versions
   . /usr/share/debconf/confmodule
@@ -76,7 +79,7 @@ fix_directory() {
   organization="$RET"
   db_get slapd/password1
   echo -n "Fixing the LDAP directory... "
-  ldapmodify -x -v -d 16383 -D $admindn -h localhost -w "$RET" <<EOF
+  ldapmodify -x -v -D $admindn -h localhost -w "$RET" <<EOF
 dn: $suffix
 changetype: modify
 add: objectClass
@@ -88,7 +91,20 @@ EOF
   echo "done"
 }
 
-# Fix the directory
+# Check, if the user wants an LDIF dump of the directory
+# XXX: Currently dumps unconditionally
+ldif_dump_wanted() {
+  return 0
+}
+
+# Ask for the filename of the dump file
+# XXX: Currently just uses /var/backups/slapd-$oldver.ldif
+ldif_dump_location() {
+  echo "/var/backups/slapd-$oldver.ldif"
+}
+
+# Fix the directory when upgrading from before 2.1 and the root dn has
+# no structural objectclass
 if dpkg --compare-versions "$2" lt-nl 2.1; then
   db_input medium slapd/fix_directory || true
   db_go || true
@@ -109,6 +125,16 @@ if dpkg --compare-versions "$2" lt-nl 2.1; then
       /etc/init.d/slapd stop || true
     fi
   fi
+fi
+
+# Dump the directory when upgrading from before 2.1 so we can recreate the 
+# directory from the LDIF file afterwards. 
+
+if dpkg --compare-versions "$2" lt-nl 2.1 && ldif_dump_wanted; then
+  location=`ldif_dump_location`
+  echo -n "Dumping directory to $location... "
+  slapcat -l $location
+  echo "done"
 fi
 
 #DEBHELPER#

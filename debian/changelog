@@ -17,6 +17,9 @@ openldap2.1 (2.1.16-1) unstable; urgency=low
       to 2.1.
       - Conditionally load debconf when upgrading as it only has to 
         be available in that case.
+    + debian/slapd.preinst: Dump database before upgrade.
+    + debian/slapd.postinst: Recreate database from dump after upgrade. 
+      Move old database out of the way.
 
   * Roland Bauerschmidt <rb@debian.org>
     + debian/slapd.README.Debian: mention that backend database modules are

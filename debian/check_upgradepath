@@ -135,13 +135,6 @@ upgrade() {
 
 	# Do an upgrade of our packages
 	in_target apt-get install -y `dh_listpackages`
-
-	# XXX This is a hack but I needed some success...
-	in_target /etc/init.d/slapd stop
-	in_target slapcat >$chroot_dir/woody/tmp/old_dir
-	rm $chroot_dir/woody/var/lib/ldap/*
-	in_target slapadd -l /tmp/old_dir
-	in_target /etc/init.d/slapd start
 }
 
 # Checks if upgrading a woody system with slapd configured with the

@@ -6,6 +6,9 @@ set -e
 # We need debconf
 . /usr/share/debconf/confmodule
 
+# Make the old version globally available
+oldver="$2"
+
 # Only create a new directory on a fresh install or on reconfigure
 if [ "$1" = configure -a -z "$2" ] || [ "$1" = reconfigure ] \
 	|| [ "$DEBCONF_RECONFIGURE" ]; then
@@ -68,6 +71,25 @@ EOF
     mv $TMPFILE /etc/ldap/slapd.conf
     echo done
   fi
+fi
+
+# Move the old database files out of the way
+# XXX: User interaction - target directory
+if dpkg --compare-versions "$2" lt-nl 2.1; then
+  echo -n "Moving old database files to /var/backups/slapd-$oldver... "
+  mkdir /var/backups/slapd-$oldver
+  mv /var/lib/ldap/* /var/backups/slapd-$oldver
+  echo done
+fi
+
+
+# If a dump file from the old version exists we want to recreate the
+# directory from it
+if dpkg --compare-versions "$2" lt-nl 2.1 \
+	&& [ -e /var/backups/slapd-$oldver.ldif ]; then
+  echo -n "Recreating directory from /var/backups/slapd-$oldver.ldif... "
+  slapadd -l /var/backups/slapd-$oldver.ldif
+  echo done
 fi
 
 db_stop
