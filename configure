@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/configure,v 1.437.2.40 2003/04/04 20:41:20 kurt Exp $
+# $OpenLDAP: pkg/ldap/configure,v 1.437.2.41 2003/06/21 17:18:19 kurt Exp $
 # from OpenLDAP: pkg/ldap/configure.in,v 1.408.2.33 2003/03/05 23:48:30 kurt Exp  
 
 # Copyright 1998-2003 The OpenLDAP Foundation.  All Rights Reserved.
@@ -23084,7 +23084,6 @@ EOF
 
 	BUILD_SLAPD=yes
 	BUILD_META=yes
-	BUILD_LDAP=yes
 	BUILD_REWRITE=yes
 	if test "$ol_with_meta_module" != static ; then
 		cat >> confdefs.h <<\EOF

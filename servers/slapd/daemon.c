@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.211.2.23 2003/05/24 23:19:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.211.2.25 2003/06/21 17:22:58 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -1322,7 +1322,11 @@ slapd_daemon_task(
 		if ( !at )
 			at = ldap_pvt_thread_pool_backload(&connection_pool);
 
+#if defined( HAVE_YIELDING_SELECT ) || defined( NO_THREADS )
+		tvp = NULL;
+#else
 		tvp = at ? &tv : NULL;
+#endif
 
 		for ( l = 0; slap_listeners[l] != NULL; l++ ) {
 			if ( slap_listeners[l]->sl_sd == AC_SOCKET_INVALID ||
@@ -2025,9 +2029,9 @@ slap_sig_shutdown( int sig )
 	 * SIGBREAK is generated when a user logs out.
 	 */
 
+#if 0
 #if HAVE_NT_SERVICE_MANAGER && SIGBREAK
 	if (is_NT_Service && sig == SIGBREAK)
-#if 0
 #ifdef NEW_LOGGING
 	    LDAP_LOG( CONNECTION, CRIT,
 		    "slap_sig_shutdown: SIGBREAK ignored.\n", 0, 0, 0 );
@@ -2035,8 +2039,8 @@ slap_sig_shutdown( int sig )
 	    Debug(LDAP_DEBUG_TRACE, "slap_sig_shutdown: SIGBREAK ignored.\n",
 		  0, 0, 0);
 #endif
-#endif
 	else
+#endif
 #endif
 #ifdef SIGHUP
 	if (sig == SIGHUP && global_gentlehup && slapd_gentle_shutdown == 0)

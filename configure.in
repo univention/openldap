@@ -1,4 +1,4 @@
-dnl $OpenLDAP: pkg/ldap/configure.in,v 1.408.2.33 2003/03/05 23:48:30 kurt Exp $
+dnl $OpenLDAP: pkg/ldap/configure.in,v 1.408.2.34 2003/06/21 17:18:37 kurt Exp $
 dnl
 dnl Copyright 1998-2003 The OpenLDAP Foundation.  All Rights Reserved.
 dnl 
@@ -14,7 +14,7 @@ dnl at top of generated configure script.  Prints simple copyright.
 define([AC_INIT_BINSH],
 [[#! /bin/sh
 # $]OpenLDAP[$
-# from] translit([$OpenLDAP: pkg/ldap/configure.in,v 1.408.2.33 2003/03/05 23:48:30 kurt Exp $], $")] [
+# from] translit([$OpenLDAP: pkg/ldap/configure.in,v 1.408.2.34 2003/06/21 17:18:37 kurt Exp $], $")] [
 
 # Copyright 1998-2003 The OpenLDAP Foundation.  All Rights Reserved.
 # 
@@ -2584,7 +2584,6 @@ if test "$ol_enable_meta" != no ; then
 	AC_DEFINE(SLAPD_META,1,[define to support LDAP Metadirectory backend])
 	BUILD_SLAPD=yes
 	BUILD_META=yes
-	BUILD_LDAP=yes
 	BUILD_REWRITE=yes
 	if test "$ol_with_meta_module" != static ; then
 		AC_DEFINE(SLAPD_META_DYNAMIC,1,
