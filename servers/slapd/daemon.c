@@ -727,13 +727,19 @@ static int slap_open_listener(
 
 	psal = sal;
 	while ( *sal != NULL ) {
+		char prot_name[10], address[50], port_asc[15], debug_msg[200];
+		prot_name[0] = '\0';
+		address[0] = '\0';
+		port_asc[0] = '\0';
+		debug_msg[0] = '\0';
+
 		switch( (*sal)->sa_family ) {
-		case AF_INET:
+		case AF_INET: strcpy(prot_name,"AF_INET"); break;
 #ifdef LDAP_PF_INET6
-		case AF_INET6:
+		case AF_INET6: strcpy(prot_name,"AF_INET6"); break;
 #endif
 #ifdef LDAP_PF_LOCAL
-		case AF_LOCAL:
+		case AF_LOCAL: strcpy(prot_name,"AF_LOCAL");
 #endif
 			break;
 		default:
@@ -746,14 +752,14 @@ static int slap_open_listener(
 		l.sl_sd = socket( (*sal)->sa_family, socktype, 0);
 		if ( l.sl_sd == AC_SOCKET_INVALID ) {
 			int err = sock_errno();
+			snprintf(debug_msg,200,"slap_open_listener: socket() failed "
+				"for %s errno=%%d (%%s)\n", prot_name);
 #ifdef NEW_LOGGING
 			LDAP_LOG( CONNECTION, ERR, 
-				"slap_open_listener: socket() failed errno=%d (%s)\n",
-				err, sock_errstr(err), 0 );
+				debug_msg, err, sock_errstr(err), 0 );
 #else
 			Debug( LDAP_DEBUG_ANY,
-				"daemon: socket() failed errno=%d (%s)\n", err,
-				sock_errstr(err), 0 );
+				debug_msg, err, sock_errstr(err), 0 );
 #endif
 			sal++;
 			continue;
@@ -837,13 +843,18 @@ static int slap_open_listener(
 
 		if (bind(l.sl_sd, *sal, addrlen)) {
 			err = sock_errno();
+			if(getnameinfo(*sal,addrlen,address,50,port_asc,15,NI_NUMERICHOST|NI_NUMERICSERV)) {
+				strcpy(address,"Unknown");
+				strcpy(port_asc,"Unknown");
+			}
+			snprintf(debug_msg,200,"slap_open_listener: bind(%%ld) failed for %s, "
+				"address: %s, port: %s errno=%%d (%%s)\n", prot_name, address, port_asc);
+				
 #ifdef NEW_LOGGING
 		LDAP_LOG( CONNECTION, INFO, 
-			"slap_open_listener: bind(%ld) failed errno=%d (%s)\n",
-			(long)l.sl_sd, err, sock_errstr(err) );
+			debug_msg, (long)l.sl_sd, err, sock_errstr(err) );
 #else
-		Debug( LDAP_DEBUG_ANY, "daemon: bind(%ld) failed errno=%d (%s)\n",
-		       (long) l.sl_sd, err, sock_errstr(err) );
+		Debug( LDAP_DEBUG_ANY, debug_msg, (long)l.sl_sd, err, sock_errstr(err) );
 #endif
 			tcp_close( l.sl_sd );
 			sal++;

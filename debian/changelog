@@ -1,3 +1,16 @@
+openldap2 (2.1.21-2) unstable; urgency=low
+
+  * Stephen Frost <sfrost@debian.org>:
+    + debian/slapd.preinst: slapcat here if possible, if slapcat not
+      available then slapcat in postinst.  Also remove old unused
+      function.
+    + debian/slapd.postinst: Check if slapcat in preinst worked and use
+      those results in preference.  Also moved to using /var/backups/ldap.
+    + servers/slapd/daemon.c: Provide more information on socket/bind 
+      failures. Patch submitted upstream. Closes: #94967.
+
+ --
+
 openldap2 (2.1.21-1) unstable; urgency=low
 
   * Torsten Landschoff <torsten@debian.org>:

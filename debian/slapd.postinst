@@ -16,9 +16,9 @@ ldif_dump_wanted() {
 }
 
 # Ask for the filename of the dump file
-# XXX: Currently just uses /var/backups/slapd-$oldver.ldif
+# XXX: Currently just uses /var/backups/ldap/$oldver/slapd-new-slapcat.ldif
 ldif_dump_location() {
-  echo "/var/backups/slapd-$oldver.ldif"
+  echo "/var/backups/ldap/$oldver/slapd-new-slapcat.ldif"
 }
 
 # Make sure slapd is shut down before mucking with the db files
@@ -214,7 +214,6 @@ then
     stop_slapd
 
     location=`ldif_dump_location`
-    echo -n "Dumping directory to $location... "
     # XXX: to be truly idempotent, we should make sure we don't try to
     # overwrite this ldif file on a second pass after already having
     # moved some of the files aside below.
@@ -226,22 +225,41 @@ then
     # has no structural objectclass
     # XXX: can we use slapcat to determine if we need to prompt for this?
     # If not, the prompting should move to the config script.
+
+    # Check if the preinst slapcat worked or not, if not, go ahead and
+    # attempt to slapcat here with the new version of slapcat
     SLAPCAT_FAIL=0
-    slapcat > $location || SLAPCAT_FAIL=1
-    if [ "$SLAPCAT_FAIL" = "1" ]; then
-      echo "failed"
-      db_input slapd/upgrade_slapcat_failure
+    if [ ! -e "/var/backups/ldap/$oldver/slapd-${oldver}-slapcat.ldif" -o \
+         ! -e "/var/backups/ldap/$oldver/slapd-${oldver}-slapcat.success" ]; then
+      echo -n "Dumping directory to $location with new slapcat... "
+      slapcat > $location || SLAPCAT_FAIL=1
+      if [ "$SLAPCAT_FAIL" = "1" ]; then
+        echo "failed"
+        db_input slapd/upgrade_slapcat_failure
+      else
+        echo "done"
+      fi
+    fi
+
+    # If the original slapcat worked then use the output of that as
+    # input to the upgrade script.  Otherwise check if the new slapcat
+    # worked and if it did then use *that*.
+    # If neither worked then the user has been notified and just give up.
+    if [ -e "/var/backups/ldap/$oldver/slapd-${oldver}-slapcat.ldif" -a \
+         -e "/var/backups/ldap/$oldver/slapd-${oldver}-slapcat.success" ]; then
+      /usr/share/slapd/fix_ldif -w -o "$organization" < /var/backups/ldap/$oldver/slapd-${oldver}-slapcat.ldif > ${location}.fixed
     else
-      echo "done"
-      /usr/share/slapd/fix_ldif -w -o "$organization" < $location > ${location}.fixed
+      if [ "$SLAPCAT_FAIL" = "0" -a -e "$location" ]; then
+        /usr/share/slapd/fix_ldif -w -o "$organization" < /var/backups/ldap/$oldver/slapd-${oldver}-slapcat.ldif > ${location}.fixed
+      fi
     fi
   fi
 
-  echo -n "Moving old database files to /var/backups/slapd-$oldver... "
-  if [ ! -e /var/backups/slapd-$oldver ]; then
-    mkdir -p /var/backups/slapd-$oldver
+  echo -n "Moving old database files to /var/backups/ldap/$oldver/slapd-db... "
+  if [ ! -d /var/backups/ldap/$oldver/slapd-db ]; then
+    mkdir -p /var/backups/ldap/$oldver/slapd-db
   fi
-  mv /var/lib/ldap/* /var/backups/slapd-$oldver
+  mv /var/lib/ldap/* /var/backups/ldap/$oldver/slapd-db
   touch /var/lib/slapd/upgrade_2.0
   echo done
 fi
