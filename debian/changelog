@@ -49,6 +49,8 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
     - Correct free of SASL interact results; already in OpenLDAP upstream CVS
     - Duplicate the DN from SASL to ensure '\0' termination; already in
       OpenLDAP upstream CVS 
+    - debian/control: added Replaces: slapd (<< 2.1) for ldap-utils due to
+      ldif.5 move.
 
   * unassigned (FIXME)
     - FIXME: Warning about changed that might break current setups. Closes: #112425.
