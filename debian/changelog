@@ -1,6 +1,7 @@
 openldap2 (2.1.23-2) unstable; urgency=low
 
   * Roland Bauerschmidt <rb@debian.org>:
+    + New upstream version.
     + debian/control: Have ldap-utils depend on the same version of
       libldap2, and libldap2 conflict with ldap-utils (<= 2.1.23-1).
       Closes: #216661.

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.81.2.26 2003/10/11 23:18:23 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.81.2.28 2003/11/13 19:56:11 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -297,6 +297,7 @@ static const char *slap_propnames[] = {
 	"*slapConn", "*authcDN", "*authzDN", NULL };
 
 static Filter *generic_filter;
+static struct berval generic_filterstr = BER_BVC("(objectclass=*)");
 
 #define	PROP_CONN	0
 #define	PROP_AUTHC	1
@@ -448,9 +449,9 @@ slap_auxprop_lookup(
 			op.o_is_auth_check = 1;
 			op.o_threadctx = conn->c_sasl_bindop->o_threadctx;
 
-			(*be->be_search)( be, conn, &op, NULL, &dn,
+			(*be->be_search)( be, conn, &op, &dn, &dn,
 				LDAP_SCOPE_BASE, LDAP_DEREF_NEVER, 1, 0,
-				generic_filter, NULL, NULL, 0 );
+				generic_filter, &generic_filterstr, NULL, 0 );
 		}
 	}
 }
@@ -501,6 +502,7 @@ sasl_cb_checkpass(
 	checkpass_info *ci = tmp->sc_private;
 	Attribute *a;
 	struct berval *bv;
+	const char *text;
 	
 	ci->rc = SASL_NOVERIFY;
 
@@ -510,7 +512,7 @@ sasl_cb_checkpass(
 		NULL, ACL_AUTH, NULL ) ) return 0;
 
 	for ( bv = a->a_vals; bv->bv_val != NULL; bv++ ) {
-		if ( !lutil_passwd( bv, &ci->cred, NULL ) ) {
+		if ( !lutil_passwd( bv, &ci->cred, NULL, &text ) ) {
 			ci->rc = SASL_OK;
 			break;
 		}
@@ -574,9 +576,9 @@ slap_sasl_checkpass(
 		op.o_is_auth_check = 1;
 		op.o_threadctx = conn->c_sasl_bindop->o_threadctx;
 
-		(*be->be_search)( be, conn, &op, NULL, &dn,
+		(*be->be_search)( be, conn, &op, &dn, &dn,
 			LDAP_SCOPE_BASE, LDAP_DEREF_NEVER, 1, 0,
-			generic_filter, NULL, NULL, 0 );
+			generic_filter, &generic_filterstr, NULL, 0 );
 	}
 	if ( ci.rc != SASL_OK ) {
 		sasl_seterror( sconn, 0,
@@ -1113,7 +1115,7 @@ int slap_sasl_open( Connection *conn )
 	/* create new SASL context */
 #if SASL_VERSION_MAJOR >= 2
 	if ( generic_filter == NULL ) {
-		generic_filter = str2filter( "(objectclass=*)" );
+		generic_filter = str2filter( generic_filterstr.bv_val );
 	}
 	if ( conn->c_sock_name.bv_len != 0 &&
 	     strncmp( conn->c_sock_name.bv_val, "IP=", 3 ) == 0) {

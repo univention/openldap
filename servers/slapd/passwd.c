@@ -1,5 +1,5 @@
 /* bind.c - ldbm backend bind and unbind routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.35.2.8 2003/03/03 17:10:07 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.35.2.10 2003/12/02 03:27:43 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -98,8 +98,8 @@ int slap_passwd_parse( struct berval *reqdata,
 	int rc = LDAP_SUCCESS;
 	ber_tag_t tag;
 	ber_len_t len;
-	char berbuf[LBER_ELEMENT_SIZEOF];
-	BerElement *ber = (BerElement *)berbuf;
+	BerElementBuffer berbuf;
+	BerElement *ber = (BerElement *) &berbuf;
 
 	if( reqdata == NULL ) {
 		return LDAP_SUCCESS;
@@ -239,9 +239,9 @@ struct berval * slap_passwd_return(
 {
 	int rc;
 	struct berval *bv = NULL;
-	char berbuf[LBER_ELEMENT_SIZEOF];
+	BerElementBuffer berbuf;
 	/* opaque structure, size unknown but smaller than berbuf */
-	BerElement *ber = (BerElement *)berbuf;
+	BerElement *ber = (BerElement *) &berbuf;
 
 	assert( cred != NULL );
 
@@ -271,7 +271,8 @@ int
 slap_passwd_check(
 	Connection *conn,
 	Attribute *a,
-	struct berval *cred )
+	struct berval *cred,
+	const char **text )
 {
 	int result = 1;
 	struct berval *bv;
@@ -284,7 +285,7 @@ slap_passwd_check(
 #endif
 
 	for ( bv = a->a_vals; bv->bv_val != NULL; bv++ ) {
-		if( !lutil_passwd( bv, cred, NULL ) ) {
+		if( !lutil_passwd( bv, cred, NULL, text ) ) {
 			result = 0;
 			break;
 		}
@@ -326,7 +327,8 @@ slap_passwd_generate( struct berval *pass )
 void
 slap_passwd_hash(
 	struct berval * cred,
-	struct berval * new )
+	struct berval * new,
+	const char **text )
 {
 	struct berval *tmp;
 #ifdef LUTIL_SHA1_BYTES
@@ -340,7 +342,7 @@ slap_passwd_hash(
 	ldap_pvt_thread_mutex_lock( &passwd_mutex );
 #endif
 
-	tmp = lutil_passwd_hash( cred , hash );
+	tmp = lutil_passwd_hash( cred , hash, text );
 	
 #if defined( SLAPD_CRYPT ) || defined( SLAPD_SPASSWD )
 	ldap_pvt_thread_mutex_unlock( &passwd_mutex );

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/tpool.c,v 1.15.2.7 2003/03/27 03:06:20 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/tpool.c,v 1.15.2.8 2003/11/13 02:35:57 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
@@ -41,6 +41,12 @@ typedef struct ldap_int_thread_key_s {
  * We don't expect to use many...
  */
 #define	MAXKEYS	32
+
+#ifdef HAVE_PTHREADS
+#define	TID_EQ(a,b)	pthread_equal((a),(b))
+#else
+#define	TID_EQ(a,b)	((a) == (b))
+#endif
 
 typedef struct ldap_int_thread_ctx_s {
 	union {
@@ -521,8 +527,8 @@ void *ldap_pvt_thread_pool_context( ldap_pvt_thread_pool_t *tpool )
 
 	ldap_pvt_thread_mutex_lock(&pool->ltp_mutex);
 	LDAP_SLIST_FOREACH(ptr, &pool->ltp_active_list, ltc_next.al)
-		if (ptr != NULL && ptr->ltc_thread_id == tid) break;
-	if (ptr != NULL && ptr->ltc_thread_id != tid) {
+		if (ptr != NULL && TID_EQ(ptr->ltc_thread_id, tid)) break;
+	if (ptr != NULL && !TID_EQ(ptr->ltc_thread_id, tid)) {
 		ptr = NULL;
 	}
 	ldap_pvt_thread_mutex_unlock(&pool->ltp_mutex);

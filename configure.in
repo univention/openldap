@@ -1,4 +1,4 @@
-dnl $OpenLDAP: pkg/ldap/configure.in,v 1.408.2.35 2003/10/11 22:40:29 kurt Exp $
+dnl $OpenLDAP: pkg/ldap/configure.in,v 1.408.2.37 2003/12/02 01:20:42 hyc Exp $
 dnl
 dnl Copyright 1998-2003 The OpenLDAP Foundation.  All Rights Reserved.
 dnl 
@@ -14,7 +14,7 @@ dnl at top of generated configure script.  Prints simple copyright.
 define([AC_INIT_BINSH],
 [[#! /bin/sh
 # $]OpenLDAP[$
-# from] translit([$OpenLDAP: pkg/ldap/configure.in,v 1.408.2.35 2003/10/11 22:40:29 kurt Exp $], $")] [
+# from] translit([$OpenLDAP: pkg/ldap/configure.in,v 1.408.2.37 2003/12/02 01:20:42 hyc Exp $], $")] [
 
 # Copyright 1998-2003 The OpenLDAP Foundation.  All Rights Reserved.
 # 
@@ -648,10 +648,11 @@ if test $ol_enable_perl != no ; then
 
 	else
 		PERL_CPPFLAGS="`$PERLBIN -MExtUtils::Embed -e ccopts`"
+		PERL_LDFLAGS="`$PERLBIN -MExtUtils::Embed -e ldopts|sed -e 's/ -lc / /' -e 's/ -lc$//'`"
 		if test x"$ol_with_perl_module" = "xstatic" ; then
-			SLAPD_PERL_LDFLAGS="`$PERLBIN -MExtUtils::Embed -e ldopts|sed -e s/-lc//`"
+			SLAPD_PERL_LDFLAGS="$PERL_LDFLAGS"
 		else
-			MOD_PERL_LDFLAGS="`$PERLBIN -MExtUtils::Embed -e ldopts|sed -e s/-lc//`"
+			MOD_PERL_LDFLAGS="$PERL_LDFLAGS"
 		fi
 		dnl should check perl version
 		ol_link_perl=yes

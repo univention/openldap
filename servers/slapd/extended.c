@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/extended.c,v 1.27.2.9 2003/03/05 23:37:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/extended.c,v 1.27.2.10 2003/12/02 02:03:03 hyc Exp $ */
 /* 
  * Copyright 1999-2003 The OpenLDAP Foundation.
  * All rights reserved.
@@ -241,6 +241,10 @@ do_extended(
 			if ( rc == LDAP_REFERRAL && refs == NULL ) {
 				refs = referral_rewrite( default_referral,
 					NULL, NULL, LDAP_SCOPE_DEFAULT );
+				if ( refs == NULL ) {
+					rc = LDAP_UNWILLING_TO_PERFORM;
+					text = "referral missing";
+				}
 			}
 
 			send_ldap_extended( conn, op, rc, NULL, text, refs,
