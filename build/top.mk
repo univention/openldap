@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/build/top.mk,v 1.69.2.6 2003/12/05 15:13:22 hyc Exp $
+# $OpenLDAP: pkg/ldap/build/top.mk,v 1.69.2.7 2003/12/16 21:08:28 kurt Exp $
 ## Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
 ## All rights reserved.
 ##
@@ -185,7 +185,6 @@ SECURITY_LIBS = -lcrypt $(SASL_LIBS) $(KRB_LIBS) $(TLS_LIBS) $(AUTH_LIBS)
 MODULES_CPPFLAGS = @SLAPD_MODULES_CPPFLAGS@
 MODULES_LDFLAGS = @SLAPD_MODULES_LDFLAGS@
 MODULES_LIBS = @MODULES_LIBS@
-TERMCAP_LIBS = @TERMCAP_LIBS@
 SLAPD_PERL_LDFLAGS = @SLAPD_PERL_LDFLAGS@
 
 SLAPD_SQL_LDFLAGS = @SLAPD_SQL_LDFLAGS@

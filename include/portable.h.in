@@ -1,4 +1,4 @@
-/* include/portable.h.in.  Generated automatically from configure.in by autoheader.  */
+/* include/portable.h.in.  Generated automatically from configure.in by autoheader 2.13.  */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
@@ -37,6 +37,15 @@
 /* Define if you have the vprintf function.  */
 #undef HAVE_VPRINTF
 
+/* Define to `int' if <sys/types.h> doesn't define.  */
+#undef mode_t
+
+/* Define to `long' if <sys/types.h> doesn't define.  */
+#undef off_t
+
+/* Define to `int' if <sys/types.h> doesn't define.  */
+#undef pid_t
+
 /* Define as the return type of signal handlers (int or void).  */
 #undef RETSIGTYPE
 
@@ -48,6 +57,9 @@
 
 /* Define to the type of arg5 for select(). */
 #undef SELECT_TYPE_ARG5
+
+/* Define to `unsigned' if <sys/types.h> doesn't define.  */
+#undef size_t
 
 /* Define if you have the ANSI C header files.  */
 #undef STDC_HEADERS
@@ -106,6 +118,12 @@
  LBER_SOCKET_T
  LBER_TAG_T
 */
+
+/* define to character address type */
+#undef caddr_t
+
+/* define to signed size type */
+#undef ssize_t
 
 /* Define if you have the bcopy function.  */
 #undef HAVE_BCOPY
@@ -379,6 +397,9 @@
 
 /* Define if you have the <getopt.h> header file.  */
 #undef HAVE_GETOPT_H
+
+/* Define if you have the <gnutls/gnutls.h> header file.  */
+#undef HAVE_GNUTLS_GNUTLS_H
 
 /* Define if you have the <grp.h> header file.  */
 #undef HAVE_GRP_H
@@ -824,26 +845,8 @@
 /* define if you have -lslp */
 #undef HAVE_SLP
 
-/* Define to `int' if <sys/types.h> does not define. */
-#undef mode_t
-
-/* Define to `long' if <sys/types.h> does not define. */
-#undef off_t
-
-/* Define to `int' if <sys/types.h> does not define. */
-#undef pid_t
-
 /* Define if system has ptrdiff_t type */
 #undef HAVE_PTRDIFF_T
-
-/* Define to `unsigned' if <sys/types.h> does not define. */
-#undef size_t
-
-/* Define to `signed int' if <sys/types.h> does not define. */
-#undef ssize_t
-
-/* Define to `char *' if <sys/types.h> does not define. */
-#undef caddr_t
 
 /* define to int if socklen_t is not available */
 #undef socklen_t

@@ -1,5 +1,5 @@
 /* entry.c - routines for dealing with entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.90.2.10 2003/05/07 22:29:10 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.90.2.11 2003/12/20 14:07:31 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -557,6 +557,16 @@ int entry_decode(struct berval *bv, Entry **e)
 	BerVarray bptr;
 
 	i = entry_getlen(&ptr);
+	if (!i) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( OPERATION, INFO, 
+			"entry_decode: entry length was zero\n", 0, 0, 0);
+#else
+		Debug( LDAP_DEBUG_ANY,
+			"entry_decode: entry length was zero\n", 0, 0, 0);
+#endif
+		return LDAP_OTHER;
+	}
 	x = ch_calloc(1, i);
 	i = entry_getlen(&ptr);
 	x->e_name.bv_val = ptr;
