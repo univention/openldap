@@ -9,6 +9,8 @@ openldap2 (2.1.17-2) unstable; urgency=low
       dn if there was no error parsing the config.
     + Update templates for po-debconf using the patch submitted by 
       Andre Luis Lopes (closes: #189933).
+    + Use [[:space:]] instead of [\t ] in sed invocation since the 
+      latter does not seem to work (reported by Daniel Lutz).
 
  -- Torsten Landschoff <torsten@debian.org>  Sat, 19 Apr 2003 02:28:32 +0200
 
