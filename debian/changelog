@@ -4,6 +4,9 @@ openldap2 (2.1.30-6) experimental; urgency=low
     to update libtool for kfreebsd-gnu and friends (closes: #266688).
   * Readd ntlm.c from the NTLM patch which got lost somewhere inbetween, 
     ouch. Forgot to svn add it...
+  * debian/move_files: Move the ucdata files into the slapd package (which
+    is no longer build) as libldap2 (where they used to be) does not use
+    them.
 
  --
 
