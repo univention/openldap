@@ -3,6 +3,8 @@ openldap2 (2.1.22-4) unstable; urgency=low
   * Roland Bauerschmidt <rb@debian.org>:
     + Applied fix for admin password breakage from Michael Beattie
       <mjb@debian.org>. Closes: #214270.
+    + Added Dutch Debconf template translation by cobaco@linux.be.
+      Closes: #215373.
 
  -- Roland Bauerschmidt <rb@debian.org>  Sat,  4 Oct 2003 14:39:43 +0200
 
