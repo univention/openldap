@@ -1,10 +1,19 @@
 openldap2.1 (2.1.12-1) experimental; urgency=low
   
   * Initial release of OpenLDAP 2.1 packages.
-  * debian/check_config: Added script to check if OpenLDAP was configured
-    the way we want it.
-  * Don't build special TLS packages anymore - SSL is enabled in the 
-    stock ldap library. Everything else will just give me more headaches.
+  
+  * Torsten Landschoff <torsten@debian.org>
+    - debian/check_config: Added script to check if OpenLDAP was configured
+      the way we want it.
+    - Don't build special TLS packages anymore - SSL is enabled in the 
+      stock ldap library. Everything else will just give me more headaches.
+      
+  * Roland Bauerschmidt <rb@debian.org>
+    - debian/control:
+      - build-depend on libdb4.1-dev instead of libdb4.0-de
+      - conflict, replace, and provide libldap2-tls (libldap2)
+    - debian/rules: build with BDB backend
+    - debian/slapd.dirs: added to create /var/lib/ldap and /var/spool/slurpd
 
  -- Torsten Landschoff <torsten@debian.org>  Fri, 10 Jan 2003 02:47:21 +0100
 

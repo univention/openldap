@@ -48,7 +48,9 @@ Package: libldap2
 Section: libs
 Priority: important
 Architecture: any
-Replaces: libopenldap-runtime
+Conflicts: libldap2-tls
+Replaces: libopenldap-runtime, libldap2-tls
+Provides: libldap2-tls
 Depends: ${shlibs:Depends}
 Description: OpenLDAP libraries 
  These are the run-time libraries for the OpenLDAP (Lightweight Directory
