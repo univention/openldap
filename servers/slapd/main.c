@@ -75,6 +75,7 @@ static STRDISP	syslog_types[] = {
 	{ "LOCAL5", sizeof("LOCAL5"), LOG_LOCAL5 },
 	{ "LOCAL6", sizeof("LOCAL6"), LOG_LOCAL6 },
 	{ "LOCAL7", sizeof("LOCAL7"), LOG_LOCAL7 },
+	{ "DAEMON", sizeof("DAEMON"), LOG_DAEMON },
 	{ NULL, 0, 0 }
 };
 
