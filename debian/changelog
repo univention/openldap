@@ -42,13 +42,6 @@ openldap2 (2.1.17-3) unstable; urgency=low
     + Maintainer upload, acknowledge NMU. Closes: #98039.
     + Add debian/po/fr.po from 194740.  Closes: #194740
     + Add space before ']' on line 113 of postinst. Closes: #194192, #194943
-    + Add libbind-dev and bind-dev to the conflicts for slapd, the libs
-      in them can end up being used even when not compiled against causing
-      getaddrinfo() to fail. Closes: #166777
-    + Flush out the copyright file to include all found copyrights and updates
-      to those.
-    + Add clarification to copyright file.
-    + Add clarification of JC license to copyright file.
 
   * Torsten Landschoff <torsten@debian.org>:
     + debian/control: Enforce libldap2 to be the same version as slapd
