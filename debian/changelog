@@ -38,10 +38,11 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
       Closes: #160964.
     - added debian/slapd.README.Debian
 
-  * Stephan Frost <sfrost@debian.org>
+  * Stephen Frost <sfrost@debian.org>
     - debian/control: added libltdl2-dev and libslp-dev to the build-depends
     - Correct typo for back-sql init routine; already in OpenLDAP upstream
       CVS
+    - Correct free of SASL interact results; already in OpenLDAP upstream CVS
 
   * unassigned (FIXME)
     - FIXME: Warning about changed that might break current setups. Closes: #112425.
