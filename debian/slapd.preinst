@@ -46,7 +46,7 @@ stop_slapd() {
 
 # Get the list of configured databases from slapd.conf
 get_database_list() {
-  grep -E '^(database|directory|suffix)' /etc/ldap/slapd.conf | \
+  grep -E '^[[:space:]]*(database|directory|suffix)' /etc/ldap/slapd.conf | \
   (
     while read type val
     do
