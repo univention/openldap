@@ -1,6 +1,6 @@
 /* conn.c - deal with connection subsystem */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*
@@ -34,9 +34,9 @@
 #include "portable.h"
 
 #include <stdio.h>
-#include "lutil.h"
 
 #include "slap.h"
+#include "lutil.h"
 #include "back-monitor.h"
 
 #define CONN_CN_PREFIX	"Connection"

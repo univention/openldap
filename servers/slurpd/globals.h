@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/globals.h,v 1.11 2002/01/04 20:17:57 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/globals.h,v 1.11.2.2 2003/03/03 17:10:11 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*
@@ -53,6 +53,8 @@ typedef struct globals {
     int no_detach;
     /* Name of program */
     char *myname;
+    /* NT service name */
+    char *serverName;
     /* Current offset into slurpd replica logfile */
     off_t srpos;
     /* mutex to serialize access to reject file */

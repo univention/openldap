@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/include/ldap_defaults.h,v 1.22.2.1 2002/05/22 14:25:44 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap_defaults.h,v 1.22.2.2 2003/03/03 17:10:03 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,6 +1,6 @@
 /* time.c - deal with time subsystem */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*
@@ -37,9 +37,9 @@
 #include <ac/string.h>
 #include <ac/time.h>
 
-#include <lutil.h>
 
 #include "slap.h"
+#include <lutil.h>
 #include "proto-slap.h"
 #include "back-monitor.h"
 

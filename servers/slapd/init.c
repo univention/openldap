@@ -1,7 +1,7 @@
 /* init.c - initialize various things */
-/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.50.2.4 2002/08/30 01:06:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.50.2.5 2003/02/09 16:31:36 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -70,65 +70,6 @@ ldap_pvt_thread_mutex_t	replog_mutex;
 
 static const char* slap_name = NULL;
 int slapMode = SLAP_UNDEFINED_MODE;
-
-/*
- * all known control OIDs should be added to this list
- */
-char *slap_known_controls[] = {
-#ifdef LDAP_CONTROL_REFERRALS
-	LDAP_CONTROL_REFERRALS,
-#endif /* LDAP_CONTROL_REFERRALS */
-
-#ifdef LDAP_CONTROL_MANAGEDSAIT
-	LDAP_CONTROL_MANAGEDSAIT,
-#endif /* LDAP_CONTROL_MANAGEDSAIT */
-
-#ifdef LDAP_CONTROL_SUBENTRIES
-	LDAP_CONTROL_SUBENTRIES,
-#endif /* LDAP_CONTROL_SUBENTRIES */
-
-#ifdef LDAP_CONTROL_NOOP
-	LDAP_CONTROL_NOOP,
-#endif /* LDAP_CONTROL_NOOP */
-
-#ifdef LDAP_CONTROL_DUPENT_REQUEST
-	LDAP_CONTROL_DUPENT_REQUEST,
-#endif /* LDAP_CONTROL_DUPENT_REQUEST */
-
-#ifdef LDAP_CONTROL_DUPENT_RESPONSE
-	LDAP_CONTROL_DUPENT_RESPONSE,
-#endif /* LDAP_CONTROL_DUPENT_RESPONSE */
-
-#ifdef LDAP_CONTROL_DUPENT_ENTRY
-	LDAP_CONTROL_DUPENT_ENTRY,
-#endif /* LDAP_CONTROL_DUPENT_ENTRY */
-
-#ifdef LDAP_CONTROL_PAGEDRESULTS
-	LDAP_CONTROL_PAGEDRESULTS,
-#endif /* LDAP_CONTROL_PAGEDRESULTS */
-
-#ifdef LDAP_CONTROL_SORTREQUEST
-	LDAP_CONTROL_SORTREQUEST,
-#endif /* LDAP_CONTROL_SORTREQUEST */
-
-#ifdef LDAP_CONTROL_SORTRESPONSE
-	LDAP_CONTROL_SORTRESPONSE,
-#endif /* LDAP_CONTROL_SORTRESPONSE */
-
-#ifdef LDAP_CONTROL_VLVREQUEST
-	LDAP_CONTROL_VLVREQUEST,
-#endif /* LDAP_CONTROL_VLVREQUEST */
-
-#ifdef LDAP_CONTROL_VLVRESPONSE
-	LDAP_CONTROL_VLVRESPONSE,
-#endif /* LDAP_CONTROL_VLVRESPONSE */
-
-#ifdef LDAP_CONTROL_VALUESRETURNFILTER
-	LDAP_CONTROL_VALUESRETURNFILTER,
-#endif /* LDAP_CONTROL_VALUESRETURNFILTER */
-
-	NULL
-};
 
 int
 slap_init( int mode, const char *name )

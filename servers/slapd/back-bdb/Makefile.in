@@ -1,15 +1,15 @@
-# $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/Makefile.in,v 1.14.2.3 2002/10/29 01:24:18 kurt Exp $
+# $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/Makefile.in,v 1.14.2.4 2003/02/09 16:31:37 kurt Exp $
 
 SRCS = init.c tools.c config.c \
 	add.c bind.c compare.c delete.c modify.c modrdn.c search.c \
 	extended.c passwd.c referral.c attribute.c group.c operational.c \
 	attr.c index.c key.c dbcache.c filterindex.c \
-	dn2entry.c dn2id.c error.c id2entry.c idl.c nextid.c cache.c lcup.c
+	dn2entry.c dn2id.c error.c id2entry.c idl.c nextid.c cache.c psearch.c
 OBJS = init.lo tools.lo config.lo \
 	add.lo bind.lo compare.lo delete.lo modify.lo modrdn.lo search.lo \
 	extended.lo passwd.lo referral.lo attribute.lo group.lo operational.lo \
 	attr.lo index.lo key.lo dbcache.lo filterindex.lo \
-	dn2entry.lo dn2id.lo error.lo id2entry.lo idl.lo nextid.lo cache.lo lcup.lo
+	dn2entry.lo dn2id.lo error.lo id2entry.lo idl.lo nextid.lo cache.lo psearch.lo
 
 LDAP_INCDIR= ../../../include       
 LDAP_LIBDIR= ../../../libraries

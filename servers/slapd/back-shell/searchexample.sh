@@ -1,6 +1,6 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/servers/slapd/back-shell/searchexample.sh,v 1.3.2.1 2002/05/22 14:25:57 kurt Exp $
-## Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP: pkg/ldap/servers/slapd/back-shell/searchexample.sh,v 1.3.2.2 2003/03/03 17:10:11 kurt Exp $
+## Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
 ## COPYING RESTRICTIONS APPLY, see COPYRIGHT file
 
 while [ 1 ]; do

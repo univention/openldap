@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test006-acls,v 1.31.2.4 2002/09/17 02:27:49 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test006-acls,v 1.31.2.5 2003/02/17 20:41:16 kurt Exp $
 
 SRCDIR="."
 if test $# -ge 1 ; then
@@ -132,7 +132,7 @@ $LDAPMODIFY -D "$JAJDN" -h $LOCALHOST -p $PORT -w jaj >> \
 
 dn: cn=ITD Staff, ou=Groups, o=University of Michigan, c=US
 changetype: modify
-delete: member
+delete: description
 
 EOMODS3
 

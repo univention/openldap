@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/unbind.c,v 1.37.2.3 2002/10/10 01:24:51 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/unbind.c,v 1.37.2.4 2003/02/09 17:02:18 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*  Portions
@@ -93,12 +93,6 @@ ldap_ld_free(
 		ldap_msgfree( lm );
 	}
 
-#ifndef LDAP_NOCACHE
-	if ( ld->ld_cache != NULL ) {
-		ldap_destroy_cache( ld );
-		ld->ld_cache = NULL;
-	}
-#endif /* !LDAP_NOCACHE */
 
 	if ( ld->ld_error != NULL ) {
 		LDAP_FREE( ld->ld_error );

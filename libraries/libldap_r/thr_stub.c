@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_stub.c,v 1.15.2.1 2002/08/29 02:10:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_stub.c,v 1.15.2.3 2003/03/03 17:10:05 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted only
@@ -191,4 +191,11 @@ int ldap_pvt_thread_pool_setkey (
 {
 	return(0);
 }
+
+ldap_pvt_thread_t
+ldap_pvt_thread_self( void )
+{
+	return(0);
+}
+
 #endif /* NO_THREADS */

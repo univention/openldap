@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  *
  * Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
@@ -125,24 +125,21 @@ meta_back_search(
 	struct berval mfilter;
 	BerVarray v2refs = NULL;
 		
-	int i, last = 0, candidates = 0, op_type;
+	int i, last = 0, candidates = 0;
 	struct slap_limits_set *limit = NULL;
 	int isroot = 0;
 
-	if ( scope == LDAP_SCOPE_BASE ) {
-		op_type = META_OP_REQUIRE_SINGLE;
-	} else {
-		op_type = META_OP_ALLOW_MULTIPLE;
-	}
-	
 	/*
 	 * controls are set in ldap_back_dobind()
 	 * 
 	 * FIXME: in case of values return filter, we might want
 	 * to map attrs and maybe rewrite value
 	 */
-	lc = meta_back_getconn( li, conn, op, op_type, nbase, NULL );
+	lc = meta_back_getconn( li, conn, op, META_OP_ALLOW_MULTIPLE, 
+			nbase, NULL );
 	if ( !lc || !meta_back_dobind( lc, op ) ) {
+ 		send_ldap_result( conn, op, LDAP_OTHER,
+ 				NULL, NULL, NULL, NULL );
 		return -1;
 	}
 
@@ -211,8 +208,9 @@ meta_back_search(
 		int 	realscope = scope;
 		ber_len_t suffixlen;
 		char	*mapped_filter, **mapped_attrs;
-		
+
 		if ( lsc->candidate != META_CANDIDATE ) {
+			msgid[ i ] = -1;
 			continue;
 		}
 
@@ -250,8 +248,8 @@ meta_back_search(
 					/*
 					 * this target is no longer candidate
 					 */
-					lsc->candidate = META_NOT_CANDIDATE;
-					continue;
+					msgid[ i ] = -1;
+					goto new_candidate;
 				}
 				break;
 
@@ -273,8 +271,8 @@ meta_back_search(
 				/*
 				 * this target is no longer candidate
 				 */
-				lsc->candidate = META_NOT_CANDIDATE;
-				continue;
+				msgid[ i ] = -1;
+				goto new_candidate;
 			}
 
 		}
@@ -291,10 +289,12 @@ meta_back_search(
 		}
 #ifdef NEW_LOGGING
 		LDAP_LOG( BACK_META, DETAIL1,
-			"[rw] searchBase: \"%s\" -> \"%s\"\n", base->bv_val, mbase, 0 );
+			"[rw] searchBase [%d]: \"%s\" -> \"%s\"\n",
+			i, base->bv_val, mbase );
 #else /* !NEW_LOGGING */
-		Debug( LDAP_DEBUG_ARGS, "rw> searchBase: \"%s\" -> \"%s\"\n%s",
-				base->bv_val, mbase, "" );
+		Debug( LDAP_DEBUG_ARGS,
+			"rw> searchBase [%d]: \"%s\" -> \"%s\"\n",
+				i, base->bv_val, mbase );
 #endif /* !NEW_LOGGING */
 		break;
 		
@@ -329,12 +329,12 @@ meta_back_search(
 			}
 #ifdef NEW_LOGGING
 			LDAP_LOG( BACK_META, DETAIL1,
-				"[rw] searchFilter: \"%s\" -> \"%s\"\n",
-				filterstr->bv_val, mfilter.bv_val, 0 );
+				"[rw] searchFilter [%d]: \"%s\" -> \"%s\"\n",
+				i, filterstr->bv_val, mfilter.bv_val );
 #else /* !NEW_LOGGING */
 			Debug( LDAP_DEBUG_ARGS,
-				"rw> searchFilter: \"%s\" -> \"%s\"\n%s",
-				filterstr->bv_val, mfilter.bv_val, "" );
+				"rw> searchFilter [%d]: \"%s\" -> \"%s\"\n",
+				i, filterstr->bv_val, mfilter.bv_val );
 #endif /* !NEW_LOGGING */
 			break;
 		
@@ -356,7 +356,8 @@ meta_back_search(
 		 * Maps attributes in filter
 		 */
 		mapped_filter = ldap_back_map_filter( &li->targets[ i ]->at_map,
-				&li->targets[ i ]->oc_map, &mfilter, 0 );
+				&li->targets[ i ]->oc_map, &mfilter,
+				BACKLDAP_MAP );
 		if ( mapped_filter == NULL ) {
 			mapped_filter = ( char * )mfilter.bv_val;
 		} else {
@@ -371,7 +372,7 @@ meta_back_search(
 		 * Maps required attributes
 		 */
 		mapped_attrs = ldap_back_map_attrs( &li->targets[ i ]->at_map,
-				attrs, 0 );
+				attrs, BACKLDAP_MAP );
 		if ( mapped_attrs == NULL && attrs) {
 			for ( count=0; attrs[ count ].an_name.bv_val; count++ );
 			mapped_attrs = ch_malloc( ( count + 1 ) * sizeof(char *));
@@ -386,11 +387,6 @@ meta_back_search(
 		 */
 		msgid[ i ] = ldap_search( lsc->ld, mbase, realscope,
 				mapped_filter, mapped_attrs, attrsonly ); 
-		if ( msgid[ i ] == -1 ) {
-			lsc->candidate = META_NOT_CANDIDATE;
-			continue;
-		}
-
 		if ( mapped_attrs ) {
 			free( mapped_attrs );
 			mapped_attrs = NULL;
@@ -404,7 +400,13 @@ meta_back_search(
 			mbase = NULL;
 		}
 
+		if ( msgid[ i ] == -1 ) {
+			continue;
+		}
+
 		++candidates;
+
+new_candidate:;
 	}
 
 	/* We pull apart the ber result, stuff it into a slapd entry, and
@@ -426,7 +428,7 @@ meta_back_search(
 		ab = op->o_abandon;
 
 		for ( i = 0, lsc = lc->conns; !META_LAST(lsc); lsc++, i++ ) {
-			if ( lsc->candidate != META_CANDIDATE ) {
+			if ( msgid[ i ] == -1 ) {
 				continue;
 			}
 			
@@ -473,6 +475,19 @@ meta_back_search(
 				if ( meta_send_entry( be, op, lc, i, e, attrs,
 						attrsonly ) == LDAP_SUCCESS ) {
 					count++;
+				}
+
+				/*
+				 * If scope is BASE, we need to jump out
+				 * as soon as one entry is found; if
+				 * the target pool is properly crafted,
+				 * this should correspond to the sole
+				 * entry that has the base DN
+				 */
+				if ( scope == LDAP_SCOPE_BASE && count > 0 ) {
+					candidates = 0;
+					sres = LDAP_SUCCESS;
+					break;
 				}
 				ldap_msgfree( res );
 				gotit = 1;
@@ -557,7 +572,7 @@ meta_back_search(
 				 * When no candidates are left,
 				 * the outer cycle finishes
 				 */
-				lsc->candidate = META_NOT_CANDIDATE;
+				msgid[ i ] = -1;
 				--candidates;
 			}
 		}
@@ -598,11 +613,12 @@ meta_back_search(
 			}
 #ifdef NEW_LOGGING
 			LDAP_LOG( BACK_META, DETAIL1,
-				"[rw] matchedDn: \"%s\" -> \"%s\"\n", match, mmatch, 0 );
+				"[rw] matchedDn: \"%s\" -> \"%s\"\n",
+				match, mmatch, 0 );
 #else /* !NEW_LOGGING */
-			Debug( LDAP_DEBUG_ARGS, "rw> matchedDn:"
-				       " \"%s\" -> \"%s\"\n%s",
-				       match, mmatch, "" );
+			Debug( LDAP_DEBUG_ARGS,
+				"rw> matchedDn: \"%s\" -> \"%s\"\n",
+				match, mmatch, 0 );
 #endif /* !NEW_LOGGING */
 			break;
 			
@@ -726,8 +742,8 @@ meta_send_entry(
 
 	while ( ber_scanf( &ber, "{m", &a ) != LBER_ERROR ) {
 		ldap_back_map( &li->targets[ target ]->at_map, 
-				&a, &mapped, 1 );
-		if ( mapped.bv_val == NULL ) {
+				&a, &mapped, BACKLDAP_REMAP );
+		if ( mapped.bv_val == NULL || mapped.bv_val[0] == '\0' ) {
 			continue;
 		}
 		attr = ( Attribute * )ch_malloc( sizeof( Attribute ) );
@@ -770,8 +786,8 @@ meta_send_entry(
 			for ( last = 0; attr->a_vals[ last ].bv_val; ++last );
 			for ( i = 0, bv = attr->a_vals; bv->bv_val; bv++, i++ ) {
 				ldap_back_map( &li->targets[ target]->oc_map,
-						bv, &mapped, 1 );
-				if ( mapped.bv_val == NULL ) {
+						bv, &mapped, BACKLDAP_REMAP );
+				if ( mapped.bv_val == NULL || mapped.bv_val[0] == '\0') {
 					free( bv->bv_val );
 					bv->bv_val = NULL;
 					if ( --last < 0 ) {

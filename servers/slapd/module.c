@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/module.c,v 1.15.2.3 2002/11/11 02:42:37 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/module.c,v 1.15.2.4 2003/02/09 16:31:36 kurt Exp $ */
 #include "portable.h"
 #include <stdio.h>
 #include "slap.h"
@@ -242,7 +242,7 @@ static int module_unload (module_loaded_t *module)
 		}
 
 		/* call module's terminate routine, if present */
-		if (terminate = lt_dlsym(module->lib, "term_module")) {
+		if ((terminate = lt_dlsym(module->lib, "term_module"))) {
 			terminate();
 		}
 

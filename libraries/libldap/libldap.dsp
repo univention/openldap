@@ -143,7 +143,7 @@ SOURCE=.\bind.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\cache.c
+SOURCE=.\cancel.c
 # End Source File
 # Begin Source File
 
@@ -283,6 +283,10 @@ SOURCE=".\os-ip.c"
 # End Source File
 # Begin Source File
 
+SOURCE=.\passwd.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\include\portable.h
 # End Source File
 # Begin Source File
@@ -356,6 +360,10 @@ SOURCE=".\util-int.c"
 # Begin Source File
 
 SOURCE=.\vlvctrl.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\whoami.c
 # End Source File
 # End Target
 # End Project

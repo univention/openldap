@@ -1,5 +1,5 @@
 .TH SLAPD-TCL 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-tcl.5,v 1.5.2.2 2002/06/20 20:12:26 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-tcl.5,v 1.5.2.3 2003/02/07 17:16:13 kurt Exp $
 .SH NAME
 slapd-tcl \- Tcl backend to slapd
 .SH SYNOPSIS
@@ -14,6 +14,8 @@ interpreter into
 Any tcl database section of the configuration file
 .BR slapd.conf (5)
 must then specify what Tcl script to use.
+.LP
+This backend is experimental.
 .SH WARNING
 .B "This backend's calling conventions have changed since OpenLDAP 2.0."
 Previously, the 2nd argument to the procs was a message ID.

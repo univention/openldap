@@ -1,7 +1,7 @@
 /* ch_malloc.c - malloc routines that test returns from malloc and friends */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ch_malloc.c,v 1.17.2.1 2002/07/28 19:17:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ch_malloc.c,v 1.17.2.2 2003/03/03 17:10:07 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

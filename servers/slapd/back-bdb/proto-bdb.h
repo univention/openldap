@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.44.2.7 2002/10/29 01:24:19 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.44.2.10 2003/03/13 03:35:26 kurt Exp $ */
 /*
- * Copyright 2000-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -171,6 +171,10 @@ void bdb_entry_free ( Entry *e );
 /*
  * idl.c
  */
+#ifdef SLAP_IDL_CACHE
+int bdb_idl_entry_cmp( const void*, const void* );
+#endif
+
 unsigned bdb_idl_search( ID *ids, ID id );
 
 int bdb_bt_compare(
@@ -364,13 +368,25 @@ int bdb_cache_delete_entry(
 );
 void bdb_cache_release_all( Cache *cache );
 
-#ifdef LDAP_CLIENT_UPDATE
+/*
+ * lcup.c
+ */
+
 int bdb_abandon(
 	BackendDB       *be,
 	Connection      *conn,
+	Operation		*op,
 	ber_int_t       id
 );
 
+int bdb_cancel(
+	BackendDB       *be,
+	Connection      *conn,
+	Operation		*op,
+	ber_int_t       id
+);
+
+#if defined(LDAP_CLIENT_UPDATE) || defined(LDAP_SYNC)
 int bdb_add_psearch_spec(
 	BackendDB       *be,
 	Connection      *conn,
@@ -384,7 +400,8 @@ int bdb_add_psearch_spec(
 	Filter          *filter,
 	struct berval   *fstr,
 	AttributeName   *attrs,
-	int             attrsonly
+	int             attrsonly,
+	int		protocol
 );
 
 int bdb_psearch(
@@ -395,7 +412,66 @@ int bdb_psearch(
 	Entry           *entry,
 	int             psearch_type
 );
+#endif
 
+/*
+ * search.c
+ */
+
+#ifdef LDAP_CLIENT_UPDATE
+int
+bdb_build_lcup_update_ctrl(
+	Connection      *conn,
+	Operation       *op,
+	Entry           *e,
+	int             entry_count,
+	LDAPControl     **ctrls,
+	int             num_ctrls,
+	struct berval   *latest_entrycsn_bv,
+	int             isdeleted       );
+
+int
+bdb_build_lcup_done_ctrl(
+	Connection      *conn,
+	Operation       *op,
+	LDAPControl     **ctrls,
+	int             num_ctrls,
+	struct berval   *latest_entrycsn_bv     );
+#endif
+
+#ifdef LDAP_SYNC
+int
+bdb_build_sync_state_ctrl(
+	Connection      *conn,
+	Operation       *op,
+	Entry           *e,
+	int             entry_sync_state,
+	LDAPControl     **ctrls,
+	int             num_ctrls,
+	int             send_cookie,
+	struct berval   *latest_entrycsn_bv     );
+
+int
+bdb_build_sync_done_ctrl(
+	Connection      *conn,
+	Operation       *op,
+	LDAPControl     **ctrls,
+	int             num_ctrls,
+	int             send_cookie,
+	struct berval   *latest_entrycsn_bv     );
+
+int
+bdb_send_ldap_intermediate(
+	Connection  *conn,
+	Operation   *op,
+	ber_int_t   err,
+	const char  *matched,
+	const char  *text,
+	BerVarray   refs,
+	const char  *rspoid,
+	int         state,
+	struct berval *cookie,
+	LDAPControl **ctrls     );
 #endif
 
 #ifdef BDB_REUSE_LOCKERS

@@ -1,7 +1,7 @@
 /* search.c - ldbm backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/search.c,v 1.93.2.7 2002/11/26 17:33:47 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/search.c,v 1.93.2.8 2003/02/09 17:41:28 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -74,7 +74,7 @@ ldbm_back_search(
 		ber_dupbv( &realbase, &e->e_nname );
 
 		candidates = search_candidates( be, e, filter,
-		    scope, deref, manageDSAit );
+		    scope, deref, manageDSAit || get_domainScope(op) );
 
 		goto searchit;
 		

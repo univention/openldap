@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /* Portions
@@ -21,6 +21,7 @@
 #include <sys/types.h>
 
 #include <ac/stdlib.h>
+#include <ac/string.h>	/* get memcmp() */
 
 #ifdef HAVE_UUID_TO_STR
 #  include <sys/uuid.h>

@@ -1,7 +1,7 @@
 /* modify.c - bdb backend modify routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modify.c,v 1.44.2.8 2002/10/29 01:24:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modify.c,v 1.44.2.12 2003/03/13 03:35:26 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -56,7 +56,8 @@ int bdb_modify_internal(
 #else
 			Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: add\n", 0, 0, 0);
 #endif
-			err = modify_add_values( e, mod, text, textbuf, textlen );
+			err = modify_add_values( e, mod, get_permissiveModify(op),
+				text, textbuf, textlen );
 			if( err != LDAP_SUCCESS ) {
 #ifdef NEW_LOGGING
 				LDAP_LOG ( OPERATION, ERR, 
@@ -75,7 +76,8 @@ int bdb_modify_internal(
 #else
 			Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: delete\n", 0, 0, 0);
 #endif
-			err = modify_delete_values( e, mod, text, textbuf, textlen );
+			err = modify_delete_values( e, mod, get_permissiveModify(op),
+				text, textbuf, textlen );
 			assert( err != LDAP_TYPE_OR_VALUE_EXISTS );
 			if( err != LDAP_SUCCESS ) {
 #ifdef NEW_LOGGING
@@ -95,7 +97,8 @@ int bdb_modify_internal(
 #else
 			Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: replace\n", 0, 0, 0);
 #endif
-			err = modify_replace_values( e, mod, text, textbuf, textlen );
+			err = modify_replace_values( e, mod, get_permissiveModify(op),
+				text, textbuf, textlen );
 			if( err != LDAP_SUCCESS ) {
 #ifdef NEW_LOGGING
 				LDAP_LOG ( OPERATION, ERR, 
@@ -119,7 +122,8 @@ int bdb_modify_internal(
  			 */
  			mod->sm_op = LDAP_MOD_ADD;
 
-			err = modify_add_values( e, mod, text, textbuf, textlen );
+			err = modify_add_values( e, mod, get_permissiveModify(op),
+				text, textbuf, textlen );
  			if ( err == LDAP_TYPE_OR_VALUE_EXISTS ) {
  				err = LDAP_SUCCESS;
  			}
@@ -206,7 +210,7 @@ int bdb_modify_internal(
 	for ( ap = save_attrs; ap != NULL; ap = ap->a_next ) {
 		if ( ap->a_flags & SLAP_ATTR_IXDEL ) {
 			rc = bdb_index_values( be, tid, ap->a_desc, ap->a_vals,
-					       e->e_id, SLAP_INDEX_DELETE_OP );
+				e->e_id, SLAP_INDEX_DELETE_OP );
 			if ( rc != LDAP_SUCCESS ) {
 				attrs_free( e->e_attrs );
 				e->e_attrs = save_attrs;
@@ -229,7 +233,7 @@ int bdb_modify_internal(
 	for ( ap = e->e_attrs; ap != NULL; ap = ap->a_next ) {
 		if (ap->a_flags & SLAP_ATTR_IXADD) {
 			rc = bdb_index_values( be, tid, ap->a_desc, ap->a_vals,
-					       e->e_id, SLAP_INDEX_ADD_OP );
+				e->e_id, SLAP_INDEX_ADD_OP );
 			if ( rc != LDAP_SUCCESS ) {
 				attrs_free( e->e_attrs );
 				e->e_attrs = save_attrs;
@@ -246,6 +250,13 @@ int bdb_modify_internal(
 			}
 			ap->a_flags &= ~SLAP_ATTR_IXADD;
 		}
+	}
+
+	/* If we've done repeated mods on a cached entry, then e_attrs
+	 * is no longer contiguous with the entry.
+	 */
+	if( (void *) save_attrs != (void *) (e+1)) {
+		attrs_free( save_attrs );
 	}
 
 	return rc;
@@ -272,12 +283,12 @@ bdb_modify(
 	DB_TXN	*ltid = NULL;
 	struct bdb_op_info opinfo;
 
-	u_int32_t	locker;
+	u_int32_t	locker = 0;
 	DB_LOCK		lock;
 
 	int		noop = 0;
 
-#ifdef LDAP_CLIENT_UPDATE
+#if defined(LDAP_CLIENT_UPDATE) || defined(LDAP_SYNC)
 	Operation* ps_list;
 	struct psid_entry* pm_list;
 	struct psid_entry* pm_prev;
@@ -302,7 +313,7 @@ retry:	/* transaction retry */
 			"bdb_modify: retrying...\n", 0, 0, 0);
 #endif
 
-#ifdef LDAP_CLIENT_UPDATE
+#if defined(LDAP_CLIENT_UPDATE) || defined(LDAP_SYNC)
 		pm_list = LDAP_LIST_FIRST(&op->premodify_list);
 		while ( pm_list != NULL ) {
 			LDAP_LIST_REMOVE ( pm_list, link );
@@ -315,6 +326,7 @@ retry:	/* transaction retry */
 		rc = TXN_ABORT( ltid );
 		ltid = NULL;
 		op->o_private = NULL;
+		op->o_do_not_cache = opinfo.boi_acl_cache;
 		if( rc != 0 ) {
 			rc = LDAP_OTHER;
 			text = "internal error";
@@ -345,7 +357,9 @@ retry:	/* transaction retry */
 
 	opinfo.boi_bdb = be;
 	opinfo.boi_txn = ltid;
+	opinfo.boi_locker = locker;
 	opinfo.boi_err = 0;
+	opinfo.boi_acl_cache = op->o_do_not_cache;
 	op->o_private = &opinfo;
 
 	/* get entry */
@@ -423,13 +437,13 @@ retry:	/* transaction retry */
 		goto done;
 	}
 
-#ifdef LDAP_CLIENT_UPDATE
+#if defined(LDAP_CLIENT_UPDATE) || defined(LDAP_SYNC)
 	if ( rc == LDAP_SUCCESS && !op->o_noop ) {
 		LDAP_LIST_FOREACH ( ps_list, &bdb->psearch_list, link ) {
-			bdb_psearch(be, conn, op, ps_list, e, LCUP_PSEARCH_BY_PREMODIFY );
+			bdb_psearch(be, conn, op, ps_list, e, LDAP_PSEARCH_BY_PREMODIFY );
 		}
 	}
-#endif /* LDAP_CLIENT_UPDATE */
+#endif
 	
 	/* Modify the entry */
 	rc = bdb_modify_internal( be, conn, op, ltid, modlist, e,
@@ -444,6 +458,9 @@ retry:	/* transaction retry */
 			"bdb_modify: modify failed (%d)\n",
 			rc, 0, 0 );
 #endif
+		if ( (rc == LDAP_INSUFFICIENT_ACCESS) && opinfo.boi_err ) {
+			rc = opinfo.boi_err;
+		}
 		switch( rc ) {
 		case DB_LOCK_DEADLOCK:
 		case DB_LOCK_NOTGRANTED:
@@ -518,23 +535,23 @@ return_results:
 	send_ldap_result( conn, op, rc,
 		NULL, text, NULL, NULL );
 
-#ifdef LDAP_CLIENT_UPDATE
+#if defined(LDAP_CLIENT_UPDATE) || defined(LDAP_SYNC)
 	if ( rc == LDAP_SUCCESS && !op->o_noop ) {
 		/* Loop through in-scope entries for each psearch spec */
 		LDAP_LIST_FOREACH ( ps_list, &bdb->psearch_list, link ) {
-			bdb_psearch( be, conn, op, ps_list, e, LCUP_PSEARCH_BY_MODIFY );
+			bdb_psearch( be, conn, op, ps_list, e, LDAP_PSEARCH_BY_MODIFY );
 		}
 		pm_list = LDAP_LIST_FIRST(&op->premodify_list);
 		while ( pm_list != NULL ) {
 			bdb_psearch(be, conn, op, pm_list->ps->op,
-						e, LCUP_PSEARCH_BY_SCOPEOUT);
+						e, LDAP_PSEARCH_BY_SCOPEOUT);
 			LDAP_LIST_REMOVE ( pm_list, link );
 			pm_prev = pm_list;
 			pm_list = LDAP_LIST_NEXT ( pm_list, link );
 			free (pm_prev);
 		}
 	}
-#endif /* LDAP_CLIENT_UPDATE */
+#endif
 
 	if( rc == LDAP_SUCCESS && bdb->bi_txn_cp ) {
 		ldap_pvt_thread_yield();
@@ -544,7 +561,7 @@ return_results:
 
 done:
 	if( ltid != NULL ) {
-#ifdef LDAP_CLIENT_UPDATE
+#if defined(LDAP_CLIENT_UPDATE) || defined(LDAP_SYNC)
 		pm_list = LDAP_LIST_FIRST(&op->premodify_list);
 		while ( pm_list != NULL ) {
 			LDAP_LIST_REMOVE ( pm_list, link );

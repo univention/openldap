@@ -1,7 +1,7 @@
 /* init.c - initialize bdb backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.75.2.16 2002/12/18 23:53:07 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.75.2.21 2003/03/14 01:16:49 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -12,10 +12,9 @@
 #include <ac/unistd.h>
 #include <ac/stdlib.h>
 
-#include <lutil.h>
-
 #include "back-bdb.h"
 #include "external.h"
+#include <lutil.h>
 
 static struct bdbi_database {
 	char *file;
@@ -95,7 +94,7 @@ bdb_db_init( BackendDB *be )
 	bdb->bi_search_stack_depth = DEFAULT_SEARCH_STACK_DEPTH;
 	bdb->bi_search_stack = NULL;
 
-#ifdef LDAP_CLIENT_UPDATE
+#if defined(LDAP_CLIENT_UPDATE) || defined(LDAP_SYNC)
 	LDAP_LIST_INIT (&bdb->psearch_list);
 #endif
 
@@ -126,7 +125,7 @@ bdb_bt_compare(
 	c = curkey->data;
 
 #ifdef WORDS_BIGENDIAN
-	for( i = 0; i < sizeof(ID); i++)
+	for( i = 0; i < (int)sizeof(ID); i++)
 #else
 	for( i = sizeof(ID)-1; i >= 0; i--)
 #endif
@@ -157,6 +156,18 @@ bdb_db_open( BackendDB *be )
 		be->be_suffix[0].bv_val, 0, 0 );
 #endif
 
+#ifndef BDB_MULTIPLE_SUFFIXES
+	if ( be->be_suffix[1].bv_val ) {
+#ifdef NEW_LOGGING
+	LDAP_LOG( BACK_BDB, ERR, 
+		"bdb_db_open: only one suffix allowed\n", 0, 0, 0 );
+#else
+	Debug( LDAP_DEBUG_ANY,
+		"bdb_db_open: only one suffix allowed\n", 0, 0, 0 );
+#endif
+		return -1;
+	}
+#endif
 	/* we should check existance of dbenv_home and db_directory */
 
 	rc = db_env_create( &bdb->bi_dbenv, 0 );
@@ -197,12 +208,27 @@ bdb_db_open( BackendDB *be )
 
 #ifdef BDB_SUBDIRS
 	{
-		char dir[MAXPATHLEN];
-		size_t len = strlen( bdb->bi_dbenv_home );
-
-		strcpy( dir, bdb->bi_dbenv_home );
-		strcat( &dir[len], BDB_TMP_SUBDIR );
+		char dir[MAXPATHLEN], *ptr;
 		
+		if (bdb->bi_dbenv_home[0] == '.') {
+			/* If home is a relative path, relative subdirs
+			 * are just concat'd by BDB. We don't want the
+			 * path to be concat'd twice, e.g.
+			 * ./test-db/./test-db/tmp
+			 */
+			ptr = dir;
+		} else {
+			ptr = lutil_strcopy( dir, bdb->bi_dbenv_home );
+			*ptr++ = LDAP_DIRSEP[0];
+#ifdef HAVE_EBCDIC
+			__atoe( dir );
+#endif
+		}
+
+		strcpy( ptr, BDB_TMP_SUBDIR );
+#ifdef HAVE_EBCDIC
+		__atoe( ptr );
+#endif
 		rc = bdb->bi_dbenv->set_tmp_dir( bdb->bi_dbenv, dir );
 		if( rc != 0 ) {
 #ifdef NEW_LOGGING
@@ -217,8 +243,10 @@ bdb_db_open( BackendDB *be )
 			return rc;
 		}
 
-		strcat( &dir[len], BDB_LG_SUBDIR );
-
+		strcpy( ptr, BDB_LG_SUBDIR );
+#ifdef HAVE_EBCDIC
+		__atoe( ptr );
+#endif
 		rc = bdb->bi_dbenv->set_lg_dir( bdb->bi_dbenv, dir );
 		if( rc != 0 ) {
 #ifdef NEW_LOGGING
@@ -233,8 +261,10 @@ bdb_db_open( BackendDB *be )
 			return rc;
 		}
 
-		strcat( &dir[len], BDB_DATA_SUBDIR );
-
+		strcpy( ptr, BDB_DATA_SUBDIR );
+#ifdef HAVE_EBCDIC
+		__atoe( ptr );
+#endif
 		rc = bdb->bi_dbenv->set_data_dir( bdb->bi_dbenv, dir );
 		if( rc != 0 ) {
 #ifdef NEW_LOGGING
@@ -435,6 +465,7 @@ bdb_db_close( BackendDB *be )
 	entry = bdb->bi_idl_lru_head;
 	while ( entry != NULL ) {
 		next_entry = entry->idl_lru_next;
+		avl_delete( &bdb->bi_idl_tree, (caddr_t) entry, bdb_idl_entry_cmp );
 		free( entry->idl );
 		free( entry->kstr.bv_val );
 		free( entry );
@@ -522,14 +553,13 @@ bdb_initialize(
 {
 	static char *controls[] = {
 		LDAP_CONTROL_MANAGEDSAIT,
+		LDAP_CONTROL_NOOP,
+#ifdef LDAP_CONTROL_PAGEDRESULTS
+		LDAP_CONTROL_PAGEDRESULTS,
+#endif
+ 		LDAP_CONTROL_VALUESRETURNFILTER,
 #ifdef LDAP_CONTROL_SUBENTRIES
 		LDAP_CONTROL_SUBENTRIES,
-#endif
-#ifdef LDAP_CONTROL_NOOP
-		LDAP_CONTROL_NOOP,
-#endif
-#ifdef LDAP_CONTROL_VALUESRETURNFILTER
- 		LDAP_CONTROL_VALUESRETURNFILTER,
 #endif
 #ifdef LDAP_CLIENT_UPDATE
 		LDAP_CONTROL_CLIENT_UPDATE,
@@ -624,7 +654,14 @@ bdb_initialize(
 	bi->bi_op_search = bdb_search;
 
 	bi->bi_op_unbind = 0;
+
+#ifdef LDAP_CLIENT_UPDATE
+	bi->bi_op_abandon = bdb_abandon;
+	bi->bi_op_cancel = bdb_cancel;
+#else
 	bi->bi_op_abandon = 0;
+	bi->bi_op_cancel = 0;
+#endif
 
 	bi->bi_extended = bdb_extended;
 
@@ -642,9 +679,7 @@ bdb_initialize(
 
 	bi->bi_chk_referrals = bdb_referrals;
 	bi->bi_operational = bdb_operational;
-#ifdef SLAP_X_FILTER_HASSUBORDINATES
 	bi->bi_has_subordinates = bdb_hasSubordinates;
-#endif /* SLAP_X_FILTER_HASSUBORDINATES */
 	bi->bi_entry_release_rw = bdb_entry_release;
 
 	/*

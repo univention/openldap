@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/t61.c,v 1.2 2002/02/01 02:13:04 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/t61.c,v 1.2.2.1 2003/03/03 17:10:05 kurt Exp $ */
 /*
- * Copyright 2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2002-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

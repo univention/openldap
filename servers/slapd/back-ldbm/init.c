@@ -1,7 +1,7 @@
 /* init.c - initialize ldbm backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/init.c,v 1.76.2.5 2002/11/26 17:33:47 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/init.c,v 1.76.2.6 2003/02/09 16:31:38 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -71,9 +71,7 @@ ldbm_back_initialize(
 	bi->bi_acl_attribute = ldbm_back_attribute;
 	bi->bi_chk_referrals = ldbm_back_referrals;
 	bi->bi_operational = ldbm_back_operational;
-#ifdef SLAP_X_FILTER_HASSUBORDINATES
 	bi->bi_has_subordinates = ldbm_back_hasSubordinates;
-#endif /* SLAP_X_FILTER_HASSUBORDINATES */
 
 	/*
 	 * hooks for slap tools

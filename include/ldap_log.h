@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/include/ldap_log.h,v 1.26.2.2 2002/09/19 20:07:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap_log.h,v 1.26.2.3 2003/03/03 17:10:03 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

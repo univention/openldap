@@ -1,7 +1,7 @@
 .TH SLAPD.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2002 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2003 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.87.2.16 2002/11/26 17:24:47 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.87.2.21 2003/03/12 19:08:25 kurt Exp $
 .SH NAME
 slapd.conf \- configuration file for slapd, the stand-alone LDAP daemon
 .SH SYNOPSIS
@@ -78,7 +78,9 @@ and the "OpenLDAP's Administrator's Guide" for details.
 Specify a set of features (separated by white space) to
 allow (default none).
 .B bind_v2
-allows acceptance of LDAPv2 bind requests.
+allows acceptance of LDAPv2 bind requests.  Note that
+.BR slapd (8)
+does not truely implement LDAPv2 (RFC 1777), now Historic (RFC 3494).
 .B bind_anon_cred
 allows anonymous bind when credentials are not empty (e.g.
 when DN is empty).
@@ -520,8 +522,8 @@ may be used to require no conditions (useful for clearly globally
 set conditions within a particular database).
 .TP
 .B reverse-lookup on | off
-Enable/disable client name reverse lookup (default is 
-.BR on 
+Enable/disable client name unverified reverse lookup (default is 
+.BR off 
 if compiled with --enable-rlookups).
 .TP
 .B rootDSE <file>
@@ -743,7 +745,7 @@ meaningful if you are using Kerberos authentication.
 .TP
 .B threads <integer>
 Specify the maximum size of the primary thread pool.
-The default is 32.
+The default is 16.
 .TP
 .B timelimit {<integer>|unlimited}
 .TP
@@ -1006,13 +1008,6 @@ backend database.  Multiple suffix lines can be given and at least one is
 required for each database definition.
 If the suffix of one database is "inside" that of another, the database
 with the inner suffix must come first in the configuration file.
-.TP
-.B suffixalias <alias> <aliased suffix>
-Specify an alternate suffix that may be used to reference an already defined
-database suffix. Operations specifying DNs residing under the alias 
-will execute as if they had specified the aliased suffix.
-.I This feature is no supported in this version of
-.BI slapd (8).
 .TP
 .B subordinate
 Specify that the current backend database is a subordinate of another

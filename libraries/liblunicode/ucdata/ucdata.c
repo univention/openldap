@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblunicode/ucdata/ucdata.c,v 1.15.2.4 2002/10/10 01:22:57 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblunicode/ucdata/ucdata.c,v 1.15.2.5 2003/02/08 23:50:39 kurt Exp $ */
 /*
- * Copyright 2000-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*

@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/kbind.c,v 1.27.2.2 2002/07/28 19:10:46 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/kbind.c,v 1.27.2.4 2003/03/06 19:08:00 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*  Portions
@@ -101,11 +101,6 @@ ldap_kerberos_bind1( LDAP *ld, LDAP_CONST char *dn )
 
 	LDAP_FREE( cred );
 
-#ifndef LDAP_NOCACHE
-	if ( ld->ld_cache != NULL ) {
-		ldap_flush_cache( ld );
-	}
-#endif /* !LDAP_NOCACHE */
 
 	/* send the message */
 	return ( ldap_send_initial_request( ld, LDAP_REQ_BIND, dn, ber ));
@@ -128,7 +123,7 @@ ldap_kerberos_bind1_s( LDAP *ld, LDAP_CONST char *dn )
 		return( ld->ld_errno );
 
 	/* wait for a result */
-	if ( ldap_result( ld, ld->ld_msgid, 1, (struct timeval *) 0, &res )
+	if ( ldap_result( ld, msgid, 1, (struct timeval *) 0, &res )
 	    == -1 ) {
 		return( ld->ld_errno );	/* ldap_result sets ld_errno */
 	}
@@ -214,7 +209,7 @@ ldap_kerberos_bind2_s( LDAP *ld, LDAP_CONST char *dn )
 		return( ld->ld_errno );
 
 	/* wait for a result */
-	if ( ldap_result( ld, ld->ld_msgid, 1, (struct timeval *) 0, &res )
+	if ( ldap_result( ld, msgid, 1, (struct timeval *) 0, &res )
 	    == -1 ) {
 		return( ld->ld_errno );	/* ldap_result sets ld_errno */
 	}

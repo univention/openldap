@@ -1,7 +1,7 @@
 /* attribute.c - bdb backend acl attribute routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/attribute.c,v 1.12.2.7 2002/09/06 01:22:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/attribute.c,v 1.12.2.9 2003/02/26 15:17:50 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -39,38 +39,41 @@ bdb_attribute(
 	const char *entry_at_name = entry_at->ad_cname.bv_val;
 	AccessControlState acl_state = ACL_STATE_INIT;
 
-	u_int32_t	locker;
+	u_int32_t	locker = 0;
 	DB_LOCK		lock;
+	int		free_lock_id = 0;
 
 #ifdef NEW_LOGGING
 	LDAP_LOG( BACK_BDB, ARGS, 
-		"bdb_attribute: gr dn: \"%s\"\n", entry_ndn->bv_val, 0, 0 );
+		"bdb_attribute: gr ndn: \"%s\"\n", entry_ndn->bv_val, 0, 0 );
 	LDAP_LOG( BACK_BDB, ARGS, 
 		"bdb_attribute: at: \"%s\"\n", entry_at_name, 0, 0);
-	LDAP_LOG( BACK_BDB, ARGS, "bdb_attribute: tr dn: \"%s\"\n",
+	LDAP_LOG( BACK_BDB, ARGS, "bdb_attribute: tr ndn: \"%s\"\n",
 		target ? target->e_ndn : "", 0, 0 );
 #else
 	Debug( LDAP_DEBUG_ARGS,
-		"=> bdb_attribute: gr dn: \"%s\"\n",
+		"=> bdb_attribute: gr ndn: \"%s\"\n",
 		entry_ndn->bv_val, 0, 0 ); 
 	Debug( LDAP_DEBUG_ARGS,
 		"=> bdb_attribute: at: \"%s\"\n", 
 		entry_at_name, 0, 0 ); 
 
 	Debug( LDAP_DEBUG_ARGS,
-		"=> bdb_attribute: tr dn: \"%s\"\n",
+		"=> bdb_attribute: tr ndn: \"%s\"\n",
 		target ? target->e_ndn : "", 0, 0 ); 
 #endif
 
 	if( op ) boi = (struct bdb_op_info *) op->o_private;
 	if( boi != NULL && be == boi->boi_bdb ) {
 		txn = boi->boi_txn;
+		locker = boi->boi_locker;
 	}
 
 	if ( txn != NULL ) {
 		locker = TXN_ID ( txn );
-	} else {
+	} else if ( !locker ) {
 		rc = LOCK_ID ( bdb->bi_dbenv, &locker );
+		free_lock_id = 1;
 		switch(rc) {
 		case 0:
 			break;
@@ -94,19 +97,23 @@ bdb_attribute(
 	} else {
 dn2entry_retry:
 		/* can we find entry */
-		rc = bdb_dn2entry_r( be, NULL, entry_ndn, &e, NULL, 0, locker, &lock );
+		rc = bdb_dn2entry_r( be, txn, entry_ndn, &e, NULL, 0, locker, &lock );
 		switch( rc ) {
 		case DB_NOTFOUND:
 		case 0:
 			break;
 		case DB_LOCK_DEADLOCK:
 		case DB_LOCK_NOTGRANTED:
+			/* the txn must abort and retry */
+			if ( txn ) {
+				boi->boi_err = rc;
+				return LDAP_BUSY;
+			}
+			ldap_pvt_thread_yield();
 			goto dn2entry_retry;
 		default:
-			if( txn != NULL ) {
-				boi->boi_err = rc;
-			}
-			else {
+			boi->boi_err = rc;
+			if ( free_lock_id ) {
 				LOCK_ID_FREE( bdb->bi_dbenv, locker );
 			}
 			return (rc != LDAP_BUSY) ? LDAP_OTHER : LDAP_BUSY;
@@ -121,7 +128,7 @@ dn2entry_retry:
 				"=> bdb_attribute: cannot find entry: \"%s\"\n",
 					entry_ndn->bv_val, 0, 0 ); 
 #endif
-			if ( txn == NULL ) {
+			if ( free_lock_id ) {
 				LOCK_ID_FREE( bdb->bi_dbenv, locker );
 			}
 			return LDAP_NO_SUCH_OBJECT; 
@@ -221,7 +228,7 @@ return_results:
 		bdb_cache_return_entry_r(bdb->bi_dbenv, &bdb->bi_cache, e, &lock);
 	}
 
-	if ( txn == NULL ) {
+	if ( free_lock_id ) {
 		LOCK_ID_FREE( bdb->bi_dbenv, locker );
 	}
 

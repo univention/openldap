@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/include/ldap_schema.h,v 1.29.2.2 2002/10/17 15:02:54 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap_schema.h,v 1.29.2.3 2003/03/03 17:10:03 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

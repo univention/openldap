@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/ldap/libraries/liblber/Makefile.in,v 1.25.2.5 2002/11/28 22:18:55 kurt Exp $
-## Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP: pkg/ldap/libraries/liblber/Makefile.in,v 1.25.2.7 2003/03/03 17:10:04 kurt Exp $
+## Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
 ## COPYING RESTRICTIONS APPLY, see COPYRIGHT file
 ##
 ## LIBLBER
@@ -40,4 +40,5 @@ idtest:  $(XLIBS) idtest.o
 install-local: FORCE
 	-$(MKDIR) $(DESTDIR)$(libdir)
 	$(LTINSTALL) $(INSTALLFLAGS) -m 644 $(LIBRARY) $(DESTDIR)$(libdir)
+	$(LTFINISH) $(DESTDIR)$libdir
 

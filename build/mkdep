@@ -1,6 +1,6 @@
 #! /bin/sh -
-# $OpenLDAP: pkg/ldap/build/mkdep,v 1.24.2.3 2002/09/24 00:10:17 kurt Exp $
-## Copyright 1998-2002 The OpenLDAP Foundation
+# $OpenLDAP: pkg/ldap/build/mkdep,v 1.24.2.4 2003/03/03 17:10:01 kurt Exp $
+## Copyright 1998-2003 The OpenLDAP Foundation
 ## COPYING RESTRICTIONS APPLY.  See COPYRIGHT File in top level directory
 ## of this package for details.
 #

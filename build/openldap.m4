@@ -1,6 +1,6 @@
-dnl $OpenLDAP: pkg/ldap/build/openldap.m4,v 1.98.2.8 2002/10/10 01:50:45 kurt Exp $
+dnl $OpenLDAP: pkg/ldap/build/openldap.m4,v 1.98.2.12 2003/03/03 16:57:04 kurt Exp $
 dnl
-dnl Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+dnl Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
 dnl All rights reserved.
 dnl 
 dnl Redistribution and use in source and binary forms, with or without
@@ -254,7 +254,7 @@ AC_DEFUN([OL_BERKELEY_DB_TRY],
 [
 	ol_DB_LIB=ifelse($2,,,$2)
 	ol_LIBS=$LIBS
-	LIBS="$ol_DB_LIB $LIBS"
+	LIBS="$ol_DB_LIB $LTHREAD_LIBS $LIBS"
 
 	AC_TRY_LINK([
 #ifdef HAVE_DB_185_H
@@ -312,8 +312,12 @@ dnl Try to locate appropriate library
 AC_DEFUN([OL_BERKELEY_DB_LINK],
 [ol_cv_lib_db=no
 OL_BERKELEY_DB_TRY(ol_cv_db_none)
-OL_BERKELEY_DB_TRY(ol_cv_db_db4,[-ldb4])
+OL_BERKELEY_DB_TRY(ol_cv_db_db41,[-ldb41])
+OL_BERKELEY_DB_TRY(ol_cv_db_db_41,[-ldb-41])
+OL_BERKELEY_DB_TRY(ol_cv_db_db_4_dot_1,[-ldb-4.1])
+OL_BERKELEY_DB_TRY(ol_cv_db_db_4_1,[-ldb-4-1])
 OL_BERKELEY_DB_TRY(ol_cv_db_db_4,[-ldb-4])
+OL_BERKELEY_DB_TRY(ol_cv_db_db4,[-ldb4])
 OL_BERKELEY_DB_TRY(ol_cv_db_db,[-ldb])
 OL_BERKELEY_DB_TRY(ol_cv_db_db3,[-ldb3])
 OL_BERKELEY_DB_TRY(ol_cv_db_db_3,[-ldb-3])
@@ -328,8 +332,9 @@ dnl Check if Berkeley DB supports DB_THREAD
 AC_DEFUN([OL_BERKELEY_DB_THREAD],
 [AC_CACHE_CHECK([for Berkeley DB thread support], [ol_cv_berkeley_db_thread], [
 	ol_LIBS="$LIBS"
+	LIBS="$LTHREAD_LIBS $LIBS"
 	if test $ol_cv_lib_db != yes ; then
-		LIBS="$ol_cv_lib_db"
+		LIBS="$ol_cv_lib_db $LIBS"
 	fi
 
 	AC_TRY_RUN([
@@ -433,9 +438,12 @@ AC_DEFUN([OL_BDB_COMPAT],
 #ifndef DB_VERSION_MAJOR
 #	define DB_VERSION_MAJOR 1
 #endif
+#ifndef DB_VERSION_MINOR
+#	define DB_VERSION_MINOR 0
+#endif
 
 /* require 4.0 or later */
-#if DB_VERSION_MAJOR >= 4 
+#if (DB_VERSION_MAJOR >= 4) && (DB_VERSION_MINOR >= 1)
 	__db_version_compat
 #endif
 	], [ol_cv_bdb_compat=yes], [ol_cv_bdb_compat=no])])
@@ -1208,3 +1216,16 @@ AC_DEFUN([OL_SASL_COMPAT],
 #endif
 	],	[ol_cv_sasl_compat=yes], [ol_cv_sasl_compat=no])])
 ])
+dnl ====================================================================
+dnl check for msg_accrights in msghdr
+AC_DEFUN(OL_MSGHDR_MSG_ACCRIGHTS,
+ [AC_CACHE_CHECK(for msg_accrights in msghdr, ol_cv_msghdr_msg_accrights,
+   [AC_TRY_COMPILE([#include <sys/socket.h>],
+		[struct msghdr m; m.msg_accrightslen=0],
+		ol_cv_msghdr_msg_accrights=yes, ol_cv_msghdr_msg_accrights=no)
+	])
+  if test $ol_cv_msghdr_msg_accrights = "yes" ; then
+	AC_DEFINE(HAVE_MSGHDR_MSG_ACCRIGHTS,1,
+		[define if struct msghdr has msg_accrights])
+  fi
+])dnl

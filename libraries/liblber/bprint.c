@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblber/bprint.c,v 1.44.2.3 2002/09/17 02:45:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/bprint.c,v 1.44.2.4 2003/03/03 17:10:04 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

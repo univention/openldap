@@ -1,7 +1,7 @@
 /* mr.c - routines to manage matching rule definitions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/mr.c,v 1.26.2.8 2002/11/26 18:26:19 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/mr.c,v 1.26.2.10 2003/03/14 16:45:06 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -22,15 +22,19 @@ struct mindexrec {
 };
 
 static Avlnode	*mr_index = NULL;
-static MatchingRule *mr_list = NULL;
-static MatchingRuleUse *mru_list = NULL;
+static LDAP_SLIST_HEAD(MRList, slap_matching_rule) mr_list
+	= LDAP_SLIST_HEAD_INITIALIZER(&mr_list);
+static LDAP_SLIST_HEAD(MRUList, slap_matching_rule_use) mru_list
+	= LDAP_SLIST_HEAD_INITIALIZER(&mru_list);
 
 static int
 mr_index_cmp(
-    struct mindexrec	*mir1,
-    struct mindexrec	*mir2
+    const void	*v_mir1,
+    const void	*v_mir2
 )
 {
+	const struct mindexrec	*mir1 = v_mir1;
+	const struct mindexrec	*mir2 = v_mir2;
 	int i = mir1->mir_name.bv_len - mir2->mir_name.bv_len;
 	if (i) return i;
 	return (strcmp( mir1->mir_name.bv_val, mir2->mir_name.bv_val ));
@@ -38,10 +42,12 @@ mr_index_cmp(
 
 static int
 mr_index_name_cmp(
-    struct berval	*name,
-    struct mindexrec	*mir
+    const void	*v_name,
+    const void	*v_mir
 )
 {
+	const struct berval    *name = v_name;
+	const struct mindexrec *mir  = v_mir;
 	int i = name->bv_len - mir->mir_name.bv_len;
 	if (i) return i;
 	return (strncmp( name->bv_val, mir->mir_name.bv_val, name->bv_len ));
@@ -62,8 +68,7 @@ mr_bvfind( struct berval *mrname )
 {
 	struct mindexrec	*mir = NULL;
 
-	if ( (mir = (struct mindexrec *) avl_find( mr_index, mrname,
-	    (AVL_CMP) mr_index_name_cmp )) != NULL ) {
+	if ( (mir = avl_find( mr_index, mrname, mr_index_name_cmp )) != NULL ) {
 		return( mir->mir_mr );
 	}
 	return( NULL );
@@ -72,12 +77,14 @@ mr_bvfind( struct berval *mrname )
 void
 mr_destroy( void )
 {
-	MatchingRule *m, *n;
+	MatchingRule *m;
 
 	avl_free(mr_index, ldap_memfree);
-	for (m=mr_list; m; m=n) {
-		n = m->smr_next;
+	while( !LDAP_SLIST_EMPTY(&mr_list) ) {
+		m = LDAP_SLIST_FIRST(&mr_list);
+		LDAP_SLIST_REMOVE_HEAD(&mr_list, smr_next);
 		ch_free( m->smr_str.bv_val );
+		ch_free( m->smr_compat_syntaxes );
 		ldap_matchingrule_free((LDAPMatchingRule *)m);
 	}
 }
@@ -88,15 +95,10 @@ mr_insert(
     const char		**err
 )
 {
-	MatchingRule		**mrp;
 	struct mindexrec	*mir;
 	char			**names;
 
-	mrp = &mr_list;
-	while ( *mrp != NULL ) {
-		mrp = &(*mrp)->smr_next;
-	}
-	*mrp = smr;
+	LDAP_SLIST_INSERT_HEAD(&mr_list, smr, smr_next);
 
 	if ( smr->smr_oid ) {
 		mir = (struct mindexrec *)
@@ -105,8 +107,7 @@ mr_insert(
 		mir->mir_name.bv_len = strlen( smr->smr_oid );
 		mir->mir_mr = smr;
 		if ( avl_insert( &mr_index, (caddr_t) mir,
-				 (AVL_CMP) mr_index_cmp,
-				 (AVL_DUP) avl_dup_error ) ) {
+		                 mr_index_cmp, avl_dup_error ) ) {
 			*err = smr->smr_oid;
 			ldap_memfree(mir);
 			return SLAP_SCHERR_MR_DUP;
@@ -122,8 +123,7 @@ mr_insert(
 			mir->mir_name.bv_len = strlen( *names );
 			mir->mir_mr = smr;
 			if ( avl_insert( &mr_index, (caddr_t) mir,
-					 (AVL_CMP) mr_index_cmp,
-					 (AVL_DUP) avl_dup_error ) ) {
+			                 mr_index_cmp, avl_dup_error ) ) {
 				*err = *names;
 				ldap_memfree(mir);
 				return SLAP_SCHERR_MR_DUP;
@@ -286,10 +286,12 @@ register_matching_rule(
 void
 mru_destroy( void )
 {
-	MatchingRuleUse *m, *n;
+	MatchingRuleUse *m;
 
-	for (m=mru_list; m; m=n) {
-		n = m->smru_next;
+	while( !LDAP_SLIST_EMPTY(&mru_list) ) {
+		m = LDAP_SLIST_FIRST(&mru_list);
+		LDAP_SLIST_REMOVE_HEAD(&mru_list, smru_next);
+
 		if ( m->smru_str.bv_val ) {
 			ch_free( m->smru_str.bv_val );
 		}
@@ -308,7 +310,7 @@ int
 matching_rule_use_init( void )
 {
 	MatchingRule	*mr;
-	MatchingRuleUse	**mru_ptr = &mru_list;
+	MatchingRuleUse	**mru_ptr = &LDAP_SLIST_FIRST(&mru_list);
 
 #ifdef NEW_LOGGING
 	LDAP_LOG( OPERATION, INFO, "matching_rule_use_init\n", 0, 0, 0 );
@@ -316,9 +318,9 @@ matching_rule_use_init( void )
 	Debug( LDAP_DEBUG_TRACE, "matching_rule_use_init\n", 0, 0, 0 );
 #endif
 
-	for ( mr = mr_list; mr; mr = mr->smr_next ) {
+	LDAP_SLIST_FOREACH( mr, &mr_list, smr_next ) {
 		AttributeType	*at;
-		MatchingRuleUse	_mru, *mru = &_mru;
+		MatchingRuleUse	mru_storage, *mru = &mru_storage;
 
 		char		**applies_oids = NULL;
 
@@ -352,7 +354,7 @@ matching_rule_use_init( void )
 		mru->smru_mr = mr;
 		mru->smru_obsolete = mr->smr_obsolete;
 		mru->smru_applies_oids = NULL;
-		mru->smru_next = NULL;
+		LDAP_SLIST_NEXT(mru, smru_next) = NULL;
 		mru->smru_oid = mr->smr_oid;
 		mru->smru_names = mr->smr_names;
 		mru->smru_desc = mr->smr_desc;
@@ -401,11 +403,11 @@ matching_rule_use_init( void )
 			/* call-forward from MatchingRule to MatchingRuleUse */
 			mr->smr_mru = mru;
 			/* copy static data to newly allocated struct */
-			*mru = _mru;
+			*mru = mru_storage;
 			/* append the struct pointer to the end of the list */
 			*mru_ptr = mru;
 			/* update the list head pointer */
-			mru_ptr = &mru->smru_next;
+			mru_ptr = &LDAP_SLIST_NEXT(mru,smru_next);
 		}
 	}
 
@@ -436,11 +438,11 @@ int mr_usable_with_at(
 
 int mr_schema_info( Entry *e )
 {
-	MatchingRule	*mr;
+	MatchingRule *mr;
 
 	AttributeDescription *ad_matchingRules = slap_schema.si_ad_matchingRules;
 
-	for ( mr = mr_list; mr; mr = mr->smr_next ) {
+	LDAP_SLIST_FOREACH(mr, &mr_list, smr_next ) {
 		if ( mr->smr_usage & SLAP_MR_HIDE ) {
 			/* skip hidden rules */
 			continue;
@@ -473,7 +475,7 @@ int mru_schema_info( Entry *e )
 	AttributeDescription *ad_matchingRuleUse 
 		= slap_schema.si_ad_matchingRuleUse;
 
-	for ( mru = mru_list; mru; mru = mru->smru_next ) {
+	LDAP_SLIST_FOREACH( mru, &mru_list, smru_next ) {
 
 		assert( !( mru->smru_usage & SLAP_MR_HIDE ) );
 

@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test007-replication,v 1.35.2.6 2002/11/11 02:42:39 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test007-replication,v 1.35.2.9 2003/02/24 16:16:54 kurt Exp $
 
 SRCDIR="."
 if test $# -ge 1 ; then
@@ -94,7 +94,7 @@ $LDAPADD -D "$MANAGERDN" -h $LOCALHOST -p $PORT -w $PASSWD < \
 RC=$?
 if test $RC != 0 ; then
 	echo "ldapadd failed ($RC)!"
-	kill -INT $PID $SLAVEPID
+	kill -HUP $PID $SLAVEPID
 	kill -KILL $SLURPPID
 	exit $RC
 fi
@@ -114,6 +114,12 @@ dn: cn=James A Jones 1, ou=Alumni Association, ou=People, o=University of Michig
 changetype: modify
 add: drink
 drink: Orange Juice
+-
+delete: sn
+sn: Jones
+-
+add: sn
+sn: Jones
 
 dn: cn=Bjorn Jensen, ou=Information Technology Division, ou=People, o=University of Michigan, c=US
 changetype: modify
@@ -132,7 +138,7 @@ member: cn=James A Jones 1, ou=Alumni Association, ou=People, o=University of Mi
 
 dn: cn=All Staff,ou=Groups,o=University of Michigan,c=US
 changetype: modify
-delete: member
+delete: description
 
 dn: cn=Gern Jensen, ou=Information Technology Division, ou=People, o=University of Michigan, c=US
 changetype: add
@@ -161,6 +167,7 @@ changetype: add
 objectclass: OpenLDAPperson
 cn: Rosco P. Coltrane
 sn: Coltrane
+uid: rosco
 
 dn: cn=Rosco P. Coltrane, ou=Information Technology Division, ou=People, o=University of Michigan, c=US
 changetype: modrdn
@@ -183,7 +190,7 @@ RC=$?
 
 if test $RC != 0 ; then
 	echo "ldapsearch failed ($RC)!"
-	kill -INT $PID $SLAVEPID
+	kill -HUP $PID $SLAVEPID
 	kill -KILL $SLURPPID
 	exit $RC
 fi
@@ -195,12 +202,12 @@ RC=$?
 
 if test $RC != 0 ; then
 	echo "ldapsearch failed ($RC)!"
-	kill -INT $PID $SLAVEPID
+	kill -HUP $PID $SLAVEPID
 	kill -KILL $SLURPPID
 	exit $RC
 fi
 
-kill -INT $PID $SLAVEPID
+kill -HUP $PID $SLAVEPID
 kill -KILL $SLURPPID
 
 SEARCHOUT=$MASTEROUT

@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/include/ldap_pvt.h,v 1.58.2.5 2002/09/06 01:16:28 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap_pvt.h,v 1.58.2.7 2003/03/05 23:48:31 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,6 +65,16 @@ ldap_pvt_gethostbyaddr_a LDAP_P((
 	char **buf,
 	struct hostent **result,
 	int *herrno_ptr ));
+
+struct sockaddr;
+
+LDAP_F( int )
+ldap_pvt_get_hname LDAP_P((
+	const struct sockaddr * sa,
+	int salen,
+	char *name,
+	int namelen,
+	char **herr ));
 
 
 /* charray.c */

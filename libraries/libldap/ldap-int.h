@@ -1,7 +1,7 @@
 /*  ldap-int.h - defines & prototypes internal to the LDAP library */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.129.2.9 2002/12/19 22:00:58 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.129.2.11 2003/03/03 17:10:04 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*  Portions
@@ -510,6 +510,11 @@ LDAP_F (LDAPURLDesc *) ldap_url_duplist LDAP_P((
 LDAP_F (int) ldap_url_parselist LDAP_P((
 	LDAPURLDesc **ludlist,
 	const char *url ));
+
+LDAP_F (int) ldap_url_parselist_ext LDAP_P((
+	LDAPURLDesc **ludlist,
+	const char *url,
+	const char *sep	));
 
 LDAP_F (int) ldap_url_parsehosts LDAP_P((
 	LDAPURLDesc **ludlist,

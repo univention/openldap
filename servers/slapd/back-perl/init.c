@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/init.c,v 1.23.2.2 2002/06/20 20:12:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/init.c,v 1.23.2.3 2003/03/13 01:09:09 kurt Exp $ */
 /*
  *	 Copyright 1999, John C. Quillan, All rights reserved.
  *	 Portions Copyright 2002, myinternet Limited. All rights reserved.
@@ -175,7 +175,7 @@ perl_back_db_open(
 
 
 static void
-perl_back_xs_init()
+perl_back_xs_init(PERL_BACK_XS_INIT_PARAMS)
 {
 	char *file = __FILE__;
 	dXSUB_SYS;

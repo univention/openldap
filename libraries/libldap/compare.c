@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/compare.c,v 1.16.2.3 2002/07/28 19:10:45 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/compare.c,v 1.16.2.4 2003/02/09 17:02:18 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*  Portions
@@ -97,17 +97,6 @@ ldap_compare_ext(
 		return( ld->ld_errno );
 	}
 
-#ifndef LDAP_NOCACHE
-	if ( ld->ld_cache != NULL ) {
-		if ( ldap_check_cache( ld, LDAP_REQ_COMPARE, ber ) == 0 ) {
-			ber_free( ber, 1 );
-			ld->ld_errno = LDAP_SUCCESS;
-			*msgidp = ld->ld_msgid;
-			return( ld->ld_errno );
-		}
-		ldap_add_request_to_cache( ld, LDAP_REQ_COMPARE, ber );
-	}
-#endif /* LDAP_NOCACHE */
 
 	/* send the message */
 	*msgidp = ldap_send_initial_request( ld, LDAP_REQ_COMPARE, dn, ber );
