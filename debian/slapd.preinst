@@ -2,102 +2,61 @@
 
 set -e
 
-# Make the version we are upgrading from globally available
-oldver="$2"
-
-# Packages until at least 2.0.27-4 did not stop the daemon on upgrade so
-# we do that before installation
-
-PERLSCRIPT='
-while (<>) {
-  chomp;
-  if (m/^\s+(.*)$/) {
-    $l .= ($l eq "" ? "$1" : " $1");
-  } else {
-    print "$l\n" if $l ne "";
-    $l = "$_";
-  }
-}
-print "$l\n" if $l ne "";'
+# This will be replaced with debian/slapd.scripts-common which includes
+# various helper functions and $OLD_VERSION and $SLAPD_CONF
+#SCRIPTSCOMMON#
 
 # Ask for the filename of the dump file
-# XXX: Currently just uses /var/backups/ldap/$oldver/slapd-${suffix}-slapcat.ldif
+# XXX: Currently just uses /var/backups/ldap/$OLD_VERSION/slapd-${suffix}-slapcat.ldif
 ldif_dump_location() {
   local suffix=$1
-  echo "/var/backups/ldap/$oldver/slapd-${suffix}-slapcat.ldif"
+  echo "/var/backups/ldap/$OLD_VERSION/slapd-${suffix}-slapcat.ldif"
 }
 
-# Make sure slapd is shut down before mucking with the db files
-# and whatnot...  Use this function
-stop_slapd() {
-        # Find out the name of slapd's pid file
-        if [ -z "$SLAPD_PIDFILE" ] && [ -f "$SLAPD_CONF" ]; then
-                SLAPD_PIDFILE=`perl -e"$PERLSCRIPT" < $SLAPD_CONF | sed -ne 's/^pidfile[[:space:]]\+\(.\+\)/\1/p'`
-        fi
-
-        # Use the pidfile if it is there, if not then just do without
-        if [ -z "$SLAPD_PIDFILE" ]; then
-                start-stop-daemon --stop --retry 10 --quiet --oknodo --exec /usr/sbin/slapd >/dev/null 2>&1
-        else
-                start-stop-daemon --stop --retry 10 --quiet --oknodo --pidfile "$SLAPD_PIDFILE" >/dev/null 2>&1
-        fi
-}
-
-# Get the list of configured databases from slapd.conf
-get_database_list() {
-  perl -e"$PERLSCRIPT" < $SLAPD_CONF | \
-  grep -E '^(database|directory|suffix)' | \
-  (
-    while read type val
-    do
-      if [ "$type" = "database" ]
-      then
-        if [ -n "$backend" ] && [ -n "$suffix" ]; then
-          echo $backend \"$suffix\" \"$directory\"
-        fi
-
-        backend=$val
-        suffix=""
-        directory=""
-      elif [ "$type" = "suffix" ]; then
-        suffix=`echo $val | sed -e's/[[:space:]]\+//g; s/^"//; s/"$//;'`
-      elif [ "$type" = "directory" ]; then
-        directory=`echo $val | sed -e's/^"//; s/"$//;'`
-      fi
-    done
-    echo $backend \"$suffix\" \"$directory\"
-  )   
-}
-
-# Source the init script configuration
-if [ -f "/etc/default/slapd" ]; then
-  . /etc/default/slapd
-fi
-
-# Load the default location of the slapd config file
-if [ -z "$SLAPD_CONF" ]; then
-  SLAPD_CONF="/etc/ldap/slapd.conf"
-fi
-
-# If we are upgrading from an old version then
-# stop slapd and attempt to slapcat out the data
-# so we can use it in postinst to do the upgrade
-
-if dpkg --compare-versions "$oldver" lt-nl 2.1 && [ -x "/usr/sbin/slapcat" ]
-then
-  # Stop slapd
-  stop_slapd
-
+# Create directory for dump file
+create_ldif_dump_location() {
   # Make our backup directory if it does not exist already
   if [ -d /var/backups/ldap ]; then
     chmod 700 /var/backups/ldap
   else
     mkdir -p -m 700 /var/backups/ldap
   fi
-  mkdir -p -m 700 /var/backups/ldap/$oldver/
+  mkdir -p -m 700 /var/backups/ldap/$OLD_VERSION/
+}
+
+# Make sure slapd is shut down before mucking with the db files
+# and whatnot...  Use this function
+stop_slapd() {
+  # Find out the name of slapd's pid file
+  if [ -z "$SLAPD_PIDFILE" ] && [ -f "$SLAPD_CONF" ]; then
+    SLAPD_PIDFILE=`merge_logical_lines < $SLAPD_CONF | sed -ne 's/^pidfile[[:space:]]\+\(.\+\)/\1/p'`
+  fi
+
+  # Use the pidfile if it is there, if not then just do without
+  if [ -z "$SLAPD_PIDFILE" ]; then
+    start-stop-daemon --stop --retry 10 --quiet --oknodo --exec /usr/sbin/slapd >/dev/null 2>&1
+  else
+    start-stop-daemon --stop --retry 10 --quiet --oknodo --pidfile "$SLAPD_PIDFILE" >/dev/null 2>&1
+  fi
+}
+
+# If we are upgrading from an old version then stop slapd and attempt to
+# slapcat out the data so we can use it in postinst to do the upgrade
+
+# Packages until at least 2.0.27-4 did not stop the daemon on upgrade so
+# we do that before installation
+
+if upgrading_version_pre21 && [ -x "/usr/sbin/slapcat" ]
+then
+  stop_slapd
+  create_ldif_dump_location
 
   get_database_list | while read backend suffix directory
   do
+    if ! supported_backend "$backend"; then
+       continue
+    fi
+
     # parse out the quotes; we no longer need them for grouping
     suffix=`eval echo $suffix`
 

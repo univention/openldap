@@ -53,6 +53,13 @@ openldap2 (2.1.22-2) unstable; urgency=high
       to 0700 if it already exists. Closes: #209019.
     + Added Japanese translation of Debconf templates by Kenshi Muto
       <kmuto@debian.org>. Closes: #210731.
+    + debian/slapd.{postinst,preinst,config}: Replaced duplicate
+      implementations of the same functions with one version and moved
+      those into debian/slapd.scripts-common which will be included by
+      debian/dh_installscripts-common.
+    + debian/slapd.preinst: before dumping the database, check if the
+      backend is supported
+    + debian/slapd.postinst: add -q to grep call for allow bind_v2
 
  -- Stephen Frost <sfrost@debian.org>  Fri, 18 Jul 2003 14:13:04 -0400
 
