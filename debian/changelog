@@ -28,7 +28,7 @@ openldap2 (2.1.17-3) unstable; urgency=low
       building arch and indep debs now.
     + Maintainer upload, acknowledge NMU. Closes: #98039.
     + Add debian/po/fr.po from 194740.  Closes: #194740
-    + Add space before ']' on line 113 of postinst. Closes: #194192
+    + Add space before ']' on line 113 of postinst. Closes: #194192, #194943
 
   * Torsten Landschoff <torsten@debian.org>:
     + debian/control: Enforce libldap2 to be the same version as slapd
