@@ -45,6 +45,8 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
     - Correct typo for back-sql init routine; already in OpenLDAP upstream
       CVS
     - Correct free of SASL interact results; already in OpenLDAP upstream CVS
+    - Duplicate the DN from SASL to ensure '\0' termination; already in
+      OpenLDAP upstream CVS 
 
   * unassigned (FIXME)
     - FIXME: Warning about changed that might break current setups. Closes: #112425.
