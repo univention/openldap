@@ -480,8 +480,16 @@ get_ca_list( char * bundle, char * dir )
 		struct stat st;
 		
 		d = opendir( dir );
-		if ( d == NULL )
+		if ( d == NULL ) {
+#ifdef NEW_LOGGING
+			LDAP_LOG ( TRANSPORT, ERR, 
+				"TLS couldn't open CACERTDIR %s\n", dir, 0, 0 );
+#else
+			Debug( LDAP_DEBUG_ANY,
+				"TLS: Can't open CACERTDIR %s\n", dir, 0, 0 );
+#endif
 			return NULL;
+		}
 		while ( (de=readdir(d)) != NULL ) {
 			snprintf( ca_file, BUFSIZ, "%s/%s", dir, de->d_name );
 		

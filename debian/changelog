@@ -14,6 +14,8 @@ openldap2 (2.1.30-4) testing-proposed-updates unstable; urgency=low
     + debian/configure.options: Build back-ldap statically (closes: #238444).
     + libraries/libldap/Makefile.in: Link with thread libraries
       (closes: #266688).
+    + Refine the patch for the TLS_CACERTDIR problem to log an error 
+      message if the directory can't be opened.
 
  -- 
 
