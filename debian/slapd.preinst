@@ -31,7 +31,7 @@ ldif_dump_location() {
 # and whatnot...  Use this function
 stop_slapd() {
         # Find out the name of slapd's pid file
-        if [ -z "$SLAPD_PIDFILE" -a -f "$SLAPD_CONF" ]; then
+        if [ -z "$SLAPD_PIDFILE" ] && [ -f "$SLAPD_CONF" ]; then
                 SLAPD_PIDFILE=`perl -e"$PERLSCRIPT" < $SLAPD_CONF | sed -ne 's/^pidfile[[:space:]]\+\(.\+\)/\1/p'`
         fi
 
@@ -52,7 +52,7 @@ get_database_list() {
     do
       if [ "$type" = "database" ]
       then
-        if [ -n "$backend" -a -n "$suffix" ]; then
+        if [ -n "$backend" ] && [ -n "$suffix" ]; then
           echo $backend \"$suffix\" \"$directory\"
         fi
 

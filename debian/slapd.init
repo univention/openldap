@@ -31,7 +31,7 @@ fi
 
 # Figure out some default settings
 # Check wether slurpd should get started
-if [ "$SLURPD_START" != "yes" -a "$SLURPD_START" != "no" ]; then
+if [ "$SLURPD_START" != "yes" ] && [ "$SLURPD_START" != "no" ]; then
 	if grep -q '^replica' "$SLAPD_CONF" > /dev/null 2>&1 ; then
 		SLURPD_START=yes
 	else

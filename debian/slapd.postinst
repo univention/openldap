@@ -51,8 +51,8 @@ get_database_list() {
     do
       if [ "$type" = "database" ]
       then
-        if [ -n "$backend" -a -n "$suffix" ]; then
-          if [ "$backend" = "ldbm" -o "$backend" = "bdb" ] \
+        if [ -n "$backend" ] && [ -n "$suffix" ]; then
+          if { [ "$backend" = "ldbm" ] || [ "$backend" = "bdb" ]; } \
              && [ -z "$directory" ]
           then
             directory=/usr/share/ldap/openldap-data
@@ -74,7 +74,8 @@ get_database_list() {
     done
 
     # Fall out of the loop, print the info for the last backend.
-    if [ "$backend" = "ldbm" -o "$backend" = "bdb" ] && [ -z "$directory" ]
+    if { [ "$backend" = "ldbm" ] || [ "$backend" = "bdb" ]; } \
+    	&& [ -z "$directory" ]
     then
       directory=/usr/share/ldap/openldap-data
     fi
@@ -93,7 +94,7 @@ if [ -z "$SLAPD_CONF" ]; then
 fi
 
 # Only create a new directory on a fresh install or on reconfigure
-if [ "$1" = configure -a -z "$2" ] || [ "$1" = reconfigure ] \
+if { [ "$1" = configure ] && [ -z "$2" ]; } || [ "$1" = reconfigure ] \
         || [ "$DEBCONF_RECONFIGURE" ]; then
   db_get slapd/domain
   basedn="dc=`echo $RET|sed 's/\./,dc=/g'`"
@@ -119,7 +120,7 @@ if [ "$1" = configure -a -z "$2" ] || [ "$1" = reconfigure ] \
     echo -n "Updating slapd configuration... "
     OLDSUFFIX=`perl -e"$PERLSCRIPT" < $SLAPD_CONF | \
                sed -n 's/^suffix[[:space:]]\+"\(.*\)"/\1/p' \
-               | head -1`
+               | head -n 1`
     if [ "$OLDSUFFIX" != "$basedn" ]; then
       db_fset slapd/suffix_change seen false
       db_set slapd/suffix_change false
