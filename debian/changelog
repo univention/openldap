@@ -53,6 +53,9 @@ openldap2 (2.1.21-2) unstable; urgency=low
     | libraries/libldap/gnutls.c: Added to support GNU TLS in place of
       OpenSSL for TLS connections.
     | libraries/libldap_r/Makefile.in: Changed to compile GNU TLS portions.
+    + debian/slapd.postinst: remove temp file if upgrading or doing a
+      reconfigure but the OLDSUFFIX and basedn match so that we do not
+      move an empty file overtop of slapd.conf.  Closes: #190797.
 
   * Torsten Landschoff <torsten@debian.org>:
     + doc/man/man8/slapd.8: Refer to slapd.conf(5) for a description of 

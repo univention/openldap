@@ -180,6 +180,10 @@ if [ "$1" = configure -a -z "$2" ] || [ "$1" = reconfigure ] \
         # empty config!
         rm $TMPFILE
       fi
+    else
+      # If we aren't updating, we don't want to overwrite with an
+      # empty config!
+      rm $TMPFILE
     fi
     if [ -e $SEDSCRIPT ]; then rm $SEDSCRIPT ; fi
   fi
