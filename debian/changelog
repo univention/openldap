@@ -51,6 +51,12 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
       OpenLDAP upstream CVS 
     - debian/control: added Replaces: slapd (<< 2.1) for ldap-utils due to
       ldif.5 move.
+    - Add modulepath /usr/lib/ldap to default slapd config
+    - Add moduleload back_bdb to default slapd config
+    - Changed libexecdir to ${prefix}/lib
+    - Add usr/lib/ldap to slapd portion of move_files
+    - Modified backend types to be built as modules for dynamic loading
+    - Fixed pt_BR translation
 
   * unassigned (FIXME)
     - FIXME: Warning about changed that might break current setups. Closes: #112425.

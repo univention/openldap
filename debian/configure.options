@@ -17,7 +17,7 @@
 #   --bindir=DIR            user executables in DIR [EPREFIX/bin]
 #   --sbindir=DIR           system admin executables in DIR [EPREFIX/sbin]
 #   --libexecdir=DIR        program executables in DIR [EPREFIX/libexec]
---libexecdir='${prefix}/sbin'
+--libexecdir='${prefix}/lib'
 #   --datadir=DIR           read-only architecture-independent data in DIR
 #                           [PREFIX/share]
 #   --sysconfdir=DIR        read-only single-machine data in DIR [PREFIX/etc]
@@ -111,38 +111,38 @@
 #     --enable-bdb	  enable Berkeley DB backend [yes]
 --enable-bdb
 #     --with-bdb-module     module type static|dynamic [static]
---with-bdb-module=static
+--with-bdb-module=dynamic
 #     --enable-dnssrv	  enable dnssrv backend [no]
 --enable-dnssrv
 #     --with-dnssrv-module  module type static|dynamic [static]
---with-dnssrv-module=static
+--with-dnssrv-module=dynamic
 #     --enable-ldap	  enable ldap backend [no]
 --enable-ldap
 #     --with-ldap-module	  module type static|dynamic [static]
---with-ldap-module=static
+--with-ldap-module=dynamic
 #     --enable-ldbm	  enable ldbm backend [no]
 --enable-ldbm
 #     --with-ldbm-api       with LDBM API auto|berkeley|bcompat|mdbm|gdbm [auto]
 --with-ldbm-api=berkeley
 #     --with-ldbm-module	  module type static|dynamic [static]
---with-ldbm-module=static
+--with-ldbm-module=dynamic
 #     --with-ldbm-type	  use LDBM type auto|btree|hash [auto]
 #     --enable-meta	  enable metadirectory backend [no]
 --enable-meta
 #     --with-meta-module	  module type static|dynamic [static]
---with-meta-module=static
+--with-meta-module=dynamic
 #     --enable-monitor	  enable monitor backend [no]
 --enable-monitor
 #     --with-monitor-module module type static|dynamic [static]
---with-monitor-module=static
+--with-monitor-module=dynamic
 #     --enable-null	  enable null backend [no]
 --enable-null
 #     --with-null-module	  module type static|dynamic [static]
---with-null-module=static
+--with-null-module=dynamic
 #     --enable-passwd	  enable passwd backend [no]
 --enable-passwd
 #     --with-passwd-module  module type static|dynamic [static]
---with-passwd-module=static
+--with-passwd-module=dynamic
 #     --enable-perl	  enable perl backend [no]
 ## This does not currently build with Perl 5.8 - disable it
 --disable-perl
@@ -150,11 +150,11 @@
 #     --enable-shell	  enable shell backend [no]
 --enable-shell
 #     --with-shell-module	  module type static|dynamic [static]
---with-shell-module=static
+--with-shell-module=dynamic
 #     --enable-sql	  enable sql backend [no]
 --enable-sql
 #     --with-sql-module	  module type static|dynamic [static]
---with-sql-module=static
+--with-sql-module=dynamic
 # 
 # SLURPD (Replication Daemon) Options:
 #   --enable-slurpd	  enable building slurpd [auto]

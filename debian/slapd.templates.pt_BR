@@ -204,5 +204,5 @@ Template: slapd/slurpd/credentials
 Type: password
 Description: Password:
  This the password used to bind to the remote LDAP server.
-Dscription-pt_BR: Senha :
+Description-pt_BR: Senha :
  A senha usada para se conectar ao servidor LDAP remoto.
