@@ -6,6 +6,7 @@ openldap2 (2.1.23-1) unstable; urgency=low
       <mjb@debian.org>. Closes: #214270.
     + Added Dutch Debconf template translation by cobaco@linux.be.
       Closes: #215373.
+    + Bumped Standards-Version (no changes needed).
 
  -- Roland Bauerschmidt <rb@debian.org>  Sat,  4 Oct 2003 14:39:43 +0200
 
