@@ -1,4 +1,4 @@
-Source: openldap2.1
+Source: openldap2
 Section: net
 Priority: optional
 Maintainer: Torsten Landschoff <torsten@debian.org>
