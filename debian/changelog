@@ -3,12 +3,13 @@ openldap2.1 (2.1.16-1) unstable; urgency=low
   * New upstream release.
     + build/top.mk: Remove patch to omit "-static" at linking time. Upstream
       now respects the --enable-shared flag used at configuration time.
-      
+
   * Roland Bauerschmidt <rb@debian.org>
     + debian/slapd.README.Debian: mention that backend database modules are
       now compiled as shared objects
+    + debian/slapd.conf: added allow bind_v2 line for compatibility
 
- -- Torsten Landschoff <torsten@debian.org>  Sun, 16 Mar 2003 11:25:46 +0100
+ -- Roland Bauerschmidt <rb@debian.org>  Wed, 26 Mar 2003 20:34:35 +0100
 
 openldap2.1 (2.1.12-1) experimental; urgency=low
 
