@@ -1,4 +1,3 @@
-/etc/init.d/slapd
 /etc/ldap/schema/corba.schema
 /etc/ldap/schema/core.schema
 /etc/ldap/schema/cosine.schema
