@@ -148,6 +148,12 @@ Type: select
 Choices: BDB, LDBM
 Default: BDB
 _Description: Which database backend would you like to use?
+ While the BDB backend is the recommended choice of the OpenLDAP developers,
+ the LDBM backend has proven to be more reliable for some Debian users,
+ especially when the BDB database wasn't properly configured. When using the
+ BDB backend, make sure to do so. For information on how to tune BDB, see
+ http://www.openldap.org/faq/data/cache/893.html.
+ .
  The BDB backend (back-bdb) and LDBM backend (back-ldbm) are comparable in
  purpose and back-bdb evolved from experience gained from back-ldbm, but the
  two are quite distinct today. They both store entries based on a 32-bit entry
@@ -163,9 +169,3 @@ _Description: Which database backend would you like to use?
  features to offer transaction processing, fine grained locking, and other
  features that offer improved concurrency and reliability. For more
  information, see http://www.openldap.org/faq/data/cache/756.html.
- .
- While the BDB backend is the recommended choice of the OpenLDAP developers,
- the LDBM backend has proven to be more reliable for some Debian users,
- especially when the BDB database wasn't properly configured. When using the
- BDB backend, make sure to do so. For information on how to tune BDB, see
- http://www.openldap.org/faq/data/cache/893.html.
