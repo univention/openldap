@@ -31,3 +31,7 @@ Type: note
 Description: passwords do not match
  You need to enter the admin password twice. Please note that differences
  such as uppercase/lowercase and added whitespace matter.
+
+Template: slapd/purge_database
+Type: boolean
+Description: Do you want your database to be removed when slapd is purged?
