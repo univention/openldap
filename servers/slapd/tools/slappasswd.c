@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/tools/slappasswd.c,v 1.12.2.2 2003/03/31 16:48:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/tools/slappasswd.c,v 1.12.2.4 2003/10/29 21:32:17 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -34,7 +34,7 @@ usage(const char *s)
 		"  -c format\tcrypt(3) salt format\n"
 		"  -u\t\tgenerate RFC2307 values (default)\n"
 		"  -v\t\tincrease verbosity\n"
-		"  -T file\tread password from verbosity\n"
+		"  -T file\tread file for new password\n"
 		, s );
 
 	exit( EXIT_FAILURE );
@@ -46,6 +46,7 @@ main( int argc, char *argv[] )
 	char	*scheme = "{SSHA}";
 	char	*newpw = NULL;
 	char	*pwfile = NULL;
+	const char *text;
 
 	int		i;
 	struct berval passwd;
@@ -115,15 +116,17 @@ main( int argc, char *argv[] )
 		passwd.bv_len = strlen(passwd.bv_val);
 	}
 
-	hash = lutil_passwd_hash( &passwd, scheme );
+	hash = lutil_passwd_hash( &passwd, scheme, &text );
 
 	if( hash == NULL || hash->bv_val == NULL ) {
-		fprintf( stderr, "Password generation failed.\n");
+		fprintf( stderr, "Password generation failed. %s\n",
+			text ? text : "" );
 		return EXIT_FAILURE;
 	}
 
-	if( lutil_passwd( hash, &passwd, NULL ) ) {
-		fprintf( stderr, "Password verification failed.\n");
+	if( lutil_passwd( hash, &passwd, NULL, &text ) ) {
+		fprintf( stderr, "Password verification failed. %s\n",
+			text ? text : "" );
 		return EXIT_FAILURE;
 	}
 

@@ -1,5 +1,5 @@
 /* init.c - initialize bdb backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.75.2.23 2003/03/29 15:45:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.75.2.25 2004/01/17 16:44:23 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -98,6 +98,7 @@ bdb_db_init( BackendDB *be )
 	LDAP_LIST_INIT (&bdb->psearch_list);
 #endif
 
+	ldap_pvt_thread_mutex_init( &bdb->bi_database_mutex );
 	ldap_pvt_thread_mutex_init( &bdb->bi_lastid_mutex );
 	ldap_pvt_thread_mutex_init( &bdb->bi_cache.lru_mutex );
 	ldap_pvt_thread_rdwr_init ( &bdb->bi_cache.c_rwlock );
@@ -379,14 +380,14 @@ bdb_db_open( BackendDB *be )
 #ifdef HAVE_EBCDIC
 		strcpy( path, bdbi_databases[i].file );
 		__atoe( path );
-		rc = DB_OPEN( db->bdi_db, NULL,
+		rc = DB_OPEN( db->bdi_db,
 			path,
 		/*	bdbi_databases[i].name, */ NULL,
 			bdbi_databases[i].type,
 			bdbi_databases[i].flags | flags | DB_AUTO_COMMIT,
 			bdb->bi_dbenv_mode );
 #else
-		rc = DB_OPEN( db->bdi_db, NULL,
+		rc = DB_OPEN( db->bdi_db,
 			bdbi_databases[i].file,
 		/*	bdbi_databases[i].name, */ NULL,
 			bdbi_databases[i].type,
@@ -460,17 +461,19 @@ bdb_db_close( BackendDB *be )
 	bdb_cache_release_all (&bdb->bi_cache);
 
 #ifdef SLAP_IDL_CACHE
-	ldap_pvt_thread_mutex_lock ( &bdb->bi_idl_tree_mutex );
-	entry = bdb->bi_idl_lru_head;
-	while ( entry != NULL ) {
-		next_entry = entry->idl_lru_next;
-		avl_delete( &bdb->bi_idl_tree, (caddr_t) entry, bdb_idl_entry_cmp );
-		free( entry->idl );
-		free( entry->kstr.bv_val );
-		free( entry );
-		entry = next_entry;
+	if ( bdb->bi_idl_cache_max_size ) {
+		ldap_pvt_thread_mutex_lock ( &bdb->bi_idl_tree_mutex );
+		entry = bdb->bi_idl_lru_head;
+		while ( entry != NULL ) {
+			next_entry = entry->idl_lru_next;
+			avl_delete( &bdb->bi_idl_tree, (caddr_t) entry, bdb_idl_entry_cmp );
+			free( entry->idl );
+			free( entry->kstr.bv_val );
+			free( entry );
+			entry = next_entry;
+		}
+		ldap_pvt_thread_mutex_unlock ( &bdb->bi_idl_tree_mutex );
 	}
-	ldap_pvt_thread_mutex_unlock ( &bdb->bi_idl_tree_mutex );
 #endif
 
 	return 0;
@@ -524,6 +527,7 @@ bdb_db_destroy( BackendDB *be )
 	ldap_pvt_thread_rdwr_destroy ( &bdb->bi_cache.c_rwlock );
 	ldap_pvt_thread_mutex_destroy( &bdb->bi_cache.lru_mutex );
 	ldap_pvt_thread_mutex_destroy( &bdb->bi_lastid_mutex );
+	ldap_pvt_thread_mutex_destroy( &bdb->bi_database_mutex );
 
 	ch_free( bdb );
 	be->be_private = NULL;

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/sasl.c,v 1.41.2.7 2003/05/22 22:22:41 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/sasl.c,v 1.41.2.8 2004/01/21 08:03:23 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -427,6 +427,7 @@ ldap_sasl_interactive_bind_s(
 	void *defaults )
 {
 	int rc;
+	char *smechs = NULL;
 
 #if defined( LDAP_R_COMPILE ) && defined( HAVE_CYRUS_SASL )
 	ldap_pvt_thread_mutex_lock( &ldap_int_sasl_mutex );
@@ -441,9 +442,14 @@ ldap_sasl_interactive_bind_s(
 		return rc < 0 ? rc : 0;
 	} else
 #endif
-	if( mechs == NULL || *mechs == '\0' ) {
-		char *smechs;
 
+#ifdef HAVE_CYRUS_SASL
+	if( mechs == NULL || *mechs == '\0' ) {
+		mechs = ld->ld_options.ldo_def_sasl_mech;
+	}
+#endif
+
+	if( mechs == NULL || *mechs == '\0' ) {
 		rc = ldap_pvt_sasl_getmechs( ld, &smechs );
 
 		if( rc != LDAP_SUCCESS ) {
@@ -481,6 +487,7 @@ done:
 #if defined( LDAP_R_COMPILE ) && defined( HAVE_CYRUS_SASL )
 	ldap_pvt_thread_mutex_unlock( &ldap_int_sasl_mutex );
 #endif
+	if ( smechs ) LDAP_FREE( smechs );
 
 	return rc;
 }

@@ -1,10 +1,18 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/ch_malloc.c,v 1.13.2.1 2003/03/03 17:10:11 kurt Exp $ */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+/* $OpenLDAP: pkg/ldap/servers/slurpd/ch_malloc.c,v 1.13.2.3 2003/12/18 03:25:14 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 1998-2003 The OpenLDAP Foundation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
-/*
- * Copyright (c) 1996 Regents of the University of Michigan.
+/* Portions Copyright (c) 1996 Regents of the University of Michigan.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted
@@ -13,6 +21,10 @@
  * may not be used to endorse or promote products derived from this
  * software without specific prior written permission. This software
  * is provided ``as is'' without express or implied warranty.
+ */
+/* ACKNOWLEDGEMENTS:
+ * This work was originally developed by the University of Michigan
+ * (as part of U-MICH LDAP).
  */
 
 #define CH_FREE 1
@@ -109,6 +121,25 @@ ch_calloc(
 	return( new );
 }
 
+/*
+ * Just like strdup, except we check the returned value and exit
+ * if anything goes wrong.
+ */
+char *
+ch_strdup(
+    const char *string
+)
+{
+	char	*new;
+
+	if ( (new = ber_strdup( string )) == NULL ) {
+		fprintf( stderr, "ch_strdup: duplication of \"%s\" failed\n",
+				string );
+		exit( EXIT_FAILURE );
+	}
+
+	return( new );
+}
 
 /*
  * Just like free, except we check to see if p is null.

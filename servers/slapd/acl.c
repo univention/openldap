@@ -1,5 +1,5 @@
 /* acl.c - routines to parse and check acl's */
-/* $OpenLDAP: pkg/ldap/servers/slapd/acl.c,v 1.139.2.15 2003/05/22 22:22:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/acl.c,v 1.139.2.16 2003/10/11 22:08:13 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -267,6 +267,7 @@ access_allowed(
 		goto vd_access;
 
 	} else {
+		if ( state ) state->as_vi_acl = NULL;
 		a = NULL;
 		ACL_INIT(mask);
 		count = 0;

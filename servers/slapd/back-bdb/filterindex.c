@@ -1,5 +1,5 @@
 /* filterindex.c - generate the list of candidate entries from a filter */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/filterindex.c,v 1.18.2.11 2003/05/23 00:31:33 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/filterindex.c,v 1.18.2.12 2003/06/24 16:56:36 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -232,6 +232,7 @@ list_candidates(
 	Debug( LDAP_DEBUG_FILTER, "=> bdb_list_candidates 0x%x\n", ftype, 0, 0 );
 #endif
 	for ( f = flist; f != NULL; f = f->f_next ) {
+		BDB_IDL_ZERO( save );
 		rc = bdb_filter_candidates( be, f, save, tmp,
 			save+BDB_IDL_UM_SIZE );
 

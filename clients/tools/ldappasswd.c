@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/clients/tools/ldappasswd.c,v 1.94.2.10 2003/04/14 15:37:27 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldappasswd.c,v 1.94.2.12 2003/12/17 23:30:20 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -54,7 +54,7 @@ usage( void )
 
 
 const char options[] = "a:As:St:T:"
-	"Cd:D:e:h:H:InO:p:QR:U:vVw:WxX:y:Y:Z";
+	"d:D:e:h:H:InO:p:QR:U:vVw:WxX:y:Y:Z";
 
 int
 handle_private_option( int i )
@@ -168,7 +168,7 @@ main( int argc, char *argv[] )
 	}
 
 	if( oldpwfile ) {
-		rc = lutil_get_filed_password( prog, &oldpw );
+		rc = lutil_get_filed_password( oldpwfile, &oldpw );
 		if( rc ) return EXIT_FAILURE;
 	}
 
@@ -189,7 +189,7 @@ main( int argc, char *argv[] )
 	}
 
 	if( newpwfile ) {
-		rc = lutil_get_filed_password( prog, &newpw );
+		rc = lutil_get_filed_password( newpwfile, &newpw );
 		if( rc ) return EXIT_FAILURE;
 	}
 
@@ -209,23 +209,22 @@ main( int argc, char *argv[] )
 		newpw.bv_len = strlen( newpw.bv_val );
 	}
 
-	if( want_bindpw && passwd.bv_val == NULL ) {
-		/* handle bind password */
-		if ( pw_file ) {
-			rc = lutil_get_filed_password( pw_file, &passwd );
-			if( rc ) return EXIT_FAILURE;
-		} else {
-			passwd.bv_val = getpassphrase( "Enter LDAP Password: " );
-			passwd.bv_len = passwd.bv_val ? strlen( passwd.bv_val ) : 0;
-		}
+	if ( pw_file ) {
+		rc = lutil_get_filed_password( pw_file, &passwd );
+		if( rc ) return EXIT_FAILURE;
+
+	} else if ( want_bindpw ) {
+		passwd.bv_val = getpassphrase( "Enter LDAP Password: " );
+		passwd.bv_len = passwd.bv_val ? strlen( passwd.bv_val ) : 0;
 	}
 
 	ld = tool_conn_setup( 0, 0 );
 
 	tool_bind( ld );
 
-	if ( authzid || manageDSAit || noop )
+	if ( authzid || manageDSAit || noop ) {
 		tool_server_controls( ld, NULL, 0 );
+	}
 
 	if( user != NULL || oldpw.bv_val != NULL || newpw.bv_val != NULL ) {
 		/* build change password control */

@@ -1,6 +1,6 @@
-dnl $OpenLDAP: pkg/ldap/configure.in,v 1.408.2.33 2003/03/05 23:48:30 kurt Exp $
+dnl $OpenLDAP: pkg/ldap/configure.in,v 1.408.2.38 2004/01/18 21:25:26 kurt Exp $
 dnl
-dnl Copyright 1998-2003 The OpenLDAP Foundation.  All Rights Reserved.
+dnl Copyright 1998-2004 The OpenLDAP Foundation.  All Rights Reserved.
 dnl 
 dnl Redistribution and use in source and binary forms, with or without
 dnl modification, are permitted only as authorized by the OpenLDAP
@@ -14,9 +14,9 @@ dnl at top of generated configure script.  Prints simple copyright.
 define([AC_INIT_BINSH],
 [[#! /bin/sh
 # $]OpenLDAP[$
-# from] translit([$OpenLDAP: pkg/ldap/configure.in,v 1.408.2.33 2003/03/05 23:48:30 kurt Exp $], $")] [
+# from] translit([$OpenLDAP: pkg/ldap/configure.in,v 1.408.2.38 2004/01/18 21:25:26 kurt Exp $], $")] [
 
-# Copyright 1998-2003 The OpenLDAP Foundation.  All Rights Reserved.
+# Copyright 1998-2004 The OpenLDAP Foundation.  All Rights Reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted only as authorized by the OpenLDAP
@@ -24,7 +24,7 @@ define([AC_INIT_BINSH],
 # http://www.OpenLDAP.org/license.html or in file LICENSE in the
 # top-level directory of the distribution.
 
-echo "Copyright 1998-2003 The OpenLDAP Foundation,  All Rights Reserved."
+echo "Copyright 1998-2004 The OpenLDAP Foundation,  All Rights Reserved."
 echo "	Restrictions apply, see COPYRIGHT and LICENSE files."
 ])dnl
 dnl ----------------------------------------------------------------
@@ -151,8 +151,9 @@ OL_ARG_WITH(cyrus_sasl,[  --with-cyrus-sasl	  with Cyrus SASL support],
 	auto, [auto yes no] )
 OL_ARG_WITH(fetch,[  --with-fetch		  with fetch(3) URL support],
 	auto, [auto yes no] )
-OL_ARG_WITH(kerberos,[  --with-kerberos	  with Kerberos support],
-	auto, [auto k5 k5only k425 kth k4 afs yes no])
+dnl OL_ARG_WITH(kerberos,[  --with-kerberos	  with Kerberos support],
+dnl	auto, [auto k5 k5only k425 kth k4 afs yes no])
+ol_with_kerberos=${ol_with_kerberos-auto}
 OL_ARG_WITH(readline,[  --with-readline	  with readline support],
 	auto, [auto yes no] )
 OL_ARG_WITH(threads,[  --with-threads	  with threads],
@@ -174,7 +175,8 @@ OL_ARG_ENABLE(slapd,[  --enable-slapd	  enable building slapd], yes)dnl
 OL_ARG_ENABLE(aci,[    --enable-aci	  enable per-object ACIs (experimental)], no)dnl
 OL_ARG_ENABLE(cleartext,[    --enable-cleartext	  enable cleartext passwords], yes)dnl
 OL_ARG_ENABLE(crypt,[    --enable-crypt	  enable crypt(3) passwords], no)dnl
-OL_ARG_ENABLE(kpasswd,[    --enable-kpasswd	  enable Kerberos password verification], no)dnl
+dnl OL_ARG_ENABLE(kpasswd,[    --enable-kpasswd	  enable Kerberos password verification], no)dnl
+ol_enable_kpasswd=${ol_enable_kpasswd-no}
 OL_ARG_ENABLE(lmpasswd,[    --enable-lmpasswd	  enable LAN Manager passwords], no)dnl
 OL_ARG_ENABLE(spasswd,[    --enable-spasswd	  enable (Cyrus) SASL password verification], no)dnl
 OL_ARG_ENABLE(modules,[    --enable-modules	  enable dynamic module support], no)dnl
@@ -646,10 +648,11 @@ if test $ol_enable_perl != no ; then
 
 	else
 		PERL_CPPFLAGS="`$PERLBIN -MExtUtils::Embed -e ccopts`"
+		PERL_LDFLAGS="`$PERLBIN -MExtUtils::Embed -e ldopts|sed -e 's/ -lc / /' -e 's/ -lc$//'`"
 		if test x"$ol_with_perl_module" = "xstatic" ; then
-			SLAPD_PERL_LDFLAGS="`$PERLBIN -MExtUtils::Embed -e ldopts|sed -e s/-lc//`"
+			SLAPD_PERL_LDFLAGS="$PERL_LDFLAGS"
 		else
-			MOD_PERL_LDFLAGS="`$PERLBIN -MExtUtils::Embed -e ldopts|sed -e s/-lc//`"
+			MOD_PERL_LDFLAGS="$PERL_LDFLAGS"
 		fi
 		dnl should check perl version
 		ol_link_perl=yes
@@ -2584,7 +2587,6 @@ if test "$ol_enable_meta" != no ; then
 	AC_DEFINE(SLAPD_META,1,[define to support LDAP Metadirectory backend])
 	BUILD_SLAPD=yes
 	BUILD_META=yes
-	BUILD_LDAP=yes
 	BUILD_REWRITE=yes
 	if test "$ol_with_meta_module" != static ; then
 		AC_DEFINE(SLAPD_META_DYNAMIC,1,

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.329.2.27 2003/05/07 22:29:11 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.329.2.28 2003/10/29 21:32:16 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -745,13 +745,15 @@ LDAP_SLAPD_F (SLAP_EXTOP_MAIN_FN) passwd_extop;
 LDAP_SLAPD_F (int) slap_passwd_check(
 	Connection			*conn,
 	Attribute			*attr,
-	struct berval		*cred );
+	struct berval		*cred,
+	const char			**text);
 
 LDAP_SLAPD_F (void) slap_passwd_generate( struct berval * );
 
 LDAP_SLAPD_F (void) slap_passwd_hash(
 	struct berval		*cred,
-	struct berval		*hash );
+	struct berval		*hash,
+	const char		**text);
 
 LDAP_SLAPD_F (struct berval *) slap_passwd_return(
 	struct berval		*cred );

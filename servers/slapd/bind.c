@@ -1,5 +1,5 @@
 /* bind.c - decode an ldap bind operation and pass it to a backend db */
-/* $OpenLDAP: pkg/ldap/servers/slapd/bind.c,v 1.109.2.15 2003/05/18 19:58:56 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/bind.c,v 1.109.2.17 2004/01/21 07:56:34 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -131,7 +131,7 @@ do_bind(
 		tag = ber_scanf( ber, /*{*/ "m}", &cred );
 
 	} else {
-		tag = ber_scanf( ber, "{o" /*}*/, &mech );
+		tag = ber_scanf( ber, "{m" /*}*/, &mech );
 
 		if ( tag != LBER_ERROR ) {
 			ber_len_t len;
@@ -298,9 +298,7 @@ do_bind(
 				slap_sasl_reset(conn);
 			}
 		} else {
-			conn->c_sasl_bind_mech = mech;
-			mech.bv_val = NULL;
-			mech.bv_len = 0;
+			ber_dupbv( &conn->c_sasl_bind_mech, &mech );
 		}
 		ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
 
@@ -383,6 +381,7 @@ do_bind(
 	}
 
 	if ( method == LDAP_AUTH_SIMPLE ) {
+		ber_str2bv( "SIMPLE", sizeof("SIMPLE")-1, 0, &mech );
 		/* accept "anonymous" binds */
 		if ( cred.bv_len == 0 || ndn.bv_len == 0 ) {
 			rc = LDAP_SUCCESS;
@@ -444,27 +443,6 @@ do_bind(
 				version, ndn.bv_val, 0 );
 #endif
 			goto cleanup;
-
-		} else if (( global_disallows & SLAP_DISALLOW_BIND_SIMPLE_UNPROTECTED )
-			&& ( op->o_ssf <= 1 ))
-		{
-			rc = LDAP_CONFIDENTIALITY_REQUIRED;
-			text = "unwilling to perform simple authentication "
-				"without confidentilty protection";
-
-			send_ldap_result( conn, op, rc,
-				NULL, text, NULL, NULL );
-
-#ifdef NEW_LOGGING
-			LDAP_LOG( OPERATION, INFO, "do_bind: conn %d  "
-				"v%d unprotected simple bind(%s) disallowed\n",
-				conn->c_connid, version, ndn.bv_val );
-#else
-			Debug( LDAP_DEBUG_TRACE,
-				"do_bind: v%d unprotected simple bind(%s) disallowed\n",
-				version, ndn.bv_val, 0 );
-#endif
-			goto cleanup;
 		}
 
 #ifdef LDAP_API_FEATURE_X_OPENLDAP_V2_KBIND
@@ -486,6 +464,7 @@ do_bind(
 #endif
 			goto cleanup;
 		}
+		ber_str2bv( "KRBV4", sizeof("KRBV4")-1, 0, &mech );
 #endif
 
 	} else {
@@ -585,9 +564,9 @@ do_bind(
 			}
 			/* log authorization identity */
 			Statslog( LDAP_DEBUG_STATS,
-				"conn=%lu op=%lu BIND dn=\"%s\" mech=simple (SLAPI) ssf=0\n",
+				"conn=%lu op=%lu BIND dn=\"%s\" mech=%s (SLAPI) ssf=0\n",
 				op->o_connid, op->o_opid,
-				conn->c_dn.bv_val, 0, 0 );
+				conn->c_dn.bv_val, mech.bv_val, 0 );
 			ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
 		}
 #ifdef NEW_LOGGING
@@ -635,9 +614,9 @@ do_bind(
 
 			/* log authorization identity */
 			Statslog( LDAP_DEBUG_STATS,
-				"conn=%lu op=%lu BIND dn=\"%s\" mech=simple ssf=0\n",
+				"conn=%lu op=%lu BIND dn=\"%s\" mech=%s ssf=0\n",
 				op->o_connid, op->o_opid,
-				conn->c_dn.bv_val, conn->c_authmech.bv_val, 0 );
+				conn->c_dn.bv_val, mech.bv_val, 0 );
 
 #ifdef NEW_LOGGING
 			LDAP_LOG( OPERATION, DETAIL1, 
@@ -678,6 +657,13 @@ do_bind(
 #endif /* defined( LDAP_SLAPI ) */
 
 cleanup:
+	if ( rc == LDAP_SUCCESS ) {
+		if ( method != LDAP_AUTH_SASL ) {
+			ber_dupbv( &conn->c_authmech, &mech );
+		}
+		conn->c_authtype = method;
+	}
+
 	conn->c_sasl_bindop = NULL;
 
 	if( pdn.bv_val != NULL ) {
@@ -685,9 +671,6 @@ cleanup:
 	}
 	if( ndn.bv_val != NULL ) {
 		free( ndn.bv_val );
-	}
-	if ( mech.bv_val != NULL ) {
-		free( mech.bv_val );
 	}
 
 	return rc;

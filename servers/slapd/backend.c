@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.150.2.16 2003/03/05 23:48:33 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.150.2.23 2004/01/21 07:56:34 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -565,7 +565,8 @@ select_backend(
 				if( be == NULL ) {
 					be = &backends[i];
 
-					if( manageDSAit && len == dnlen ) {
+					if( manageDSAit && len == dnlen &&
+						!SLAP_GLUE_SUBORDINATE( be ) ) {
 						continue;
 					}
 				} else {
@@ -637,6 +638,7 @@ be_isroot_pw( Backend *be,
 	struct berval *cred )
 {
 	int result;
+	char *errmsg;
 
 	if ( ! be_isroot( be, ndn ) ) {
 		return 0;
@@ -653,7 +655,7 @@ be_isroot_pw( Backend *be,
 #endif
 #endif
 
-	result = lutil_passwd( &be->be_rootpw, cred, NULL );
+	result = lutil_passwd( &be->be_rootpw, cred, NULL, NULL );
 
 #if defined( SLAPD_CRYPT ) || defined( SLAPD_SPASSWD )
 #ifdef SLAPD_SPASSWD
@@ -985,7 +987,7 @@ backend_check_restrictions(
 		if( requires & SLAP_REQUIRE_STRONG ) {
 			/* should check mechanism */
 			if( ( op->o_transport_ssf < ssf->sss_transport
-				&& op->o_authmech.bv_len == 0 ) || op->o_dn.bv_len == 0 )
+				&& op->o_authtype == LDAP_AUTH_SIMPLE ) || op->o_dn.bv_len == 0 )
 			{
 				*text = "strong authentication required";
 				return LDAP_STRONG_AUTH_REQUIRED;
@@ -993,7 +995,7 @@ backend_check_restrictions(
 		}
 
 		if( requires & SLAP_REQUIRE_SASL ) {
-			if( op->o_authmech.bv_len == 0 || op->o_dn.bv_len == 0 ) {
+			if( op->o_authtype != LDAP_AUTH_SASL || op->o_dn.bv_len == 0 ) {
 				*text = "SASL authentication required";
 				return LDAP_STRONG_AUTH_REQUIRED;
 			}
@@ -1109,17 +1111,13 @@ backend_group(
 		}
 	} 
 
-	ldap_pvt_thread_mutex_lock( &conn->c_mutex );
-
-	for (g = conn->c_groups; g; g=g->ga_next) {
+	for (g = op->o_groups; g; g=g->ga_next) {
 		if (g->ga_be != be || g->ga_oc != group_oc ||
 			g->ga_at != group_at || g->ga_len != gr_ndn->bv_len)
 			continue;
 		if (strcmp( g->ga_ndn, gr_ndn->bv_val ) == 0)
 			break;
 	}
-
-	ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
 
 	if (g) {
 		return g->ga_res;
@@ -1138,10 +1136,8 @@ backend_group(
 			g->ga_res = res;
 			g->ga_len = gr_ndn->bv_len;
 			strcpy(g->ga_ndn, gr_ndn->bv_val);
-			ldap_pvt_thread_mutex_lock( &conn->c_mutex );
-			g->ga_next = conn->c_groups;
-			conn->c_groups = g;
-			ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
+			g->ga_next = op->o_groups;
+			op->o_groups = g;
 		}
 
 		return res;
