@@ -23,6 +23,8 @@ openldap2 (2.1.30-3) unstable; urgency=high
       Thanks to Andrew Suffield for pointing this out.
     + debian/slapd.cron.daily: cron job to remove GNUTLS rsa_export and
       dh param cache files every day.
+    + debian/slapd.README.Debian: add note that we use GNUTLS rather
+      than OpenSSL.
 
  -- 
 

@@ -24,7 +24,15 @@ Notes about Debian's slapd package
    doing so if you're using LDBM), move the old database files away, change
    /etc/ldap/slapd.conf, and then reimport your database from the LDIF file
    via slapadd.
-   
+
+++ TLS/SSL support
+
+   Different to the official version, Debian's OpenLDAP packages are compiled
+   with the GNUTLS library rather than with OpenSSL. This was necessary for
+   other third-party packages licensed under the GPL (such as Samba) to link
+   with OpenLDAP. As of this version, Debian's GNUTLS extension is not
+   included in the official version of OpenLDAP.
+
 ++ If slapd depends on other service (such as SQL)
 
    In the event that you are running slapd with a different back-end module
