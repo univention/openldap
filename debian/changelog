@@ -17,6 +17,18 @@ openldap2 (2.1.21-2) unstable; urgency=low
       before database definitions
     + debian/control: Drop the libldap2-dev Depends that aren't actually
       necessary.
+    + debian/slapd.preinst: Add create_sed_script to create the script to
+      deal with multi-line commands in slapd.conf.  Modify things to use
+      sed script to preprocess slapd.conf before using it.  Remove
+      support for whitespace preceeding commands.
+    + debian/slapd.postinst: Add create_sed_script here too and modify
+      everything to use it as necessary.  Also change everything to
+      reference $SLAPD_CONF instead of /etc/ldap/slapd.conf everywhere.
+      Remove support for whitespace preceeding commands.
+    + debian/slapd.postinst: Removed all tabs.  Changed all sed scripts
+      to used [:space:] instead of [space tab].
+    + debian/slapd.postinst: Removed debugging statements from ldap_v2
+      support handling code.
 
   * Torsten Landschoff <torsten@debian.org>:
     + doc/man/man8/slapd.8: Refer to slapd.conf(5) for a description of 

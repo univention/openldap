@@ -18,16 +18,6 @@ ldif_dump_location() {
 # Make sure slapd is shut down before mucking with the db files
 # and whatnot...  Use this function
 stop_slapd() {
-        # Source the init script configuration
-        if [ -f "/etc/default/slapd" ]; then
-                . /etc/default/slapd
-        fi
-
-        # Load the default location of the slapd config file
-        if [ -z "$SLAPD_CONF" ]; then
-                SLAPD_CONF="/etc/ldap/slapd.conf"
-        fi
-
         # Find out the name of slapd's pid file
         if [ -z "$SLAPD_PIDFILE" -a -f "$SLAPD_CONF" ]; then
                 SLAPD_PIDFILE=`sed -ne 's/^pidfile[[:space:]]\+\(.\+\)/\1/p' \
@@ -44,9 +34,33 @@ stop_slapd() {
         fi
 }
 
+
+create_sed_script() {
+  if [ ! -e /tmp/$$.sedscript ]; then
+    cat <<EOF > /tmp/$$.sedscript
+{
+  s/^[#[:space:]][#[:space:]]*/&/
+  t other
+  b start
+  :start
+    N
+    s/\n[[:space:]][[:space:]]*/ /
+    t start
+    b end
+    p
+  :other
+    b end
+  :end
+}
+EOF
+  fi
+}
+
 # Get the list of configured databases from slapd.conf
 get_database_list() {
-  grep -E '^[[:space:]]*(database|directory|suffix)' /etc/ldap/slapd.conf | \
+  create_sed_script
+  sed -f /tmp/$$.sedscript < $SLAPD_CONF | \
+  grep -E '^(database|directory|suffix)' | \
   (
     while read type val
     do
@@ -68,6 +82,16 @@ get_database_list() {
     echo $backend \"$suffix\" \"$directory\"
   )   
 }
+
+# Source the init script configuration
+if [ -f "/etc/default/slapd" ]; then
+  . /etc/default/slapd
+fi
+
+# Load the default location of the slapd config file
+if [ -z "$SLAPD_CONF" ]; then
+  SLAPD_CONF="/etc/ldap/slapd.conf"
+fi
 
 # If we are upgrading from an old version then
 # stop slapd and attempt to slapcat out the data
