@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/main.c,v 1.23.2.7 2003/03/26 15:45:13 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/main.c,v 1.23.2.9 2003/10/10 00:15:21 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <ac/stdlib.h>
+#include <ac/unistd.h>
 
 #include "slurp.h"
 #include "globals.h"
@@ -176,14 +177,44 @@ int main( int argc, char **argv )
 	goto stop;
     }
 
+
     /*
      * Detach from the controlling terminal
      * unless the -d flag is given or in one-shot mode.
      */
 #ifndef HAVE_WINSOCK
-    if ( ! (sglob->no_detach || sglob->one_shot_mode) )
-	lutil_detach( 0, 0 );
+	if ( ! (sglob->no_detach || sglob->one_shot_mode) ) {
+		lutil_detach( 0, 0 );
+	}
 #endif
+
+	if ( slurpd_pid_file != NULL ) {
+		FILE *fp = fopen( slurpd_pid_file, "w" );
+
+		if( fp != NULL ) {
+			fprintf( fp, "%d\n", (int) getpid() );
+			fclose( fp );
+
+		} else {
+		free(slurpd_pid_file);
+		slurpd_pid_file = NULL;
+		}
+	}
+
+	if ( slurpd_args_file != NULL ) {
+		FILE *fp = fopen( slurpd_args_file, "w" );
+
+		if( fp != NULL ) {
+			for ( i = 0; i < argc; i++ ) {
+				fprintf( fp, "%s ", argv[i] );
+			}
+			fprintf( fp, "\n" );
+			fclose( fp );
+		} else {
+			free(slurpd_args_file);
+			slurpd_args_file = NULL;
+		}
+	}
 
     if ( (rc = lutil_pair( sglob->wake_sds )) < 0 ) {
 	SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 16 );
@@ -262,6 +293,15 @@ stop:
 #else
     Debug( LDAP_DEBUG_ANY, "slurpd: terminated.\n", 0, 0, 0 );
 #endif
+
+    if ( slurpd_pid_file != NULL ) {
+	unlink( slurpd_pid_file );
+    }
+    if ( slurpd_args_file != NULL ) {
+	unlink( slurpd_args_file );
+    }
+
+
 	MAIN_RETURN(rc);
 #endif /* !NO_THREADS */
 }

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.150.2.16 2003/03/05 23:48:33 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.150.2.18 2003/10/11 23:19:22 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -314,6 +314,22 @@ int backend_startup(Backend *be)
 
 	/* open each backend database */
 	for( i = 0; i < nBackendDB; i++ ) {
+		if ( backendDB[i].be_update_ndn.bv_val && (
+			!backendDB[i].be_update_refs &&
+			!default_referral ) ) {
+#ifdef NEW_LOGGING
+			LDAP_LOG( BACKEND, CRIT, 
+				"backend_startup: slave \"%s\" updateref missing\n",
+				backendDB[i].be_suffix[0].bv_val, 0, 0 );
+				
+#else
+			Debug( LDAP_DEBUG_ANY,
+				"backend_startup: slave \"%s\" updateref missing\n",
+				backendDB[i].be_suffix[0].bv_val, 0, 0 );
+#endif
+			return -1;
+		}
+
 		/* append global access controls */
 		acl_append( &backendDB[i].be_acl, global_acl );
 
@@ -565,7 +581,8 @@ select_backend(
 				if( be == NULL ) {
 					be = &backends[i];
 
-					if( manageDSAit && len == dnlen ) {
+					if( manageDSAit && len == dnlen &&
+						!SLAP_GLUE_SUBORDINATE( be ) ) {
 						continue;
 					}
 				} else {

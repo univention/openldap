@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/slurp.h,v 1.27.2.3 2003/03/03 17:10:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/slurp.h,v 1.27.2.5 2003/09/14 07:21:56 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -128,6 +128,7 @@
 
 /* Config file keywords */
 #define	HOSTSTR			"host"
+#define	URISTR			"uri"
 #define	ATTRSTR			"attr"
 #define	SUFFIXSTR		"suffix"
 #define	BINDDNSTR		"binddn"
@@ -144,7 +145,7 @@
 #define	REALMSTR		"realm"
 #define	SECPROPSSTR		"secprops"
 #define TLSSTR			"tls"
-#define TLSCRITICALSTR	"critical"
+#define TLSCRITICALSTR		"critical"
 
 #define	REPLICA_SLEEP_TIME	( 10 )
 
@@ -213,6 +214,7 @@ struct ri {
     /* Private data */
     char	*ri_hostname;		/* canonical hostname of replica */
     int		ri_port;		/* port where slave slapd running */
+    char	*ri_uri;		/* e.g. "ldaps://ldap-1.example.com:636" */
     LDAP	*ri_ldp;		/* LDAP struct for this replica */
     int		ri_tls;			/* TLS: 0=no, 1=yes, 2=critical */
     int		ri_bind_method;		/* AUTH_SIMPLE or AUTH_KERBEROS */

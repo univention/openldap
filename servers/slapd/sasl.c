@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.81.2.25 2003/03/24 03:54:12 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.81.2.26 2003/10/11 23:18:23 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -25,7 +25,11 @@
 # endif
 
 # if SASL_VERSION_MAJOR >= 2
+# ifdef HAVE_SASL_SASL_H
 #  include <sasl/saslplug.h>
+# else
+#  include <saslplug.h>
+# endif
 #  define	SASL_CONST const
 # else
 #  define	SASL_CONST

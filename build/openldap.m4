@@ -1,4 +1,4 @@
-dnl $OpenLDAP: pkg/ldap/build/openldap.m4,v 1.98.2.13 2003/04/04 01:45:49 kurt Exp $
+dnl $OpenLDAP: pkg/ldap/build/openldap.m4,v 1.98.2.14 2003/10/10 00:21:14 kurt Exp $
 dnl
 dnl Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
 dnl All rights reserved.
@@ -1209,10 +1209,10 @@ AC_DEFUN([OL_SASL_COMPAT],
 #if SASL_VERSION_MAJOR == 1  && SASL_VERSION_MINOR >= 5
 	char *__sasl_compat = "1.5.x okay";
 #elif SASL_VERSION_MAJOR == 2  && SASL_VERSION_MINOR > 1
-	__sasl_compat "2.2+ or better okay (we guess)";
+	char *__sasl_compat = "2.2+ or better okay (we guess)";
 #elif SASL_VERSION_MAJOR == 2  && SASL_VERSION_MINOR == 1 \
 	&& SASL_VERSION_STEP >=3
-	__sasl_compat = "2.1.3+ or better okay";
+	char *__sasl_compat = "2.1.3+ or better okay";
 #endif
 	],	[ol_cv_sasl_compat=yes], [ol_cv_sasl_compat=no])])
 ])
