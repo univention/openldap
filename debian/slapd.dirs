@@ -1,2 +1,4 @@
 var/lib/ldap
 var/spool/slurpd
+var/lib/slapd
+usr/share/slapd

@@ -6,10 +6,12 @@ set -e
 
 if [ "$1" = "purge" ]; then
 	rm -f /etc/ldap/slapd.conf 2>/dev/null || true
+	rm -rf /var/lib/slapd 2>/dev/null || true
 
 	db_get slapd/purge_database
 	if [ "$RET" = "true" ]; then
 		rm -rf /var/lib/ldap 2>/dev/null || true
+		rm -rf /var/backups/slapd-* 2>/dev/null || true
 	fi
 
 	rmdir --ignore-fail-on-non-empty /etc/ldap/schema

@@ -44,6 +44,7 @@ install_stuff usr/share/man/man5/slapd*
 install_stuff usr/share/man/man8
 install_stuff etc/ldap/schema
 rm -f debian/tmp/etc/ldap/slapd.conf
+install -m644 debian/slapd.conf debian/slapd/usr/share/slapd/slapd.conf
 
 target=ldap-utils
 echo -n " $target"

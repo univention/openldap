@@ -60,3 +60,13 @@ _Description: Fix LDAP directory on upgrade
  more strict about this and you won't be able to access your directory
  after the upgrade without fixing it. If you select this option I'll try to
  fix it for you automagically.
+
+Template: slapd/suffix_change
+Type: boolean
+Default: false
+_Description: Move aside current database and create a new one?
+ You have specified a directory suffix (domain) that doesn't match the
+ one currently in /etc/ldap/slapd.conf.  Changing the directory suffix
+ requires moving aside the current LDAP database and creating a new one.
+ Are you sure you want to abandon the current database? (A backup will
+ be made.)
