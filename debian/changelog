@@ -14,6 +14,8 @@ openldap2 (2.1.22-2) unstable; urgency=low
   * Torsten Landschoff <torsten@debian.org>:
     + Fix invocation of "head" in maintainer scripts and replace usage of
       [ foo -a bar ] by [ foo ] && [ bar ] (closes: #203292).
+    + debian/slapd.postrm: Small cleanup, only remove the directory, not
+      the backups, on purge. 
 
  -- Stephen Frost <sfrost@debian.org>  Fri, 18 Jul 2003 14:13:04 -0400
 

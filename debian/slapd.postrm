@@ -2,21 +2,30 @@
 
 set -e
 
+# Load debconf if available (might have been removed before purging
+# slapd)
+
+if [ -e "/usr/share/debconf/confmodule" ]; then
+  . /usr/share/debconf/confmodule
+fi
+
+# Check if the user wants the database removed on purging slapd
+remove_database_on_purge() {
+  db_get slapd/purge_database || RET=false
+  return [ "$RET" = "true" ]
+}
+
 if [ "$1" = "purge" ]; then
-	rm -f /etc/ldap/slapd.conf 2>/dev/null || true
-	rm -rf /var/lib/slapd 2>/dev/null || true
+  echo -n "Removing slapd configuration... "
+  rm -f /etc/ldap/slapd.conf 2>/dev/null || true
+  rmdir --ignore-fail-on-non-empty /etc/ldap/schema
+  echo done
 
-	if [ -e "/usr/share/debconf/confmodule" ]; then
-		. /usr/share/debconf/confmodule
-
-		db_get slapd/purge_database || RET=false
-		if [ "$RET" = "true" ]; then
-			rm -rf /var/lib/ldap 2>/dev/null || true
-			rm -rf /var/backups/slapd-* 2>/dev/null || true
-		fi
-	fi
-
-	rmdir --ignore-fail-on-non-empty /etc/ldap/schema
+  if remove_database_on_purge; then
+    echo -n "Purging OpenLDAP database... "
+    rm -rf /var/lib/ldap || true
+    echo done
+  fi
 fi
 
 #DEBHELPER#
