@@ -1,3 +1,16 @@
+openldap2 (2.1.17-4) unstable; urgency=low
+
+  * Stephen Frost <sfrost@debian.org>:
+    + Add libbind-dev and bind-dev to the conflicts for slapd, the libs
+      in them can end up being used even when not compiled against causing
+      getaddrinfo() to fail. Closes: #166777
+    + Flush out the copyright file to include all found copyrights and updates
+      to those.
+    + Add clarification to copyright file.
+    + Add clarification of JC license to copyright file.
+
+ --
+
 openldap2 (2.1.17-3) unstable; urgency=low
 
   * Stephen Frost <sfrost@debian.org>:
