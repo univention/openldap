@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/sasl.c,v 1.10.2.1 2002/07/28 19:18:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/sasl.c,v 1.15 2003/02/21 18:27:54 kurt Exp $ */
 /*
- * Copyright 2000-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -189,6 +189,14 @@ int lutil_sasl_interact(
 	void *in )
 {
 	sasl_interact_t *interact = in;
+
+	if( interact->result ) {
+		/* we have results from a previous interaction */
+		free( (void *)interact->result );
+		interact->result = NULL;
+	}
+
+	if( ld == NULL ) return LDAP_PARAM_ERROR;
 
 	if( flags == LDAP_SASL_INTERACTIVE ) {
 		fputs( "SASL Interaction\n", stderr );
