@@ -80,7 +80,7 @@ openldap2 (2.1.21-2) unstable; urgency=low
     + debian/slapd.postinst: Add question about no configuration.
     + debian/slapd.templates: Add template for no config question.
     + debian/slapd.templates: Add template for invalid suffix.
-    + debian/slapd.config: Add no configuration option.
+    + debian/slapd.config: Add no configuration option.  Closes: #87986
     + debian/slapd.config: Complain to the user on invalid domain/org.
 
  --
