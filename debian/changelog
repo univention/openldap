@@ -11,6 +11,10 @@ openldap2 (2.1.23-2) unstable; urgency=low
     + debian/slapd.{templates,config,postinst,conf}: Ask which
       database backend to use (BDB or LDBM).
     + debian/slapd.README.Debian: cleanup
+  
+  * Torsten Landschoff <torsten@debian.org>:
+    + debian/move_files: Install slappasswd into ldap-utils instead 
+      of slapd as it's useful without slapd as well (closes: #228705).
 
  -- Roland Bauerschmidt <rb@debian.org>  Sat, 18 Oct 2003 19:59:56 +0200
 
@@ -23,6 +27,10 @@ openldap2 (2.1.23-1) unstable; urgency=low
     + Added Dutch Debconf template translation by cobaco@linux.be.
       Closes: #215373.
     + Bumped Standards-Version (no changes needed).
+  
+  * Torsten Landschoff <torsten@debian.org>:
+    + debian/move_files: Install slappasswd into ldap-utils instead
+      of slapd (closes: #228705).
 
  -- Roland Bauerschmidt <rb@debian.org>  Sat, 18 Oct 2003 19:56:54 +0200
 
