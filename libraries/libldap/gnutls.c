@@ -603,6 +603,13 @@ SSL_free( SSL *ssl )
 	if (ssl->session)
 		gnutls_deinit(ssl->session);
 
+	/* Free BIOs */
+	if (ssl->wbio && (ssl->wbio != ssl->rbio))
+		free(ssl->wbio);
+	
+	if (ssl->rbio)
+		free(ssl->rbio);
+
 	free(ssl);
 }
 

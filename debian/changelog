@@ -1,6 +1,8 @@
 openldap2 (2.1.30-4) unstable; urgency=low
 
-  * 
+  * Roland Bauerschmidt <rb@debian.org>
+    + Applied patch by Modestas Vainius <geromanas@mailas.com> to fix a
+      memory leak in the GNUTLS compatibility wrapper. Closes: #264443.
 
  -- 
 
