@@ -1,16 +1,25 @@
 Notes about Debian's slapd package
 ----------------------------------
 
-OpenLDAP 2.1 includes the new BDB database backend which is also the
-recommended backend to use. In comparision to the formerly recommended
-LDBM backend (which still exists for compatibility reasons), it is
-supposed to be both faster and safer to use, i.e. hot backups are now
-possible with the BDB database backend.
+Starting with OpenLDAP 2.1, backend modules are compiled as dynamically
+loadable shared objects. As a consequence thereof, you need to specify
+the path of the modules and the modules to load in your slapd.conf file
+for now. This can be done by lines such as the following:
+
+modulepath      /usr/lib/ldap
+moduleload      back_bdb.la
+
+for the BDB database backend module.
+
+Starting with OpenLDAP 2.1, BDB is the recommended database backend to
+use. In comparision to the formerly recommended LDBM backend (which
+still exists for compatibility reasons), it is supposed to be both
+faster and safer to use, i.e. hot backups are now possible with the BDB
+database backend and the like.
 
 To switch to the BDB backend, you should export your current database
 in LDIF format with the slapcat command (be sure to stop slapd before
 doing so), move the old database files away, change /etc/ldap/slapd.conf,
 and then reimport your database from the LDIF file via slapadd.
 
- -- Roland Bauerschmidt <rb@debian.org>  Fri, 14 Feb 2003 18:36:16 +0100
-
+ -- Roland Bauerschmidt <rb@debian.org>  Wed, 19 Mar 2003 15:50:32 +0100
