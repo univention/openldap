@@ -57,3 +57,12 @@ Description: OpenLDAP development libraries
  This package allows development of LDAP applications using the OpenLDAP
  libraries. It includes headers, libraries and links to allow static and
  dynamic linking.
+
+Package: libslapd2-dev
+Section: libdevel
+Priority: extra
+Architecture: all
+Depends: libldap2 (= ${Source-Version})
+Description: OpenLDAP slapd back-end development headers
+ This package allows development of back-ends for the OpenLDAP slapd.
+ It includes headers used when developing a back-end for slapd.

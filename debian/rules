@@ -18,14 +18,27 @@ $(builddir)/Makefile:
 build: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) DESTDIR=$(tmpdir) 
 
-binary: binary-arch
+binary: binary-arch binary-indep
 
 binary-indep:
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+
+	dh_installdirs -i
+	sh debian/copy_slapd_dev_files
+	dh_installchangelogs -i
+	dh_installdocs -i
+	dh_installdebconf -i
+	dh_installdeb -i
+	dh_gencontrol -i
+	dh_md5sums -i
+	dh_builddeb -i
 
 binary-arch: build
 	dh_testdir
 	dh_testroot
-	dh_clean
+	dh_clean -k
 
 	dh_installdirs -a
 	$(MAKE) -C $(builddir) DESTDIR=$(tmpdir) install
