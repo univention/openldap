@@ -480,6 +480,8 @@ get_ca_list( char * bundle, char * dir )
 		struct stat st;
 		
 		d = opendir( dir );
+		if ( d == NULL )
+			return NULL;
 		while ( (de=readdir(d)) != NULL ) {
 			snprintf( ca_file, BUFSIZ, "%s/%s", dir, de->d_name );
 		
