@@ -39,3 +39,23 @@ Description: Do you want your database to be removed when slapd is purged?
 Template: slapd/internal/adminpw
 Type: password
 Description: encrypted admin password
+
+Template: slapd/autoconf_modules
+Type: boolean
+Default: true
+Description: Change configuration to load backend modules
+ With OpenLDAP 2.1 backends are not longer built into the server but 
+ are instead dynamically loaded at startup. This means that the slapd
+ configuration has to be changed to load the modules for the backends you
+ are using. If you select this option I'll try to fix the configuration for
+ you. For more information read /usr/share/doc/slapd/README.Debian.
+
+Template: slapd/fix_directory
+Type: boolean
+Default: true
+Description: Fix LDAP directory on upgrade
+ The installation scripts of the old OpenLDAP 2.0 packages create a 
+ directory that does not conform to the ldap schema. The new version 
+ is more strict about this and you won't be able to access your 
+ directory after the upgrade without fixing it. If you select this option
+ I'll try to fix it for you automagically.
