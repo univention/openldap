@@ -74,7 +74,7 @@ start_slapd() {
 # Start the slurpd daemon and capture the error message if any to
 # $reason.
 start_slurpd() {
-	if [ "$START_SLURPD" != yes ]; then
+	if [ "$SLURPD_START" != yes ]; then
 		return 0
 	fi
 	echo -n " slurpd"
@@ -94,7 +94,7 @@ stop_slapd() {
 # Stop the slurpd daemon and capture the error message (if any) to
 # $reason.
 stop_slurpd() {
-	if [ "$START_SLURPD" != yes ]; then
+	if [ "$SLURPD_START" != yes ]; then
 		return 0
 	fi
 	echo -n " slurpd"

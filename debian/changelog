@@ -2,6 +2,20 @@ openldap2 (2.1.17-3) unstable; urgency=low
 
   * Stephen Frost <sfrost@debian.org>:
     + debian/slapd.init: Add --oknodo for stopping slapd. Closes: #192423.
+    + debian/slapd.init: Change START_SLURPD to SLURPD_START. Closes: #190724.
+    + debian/libldap2.shlibs: Bump to 2.1.17- 2.1.12 never hit the archive.
+      These should only be bumped when new symbols are added so we should
+      figure out a way to handle checking that. Closes: #190164.
+    + debian/slapd.dirs: Added /var/run/slapd for pidfile
+    + debian/slapd.conf: Moved pidfile to /var/run/slapd; Needed if running
+      non-root.
+    + debian/slapd.conf: Clean up config file, be more explicit about what
+      directives are 'general', 'backend', and 'database'.  Moved and
+      commented out 'replogfile' since it is database specific, wasn't doing
+      anything where it was and use of it depends on slurpd usage.
+      I consider this solving #151511 since we don't ask if you want to use
+      replication anymore anyway. Closes: #151511
+    + Maintainer upload, acknowledge NMU. Closes: #98039.
 
  -- Torsten Landschoff <torsten@debian.org>  Mon, 19 May 2003 10:39:56 -0400
 
