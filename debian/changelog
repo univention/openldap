@@ -1,24 +1,35 @@
 openldap2.1 (2.1.12-1) experimental; urgency=low
   
-  * Initial release of OpenLDAP 2.1 packages.
+  * Initial release of OpenLDAP 2.1 packages. Closes: #167566, #178014.
+    - this includes support for the >= and <= operators. Closes: #159078.
   
   * Torsten Landschoff <torsten@debian.org>
     - debian/check_config: Added script to check if OpenLDAP was configured
       the way we want it.
     - Don't build special TLS packages anymore - SSL is enabled in the 
       stock ldap library. Everything else will just give me more headaches.
+    - Build against libsasl2 instead of libsasl1. Closes: #176462.
     - debian/control: 
       - Build-depend on debhelper 4.0 as debian/rules uses DH_COMPAT=4.
+      - Depend on coreutils | fileutils. Closes: #175704.
       
   * Roland Bauerschmidt <rb@debian.org>
     - debian/control:
       - build-depend on libdb4.1-dev instead of libdb4.0-dev
       - conflict, replace, and provide libldap2-tls (libldap2)
       - removed ldap-gateways binary package
+      - drop suggestions to obsolete openldap-guide. Closes: #171894.
     - debian/rules:
       - build with BDB backend
       - run dh_installdeb
     - debian/slapd.dirs: added to create /var/lib/ldap and /var/spool/slurpd
+    - debian/slapd.postinst:
+      - properly remove temporary files on errors. Closes: #160412.
+      - install init.d link if slapd.conf already exists. Closes: #159542.
+
+  * unassigned (FIXME)
+    - FIXME: Offer to run slapd not as root. Closes: #157037, #111765.
+    - FIXME: Warning about changed that might break current setups. Closes: #112425.
 
  -- Torsten Landschoff <torsten@debian.org>  Mon, 10 Feb 2003 22:32:06 +0100
 

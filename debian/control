@@ -12,7 +12,7 @@ Section: net
 Priority: extra
 Architecture: any
 Depends: ${shlibs:Depends}, debconf (>= 0.2.50), coreutils | fileutils (>= 4.0i-1), psmisc
-Suggests: openldap-guide, ldap-utils
+Suggests: ldap-utils
 Conflicts: umich-ldapd, ldap-server
 Provides: ldap-server
 Description: OpenLDAP server (slapd)
