@@ -11,7 +11,7 @@ Package: slapd
 Section: net
 Priority: optional
 Architecture: any
-Depends: ${shlibs:Depends}, debconf (>= 0.2.50), coreutils | fileutils (>= 4.0i-1), psmisc
+Depends: ${shlibs:Depends}, debconf (>= 0.2.50), coreutils (>= 4.5.1-1) | fileutils (>= 4.0i-1), psmisc
 Suggests: ldap-utils
 Conflicts: umich-ldapd, ldap-server
 Provides: ldap-server
