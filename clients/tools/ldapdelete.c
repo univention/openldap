@@ -1,5 +1,5 @@
 /* ldapdelete.c - simple program to delete an entry using LDAP */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapdelete.c,v 1.99.2.6 2004/01/01 18:16:26 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapdelete.c,v 1.99.2.7 2004/03/17 19:54:53 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -83,7 +83,7 @@ handle_private_option( int i )
 #if 0
 		int crit;
 		char *control, *cvalue;
-	case 'E': /* delete controls */
+	case 'E': /* delete extensions */
 		if( protocol == LDAP_VERSION2 ) {
 			fprintf( stderr, _("%s: -E incompatible with LDAPv%d\n"),
 				prog, protocol );
@@ -105,7 +105,7 @@ handle_private_option( int i )
 		if ( (cvalue = strchr( control, '=' )) != NULL ) {
 			*cvalue++ = '\0';
 		}
-		fprintf( stderr, _("Invalid delete control name: %s\n"), control );
+		fprintf( stderr, _("Invalid delete extension name: %s\n"), control );
 		usage();
 #endif
 

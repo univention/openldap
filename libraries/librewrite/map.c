@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/map.c,v 1.12.2.3 2004/01/01 18:16:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/map.c,v 1.12.2.4 2004/03/17 20:14:49 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -51,7 +51,7 @@ rewrite_map_parse(
 	 * Go to the end of the map invocation (the right closing brace)
 	 */
 	for ( p = string, cnt = 1; p[ 0 ] != '\0' && cnt > 0; p++ ) {
-		if ( p[ 0 ] == REWRITE_SUBMATCH_ESCAPE ) {
+		if ( IS_REWRITE_SUBMATCH_ESCAPE( p[ 0 ] ) ) {
 			/*
 			 * '%' marks the beginning of a new map
 			 */

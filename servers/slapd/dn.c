@@ -1,5 +1,5 @@
 /* dn.c - routines for dealing with distinguished names */
-/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.144.2.5 2004/01/01 18:16:33 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.144.2.7 2004/04/12 18:13:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -259,7 +259,7 @@ LDAPDN_rewrite( LDAPDN dn, unsigned flags, void *ctx )
 			slap_mr_normalize_func *normf = NULL;
 			slap_syntax_transform_func *transf = NULL;
 			MatchingRule *mr = NULL;
-			struct berval		bv = { 0, NULL };
+			struct berval		bv = BER_BVNULL;
 			int			do_sort = 0;
 
 			assert( ava );
@@ -843,7 +843,7 @@ build_new_dn( struct berval * new_dn,
 {
 	char *ptr;
 
-	if ( parent_dn == NULL ) {
+	if ( parent_dn == NULL || parent_dn->bv_len == 0 ) {
 		ber_dupbv( new_dn, newrdn );
 		return;
 	}

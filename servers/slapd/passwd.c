@@ -1,5 +1,5 @@
 /* passwd.c - password extended operation routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.53.2.8 2004/01/10 18:28:24 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.53.2.12 2004/04/06 18:16:00 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -28,16 +28,28 @@
 #include <lber_pvt.h>
 #include <lutil.h>
 
+static const char *defhash[] = {
+#ifdef LUTIL_SHA1_BYTES
+	"{SSHA}",
+#else
+	"{SMD5}",
+#endif
+	NULL
+};
+
 int passwd_extop(
 	Operation *op,
 	SlapReply *rs )
 {
-	struct berval id = {0, NULL}, old = {0, NULL}, new = {0, NULL},
-		dn, ndn, hash, vals[2], tmpbv, *rsp = NULL;
-	Modifications ml, **modtail;
+	struct berval id = {0, NULL}, hash, *rsp = NULL;
+	req_pwdexop_s *qpw = &op->oq_pwdexop;
+	Modifications *ml;
 	Operation op2;
 	slap_callback cb = { NULL, slap_null_cb, NULL, NULL };
 	slap_callback cb2 = { NULL, slap_replog_cb, NULL, NULL };
+	int i, nhash;
+	char **hashes;
+
 	cb2.sc_next = &cb;
 
 	assert( ber_bvcmp( &slap_EXOP_MODIFY_PASSWD, &op->ore_reqoid ) == 0 );
@@ -47,29 +59,30 @@ int passwd_extop(
 		return LDAP_STRONG_AUTH_REQUIRED;
 	}
 
-	if( op->oq_extended.rs_reqdata ) {
-		ber_dupbv_x( &tmpbv, op->oq_extended.rs_reqdata, op->o_tmpmemctx );
-	}
-	rs->sr_err = slap_passwd_parse(
-		op->oq_extended.rs_reqdata ? &tmpbv : NULL,
-		&id, &old, &new, &rs->sr_text );
+	qpw->rs_old.bv_val = NULL;
+	qpw->rs_new.bv_val = NULL;
+	qpw->rs_mods = NULL;
+	qpw->rs_modtail = NULL;
+
+	rs->sr_err = slap_passwd_parse( op->ore_reqdata, &id, &qpw->rs_old,
+		&qpw->rs_new, &rs->sr_text );
 
 	if ( rs->sr_err != LDAP_SUCCESS ) {
 		return rs->sr_err;
 	}
 
 	if ( id.bv_len ) {
-		dn = id;
+		op->o_req_dn = id;
 		/* ndn is in tmpmem, so we don't need to free it */
-		rs->sr_err = dnNormalize( 0, NULL, NULL, &dn, &ndn, op->o_tmpmemctx );
+		rs->sr_err = dnNormalize( 0, NULL, NULL, &id, &op->o_req_ndn, op->o_tmpmemctx );
 		if ( rs->sr_err != LDAP_SUCCESS ) {
 			rs->sr_text = "Invalid DN";
 			return rs->sr_err;
 		}
-		op->o_bd = select_backend( &ndn, 0, 0 );
+		op->o_bd = select_backend( &op->o_req_ndn, 0, 0 );
 	} else {
-		dn = op->o_dn;
-		ndn = op->o_ndn;
+		op->o_req_dn = op->o_dn;
+		op->o_req_ndn = op->o_ndn;
 		ldap_pvt_thread_mutex_lock( &op->o_conn->c_mutex );
 		op->o_bd = op->o_conn->c_authz_backend;
 		ldap_pvt_thread_mutex_unlock( &op->o_conn->c_mutex );
@@ -84,7 +97,7 @@ int passwd_extop(
 #endif
 	}
 
-	if ( ndn.bv_len == 0 ) {
+	if ( op->o_req_ndn.bv_len == 0 ) {
 		rs->sr_text = "no password is associated with the Root DSE";
 		return LDAP_UNWILLING_TO_PERFORM;
 	}
@@ -97,29 +110,45 @@ int passwd_extop(
 
 #ifndef SLAPD_MULTIMASTER
 	/* This does not apply to multi-master case */
-	if( op->o_bd->be_update_ndn.bv_len ) {
+	if(!( !SLAP_SHADOW( op->o_bd ) || be_isupdate( op ))) {
 		/* we SHOULD return a referral in this case */
-		BerVarray defref = NULL;
-		if ( !LDAP_STAILQ_EMPTY( &op->o_bd->be_syncinfo )) {
-			syncinfo_t *si;
-			LDAP_STAILQ_FOREACH( si, &op->o_bd->be_syncinfo, si_next ) {
-				struct berval tmpbv;
-				ber_dupbv( &tmpbv, &si->si_provideruri_bv[0] );
-				ber_bvarray_add( &defref, &tmpbv );
-			}
-		} else {
-			defref = referral_rewrite( op->o_bd->be_update_refs,
+		BerVarray defref = op->o_bd->be_update_refs
+			? op->o_bd->be_update_refs : default_referral; 
+
+		if( defref != NULL ) {
+			rs->sr_ref = referral_rewrite( op->o_bd->be_update_refs,
 				NULL, NULL, LDAP_SCOPE_DEFAULT );
+			if(rs->sr_ref) {
+				rs->sr_flags |= REP_REF_MUSTBEFREED;
+			} else {
+				rs->sr_ref = defref;
+			}
+			return LDAP_REFERRAL;
+
 		}
-		rs->sr_ref = defref;
-		return LDAP_REFERRAL;
+
+		rs->sr_text = "shadow context; no update referral";
+		return LDAP_UNWILLING_TO_PERFORM;
 	}
 #endif /* !SLAPD_MULTIMASTER */
+
+	/* generate a new password if none was provided */
+	if ( qpw->rs_new.bv_len == 0 ) {
+		slap_passwd_generate( &qpw->rs_new );
+		if ( qpw->rs_new.bv_len ) {
+			rsp = slap_passwd_return( &qpw->rs_new );
+		}
+	}
+	if ( qpw->rs_new.bv_len == 0 ) {
+		rs->sr_text = "password generation failed";
+		return LDAP_OTHER;
+	}
 
 	/* Give the backend a chance to handle this itself */
 	if ( op->o_bd->be_extended ) {
 		rs->sr_err = op->o_bd->be_extended( op, rs );
-		if ( rs->sr_err != LDAP_UNWILLING_TO_PERFORM ) {
+		if ( rs->sr_err != LDAP_UNWILLING_TO_PERFORM &&
+			rs->sr_err != SLAP_CB_CONTINUE ) {
 			return rs->sr_err;
 		}
 	}
@@ -130,53 +159,61 @@ int passwd_extop(
 		return LDAP_UNWILLING_TO_PERFORM;
 	}
 
-	if ( new.bv_len == 0 ) {
-		slap_passwd_generate( &new );
-		rsp = slap_passwd_return( &new );
+	ml = ch_malloc( sizeof(Modifications) );
+	if ( !qpw->rs_modtail ) qpw->rs_modtail = &ml->sml_next;
+
+	if ( default_passwd_hash ) {
+		for ( nhash = 0; default_passwd_hash[nhash]; nhash++ );
+		hashes = default_passwd_hash;
+	} else {
+		nhash = 1;
+		hashes = (char **)defhash;
 	}
-	if ( new.bv_len == 0 ) {
-		rs->sr_text = "password generation failed";
-		return LDAP_OTHER;
-	}
-	slap_passwd_hash( &new, &hash, &rs->sr_text );
-	if ( rsp ) {
-		free( new.bv_val );
-	}
-	if ( hash.bv_len == 0 ) {
-		if ( !rs->sr_text ) {
-			rs->sr_text = "password hash failed";
+	ml->sml_values = ch_malloc( (nhash+1)*sizeof(struct berval) );
+	for ( i=0; hashes[i]; i++ ) {
+		slap_passwd_hash_type( &qpw->rs_new, &hash, hashes[i], &rs->sr_text );
+		if ( hash.bv_len == 0 ) {
+			if ( !rs->sr_text ) {
+				rs->sr_text = "password hash failed";
+			}
+			break;
 		}
-		return LDAP_OTHER;
+		ml->sml_values[i] = hash;
 	}
-	vals[0] = hash;
-	vals[1].bv_val = NULL;
-	ml.sml_desc = slap_schema.si_ad_userPassword;
-	ml.sml_values = vals;
-	ml.sml_nvalues = NULL;
-	ml.sml_op = LDAP_MOD_REPLACE;
-	ml.sml_next = NULL;
+	ml->sml_values[i].bv_val = NULL;
+	ml->sml_nvalues = NULL;
+	ml->sml_desc = slap_schema.si_ad_userPassword;
+	ml->sml_op = LDAP_MOD_REPLACE;
+	ml->sml_next = qpw->rs_mods;
+	qpw->rs_mods = ml;
 
-	op2 = *op;
-	op2.o_tag = LDAP_REQ_MODIFY;
-	op2.o_callback = &cb2;
-	op2.o_req_dn = dn;
-	op2.o_req_ndn = ndn;
-	op2.orm_modlist = &ml;
+	if ( hashes[i] ) {
+		rs->sr_err = LDAP_OTHER;
+	} else {
 
-	modtail = &ml.sml_next;
-	rs->sr_err = slap_mods_opattrs( &op2, &ml, modtail, &rs->sr_text,
-		NULL, 0 );
-	
-	if ( rs->sr_err == LDAP_SUCCESS ) {
-		rs->sr_err = op2.o_bd->be_modify( &op2, rs );
+		op2 = *op;
+		op2.o_tag = LDAP_REQ_MODIFY;
+		op2.o_callback = &cb2;
+		op2.orm_modlist = qpw->rs_mods;
+		cb2.sc_private = qpw;	/* let Modify know this was pwdMod,
+					 * if it cares... */
+
+		rs->sr_err = slap_mods_opattrs( &op2, ml, qpw->rs_modtail, &rs->sr_text,
+			NULL, 0 );
+		
+		if ( rs->sr_err == LDAP_SUCCESS ) {
+			rs->sr_err = op2.o_bd->be_modify( &op2, rs );
+		}
+		if ( rs->sr_err == LDAP_SUCCESS ) {
+			rs->sr_rspdata = rsp;
+		} else if ( rsp ) {
+			ber_bvfree( rsp );
+		}
 	}
-	if ( rs->sr_err == LDAP_SUCCESS ) {
-		rs->sr_rspdata = rsp;
-	} else if ( rsp ) {
-		ber_bvfree( rsp );
+	slap_mods_free( qpw->rs_mods );
+	if ( rsp ) {
+		free( qpw->rs_new.bv_val );
 	}
-	slap_mods_free( ml.sml_next );
-	free( hash.bv_val );
 
 	return rs->sr_err;
 }
@@ -405,56 +442,57 @@ slap_passwd_check(
 void
 slap_passwd_generate( struct berval *pass )
 {
-	struct berval *tmp;
 #ifdef NEW_LOGGING
 	LDAP_LOG( OPERATION, ENTRY, "slap_passwd_generate: begin\n", 0, 0, 0 );
 #else
 	Debug( LDAP_DEBUG_TRACE, "slap_passwd_generate\n", 0, 0, 0 );
 #endif
+	pass->bv_val = NULL;
+	pass->bv_len = 0;
+
 	/*
 	 * generate passwords of only 8 characters as some getpass(3)
 	 * implementations truncate at 8 characters.
 	 */
-	tmp = lutil_passwd_generate( 8 );
-	if (tmp) {
-		*pass = *tmp;
-		free(tmp);
-	} else {
-		pass->bv_val = NULL;
-		pass->bv_len = 0;
-	}
+	lutil_passwd_generate( pass, 8 );
 }
 
+void
+slap_passwd_hash_type(
+	struct berval * cred,
+	struct berval * new,
+	char *hash,
+	const char **text )
+{
+	new->bv_len = 0;
+	new->bv_val = NULL;
+
+	assert( hash );
+
+#if defined( SLAPD_CRYPT ) || defined( SLAPD_SPASSWD )
+	ldap_pvt_thread_mutex_lock( &passwd_mutex );
+#endif
+
+	lutil_passwd_hash( cred , hash, new, text );
+	
+#if defined( SLAPD_CRYPT ) || defined( SLAPD_SPASSWD )
+	ldap_pvt_thread_mutex_unlock( &passwd_mutex );
+#endif
+
+}
 void
 slap_passwd_hash(
 	struct berval * cred,
 	struct berval * new,
 	const char **text )
 {
-	struct berval *tmp;
-#ifdef LUTIL_SHA1_BYTES
-	char* hash = default_passwd_hash ?  default_passwd_hash : "{SSHA}";
-#else
-	char* hash = default_passwd_hash ?  default_passwd_hash : "{SMD5}";
-#endif
-	
-
-#if defined( SLAPD_CRYPT ) || defined( SLAPD_SPASSWD )
-	ldap_pvt_thread_mutex_lock( &passwd_mutex );
-#endif
-
-	tmp = lutil_passwd_hash( cred , hash, text );
-	
-#if defined( SLAPD_CRYPT ) || defined( SLAPD_SPASSWD )
-	ldap_pvt_thread_mutex_unlock( &passwd_mutex );
-#endif
-
-	if( tmp == NULL ) {
-		new->bv_len = 0;
-		new->bv_val = NULL;
+	char *hash = NULL;
+	if ( default_passwd_hash ) {
+		hash = default_passwd_hash[0];
+	}
+	if ( !hash ) {
+		hash = (char *)defhash[0];
 	}
 
-	*new = *tmp;
-	free( tmp );
-	return;
+	slap_passwd_hash_type( cred, new, hash, text );
 }

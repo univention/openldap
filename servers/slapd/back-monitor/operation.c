@@ -1,5 +1,5 @@
 /* operation.c - deal with operation subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/operation.c,v 1.18.2.3 2004/01/01 18:16:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/operation.c,v 1.18.2.6 2004/04/12 18:20:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2004 The OpenLDAP Foundation.
@@ -40,7 +40,7 @@ static struct berval
 		BER_BVC( "Search" ),
 		BER_BVC( "Abandon" ),
 		BER_BVC( "Extended" ),
-		{ 0, NULL }
+		BER_BVNULL
 	};
 
 int
@@ -54,6 +54,7 @@ monitor_subsys_ops_init(
 	struct monitorentrypriv	*mp;
 	char			buf[ BACKMONITOR_BUFSIZE ];
 	int 			i;
+	struct berval		bv_zero = BER_BVC("0");
 
 	assert( be != NULL );
 
@@ -75,6 +76,9 @@ monitor_subsys_ops_init(
 #endif
 		return( -1 );
 	}
+
+	attr_merge_one( e_op, mi->mi_ad_monitorOpInitiated, &bv_zero, NULL );
+	attr_merge_one( e_op, mi->mi_ad_monitorOpCompleted, &bv_zero, NULL );
 
 	e_tmp = NULL;
 
@@ -163,7 +167,7 @@ monitor_subsys_ops_update(
 )
 {
 	struct monitorinfo *mi = (struct monitorinfo *)op->o_bd->be_private;
-	long 		nInitiated = -1, nCompleted = -1;
+	long 		nInitiated = 0, nCompleted = 0;
 	char 		*rdnvalue;
 	int 		i;
 	Attribute	*a;
@@ -174,17 +178,29 @@ monitor_subsys_ops_update(
 
 	rdnvalue = e->e_dn + ( sizeof( "cn=" ) - 1 );
 
-	for (i = 0; i < SLAP_OP_LAST; i++ ) {
-		if ( strncmp( rdnvalue, bv_op[ i ].bv_val, 
-					bv_op[ i ].bv_len ) == 0 ) {
-			nInitiated = num_ops_initiated_[ i ];
-			nCompleted = num_ops_completed_[ i ];
-			break;
+	if ( strncmp( rdnvalue, SLAPD_MONITOR_OPS_NAME,
+				sizeof( SLAPD_MONITOR_OPS_NAME ) - 1 ) == 0 )
+	{
+		for ( i = 0; i < SLAP_OP_LAST; i++ ) {
+			nInitiated += num_ops_initiated_[ i ];
+			nCompleted += num_ops_completed_[ i ];
 		}
-	}
+		
+	} else {
+		for ( i = 0; i < SLAP_OP_LAST; i++ ) {
+			if ( strncmp( rdnvalue, bv_op[ i ].bv_val, 
+						bv_op[ i ].bv_len ) == 0 )
+			{
+				nInitiated = num_ops_initiated_[ i ];
+				nCompleted = num_ops_completed_[ i ];
+				break;
+			}
+		}
 
-	if ( i == SLAP_OP_LAST ) {
-		return( 0 );
+		if ( i == SLAP_OP_LAST ) {
+			/* not found ... */
+			return( 0 );
+		}
 	}
 
 	a = attr_find( e->e_attrs, mi->mi_ad_monitorOpInitiated );

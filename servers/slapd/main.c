@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.157.2.6 2004/01/01 18:16:33 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.157.2.11 2004/04/28 23:07:36 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -64,6 +64,22 @@ static struct sockaddr_in	bind_addr;
 #define MAIN_RETURN(x) return(x)
 #endif
 
+typedef int (MainFunc) LDAP_P(( int argc, char *argv[] ));
+extern MainFunc slapadd, slapcat, slapdn, slapindex, slappasswd, slaptest;
+
+static struct {
+	char *name;
+	MainFunc *func;
+} tools[] = {
+	{"slapadd", slapadd},
+	{"slapcat", slapcat},
+	{"slapdn", slapdn},
+	{"slapindex", slapindex},
+	{"slappasswd", slappasswd},
+	{"slaptest", slaptest},
+	{NULL, NULL}
+};
+
 /*
  * when more than one slapd is running on one machine, each one might have
  * it's own LOCAL for syslogging and must have its own pid/args files
@@ -102,8 +118,12 @@ static int   cnvt_str2int( char *, STRDISP_P, int );
 
 #endif	/* LOG_LOCAL4 */
 
-static int check_config = 0;
+#define CHECK_NONE	0x00
+#define CHECK_CONFIG	0x01
+static int check = CHECK_NONE;
 static int version = 0;
+
+void *slap_tls_ctx;
 
 static void
 usage( char *name )
@@ -113,6 +133,7 @@ usage( char *name )
 	fprintf( stderr,
 		"\t-4\t\tIPv4 only\n"
 		"\t-6\t\tIPv6 only\n"
+		"\t-T {acdipt}\tRun in Tool mode\n"
 		"\t-c cookie\tSync cookie of consumer\n"
 		"\t-d level\tDebug level" "\n"
 		"\t-f filename\tConfiguration file\n"
@@ -128,7 +149,6 @@ usage( char *name )
 		"\t-r directory\tSandbox directory to chroot to\n"
 #endif
 		"\t-s level\tSyslog level\n"
-		"\t-t\t\tCheck configuration file and exit\n"
 #if defined(HAVE_SETUID) && defined(HAVE_SETGID)
 		"\t-u user\t\tUser (id or name) to run as\n"
 		"\t-V\t\tprint version info (-VV only)\n"
@@ -164,10 +184,10 @@ int main( int argc, char **argv )
 #else
 	char		*configfile = SLAPD_DEFAULT_CONFIGFILE;
 #endif
-	char	    *serverName = NULL;
+	char	    *serverName;
 	int	    serverMode = SLAP_SERVER_MODE;
 
-	struct berval cookie = { 0, NULL };
+	struct berval cookie = BER_BVNULL;
 	struct sync_cookie *scp = NULL;
 	struct sync_cookie *scp_entry = NULL;
 
@@ -180,6 +200,17 @@ int main( int argc, char **argv )
 
 	sl_mem_init();
 
+	serverName = lutil_progname( "slapd", argc, argv );
+
+	if ( strcmp( serverName, "slapd" ) ) {
+		for (i=0; tools[i].name; i++) {
+			if ( !strcmp( serverName, tools[i].name ) ) {
+				rc = tools[i].func(argc, argv);
+				MAIN_RETURN(rc);
+			}
+		}
+	}
+
 #ifdef HAVE_NT_SERVICE_MANAGER
 	{
 		int *i;
@@ -188,7 +219,6 @@ int main( int argc, char **argv )
 		char *regService = NULL;
 
 		if ( is_NT_Service ) {
-			serverName = argv[0];
 			lutil_CommenceStartupProcessing( serverName, slap_sig_shutdown );
 			if ( strcmp(serverName, SERVICE_NAME) )
 			    regService = serverName;
@@ -241,7 +271,7 @@ int main( int argc, char **argv )
 #endif
 
 	while ( (i = getopt( argc, argv,
-			     "c:d:f:h:s:n:t:V"
+			     "c:d:f:h:s:n:tT:V"
 #if LDAP_PF_INET6
 				"46"
 #endif
@@ -341,17 +371,28 @@ int main( int argc, char **argv )
 #endif /* SETUID && GETUID */
 
 		case 'n':  /* NT service name */
-			if( serverName != NULL ) free( serverName );
 			serverName = ch_strdup( optarg );
 			break;
 
 		case 't':
-			check_config++;
+			/* deprecated; use slaptest instead */
+			fprintf( stderr, "option -t deprecated; "
+				"use slaptest command instead\n" );
+			check |= CHECK_CONFIG;
 			break;
+
 		case 'V':
 			version++;
 			break;
 
+		case 'T':
+			for (i=0; tools[i].name; i++) {
+				if ( optarg[0] == tools[i].name[4] ) {
+					rc = tools[i].func(argc, argv);
+					MAIN_RETURN(rc);
+				}
+			}
+			/* FALLTHRU */
 		default:
 			usage( argv[0] );
 			rc = 1;
@@ -374,19 +415,24 @@ int main( int argc, char **argv )
 		if ( version > 1 ) goto stop;
 	}
 
-	if( serverName == NULL ) {
-		if ( (serverName = strrchr( argv[0], *LDAP_DIRSEP )) == NULL ) {
-			serverName = argv[0];
-		} else {
-			serverName = serverName + 1;
-		}
-	}
+	{
+		char *logName;
+#ifdef HAVE_EBCDIC
+		logName = ch_strdup( serverName );
+		__atoe( logName );
+#else
+		logName = serverName;
+#endif
 
 #ifdef LOG_LOCAL4
-	openlog( serverName, OPENLOG_OPTIONS, syslogUser );
+		openlog( logName, OPENLOG_OPTIONS, syslogUser );
 #elif LOG_DEBUG
-	openlog( serverName, OPENLOG_OPTIONS );
+		openlog( logName, OPENLOG_OPTIONS );
 #endif
+#ifdef HAVE_EBCDIC
+		free( logName );
+#endif
+	}
 
 #ifdef NEW_LOGGING
 	LDAP_LOG( SLAPD, INFO, "%s", Versionstr, 0, 0 );
@@ -394,7 +440,7 @@ int main( int argc, char **argv )
 	Debug( LDAP_DEBUG_ANY, "%s", Versionstr, 0, 0 );
 #endif
 
-	if( !check_config && slapd_daemon_init( urls ) != 0 ) {
+	if( check == CHECK_NONE && slapd_daemon_init( urls ) != 0 ) {
 		rc = 1;
 		SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 16 );
 		goto stop;
@@ -495,17 +541,21 @@ int main( int argc, char **argv )
 		rc = 1;
 		SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 19 );
 
-		if ( check_config ) {
+		if ( check & CHECK_CONFIG ) {
 			fprintf( stderr, "config check failed\n" );
 		}
 
 		goto destroy;
 	}
 
-	if ( check_config ) {
-		rc = 0;
+	if ( check & CHECK_CONFIG ) {
 		fprintf( stderr, "config check succeeded\n" );
-		goto destroy;
+
+		check &= ~CHECK_CONFIG;
+		if ( check == CHECK_NONE ) {
+			rc = 0;
+			goto destroy;
+		}
 	}
 
 	if ( glue_sub_init( ) != 0 ) {
@@ -546,18 +596,32 @@ int main( int argc, char **argv )
 		goto destroy;
 	}
 
-	rc = ldap_pvt_tls_init_def_ctx();
-	if( rc != 0) {
+	{
+		void *def_ctx = NULL;
+
+		/* Save existing default ctx, if any */
+		ldap_pvt_tls_get_option( NULL, LDAP_OPT_X_TLS_CTX, &def_ctx );
+
+		/* Force new ctx to be created */
+		ldap_pvt_tls_set_option( NULL, LDAP_OPT_X_TLS_CTX, NULL );
+
+		rc = ldap_pvt_tls_init_def_ctx();
+		if( rc != 0) {
 #ifdef NEW_LOGGING
-		LDAP_LOG( SLAPD, CRIT, "main: tls init def ctx failed: %d\n", rc, 0, 0 );
+			LDAP_LOG( SLAPD, CRIT, "main: tls init def ctx failed: %d\n", rc, 0, 0 );
 #else
-		Debug( LDAP_DEBUG_ANY,
-		    "main: TLS init def ctx failed: %d\n",
-		    rc, 0, 0 );
+			Debug( LDAP_DEBUG_ANY,
+			    "main: TLS init def ctx failed: %d\n",
+			    rc, 0, 0 );
 #endif
-		rc = 1;
-		SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 20 );
-		goto destroy;
+			rc = 1;
+			SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 20 );
+			goto destroy;
+		}
+		/* Retrieve slapd's own ctx */
+		ldap_pvt_tls_get_option( NULL, LDAP_OPT_X_TLS_CTX, &slap_tls_ctx );
+		/* Restore previous ctx */
+		ldap_pvt_tls_set_option( NULL, LDAP_OPT_X_TLS_CTX, def_ctx );
 	}
 #endif
 

@@ -1,5 +1,5 @@
 /* init.c - initialize shell backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/init.c,v 1.27.2.3 2004/01/01 18:16:39 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/init.c,v 1.27.2.4 2004/04/12 18:20:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -37,7 +37,7 @@
 #include "slap.h"
 #include "shell.h"
 
-#ifdef SLAPD_SHELL_DYNAMIC
+#if SLAPD_SHELL == SLAPD_MOD_DYNAMIC
 
 int init_module(int argc, char *argv[]) {
     BackendInfo bi;
@@ -50,7 +50,7 @@ int init_module(int argc, char *argv[]) {
     return 0;
 }
 
-#endif /* SLAPD_SHELL_DYNAMIC */
+#endif /* SLAPD_SHELL */
 
 int
 shell_back_initialize(

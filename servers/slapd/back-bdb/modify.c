@@ -1,5 +1,5 @@
 /* modify.c - bdb backend modify routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modify.c,v 1.76.2.9 2004/01/01 18:16:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modify.c,v 1.76.2.11 2004/02/24 16:31:27 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -23,6 +23,11 @@
 #include "back-bdb.h"
 #include "external.h"
 
+static struct berval scbva[] = {
+	BER_BVC("glue"),
+	BER_BVNULL
+};
+
 int bdb_modify_internal(
 	Operation *op,
 	DB_TXN *tid,
@@ -37,6 +42,7 @@ int bdb_modify_internal(
 	Modifications	*ml;
 	Attribute	*save_attrs;
 	Attribute 	*ap;
+	int			glue_attr_delete = 0;
 
 #ifdef NEW_LOGGING
 	LDAP_LOG ( OPERATION, ENTRY, "bdb_modify_internal: 0x%08lx: %s\n", 
@@ -53,6 +59,38 @@ int bdb_modify_internal(
 	/* save_attrs will be disposed of by bdb_cache_modify */
 	save_attrs = e->e_attrs;
 	e->e_attrs = attrs_dup( e->e_attrs );
+
+	for ( ml = modlist; ml != NULL; ml = ml->sml_next ) {
+		int match;
+		mod = &ml->sml_mod;
+		switch( mod->sm_op ) {
+		case LDAP_MOD_ADD:
+		case LDAP_MOD_REPLACE:
+			if ( mod->sm_desc == slap_schema.si_ad_structuralObjectClass ) {
+				value_match( &match, slap_schema.si_ad_structuralObjectClass,
+				slap_schema.si_ad_structuralObjectClass->ad_type->sat_equality,
+				SLAP_MR_VALUE_OF_ATTRIBUTE_SYNTAX,
+				&mod->sm_values[0], &scbva[0], text );
+				if ( !match )
+					glue_attr_delete = 1;
+			}
+		}
+		if ( glue_attr_delete )
+			break;
+	}
+
+	if ( glue_attr_delete ) {
+		Attribute	**app = &e->e_attrs;
+		while ( *app != NULL ) {
+			if ( !is_at_operational( (*app)->a_desc->ad_type )) {
+				Attribute *save = *app;
+				*app = (*app)->a_next;
+				attr_free( save );
+				continue;
+			}
+			app = &(*app)->a_next;
+		}
+	}
 
 	for ( ml = modlist; ml != NULL; ml = ml->sml_next ) {
 		mod = &ml->sml_mod;
@@ -78,6 +116,8 @@ int bdb_modify_internal(
 			break;
 
 		case LDAP_MOD_DELETE:
+			if ( glue_attr_delete )
+				break;
 #ifdef NEW_LOGGING
 			LDAP_LOG ( OPERATION, DETAIL1, 
 				"bdb_modify_internal: delete\n", 0, 0, 0 );
@@ -200,6 +240,10 @@ int bdb_modify_internal(
 
 		/* If objectClass was modified, reset the flags */
 		if ( mod->sm_desc == slap_schema.si_ad_objectClass ) {
+			e->e_ocflags = 0;
+		}
+
+		if ( glue_attr_delete ) {
 			e->e_ocflags = 0;
 		}
 

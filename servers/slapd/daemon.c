@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.273.2.8 2004/01/17 18:36:41 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.273.2.10 2004/04/12 18:13:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -1490,7 +1490,7 @@ slapd_daemon_task(
 			socklen_t len = sizeof(from);
 			long id;
 			slap_ssf_t ssf = 0;
-			struct berval authid = { 0, NULL };
+			struct berval authid = BER_BVNULL;
 #ifdef SLAPD_RLOOKUPS
 			char hbuf[NI_MAXHOST];
 #endif
@@ -1660,6 +1660,14 @@ slapd_daemon_task(
 			switch ( from.sa_addr.sa_family ) {
 #  ifdef LDAP_PF_LOCAL
 			case AF_LOCAL:
+				/* FIXME: apparently accept doesn't fill
+				 * the sun_path sun_path member */
+				if ( from.sa_un_addr.sun_path[0] == '\0' ) {
+					AC_MEMCPY( from.sa_un_addr.sun_path,
+							slap_listeners[l]->sl_sa.sa_un_addr.sun_path,
+							sizeof( from.sa_un_addr.sun_path ) );
+				}
+
 				sprintf( peername, "PATH=%s", from.sa_un_addr.sun_path );
 				ssf = LDAP_PVT_SASL_LOCAL_SSF;
 				{

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.27.2.4 2004/01/01 18:16:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.27.2.5 2004/03/17 20:59:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -48,6 +48,27 @@ new_target( void )
 	if ( lt->rwmap.rwm_rw == NULL ) {
 		free( lt );
                 return NULL;
+	}
+
+	{
+		char	*rargv[3];
+
+		/*
+		 * the filter rewrite as a string must be disabled
+		 * by default; it can be re-enabled by adding rules;
+		 * this creates an empty rewriteContext
+		 */
+		rargv[ 0 ] = "rewriteContext";
+		rargv[ 1 ] = "searchFilter";
+		rargv[ 2 ] = NULL;
+		rewrite_parse( lt->rwmap.rwm_rw, "<suffix massage>", 
+				1, 2, rargv );
+
+		rargv[ 0 ] = "rewriteContext";
+		rargv[ 1 ] = "default";
+		rargv[ 2 ] = NULL;
+		rewrite_parse( lt->rwmap.rwm_rw, "<suffix massage>", 
+				1, 2, rargv );
 	}
 
 	ldap_back_map_init( &lt->rwmap.rwm_at, &mapping );

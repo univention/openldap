@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/bind.c,v 1.29.2.4 2004/01/01 18:16:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/bind.c,v 1.29.2.8 2004/04/12 16:08:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -169,7 +169,7 @@ meta_back_bind( Operation *op, SlapReply *rs )
 			rs->sr_err = LDAP_INVALID_CREDENTIALS;
 		}
 
-		rs->sr_err = ldap_back_map_result( rs );
+		rs->sr_err = slap_map_api2result( rs );
 		send_ldap_result( op, rs );
 		return -1;
 	}
@@ -191,10 +191,11 @@ meta_back_do_single_bind(
 )
 {
 	struct metainfo	*li = ( struct metainfo * )op->o_bd->be_private;
-	struct berval	mdn = { 0, NULL };
+	struct berval	mdn = BER_BVNULL;
 	ber_int_t	msgid;
 	dncookie	dc;
 	struct metasingleconn	*lsc = &lc->conns[ candidate ];
+	LDAPMessage	*res;
 	
 	/*
 	 * Rewrite the bind dn if needed
@@ -202,7 +203,7 @@ meta_back_do_single_bind(
 	dc.rwmap = &li->targets[ candidate ]->rwmap;
 	dc.conn = op->o_conn;
 	dc.rs = rs;
-	dc.ctx = "bindDn";
+	dc.ctx = "bindDN";
 
 	if ( ldap_back_dn_massage( &dc, &op->o_req_dn, &mdn ) ) {
 		send_ldap_result( op, rs );
@@ -213,42 +214,45 @@ meta_back_do_single_bind(
 		rs->sr_err = ldap_set_option( lsc->ld, 
 				LDAP_OPT_SERVER_CONTROLS, op->o_ctrls );
 		if ( rs->sr_err != LDAP_SUCCESS ) {
-			rs->sr_err = ldap_back_map_result( rs );
+			rs->sr_err = slap_map_api2result( rs );
 			goto return_results;
 		}
 	}
-	
-	rs->sr_err = ldap_sasl_bind(lsc->ld, mdn.bv_val,
+
+	/* FIXME: this fixes the bind problem right now; we need
+	 * to use the asynchronous version to get the "matched"
+	 * and more in case of failure ... */
+	rs->sr_err = ldap_sasl_bind_s(lsc->ld, mdn.bv_val,
 			LDAP_SASL_SIMPLE, &op->oq_bind.rb_cred,
-			op->o_ctrls, NULL, &msgid);
+			op->o_ctrls, NULL, NULL);
 	if ( rs->sr_err != LDAP_SUCCESS ) {
-		rs->sr_err = ldap_back_map_result( rs );
+		rs->sr_err = slap_map_api2result( rs );
+		goto return_results;
+	}
 
-	} else {
-		/*
-		 * FIXME: handle response!!!
-		 */
-		if ( lsc->bound_dn.bv_val != NULL ) {
-			ber_memfree( lsc->bound_dn.bv_val );
-		}
-		ber_dupbv( &lsc->bound_dn, &op->o_req_dn );
-		lsc->bound = META_BOUND;
-		lc->bound_target = candidate;
+	/*
+	 * FIXME: handle response!!!
+	 */
+	if ( lsc->bound_dn.bv_val != NULL ) {
+		ber_memfree( lsc->bound_dn.bv_val );
+	}
+	ber_dupbv( &lsc->bound_dn, &op->o_req_dn );
+	lsc->bound = META_BOUND;
+	lc->bound_target = candidate;
 
-		if ( li->savecred ) {
-			if ( lsc->cred.bv_val ) {
-				memset( lsc->cred.bv_val, 0, lsc->cred.bv_len );
-				ber_memfree( lsc->cred.bv_val );
-			}
-			ber_dupbv( &lsc->cred, &op->oq_bind.rb_cred );
-			ldap_set_rebind_proc( lsc->ld, meta_back_rebind, lsc );
+	if ( li->savecred ) {
+		if ( lsc->cred.bv_val ) {
+			memset( lsc->cred.bv_val, 0, lsc->cred.bv_len );
+			ber_memfree( lsc->cred.bv_val );
 		}
+		ber_dupbv( &lsc->cred, &op->oq_bind.rb_cred );
+		ldap_set_rebind_proc( lsc->ld, meta_back_rebind, lsc );
+	}
 
-		if ( li->cache.ttl != META_DNCACHE_DISABLED
-				&& op->o_req_ndn.bv_len != 0 ) {
-			( void )meta_dncache_update_entry( &li->cache,
-					&op->o_req_ndn, candidate );
-		}
+	if ( li->cache.ttl != META_DNCACHE_DISABLED
+			&& op->o_req_ndn.bv_len != 0 ) {
+		( void )meta_dncache_update_entry( &li->cache,
+				&op->o_req_ndn, candidate );
 	}
 
 return_results:;
@@ -277,7 +281,8 @@ meta_back_dobind( struct metaconn *lc, Operation *op )
 	}
 
 	for ( i = 0, lsc = lc->conns; !META_LAST(lsc); ++i, ++lsc ) {
-		int rc;
+		int		rc;
+		struct berval	cred = BER_BVC("");
 
 		/*
 		 * Not a candidate or something wrong with this target ...
@@ -324,7 +329,8 @@ meta_back_dobind( struct metaconn *lc, Operation *op )
 			lsc->cred.bv_len = 0;
 		}
 
-		rc = ldap_bind_s( lsc->ld, 0, NULL, LDAP_AUTH_SIMPLE );
+		rc = ldap_sasl_bind_s(lsc->ld, "", LDAP_SASL_SIMPLE, &cred,
+				op->o_ctrls, NULL, NULL);
 		if ( rc != LDAP_SUCCESS ) {
 			
 #ifdef NEW_LOGGING
@@ -410,6 +416,7 @@ meta_back_op_result( struct metaconn *lc, Operation *op, SlapReply *rs )
 	struct metasingleconn *lsc;
 	char *rmsg = NULL;
 	char *rmatch = NULL;
+	int	free_rmsg = 0, free_rmatch = 0;
 
 	for ( i = 0, lsc = lc->conns; !META_LAST(lsc); ++i, ++lsc ) {
 		char *msg = NULL;
@@ -429,7 +436,7 @@ meta_back_op_result( struct metaconn *lc, Operation *op, SlapReply *rs )
 					LDAP_OPT_ERROR_STRING, &msg );
 			ldap_get_option( lsc->ld,
 					LDAP_OPT_MATCHED_DN, &match );
-			rs->sr_err = ldap_back_map_result( rs );
+			rs->sr_err = slap_map_api2result( rs );
 
 #ifdef NEW_LOGGING
 			LDAP_LOG( BACK_META, RESULTS,
@@ -453,9 +460,17 @@ meta_back_op_result( struct metaconn *lc, Operation *op, SlapReply *rs )
 			switch ( rs->sr_err ) {
 			default:
 				rerr = rs->sr_err;
+				if ( rmsg ) {
+					ber_memfree( rmsg );
+				}
 				rmsg = msg;
+				free_rmsg = 1;
 				msg = NULL;
+				if ( rmatch ) {
+					ber_memfree( rmatch );
+				}
 				rmatch = match;
+				free_rmatch = 1;
 				match = NULL;
 				break;
 			}
@@ -474,6 +489,12 @@ meta_back_op_result( struct metaconn *lc, Operation *op, SlapReply *rs )
 	rs->sr_text = rmsg;
 	rs->sr_matched = rmatch;
 	send_ldap_result( op, rs );
+	if ( free_rmsg ) {
+		ber_memfree( rmsg );
+	}
+	if ( free_rmatch ) {
+		ber_memfree( rmatch );
+	}
 	rs->sr_text = NULL;
 	rs->sr_matched = NULL;
 

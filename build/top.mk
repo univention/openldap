@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/build/top.mk,v 1.78.2.4 2004/01/01 18:16:25 kurt Exp $
+# $OpenLDAP: pkg/ldap/build/top.mk,v 1.78.2.7 2004/04/12 18:21:07 kurt Exp $
 ## Copyright 1998-2004 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
@@ -67,16 +67,19 @@ MKVERSION = $(top_srcdir)/build/mkversion -v "$(VERSION)"
 SHTOOL = $(top_srcdir)/build/shtool
 
 LIBTOOL = @LIBTOOL@
+LIBRELEASE = @OPENLDAP_LIBRELEASE@
 LIBVERSION = @OPENLDAP_LIBVERSION@
-LTVERSION = -version-info $(LIBVERSION)
+LTVERSION = -release $(LIBRELEASE) -version-info $(LIBVERSION)
 
 # libtool --only flag for libraries: platform specific
 NT_LTONLY_LIB = # --only-$(BUILD_LIBS_DYNAMIC)
 LTONLY_LIB = $(@PLAT@_LTONLY_LIB)
 
 # libtool --only flag for modules: depends on linkage of module
-# The BUILD_MOD_DYNAMIC macro is defined in each backend Makefile.in file
-LTONLY_MOD = # --only-$(BUILD_MOD_DYNAMIC)
+# The BUILD_MOD macro is defined in each backend Makefile.in file
+LTONLY_yes = static
+LTONLY_mod = shared
+LTONLY_MOD = # --only-$(BUILD_MOD)
 
 # platform-specific libtool flags
 NT_LTFLAGS_LIB = -no-undefined -avoid-version -rpath $(libdir)

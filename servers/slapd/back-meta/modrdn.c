@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/modrdn.c,v 1.15.2.3 2004/01/01 18:16:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/modrdn.c,v 1.15.2.4 2004/04/12 16:08:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -50,8 +50,8 @@ meta_back_modrdn( Operation *op, SlapReply *rs )
 	struct metaconn		*lc;
 	int			rc = 0;
 	int			candidate = -1;
-	struct berval		mdn = { 0, NULL },
-				mnewSuperior = { 0, NULL };
+	struct berval		mdn = BER_BVNULL,
+				mnewSuperior = BER_BVNULL;
 	dncookie		dc;
 
 	lc = meta_back_getconn( op, rs, META_OP_REQUIRE_SINGLE,

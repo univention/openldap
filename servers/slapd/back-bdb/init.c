@@ -1,5 +1,5 @@
 /* init.c - initialize bdb backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.132.2.6 2004/01/01 18:16:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.132.2.8 2004/04/12 18:20:13 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -36,7 +36,7 @@ static const struct bdbi_database {
 	{ NULL, NULL, 0, 0 }
 };
 
-struct berval bdb_uuid = { 0, NULL };
+struct berval bdb_uuid = BER_BVNULL;
 
 typedef void * db_malloc(size_t);
 typedef void * db_realloc(void *, size_t);
@@ -75,17 +75,6 @@ bdb_db_init( BackendDB *be )
 		0, 0, 0 );
 #endif
 
-	/* indicate system schema supported */
-	be->be_flags |=
-		SLAP_BFLAG_INCREMENT |
-#ifdef BDB_SUBENTRIES
-		SLAP_BFLAG_SUBENTRIES |
-#endif
-#ifdef BDB_ALIASES
-		SLAP_BFLAG_ALIASES |
-#endif
-		SLAP_BFLAG_REFERRALS;
-
 	/* allocate backend-database-specific stuff */
 	bdb = (struct bdb_info *) ch_calloc( 1, sizeof(struct bdb_info) );
 
@@ -118,8 +107,7 @@ int
 bdb_bt_compare(
 	DB *db, 
 	const DBT *usrkey,
-	const DBT *curkey
-)
+	const DBT *curkey )
 {
 	unsigned char *u, *c;
 	int i, x;
@@ -565,8 +553,8 @@ bdb_db_destroy( BackendDB *be )
 	return 0;
 }
 
-#if	(defined(SLAPD_BDB_DYNAMIC) && !defined(BDB_HIER)) || \
-	(defined(SLAPD_HDB_DYNAMIC) && defined(BDB_HIER))
+#if	(SLAPD_BDB == SLAPD_MOD_DYNAMIC && !defined(BDB_HIER)) || \
+	(SLAPD_HDB == SLAPD_MOD_DYNAMIC && defined(BDB_HIER))
 int init_module( int argc, char *argv[] ) {
 	BackendInfo bi;
 
@@ -581,12 +569,11 @@ int init_module( int argc, char *argv[] ) {
 	backend_add( &bi );
 	return 0;
 }
-#endif /* SLAPD_BDB_DYNAMIC */
+#endif /* SLAPD_BDB */
 
 int
 bdb_initialize(
-	BackendInfo	*bi
-)
+	BackendInfo	*bi )
 {
 	static char *controls[] = {
 		LDAP_CONTROL_ASSERT,
@@ -600,8 +587,6 @@ bdb_initialize(
 		NULL
 	};
 
-	bi->bi_controls = controls;
-
 	/* initialize the underlying database system */
 #ifdef NEW_LOGGING
 	LDAP_LOG( BACK_BDB, ENTRY, "bdb_db_initialize\n", 0, 0, 0 );
@@ -609,6 +594,18 @@ bdb_initialize(
 	Debug( LDAP_DEBUG_TRACE, "bdb_initialize: initialize BDB backend\n",
 		0, 0, 0 );
 #endif
+
+	bi->bi_flags |=
+		SLAP_BFLAG_INCREMENT |
+#ifdef BDB_SUBENTRIES
+		SLAP_BFLAG_SUBENTRIES |
+#endif
+#ifdef BDB_ALIASES
+		SLAP_BFLAG_ALIASES |
+#endif
+		SLAP_BFLAG_REFERRALS;
+
+	bi->bi_controls = controls;
 
 	{	/* version check */
 		int major, minor, patch;

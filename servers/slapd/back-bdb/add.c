@@ -1,5 +1,5 @@
 /* add.c - ldap BerkeleyDB back-end add routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/add.c,v 1.76.2.12 2004/01/01 18:21:58 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/add.c,v 1.76.2.14 2004/04/12 18:20:13 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -298,8 +298,8 @@ retry:	/* transaction retry */
 		 * no parent!
 		 *  if not attempting to add entry at suffix or with parent ""
 		 */
-		if (( !be_isroot( op->o_bd, &op->o_ndn ) || pdn.bv_len > 0 )
-			&& !is_entry_glue( op->oq_add.rs_e ))
+		if ((( !be_isroot( op ) && !be_shadow_update(op) )
+			|| pdn.bv_len > 0 ) && !is_entry_glue( op->oq_add.rs_e ))
 		{
 #ifdef NEW_LOGGING
 			LDAP_LOG ( OPERATION, DETAIL1, "bdb_add: %s denied\n", 

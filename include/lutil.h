@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/lutil.h,v 1.49.2.3 2004/01/01 18:16:28 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/lutil.h,v 1.49.2.5 2004/03/19 17:16:47 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -70,15 +70,19 @@ lutil_get_filed_password LDAP_P((
 /* passwd.c */
 struct lutil_pw_scheme;
 
+#define LUTIL_PASSWD_OK		(0)
+#define LUTIL_PASSWD_ERR	(-1)
+
 typedef int (LUTIL_PASSWD_CHK_FUNC)(
 	const struct berval *scheme,
 	const struct berval *passwd,
 	const struct berval *cred,
 	const char **text );
 
-typedef struct berval * (LUTIL_PASSWD_HASH_FUNC) (
+typedef int (LUTIL_PASSWD_HASH_FUNC) (
 	const struct berval *scheme,
 	const struct berval *passwd,
+	struct berval *hash, 
 	const char **text );
 
 LDAP_LUTIL_F( int )
@@ -118,13 +122,14 @@ lutil_passwd LDAP_P((
 	const char **methods,
 	const char **text ));			/* error message */
 
-LDAP_LUTIL_F( struct berval * )
-lutil_passwd_generate LDAP_P(( ber_len_t ));
+LDAP_LUTIL_F( int )
+lutil_passwd_generate LDAP_P(( struct berval *pw, ber_len_t ));
 
-LDAP_LUTIL_F( struct berval * )
+LDAP_LUTIL_F( int )
 lutil_passwd_hash LDAP_P((
 	const struct berval *passwd,
 	const char *method,
+	struct berval *hash,
 	const char **text ));
 
 LDAP_LUTIL_F( int )
@@ -141,6 +146,14 @@ lutil_progname LDAP_P((
 	const char* name,
 	int argc,
 	char *argv[] ));
+
+#ifdef _WIN32
+LDAP_LUTIL_F( void )
+lutil_slashpath LDAP_P(( char* path ));
+#define	LUTIL_SLASHPATH(p)	lutil_slashpath(p)
+#else
+#define	LUTIL_SLASHPATH(p)
+#endif
 
 LDAP_LUTIL_F( char* )
 lutil_strcopy LDAP_P(( char *dst, const char *src ));

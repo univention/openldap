@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/dnssrv.c,v 1.26.2.4 2004/01/17 18:18:37 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/dnssrv.c,v 1.26.2.7 2004/04/12 15:17:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -46,7 +46,7 @@ int ldap_dn2domain(
 	LDAPDN dn = NULL;
 	LDAPRDN rdn = NULL;
 	LDAPAVA *ava = NULL;
-	struct berval domain = { 0, NULL };
+	struct berval domain = BER_BVNULL;
 	static const struct berval DC = BER_BVC("DC");
 	static const struct berval DCOID = BER_BVC("0.9.2342.19200300.100.1.25");
 
@@ -210,11 +210,15 @@ int ldap_domain2hostlist(
 #ifdef NS_HFIXEDSZ
 	/* Bind 8/9 interface */
     len = res_query(request, ns_c_in, ns_t_srv, reply, sizeof(reply));
+#	ifndef T_SRV
+#		define T_SRV ns_t_srv
+#	endif
 #else
 	/* Bind 4 interface */
 #	ifndef T_SRV
 #		define T_SRV 33
 #	endif
+
     len = res_query(request, C_IN, T_SRV, reply, sizeof(reply));
 #endif
     if (len >= 0) {

@@ -1,5 +1,5 @@
 /* add.c - ldap backend add function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/add.c,v 1.38.2.3 2004/01/01 18:16:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/add.c,v 1.38.2.7 2004/04/12 16:00:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -42,9 +42,10 @@ ldap_back_add(
 	Attribute *a;
 	LDAPMod **attrs;
 	struct berval mapped;
-	struct berval mdn = { 0, NULL };
+	struct berval mdn = BER_BVNULL;
 	ber_int_t msgid;
 	dncookie dc;
+	int isupdate;
 #ifdef LDAP_BACK_PROXY_AUTHZ 
 	LDAPControl **ctrls = NULL;
 	int rc = LDAP_SUCCESS;
@@ -68,7 +69,7 @@ ldap_back_add(
 #ifdef ENABLE_REWRITE
 	dc.conn = op->o_conn;
 	dc.rs = rs;
-	dc.ctx = "addDn";
+	dc.ctx = "addDN";
 #else
 	dc.tofrom = 1;
 	dc.normalized = 0;
@@ -86,10 +87,12 @@ ldap_back_add(
 	attrs = (LDAPMod **)ch_malloc(sizeof(LDAPMod *)*i);
 
 #ifdef ENABLE_REWRITE
-	dc.ctx = "addDnAttr";
+	dc.ctx = "addAttrDN";
 #endif
+
+	isupdate = be_shadow_update( op );
 	for (i=0, a=op->oq_add.rs_e->e_attrs; a; a=a->a_next) {
-		if ( a->a_desc->ad_type->sat_no_user_mod  ) {
+		if ( !isupdate && a->a_desc->ad_type->sat_no_user_mod  ) {
 			continue;
 		}
 

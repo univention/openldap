@@ -1,5 +1,5 @@
 /* idl.c - ldap id list handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/idl.c,v 1.76.2.2 2004/01/01 18:16:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/idl.c,v 1.76.2.3 2004/03/17 20:59:57 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -59,7 +59,7 @@ bdb_idl_entry_cmp( const void *v_idl1, const void *v_idl2 )
 	const bdb_idl_cache_entry_t *idl1 = v_idl1, *idl2 = v_idl2;
 	int rc;
 
-	if ((rc = idl1->db - idl2->db )) return rc;
+	if ((rc = SLAP_PTRCMP( idl1->db, idl2->db ))) return rc;
 	if ((rc = idl1->kstr.bv_len - idl2->kstr.bv_len )) return rc;
 	return ( memcmp ( idl1->kstr.bv_val, idl2->kstr.bv_val , idl1->kstr.bv_len ) );
 }

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.165.2.12 2004/01/17 19:32:20 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.165.2.15 2004/04/12 18:20:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -318,7 +318,7 @@ slap_sasl_log(
 
 #if SASL_VERSION_MAJOR >= 2
 static const char *slap_propnames[] = {
-	"*slapConn", "*authcDN", "*authzDN", NULL };
+	"*slapConn", "*slapAuthcDN", "*slapAuthzDN", NULL };
 
 static Filter generic_filter = { LDAP_FILTER_PRESENT };
 static struct berval generic_filterstr = BER_BVC("(objectclass=*)");
@@ -326,15 +326,15 @@ static struct berval generic_filterstr = BER_BVC("(objectclass=*)");
 #define	PROP_CONN	0
 #define	PROP_AUTHC	1
 #define	PROP_AUTHZ	2
+#define	PROP_COUNT	3	/* Number of properties we used */
 
 typedef struct lookup_info {
-	int last;
 	int flags;
 	const struct propval *list;
 	sasl_server_params_t *sparams;
 } lookup_info;
 
-static slap_response sasl_ap_lookup, sasl_cb_checkpass;
+static slap_response sasl_ap_lookup;
 
 static int
 sasl_ap_lookup( Operation *op, SlapReply *rs )
@@ -349,11 +349,16 @@ sasl_ap_lookup( Operation *op, SlapReply *rs )
 
 	if (rs->sr_type != REP_SEARCH) return 0;
 
-	for( i = 0; i < sl->last; i++ ) {
+	for( i = 0; sl->list[i].name; i++ ) {
 		const char *name = sl->list[i].name;
 
 		if ( name[0] == '*' ) {
 			if ( sl->flags & SASL_AUXPROP_AUTHZID ) continue;
+			/* Skip our private properties */
+			if ( !strcmp( name, slap_propnames[0] )) {
+				i += PROP_COUNT-1;
+				continue;
+			}
 			name++;
 		} else if ( !(sl->flags & SASL_AUXPROP_AUTHZID ) )
 			continue;
@@ -408,23 +413,21 @@ slap_auxprop_lookup(
 	sl.flags = flags;
 
 	/* Find our DN and conn first */
-	for( i = 0, sl.last = 0; sl.list[i].name; i++ ) {
+	for( i = 0; sl.list[i].name; i++ ) {
 		if ( sl.list[i].name[0] == '*' ) {
 			if ( !strcmp( sl.list[i].name, slap_propnames[PROP_CONN] ) ) {
 				if ( sl.list[i].values && sl.list[i].values[0] )
 					AC_MEMCPY( &conn, sl.list[i].values[0], sizeof( conn ) );
-				if ( !sl.last ) sl.last = i;
+				continue;
 			}
 			if ( (flags & SASL_AUXPROP_AUTHZID) &&
 				!strcmp( sl.list[i].name, slap_propnames[PROP_AUTHZ] ) ) {
 
 				if ( sl.list[i].values && sl.list[i].values[0] )
 					AC_MEMCPY( &op.o_req_ndn, sl.list[i].values[0], sizeof( struct berval ) );
-				if ( !sl.last ) sl.last = i;
 				break;
 			}
 			if ( !strcmp( sl.list[i].name, slap_propnames[PROP_AUTHC] ) ) {
-				if ( !sl.last ) sl.last = i;
 				if ( sl.list[i].values && sl.list[i].values[0] ) {
 					AC_MEMCPY( &op.o_req_ndn, sl.list[i].values[0], sizeof( struct berval ) );
 					if ( !(flags & SASL_AUXPROP_AUTHZID) )
@@ -435,11 +438,16 @@ slap_auxprop_lookup(
 	}
 
 	/* Now see what else needs to be fetched */
-	for( i = 0; i < sl.last; i++ ) {
+	for( i = 0; sl.list[i].name; i++ ) {
 		const char *name = sl.list[i].name;
 
 		if ( name[0] == '*' ) {
 			if ( flags & SASL_AUXPROP_AUTHZID ) continue;
+			/* Skip our private properties */
+			if ( !strcmp( name, slap_propnames[0] )) {
+				i += PROP_COUNT-1;
+				continue;
+			}
 			name++;
 		} else if ( !(flags & SASL_AUXPROP_AUTHZID ) )
 			continue;
@@ -448,6 +456,7 @@ slap_auxprop_lookup(
 			if ( !(flags & SASL_AUXPROP_OVERRIDE) ) continue;
 		}
 		doit = 1;
+		break;
 	}
 
 	if (doit) {
@@ -617,116 +626,6 @@ slap_auxprop_init(
 	return SASL_OK;
 }
 
-typedef struct checkpass_info {
-	int rc;
-	struct berval cred;
-} checkpass_info;
-
-static int
-sasl_cb_checkpass( Operation *op, SlapReply *rs )
-{
-	slap_callback *tmp = op->o_callback;
-	checkpass_info *ci = tmp->sc_private;
-	Attribute *a;
-	struct berval *bv;
-	
-	if (rs->sr_type != REP_SEARCH) return 0;
-
-	ci->rc = SASL_NOVERIFY;
-
-	a = attr_find( rs->sr_entry->e_attrs, slap_schema.si_ad_userPassword );
-	if ( !a ) return 0;
-	if ( ! access_allowed( op, rs->sr_entry, slap_schema.si_ad_userPassword,
-		NULL, ACL_AUTH, NULL ) )
-	{
-		return 0;
-	}
-
-	for ( bv = a->a_vals; bv->bv_val != NULL; bv++ ) {
-		if ( !lutil_passwd( bv, &ci->cred, NULL, &rs->sr_text ) ) {
-			ci->rc = SASL_OK;
-			break;
-		}
-	}
-	return 0;
-}
-
-static int
-slap_sasl_checkpass(
-	sasl_conn_t *sconn,
-	void *context,
-	const char *username,
-	const char *pass,
-	unsigned passlen,
-	struct propctx *propctx)
-{
-	Connection *conn = (Connection *)context;
-	Operation op = {0};
-	int rc;
-	checkpass_info ci;
-
-	ci.rc = SASL_NOUSER;
-
-	/* SASL will fallback to its own mechanisms if we don't
-	 * find an answer here.
-	 */
-
-	rc = slap_sasl_getdn( conn, NULL, (char *)username, 0, NULL, &op.o_req_ndn,
-		SLAP_GETDN_AUTHCID );
-	if ( rc != LDAP_SUCCESS ) {
-		sasl_seterror( sconn, 0, ldap_err2string( rc ) );
-		return SASL_NOUSER;
-	}
-
-	if ( op.o_req_ndn.bv_len == 0 ) {
-		sasl_seterror( sconn, 0,
-			"No password is associated with the Root DSE" );
-		if ( op.o_req_ndn.bv_val != NULL ) {
-			ch_free( op.o_req_ndn.bv_val );
-		}
-		return SASL_NOUSER;
-	}
-
-	op.o_bd = select_backend( &op.o_req_ndn, 0, 1 );
-	if ( op.o_bd && op.o_bd->be_search ) {
-		slap_callback cb = { NULL, sasl_cb_checkpass, NULL, NULL };
-		SlapReply rs = {REP_RESULT};
-
-		ci.cred.bv_val = (char *)pass;
-		ci.cred.bv_len = passlen;
-
-		cb.sc_private = &ci;
-		op.o_tag = LDAP_REQ_SEARCH;
-		op.o_protocol = LDAP_VERSION3;
-		op.o_ndn = conn->c_ndn;
-		op.o_callback = &cb;
-		op.o_time = slap_get_time();
-		op.o_do_not_cache = 1;
-		op.o_is_auth_check = 1;
-		op.o_threadctx = conn->c_sasl_bindop->o_threadctx;
-		op.o_tmpmemctx = conn->c_sasl_bindop->o_tmpmemctx;
-		op.o_tmpmfuncs = conn->c_sasl_bindop->o_tmpmfuncs;
-		op.o_conn = conn;
-		op.o_connid = conn->c_connid;
-		op.o_req_dn = op.o_req_ndn;
-		op.ors_scope = LDAP_SCOPE_BASE;
-		op.ors_deref = LDAP_DEREF_NEVER;
-		op.ors_slimit = 1;
-		op.ors_filter = &generic_filter;
-		op.ors_filterstr = generic_filterstr;
-
-		op.o_bd->be_search( &op, &rs );
-	}
-	if ( ci.rc != SASL_OK ) {
-		sasl_seterror( sconn, 0,
-			ldap_err2string( LDAP_INVALID_CREDENTIALS ) );
-	}
-
-	ch_free( op.o_req_ndn.bv_val );
-
-	return ci.rc;
-}
-
 /* Convert a SASL authcid or authzid into a DN. Store the DN in an
  * auxiliary property, so that we can refer to it in sasl_authorize
  * without interfering with anything else. Also, the SASL username
@@ -772,6 +671,14 @@ slap_sasl_canonicalize(
 	 */
 	if ( inlen > out_max )
 		inlen = out_max-1;
+
+	/* This is a Simple Bind using SPASSWD. That means the in-directory
+	 * userPassword of the Binding user already points at SASL, so it
+	 * cannot be used to actually satisfy a password comparison. Just
+	 * ignore it, some other mech will process it.
+	 */
+	if ( !conn->c_sasl_bindop ||
+		conn->c_sasl_bindop->orb_method != LDAP_AUTH_SASL ) goto done;
 
 	/* See if we need to add request, can only do it once */
 	prop_getnames( props, slap_propnames, auxvals );
@@ -867,6 +774,10 @@ slap_sasl_authorize(
 	struct berval authcDN, authzDN;
 	int rc;
 
+	/* Simple Binds don't support proxy authorization, ignore it */
+	if ( !conn->c_sasl_bindop ||
+		conn->c_sasl_bindop->orb_method != LDAP_AUTH_SASL ) return SASL_OK;
+
 #ifdef NEW_LOGGING
 	LDAP_LOG( TRANSPORT, ENTRY, 
 		"slap_sasl_authorize: conn %d authcid=\"%s\" authzid=\"%s\"\n",
@@ -885,6 +796,12 @@ slap_sasl_authorize(
 	/* Skip PROP_CONN */
 	prop_getnames( props, slap_propnames+1, auxvals );
 	
+	/* Should not happen */
+	if ( !auxvals[0].values ) {
+		sasl_seterror( sconn, 0, "invalid authcid" );
+		return SASL_NOAUTHZ;
+	}
+
 	AC_MEMCPY( &authcDN, auxvals[0].values[0], sizeof(authcDN) );
 
 	/* Nothing to do if no authzID was given */
@@ -1246,11 +1163,6 @@ int slap_sasl_open( Connection *conn, int reopen )
 #if SASL_VERSION_MAJOR >= 2
 		session_callbacks[cb].id = SASL_CB_CANON_USER;
 		session_callbacks[cb].proc = &slap_sasl_canonicalize;
-		session_callbacks[cb++].context = conn;
-
-		/* XXXX: this should be conditional */
-		session_callbacks[cb].id = SASL_CB_SERVER_USERDB_CHECKPASS;
-		session_callbacks[cb].proc = &slap_sasl_checkpass;
 		session_callbacks[cb++].context = conn;
 #endif
 
@@ -1712,9 +1624,9 @@ char* slap_sasl_secprops( const char *in )
 int
 slap_sasl_setpass( Operation *op, SlapReply *rs )
 {
-	struct berval id = { 0, NULL };	/* needs to come from connection */
-	struct berval new = { 0, NULL };
-	struct berval old = { 0, NULL };
+	struct berval id = BER_BVNULL;	/* needs to come from connection */
+	struct berval new = BER_BVNULL;
+	struct berval old = BER_BVNULL;
 
 	assert( ber_bvcmp( &slap_EXOP_MODIFY_PASSWD, &op->ore_reqoid ) == 0 );
 
@@ -1880,7 +1792,7 @@ int slap_sasl_getdn( Connection *conn, Operation *op, char *id, int len,
 	/* Username strings */
 	if( is_dn == SET_U ) {
 		char		*p;
-		struct berval	realm = { 0, NULL }, c1 = *dn;
+		struct berval	realm = BER_BVNULL, c1 = *dn;
 
 		len = dn->bv_len + sizeof("uid=")-1 + sizeof(",cn=auth")-1;
 

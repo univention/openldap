@@ -1,5 +1,5 @@
 /* root_dse.c - Provides the Root DSA-Specific Entry */
-/* $OpenLDAP: pkg/ldap/servers/slapd/root_dse.c,v 1.81.2.10 2004/01/17 18:36:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/root_dse.c,v 1.81.2.11 2004/04/06 18:16:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -124,7 +124,7 @@ root_dse_info(
 			/* no suffix! */
 			continue;
 		}
-		if ( backends[i].be_flags & SLAP_BFLAG_MONITOR ) {
+		if ( SLAP_MONITOR( &backends[i] )) {
 			vals[0] = backends[i].be_suffix[0];
 			nvals[0] = backends[i].be_nsuffix[0];
 			if( attr_merge( e, ad_monitorContext, vals, nvals ) ) {

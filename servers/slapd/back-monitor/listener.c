@@ -1,5 +1,5 @@
 /* listener.c - deals with listener subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/listener.c,v 1.16.2.3 2004/01/01 18:16:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/listener.c,v 1.16.2.4 2004/03/18 00:56:29 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2004 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* compare.c - DNS SRV backend compare function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/compare.c,v 1.12.2.2 2004/01/01 18:16:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/compare.c,v 1.12.2.3 2004/04/06 18:16:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -39,9 +39,8 @@ dnssrv_back_compare(
 	assert( get_manageDSAit( op ) );
 #endif
 	send_ldap_error( op, rs, LDAP_OTHER,
-			"Operation not supported within naming context" );
+		"Operation not supported within naming context" );
 
 	/* not implemented */
-
 	return 1;
 }

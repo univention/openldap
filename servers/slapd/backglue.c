@@ -1,5 +1,5 @@
 /* backglue.c - backend glue routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.60.2.9 2004/01/23 01:09:44 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.60.2.15 2004/06/04 03:39:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2004 The OpenLDAP Foundation.
@@ -138,6 +138,7 @@ glue_back_db_open (
 	glueOpened = 1;
 
 	gi->bd.be_acl = be->be_acl;
+	gi->bd.be_pending_csn_list = be->be_pending_csn_list;
 
 	if (gi->bd.bd_info->bi_db_open)
 		rc = gi->bd.bd_info->bi_db_open(&gi->bd);
@@ -193,8 +194,8 @@ glue_back_response ( Operation *op, SlapReply *rs )
 
 	switch(rs->sr_type) {
 	case REP_SEARCH:
-		if ( gs->slimit && rs->sr_nentries >= gs->slimit ) {
-			gs->err = LDAP_SIZELIMIT_EXCEEDED;
+		if ( gs->slimit != -1 && rs->sr_nentries >= gs->slimit ) {
+			rs->sr_err = gs->err = LDAP_SIZELIMIT_EXCEEDED;
 			return -1;
 		}
 		/* fallthru */
@@ -206,7 +207,8 @@ glue_back_response ( Operation *op, SlapReply *rs )
 			rs->sr_err == LDAP_SIZELIMIT_EXCEEDED ||
 			rs->sr_err == LDAP_TIMELIMIT_EXCEEDED ||
 			rs->sr_err == LDAP_ADMINLIMIT_EXCEEDED ||
-				gs->err != LDAP_SUCCESS)
+			rs->sr_err == LDAP_NO_SUCH_OBJECT ||
+			gs->err != LDAP_SUCCESS)
 			gs->err = rs->sr_err;
 		if (gs->err == LDAP_SUCCESS && gs->matched) {
 			ch_free (gs->matched);
@@ -251,6 +253,7 @@ static int
 glue_back_search ( Operation *op, SlapReply *rs )
 {
 	BackendDB *b0 = op->o_bd;
+	BackendDB *b1 = NULL;
 	glueinfo *gi = (glueinfo *) b0->bd_info;
 	int i;
 	long stoptime = 0;
@@ -263,14 +266,12 @@ glue_back_search ( Operation *op, SlapReply *rs )
 
 	cb.sc_next = op->o_callback;
 
-	if (op->ors_tlimit) {
-		stoptime = slap_get_time () + op->ors_tlimit;
-	}
+	stoptime = slap_get_time () + op->ors_tlimit;
+
+	op->o_bd = glue_back_select (b0, op->o_req_ndn.bv_val);
 
 	switch (op->ors_scope) {
 	case LDAP_SCOPE_BASE:
-		op->o_bd = glue_back_select (b0, op->o_req_ndn.bv_val);
-
 		if (op->o_bd && op->o_bd->be_search) {
 			rs->sr_err = op->o_bd->be_search( op, rs );
 		} else {
@@ -281,6 +282,20 @@ glue_back_search ( Operation *op, SlapReply *rs )
 
 	case LDAP_SCOPE_ONELEVEL:
 	case LDAP_SCOPE_SUBTREE:
+#ifdef LDAP_SCOPE_SUBORDINATE
+	case LDAP_SCOPE_SUBORDINATE: /* FIXME */
+#endif
+
+		if ( op->o_sync_mode & SLAP_SYNC_REFRESH ) {
+			if (op->o_bd && op->o_bd->be_search) {
+				rs->sr_err = op->o_bd->be_search( op, rs );
+			} else {
+				send_ldap_error(op, rs, LDAP_UNWILLING_TO_PERFORM,
+					      "No search target found");
+			}
+			return rs->sr_err;
+		}
+
 		op->o_callback = &cb;
 		rs->sr_err = gs.err = LDAP_UNWILLING_TO_PERFORM;
 		scope0 = op->ors_scope;
@@ -288,6 +303,7 @@ glue_back_search ( Operation *op, SlapReply *rs )
 		tlimit0 = op->ors_tlimit;
 		dn = op->o_req_dn;
 		ndn = op->o_req_ndn;
+		b1 = op->o_bd;
 
 		/*
 		 * Execute in reverse order, most general first 
@@ -295,14 +311,16 @@ glue_back_search ( Operation *op, SlapReply *rs )
 		for (i = gi->nodes-1; i >= 0; i--) {
 			if (!gi->n[i].be || !gi->n[i].be->be_search)
 				continue;
-			if (tlimit0) {
+			if (!dnIsSuffix(&gi->n[i].be->be_nsuffix[0], &b1->be_nsuffix[0]))
+				continue;
+			if (tlimit0 != -1) {
 				op->ors_tlimit = stoptime - slap_get_time ();
 				if (op->ors_tlimit <= 0) {
 					rs->sr_err = gs.err = LDAP_TIMELIMIT_EXCEEDED;
 					break;
 				}
 			}
-			if (slimit0) {
+			if (slimit0 != -1) {
 				op->ors_slimit = slimit0 - rs->sr_nentries;
 				if (op->ors_slimit < 0) {
 					rs->sr_err = gs.err = LDAP_SIZELIMIT_EXCEEDED;
@@ -314,7 +332,7 @@ glue_back_search ( Operation *op, SlapReply *rs )
 			 * check for abandon 
 			 */
 			if (op->o_abandon) {
-				goto done;
+				goto end_of_loop;
 			}
 			op->o_bd = gi->n[i].be;
 
@@ -349,6 +367,7 @@ glue_back_search ( Operation *op, SlapReply *rs )
 			case LDAP_SIZELIMIT_EXCEEDED:
 			case LDAP_TIMELIMIT_EXCEEDED:
 			case LDAP_ADMINLIMIT_EXCEEDED:
+			case LDAP_NO_SUCH_OBJECT:
 				goto end_of_loop;
 			
 			default:
@@ -364,14 +383,15 @@ end_of_loop:;
 
 		break;
 	}
-	op->o_callback = cb.sc_next;
-	rs->sr_err = gs.err;
-	rs->sr_matched = gs.matched;
-	rs->sr_ref = gs.refs;
+	if ( !op->o_abandon ) {
+		op->o_callback = cb.sc_next;
+		rs->sr_err = gs.err;
+		rs->sr_matched = gs.matched;
+		rs->sr_ref = gs.refs;
 
-	send_ldap_result( op, rs );
+		send_ldap_result( op, rs );
+	}
 
-done:
 	op->o_bd = b0;
 	if (gs.matched)
 		free (gs.matched);
@@ -558,7 +578,7 @@ glue_sub_init( )
 		if (SLAP_GLUE_SUBORDINATE ( b1 ) ) {
 			/* The last database cannot be a subordinate of noone */
 			if (i == nBackendDB - 1) {
-				b1->be_flags ^= SLAP_BFLAG_GLUE_SUBORDINATE;
+				SLAP_DBFLAGS(b1) ^= SLAP_DBFLAG_GLUE_SUBORDINATE;
 			}
 			continue;
 		}
@@ -577,7 +597,7 @@ glue_sub_init( )
 				continue;
 			}
 			cont--;
-			be->be_flags |= SLAP_BFLAG_GLUE_LINKED;
+			SLAP_DBFLAGS(be) |= SLAP_DBFLAG_GLUE_LINKED;
 			if (gi == NULL) {
 				/* We create a copy of the superior's be
 				 * structure, pointing to all of its original
@@ -586,7 +606,7 @@ glue_sub_init( )
 				 * is used whenever we have operations to pass
 				 * down to the real database.
 				 */
-				b1->be_flags |= SLAP_BFLAG_GLUE_INSTANCE;
+				SLAP_DBFLAGS(b1) |= SLAP_DBFLAG_GLUE_INSTANCE;
 				gi = (glueinfo *)ch_malloc(sizeof(glueinfo));
 				gi->nodes = 0;
 				gi->bd = *b1;

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/tools/slapadd.c,v 1.56.2.6 2004/01/01 18:16:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapadd.c,v 1.2.2.3 2004/04/12 18:13:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -53,7 +53,7 @@ struct subentryinfo {
 };
 
 int
-main( int argc, char **argv )
+slapadd( int argc, char **argv )
 {
 	char		*buf = NULL;
 	int         lineno;
@@ -63,10 +63,11 @@ main( int argc, char **argv )
 	const char *text;
 	char textbuf[SLAP_TEXT_BUFLEN] = { '\0' };
 	size_t textlen = sizeof textbuf;
+	const char *progname = "slapadd";
 
 	struct berval csn;
-	struct berval maxcsn = { 0, NULL };
-	struct berval ldifcsn = { 0, NULL };
+	struct berval maxcsn = BER_BVNULL;
+	struct berval ldifcsn = BER_BVNULL;
 	int match;
 	int	provider_subentry = 0;
 	struct subentryinfo *sei;
@@ -74,14 +75,16 @@ main( int argc, char **argv )
 	Attribute *attr;
 	Entry *ctxcsn_e;
 	ID	ctxcsn_id;
-	struct berval	ctxcsn_ndn = { 0, NULL };
+	struct berval	ctxcsn_ndn = BER_BVNULL;
 	int ret;
 	struct berval bvtext;
 	int i;
+	struct berval mc;
+	struct sync_cookie sc;
 #ifdef NEW_LOGGING
 	lutil_log_initialize(argc, argv );
 #endif
-	slap_tool_init( "slapadd", SLAPADD, argc, argv );
+	slap_tool_init( progname, SLAPADD, argc, argv );
 
 	LDAP_SLIST_INIT( &consumer_subentry );
 
@@ -305,7 +308,8 @@ main( int argc, char **argv )
 			}
 		}
 
-		if ( update_ctxcsn == SLAP_TOOL_CTXCSN_KEEP ) {
+		if ( update_ctxcsn == SLAP_TOOL_CTXCSN_KEEP &&
+			( replica_promotion || replica_demotion )) {
 			if ( is_entry_syncProviderSubentry( e )) { 
 				if ( !LDAP_SLIST_EMPTY( &consumer_subentry )) {
 					fprintf( stderr, "%s: consumer and provider subentries "
@@ -399,8 +403,9 @@ main( int argc, char **argv )
 			}
 		}
 
-		if ( !is_entry_syncProviderSubentry( e ) &&
-			 !is_entry_syncConsumerSubentry( e )) {
+		if (( !is_entry_syncProviderSubentry( e ) &&
+			 !is_entry_syncConsumerSubentry( e )) ||
+			 ( !replica_promotion && !replica_demotion )) {
 			if (!dryrun) {
 				ID id = be->be_entry_put( be, e, &bvtext );
 				if( id == NOID ) {
@@ -435,21 +440,27 @@ main( int argc, char **argv )
 		maxcsn.bv_len = 0;
 		maxcsn.bv_val = NULL;
 		LDAP_SLIST_FOREACH( sei, &consumer_subentry, sei_next ) {
+			sc.octet_str = &sei->cookie;
+			slap_parse_sync_cookie( &sc );
 			if ( maxcsn.bv_len != 0 ) {
 				value_match( &match, slap_schema.si_ad_syncreplCookie,
 					slap_schema.si_ad_syncreplCookie->ad_type->sat_ordering,
 					SLAP_MR_VALUE_OF_ATTRIBUTE_SYNTAX,
-					&maxcsn, &sei->cookie, &text );
+					&maxcsn, &sc.ctxcsn[0], &text );
 			} else {
 				match = -1;
 			}
 			if ( match < 0 ) {
 				if ( maxcsn.bv_val )
 					ch_free( maxcsn.bv_val );
-				ber_dupbv( &maxcsn, &sei->cookie );
+				ber_dupbv( &maxcsn, &sc.ctxcsn[0] );
 			}
+			sc.octet_str = NULL;
+			slap_sync_cookie_free( &sc, 0 );
 		}
 	}
+
+	slap_compose_sync_cookie( NULL, &mc, &maxcsn, -1, -1 );
 
 	if ( SLAP_LASTMOD(be) && replica_promotion ) {
 		if ( provider_subentry || update_ctxcsn == SLAP_TOOL_CTXCSN_BATCH ||
@@ -535,7 +546,7 @@ main( int argc, char **argv )
 			ctxcsn_id = be->be_dn2id_get( be, &ctxcsn_ndn );
 
 			if ( ctxcsn_id == NOID ) {
-				ctxcsn_e = slap_create_syncrepl_entry( be, &maxcsn,
+				ctxcsn_e = slap_create_syncrepl_entry( be, &mc,
 												&slap_syncrepl_cn_bv,
 												&slap_syncrepl_bv );
 				if ( !dryrun ) {
@@ -561,7 +572,7 @@ main( int argc, char **argv )
 				if ( ret == LDAP_SUCCESS ) {
 					attr = attr_find( ctxcsn_e->e_attrs,
 									  slap_schema.si_ad_syncreplCookie );
-					AC_MEMCPY( attr->a_vals[0].bv_val, maxcsn.bv_val, maxcsn.bv_len );
+					AC_MEMCPY( attr->a_vals[0].bv_val, mc.bv_val, mc.bv_len );
 					attr->a_vals[0].bv_val[maxcsn.bv_len] = '\0';
 					attr->a_vals[0].bv_len = maxcsn.bv_len;
 					if ( !dryrun ) {
@@ -628,9 +639,9 @@ main( int argc, char **argv )
 				if ( ret == LDAP_SUCCESS ) {
 					attr = attr_find( ctxcsn_e->e_attrs,
 									  slap_schema.si_ad_syncreplCookie );
-					AC_MEMCPY( attr->a_vals[0].bv_val, maxcsn.bv_val, maxcsn.bv_len );
-					attr->a_vals[0].bv_val[maxcsn.bv_len] = '\0';
-					attr->a_vals[0].bv_len = maxcsn.bv_len;
+					AC_MEMCPY( attr->a_vals[0].bv_val, sei->cookie.bv_val, sei->cookie.bv_len );
+					attr->a_vals[0].bv_val[sei->cookie.bv_len] = '\0';
+					attr->a_vals[0].bv_len = sei->cookie.bv_len;
 					if ( !dryrun ) {
 						ctxcsn_id = be->be_entry_modify( be,
 											ctxcsn_e, &bvtext );

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_ops.c,v 1.37.2.6 2004/01/01 18:16:41 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_ops.c,v 1.37.2.10 2004/04/15 01:41:49 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2002-2004 The OpenLDAP Foundation.
@@ -342,7 +342,7 @@ slapi_int_ldapmod_to_entry(
 	char *ldn, 
 	LDAPMod **mods )
 {
-	struct berval		dn = { 0, NULL };
+	struct berval		dn = BER_BVNULL;
 	Entry			*pEntry=NULL;
 	LDAPMod			*pMod;
 	struct berval		*bv;
@@ -396,7 +396,7 @@ slapi_int_ldapmod_to_entry(
 				if ( rc != LDAP_SUCCESS ) goto cleanup;
 				tmp.sml_type.bv_val = pMod->mod_type;
 				tmp.sml_type.bv_len = strlen( pMod->mod_type );
-				tmp.sml_bvalues = bv;
+				tmp.sml_values = bv;
 				tmp.sml_nvalues = NULL;
 		
 				mod  = (Modifications *) ch_malloc( sizeof(Modifications) );
@@ -405,7 +405,7 @@ slapi_int_ldapmod_to_entry(
 				mod->sml_next = NULL;
 				mod->sml_desc = NULL;
 				mod->sml_type = tmp.sml_type;
-				mod->sml_bvalues = tmp.sml_bvalues;
+				mod->sml_values = tmp.sml_values;
 				mod->sml_nvalues = tmp.sml_nvalues;
 
 				*modtail = mod;
@@ -421,7 +421,7 @@ slapi_int_ldapmod_to_entry(
 					if ( rc != LDAP_SUCCESS ) goto cleanup;
 					tmp.sml_type.bv_val = pMod->mod_type;
 					tmp.sml_type.bv_len = strlen( pMod->mod_type );
-					tmp.sml_bvalues = bv;
+					tmp.sml_values = bv;
 					tmp.sml_nvalues = NULL;
 		
 					mod  = (Modifications *) ch_malloc( sizeof(Modifications) );
@@ -430,7 +430,7 @@ slapi_int_ldapmod_to_entry(
 					mod->sml_next = NULL;
 					mod->sml_desc = NULL;
 					mod->sml_type = tmp.sml_type;
-					mod->sml_bvalues = tmp.sml_bvalues;
+					mod->sml_values = tmp.sml_values;
 					mod->sml_nvalues = tmp.sml_nvalues;
 
 					*modtail = mod;
@@ -444,7 +444,7 @@ slapi_int_ldapmod_to_entry(
 	if ( op->o_bd == NULL ) {
 		rc = LDAP_PARTIAL_RESULTS;
 	} else {
-		int repl_user = be_isupdate( op->o_bd, &op->o_bd->be_rootdn );
+		int repl_user = be_isupdate_dn( op->o_bd, &op->o_bd->be_rootdn );
         	if ( !op->o_bd->be_update_ndn.bv_len || repl_user ) {
 			int update = op->o_bd->be_update_ndn.bv_len;
 			char textbuf[SLAP_TEXT_BUFLEN];
@@ -516,7 +516,7 @@ slapi_delete_internal(
 	Slapi_PBlock		*pPB = NULL;
 	Slapi_PBlock		*pSavePB = NULL;
 	SlapReply		rs = { REP_RESULT };
-	struct berval		dn = { 0, NULL };
+	struct berval		dn = BER_BVNULL;
 
 	int			manageDsaIt = 0;
 	int			isCritical;
@@ -557,7 +557,7 @@ slapi_delete_internal(
 	op->o_ndn = pConn->c_ndn = op->o_bd->be_rootndn;
 
 	if ( op->o_bd->be_delete ) {
-		int repl_user = be_isupdate( op->o_bd, &op->o_ndn );
+		int repl_user = be_isupdate( op );
 		if ( !op->o_bd->be_update_ndn.bv_len || repl_user ) {
 			slap_callback cb = { NULL, slap_replog_cb, NULL, NULL };
 			if ( log_change ) op->o_callback = &cb;
@@ -636,7 +636,7 @@ slapi_int_add_entry_locked(
 	op->oq_add.rs_e = *e;
 
 	if ( op->o_bd->be_add ) {
-		int repl_user = be_isupdate( op->o_bd, &op->o_ndn );
+		int repl_user = be_isupdate( op );
 		if ( !op->o_bd->be_update_ndn.bv_len || repl_user ) {
 			slap_callback cb = { NULL, slap_replog_cb, NULL, NULL };
 			if ( log_changes ) op->o_callback = &cb;
@@ -763,8 +763,8 @@ slapi_modrdn_internal(
 	int log_change )
 {
 #ifdef LDAP_SLAPI
-	struct berval		dn = { 0, NULL };
-	struct berval		newrdn = { 0, NULL };
+	struct berval		dn = BER_BVNULL;
+	struct berval		newrdn = BER_BVNULL;
 	Connection		*pConn = NULL;
 	Operation		*op = NULL;
 	Slapi_PBlock		*pPB = NULL;
@@ -827,7 +827,7 @@ slapi_modrdn_internal(
 	op->oq_modrdn.rs_deleteoldrdn = deloldrdn;
 
 	if ( op->o_bd->be_modrdn ) {
-		int repl_user = be_isupdate( op->o_bd, &op->o_ndn );
+		int repl_user = be_isupdate( op );
 		if ( !op->o_bd->be_update_ndn.bv_len || repl_user ) {
 			slap_callback cb = { NULL, slap_replog_cb, NULL, NULL };
 			if ( log_change ) op->o_callback = &cb;
@@ -893,7 +893,7 @@ slapi_modify_internal(
 	Slapi_PBlock		*pPB = NULL;
 	Slapi_PBlock		*pSavePB = NULL;
 
-	struct berval dn = { 0, NULL };
+	struct berval dn = BER_BVNULL;
 
 	int			manageDsaIt = 0;
 	int			isCritical;
@@ -959,7 +959,7 @@ slapi_modify_internal(
 				goto cleanup;
 			tmp.sml_type.bv_val = pMod->mod_type;
 			tmp.sml_type.bv_len = strlen( pMod->mod_type );
-			tmp.sml_bvalues = bv;
+			tmp.sml_values = bv;
 			tmp.sml_nvalues = NULL;
 
 			mod  = (Modifications *)ch_malloc( sizeof(Modifications) );
@@ -968,7 +968,7 @@ slapi_modify_internal(
 			mod->sml_next = NULL;
 			mod->sml_desc = NULL;
 			mod->sml_type = tmp.sml_type;
-			mod->sml_bvalues = tmp.sml_bvalues;
+			mod->sml_values = tmp.sml_values;
 			mod->sml_nvalues = tmp.sml_nvalues;
 		} else { 
 			rs.sr_err = values2obj_copy( pMod->mod_values, &bv );
@@ -976,7 +976,7 @@ slapi_modify_internal(
 				goto cleanup;
 			tmp.sml_type.bv_val = pMod->mod_type;
 			tmp.sml_type.bv_len = strlen( pMod->mod_type );
-			tmp.sml_bvalues = bv;
+			tmp.sml_values = bv;
 			tmp.sml_nvalues = NULL;
 
 			mod  = (Modifications *) ch_malloc( sizeof(Modifications) );
@@ -985,7 +985,7 @@ slapi_modify_internal(
 			mod->sml_next = NULL;
 			mod->sml_desc = NULL;
 			mod->sml_type = tmp.sml_type;
-			mod->sml_bvalues = tmp.sml_bvalues;
+			mod->sml_values = tmp.sml_values;
 			mod->sml_nvalues = tmp.sml_nvalues;
 		}
 		*modtail = mod;
@@ -993,7 +993,7 @@ slapi_modify_internal(
 
 		switch( pMod->mod_op & LDAP_MOD_OP ) {
 		case LDAP_MOD_ADD:
-		if ( mod->sml_bvalues == NULL ) {
+		if ( mod->sml_values == NULL ) {
 			rs.sr_err = LDAP_PROTOCOL_ERROR;
 			goto cleanup;
 		}
@@ -1018,7 +1018,7 @@ slapi_modify_internal(
 	op->oq_modify.rs_modlist = modlist;
 
 	if ( op->o_bd->be_modify ) {
-		int repl_user = be_isupdate( op->o_bd, &op->o_ndn );
+		int repl_user = be_isupdate( op );
 		if ( !op->o_bd->be_update_ndn.bv_len || repl_user ) {
 			int update = op->o_bd->be_update_ndn.bv_len;
 			const char *text = NULL;
@@ -1088,9 +1088,9 @@ slapi_search_internal(
 	Operation		*op = NULL;
 	Slapi_PBlock		*ptr = NULL;		
 	Slapi_PBlock		*pSavePB = NULL;		
-	struct berval		dn = { 0, NULL };
+	struct berval		dn = BER_BVNULL;
 	Filter			*filter=NULL;
-	struct berval		fstr = { 0, NULL };
+	struct berval		fstr = BER_BVNULL;
 	AttributeName		*an = NULL;
 	const char		*text = NULL;
 
@@ -1174,6 +1174,7 @@ slapi_search_internal(
 				rs.sr_type = REP_SEARCH;
 				rs.sr_err = LDAP_SUCCESS;
 				rs.sr_attrs = an;
+				rs.sr_flags = REP_ENTRY_MODIFIABLE;
 
 				send_search_entry( op, &rs );
             		}

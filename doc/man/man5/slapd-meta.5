@@ -2,7 +2,7 @@
 .\" Copyright 1998-2004 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-meta.5,v 1.15.2.4 2004/01/01 18:16:27 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-meta.5,v 1.15.2.7 2004/04/12 18:21:07 kurt Exp $
 .\"
 .\" Portions of this document should probably be moved to slapd-ldap(5)
 .\" and maybe manual pages for librewrite.
@@ -170,7 +170,8 @@ It has been obsoleted by the rewriting tools.
 However, both for backward compatibility and for ease of configuration
 when simple suffix massage is required, it has been preserved.
 It wraps the basic rewriting instructions that perform suffix
-massaging.
+massaging.  See the "REWRITING" section for a detailed list 
+of the rewrite rules it implies.
 .LP
 Note: this also fixes a flaw in suffix massaging, which operated
 on (case insensitive) DNs instead of normalized DNs,
@@ -513,20 +514,22 @@ client -> server:
 .LP
 .RS
 .nf
-(default)      if defined and no specific context 
-               is available
-bindDN         bind
-searchBase     search
-searchFilter   search
-compareDN      compare
-compareAttrDN  compare AVA
-addDN          add
-addAttrDN      add AVA
-modifyDN       modify
-modifyAttrDN   modify AVA
-modrDN         modrdn
-newSuperiorDN  modrdn
-deleteDN       delete
+(default)            if defined and no specific context 
+                     is available
+bindDN               bind
+searchBase           search
+searchFilter         search
+searchFilterAttrDN   search
+compareDN            compare
+compareAttrDN        compare AVA
+addDN                add
+addAttrDN            add AVA
+modifyDN             modify
+modifyAttrDN         modify AVA
+modrDN               modrdn
+newSuperiorDN        modrdn
+deleteDN             delete
+exopPasswdDN         passwd exop DN if proxy
 .fi
 .RE
 .LP
@@ -534,11 +537,11 @@ server -> client:
 .LP
 .RS
 .nf
-searchResult   search (only if defined; no default;
-               acts on DN and DN-syntax attributes 
-               of search results)
-searchAttrDN   search AVA
-matchedDN      all ops (only if applicable)
+searchResult         search (only if defined; no default;
+                     acts on DN and DN-syntax attributes 
+                     of search results)
+searchAttrDN         search AVA
+matchedDN            all ops (only if applicable)
 .fi
 .RE
 .LP
@@ -562,7 +565,7 @@ Determines how a string can be rewritten if a pattern is matched.
 Examples are reported below.
 .SH "Additional configuration syntax:"
 .TP
-.B rewriteMap "<map name>" "<map type>" "[ <map attrs> ]"
+.B rewriteMap "<map type>" "<map name>" "[ <map attrs> ]"
 Allows to define a map that transforms substring rewriting into
 something else.
 The map is referenced inside the substitution pattern of a rule.
@@ -585,6 +588,19 @@ with the `M{n}' flag.
 .nf
 # set to `off' to disable rewriting
 rewriteEngine on
+
+# the rules the "suffixmassage" directive implies
+rewriteEngine on
+# all dataflow from client to server referring to DNs
+rewriteContext default
+rewriteRule "(.*)<virtualnamingcontext>$" "%1<realnamingcontext>" ":"
+# empty filter rule
+rewriteContext searchFilter
+# all dataflow from server to client
+rewriteContext searchResult
+rewriteRule "(.*)<realnamingcontext>$" "%1<virtualnamingcontext>" ":"
+rewriteContext searchAttrDN alias searchResult
+rewriteContext matchedDN alias searchResult
 
 # Everything defined here goes into the `default' context.
 # This rule changes the naming context of anything sent
@@ -627,10 +643,10 @@ rewriteRule     ".*" "%{>addBlanks(%0)}" ":"
 .\" 
 .\" # Finally, in a bind, if one uses a `uid=username' DN,
 .\" # it is rewritten in `cn=name surname' if possible.
-.\" rewriteContext  bindDn
+.\" rewriteContext  bindDN
 .\" rewriteRule     ".*" "%{>addBlanks(%{>uid2Gecos(%0)})}" ":"
 .\" 
-# Rewrite the search base  according to `default' rules.
+# Rewrite the search base according to `default' rules.
 rewriteContext  searchBase alias default
 
 # Search results with OpenLDAP DN are rewritten back with
@@ -652,7 +668,7 @@ rewriteMap ldap attr2dn "ldap://host/dc=my,dc=org?dn?sub"
 # to real naming contexts, we also need to rewrite
 # regular DNs, because the definition of a bindDn
 # rewrite context overrides the default definition.
-rewriteContext bindDn
+rewriteContext bindDN
 rewriteRule "^mail=[^,]+@[^,]+$" "%{attr2dn(%0)}" ":@I"
 
 # This is a rather sophisticated example. It massages a
@@ -661,7 +677,7 @@ rewriteRule "^mail=[^,]+@[^,]+$" "%{attr2dn(%0)}" ":@I"
 # track of the bind DN of the incoming request, which is
 # stored in a variable called `binddn' with session scope,
 # and left in place to allow regular binding:
-rewriteContext  bindDn
+rewriteContext  bindDN
 rewriteRule     ".+" "%{&&binddn(%0)}%0" ":"
 
 # A search filter containing `uid=' is rewritten only

@@ -1,5 +1,5 @@
 /* init.c - initialize ldbm backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/init.c,v 1.84.2.3 2004/01/01 18:16:37 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/init.c,v 1.84.2.5 2004/04/12 18:20:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -24,7 +24,7 @@
 #include "slap.h"
 #include "back-ldbm.h"
 
-#ifdef SLAPD_LDBM_DYNAMIC
+#if SLAPD_LDBM == SLAPD_MOD_DYNAMIC
 
 int init_module(int argc, char *argv[]) {
     BackendInfo bi;
@@ -37,7 +37,7 @@ int init_module(int argc, char *argv[]) {
     return 0;
 }
 
-#endif /* SLAPD_LDBM_DYNAMIC */
+#endif /* SLAPD_LDBM */
 
 int
 ldbm_back_initialize(
@@ -51,6 +51,14 @@ ldbm_back_initialize(
 	};
 
 	bi->bi_controls = controls;
+
+	bi->bi_flags |= 
+		SLAP_BFLAG_INCREMENT |
+#ifdef LDBM_SUBENTRIES
+		SLAP_BFLAG_SUBENTRIES |
+#endif
+		SLAP_BFLAG_ALIASES |
+		SLAP_BFLAG_REFERRALS;
 
 	bi->bi_open = ldbm_back_open;
 	bi->bi_config = NULL;
@@ -139,15 +147,6 @@ ldbm_back_db_init(
 )
 {
 	struct ldbminfo	*li;
-
-	/* indicate system schema supported */
-	be->be_flags |= 
-		SLAP_BFLAG_INCREMENT |
-#ifdef LDBM_SUBENTRIES
-		SLAP_BFLAG_SUBENTRIES |
-#endif
-		SLAP_BFLAG_ALIASES |
-		SLAP_BFLAG_REFERRALS;
 
 	/* allocate backend-database-specific stuff */
 	li = (struct ldbminfo *) ch_calloc( 1, sizeof(struct ldbminfo) );

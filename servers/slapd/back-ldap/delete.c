@@ -1,5 +1,5 @@
 /* delete.c - ldap backend delete function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/delete.c,v 1.27.2.3 2004/01/01 18:16:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/delete.c,v 1.27.2.5 2004/04/12 16:00:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2004 The OpenLDAP Foundation.
@@ -45,7 +45,7 @@ ldap_back_delete(
 	int rc = LDAP_SUCCESS;
 #endif /* LDAP_BACK_PROXY_AUTHZ */
 
-	struct berval mdn = { 0, NULL };
+	struct berval mdn = BER_BVNULL;
 
 	lc = ldap_back_getconn( op, rs );
 	
@@ -60,12 +60,12 @@ ldap_back_delete(
 #ifdef ENABLE_REWRITE
 	dc.conn = op->o_conn;
 	dc.rs = rs;
-	dc.ctx = "deleteDn";
+	dc.ctx = "deleteDN";
 #else
 	dc.tofrom = 1;
 	dc.normalized = 0;
 #endif
-	if ( ldap_back_dn_massage( &dc, &op->o_req_dn, &mdn ) ) {
+	if ( ldap_back_dn_massage( &dc, &op->o_req_ndn, &mdn ) ) {
 		send_ldap_result( op, rs );
 		return -1;
 	}
@@ -93,7 +93,7 @@ cleanup:
 	}
 #endif /* LDAP_BACK_PROXY_AUTHZ */
 
-	if ( mdn.bv_val != op->o_req_dn.bv_val ) {
+	if ( mdn.bv_val != op->o_req_ndn.bv_val ) {
 		free( mdn.bv_val );
 	}
 

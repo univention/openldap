@@ -1,5 +1,5 @@
 /* dbcache.c - manage cache of open databases */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dbcache.c,v 1.28.2.4 2004/01/01 18:16:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dbcache.c,v 1.28.2.5 2004/02/23 22:08:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -28,6 +28,7 @@
 #include "back-bdb.h"
 #include "lutil_hash.h"
 
+#ifdef BDB_INDEX_USE_HASH
 /* Pass-thru hash function. Since the indexer is already giving us hash
  * values as keys, we don't need BDB to re-hash them.
  */
@@ -51,6 +52,10 @@ bdb_db_hash(
 	}
 	return ret;
 }
+#define	BDB_INDEXTYPE	DB_HASH
+#else
+#define	BDB_INDEXTYPE	DB_BTREE
+#endif
 
 int
 bdb_db_cache(
@@ -109,7 +114,9 @@ bdb_db_cache(
 	}
 
 	rc = db->bdi_db->set_pagesize( db->bdi_db, BDB_PAGESIZE );
+#ifdef BDB_INDEX_USE_HASH
 	rc = db->bdi_db->set_h_hash( db->bdi_db, bdb_db_hash );
+#endif
 	rc = db->bdi_db->set_flags( db->bdi_db, DB_DUP | DB_DUPSORT );
 	rc = db->bdi_db->set_dup_compare( db->bdi_db, bdb_bt_compare );
 
@@ -121,7 +128,7 @@ bdb_db_cache(
 #endif
 	rc = DB_OPEN( db->bdi_db,
 		file, NULL /* name */,
-		DB_HASH, bdb->bi_db_opflags | DB_CREATE | DB_THREAD,
+		BDB_INDEXTYPE, bdb->bi_db_opflags | DB_CREATE | DB_THREAD,
 		bdb->bi_dbenv_mode );
 
 	ch_free( file );

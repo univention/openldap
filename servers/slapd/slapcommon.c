@@ -1,5 +1,5 @@
 /* slapcommon.c - common routine for the slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/tools/slapcommon.c,v 1.42.2.6 2004/01/01 18:16:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.c,v 1.2.2.4 2004/04/12 18:13:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -37,57 +37,41 @@
 #include "slapcommon.h"
 #include "lutil.h"
 
-
-char	*progname	= NULL;
-char	*conffile	= SLAPD_DEFAULT_CONFIGFILE;
-int		truncatemode = 0;
-int		verbose		= 0;
-int		update_ctxcsn = SLAP_TOOL_CTXCSN_KEEP;
-int		retrieve_ctxcsn = 0;
-int		retrieve_synccookie = 0;
-int		replica_promotion = 0;
-int		replica_demotion = 0;
-char	*replica_id_string = NULL;
-char	**replica_id_strlist = NULL;
-int		*replica_id_list = NULL;
-int		continuemode = 0;
-int		nosubordinates = 0;
-int		dryrun = 0;
-struct berval	sub_ndn = { 0, NULL };
-
-char	*ldiffile	= NULL;
-FILE	*ldiffp		= NULL;
+tool_vars tool_globals;
 
 #ifdef CSRIMALLOC
-	char *leakfilename;
-	FILE *leakfile;
+static char *leakfilename;
+static FILE *leakfile;
 #endif
 
-Backend *be = NULL;
-
 static void
-usage( int tool )
+usage( int tool, const char *progname )
 {
 	char *options = NULL;
 	fprintf( stderr,
-		"usage: %s [-v] [-c] [-d debuglevel] [-f configfile]\n"
-			"\t[-n databasenumber | -b suffix]", progname );
+		"usage: %s [-v] [-c] [-d debuglevel] [-f configfile]\n",
+		progname );
 
 	switch( tool ) {
 	case SLAPADD:
-		options = "\n\t[-l ldiffile] [-u] [-p [-w] | -r [-i syncreplidlist] [-w]]\n";
+		options = "\t[-n databasenumber | -b suffix]\n"
+			"\t[-l ldiffile] [-u] [-p [-w] | -r [-i syncreplidlist] [-w]]\n";
 		break;
 
 	case SLAPCAT:
-		options = "\t[-l ldiffile] [-m] [-k]\n";
+		options = "\t[-n databasenumber | -b suffix] [-l ldiffile] [-m] [-k]\n";
+		break;
+
+	case SLAPDN:
+		options = "\tDN [...]\n";
 		break;
 
 	case SLAPINDEX:
-		options = "\n";
+		options = "\t[-n databasenumber | -b suffix]\n";
 		break;
 	}
 
-	if( options != NULL ) {
+	if ( options != NULL ) {
 		fputs( options, stderr );
 	}
 	exit( EXIT_FAILURE );
@@ -104,17 +88,18 @@ usage( int tool )
 
 void
 slap_tool_init(
-	const char* name,
+	const char* progname,
 	int tool,
 	int argc, char **argv )
 {
 	char *options;
-	struct berval base = { 0, NULL };
+	char *conffile = SLAPD_DEFAULT_CONFIGFILE;
+	struct berval base = BER_BVNULL;
 	char *subtree = NULL;
+	char *ldiffile	= NULL;
 	int rc, i, dbnum;
 	int mode = SLAP_TOOL_MODE;
-
-	progname = lutil_progname( name, argc, argv );
+	int truncatemode = 0;
 
 #ifdef CSRIMALLOC
 	leakfilename = malloc( strlen( progname ) + sizeof(".leak") );
@@ -130,14 +115,19 @@ slap_tool_init(
 		options = "b:cd:f:i:l:n:prtuvWw";
 		break;
 
-	case SLAPINDEX:
-		options = "b:cd:f:n:v";
-		mode |= SLAP_TOOL_READMAIN;
-		break;
-
 	case SLAPCAT:
 		options = "b:cd:f:kl:mn:s:v";
 		mode |= SLAP_TOOL_READMAIN | SLAP_TOOL_READONLY;
+		break;
+
+	case SLAPDN:
+	case SLAPTEST:
+		options = "d:f:v";
+		break;
+
+	case SLAPINDEX:
+		options = "b:cd:f:n:v";
+		mode |= SLAP_TOOL_READMAIN;
 		break;
 
 	default:
@@ -146,8 +136,6 @@ slap_tool_init(
 		exit( EXIT_FAILURE );
 	}
 
-	ldiffile = NULL;
-	conffile = SLAPD_DEFAULT_CONFIGFILE;
 	dbnum = -1;
 	while ( (i = getopt( argc, argv, options )) != EOF ) {
 		switch ( i ) {
@@ -171,7 +159,7 @@ slap_tool_init(
 		case 'i': /* specify syncrepl id list */
 			replica_id_string = strdup( optarg );
 			if ( !isdigit( (unsigned char) *replica_id_string )) {
-				usage( tool );
+				usage( tool, progname );
 				exit( EXIT_FAILURE );
 			}
 			str2clist( &replica_id_strlist, replica_id_string, "," );
@@ -240,21 +228,43 @@ slap_tool_init(
 			break;
 
 		default:
-			usage( tool );
+			usage( tool, progname );
 			break;
 		}
 	}
 
-	if ( ( argc != optind ) || (dbnum >= 0 && base.bv_val != NULL ) ) {
-		usage( tool );
-	}
-
-	if ( replica_promotion && replica_demotion ) {
-		usage( tool );
-	} else if ( !replica_promotion && !replica_demotion ) {
-		if ( update_ctxcsn != SLAP_TOOL_CTXCSN_KEEP ) {
-			usage( tool );
+	switch ( tool ) {
+	case SLAPADD:
+	case SLAPCAT:
+	case SLAPINDEX:
+		if ( ( argc != optind ) || (dbnum >= 0 && base.bv_val != NULL ) ) {
+			usage( tool, progname );
 		}
+
+		if ( replica_promotion && replica_demotion ) {
+			usage( tool, progname );
+
+		} else if ( !replica_promotion && !replica_demotion ) {
+			if ( update_ctxcsn != SLAP_TOOL_CTXCSN_KEEP ) {
+				usage( tool, progname );
+			}
+		}
+		break;
+
+	case SLAPDN:
+		if ( argc == optind ) {
+			usage( tool, progname );
+		}
+		break;
+
+	case SLAPTEST:
+		if ( argc != optind ) {
+			usage( tool, progname );
+		}
+		break;
+
+	default:
+		break;
 	}
 
 	if ( ldiffile == NULL ) {
@@ -292,6 +302,11 @@ slap_tool_init(
 		exit( EXIT_FAILURE );
 	}
 
+	if ( overlay_init() ) {
+		fprintf( stderr, "%s: overlay_init failed!\n", progname );
+		exit( EXIT_FAILURE );
+	}
+
 	rc = read_config( conffile, 0 );
 
 	if ( rc != 0 ) {
@@ -299,9 +314,21 @@ slap_tool_init(
 		exit( EXIT_FAILURE );
 	}
 
-	if ( !nbackends ) {
-		fprintf( stderr, "No databases found in config file\n" );
-		exit( EXIT_FAILURE );
+	ldap_syslog = 0;
+
+	switch ( tool ) {
+	case SLAPADD:
+	case SLAPCAT:
+	case SLAPINDEX:
+		if ( !nbackends ) {
+			fprintf( stderr, "No databases found "
+					"in config file\n" );
+			exit( EXIT_FAILURE );
+		}
+		break;
+
+	default:
+		break;
 	}
 
 	rc = glue_sub_init();
@@ -316,6 +343,15 @@ slap_tool_init(
 	if ( rc != 0 ) {
 		fprintf( stderr, "%s: slap_schema_prep failed!\n", progname );
 		exit( EXIT_FAILURE );
+	}
+
+	switch ( tool ) {
+	case SLAPDN:
+	case SLAPTEST:
+		return;
+
+	default:
+		break;
 	}
 
 	if( subtree ) {
@@ -380,7 +416,7 @@ slap_tool_init(
 
 		if ( dbnum >= nbackends ) {
 			fprintf( stderr, "Available database(s) "
-					"do not allow %s\n", name );
+					"do not allow %s\n", progname );
 			exit( EXIT_FAILURE );
 		}
 		
@@ -388,11 +424,11 @@ slap_tool_init(
 #ifdef NEW_LOGGING
 			LDAP_LOG( BACKEND, ERR, 
 "The first database does not allow %s; using the first available one (%d)\n",
-				name, dbnum + 1, 0 );
+				progname, dbnum + 1, 0 );
 #else
 			Debug( LDAP_DEBUG_ANY,
 "The first database does not allow %s; using the first available one (%d)\n",
-				name, dbnum + 1, 0 );
+				progname, dbnum + 1, 0 );
 #endif
 		}
 

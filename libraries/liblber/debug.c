@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblber/debug.c,v 1.9.2.4 2004/01/01 18:16:29 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/debug.c,v 1.9.2.6 2004/03/17 20:15:31 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -146,8 +146,6 @@ void lutil_log_int(
 	time_t now;
 	struct tm *today;
 #endif
-	size_t i;
-	char * tmp;
 
 #ifdef LDAP_SYSLOG
 	/* we're configured to use syslog */
@@ -302,3 +300,23 @@ void (lutil_debug)( int debug, int level, const char *fmt, ... )
 	fputs( buffer, stderr );
 	va_end( vl );
 }
+
+#if defined(HAVE_EBCDIC) && defined(LDAP_SYSLOG)
+#undef syslog
+void eb_syslog( int pri, const char *fmt, ... )
+{
+	char buffer[4096];
+	va_list vl;
+
+	va_start( vl, fmt );
+	vsnprintf( buffer, sizeof(buffer), fmt, vl );
+	buffer[sizeof(buffer)-1] = '\0';
+
+	/* The syslog function appears to only work with pure EBCDIC */
+	__atoe(buffer);
+#pragma convlit(suspend)
+	syslog( pri, "%s", buffer );
+#pragma convlit(resume)
+	va_end( vl );
+}
+#endif

@@ -1,5 +1,5 @@
 /* ctxcsn.c -- back-bdb Context CSN Management Routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/ctxcsn.c,v 1.10.2.6 2004/01/01 18:16:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/ctxcsn.c,v 1.10.2.8 2004/05/21 01:38:48 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2004 The OpenLDAP Foundation.
@@ -39,7 +39,7 @@ bdb_csn_commit(
 )
 {
 	struct bdb_info	*bdb = (struct bdb_info *) op->o_bd->be_private;
-	struct berval	ctxcsn_ndn = { 0, NULL };
+	struct berval	ctxcsn_ndn = BER_BVNULL;
 	EntryInfo		*ctxcsn_ei = NULL;
 	DB_LOCK			ctxcsn_lock;
 	struct berval	max_committed_csn;
@@ -90,7 +90,7 @@ bdb_csn_commit(
 			modvals[1].bv_len = 0;
 
 			mod.sml_op = LDAP_MOD_REPLACE;
-			mod.sml_bvalues = modvals;
+			mod.sml_values = modvals;
 			mod.sml_nvalues = NULL;
 			mod.sml_desc = slap_schema.si_ad_contextCSN;
 			mod.sml_type = mod.sml_desc->ad_cname;
@@ -171,7 +171,7 @@ bdb_csn_commit(
 			goto rewind;
 		case DB_KEYEXIST :
 			rs->sr_err = LDAP_OTHER;
-			rs->sr_text = "context csn exists before contex prefix does";
+			rs->sr_text = "context csn exists before context prefix does";
 			return BDB_CSN_ABORT;
 		default :
 			rs->sr_err = LDAP_OTHER;

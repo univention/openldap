@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/compare.c,v 1.23.2.3 2004/01/01 18:16:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/compare.c,v 1.23.2.7 2004/04/12 16:08:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -38,7 +38,7 @@ meta_back_compare( Operation *op, SlapReply *rs )
 	struct metaconn *lc;
 	struct metasingleconn *lsc;
 	char *match = NULL, *err = NULL;
-	struct berval mmatch = { 0, NULL };
+	struct berval mmatch = BER_BVNULL;
 	int candidates = 0, last = 0, i, count = 0, rc;
        	int cres = LDAP_SUCCESS, rres = LDAP_SUCCESS;
 	int *msgid;
@@ -67,10 +67,10 @@ meta_back_compare( Operation *op, SlapReply *rs )
 	 */
 	dc.conn = op->o_conn;
 	dc.rs = rs;
-	dc.ctx = "compareDn";
+	dc.ctx = "compareDN";
 
 	for ( i = 0, lsc = lc->conns; !META_LAST(lsc); ++i, ++lsc ) {
-		struct berval mdn = { 0, NULL };
+		struct berval mdn = BER_BVNULL;
 		struct berval mapped_attr = op->oq_compare.rs_ava->aa_desc->ad_cname;
 		struct berval mapped_value = op->oq_compare.rs_ava->aa_value;
 
@@ -194,7 +194,7 @@ meta_back_compare( Operation *op, SlapReply *rs )
 					break;
 
 				default:
-					rres = ldap_back_map_result( rs );
+					rres = slap_map_api2result( rs );
 
 					if ( err != NULL ) {
 						free( err );
@@ -254,11 +254,13 @@ finish:;
 		matched.bv_val = match;
 		matched.bv_len = strlen( match );
 
-		dc.ctx = "matchedDn";
+		dc.ctx = "matchedDN";
 		ldap_back_dn_massage( &dc, &matched, &mmatch );
 	}
 
-	rs->sr_err = rres;
+	if ( rres != LDAP_SUCCESS ) {
+		rs->sr_err = rres;
+	}
 	rs->sr_matched = mmatch.bv_val;
 	send_ldap_result( op, rs );
 	rs->sr_matched = NULL;

@@ -1,5 +1,5 @@
 /* config.c - configuration file handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.228.2.7 2004/01/01 18:16:33 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.228.2.17 2004/05/21 23:35:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -54,7 +54,8 @@ struct slap_limits_set deflimit = {
 	0,
 	-1,				/* no limit on unchecked size */
 	0,				/* page limit */
-	0				/* hide number of entries left */
+	0,				/* hide number of entries left */
+	0				/* number of total entries returned by pagedResults equal to hard limit */
 };
 
 AccessControl	*global_acl = NULL;
@@ -70,14 +71,14 @@ int		global_idletimeout = 0;
 char	*global_host = NULL;
 char	*global_realm = NULL;
 char		*ldap_srvtab = "";
-char		*default_passwd_hash = NULL;
+char		**default_passwd_hash = NULL;
 int		cargc = 0, cargv_size = 0;
 char	**cargv;
-struct berval default_search_base = { 0, NULL };
-struct berval default_search_nbase = { 0, NULL };
+struct berval default_search_base = BER_BVNULL;
+struct berval default_search_nbase = BER_BVNULL;
 unsigned		num_subordinates = 0;
-struct berval global_schemadn = { 0, NULL };
-struct berval global_schemandn = { 0, NULL };
+struct berval global_schemadn = BER_BVNULL;
+struct berval global_schemandn = BER_BVNULL;
 
 ber_len_t sockbuf_max_incoming = SLAP_SB_MAX_INCOMING_DEFAULT;
 ber_len_t sockbuf_max_incoming_auth= SLAP_SB_MAX_INCOMING_AUTH;
@@ -96,15 +97,15 @@ int use_reverse_lookup = 0;
 int slapi_plugins_used = 0;
 #endif
 
-static char	*fp_getline(FILE *fp, int *lineno);
-static void	fp_getline_init(int *lineno);
-static int	fp_parse_line(int lineno, char *line);
+static char *fp_getline(FILE *fp, int *lineno);
+static void fp_getline_init(int *lineno);
+static int fp_parse_line(int lineno, char *line);
 
 static char	*strtok_quote(char *line, char *sep);
-static int      load_ucdata(char *path);
+static int load_ucdata(char *path);
 
-static int     add_syncrepl LDAP_P(( Backend *, char **, int ));
-static int      parse_syncrepl_line LDAP_P(( char **, int, syncinfo_t *));
+static int add_syncrepl LDAP_P(( Backend *, char **, int ));
+static int parse_syncrepl_line LDAP_P(( char **, int, syncinfo_t *));
 
 int
 read_config( const char *fname, int depth )
@@ -635,21 +636,33 @@ read_config( const char *fname, int depth )
 				return 1;
 
 			}
-
-			if ( lutil_passwd_scheme( cargv[1] ) == 0 ) {
+			for(i = 1; i < cargc; i++) {
+				if ( lutil_passwd_scheme( cargv[i] ) == 0 ) {
+#ifdef NEW_LOGGING
+					LDAP_LOG( CONFIG, CRIT, 
+					   	"%s: line %d: password scheme \"%s\" not available\n",
+					   	fname, lineno, cargv[i] );
+#else
+					Debug( LDAP_DEBUG_ANY,
+						"%s: line %d: password scheme \"%s\" not available\n",
+						fname, lineno, cargv[i] );
+#endif
+				} else {
+					ldap_charray_add( &default_passwd_hash, cargv[i] );
+				}
+			}
+			if( !default_passwd_hash ) {
 #ifdef NEW_LOGGING
 				LDAP_LOG( CONFIG, CRIT, 
-					   "%s: line %d: password scheme \"%s\" not available\n",
-					   fname, lineno, cargv[1] );
+				   	"%s: line %d: no valid hashes found\n",
+				   	fname, lineno, 0 );
 #else
 				Debug( LDAP_DEBUG_ANY,
-					"%s: line %d: password scheme \"%s\" not available\n",
-					fname, lineno, cargv[1] );
-#endif
+					"%s: line %d: no valid hashes found\n",
+					fname, lineno, 0 );
 				return 1;
+#endif
 			}
-
-			default_passwd_hash = ch_strdup( cargv[1] );
 
 		} else if ( strcasecmp( cargv[0], "password-crypt-salt-format" ) == 0 ) 
 		{
@@ -674,6 +687,15 @@ read_config( const char *fname, int depth )
 		} else if ( strncasecmp( cargv[0], "sasl", 4 ) == 0 ) {
 			if ( slap_sasl_config( cargc, cargv, line, fname, lineno ) )
 				return 1;
+#ifdef SLAP_X_SASL_REWRITE
+		/* use authid rewrite instead of sasl regexp */
+		} else if ( strncasecmp( cargv[0], "authid-rewrite", sizeof("authid-rewrite") - 1 ) == 0 ) {
+			int rc = slap_sasl_rewrite_config( fname, lineno,
+					cargc, cargv );
+			if ( rc ) {
+				return rc;
+			}
+#endif /* SLAP_X_SASL_REWRITE */
 
 		} else if ( strcasecmp( cargv[0], "schemadn" ) == 0 ) {
 			struct berval dn;
@@ -772,7 +794,7 @@ read_config( const char *fname, int depth )
 
 			for ( i = 1; i < cargc; i++ ) {
 				if ( strncasecmp( cargv[i], "size", 4 ) == 0 ) {
-					rc = parse_limit( cargv[i], lim );
+					rc = limits_parse_one( cargv[i], lim );
 					if ( rc ) {
 #ifdef NEW_LOGGING
 						LDAP_LOG( CONFIG, CRIT, 
@@ -852,7 +874,7 @@ read_config( const char *fname, int depth )
 
 			for ( i = 1; i < cargc; i++ ) {
 				if ( strncasecmp( cargv[i], "time", 4 ) == 0 ) {
-					rc = parse_limit( cargv[i], lim );
+					rc = limits_parse_one( cargv[i], lim );
 					if ( rc ) {
 #ifdef NEW_LOGGING
 						LDAP_LOG( CONFIG, CRIT, 
@@ -920,7 +942,7 @@ read_config( const char *fname, int depth )
 				return( 1 );
 			}
 
-			if ( parse_limits( be, fname, lineno, cargc, cargv ) ) {
+			if ( limits_parse( be, fname, lineno, cargc, cargv ) ) {
 				return( 1 );
 			}
 
@@ -939,7 +961,7 @@ read_config( const char *fname, int depth )
 				return 1;
 
 			} else {
-				be->be_flags |= SLAP_BFLAG_GLUE_SUBORDINATE;
+				SLAP_DBFLAGS(be) |= SLAP_DBFLAG_GLUE_SUBORDINATE;
 				num_subordinates++;
 			}
 
@@ -1316,7 +1338,7 @@ read_config( const char *fname, int depth )
 #ifdef NEW_LOGGING
 					LDAP_LOG( CONFIG, CRIT, "%s: line %d: "
 						"unknown feature %s in \"allow <features>\" line.\n",
-						fname, lineno, cargv[1] );
+						fname, lineno, cargv[i] );
 #else
 					Debug( LDAP_DEBUG_ANY, "%s: line %d: "
 						"unknown feature %s in \"allow <features>\" line\n",
@@ -1780,11 +1802,24 @@ read_config( const char *fname, int depth )
 					    "a database definition.\n", fname, lineno, 0);
 #endif
 				return 1;
-			} else {
-				if ( add_syncrepl( be, cargv, cargc )) {
-					return 1;
-				}
+
+			} else if ( SLAP_SHADOW( be )) {
+#ifdef NEW_LOGGING
+				LDAP_LOG( CONFIG, INFO, 
+					"%s: line %d: syncrepl: database already shadowed.\n",
+					fname, lineno, 0);
+#else
+				Debug( LDAP_DEBUG_ANY,
+					"%s: line %d: syncrepl: database already shadowed.\n",
+					fname, lineno, 0);
+#endif
+				return 1;
+
+			} else if ( add_syncrepl( be, cargv, cargc )) {
+				return 1;
 			}
+
+			SLAP_DBFLAGS(be) |= ( SLAP_DBFLAG_SHADOW | SLAP_DBFLAG_SYNC_SHADOW );
 
 		/* list of replicas of the data in this backend (master only) */
 		} else if ( strcasecmp( cargv[0], "replica" ) == 0 ) {
@@ -1958,6 +1993,9 @@ read_config( const char *fname, int depth )
 				}
 			}
 
+		} else if ( strcasecmp( cargv[0], "replicationInterval" ) == 0 ) {
+			/* ignore */
+
 		/* dn of slave entity allowed to write to replica */
 		} else if ( strcasecmp( cargv[0], "updatedn" ) == 0 ) {
 			if ( cargc < 2 ) {
@@ -1986,6 +2024,18 @@ read_config( const char *fname, int depth )
 #endif
 				return 1;
 
+			} else if ( SLAP_SHADOW(be) ) {
+#ifdef NEW_LOGGING
+				LDAP_LOG( CONFIG, INFO, 
+					"%s: line %d: updatedn: database already shadowed.\n",
+					fname, lineno, 0);
+#else
+				Debug( LDAP_DEBUG_ANY,
+					"%s: line %d: updatedn: database already shadowed.\n",
+					fname, lineno, 0);
+#endif
+				return 1;
+
 			} else {
 				struct berval dn;
 
@@ -2007,7 +2057,9 @@ read_config( const char *fname, int depth )
 #endif
 					return 1;
 				}
+
 			}
+			SLAP_DBFLAGS(be) |= ( SLAP_DBFLAG_SHADOW | SLAP_DBFLAG_SLURP_SHADOW );
 
 		} else if ( strcasecmp( cargv[0], "updateref" ) == 0 ) {
 			if ( cargc < 2 ) {
@@ -2035,14 +2087,14 @@ read_config( const char *fname, int depth )
 #endif
 				return 1;
 
-			} else if ( !be->be_update_ndn.bv_len ) {
+			} else if ( !SLAP_SHADOW(be) ) {
 #ifdef NEW_LOGGING
 				LDAP_LOG( CONFIG, INFO, "%s: line %d: "
-					"updateref line must come after updatedn.\n",
+					"updateref line must come after syncrepl or updatedn.\n",
 					fname, lineno , 0 );
 #else
 				Debug( LDAP_DEBUG_ANY, "%s: line %d: "
-					"updateref line must after updatedn.\n",
+					"updateref line must after syncrepl or updatedn.\n",
 				    fname, lineno, 0 );
 #endif
 				return 1;
@@ -2063,8 +2115,9 @@ read_config( const char *fname, int depth )
 
 			vals[0].bv_val = cargv[1];
 			vals[0].bv_len = strlen( vals[0].bv_val );
-			if( value_add( &be->be_update_refs, vals ) )
+			if( value_add( &be->be_update_refs, vals ) ) {
 				return LDAP_OTHER;
+			}
 
 		/* replication log file to which changes are appended */
 		} else if ( strcasecmp( cargv[0], "replogfile" ) == 0 ) {
@@ -2132,13 +2185,13 @@ read_config( const char *fname, int depth )
 			}
 			if ( strcasecmp( cargv[1], "on" ) == 0 ) {
 				if ( be ) {
-					be->be_flags &= ~SLAP_BFLAG_NOLASTMOD;
+					SLAP_DBFLAGS(be) &= ~SLAP_DBFLAG_NOLASTMOD;
 				} else {
 					lastmod = 1;
 				}
 			} else {
 				if ( be ) {
-					be->be_flags |= SLAP_BFLAG_NOLASTMOD;
+					SLAP_DBFLAGS(be) |= SLAP_DBFLAG_NOLASTMOD;
 				} else {
 					lastmod = 0;
 				}
@@ -2774,7 +2827,7 @@ config_destroy( )
 	if ( slapd_pid_file )
 		free ( slapd_pid_file );
 	if ( default_passwd_hash )
-		free( default_passwd_hash );
+		ldap_charray_free( default_passwd_hash );
 	acl_destroy( global_acl, NULL );
 }
 
@@ -2834,10 +2887,10 @@ add_syncrepl(
 		if ( si->si_rid == si_entry->si_rid ) {
 #ifdef NEW_LOGGING
 			LDAP_LOG( CONFIG, ERR,
-					"add_syncrepl: duplicaetd replica id\n", 0, 0,0 );
+				"add_syncrepl: duplicated replica id\n", 0, 0,0 );
 #else
 			Debug( LDAP_DEBUG_ANY,
-					"add_syncrepl: duplicated replica id\n",0, 0, 0 );
+				"add_syncrepl: duplicated replica id\n",0, 0, 0 );
 #endif
 			duplicated_replica_id = 1;
 			break;
@@ -2889,7 +2942,7 @@ add_syncrepl(
 			si->si_provideruri == NULL ? "(null)" : si->si_provideruri, 0, 0 );
 #endif
 		if ( !si->si_schemachecking ) {
-			be->be_flags |= SLAP_BFLAG_NO_SCHEMA_CHECK;
+			SLAP_DBFLAGS(be) |= SLAP_DBFLAG_NO_SCHEMA_CHECK;
 		}
 		si->si_be = be;
 		LDAP_STAILQ_INSERT_TAIL( &be->be_syncinfo, si, si_next );
@@ -3079,6 +3132,12 @@ parse_syncrepl_line(
 				si->si_scope = LDAP_SCOPE_BASE;
 			} else if ( !strncasecmp( val, "one", sizeof( "one" ) - 1 )) {
 				si->si_scope = LDAP_SCOPE_ONELEVEL;
+#ifdef LDAP_SCOPE_SUBORDINATE
+			} else if ( !strcasecmp( val, "subordinate" ) ||
+				!strcasecmp( val, "children" ))
+			{
+				si->si_scope = LDAP_SCOPE_SUBORDINATE;
+#endif
 			} else if ( !strncasecmp( val, "sub", sizeof( "sub" ) - 1 )) {
 				si->si_scope = LDAP_SCOPE_SUBTREE;
 			} else {
@@ -3114,51 +3173,48 @@ parse_syncrepl_line(
 		} else if ( !strncasecmp( cargv[ i ],
 			INTERVALSTR, sizeof( INTERVALSTR ) - 1 ) )
 		{
+			char *hstr;
+			char *mstr;
+			char *dstr;
+			char *sstr;
+			int dd, hh, mm, ss;
 			val = cargv[ i ] + sizeof( INTERVALSTR );
-			if ( si->si_type == LDAP_SYNC_REFRESH_AND_PERSIST ) {
-				si->si_interval = 0;
-			} else {
-				char *hstr;
-				char *mstr;
-				char *dstr;
-				char *sstr;
-				int dd, hh, mm, ss;
-				dstr = val;
-				hstr = strchr( dstr, ':' );
-				if ( hstr == NULL ) {
-					fprintf( stderr, "Error: parse_syncrepl_line: "
-						"invalid interval \"%s\"\n", val );
-					return 1;
-				}
-				*hstr++ = '\0';
-				mstr = strchr( hstr, ':' );
-				if ( mstr == NULL ) {
-					fprintf( stderr, "Error: parse_syncrepl_line: "
-						"invalid interval \"%s\"\n", val );
-					return 1;
-				}
-				*mstr++ = '\0';
-				sstr = strchr( mstr, ':' );
-				if ( sstr == NULL ) {
-					fprintf( stderr, "Error: parse_syncrepl_line: "
-						"invalid interval \"%s\"\n", val );
-					return 1;
-				}
-				*sstr++ = '\0';
-
-				dd = atoi( dstr );
-				hh = atoi( hstr );
-				mm = atoi( mstr );
-				ss = atoi( sstr );
-				if (( hh > 24 ) || ( hh < 0 ) ||
-					( mm > 60 ) || ( mm < 0 ) ||
-					( ss > 60 ) || ( ss < 0 ) || ( dd < 0 )) {
-					fprintf( stderr, "Error: parse_syncrepl_line: "
-						"invalid interval \"%s\"\n", val );
-					return 1;
-				}
-				si->si_interval = (( dd * 24 + hh ) * 60 + mm ) * 60 + ss;
+			dstr = val;
+			hstr = strchr( dstr, ':' );
+			if ( hstr == NULL ) {
+				fprintf( stderr, "Error: parse_syncrepl_line: "
+					"invalid interval \"%s\"\n", val );
+				return 1;
 			}
+			*hstr++ = '\0';
+			mstr = strchr( hstr, ':' );
+			if ( mstr == NULL ) {
+				fprintf( stderr, "Error: parse_syncrepl_line: "
+					"invalid interval \"%s\"\n", val );
+				return 1;
+			}
+			*mstr++ = '\0';
+			sstr = strchr( mstr, ':' );
+			if ( sstr == NULL ) {
+				fprintf( stderr, "Error: parse_syncrepl_line: "
+					"invalid interval \"%s\"\n", val );
+				return 1;
+			}
+			*sstr++ = '\0';
+
+			dd = atoi( dstr );
+			hh = atoi( hstr );
+			mm = atoi( mstr );
+			ss = atoi( sstr );
+			if (( hh > 24 ) || ( hh < 0 ) ||
+				( mm > 60 ) || ( mm < 0 ) ||
+				( ss > 60 ) || ( ss < 0 ) || ( dd < 0 )) {
+				fprintf( stderr, "Error: parse_syncrepl_line: "
+					"invalid interval \"%s\"\n", val );
+				return 1;
+			}
+			si->si_interval = (( dd * 24 + hh ) * 60 + mm ) * 60 + ss;
+
 			if ( si->si_interval < 0 ) {
 				fprintf( stderr, "Error: parse_syncrepl_line: "
 					"invalid interval \"%ld\"\n",

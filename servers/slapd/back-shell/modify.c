@@ -1,5 +1,5 @@
 /* modify.c - shell backend modify function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/modify.c,v 1.27.2.3 2004/01/01 18:16:39 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/modify.c,v 1.27.2.4 2004/04/12 17:53:23 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -103,10 +103,10 @@ shell_back_modify(
 			break;
 		}
 
-		if( mod->sm_bvalues != NULL ) {
-			for ( i = 0; mod->sm_bvalues[i].bv_val != NULL; i++ ) {
+		if( mod->sm_values != NULL ) {
+			for ( i = 0; mod->sm_values[i].bv_val != NULL; i++ ) {
 				fprintf( wfp, "%s: %s\n", mod->sm_desc->ad_cname.bv_val,
-					mod->sm_bvalues[i].bv_val /* binary! */ );
+					mod->sm_values[i].bv_val /* binary! */ );
 			}
 		}
 

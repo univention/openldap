@@ -1,5 +1,5 @@
 /* value.c - routines for dealing with values */
-/* $OpenLDAP: pkg/ldap/servers/slapd/value.c,v 1.69.2.3 2004/01/01 18:16:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/value.c,v 1.69.2.4 2004/04/12 18:13:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -41,8 +41,7 @@
 int
 value_add( 
     BerVarray *vals,
-    BerVarray addvals
-)
+    BerVarray addvals )
 {
 	int	n, nn;
 	BerVarray v2;
@@ -96,8 +95,7 @@ value_add(
 int
 value_add_one( 
     BerVarray *vals,
-    struct berval *addval
-)
+    struct berval *addval )
 {
 	int	n;
 	BerVarray v2;
@@ -217,8 +215,8 @@ value_match(
 	const char ** text )
 {
 	int rc;
-	struct berval nv1 = { 0, NULL };
-	struct berval nv2 = { 0, NULL };
+	struct berval nv1 = BER_BVNULL;
+	struct berval nv2 = BER_BVNULL;
 
 	assert( mr != NULL );
 
@@ -246,7 +244,7 @@ int value_find_ex(
 {
 	int	i;
 	int rc;
-	struct berval nval = { 0, NULL };
+	struct berval nval = BER_BVNULL;
 	MatchingRule *mr = ad->ad_type->sat_equality;
 
 	if( mr == NULL || !mr->smr_match ) {

@@ -1,5 +1,5 @@
 /* filterindex.c - generate the list of candidate entries from a filter */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/filterindex.c,v 1.48.2.2 2004/01/01 18:16:37 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/filterindex.c,v 1.48.2.3 2004/03/18 01:01:03 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -45,6 +45,7 @@ filter_candidates(
     Filter	*f
 )
 {
+	char *sub = "SUBTREE";
 	ID_BLOCK	*result;
 
 #ifdef NEW_LOGGING
@@ -88,12 +89,17 @@ filter_candidates(
 		}
 		break;
 
+#ifdef SLAPD_FILTER_DN_CHILDREN
+	case SLAPD_FILTER_DN_CHILDREN:
+		sub = "CHILDREN";
+#endif
 	case SLAPD_FILTER_DN_SUBTREE:
 #ifdef NEW_LOGGING
 		LDAP_LOG( FILTER, DETAIL1, 
-			   "filter_candidates:  DN SUBTREE (%s)\n", f->f_dn, 0, 0 );
+		   "filter_candidates:  DN %s (%s)\n", sub, f->f_dn, 0 );
 #else
-		Debug( LDAP_DEBUG_FILTER, "\tDN SUBTREE\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_FILTER,
+			"\tDN %s\n", sub, 0, 0 );
 #endif
 
 		/* an error is treated as an empty list */

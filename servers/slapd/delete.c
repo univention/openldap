@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/delete.c,v 1.95.2.6 2004/01/01 18:16:33 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/delete.c,v 1.95.2.9 2004/04/12 18:20:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -45,7 +45,13 @@ do_delete(
     SlapReply	*rs
 )
 {
-	struct berval dn = { 0, NULL };
+	struct berval dn = BER_BVNULL;
+	struct berval pdn = BER_BVNULL;
+	struct berval org_req_dn = BER_BVNULL;
+	struct berval org_req_ndn = BER_BVNULL;
+	struct berval org_dn = BER_BVNULL;
+	struct berval org_ndn = BER_BVNULL;
+	int	org_managedsait;
 	int manageDSAit;
 
 #ifdef NEW_LOGGING
@@ -132,7 +138,8 @@ do_delete(
 	 * appropriate one, or send a referral to our "referral server"
 	 * if we don't hold it.
 	 */
-	if ( (op->o_bd = select_backend( &op->o_req_ndn, manageDSAit, 0 )) == NULL ) {
+	op->o_bd = select_backend( &op->o_req_ndn, manageDSAit, 0 );
+	if ( op->o_bd == NULL ) {
 		rs->sr_ref = referral_rewrite( default_referral,
 			NULL, &op->o_req_dn, LDAP_SCOPE_DEFAULT );
 
@@ -145,7 +152,7 @@ do_delete(
 			if (rs->sr_ref != default_referral) ber_bvarray_free( rs->sr_ref );
 		} else {
 			send_ldap_error( op, rs, LDAP_UNWILLING_TO_PERFORM,
-					"referral missing" );
+				"no global superior knowledge" );
 		}
 		goto cleanup;
 	}
@@ -198,12 +205,9 @@ do_delete(
 	 */
 	if ( op->o_bd->be_delete ) {
 		/* do the update here */
-		int repl_user = be_isupdate( op->o_bd, &op->o_ndn );
+		int repl_user = be_isupdate( op );
 #ifndef SLAPD_MULTIMASTER
-		if ( LDAP_STAILQ_EMPTY( &op->o_bd->be_syncinfo ) &&
-			( !op->o_bd->be_update_ndn.bv_len || repl_user ))
-#else
-		if ( LDAP_STAILQ_EMPTY( &op->o_bd->be_syncinfo ))
+		if ( !SLAP_SHADOW(op->o_bd) || repl_user )
 #endif
 		{
 			slap_callback cb = { NULL, slap_replog_cb, NULL, NULL };
@@ -221,21 +225,47 @@ do_delete(
 				cb.sc_next = op->o_callback;
 				op->o_callback = &cb;
 			}
+
 			op->o_bd->be_delete( op, rs );
+
+			org_req_dn = op->o_req_dn;
+			org_req_ndn = op->o_req_ndn;
+			org_dn = op->o_dn;
+			org_ndn = op->o_ndn;
+			org_managedsait = get_manageDSAit( op );
+			op->o_dn = op->o_bd->be_rootdn;
+			op->o_ndn = op->o_bd->be_rootndn;
+			op->o_managedsait = 1;
+
+			while ( rs->sr_err == LDAP_SUCCESS &&
+				op->o_delete_glue_parent )
+			{
+				op->o_delete_glue_parent = 0;
+				if ( !be_issuffix( op->o_bd, &op->o_req_ndn )) {
+					slap_callback cb = { NULL };
+					cb.sc_response = slap_null_cb;
+					dnParent( &op->o_req_ndn, &pdn );
+					op->o_req_dn = pdn;
+					op->o_req_ndn = pdn;
+					op->o_callback = &cb;
+					op->o_bd->be_delete( op, rs );
+				} else {
+					break;
+				}
+			}
+
+			op->o_managedsait = org_managedsait;
+			op->o_dn = org_dn;
+			op->o_ndn = org_ndn;
+			op->o_req_dn = org_req_dn;
+			op->o_req_ndn = org_req_ndn;
+			op->o_delete_glue_parent = 0;
+
 #ifndef SLAPD_MULTIMASTER
 		} else {
-			BerVarray defref = NULL;
-			if ( !LDAP_STAILQ_EMPTY( &op->o_bd->be_syncinfo )) {
-				syncinfo_t *si;
-				LDAP_STAILQ_FOREACH( si, &op->o_bd->be_syncinfo, si_next ) {
-					struct berval tmpbv;
-					ber_dupbv( &tmpbv, &si->si_provideruri_bv[0] );
-					ber_bvarray_add( &defref, &tmpbv );
-				}
-			} else {
-				defref = op->o_bd->be_update_refs
-					? op->o_bd->be_update_refs : default_referral;
-			}
+			BerVarray defref = op->o_bd->be_update_refs
+				? op->o_bd->be_update_refs : default_referral;
+
 			if ( defref != NULL ) {
 				rs->sr_ref = referral_rewrite( defref,
 					NULL, &op->o_req_dn, LDAP_SCOPE_DEFAULT );
@@ -244,10 +274,11 @@ do_delete(
 				send_ldap_result( op, rs );
 
 				if (rs->sr_ref != defref) ber_bvarray_free( rs->sr_ref );
+
 			} else {
 				send_ldap_error( op, rs,
-						LDAP_UNWILLING_TO_PERFORM,
-						"referral missing" );
+					LDAP_UNWILLING_TO_PERFORM,
+					"shadow context; no update referral" );
 			}
 #endif
 		}

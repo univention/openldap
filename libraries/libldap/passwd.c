@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/passwd.c,v 1.9.2.3 2004/01/01 18:16:30 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/passwd.c,v 1.9.2.5 2004/04/12 15:17:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -11,6 +11,10 @@
  * A copy of this license is available in the file LICENSE in the
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
+ */
+/* ACKNOWLEDGEMENTS:
+ * This program was orignally developed by Kurt D. Zeilenga for inclusion in
+ * OpenLDAP Software.
  */
 
 #include "portable.h"
@@ -81,7 +85,7 @@ ldap_passwd( LDAP *ld,
 	int				*msgidp )
 {
 	int rc;
-	struct berval bv = {0, NULL};
+	struct berval bv = BER_BVNULL;
 	BerElement *ber = NULL;
 
 	assert( ld != NULL );

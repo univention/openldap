@@ -1,5 +1,5 @@
 /* init.c - initialize monitor backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/init.c,v 1.53.2.6 2004/01/01 18:16:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/init.c,v 1.53.2.9 2004/04/12 18:20:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2004 The OpenLDAP Foundation.
@@ -136,10 +136,18 @@ struct monitorsubsys monitor_subsys[] = {
 		monitor_subsys_time_update,
 		NULL,   /* create */
 		NULL,	/* modify */
+       	}, { 
+		SLAPD_MONITOR_OVERLAY, SLAPD_MONITOR_OVERLAY_NAME,
+		BER_BVNULL, BER_BVNULL, BER_BVNULL,
+		MONITOR_F_PERSISTENT_CH,
+		monitor_subsys_overlay_init,
+		NULL,	/* update */
+		NULL,   /* create */
+		NULL,	/* modify */
 	}, { -1, NULL }
 };
 
-#ifdef SLAPD_MONITOR_DYNAMIC
+#if SLAPD_MONITOR == SLAPD_MOD_DYNAMIC
 
 int
 init_module( int argc, char *argv[] )
@@ -153,7 +161,7 @@ init_module( int argc, char *argv[] )
 	return 0;
 }
 
-#endif /* SLAPD_MONITOR_DYNAMIC */
+#endif /* SLAPD_MONITOR */
 
 int
 monitor_back_initialize(
@@ -243,7 +251,7 @@ monitor_back_db_init(
 	be_monitor = be;
 
 	/* indicate system schema supported */
-	be->be_flags |= SLAP_BFLAG_MONITOR;
+	SLAP_BFLAGS(be) |= SLAP_BFLAG_MONITOR;
 
 	dn.bv_val = SLAPD_MONITOR_DN;
 	dn.bv_len = sizeof( SLAPD_MONITOR_DN ) - 1;
@@ -321,8 +329,10 @@ monitor_back_db_open(
 				"$ postalCode "
 #endif
 				"$ seeAlso "
+				"$ labeledURI "
 				"$ monitoredInfo "
 				"$ managedInfo "
+				"$ monitorOverlay "
 			") )", SLAP_OC_OPERATIONAL|SLAP_OC_HIDE,
 			offsetof(struct monitorinfo, mi_oc_monitor) },
 		{ "monitorServer", "( 1.3.6.1.4.1.4203.666.3.7 "
@@ -440,10 +450,18 @@ monitor_back_db_open(
 			"NO-USER-MODIFICATION "
 			"USAGE directoryOperation )", SLAP_AT_FINAL|SLAP_AT_HIDE,
 			offsetof(struct monitorinfo, mi_ad_monitorTimestamp) },
+		{ "monitorOverlay", "( 1.3.6.1.4.1.4203.666.1.27 "
+			"NAME 'monitorOverlay' "
+			"DESC 'name of overlays defined for a give database' "
+			"SUP monitoredInfo "
+			"NO-USER-MODIFICATION "
+			"USAGE directoryOperation )", SLAP_AT_HIDE,
+			offsetof(struct monitorinfo, mi_ad_monitorOverlay) },
 #ifdef INTEGRATE_CORE_SCHEMA
 		{ NULL, NULL, 0, -1 },	/* description */
 		{ NULL, NULL, 0, -1 },	/* seeAlso */
 		{ NULL, NULL, 0, -1 },	/* l */
+		{ NULL, NULL, 0, -1 },	/* labeledURI */
 #endif /* INTEGRATE_CORE_SCHEMA */
 		{ NULL, NULL, 0, -1 }
 	}, mat_core[] = {
@@ -464,6 +482,12 @@ monitor_back_db_open(
 			"DESC 'RFC2256: locality which this object resides in' "
 			"SUP name )", 0,
 			offsetof(struct monitorinfo, mi_ad_l) },
+		{ "labeledURI", "( 1.3.6.1.4.1.250.1.57 "
+			"NAME 'labeledURI' "
+			"DESC 'RFC2079: Uniform Resource Identifier with optional label' "
+			"EQUALITY caseExactMatch "
+			"SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 )", 0,
+			offsetof(struct monitorinfo, mi_ad_labeledURI) },
 		{ NULL, NULL, 0, -1 }
 	};
 	

@@ -1,5 +1,5 @@
 /* result.c - routines to send ldap results, errors, and referrals */
-/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.186.2.14 2004/01/23 01:09:44 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.186.2.18 2004/04/12 18:20:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -351,7 +351,7 @@ send_ldap_response(
 	if (op->o_conn && op->o_conn->c_is_udp &&
 		op->o_protocol == LDAP_VERSION2 )
 	{
-		rc = ber_printf( ber, "t{ess" /*"}}"*/,
+		rc = ber_printf( ber, "t{ess" /*"}"*/,
 			rs->sr_tag, rs->sr_err,
 		rs->sr_matched == NULL ? "" : rs->sr_matched,
 		rs->sr_text == NULL ? "" : rs->sr_text );
@@ -409,7 +409,9 @@ send_ldap_response(
 	}
 
 #ifdef LDAP_CONNECTIONLESS
-	if( op->o_conn && op->o_conn->c_is_udp && op->o_protocol == LDAP_VERSION2 && rc != -1 ) {
+	if( op->o_conn && op->o_conn->c_is_udp && op->o_protocol == LDAP_VERSION2
+		&& rc != -1 )
+	{
 		rc = ber_printf( ber, /*"{"*/ "N}" );
 	}
 #endif
@@ -426,7 +428,9 @@ send_ldap_response(
 #ifdef LDAP_CONNECTIONLESS
 		if (!op->o_conn || op->o_conn->c_is_udp == 0)
 #endif
-		ber_free_buf( ber );
+		{
+			ber_free_buf( ber );
+		}
 		goto cleanup;
 	}
 
@@ -435,7 +439,9 @@ send_ldap_response(
 #ifdef LDAP_CONNECTIONLESS
 	if (!op->o_conn || op->o_conn->c_is_udp == 0)
 #endif
-	ber_free_buf( ber );
+	{
+		ber_free_buf( ber );
+	}
 
 	if ( bytes < 0 ) {
 #ifdef NEW_LOGGING
@@ -454,7 +460,8 @@ send_ldap_response(
 #ifdef LDAP_SLAPI
 	if ( op->o_pb ) {
 		slapi_pblock_set( op->o_pb, SLAPI_RESULT_CODE, (void *)rs->sr_err );
-		slapi_pblock_set( op->o_pb, SLAPI_RESULT_MATCHED, (void *)rs->sr_matched );
+		slapi_pblock_set( op->o_pb, SLAPI_RESULT_MATCHED,
+			(void *)rs->sr_matched );
 		slapi_pblock_set( op->o_pb, SLAPI_RESULT_TEXT, (void *)rs->sr_text );
 	}
 #endif /* LDAP_SLAPI */
@@ -473,6 +480,11 @@ cleanup:
 	if ( rs->sr_matched && rs->sr_flags & REP_MATCHED_MUSTBEFREED ) {
 		free( (char *)rs->sr_matched );
 		rs->sr_matched = NULL;
+	}
+
+	if ( rs->sr_ref && rs->sr_flags & REP_REF_MUSTBEFREED ) {
+		ber_bvarray_free( rs->sr_ref );
+		rs->sr_ref = NULL;
 	}
 
 clean2:
@@ -526,8 +538,9 @@ send_ldap_disconnect( Operation	*op, SlapReply *rs )
 
 	if ( send_ldap_response( op, rs ) == SLAP_CB_CONTINUE ) {
 		Statslog( LDAP_DEBUG_STATS,
-	    "conn=%lu op=%lu DISCONNECT tag=%lu err=%d text=%s\n",
-		op->o_connid, op->o_opid, rs->sr_tag, rs->sr_err, rs->sr_text ? rs->sr_text : "" );
+			"conn=%lu op=%lu DISCONNECT tag=%lu err=%d text=%s\n",
+			op->o_connid, op->o_opid, rs->sr_tag, rs->sr_err,
+			rs->sr_text ? rs->sr_text : "" );
 	}
 }
 
@@ -540,11 +553,11 @@ slap_send_ldap_result( Operation *op, SlapReply *rs )
 
 	rs->sr_type = REP_RESULT;
 
-	assert( !LDAP_API_ERROR( rs->sr_err ) && ( rs->sr_err >= 0 ));
+	assert( !LDAP_API_ERROR( rs->sr_err ));
 
 #ifdef NEW_LOGGING
 	LDAP_LOG( OPERATION, ENTRY, 
-		"send_ldap_result: conn %lu op=%lu p=%d\n",
+		"send_ldap_result: conn=%lu op=%lu p=%d\n",
 		op->o_connid, op->o_opid, op->o_protocol );
 #else
 	Debug( LDAP_DEBUG_TRACE,
@@ -888,6 +901,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 
 	for ( a = rs->sr_entry->e_attrs, j = 0; a != NULL; a = a->a_next, j++ ) {
 		AttributeDescription *desc = a->a_desc;
+		int finish = 0;
 
 		if ( rs->sr_attrs == NULL ) {
 			/* all attrs request, skip operational attributes */
@@ -909,39 +923,42 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 			}
 		}
 
-		if ( ! access_allowed( op, rs->sr_entry, desc, NULL,
-			ACL_READ, &acl_state ) )
-		{
+		if ( op->ors_attrsonly ) {
+			if ( ! access_allowed( op, rs->sr_entry, desc, NULL,
+				ACL_READ, &acl_state ) )
+			{
 #ifdef NEW_LOGGING
-			LDAP_LOG( ACL, INFO, 
-				"send_search_entry: conn %lu  access to attribute %s not "
-				"allowed\n", op->o_connid, desc->ad_cname.bv_val, 0 );
+				LDAP_LOG( ACL, INFO, 
+					"send_search_entry: conn %lu  access to attribute %s not "
+					"allowed\n", op->o_connid, desc->ad_cname.bv_val, 0 );
 #else
-			Debug( LDAP_DEBUG_ACL, "acl: "
-				"access to attribute %s not allowed\n",
-			    desc->ad_cname.bv_val, 0, 0 );
+				Debug( LDAP_DEBUG_ACL, "acl: "
+					"access to attribute %s not allowed\n",
+				    desc->ad_cname.bv_val, 0, 0 );
 #endif
-			continue;
-		}
+				continue;
+			}
 
-		if (( rc = ber_printf( ber, "{O[" /*]}*/ , &desc->ad_cname )) == -1 ) {
+			if (( rc = ber_printf( ber, "{O[" /*]}*/ , &desc->ad_cname )) == -1 ) {
 #ifdef NEW_LOGGING
-			LDAP_LOG( OPERATION, ERR, 
-				"send_search_entry: conn %lu  ber_printf failed\n", 
-				op->o_connid, 0, 0 );
+				LDAP_LOG( OPERATION, ERR, 
+					"send_search_entry: conn %lu  ber_printf failed\n", 
+					op->o_connid, 0, 0 );
 #else
-			Debug( LDAP_DEBUG_ANY, "ber_printf failed\n", 0, 0, 0 );
+				Debug( LDAP_DEBUG_ANY, "ber_printf failed\n", 0, 0, 0 );
 #endif
 
-			if ( op->o_res_ber == NULL ) ber_free_buf( ber );
-			send_ldap_error( op, rs, LDAP_OTHER, "encoding description error");
-			goto error_return;
-		}
+				if ( op->o_res_ber == NULL ) ber_free_buf( ber );
+				send_ldap_error( op, rs, LDAP_OTHER, "encoding description error");
+				goto error_return;
+			}
+			finish = 1;
 
-		if ( ! op->ors_attrsonly ) {
-			for ( i = 0; a->a_vals[i].bv_val != NULL; i++ ) {
+		} else {
+			int first = 1;
+			for ( i = 0; a->a_nvals[i].bv_val != NULL; i++ ) {
 				if ( ! access_allowed( op, rs->sr_entry,
-					desc, &a->a_vals[i], ACL_READ, &acl_state ) )
+					desc, &a->a_nvals[i], ACL_READ, &acl_state ) )
 				{
 #ifdef NEW_LOGGING
 					LDAP_LOG( ACL, INFO, 
@@ -962,6 +979,23 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 					continue;
 				}
 
+				if ( first ) {
+					first = 0;
+					finish = 1;
+					if (( rc = ber_printf( ber, "{O[" /*]}*/ , &desc->ad_cname )) == -1 ) {
+#ifdef NEW_LOGGING
+						LDAP_LOG( OPERATION, ERR, 
+							"send_search_entry: conn %lu  ber_printf failed\n", 
+							op->o_connid, 0, 0 );
+#else
+						Debug( LDAP_DEBUG_ANY, "ber_printf failed\n", 0, 0, 0 );
+#endif
+
+						if ( op->o_res_ber == NULL ) ber_free_buf( ber );
+						send_ldap_error( op, rs, LDAP_OTHER, "encoding description error");
+						goto error_return;
+					}
+				}
 				if (( rc = ber_printf( ber, "O", &a->a_vals[i] )) == -1 ) {
 #ifdef NEW_LOGGING
 					LDAP_LOG( OPERATION, ERR, 
@@ -980,7 +1014,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 			}
 		}
 
-		if (( rc = ber_printf( ber, /*{[*/ "]N}" )) == -1 ) {
+		if ( finish && ( rc = ber_printf( ber, /*{[*/ "]N}" )) == -1 ) {
 #ifdef NEW_LOGGING
 			LDAP_LOG( OPERATION, ERR, 
 				"send_search_entry: conn %lu ber_printf failed\n", 
@@ -1634,3 +1668,50 @@ int slap_read_controls(
 	**ctrl = c;
 	return LDAP_SUCCESS;
 }
+
+/* Map API errors to protocol errors... */
+int
+slap_map_api2result( SlapReply *rs )
+{
+	switch(rs->sr_err) {
+	case LDAP_SERVER_DOWN:
+		return LDAP_UNAVAILABLE;
+	case LDAP_LOCAL_ERROR:
+		return LDAP_OTHER;
+	case LDAP_ENCODING_ERROR:
+	case LDAP_DECODING_ERROR:
+		return LDAP_PROTOCOL_ERROR;
+	case LDAP_TIMEOUT:
+		return LDAP_UNAVAILABLE;
+	case LDAP_AUTH_UNKNOWN:
+		return LDAP_AUTH_METHOD_NOT_SUPPORTED;
+	case LDAP_FILTER_ERROR:
+		rs->sr_text = "Filter error";
+		return LDAP_OTHER;
+	case LDAP_USER_CANCELLED:
+		rs->sr_text = "User cancelled";
+		return LDAP_OTHER;
+	case LDAP_PARAM_ERROR:
+		return LDAP_PROTOCOL_ERROR;
+	case LDAP_NO_MEMORY:
+		return LDAP_OTHER;
+	case LDAP_CONNECT_ERROR:
+		return LDAP_UNAVAILABLE;
+	case LDAP_NOT_SUPPORTED:
+		return LDAP_UNWILLING_TO_PERFORM;
+	case LDAP_CONTROL_NOT_FOUND:
+		return LDAP_PROTOCOL_ERROR;
+	case LDAP_NO_RESULTS_RETURNED:
+		return LDAP_NO_SUCH_OBJECT;
+	case LDAP_MORE_RESULTS_TO_RETURN:
+		rs->sr_text = "More results to return";
+		return LDAP_OTHER;
+	case LDAP_CLIENT_LOOP:
+	case LDAP_REFERRAL_LIMIT_EXCEEDED:
+		return LDAP_LOOP_DETECT;
+	default:
+		if ( LDAP_API_ERROR(rs->sr_err) ) return LDAP_OTHER;
+		return rs->sr_err;
+	}
+}
+

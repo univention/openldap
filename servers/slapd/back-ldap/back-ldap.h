@@ -1,5 +1,5 @@
 /* back-ldap.h - ldap backend header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.42.2.4 2004/01/01 18:16:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.42.2.7 2004/04/06 20:29:28 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -80,7 +80,8 @@ struct ldaprwmap {
 
 struct ldapinfo {
 	struct slap_backend_db	*be;
-	char *url;
+	char		*url;
+	LDAPURLDesc	*lud;
 	struct berval binddn;
 	struct berval bindpw;
 #ifdef LDAP_BACK_PROXY_AUTHZ

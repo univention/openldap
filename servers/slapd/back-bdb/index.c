@@ -1,5 +1,5 @@
 /* index.c - routines for dealing with attribute indexes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/index.c,v 1.38.2.6 2004/01/01 18:16:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/index.c,v 1.38.2.7 2004/04/12 18:20:13 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -121,9 +121,14 @@ int bdb_index_param(
 		break;
 
 	case LDAP_FILTER_APPROX:
-		if( IS_SLAP_INDEX( mask, SLAP_INDEX_APPROX ) ) {
-			goto done;
+		if ( desc->ad_type->sat_approx ) {
+			if( IS_SLAP_INDEX( mask, SLAP_INDEX_APPROX ) ) {
+				goto done;
+			}
+			break;
 		}
+
+		/* Use EQUALITY rule and index for approximate match */
 		/* fall thru */
 
 	case LDAP_FILTER_EQUALITY:

@@ -1,5 +1,5 @@
 /* init.c - initialize ldap backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/init.c,v 1.43.2.5 2004/01/01 18:16:37 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/init.c,v 1.43.2.10 2004/04/12 18:20:13 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2004 The OpenLDAP Foundation.
@@ -31,7 +31,7 @@
 #include "slap.h"
 #include "back-ldap.h"
 
-#ifdef SLAPD_LDAP_DYNAMIC
+#if SLAPD_LDAP == SLAPD_MOD_DYNAMIC
 
 int init_module(int argc, char *argv[]) {
     BackendInfo bi;
@@ -44,7 +44,7 @@ int init_module(int argc, char *argv[]) {
     return 0;
 }
 
-#endif /* SLAPD_LDAP_DYNAMIC */
+#endif /* SLAPD_LDAP */
 
 int
 ldap_back_initialize(
@@ -118,6 +118,27 @@ ldap_back_db_init(
  		ch_free( li );
  		return -1;
  	}
+
+	{
+		char	*rargv[3];
+
+		/*
+		 * the filter rewrite as a string must be disabled
+		 * by default; it can be re-enabled by adding rules;
+		 * this creates an empty rewriteContext
+		 */
+		rargv[ 0 ] = "rewriteContext";
+		rargv[ 1 ] = "searchFilter";
+		rargv[ 2 ] = NULL;
+		rewrite_parse( li->rwmap.rwm_rw, "<suffix massage>", 
+				1, 2, rargv );
+
+		rargv[ 0 ] = "rewriteContext";
+		rargv[ 1 ] = "default";
+		rargv[ 2 ] = NULL;
+		rewrite_parse( li->rwmap.rwm_rw, "<suffix massage>", 
+				1, 2, rargv );
+	}
 #endif /* ENABLE_REWRITE */
 
 	ldap_pvt_thread_mutex_init( &li->conn_mutex );
@@ -127,7 +148,7 @@ ldap_back_db_init(
 
 	li->be = be;
 	be->be_private = li;
-	be->be_flags |= SLAP_BFLAG_NOLASTMOD;
+	SLAP_DBFLAGS(be) |= SLAP_DBFLAG_NOLASTMOD;
 
 	return 0;
 }
@@ -177,6 +198,10 @@ ldap_back_db_destroy(
 		if (li->url) {
 			ch_free(li->url);
 			li->url = NULL;
+		}
+		if ( li->lud ) {
+			ldap_free_urldesc( li->lud );
+			li->lud = NULL;
 		}
 		if (li->binddn.bv_val) {
 			ch_free(li->binddn.bv_val);

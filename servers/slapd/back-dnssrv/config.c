@@ -1,5 +1,5 @@
 /* config.c - DNS SRV backend configuration file routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/config.c,v 1.8.2.3 2004/01/01 18:16:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/config.c,v 1.8.2.4 2004/04/06 18:16:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -46,8 +46,5 @@ dnssrv_back_db_config(
 	}
 
 	/* no configuration options (yet) */
-	{
-		return SLAP_CONF_UNKNOWN;
-	}
-	return 0;
+	return SLAP_CONF_UNKNOWN;
 }

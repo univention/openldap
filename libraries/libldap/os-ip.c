@@ -1,5 +1,5 @@
 /* os-ip.c -- platform-specific TCP & UDP related code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.90.2.5 2004/01/01 18:16:30 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.90.2.6 2004/03/17 20:10:49 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -523,7 +523,6 @@ ldap_host_connected_to( Sockbuf *sb, const char *host )
 	struct sockaddr sabuf;
 #endif
 	struct sockaddr	*sa = (struct sockaddr *) &sabuf;
-	int rc;
 	ber_socket_t	sd;
 
 	(void)memset( (char *)sa, '\0', sizeof sabuf );

@@ -1,5 +1,5 @@
 # Makefile.in for back-ldbm
-# $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/Makefile.in,v 1.32.2.3 2004/01/01 18:16:37 kurt Exp $
+# $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/Makefile.in,v 1.32.2.4 2004/04/12 18:20:13 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2004 The OpenLDAP Foundation.
@@ -31,7 +31,6 @@ LDAP_LIBDIR= ../../../libraries
 
 BUILD_OPT = "--enable-ldbm"
 BUILD_MOD = @BUILD_LDBM@
-BUILD_MOD_DYNAMIC = @BUILD_LDBM_DYNAMIC@
 
 mod_DEFS = -DSLAPD_IMPORT
 MOD_DEFS = $(@BUILD_LDBM@_DEFS)

@@ -1,5 +1,5 @@
 # Makefile.in for back-monitor
-# $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/Makefile.in,v 1.12.2.3 2004/01/01 18:16:38 kurt Exp $
+# $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/Makefile.in,v 1.12.2.5 2004/04/12 18:20:14 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2004 The OpenLDAP Foundation.
@@ -17,19 +17,18 @@ SRCS = init.c search.c compare.c modify.c bind.c \
 	operational.c \
 	cache.c entry.c \
 	backend.c database.c thread.c conn.c rww.c log.c \
-	operation.c sent.c listener.c time.c
+	operation.c sent.c listener.c time.c overlay.c
 OBJS = init.lo search.lo compare.lo modify.lo bind.lo \
 	operational.lo \
 	cache.lo entry.lo \
 	backend.lo database.lo thread.lo conn.lo rww.lo log.lo \
-	operation.lo sent.lo listener.lo time.lo
+	operation.lo sent.lo listener.lo time.lo overlay.lo
 
 LDAP_INCDIR= ../../../include
 LDAP_LIBDIR= ../../../libraries
 
 BUILD_OPT = "--enable-monitor"
 BUILD_MOD = @BUILD_MONITOR@
-BUILD_MOD_DYNAMIC = @BUILD_MONITOR_DYNAMIC@
 
 mod_DEFS = -DSLAPD_IMPORT
 MOD_DEFS = $(@BUILD_MONITOR@_DEFS)

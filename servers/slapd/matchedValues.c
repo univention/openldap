@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/matchedValues.c,v 1.17.2.3 2004/01/01 18:16:33 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/matchedValues.c,v 1.17.2.4 2004/04/12 18:13:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -206,8 +206,8 @@ test_ava_vrFilter(
 		case LDAP_FILTER_APPROX:
 			mr = a->a_desc->ad_type->sat_approx;
 			if( mr != NULL ) break;
+			/* use EQUALITY matching rule if no APPROX rule */
 
-		/* use EQUALITY matching rule if no APPROX rule */
 		case LDAP_FILTER_EQUALITY:
 			mr = a->a_desc->ad_type->sat_equality;
 			break;
@@ -221,10 +221,7 @@ test_ava_vrFilter(
 			mr = NULL;
 		}
 
-		if( mr == NULL ) {
-			continue;
-
-		}
+		if( mr == NULL ) continue;
 
 		bv = a->a_nvals;
 		for ( j=0; bv->bv_val != NULL; bv++, j++ ) {

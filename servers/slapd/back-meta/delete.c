@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/delete.c,v 1.14.2.3 2004/01/01 18:16:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/delete.c,v 1.14.2.5 2004/04/12 16:08:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -37,7 +37,7 @@ meta_back_delete( Operation *op, SlapReply *rs )
 	struct metainfo *li = ( struct metainfo * )op->o_bd->be_private;
 	struct metaconn *lc;
 	int candidate = -1;
-	struct berval mdn = { 0, NULL };
+	struct berval mdn = BER_BVNULL;
 	dncookie dc;
 
 	lc = meta_back_getconn( op, rs, META_OP_REQUIRE_SINGLE,
@@ -60,7 +60,7 @@ meta_back_delete( Operation *op, SlapReply *rs )
 	dc.rwmap = &li->targets[ candidate ]->rwmap;
 	dc.conn = op->o_conn;
 	dc.rs = rs;
-	dc.ctx = "deleteDn";
+	dc.ctx = "deleteDN";
 
 	if ( ldap_back_dn_massage( &dc, &op->o_req_dn, &mdn ) ) {
 		send_ldap_result( op, rs );

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/init.c,v 1.20.2.5 2004/01/01 18:16:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/init.c,v 1.20.2.6 2004/04/12 18:20:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -26,7 +26,7 @@
 #include "../back-ldap/back-ldap.h"
 #include "back-meta.h"
 
-#ifdef SLAPD_META_DYNAMIC
+#if SLAPD_META == SLAPD_MOD_DYNAMIC
 
 int
 init_module( int argc, char *argv[] ) {
@@ -40,7 +40,7 @@ init_module( int argc, char *argv[] ) {
     return 0;
 }
 
-#endif /* SLAPD_META_DYNAMIC */
+#endif /* SLAPD_META */
 
 int
 meta_back_initialize(

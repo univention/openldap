@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/lber_pvt.h,v 1.22.2.4 2004/01/01 18:16:28 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/lber_pvt.h,v 1.22.2.5 2004/04/11 16:57:42 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -165,8 +165,20 @@ ber_bvarray_add_x LDAP_P(( BerVarray *p, BerValue *bv, void *ctx ));
 #define ber_bvchr(bv,c) \
 	memchr( (bv)->bv_val, (c), (bv)->bv_len )
 
-#define BER_BVC(x)	{ sizeof( (x) ) - 1, (x) }
-#define BER_BVNULL	{ 0L, NULL }
+#define BER_BVC(s)		{ sizeof(s) - 1, (s) }
+#define BER_BVNULL		{ 0L, NULL }
+#define BER_BVZERO(bv) \
+	do { \
+		(bv)->bv_len = 0; \
+		(bv)->bv_val = NULL; \
+	} while (0)
+#define BER_BVSTR(bv,s)	\
+	do { \
+		(bv)->bv_len = sizeof(s)-1; \
+		(bv)->bv_val = (s); \
+	} while (0)
+#define BER_BVISNULL(bv)	((bv)->bv_val == NULL)
+#define BER_BVISEMPTY(bv)	((bv)->bv_len == 0)
 
 LDAP_END_DECL
 

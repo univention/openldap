@@ -1,5 +1,5 @@
 /* ldapwhoami.c -- a tool for asking the directory "Who Am I?" */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapwhoami.c,v 1.26.2.5 2004/01/01 18:16:26 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapwhoami.c,v 1.26.2.6 2004/03/17 19:54:53 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -71,7 +71,7 @@ handle_private_option( int i )
 #if 0
 		char	*control, *cvalue;
 		int		crit;
-	case 'E': /* whoami controls */
+	case 'E': /* whoami extension */
 		if( protocol == LDAP_VERSION2 ) {
 			fprintf( stderr, _("%s: -E incompatible with LDAPv%d\n"),
 				prog, protocol );
@@ -93,7 +93,8 @@ handle_private_option( int i )
 		if ( (cvalue = strchr( control, '=' )) != NULL ) {
 			*cvalue++ = '\0';
 		}
-		fprintf( stderr, _("Invalid whoami control name: %s\n"), control );
+
+		fprintf( stderr, _("Invalid whoami extension name: %s\n"), control );
 		usage();
 #endif
 

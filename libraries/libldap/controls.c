@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/controls.c,v 1.40.2.4 2004/01/01 18:16:29 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/controls.c,v 1.40.2.5 2004/03/17 20:10:49 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -26,9 +26,6 @@
  * LICENSE, OR OTHER PRIOR WRITTEN CONSENT FROM NOVELL, COULD SUBJECT THE
  * PERPETRATOR TO CRIMINAL AND CIVIL LIABILITY. 
  *---
- * Modification to OpenLDAP source by Novell, Inc.
- * June 2000 sfs  Added control utilities
- *--
  * Note: A verbatim copy of version 2.0.1 of the OpenLDAP Public License
  * can be found in the file "build/LICENSE-2.0.1" in this distribution
  * of OpenLDAP Software.
@@ -390,6 +387,25 @@ ldap_control_dup( const LDAPControl *c )
 
 	new->ldctl_iscritical = c->ldctl_iscritical;
 	return new;
+}
+
+
+LDAPControl *
+ldap_find_control(
+	LDAP_CONST char *oid,
+	LDAPControl **ctrls )
+{
+	if( ctrls == NULL || *ctrls == NULL ) {
+		return NULL;
+	}
+
+	for( ; *ctrls != NULL; ctrls++ ) {
+		if( strcmp( (*ctrls)->ldctl_oid, oid ) == 0 ) {
+			return *ctrls;
+		}
+	}
+
+	return NULL;
 }
 
 /*

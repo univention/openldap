@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/add.c,v 1.162.2.8 2004/01/01 18:16:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/add.c,v 1.162.2.12 2004/05/21 02:11:38 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -36,7 +36,8 @@
 #ifdef LDAP_SLAPI
 #include "slapi/slapi.h"
 
-static void init_add_pblock( Operation *op, struct berval *dn, Entry *e, int manageDSAit );
+static void init_add_pblock( Operation *op, struct berval *dn, Entry *e,
+	int manageDSAit );
 static int call_add_preop_plugins( Operation *op );
 static void call_add_postop_plugins( Operation *op );
 #endif /* LDAP_SLAPI */
@@ -46,7 +47,7 @@ do_add( Operation *op, SlapReply *rs )
 {
 	BerElement	*ber = op->o_ber;
 	char		*last;
-	struct berval dn = { 0, NULL };
+	struct berval dn = BER_BVNULL;
 	ber_len_t	len;
 	ber_tag_t	tag;
 	Entry		*e;
@@ -86,7 +87,8 @@ do_add( Operation *op, SlapReply *rs )
 
 	e = (Entry *) ch_calloc( 1, sizeof(Entry) );
 
-	rs->sr_err = dnPrettyNormal( NULL, &dn, &op->o_req_dn, &op->o_req_ndn, op->o_tmpmemctx );
+	rs->sr_err = dnPrettyNormal( NULL, &dn, &op->o_req_dn, &op->o_req_ndn,
+		op->o_tmpmemctx );
 
 	if( rs->sr_err != LDAP_SUCCESS ) {
 #ifdef NEW_LOGGING
@@ -212,8 +214,8 @@ do_add( Operation *op, SlapReply *rs )
 	if ( op->o_bd == NULL ) {
 		rs->sr_ref = referral_rewrite( default_referral,
 			NULL, &e->e_name, LDAP_SCOPE_DEFAULT );
-		if (!rs->sr_ref) rs->sr_ref = default_referral;
-		if ( rs->sr_ref != NULL ) {
+		if ( !rs->sr_ref ) rs->sr_ref = default_referral;
+		if ( rs->sr_ref ) {
 			rs->sr_err = LDAP_REFERRAL;
 			send_ldap_result( op, rs );
 
@@ -222,7 +224,7 @@ do_add( Operation *op, SlapReply *rs )
 			}
 		} else {
 			send_ldap_error( op, rs, LDAP_UNWILLING_TO_PERFORM,
-					"referral missing" );
+				"no global superior knowledge" );
 		}
 		goto done;
 	}
@@ -250,12 +252,9 @@ do_add( Operation *op, SlapReply *rs )
 	 */
 	if ( op->o_bd->be_add ) {
 		/* do the update here */
-		int repl_user = be_isupdate(op->o_bd, &op->o_ndn );
+		int repl_user = be_isupdate( op );
 #ifndef SLAPD_MULTIMASTER
-		if ( LDAP_STAILQ_EMPTY( &op->o_bd->be_syncinfo ) &&
-			( !op->o_bd->be_update_ndn.bv_len || repl_user ))
-#else
-		if ( LDAP_STAILQ_EMPTY( &op->o_bd->be_syncinfo ))
+		if ( !SLAP_SHADOW(op->o_bd) || repl_user )
 #endif
 		{
 			int update = op->o_bd->be_update_ndn.bv_len;
@@ -264,7 +263,7 @@ do_add( Operation *op, SlapReply *rs )
 			slap_callback cb = { NULL, slap_replog_cb, NULL, NULL };
 
 			rs->sr_err = slap_mods_check( modlist, update, &rs->sr_text,
-										  textbuf, textlen, NULL );
+				  textbuf, textlen, NULL );
 
 			if( rs->sr_err != LDAP_SUCCESS ) {
 				send_ldap_result( op, rs );
@@ -288,7 +287,7 @@ do_add( Operation *op, SlapReply *rs )
 			}
 
 			rs->sr_err = slap_mods2entry( modlist, &e, repl_user, 0,
-									&rs->sr_text, textbuf, textlen );
+				&rs->sr_text, textbuf, textlen );
 			if( rs->sr_err != LDAP_SUCCESS ) {
 				send_ldap_result( op, rs );
 				goto done;
@@ -338,17 +337,8 @@ do_add( Operation *op, SlapReply *rs )
 			}
 #endif /* LDAP_SLAPI */
 
-			if ( !LDAP_STAILQ_EMPTY( &op->o_bd->be_syncinfo )) {
-				syncinfo_t *si;
-				LDAP_STAILQ_FOREACH( si, &op->o_bd->be_syncinfo, si_next ) {
-					struct berval tmpbv;
-					ber_dupbv( &tmpbv, &si->si_provideruri_bv[0] );
-					ber_bvarray_add( &defref, &tmpbv );
-				}
-			} else {
-				defref = op->o_bd->be_update_refs
-					? op->o_bd->be_update_refs : default_referral;
-			}
+			defref = op->o_bd->be_update_refs
+				? op->o_bd->be_update_refs : default_referral;
 
 			if ( defref != NULL ) {
 				rs->sr_ref = referral_rewrite( defref,
@@ -358,11 +348,13 @@ do_add( Operation *op, SlapReply *rs )
 				if (!rs->sr_ref) rs->sr_ref = default_referral;
 				send_ldap_result( op, rs );
 
-				if ( rs->sr_ref != default_referral ) ber_bvarray_free( rs->sr_ref );
+				if ( rs->sr_ref != default_referral ) {
+					ber_bvarray_free( rs->sr_ref );
+				}
 			} else {
 				send_ldap_error( op, rs,
-						LDAP_UNWILLING_TO_PERFORM,
-						"referral missing" );
+					LDAP_UNWILLING_TO_PERFORM,
+					"shadow context; no update referral" );
 			}
 #endif /* SLAPD_MULTIMASTER */
 		}
@@ -493,11 +485,12 @@ slap_mods2entry(
 
 			/* check if the values we're adding already exist */
 			if( mr == NULL || !mr->smr_match ) {
-				for ( i = 0; mods->sml_bvalues[i].bv_val != NULL; i++ ) {
+				for ( i = 1; mods->sml_values[i].bv_val != NULL; i++ ) {
 					/* test asserted values against themselves */
 					for( j = 0; j < i; j++ ) {
-						if ( bvmatch( &mods->sml_bvalues[i],
-							&mods->sml_bvalues[j] ) ) {
+						if ( bvmatch( &mods->sml_values[i],
+							&mods->sml_values[j] ) )
+						{
 							/* value exists already */
 							snprintf( textbuf, textlen,
 								"%s: value #%d provided more than once",
@@ -508,14 +501,15 @@ slap_mods2entry(
 				}
 
 			} else {
-				int		rc = LDAP_SUCCESS;
+				int	rc;
 				int match;
 
-				for ( i = 0; mods->sml_values[i].bv_val != NULL; i++ ) {
+				for ( i = 1; mods->sml_values[i].bv_val != NULL; i++ ) {
 					/* test asserted values against themselves */
 					for( j = 0; j < i; j++ ) {
 						rc = value_match( &match, mods->sml_desc, mr,
-							SLAP_MR_EQUALITY | SLAP_MR_VALUE_OF_ATTRIBUTE_SYNTAX
+							SLAP_MR_EQUALITY
+							| SLAP_MR_VALUE_OF_ATTRIBUTE_SYNTAX
 							| SLAP_MR_ASSERTED_VALUE_NORMALIZED_MATCH
 							| SLAP_MR_ATTRIBUTE_VALUE_NORMALIZED_MATCH,
 							mods->sml_nvalues
@@ -525,17 +519,18 @@ slap_mods2entry(
 								? &mods->sml_nvalues[j]
 								: &mods->sml_values[j],
 							text );
+
 						if ( rc == LDAP_SUCCESS && match == 0 ) {
 							/* value exists already */
 							snprintf( textbuf, textlen,
 								"%s: value #%d provided more than once",
 								mods->sml_desc->ad_cname.bv_val, j );
 							return LDAP_TYPE_OR_VALUE_EXISTS;
+
+						} else if ( rc != LDAP_SUCCESS ) {
+							return rc;
 						}
 					}
-				}
-				if ( rc != LDAP_SUCCESS ) {
-					return rc;
 				}
 			}
 		}
@@ -544,17 +539,17 @@ slap_mods2entry(
 
 		/* move ad to attr structure */
 		attr->a_desc = mods->sml_desc;
-		if ( !dup )
-			mods->sml_desc = NULL;
+		if ( !dup ) mods->sml_desc = NULL;
 
 		/* move values to attr structure */
 		/*	should check for duplicates */
 		if ( dup ) { 
 			int i;
-			for ( i = 0; mods->sml_values[i].bv_val; i++ ) ;
+			for ( i = 0; mods->sml_values[i].bv_val; i++ ) /* EMPTY */;
 			attr->a_vals = (BerVarray) ch_calloc( i+1, sizeof( BerValue ));
-			for ( i = 0; mods->sml_values[i].bv_val; i++ )
+			for ( i = 0; mods->sml_values[i].bv_val; i++ ) {
 				ber_dupbv( &attr->a_vals[i], &mods->sml_values[i] );
+			}
 			attr->a_vals[i].bv_len = 0;
 			attr->a_vals[i].bv_val = NULL;
 		} else {
@@ -565,10 +560,11 @@ slap_mods2entry(
 		if ( mods->sml_nvalues ) {
 			if ( dup ) {
 				int i;
-				for ( i = 0; mods->sml_nvalues[i].bv_val; i++ ) ;
+				for ( i = 0; mods->sml_nvalues[i].bv_val; i++ ) /* EMPTY */;
 				attr->a_nvals = (BerVarray) ch_calloc( i+1, sizeof( BerValue ));
-				for ( i = 0; mods->sml_nvalues[i].bv_val; i++ )
+				for ( i = 0; mods->sml_nvalues[i].bv_val; i++ ) {
 					ber_dupbv( &attr->a_nvals[i], &mods->sml_nvalues[i] );
+				}
 				attr->a_nvals[i].bv_len = 0;
 				attr->a_nvals[i].bv_val = NULL;
 			} else {
@@ -610,10 +606,10 @@ slap_entry2mods(
 
 		mod->sml_type = a_new_desc->ad_cname;
 
-		for ( count = 0; a_new->a_vals[count].bv_val; count++ );
+		for ( count = 0; a_new->a_vals[count].bv_val; count++ ) /* EMPTY */;
 
-		mod->sml_bvalues = (struct berval*) malloc(
-				(count+1) * sizeof( struct berval) );
+		mod->sml_values = (struct berval*) malloc(
+			(count+1) * sizeof( struct berval) );
 
 		/* see slap_mods_check() comments...
 		 * if a_vals == a_nvals, there is no normalizer.
@@ -627,17 +623,17 @@ slap_entry2mods(
 		}
 
 		for ( i = 0; i < count; i++ ) {
-			ber_dupbv(mod->sml_bvalues+i, a_new->a_vals+i); 
+			ber_dupbv(mod->sml_values+i, a_new->a_vals+i); 
 			if ( mod->sml_nvalues ) {
-				ber_dupbv( mod->sml_nvalues+i, a_new->a_vals+i ); 
+				ber_dupbv( mod->sml_nvalues+i, a_new->a_nvals+i ); 
 			} 
 		}
 
-		mod->sml_bvalues[count].bv_val = 0; 
-		mod->sml_bvalues[count].bv_len = 0; 
+		mod->sml_values[count].bv_val = NULL; 
+		mod->sml_values[count].bv_len = 0; 
 
 		if ( mod->sml_nvalues ) {
-			mod->sml_nvalues[count].bv_val = 0; 
+			mod->sml_nvalues[count].bv_val = NULL; 
 			mod->sml_nvalues[count].bv_len = 0; 
 		}
 

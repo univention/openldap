@@ -1,5 +1,5 @@
 /* sessionlog.c -- Session History Management Routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/sessionlog.c,v 1.4.2.4 2004/01/01 18:16:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sessionlog.c,v 1.4.2.5 2004/03/18 01:01:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2004 The OpenLDAP Foundation.
@@ -87,6 +87,7 @@ slap_send_session_log(
 			rs->sr_entry = &e;
 			rs->sr_attrs = uuid_attr;
 			rs->sr_ctrls = ctrls;
+			rs->sr_flags = 0;
 			result = send_search_entry( op, rs );
 			sl_free( ctrls[num_ctrls-1]->ldctl_value.bv_val, op->o_tmpmemctx );
 			sl_free( ctrls[--num_ctrls], op->o_tmpmemctx );

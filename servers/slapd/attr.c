@@ -1,5 +1,5 @@
 /* attr.c - routines for dealing with attributes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/attr.c,v 1.88.2.4 2004/01/01 18:16:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/attr.c,v 1.88.2.5 2004/04/12 18:13:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -142,8 +142,8 @@ attr_merge(
 	Entry		*e,
 	AttributeDescription *desc,
 	BerVarray	vals,
-	BerVarray	nvals
-) {
+	BerVarray	nvals )
+{
 	int rc;
 
 	Attribute	**a;
@@ -176,8 +176,8 @@ attr_merge_normalize(
 	Entry		*e,
 	AttributeDescription *desc,
 	BerVarray	vals,
-	void	 *memctx
-) {
+	void	 *memctx )
+{
 	BerVarray	nvals = NULL;
 	int		rc;
 
@@ -218,8 +218,8 @@ attr_merge_one(
 	Entry		*e,
 	AttributeDescription *desc,
 	struct berval	*val,
-	struct berval	*nval
-) {
+	struct berval	*nval )
+{
 	int rc;
 	Attribute	**a;
 
@@ -250,8 +250,8 @@ attr_merge_normalize_one(
 	Entry		*e,
 	AttributeDescription *desc,
 	struct berval	*val,
-	void		*memctx
-) {
+	void		*memctx )
+{
 	struct berval	nval;
 	struct berval	*nvalp;
 	int		rc;
@@ -288,8 +288,7 @@ attr_merge_normalize_one(
 Attribute *
 attrs_find(
     Attribute	*a,
-	AttributeDescription *desc
-)
+	AttributeDescription *desc )
 {
 	for ( ; a != NULL; a = a->a_next ) {
 		if ( is_ad_subtype( a->a_desc, desc ) ) {
@@ -307,8 +306,7 @@ attrs_find(
 Attribute *
 attr_find(
     Attribute	*a,
-	AttributeDescription *desc
-)
+	AttributeDescription *desc )
 {
 	for ( ; a != NULL; a = a->a_next ) {
 		if ( ad_cmp( a->a_desc, desc ) == 0 ) {
@@ -329,8 +327,7 @@ attr_find(
 int
 attr_delete(
     Attribute	**attrs,
-	AttributeDescription *desc
-)
+	AttributeDescription *desc )
 {
 	Attribute	**a;
 

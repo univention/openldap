@@ -1,5 +1,5 @@
 /* search.c - DNS SRV backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/search.c,v 1.27.2.2 2004/01/01 18:16:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/search.c,v 1.27.2.4 2004/04/12 15:51:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -41,7 +41,7 @@ dnssrv_back_search(
 	char *hostlist = NULL;
 	char **hosts = NULL;
 	char *refdn;
-	struct berval nrefdn = { 0, NULL };
+	struct berval nrefdn = BER_BVNULL;
 	BerVarray urls = NULL;
 	int manageDSAit;
 
@@ -221,6 +221,7 @@ dnssrv_back_search(
 		if( rc == LDAP_COMPARE_TRUE ) {
 			rs->sr_entry = e;
 			rs->sr_attrs = op->oq_search.rs_attrs;
+			rs->sr_flags = REP_ENTRY_MODIFIABLE;
 			send_search_entry( op, rs );
 			rs->sr_entry = NULL;
 			rs->sr_attrs = NULL;

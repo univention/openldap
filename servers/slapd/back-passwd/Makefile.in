@@ -1,5 +1,5 @@
 # Makefile.in for back-passwd
-# $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/Makefile.in,v 1.14.2.2 2004/01/01 18:16:38 kurt Exp $
+# $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/Makefile.in,v 1.14.2.3 2004/04/12 18:20:14 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2004 The OpenLDAP Foundation.
@@ -21,7 +21,6 @@ LDAP_LIBDIR= ../../../libraries
 
 BUILD_OPT = "--enable-passwd"
 BUILD_MOD = @BUILD_PASSWD@
-BUILD_MOD_DYNAMIC = @BUILD_PASSWD_DYNAMIC@
 
 mod_DEFS = -DSLAPD_IMPORT
 MOD_DEFS = $(@BUILD_PASSWD@_DEFS)

@@ -1,5 +1,5 @@
 /* ldbm.c - ldap dbm compatibility routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/ldbm.c,v 1.1.2.2 2004/01/01 18:16:37 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/ldbm.c,v 1.1.2.3 2004/02/23 22:08:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -152,8 +152,16 @@ int ldbm_initialize( const char* home )
 
 	{
 		char *version;
+#ifdef HAVE_EBCDIC
+		char v2[1024];
+#endif
 		int major, minor, patch;
 		version = db_version( &major, &minor, &patch );
+#ifdef HAVE_EBCDIC
+		strcpy( v2, version );
+		__etoa( v2 );
+		version = v2;
+#endif
 
 		if( major != DB_VERSION_MAJOR ||
 			minor < DB_VERSION_MINOR )

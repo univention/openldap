@@ -1,5 +1,5 @@
 /* abandon.c - decode and handle an ldap abandon operation */
-/* $OpenLDAP: pkg/ldap/servers/slapd/abandon.c,v 1.36.2.2 2004/01/01 18:16:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/abandon.c,v 1.36.2.3 2004/06/04 03:39:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -103,6 +103,7 @@ do_abandon( Operation *op, SlapReply *rs )
 	LDAP_STAILQ_FOREACH( o, &op->o_conn->c_pending_ops, o_next ) {
 		if ( o->o_msgid == id ) {
 			LDAP_STAILQ_REMOVE( &op->o_conn->c_pending_ops, o, slap_op, o_next );
+			op->o_conn->c_n_ops_pending--;
 			slap_op_free( o );
 			goto done;
 		}

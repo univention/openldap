@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/getdn.c,v 1.112.2.2 2004/01/01 18:16:29 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/getdn.c,v 1.112.2.6 2004/04/12 15:17:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -471,7 +471,8 @@ ldap_dn_normalize( LDAP_CONST char *dnin,
 	( LDAP_DN_RDN_SEP(c) || LDAP_DN_AVA_SEP(c) )
 #define LDAP_DN_NE(c) \
 	( LDAP_DN_RDN_SEP_V2(c) || LDAP_DN_AVA_SEP(c) \
-	  || LDAP_DN_QUOTES(c) || (c) == '<' || (c) == '>' )
+	  || LDAP_DN_AVA_EQUALS(c) || LDAP_DN_QUOTES(c) \
+	  || (c) == '<' || (c) == '>' )
 #define LDAP_DN_MAYESCAPE(c) \
 	( LDAP_DN_ESCAPE(c) || LDAP_DN_NE(c) \
 	  || LDAP_DN_ASCII_SPACE(c) || LDAP_DN_OCTOTHORPE(c) )
@@ -954,8 +955,8 @@ ldap_bv2rdn_x( struct berval *bv, LDAPRDN *rdn,
 	int		attrTypeEncoding = LDAP_AVA_STRING, 
 			attrValueEncoding = LDAP_AVA_STRING;
 
-	struct berval	attrType = { 0, NULL };
-	struct berval 	attrValue = { 0, NULL };
+	struct berval	attrType = BER_BVNULL;
+	struct berval 	attrValue = BER_BVNULL;
 
 	LDAPRDN		newRDN = NULL;
 	LDAPAVA		*tmpRDN_[TMP_AVA_SLOTS], **tmpRDN = tmpRDN_;
@@ -3227,6 +3228,8 @@ int ldap_dn2bv_x( LDAPDN dn, struct berval *bv, unsigned flags, void *ctx )
 		break;
 
 	case LDAP_DN_FORMAT_AD_CANONICAL: {
+		int	trailing_slash = 1;
+
 		/*
 		 * Sort of UFN for DCE DNs: a slash ('/') separated
 		 * global->local DN with no types; strictly speaking,
@@ -3251,7 +3254,10 @@ int ldap_dn2bv_x( LDAPDN dn, struct berval *bv, unsigned flags, void *ctx )
 			len += rdnl;
 		}
 
-		if ( ( bv->bv_val = LDAP_MALLOCX( len + 1, ctx ) ) == NULL ) {
+		/* reserve room for trailing '/' in case the DN 
+		 * is exactly a domain */
+		if ( ( bv->bv_val = LDAP_MALLOCX( len + 1 + 1, ctx ) ) == NULL )
+		{
 			rc = LDAP_NO_MEMORY;
 			break;
 		}
@@ -3260,6 +3266,8 @@ int ldap_dn2bv_x( LDAPDN dn, struct berval *bv, unsigned flags, void *ctx )
 		if ( iRDN && dn2domain( dn, bv, 0, &iRDN ) != 0 ) {
 			for ( l = bv->bv_len; iRDN >= 0 ; iRDN-- ) {
 				ber_len_t	rdnl;
+
+				trailing_slash = 0;
 			
 				if ( rdn2ADstr( dn[ iRDN ], &bv->bv_val[ l ], 
 						flags, &rdnl, 0 ) ) {
@@ -3299,6 +3307,13 @@ int ldap_dn2bv_x( LDAPDN dn, struct berval *bv, unsigned flags, void *ctx )
 				}
 				l += rdnl;
 			}
+		}
+
+		if ( trailing_slash ) {
+			/* the DN is exactly a domain -- need a trailing
+			 * slash; room was reserved in advance */
+			bv->bv_val[ len ] = '/';
+			len++;
 		}
 
 		bv->bv_len = len;

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/group.c,v 1.20.2.3 2004/01/01 18:16:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/group.c,v 1.20.2.4 2004/04/12 16:08:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -56,9 +56,9 @@ meta_back_group(
 	char *gattr[ 2 ];
 	char *filter = NULL, *ptr;
 	LDAP *ld = NULL;
-	struct berval mop_ndn = { 0, NULL }, mgr_ndn = { 0, NULL };
+	struct berval mop_ndn = BER_BVNULL, mgr_ndn = BER_BVNULL;
 
-	struct berval group_oc_name = { 0, NULL };
+	struct berval group_oc_name = BER_BVNULL;
 	struct berval group_at_name = group_at->ad_cname;
 
 	if ( group_oc->soc_names && group_oc->soc_names[ 0 ] ) {

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/search.c,v 1.132.2.7 2004/01/01 18:16:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/search.c,v 1.132.2.9 2004/04/12 18:13:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -49,7 +49,7 @@ do_search(
     Operation	*op,	/* info about the op to which we're responding */
     SlapReply	*rs	/* all the response data we'll send */
 ) {
-	struct berval base = { 0, NULL };
+	struct berval base = BER_BVNULL;
 	ber_len_t	siz, off, i;
 	int			manageDSAit;
 	int			be_manageDSAit;
@@ -396,7 +396,7 @@ do_search(
 #endif /* LDAP_SLAPI */
 
 	/* actually do the search and send the result(s) */
-	if ( op->o_bd->be_search ) {
+	if ( op->o_bd->be_search && limits_check( op, rs ) == 0 ) {
 		(op->o_bd->be_search)( op, rs );
 	} else {
 		send_ldap_error( op, rs, LDAP_UNWILLING_TO_PERFORM,

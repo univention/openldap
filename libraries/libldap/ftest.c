@@ -1,5 +1,5 @@
 /* ftest.c -- OpenLDAP Filter API Test */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/ftest.c,v 1.10.2.2 2004/01/01 18:16:29 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/ftest.c,v 1.10.2.3 2004/04/12 15:17:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -25,6 +25,7 @@
 #include <ldap.h>
 
 #include "ldap_pvt.h"
+#include "lber_pvt.h"
 
 #include "ldif.h"
 #include "lutil.h"
@@ -85,7 +86,7 @@ main( int argc, char *argv[] )
 static int filter2ber( char *filter )
 {
 	int rc;
-	struct berval bv = {0, NULL};
+	struct berval bv = BER_BVNULL;
 	BerElement *ber;
 
 	printf( "Filter: %s\n", filter );

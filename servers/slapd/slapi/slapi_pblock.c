@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_pblock.c,v 1.12.2.6 2004/01/01 18:16:41 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_pblock.c,v 1.12.2.8 2004/03/18 01:01:04 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2002-2004 The OpenLDAP Foundation.
@@ -321,8 +321,13 @@ set( Slapi_PBlock *pb, int param, void *val )
 		LDAPControl **ctrls = pb->curVals[i];
 		int j;
 
-		for (j=0; ctrls[j]; j++);
-		ctrls = ch_realloc( ctrls, (j+2)*sizeof(LDAPControl *) );
+		if ( ctrls ) {
+			for (j=0; ctrls[j]; j++);
+			ctrls = ch_realloc( ctrls, (j+2)*sizeof(LDAPControl *) );
+		} else {
+			ctrls = ch_malloc( 2 * sizeof(LDAPControl *) );
+			j = 0;
+		}
 		ctrls[j] = val;
 		ctrls[j+1] = NULL;
 		pb->curVals[i] = ctrls;

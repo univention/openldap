@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi.h,v 1.20.2.5 2004/01/01 18:16:41 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi.h,v 1.20.2.7 2004/03/18 01:01:04 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2002-2004 The OpenLDAP Foundation.
@@ -25,7 +25,7 @@
 #ifndef _SLAPI_H
 #define _SLAPI_H
 
-#include <ibm_pblock_params.h> 
+#include "ibm_pblock_params.h"
 
 LDAP_BEGIN_DECL
 

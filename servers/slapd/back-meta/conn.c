@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/conn.c,v 1.24.2.3 2004/01/01 18:16:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/conn.c,v 1.24.2.5 2004/04/06 18:16:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -207,7 +207,7 @@ init_one_conn(
 	 */
 	rs->sr_err = ldap_initialize( &lsc->ld, lt->uri );
 	if ( rs->sr_err != LDAP_SUCCESS ) {
-		return ldap_back_map_result( rs );
+		return slap_map_api2result( rs );
 	}
 
 	/*
@@ -243,7 +243,7 @@ init_one_conn(
 		dc.rwmap = &lt->rwmap;
 		dc.conn = op->o_conn;
 		dc.rs = rs;
-		dc.ctx = "bindDn";
+		dc.ctx = "bindDN";
 		
 		/*
 		 * Rewrite the bind dn if needed
@@ -252,6 +252,11 @@ init_one_conn(
 					&lsc->bound_dn) ) {
 			send_ldap_result( op, rs );
 			return rs->sr_err;
+		}
+
+		/* copy the DN idf needed */
+		if ( lsc->bound_dn.bv_val == op->o_conn->c_dn.bv_val ) {
+			ber_dupbv( &lsc->bound_dn, &op->o_conn->c_dn );
 		}
 
 		assert( lsc->bound_dn.bv_val );

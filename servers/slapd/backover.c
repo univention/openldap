@@ -1,5 +1,5 @@
 /* backover.c - backend overlay routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backover.c,v 1.6.2.7 2004/01/01 18:16:33 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backover.c,v 1.6.2.10 2004/04/06 18:16:00 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2004 The OpenLDAP Foundation.
@@ -38,25 +38,23 @@ over_db_func(
 {
 	slap_overinfo *oi = (slap_overinfo *) be->bd_info;
 	slap_overinst *on = oi->oi_list;
-	BackendDB bd;
 	BI_db_open **func;
 	int rc = 0;
 
-	func = &oi->oi_bd.bd_info->bi_db_open;
+	func = &oi->oi_orig->bi_db_open;
 	if ( func[which] ) {
-		rc = func[which]( &oi->oi_bd );
-		if ( rc ) return rc;
+		be->bd_info = oi->oi_orig;
+		rc = func[which]( be );
 	}
 
-	bd = *be;
-	for (; on; on=on->on_next) {
-		bd.bd_info = &on->on_bi;
+	for (; on && rc == 0; on=on->on_next) {
+		be->bd_info = &on->on_bi;
 		func = &on->on_bi.bi_db_open;
 		if (func[which]) {
-			rc = func[which]( &bd );
-			if ( rc ) break;
+			rc = func[which]( be );
 		}
 	}
+	be->bd_info = (BackendInfo *)oi;
 	return rc;
 }
 
@@ -71,24 +69,25 @@ over_db_config(
 {
 	slap_overinfo *oi = (slap_overinfo *) be->bd_info;
 	slap_overinst *on = oi->oi_list;
-	BackendDB bd;
 	int rc = 0;
 
-	if ( oi->oi_bd.bd_info->bi_db_config ) {
-		rc = oi->oi_bd.bd_info->bi_db_config( &oi->oi_bd, fname, lineno,
+	if ( oi->oi_orig->bi_db_config ) {
+		be->bd_info = oi->oi_orig;
+		rc = oi->oi_orig->bi_db_config( be, fname, lineno,
 			argc, argv );
+		be->bd_info = (BackendInfo *)oi;
 		if ( rc != SLAP_CONF_UNKNOWN ) return rc;
 	}
 
-	bd = *be;
 	for (; on; on=on->on_next) {
-		bd.bd_info = &on->on_bi;
 		if (on->on_bi.bi_db_config) {
-			rc = on->on_bi.bi_db_config( &bd, fname, lineno,
+			be->bd_info = &on->on_bi;
+			rc = on->on_bi.bi_db_config( be, fname, lineno,
 				argc, argv );
 			if ( rc != SLAP_CONF_UNKNOWN ) break;
 		}
 	}
+	be->bd_info = (BackendInfo *)oi;
 	return rc;
 }
 
@@ -130,7 +129,7 @@ over_db_destroy(
 static int
 over_back_response ( Operation *op, SlapReply *rs )
 {
-	slap_overinfo *oi = (slap_overinfo *) op->o_bd->bd_info;
+	slap_overinfo *oi = op->o_callback->sc_private;
 	slap_overinst *on = oi->oi_list;
 	int rc = SLAP_CB_CONTINUE;
 	BackendDB *be = op->o_bd, db = *op->o_bd;
@@ -147,9 +146,40 @@ over_back_response ( Operation *op, SlapReply *rs )
 	return rc;
 }
 
-enum op_which { op_bind = 0, op_unbind, op_search, op_compare,
-	op_modify, op_modrdn, op_add, op_delete, op_abandon,
-	op_cancel, op_extended };
+enum op_which {
+	op_bind = 0,
+	op_unbind,
+	op_search,
+	op_compare,
+	op_modify,
+	op_modrdn,
+	op_add,
+	op_delete,
+	op_abandon,
+	op_cancel,
+	op_extended,
+	op_aux_chk_referrals,
+	op_last
+};
+
+/*
+ * default return code in case of missing backend function
+ * and overlay stack returning SLAP_CB_CONTINUE
+ */
+static int op_rc[] = {
+	LDAP_UNWILLING_TO_PERFORM,	/* bind */
+	LDAP_UNWILLING_TO_PERFORM,	/* unbind */
+	LDAP_UNWILLING_TO_PERFORM,	/* search */
+	LDAP_UNWILLING_TO_PERFORM,	/* compare */
+	LDAP_UNWILLING_TO_PERFORM,	/* modify */
+	LDAP_UNWILLING_TO_PERFORM,	/* modrdn */
+	LDAP_UNWILLING_TO_PERFORM,	/* add */
+	LDAP_UNWILLING_TO_PERFORM,	/* delete */
+	LDAP_UNWILLING_TO_PERFORM,	/* abandon */
+	LDAP_UNWILLING_TO_PERFORM,	/* cancel */
+	LDAP_UNWILLING_TO_PERFORM,	/* extended */
+	LDAP_SUCCESS			/* aux_chk_referrals */
+};
 
 static int
 over_op_func(
@@ -167,6 +197,7 @@ over_op_func(
 
 	op->o_bd = &db;
 	cb.sc_next = op->o_callback;
+	cb.sc_private = oi;
 	op->o_callback = &cb;
 
 	for (; on; on=on->on_next ) {
@@ -179,13 +210,13 @@ over_op_func(
 	}
 
 	op->o_bd = be;
-	func = &oi->oi_bd.bd_info->bi_op_bind;
+	func = &oi->oi_orig->bi_op_bind;
 	if ( func[which] && rc == SLAP_CB_CONTINUE ) {
 		rc = func[which]( op, rs );
 	}
 	/* should not fall thru this far without anything happening... */
 	if ( rc == SLAP_CB_CONTINUE ) {
-		rc = LDAP_UNWILLING_TO_PERFORM;
+		rc = op_rc[ which ];
 	}
 	op->o_callback = cb.sc_next;
 	return rc;
@@ -257,6 +288,12 @@ over_op_extended( Operation *op, SlapReply *rs )
 	return over_op_func( op, rs, op_extended );
 }
 
+static int
+over_chk_referrals( Operation *op, SlapReply *rs )
+{
+	return over_op_func( op, rs, op_aux_chk_referrals );
+}
+
 int
 overlay_register(
 	slap_overinst *on
@@ -267,15 +304,27 @@ overlay_register(
 	return 0;
 }
 
+slap_overinst *
+overlay_next(
+	slap_overinst *on
+)
+{
+	if ( on == NULL ) {
+		return overlays;
+	}
+
+	return on->on_next;
+}
+
 static const char overtype[] = "over";
 
 /* add an overlay to a particular backend. */
 int
 overlay_config( BackendDB *be, const char *ov )
 {
-	slap_overinst *on, *on2, *prev;
-	slap_overinfo *oi;
-	BackendInfo *bi;
+	slap_overinst *on = NULL, *on2 = NULL, *prev = NULL;
+	slap_overinfo *oi = NULL;
+	BackendInfo *bi = NULL;
 
 	for ( on = overlays; on; on=on->on_next ) {
 		if (!strcmp( ov, on->on_bi.bi_type ) )
@@ -291,7 +340,7 @@ overlay_config( BackendDB *be, const char *ov )
 	 */
 	if ( be->bd_info->bi_type != overtype ) {
 		oi = ch_malloc( sizeof(slap_overinfo) );
-		oi->oi_bd = *be;
+		oi->oi_orig = be->bd_info;
 		oi->oi_bi = *be->bd_info;
 		oi->oi_list = NULL;
 		bi = (BackendInfo *)oi;
@@ -313,16 +362,27 @@ overlay_config( BackendDB *be, const char *ov )
 		bi->bi_op_delete = over_op_delete;
 		bi->bi_op_abandon = over_op_abandon;
 		bi->bi_op_cancel = over_op_cancel;
+
 		bi->bi_extended = over_op_extended;
 
+		/*
+		 * this is fine because it has the same
+		 * args of the operations; we need to rework
+		 * all the hooks to share the same args
+		 * of the operations...
+		 */
+		bi->bi_chk_referrals = over_chk_referrals;
+
 		be->bd_info = bi;
+
+	} else {
+		oi = (slap_overinfo *) be->bd_info;
 	}
 
 #if 0
 	/* Walk to the end of the list of overlays, add the new
 	 * one onto the end
 	 */
-	oi = (slap_overinfo *) be->bd_info;
 	for ( prev=NULL, on2 = oi->oi_list; on2; prev=on2, on2=on2->on_next );
 	on2 = ch_calloc( 1, sizeof(slap_overinst) );
 	if ( !prev ) {

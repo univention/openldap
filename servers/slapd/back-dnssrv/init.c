@@ -1,5 +1,5 @@
 /* init.c - initialize ldap backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/init.c,v 1.17.2.3 2004/01/01 18:16:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/init.c,v 1.17.2.4 2004/04/12 18:20:13 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -28,7 +28,7 @@
 #include "slap.h"
 #include "external.h"
 
-#ifdef SLAPD_DNSSRV_DYNAMIC
+#if SLAPD_DNSSRV == SLAPD_MOD_DYNAMIC
 
 int init_module(int argc, char *argv[])
 {
@@ -42,7 +42,7 @@ int init_module(int argc, char *argv[])
     return 0;
 }
 
-#endif /* SLAPD_DNSSRV_DYNAMIC */
+#endif /* SLAPD_DNSSRV */
 
 int
 dnssrv_back_initialize(

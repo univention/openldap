@@ -1,5 +1,5 @@
 /* config.c - bdb backend configuration file routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/config.c,v 1.26.2.4 2004/01/01 18:16:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/config.c,v 1.26.2.5 2004/04/12 18:20:13 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -202,7 +202,6 @@ bdb_db_config(
 		}
 
 		se_id = atoi( argv[1] );
-		se_size = atoi( argv[2] );
 
 		if ( se_id < 0 || se_id > 999 ) {
 #ifdef NEW_LOGGING
@@ -217,7 +216,8 @@ bdb_db_config(
 			return( 1 );
 		}
 
-		if ( se_size < 0 || se_size > 999 ) {
+		se_size = atoi( argv[2] );
+		if ( se_size < 0 ) {
 #ifdef NEW_LOGGING
 			LDAP_LOG( CONFIG, CRIT,
 				"%s: line %d: session log size %d is negative\n",

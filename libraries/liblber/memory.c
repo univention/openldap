@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblber/memory.c,v 1.53.2.3 2004/01/01 18:16:29 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/memory.c,v 1.53.2.4 2004/04/28 23:27:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -341,7 +341,7 @@ ber_memrealloc_x( void* p, ber_len_t s, void *ctx )
 			mh = p;
 		mh->bm_length = s;
 		setend( (char *)&mh[1] + mh->bm_length );
-		if( (s - oldlen) > 0 ) {
+		if( s > oldlen ) {
 			/* poison any new memory */
 			memset( (char *)&mh[1] + oldlen, 0xff, s - oldlen);
 		}

@@ -1,5 +1,5 @@
 /* bind.c - DNS SRV backend bind function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/bind.c,v 1.14.2.2 2004/01/01 18:16:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/bind.c,v 1.14.2.3 2004/04/06 18:16:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -39,7 +39,9 @@ dnssrv_back_bind(
 		op->o_req_dn.bv_val == NULL ? "" : op->o_req_dn.bv_val, 
 		op->oq_bind.rb_method, NULL );
 		
-	if( op->oq_bind.rb_method == LDAP_AUTH_SIMPLE && op->oq_bind.rb_cred.bv_val != NULL && op->oq_bind.rb_cred.bv_len ) {
+	if( op->oq_bind.rb_method == LDAP_AUTH_SIMPLE &&
+		op->oq_bind.rb_cred.bv_val != NULL && op->oq_bind.rb_cred.bv_len )
+	{
 		Statslog( LDAP_DEBUG_STATS,
 		   	"conn=%lu op=%lu DNSSRV BIND dn=\"%s\" provided passwd\n",
 	   		 op->o_connid, op->o_opid,

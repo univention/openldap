@@ -1,5 +1,5 @@
 /* referral.c - BDB backend referral handler */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/referral.c,v 1.28.2.2 2004/01/01 18:16:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/referral.c,v 1.28.2.3 2004/04/06 18:16:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -150,7 +150,7 @@ dn2entry_retry:
 
 		rs->sr_matched = e->e_name.bv_val;
 		if( rs->sr_ref != NULL ) {
-			rs->sr_err = LDAP_REFERRAL;
+			rc = rs->sr_err = LDAP_REFERRAL;
 			send_ldap_result( op, rs );
 			ber_bvarray_free( rs->sr_ref );
 			rs->sr_ref = NULL;

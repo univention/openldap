@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/util-int.c,v 1.45.2.2 2004/01/01 18:16:30 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/util-int.c,v 1.45.2.3 2004/05/21 17:29:34 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -399,6 +399,10 @@ void ldap_int_utils_init( void )
 	ldap_pvt_thread_mutex_init( &ldap_int_ctime_mutex );
 #endif
 	ldap_pvt_thread_mutex_init( &ldap_int_resolv_mutex );
+
+#ifdef HAVE_CYRUS_SASL
+	ldap_pvt_thread_mutex_init( &ldap_int_sasl_mutex );
+#endif
 #endif
 
 	/* call other module init functions here... */

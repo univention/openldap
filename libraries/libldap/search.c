@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/search.c,v 1.57.2.4 2004/01/01 18:16:30 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/search.c,v 1.57.2.5 2004/03/17 20:10:49 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -217,7 +217,7 @@ ldap_build_search_req(
 	ber_int_t *idp)
 {
 	BerElement	*ber;
-	int		err, id;
+	int		err;
 
 	/*
 	 * Create the search request.  It looks like this:

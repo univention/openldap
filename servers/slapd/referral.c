@@ -1,5 +1,5 @@
 /* referral.c - muck with referrals */
-/* $OpenLDAP: pkg/ldap/servers/slapd/referral.c,v 1.18.2.2 2004/01/01 18:16:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/referral.c,v 1.18.2.3 2004/04/12 18:13:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -40,9 +40,9 @@ static char * referral_dn_muck(
 {
 	int rc;
 	struct berval bvin;
-	struct berval nrefDN = { 0, NULL };
-	struct berval nbaseDN = { 0, NULL };
-	struct berval ntargetDN = { 0, NULL };
+	struct berval nrefDN = BER_BVNULL;
+	struct berval nbaseDN = BER_BVNULL;
+	struct berval ntargetDN = BER_BVNULL;
 
 	if( !baseDN ) {
 		/* no base, return target */

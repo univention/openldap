@@ -1,5 +1,5 @@
 /* schema_init.c - init builtin schema */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_init.c,v 1.297.2.8 2004/01/01 18:16:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_init.c,v 1.297.2.16 2004/05/13 20:58:00 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -804,7 +804,7 @@ nameUIDPretty(
 	} else {
 		int rc;
 		struct berval dnval = *val;
-		struct berval uidval = { 0, NULL };
+		struct berval uidval = BER_BVNULL;
 
 		if( val->bv_val[val->bv_len-1] == 'B'
 			&& val->bv_val[val->bv_len-2] == '\'' )
@@ -873,9 +873,12 @@ uniqueMemberNormalize(
 
 	assert( SLAP_MR_IS_VALUE_OF_SYNTAX( usage ));
 
-	ber_dupbv( &out, val );
-	if( out.bv_len != 0 ) {
-		struct berval uid = { 0, NULL };
+	ber_dupbv_x( &out, val, ctx );
+	if( BER_BVISEMPTY( &out ) ) {
+		*normalized = out;
+
+	} else {
+		struct berval uid = BER_BVNULL;
 
 		if( out.bv_val[out.bv_len-1] == 'B'
 			&& out.bv_val[out.bv_len-2] == '\'' )
@@ -884,7 +887,7 @@ uniqueMemberNormalize(
 			uid.bv_val = strrchr( out.bv_val, '#' );
 
 			if( uid.bv_val == NULL ) {
-				free( out.bv_val );
+				sl_free( out.bv_val, ctx );
 				return LDAP_INVALID_SYNTAX;
 			}
 
@@ -898,7 +901,7 @@ uniqueMemberNormalize(
 		rc = dnNormalize( 0, NULL, NULL, &out, normalized, ctx );
 
 		if( rc != LDAP_SUCCESS ) {
-			free( out.bv_val );
+			sl_free( out.bv_val, ctx );
 			return LDAP_INVALID_SYNTAX;
 		}
 
@@ -918,7 +921,7 @@ uniqueMemberNormalize(
 			normalized->bv_val[normalized->bv_len] = '\0';
 		}
 
-		free( out.bv_val );
+		sl_free( out.bv_val, ctx );
 	}
 
 	return LDAP_SUCCESS;
@@ -935,10 +938,10 @@ uniqueMemberMatch(
 {
 	int match;
 	struct berval *asserted = (struct berval *) assertedValue;
-	struct berval assertedDN = { 0, NULL };
-	struct berval assertedUID = { 0, NULL };
-	struct berval valueDN = { 0, NULL };
-	struct berval valueUID = { 0, NULL };
+	struct berval assertedDN = BER_BVNULL;
+	struct berval assertedUID = BER_BVNULL;
+	struct berval valueDN = BER_BVNULL;
+	struct berval valueUID = BER_BVNULL;
 
 	if( asserted->bv_len != 0 ) {
 		assertedDN = *asserted;
@@ -1372,7 +1375,7 @@ approxIndexer(
 	BerVarray keys=NULL;
 
 	for( j=0; values[j].bv_val != NULL; j++ ) {
-		struct berval val = { 0, NULL };
+		struct berval val = BER_BVNULL;
 		/* Yes, this is necessary */
 		UTF8bvnormalize( &values[j], &val, LDAP_UTF8_APPROX, NULL );
 		assert( val.bv_val != NULL );
@@ -1749,7 +1752,7 @@ IA5StringNormalize(
 
 		} else if ( casefold ) {
 			/* Most IA5 rules require casefolding */
-			*q++ = TOLOWER(*p++);
+			*q++ = TOLOWER(*p); p++;
 
 		} else {
 			*q++ = *p++;
@@ -2210,7 +2213,7 @@ certificateExactNormalize(
 	unsigned char *p;
 	char *serial = NULL;
 	ber_len_t seriallen;
-	struct berval issuer_dn = { 0, NULL };
+	struct berval issuer_dn = BER_BVNULL;
 	X509_NAME *name = NULL;
 	ASN1_INTEGER *sn = NULL;
 	X509 *xcert = NULL;
@@ -2558,6 +2561,139 @@ generalizedTimeOrderingMatch(
 }
 
 static int
+deliveryMethodValidate(
+	Syntax *syntax,
+	struct berval *val )
+{
+#undef LENOF
+#define LENOF(s) (sizeof(s)-1)
+	struct berval tmp = *val;
+	/*
+     *	DeliveryMethod = pdm *( WSP DOLLAR WSP DeliveryMethod )
+	 *	pdm = "any" / "mhs" / "physical" / "telex" / "teletex" /
+	 *		"g3fax" / "g4fax" / "ia5" / "videotex" / "telephone"
+	 */
+again:
+	if( tmp.bv_len < 3 ) return LDAP_INVALID_SYNTAX;
+
+	switch( tmp.bv_val[0] ) {
+	case 'a':
+	case 'A':
+		if(( tmp.bv_len >= LENOF("any") ) &&
+			( strncasecmp(tmp.bv_val, "any", LENOF("any")) == 0 ))
+		{
+			tmp.bv_len -= LENOF("any");
+			tmp.bv_val += LENOF("any");
+			break;
+		}
+		return LDAP_INVALID_SYNTAX;
+
+	case 'm':
+	case 'M':
+		if(( tmp.bv_len >= LENOF("mhs") ) &&
+			( strncasecmp(tmp.bv_val, "mhs", LENOF("mhs")) == 0 ))
+		{
+			tmp.bv_len -= LENOF("mhs");
+			tmp.bv_val += LENOF("mhs");
+			break;
+		}
+		return LDAP_INVALID_SYNTAX;
+
+	case 'p':
+	case 'P':
+		if(( tmp.bv_len >= LENOF("physical") ) &&
+			( strncasecmp(tmp.bv_val, "physical", LENOF("physical")) == 0 ))
+		{
+			tmp.bv_len -= LENOF("physical");
+			tmp.bv_val += LENOF("physical");
+			break;
+		}
+		return LDAP_INVALID_SYNTAX;
+
+	case 't':
+	case 'T': /* telex or teletex or telephone */
+		if(( tmp.bv_len >= LENOF("telex") ) &&
+			( strncasecmp(tmp.bv_val, "telex", LENOF("telex")) == 0 ))
+		{
+			tmp.bv_len -= LENOF("telex");
+			tmp.bv_val += LENOF("telex");
+			break;
+		}
+		if(( tmp.bv_len >= LENOF("teletex") ) &&
+			( strncasecmp(tmp.bv_val, "teletex", LENOF("teletex")) == 0 ))
+		{
+			tmp.bv_len -= LENOF("teletex");
+			tmp.bv_val += LENOF("teletex");
+			break;
+		}
+		if(( tmp.bv_len >= LENOF("telephone") ) &&
+			( strncasecmp(tmp.bv_val, "telephone", LENOF("telephone")) == 0 ))
+		{
+			tmp.bv_len -= LENOF("telephone");
+			tmp.bv_val += LENOF("telephone");
+			break;
+		}
+		return LDAP_INVALID_SYNTAX;
+
+	case 'g':
+	case 'G': /* g3fax or g4fax */
+		if(( tmp.bv_len >= LENOF("g3fax") ) && (
+			( strncasecmp(tmp.bv_val, "g3fax", LENOF("g3fax")) == 0 ) ||
+			( strncasecmp(tmp.bv_val, "g4fax", LENOF("g4fax")) == 0 )))
+		{
+			tmp.bv_len -= LENOF("g3fax");
+			tmp.bv_val += LENOF("g3fax");
+			break;
+		}
+		return LDAP_INVALID_SYNTAX;
+
+	case 'i':
+	case 'I':
+		if(( tmp.bv_len >= LENOF("ia5") ) &&
+			( strncasecmp(tmp.bv_val, "ia5", LENOF("ia5")) == 0 ))
+		{
+			tmp.bv_len -= LENOF("ia5");
+			tmp.bv_val += LENOF("ia5");
+			break;
+		}
+		return LDAP_INVALID_SYNTAX;
+
+	case 'v':
+	case 'V':
+		if(( tmp.bv_len >= LENOF("videotex") ) &&
+			( strncasecmp(tmp.bv_val, "videotex", LENOF("videotex")) == 0 ))
+		{
+			tmp.bv_len -= LENOF("videotex");
+			tmp.bv_val += LENOF("videotex");
+			break;
+		}
+		return LDAP_INVALID_SYNTAX;
+
+	default:
+		return LDAP_INVALID_SYNTAX;
+	}
+
+	if( tmp.bv_len == 0 ) return LDAP_SUCCESS;
+
+	while( tmp.bv_len && ( tmp.bv_val[0] == ' ' )) {
+		tmp.bv_len++;
+		tmp.bv_val--;
+	}
+	if( tmp.bv_len && ( tmp.bv_val[0] == '$' )) {
+		tmp.bv_len++;
+		tmp.bv_val--;
+	} else {
+		return LDAP_INVALID_SYNTAX;
+	}
+	while( tmp.bv_len && ( tmp.bv_val[0] == ' ' )) {
+		tmp.bv_len++;
+		tmp.bv_val--;
+	}
+
+	goto again;
+}
+
+static int
 nisNetgroupTripleValidate(
 	Syntax *syntax,
 	struct berval *val )
@@ -2657,8 +2793,13 @@ firstComponentNormalize(
 	void *ctx )
 {
 	int rc;
-	struct berval oid;
+	struct berval comp;
 	ber_len_t len;
+
+	if( SLAP_MR_IS_VALUE_OF_ASSERTION_SYNTAX( usage )) {
+		ber_dupbv_x( normalized, val, ctx );
+		return LDAP_SUCCESS;
+	}
 
 	if( val->bv_len < 3 ) return LDAP_INVALID_SYNTAX;
 
@@ -2677,26 +2818,26 @@ firstComponentNormalize(
 	}
 
 	/* grab next word */
-	oid.bv_val = &val->bv_val[len];
+	comp.bv_val = &val->bv_val[len];
 	len = val->bv_len - len;
-	for( oid.bv_len=0;
-		!ASCII_SPACE(oid.bv_val[oid.bv_len]) && oid.bv_len < len;
-		oid.bv_len++ )
+	for( comp.bv_len=0;
+		!ASCII_SPACE(comp.bv_val[comp.bv_len]) && comp.bv_len < len;
+		comp.bv_len++ )
 	{
 		/* empty */
 	}
 
 	if( mr == slap_schema.si_mr_objectIdentifierFirstComponentMatch ) {
-		rc = numericoidValidate( NULL, &oid );
+		rc = numericoidValidate( NULL, &comp );
 	} else if( mr == slap_schema.si_mr_integerFirstComponentMatch ) {
-		rc = integerValidate( NULL, &oid );
+		rc = integerValidate( NULL, &comp );
 	} else {
 		rc = LDAP_INVALID_SYNTAX;
 	}
 	
 
 	if( rc == LDAP_SUCCESS ) {
-		ber_dupbv_x( normalized, &oid, ctx );
+		ber_dupbv_x( normalized, &comp, ctx );
 	}
 
 	return rc;
@@ -2740,7 +2881,7 @@ static slap_syntax_defs_rec syntax_defs[] = {
 	{"( 1.3.6.1.4.1.1466.115.121.1.13 DESC 'Data Quality' )",
 		0, NULL, NULL},
 	{"( 1.3.6.1.4.1.1466.115.121.1.14 DESC 'Delivery Method' )",
-		0, NULL, NULL},
+		0, deliveryMethodValidate, NULL},
 	{"( 1.3.6.1.4.1.1466.115.121.1.15 DESC 'Directory String' )",
 		0, UTF8StringValidate, NULL},
 	{"( 1.3.6.1.4.1.1466.115.121.1.16 DESC 'DIT Content Rule Description' )",
@@ -2889,21 +3030,22 @@ char *objectIdentifierFirstComponentMatchSyntaxes[] = {
 /*
  * Other matching rules in X.520 that we do not use (yet):
  *
- * 2.5.13.9		numericStringOrderingMatch
  * 2.5.13.25	uTCTimeMatch
  * 2.5.13.26	uTCTimeOrderingMatch
- * 2.5.13.31	directoryStringFirstComponentMatch
- * 2.5.13.32	wordMatch
- * 2.5.13.33	keywordMatch
+ * 2.5.13.31*	directoryStringFirstComponentMatch
+ * 2.5.13.32*	wordMatch
+ * 2.5.13.33*	keywordMatch
  * 2.5.13.36	certificatePairExactMatch
  * 2.5.13.37	certificatePairMatch
  * 2.5.13.38	certificateListExactMatch
  * 2.5.13.39	certificateListMatch
  * 2.5.13.40	algorithmIdentifierMatch
- * 2.5.13.41	storedPrefixMatch
+ * 2.5.13.41*	storedPrefixMatch
  * 2.5.13.42	attributeCertificateMatch
  * 2.5.13.43	readerAndKeyIDMatch
  * 2.5.13.44	attributeIntegrityMatch
+ *
+ * (*) described in RFC 3698 (LDAP: Additional Matching Rules)
  */
 static slap_mrule_defs_rec mrule_defs[] = {
 	/*
@@ -2958,7 +3100,7 @@ static slap_mrule_defs_rec mrule_defs[] = {
 
 	{"( 2.5.13.4 NAME 'caseIgnoreSubstringsMatch' "
 		"SYNTAX 1.3.6.1.4.1.1466.115.121.1.58 )",
-		SLAP_MR_SUBSTR, NULL,
+		SLAP_MR_SUBSTR, directoryStringSyntaxes,
 		NULL, UTF8StringNormalize, octetStringSubstringsMatch,
 		octetStringSubstringsIndexer, octetStringSubstringsFilter,
 		"caseIgnoreMatch" },
@@ -2987,9 +3129,16 @@ static slap_mrule_defs_rec mrule_defs[] = {
 	{"( 2.5.13.8 NAME 'numericStringMatch' "
 		"SYNTAX 1.3.6.1.4.1.1466.115.121.1.36 )",
 		SLAP_MR_EQUALITY | SLAP_MR_EXT, NULL,
-		NULL, numericStringNormalize, octetStringSubstringsMatch,
-		octetStringSubstringsIndexer, octetStringSubstringsFilter,
+		NULL, numericStringNormalize, octetStringMatch,
+		octetStringIndexer, octetStringFilter,
 		NULL },
+
+	{"( 2.5.13.9 NAME 'numericStringOrderingMatch' "
+		"SYNTAX 1.3.6.1.4.1.1466.115.121.1.36 )",
+		SLAP_MR_ORDERING, NULL,
+		NULL, numericStringNormalize, octetStringOrderingMatch,
+		NULL, NULL,
+		"numericStringMatch" },
 
 	{"( 2.5.13.10 NAME 'numericStringSubstringsMatch' "
 		"SYNTAX 1.3.6.1.4.1.1466.115.121.1.58 )",

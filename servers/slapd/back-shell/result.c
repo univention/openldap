@@ -1,5 +1,5 @@
 /* result.c - shell backend result reading function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/result.c,v 1.17.2.2 2004/01/01 18:16:39 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/result.c,v 1.17.2.3 2004/04/06 18:27:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -99,6 +99,7 @@ read_and_send_results(
 				    buf, 0, 0 );
 			} else {
 				rs->sr_attrs = op->oq_search.rs_attrs;
+				rs->sr_flags = REP_ENTRY_MODIFIABLE;
 				send_search_entry( op, rs );
 				entry_free( rs->sr_entry );
 			}

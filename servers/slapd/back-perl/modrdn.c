@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/modrdn.c,v 1.15.2.4 2004/01/01 18:16:39 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/modrdn.c,v 1.15.2.5 2004/04/28 23:23:16 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -14,20 +14,6 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
-
-#include <EXTERN.h>
-#include <perl.h>
-#undef _ /* #defined by both Perl and ac/localize.h */
-
-#ifdef HAVE_WIN32_ASPERL
-#include "asperl_undefs.h"
-#endif
-
-#include "portable.h"
-
-#include <stdio.h>
-
-#include "slap.h"
 
 #include "perl_back.h"
 

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/sql-wrap.c,v 1.15.2.5 2004/01/20 23:44:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/sql-wrap.c,v 1.15.2.7 2004/04/13 15:49:08 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -47,17 +47,13 @@ backsql_PrintErrors( SQLHENV henv, SQLHDBC hdbc, SQLHSTMT sth, int rc )
 
 	Debug( LDAP_DEBUG_TRACE, "Return code: %d\n", rc, 0, 0 );
 
-
-	rc = SQLError( henv, hdbc, sth, state, &iSqlCode, msg,
-			SQL_MAX_MESSAGE_LENGTH - 1, &len );
-	for ( ; BACKSQL_SUCCESS( rc ); ) {
-		Debug( LDAP_DEBUG_TRACE, "Native error code: %d\n", 
-				(int)iSqlCode, 0, 0 );
-		Debug( LDAP_DEBUG_TRACE, "SQL engine state: %s\n", 
-				state, 0, 0 );
-		Debug( LDAP_DEBUG_TRACE, "Message: %s\n", msg, 0, 0 );
-		rc = SQLError( henv, hdbc, sth, state, &iSqlCode, msg,
-				SQL_MAX_MESSAGE_LENGTH - 1, &len );
+	for ( ; rc = SQLError( henv, hdbc, sth, state, &iSqlCode, msg,
+			SQL_MAX_MESSAGE_LENGTH - 1, &len ), BACKSQL_SUCCESS( rc ); ) {
+		Debug( LDAP_DEBUG_TRACE,
+				"   Native error code: %d\n"
+				"   SQL engine state:  %s\n"
+				"   Message:           %s\n", 
+				(int)iSqlCode, state, msg );
 	}
 }
 
@@ -80,7 +76,7 @@ backsql_Prepare( SQLHDBC dbh, SQLHSTMT *sth, char *query, int timeout )
 	SQLGetInfo( dbh, SQL_DRIVER_NAME, drv_name, sizeof( drv_name ), &len );
 
 #ifdef BACKSQL_TRACE
-	Debug( LDAP_DEBUG_TRACE, "backsql_Prepare(): driver name='%s'\n",
+	Debug( LDAP_DEBUG_TRACE, "backsql_Prepare(): driver name=\"%s\"\n",
 			drv_name, 0, 0 );
 #endif /* BACKSQL_TRACE */
 
@@ -333,7 +329,7 @@ backsql_open_db_conn( backsql_info *si, int ldap_cid, backsql_db_conn **pdbc )
 			SQL_NTS, si->dbpasswd, SQL_NTS );
 	if ( rc != SQL_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE, "backsql_open_db_conn: "
-			"SQLConnect() to database '%s' as user '%s' "
+			"SQLConnect() to database \"%s\" as user \"%s\" "
 			"%s:\n", si->dbname, si->dbuser,
 			rc == SQL_SUCCESS_WITH_INFO ?
 			"succeeded with info" : "failed" );

@@ -1,5 +1,5 @@
 /* schema_check.c - routines to enforce schema definitions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_check.c,v 1.76.2.4 2004/01/01 18:16:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_check.c,v 1.76.2.6 2004/04/12 18:13:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -810,12 +810,12 @@ int mods_structural_class(
 		return LDAP_OBJECT_CLASS_VIOLATION;
 	}
 
-	if( ocmod->sml_bvalues == NULL || ocmod->sml_bvalues[0].bv_val == NULL ) {
+	if( ocmod->sml_values == NULL || ocmod->sml_values[0].bv_val == NULL ) {
 		*text = "objectClass attribute has no values";
 		return LDAP_OBJECT_CLASS_VIOLATION;
 	}
 
-	return structural_class( ocmod->sml_bvalues, sc, NULL,
+	return structural_class( ocmod->sml_values, sc, NULL,
 		text, textbuf, textlen );
 }
 
@@ -881,7 +881,7 @@ entry_naming_check(
 
 		if( desc->ad_type->sat_obsolete ) {
 			snprintf( textbuf, textlen, 
-				"naming attribute '%s' is collective",
+				"naming attribute '%s' is obsolete",
 				ava->la_attr.bv_val );
 			rc = LDAP_NAMING_VIOLATION;
 			break;

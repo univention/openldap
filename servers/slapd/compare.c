@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/compare.c,v 1.106.2.5 2004/01/01 18:16:33 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/compare.c,v 1.106.2.6 2004/04/12 18:13:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -47,10 +47,10 @@ do_compare(
 )
 {
 	Entry *entry = NULL;
-	struct berval dn = { 0, NULL };
-	struct berval desc = { 0, NULL };
-	struct berval value = { 0, NULL };
-	AttributeAssertion ava = { NULL, { 0, NULL } };
+	struct berval dn = BER_BVNULL;
+	struct berval desc = BER_BVNULL;
+	struct berval value = BER_BVNULL;
+	AttributeAssertion ava = { NULL, BER_BVNULL };
 	int manageDSAit;
 
 	ava.aa_desc = NULL;

@@ -1,5 +1,5 @@
 /* thr_nt.c - wrapper around NT threads */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_nt.c,v 1.24.2.3 2004/01/17 18:18:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_nt.c,v 1.24.2.4 2004/03/17 20:11:37 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -19,6 +19,19 @@
 #if defined( HAVE_NT_THREADS )
 
 #include "ldap_pvt_thread.h"
+
+typedef struct ldap_int_thread_s {
+	long tid;
+	HANDLE thd;
+} ldap_int_thread_s;
+
+#ifndef NT_MAX_THREADS
+#define NT_MAX_THREADS	1024
+#endif
+
+static ldap_int_thread_s tids[NT_MAX_THREADS];
+static int ntids;
+
 
 /* mingw compiler very sensitive about getting prototypes right */
 typedef unsigned __stdcall thrfunc_t(void *);
@@ -50,7 +63,9 @@ ldap_pvt_thread_create( ldap_pvt_thread_t * thread,
 
 	if ( thd ) {
 		*thread = (ldap_pvt_thread_t) tid;
-		CloseHandle( thd );
+		tids[ntids].tid = tid;
+		tids[ntids].thd = thd;
+		ntids++;
 		rc = 0;
 	}
 	return rc;
@@ -66,12 +81,19 @@ int
 ldap_pvt_thread_join( ldap_pvt_thread_t thread, void **thread_return )
 {
 	DWORD status;
-	HANDLE thd;
-	HANDLE __stdcall OpenThread( int, int, int );
+	int i;
 
-	thd = OpenThread( SYNCHRONIZE, 0, thread );
-	status = WaitForSingleObject( thd, INFINITE );
-	CloseHandle( thd );
+	for (i=0; i<ntids; i++) {
+		if ( tids[i].tid == thread )
+			break;
+	}
+	if ( i > ntids ) return -1;
+
+	status = WaitForSingleObject( tids[i].thd, INFINITE );
+	for (; i<ntids; i++) {
+		tids[i] = tids[i+1];
+	}
+	ntids--;
 	return status == WAIT_FAILED ? -1 : 0;
 }
 

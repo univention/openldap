@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/config.c,v 1.7.2.3 2004/01/20 23:44:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/config.c,v 1.7.2.4 2004/04/12 18:20:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -333,6 +333,15 @@ backsql_db_config(
 		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
 			"fail_if_no_mapping=%s\n", 
 			BACKSQL_FAIL_IF_NO_MAPPING( si ) ? "yes" : "no", 0, 0 );
+
+	} else if ( !strcasecmp( argv[ 0 ], "sqllayer") ) {
+		if ( backsql_api_config( si, argv[ 1 ] ) ) {
+			Debug( LDAP_DEBUG_TRACE,
+				"<==backsql_db_config (%s line %d): "
+				"unable to load sqllayer \"%s\"\n",
+				fname, lineno, argv[ 1 ] );
+			return 1;
+		}
 
 	} else {
 		return SLAP_CONF_UNKNOWN;

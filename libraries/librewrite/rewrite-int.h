@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/rewrite-int.h,v 1.7.2.4 2004/01/01 18:16:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/rewrite-int.h,v 1.7.2.5 2004/03/17 20:14:49 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -55,7 +55,10 @@
  */
 /* the '\' conflicts with slapd.conf parsing */
 /* #define REWRITE_SUBMATCH_ESCAPE			'\\' */
-#define REWRITE_SUBMATCH_ESCAPE                 '%'
+#define REWRITE_SUBMATCH_ESCAPE_ORIG		'%'
+#define REWRITE_SUBMATCH_ESCAPE			'$'
+#define IS_REWRITE_SUBMATCH_ESCAPE(c) \
+	((c) == REWRITE_SUBMATCH_ESCAPE || (c) == REWRITE_SUBMATCH_ESCAPE_ORIG)
 
 /*
  * REGEX flags

@@ -1,5 +1,5 @@
 /* ava.c - routines for dealing with attribute value assertions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ava.c,v 1.34.2.3 2004/01/01 18:16:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ava.c,v 1.34.2.4 2004/04/12 18:13:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -53,8 +53,7 @@ get_ava(
 	BerElement	*ber,
 	AttributeAssertion	**ava,
 	unsigned usage,
-	const char **text
-)
+	const char **text )
 {
 	int rc;
 	ber_tag_t rtag;

@@ -1,5 +1,5 @@
 /* search.c - ldap backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.113.2.5 2004/01/17 18:36:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.113.2.12 2004/05/21 02:11:39 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -40,9 +40,8 @@ static int
 ldap_build_entry( Operation *op, LDAPMessage *e, Entry *ent,
 	 struct berval *bdn, int flags );
 #define LDAP_BUILD_ENTRY_PRIVATE	0x01
-#define LDAP_BUILD_ENTRY_NORMALIZE	0x02
 
-static struct berval dummy = { 0, NULL };
+static struct berval dummy = BER_BVNULL;
 
 int
 ldap_back_search(
@@ -54,12 +53,10 @@ ldap_back_search(
 	struct timeval	tv;
 	LDAPMessage		*res, *e;
 	int	rc = 0, msgid; 
-	struct berval match = { 0, NULL };
+	struct berval match = BER_BVNULL;
 	char **mapped_attrs = NULL;
 	struct berval mbase;
-	struct berval mfilter = { 0, NULL };
-	struct slap_limits_set *limit = NULL;
-	int isroot = 0;
+	struct berval mfilter = BER_BVNULL;
 	int dontfreetext = 0;
 	dncookie dc;
 #ifdef LDAP_BACK_PROXY_AUTHZ
@@ -79,56 +76,11 @@ ldap_back_search(
 		return( -1 );
 	}
 
-	/* if not root, get appropriate limits */
-	if ( be_isroot( op->o_bd, &op->o_ndn ) ) {
-		isroot = 1;
-	} else {
-		( void ) get_limits( op->o_bd, &op->o_ndn, &limit );
-	}
-	
-	/* if no time limit requested, rely on remote server limits */
-	/* if requested limit higher than hard limit, abort */
-	if ( !isroot && op->oq_search.rs_tlimit > limit->lms_t_hard ) {
-		/* no hard limit means use soft instead */
-		if ( limit->lms_t_hard == 0
-				&& limit->lms_t_soft > -1
-				&& op->oq_search.rs_tlimit > limit->lms_t_soft ) {
-			op->oq_search.rs_tlimit = limit->lms_t_soft;
-			
-		/* positive hard limit means abort */
-		} else if ( limit->lms_t_hard > 0 ) {
-			rs->sr_err = LDAP_ADMINLIMIT_EXCEEDED;
-			rc = 0;
-			goto finish;
-		}
-		
-		/* negative hard limit means no limit */
-	}
-	
-	/* if no size limit requested, rely on remote server limits */
-	/* if requested limit higher than hard limit, abort */
-	if ( !isroot && op->oq_search.rs_slimit > limit->lms_s_hard ) {
-		/* no hard limit means use soft instead */
-		if ( limit->lms_s_hard == 0
-				&& limit->lms_s_soft > -1
-				&& op->oq_search.rs_slimit > limit->lms_s_soft ) {
-			op->oq_search.rs_slimit = limit->lms_s_soft;
-			
-		/* positive hard limit means abort */
-		} else if ( limit->lms_s_hard > 0 ) {
-			rs->sr_err = LDAP_ADMINLIMIT_EXCEEDED;
-			rc = 0;
-			goto finish;
-		}
-		
-		/* negative hard limit means no limit */
-	}
-
 	/* should we check return values? */
-	if (op->oq_search.rs_deref != -1)
-		ldap_set_option( lc->ld, LDAP_OPT_DEREF, (void *)&op->oq_search.rs_deref);
-	if (op->oq_search.rs_tlimit != -1) {
-		tv.tv_sec = op->oq_search.rs_tlimit;
+	if (op->ors_deref != -1)
+		ldap_set_option( lc->ld, LDAP_OPT_DEREF, (void *)&op->ors_deref);
+	if (op->ors_tlimit != -1) {
+		tv.tv_sec = op->ors_tlimit;
 		tv.tv_usec = 0;
 	} else {
 		tv.tv_sec = 0;
@@ -151,10 +103,20 @@ ldap_back_search(
 		return -1;
 	}
 
-	rc = ldap_back_filter_map_rewrite( &dc, op->oq_search.rs_filter,
+	rc = ldap_back_filter_map_rewrite( &dc, op->ors_filter,
 			&mfilter, BACKLDAP_MAP );
 
-	if ( rc ) {
+	switch ( rc ) {
+	case LDAP_SUCCESS:
+		break;
+
+	case LDAP_COMPARE_FALSE:
+		rs->sr_err = LDAP_SUCCESS;
+		rs->sr_text = NULL;
+		rc = 0;
+		goto finish;
+
+	default:
 		rs->sr_err = LDAP_OTHER;
 		rs->sr_text = "Rewrite error";
 		dontfreetext = 1;
@@ -163,7 +125,7 @@ ldap_back_search(
 	}
 
 	rs->sr_err = ldap_back_map_attrs( &li->rwmap.rwm_at,
-			op->oq_search.rs_attrs,
+			op->ors_attrs,
 			BACKLDAP_MAP, &mapped_attrs );
 	if ( rs->sr_err ) {
 		rc = -1;
@@ -179,15 +141,15 @@ ldap_back_search(
 #endif /* LDAP_BACK_PROXY_AUTHZ */
 	
 	rs->sr_err = ldap_search_ext(lc->ld, mbase.bv_val,
-			op->oq_search.rs_scope, mfilter.bv_val,
-			mapped_attrs, op->oq_search.rs_attrsonly,
+			op->ors_scope, mfilter.bv_val,
+			mapped_attrs, op->ors_attrsonly,
 #ifdef LDAP_BACK_PROXY_AUTHZ
 			ctrls,
 #else /* ! LDAP_BACK_PROXY_AUTHZ */
 			op->o_ctrls,
 #endif /* ! LDAP_BACK_PROXY_AUTHZ */
 			NULL,
-			tv.tv_sec ? &tv : NULL, op->oq_search.rs_slimit,
+			tv.tv_sec ? &tv : NULL, op->ors_slimit,
 			&msgid );
 
 	if ( rs->sr_err != LDAP_SUCCESS ) {
@@ -218,12 +180,14 @@ fail:;
 		} else if (rc == LDAP_RES_SEARCH_ENTRY) {
 			Entry ent = {0};
 			struct berval bdn;
+			int abort = 0;
 			e = ldap_first_entry(lc->ld,res);
-			if ( ldap_build_entry(op, e, &ent, &bdn,
-						LDAP_BUILD_ENTRY_PRIVATE) == LDAP_SUCCESS ) {
+			if ( ( rc = ldap_build_entry(op, e, &ent, &bdn,
+						LDAP_BUILD_ENTRY_PRIVATE)) == LDAP_SUCCESS ) {
 				rs->sr_entry = &ent;
-				rs->sr_attrs = op->oq_search.rs_attrs;
-				send_search_entry( op, rs );
+				rs->sr_attrs = op->ors_attrs;
+				rs->sr_flags = 0;
+				abort = send_search_entry( op, rs );
 				while (ent.e_attrs) {
 					Attribute *a;
 					BerVarray v;
@@ -245,6 +209,10 @@ fail:;
 					free( ent.e_ndn );
 			}
 			ldap_msgfree(res);
+			if ( abort ) {
+				ldap_abandon(lc->ld, msgid);
+				goto finish;
+			}
 
 		} else if ( rc == LDAP_RES_SEARCH_REFERENCE ) {
 			char		**references = NULL;
@@ -291,7 +259,7 @@ fail:;
 					&match.bv_val, (char **)&rs->sr_text,
 					NULL, NULL, 1);
 			if (rc != LDAP_SUCCESS ) rs->sr_err = rc;
-			rs->sr_err = ldap_back_map_result(rs);
+			rs->sr_err = slap_map_api2result( rs );
 			rc = 0;
 			break;
 		}
@@ -307,7 +275,7 @@ fail:;
 		struct berval mdn;
 
 #ifdef ENABLE_REWRITE
-		dc.ctx = "matchedDn";
+		dc.ctx = "matchedDN";
 #else
 		dc.tofrom = 0;
 		dc.normalized = 0;
@@ -346,10 +314,10 @@ finish:;
 	if ( mapped_attrs ) {
 		ch_free( mapped_attrs );
 	}
-	if ( mfilter.bv_val != op->oq_search.rs_filterstr.bv_val ) {
+	if ( mfilter.bv_val != op->ors_filterstr.bv_val ) {
 		ch_free( mfilter.bv_val );
 	}
-	if ( mbase.bv_val != op->o_req_dn.bv_val ) {
+	if ( mbase.bv_val != op->o_req_ndn.bv_val ) {
 		free( mbase.bv_val );
 	}
 	
@@ -373,7 +341,6 @@ ldap_build_entry(
 	const char *text;
 	int last;
 	int private = flags & LDAP_BUILD_ENTRY_PRIVATE;
-	int normalize = flags & LDAP_BUILD_ENTRY_NORMALIZE;
 	dncookie dc;
 
 	/* safe assumptions ... */
@@ -520,7 +487,7 @@ ldap_build_entry(
 			ldap_dnattr_result_rewrite( &dc, attr->a_vals );
 		}
 
-		if ( normalize && last && attr->a_desc->ad_type->sat_equality &&
+		if ( last && attr->a_desc->ad_type->sat_equality &&
 			attr->a_desc->ad_type->sat_equality->smr_normalize ) {
 			int i;
 
@@ -563,7 +530,7 @@ ldap_back_entry_get(
 	struct ldapinfo *li = (struct ldapinfo *) op->o_bd->be_private;    
 	struct ldapconn *lc;
 	int rc = 1, is_oc;
-	struct berval mapped = { 0, NULL }, bdn, mdn;
+	struct berval mapped = BER_BVNULL, bdn, mdn;
 	LDAPMessage	*result = NULL, *e = NULL;
 	char *gattr[3];
 	char *filter = NULL;
@@ -642,7 +609,7 @@ ldap_back_entry_get(
 
 	*ent = ch_calloc(1,sizeof(Entry));
 
-	rc = ldap_build_entry(op, e, *ent, &bdn, LDAP_BUILD_ENTRY_NORMALIZE);
+	rc = ldap_build_entry(op, e, *ent, &bdn, 0);
 
 	if (rc != LDAP_SUCCESS) {
 		ch_free(*ent);

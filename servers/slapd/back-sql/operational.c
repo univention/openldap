@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/operational.c,v 1.1.2.1 2004/01/20 23:44:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/operational.c,v 1.1.2.2 2004/04/12 18:20:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -45,7 +45,7 @@ backsql_operational(
 	Attribute		**aa = a;
 	int			rc = 0;
 
-	Debug( LDAP_DEBUG_TRACE, "==>backsql_operational(): entry '%s'\n",
+	Debug( LDAP_DEBUG_TRACE, "==>backsql_operational(): entry \"%s\"\n",
 			rs->sr_entry->e_nname.bv_val, 0, 0 );
 
 

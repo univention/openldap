@@ -1,5 +1,5 @@
 /* delete.c - ldbm backend delete routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/delete.c,v 1.62.2.5 2004/01/01 18:16:37 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/delete.c,v 1.62.2.7 2004/04/12 18:20:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -194,8 +194,9 @@ ldbm_back_delete(
 
 	} else {
 		/* no parent, must be root to delete */
-		if( ! be_isroot( op->o_bd, &op->o_ndn ) ) {
-			if ( be_issuffix( op->o_bd, (struct berval *)&slap_empty_bv ) || be_isupdate( op->o_bd, &op->o_ndn ) ) {
+		if( ! be_isroot( op ) ) {
+			if ( be_issuffix( op->o_bd, (struct berval *)&slap_empty_bv )
+				|| be_shadow_update( op ) ) {
 				p = (Entry *)&slap_entry_root;
 				
 				rc = access_allowed( op, p,

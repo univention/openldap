@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/ldap_cdefs.h,v 1.23.2.2 2004/01/01 18:16:28 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap_cdefs.h,v 1.23.2.3 2004/03/17 20:15:31 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -158,13 +158,9 @@
 #endif
 
 /* LDBM library */
-#if defined(_WIN32) && defined(SLAPD_IMPORT)
-#	define LDAP_LDBM_F(type)	extern __declspec(dllimport) type
-#	define LDAP_LDBM_V(type)	extern __declspec(dllimport) type
-#else
+/* Not exported/imported any more */
 #	define LDAP_LDBM_F(type)	extern type
 #	define LDAP_LDBM_V(type)	extern type
-#endif
 
 /* LDIF library */
 #if defined(_WIN32) && defined(SLAPD_IMPORT)

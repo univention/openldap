@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.88.2.8 2004/01/01 18:16:29 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.88.2.15 2004/05/21 17:29:34 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -49,22 +49,22 @@ ldap_pvt_thread_mutex_t ldap_int_sasl_mutex;
 * Various Cyrus SASL related stuff.
 */
 
+static const sasl_callback_t client_callbacks[] = {
+#ifdef SASL_CB_GETREALM
+	{ SASL_CB_GETREALM, NULL, NULL },
+#endif
+	{ SASL_CB_USER, NULL, NULL },
+	{ SASL_CB_AUTHNAME, NULL, NULL },
+	{ SASL_CB_PASS, NULL, NULL },
+	{ SASL_CB_ECHOPROMPT, NULL, NULL },
+	{ SASL_CB_NOECHOPROMPT, NULL, NULL },
+	{ SASL_CB_LIST_END, NULL, NULL }
+};
+
 int ldap_int_sasl_init( void )
 {
 	/* XXX not threadsafe */
 	static int sasl_initialized = 0;
-
-	static sasl_callback_t client_callbacks[] = {
-#ifdef SASL_CB_GETREALM
-		{ SASL_CB_GETREALM, NULL, NULL },
-#endif
-		{ SASL_CB_USER, NULL, NULL },
-		{ SASL_CB_AUTHNAME, NULL, NULL },
-		{ SASL_CB_PASS, NULL, NULL },
-		{ SASL_CB_ECHOPROMPT, NULL, NULL },
-		{ SASL_CB_NOECHOPROMPT, NULL, NULL },
-		{ SASL_CB_LIST_END, NULL, NULL }
-	};
 
 #ifdef HAVE_SASL_VERSION
 	/* stringify the version number, sasl.h doesn't do it for us */
@@ -114,11 +114,9 @@ int ldap_int_sasl_init( void )
 		ldap_pvt_sasl_mutex_lock,
 		ldap_pvt_sasl_mutex_unlock,    
 		ldap_pvt_sasl_mutex_dispose );    
-
-	ldap_pvt_thread_mutex_init( &ldap_int_sasl_mutex );
 #endif
 
-	if ( sasl_client_init( client_callbacks ) == SASL_OK ) {
+	if ( sasl_client_init( NULL ) == SASL_OK ) {
 		sasl_initialized = 1;
 		return 0;
 	}
@@ -264,7 +262,8 @@ sb_sasl_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 
 	/* Read the length of the packet */
 	while ( p->sec_buf_in.buf_ptr < 4 ) {
-		ret = LBER_SBIOD_READ_NEXT( sbiod, p->sec_buf_in.buf_base,
+		ret = LBER_SBIOD_READ_NEXT( sbiod, p->sec_buf_in.buf_base +
+			p->sec_buf_in.buf_ptr,
 			4 - p->sec_buf_in.buf_ptr );
 #ifdef EINTR
 		if ( ( ret < 0 ) && ( errno == EINTR ) )
@@ -356,14 +355,11 @@ sb_sasl_write( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 	/* now encode the next packet. */
 #if SASL_VERSION_MAJOR >= 2
 	ber_pvt_sb_buf_init( &p->buf_out );
-	/* sasl v2 makes sure this number is correct */
-	if ( len > *p->sasl_maxbuf )
-		len = *p->sasl_maxbuf;
 #else
 	ber_pvt_sb_buf_destroy( &p->buf_out );
+#endif
 	if ( len > *p->sasl_maxbuf - 100 )
 		len = *p->sasl_maxbuf - 100;	/* For safety margin */
-#endif
 	ret = sasl_encode( p->sasl_context, buf, len,
 		(SASL_CONST char **)&p->buf_out.buf_base,
 		(unsigned *)&p->buf_out.buf_size );
@@ -376,8 +372,11 @@ sb_sasl_write( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 	p->buf_out.buf_end = p->buf_out.buf_size;
 
 	ret = ber_pvt_sb_do_write( sbiod, &p->buf_out );
-	if ( ret <= 0 )
+	if ( ret <= 0 ) {
+		/* caller will retry, so clear this buffer out */
+		p->buf_out.buf_ptr = p->buf_out.buf_end;
 		return ret;
+	}
 	return len;
 }
 
@@ -506,9 +505,9 @@ ldap_int_sasl_open(
 
 #if SASL_VERSION_MAJOR >= 2
 	rc = sasl_client_new( "ldap", host, NULL, NULL,
-		NULL, 0, &ctx );
+		client_callbacks, 0, &ctx );
 #else
-	rc = sasl_client_new( "ldap", host, NULL,
+	rc = sasl_client_new( "ldap", host, client_callbacks,
 		SASL_SECURITY_LAYER, &ctx );
 #endif
 
@@ -624,7 +623,7 @@ ldap_int_sasl_bind(
 	/* Check for TLS */
 	ssl = ldap_pvt_tls_sb_ctx( ld->ld_sb );
 	if ( ssl ) {
-		struct berval authid = { 0, NULL };
+		struct berval authid = BER_BVNULL;
 		ber_len_t fac;
 
 		fac = ldap_pvt_tls_get_strength( ssl );
@@ -635,6 +634,7 @@ ldap_int_sasl_bind(
 		LDAP_FREE( authid.bv_val );
 	}
 
+#if !defined(_WIN32)
 	/* Check for local */
 	if ( ldap_pvt_url_scheme2proto( ld->ld_defconn->lconn_server->lud_scheme ) == LDAP_PROTO_IPC ) {
 		char authid[sizeof("uidNumber=4294967295+gidNumber=4294967295,"
@@ -644,6 +644,7 @@ ldap_int_sasl_bind(
 			(int) geteuid(), (int) getegid() );
 		(void) ldap_int_sasl_external( ld, ld->ld_defconn, authid, LDAP_PVT_SASL_LOCAL_SSF );
 	}
+#endif
 
 	/* (re)set security properties */
 	sasl_setprop( ctx, SASL_SEC_PROPS,

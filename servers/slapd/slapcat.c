@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/tools/slapcat.c,v 1.11.2.4 2004/01/01 18:16:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapcat.c,v 1.1.2.1 2004/03/17 20:59:57 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -32,13 +32,14 @@
 #include "slapcommon.h"
 
 int
-main( int argc, char **argv )
+slapcat( int argc, char **argv )
 {
 	ID id;
 	int rc = EXIT_SUCCESS;
 	Operation op = {0};
+	const char *progname = "slapcat";
 
-	slap_tool_init( "slapcat", SLAPCAT, argc, argv );
+	slap_tool_init( progname, SLAPCAT, argc, argv );
 
 	if( !be->be_entry_open ||
 		!be->be_entry_close ||

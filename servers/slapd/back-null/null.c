@@ -1,5 +1,5 @@
 /* null.c - the null backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-null/null.c,v 1.5.2.3 2004/01/01 18:16:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-null/null.c,v 1.5.2.4 2004/04/12 18:20:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2002-2004 The OpenLDAP Foundation.
@@ -156,8 +156,8 @@ null_back_initialize(
 	return 0;
 }
 
-#ifdef SLAPD_NULL_DYNAMIC
-int back_null_LTX_init_module(
+#if SLAPD_NULL == SLAPD_MOD_DYNAMIC
+int init_module(
 	int argc,
 	char *argv[] )
 {
@@ -170,4 +170,4 @@ int back_null_LTX_init_module(
     backend_add(&bi);
     return 0;
 }
-#endif /* SLAPD_NULL_DYNAMIC */
+#endif /* SLAPD_NULL */

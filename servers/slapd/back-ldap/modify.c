@@ -1,5 +1,5 @@
 /* modify.c - ldap backend modify function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modify.c,v 1.40.2.3 2004/01/01 18:16:37 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modify.c,v 1.40.2.8 2004/04/15 01:41:49 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -43,9 +43,10 @@ ldap_back_modify(
 	Modifications *ml;
 	int i, j, rc;
 	struct berval mapped;
-	struct berval mdn = { 0, NULL };
+	struct berval mdn = BER_BVNULL;
 	ber_int_t msgid;
 	dncookie dc;
+	int isupdate;
 #ifdef LDAP_BACK_PROXY_AUTHZ 
 	LDAPControl **ctrls = NULL;
 #endif /* LDAP_BACK_PROXY_AUTHZ */
@@ -62,12 +63,12 @@ ldap_back_modify(
 #ifdef ENABLE_REWRITE
 	dc.conn = op->o_conn;
 	dc.rs = rs;
-	dc.ctx = "modifyDn";
+	dc.ctx = "modifyDN";
 #else
 	dc.tofrom = 1;
 	dc.normalized = 0;
 #endif
-	if ( ldap_back_dn_massage( &dc, &op->o_req_dn, &mdn ) ) {
+	if ( ldap_back_dn_massage( &dc, &op->o_req_ndn, &mdn ) ) {
 		send_ldap_result( op, rs );
 		return -1;
 	}
@@ -89,10 +90,12 @@ ldap_back_modify(
 #ifdef ENABLE_REWRITE
 	dc.ctx = "modifyAttrDN";
 #endif
+
+	isupdate = be_shadow_update( op );
 	for (i=0, ml=op->oq_modify.rs_modlist; ml; ml=ml->sml_next) {
 		int	is_oc = 0;
 
-		if ( ml->sml_desc->ad_type->sat_no_user_mod  ) {
+		if ( !isupdate && ml->sml_desc->ad_type->sat_no_user_mod  ) {
 			continue;
 		}
 
@@ -114,14 +117,14 @@ ldap_back_modify(
 		mods[i].mod_op = ml->sml_op | LDAP_MOD_BVALUES;
 		mods[i].mod_type = mapped.bv_val;
 
-		if ( ml->sml_bvalues != NULL ) {
+		if ( ml->sml_values != NULL ) {
 			if ( is_oc ) {
-				for (j = 0; ml->sml_bvalues[j].bv_val; j++);
+				for (j = 0; ml->sml_values[j].bv_val; j++);
 				mods[i].mod_bvalues = (struct berval **)ch_malloc((j+1) *
 					sizeof(struct berval *));
-				for (j = 0; ml->sml_bvalues[j].bv_val; j++) {
+				for (j = 0; ml->sml_values[j].bv_val; j++) {
 					ldap_back_map(&li->rwmap.rwm_oc,
-							&ml->sml_bvalues[j],
+							&ml->sml_values[j],
 							&mapped, BACKLDAP_MAP);
 					if (mapped.bv_val == NULL || mapped.bv_val[0] == '\0') {
 						continue;
@@ -133,18 +136,18 @@ ldap_back_modify(
 			} else {
 				if ( ml->sml_desc->ad_type->sat_syntax ==
 					slap_schema.si_syn_distinguishedName ) {
-					ldap_dnattr_rewrite( &dc, ml->sml_bvalues );
+					ldap_dnattr_rewrite( &dc, ml->sml_values );
 				}
 
-				if ( ml->sml_bvalues == NULL ) {	
+				if ( ml->sml_values == NULL ) {	
 					continue;
 				}
 
-				for (j = 0; ml->sml_bvalues[j].bv_val; j++);
+				for (j = 0; ml->sml_values[j].bv_val; j++);
 				mods[i].mod_bvalues = (struct berval **)ch_malloc((j+1) *
 					sizeof(struct berval *));
-				for (j = 0; ml->sml_bvalues[j].bv_val; j++)
-					mods[i].mod_bvalues[j] = &ml->sml_bvalues[j];
+				for (j = 0; ml->sml_values[j].bv_val; j++)
+					mods[i].mod_bvalues[j] = &ml->sml_values[j];
 				mods[i].mod_bvalues[j] = NULL;
 			}
 
@@ -179,7 +182,7 @@ cleanup:;
 	}
 #endif /* LDAP_BACK_PROXY_AUTHZ */
 
-	if ( mdn.bv_val != op->o_req_dn.bv_val ) {
+	if ( mdn.bv_val != op->o_req_ndn.bv_val ) {
 		free( mdn.bv_val );
 	}
 	for (i=0; modv[i]; i++) {

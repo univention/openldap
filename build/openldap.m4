@@ -1,5 +1,5 @@
 dnl OpenLDAP Autoconf Macros
-dnl $OpenLDAP: pkg/ldap/build/openldap.m4,v 1.124.2.6 2004/01/01 18:16:25 kurt Exp $
+dnl $OpenLDAP: pkg/ldap/build/openldap.m4,v 1.124.2.8 2004/04/21 19:16:40 kurt Exp $
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
 dnl Copyright 1998-2004 The OpenLDAP Foundation.
@@ -76,6 +76,7 @@ AC_MSG_CHECKING(size of $1)
 AC_CACHE_VAL(AC_CV_NAME, 
 [for ac_size in 4 8 1 2 16 $2 ; do # List sizes in rough order of prevalence. 
   AC_TRY_COMPILE([#include "confdefs.h" 
+#include <stdlib.h>
 #include <sys/types.h> 
 $2 
 ], [switch (0) case 0: case (sizeof ($1) == $ac_size):;], AC_CV_NAME=$ac_size) 
@@ -334,6 +335,58 @@ OL_BERKELEY_DB_TRY(ol_cv_db_db_1,[-ldb-1])
 ])
 dnl
 dnl --------------------------------------------------------------------
+dnl Check if Berkeley DB version
+AC_DEFUN([OL_BERKELEY_DB_VERSION],
+[AC_CACHE_CHECK([for Berkeley DB version match], [ol_cv_berkeley_db_version], [
+	ol_LIBS="$LIBS"
+	LIBS="$LTHREAD_LIBS $LIBS"
+	if test $ol_cv_lib_db != yes ; then
+		LIBS="$ol_cv_lib_db $LIBS"
+	fi
+
+	AC_TRY_RUN([
+#ifdef HAVE_DB_185_H
+	choke me;
+#else
+#include <db.h>
+#endif
+#ifndef DB_VERSION_MAJOR
+# define DB_VERSION_MAJOR 1
+#endif
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+main()
+{
+#if DB_VERSION_MAJOR > 1
+	char *version;
+	int major, minor, patch;
+
+	version = db_version( &major, &minor, &patch );
+
+	if( major != DB_VERSION_MAJOR || minor < DB_VERSION_MINOR ) {
+		printf("Berkeley DB version mismatch\n"
+			"\texpected: %s\n\tgot: %s\n",
+			DB_VERSION_STRING, version);
+		return 1;
+	}
+#endif
+
+	return 0;
+}],
+	[ol_cv_berkeley_db_version=yes],
+	[ol_cv_berkeley_db_version=no],
+	[ol_cv_berkeley_db_version=cross])
+
+	LIBS="$ol_LIBS"
+])
+
+	if test $ol_cv_berkeley_db_version = no ; then
+		AC_MSG_ERROR([Berkeley DB version mismatch])
+	fi
+])dnl
+dnl
+dnl --------------------------------------------------------------------
 dnl Check if Berkeley DB supports DB_THREAD
 AC_DEFUN([OL_BERKELEY_DB_THREAD],
 [AC_CACHE_CHECK([for Berkeley DB thread support], [ol_cv_berkeley_db_thread], [
@@ -429,6 +482,7 @@ if test $ac_cv_header_db_h = yes; then
 	OL_BERKELEY_DB_LINK
 	if test "$ol_cv_lib_db" != no ; then
 		ol_cv_berkeley_db=yes
+		OL_BERKELEY_DB_VERSION
 		OL_BERKELEY_DB_THREAD
 	fi
 fi

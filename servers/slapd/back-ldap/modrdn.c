@@ -1,5 +1,5 @@
 /* modrdn.c - ldap backend modrdn function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modrdn.c,v 1.28.2.3 2004/01/01 18:16:37 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modrdn.c,v 1.28.2.5 2004/04/12 16:00:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -45,7 +45,7 @@ ldap_back_modrdn(
 	int rc = LDAP_SUCCESS;
 #endif /* LDAP_BACK_PROXY_AUTHZ */
 
-	struct berval mdn = { 0, NULL }, mnewSuperior = { 0, NULL };
+	struct berval mdn = BER_BVNULL, mnewSuperior = BER_BVNULL;
 
 	lc = ldap_back_getconn( op, rs );
 	if ( !lc || !ldap_back_dobind(lc, op, rs) ) {
@@ -68,7 +68,7 @@ ldap_back_modrdn(
 		 * Rewrite the new superior, if defined and required
 	 	 */
 #ifdef ENABLE_REWRITE
-		dc.ctx = "newSuperiorDn";
+		dc.ctx = "newSuperiorDN";
 #endif
 		if ( ldap_back_dn_massage( &dc, op->orr_newSup,
 			&mnewSuperior ) ) {
@@ -81,9 +81,9 @@ ldap_back_modrdn(
 	 * Rewrite the modrdn dn, if required
 	 */
 #ifdef ENABLE_REWRITE
-	dc.ctx = "modrDn";
+	dc.ctx = "modrDN";
 #endif
-	if ( ldap_back_dn_massage( &dc, &op->o_req_dn, &mdn ) ) {
+	if ( ldap_back_dn_massage( &dc, &op->o_req_ndn, &mdn ) ) {
 		send_ldap_result( op, rs );
 		return -1;
 	}
@@ -113,7 +113,7 @@ cleanup:
 	}
 #endif /* LDAP_BACK_PROXY_AUTHZ */
 
-	if ( mdn.bv_val != op->o_req_dn.bv_val ) {
+	if ( mdn.bv_val != op->o_req_ndn.bv_val ) {
 		free( mdn.bv_val );
 	}
 	if ( mnewSuperior.bv_val != NULL

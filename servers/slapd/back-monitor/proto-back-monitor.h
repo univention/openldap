@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/proto-back-monitor.h,v 1.12.2.3 2004/01/01 18:16:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/proto-back-monitor.h,v 1.12.2.4 2004/03/18 00:56:29 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2004 The OpenLDAP Foundation.
@@ -73,6 +73,11 @@ int monitor_subsys_log_modify LDAP_P(( Operation *op, Entry *e ));
  */
 int monitor_subsys_ops_init LDAP_P(( BackendDB *be ));
 int monitor_subsys_ops_update LDAP_P(( Operation *op, Entry *e ));
+
+/*
+ * overlay
+ */
+int monitor_subsys_overlay_init LDAP_P(( BackendDB *be ));
 
 /*
  * sent

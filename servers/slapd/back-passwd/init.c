@@ -1,5 +1,5 @@
 /* init.c - initialize passwd backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/init.c,v 1.22.2.3 2004/01/01 18:16:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/init.c,v 1.22.2.4 2004/04/12 18:20:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -25,7 +25,7 @@
 
 ldap_pvt_thread_mutex_t passwd_mutex;
 
-#ifdef SLAPD_PASSWD_DYNAMIC
+#if SLAPD_PASSWD == SLAPD_MOD_DYNAMIC
 
 int init_module(int argc, char *argv[]) {
     BackendInfo bi;
@@ -38,7 +38,7 @@ int init_module(int argc, char *argv[]) {
     return 0;
 }
 
-#endif /* SLAPD_PASSWD_DYNAMIC */
+#endif /* SLAPD_PASSWD */
 
 int
 passwd_back_initialize(

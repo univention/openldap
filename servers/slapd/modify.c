@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.182.2.7 2004/01/01 18:16:33 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.182.2.11 2004/04/28 22:57:24 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -44,7 +44,7 @@ do_modify(
     Operation	*op,
     SlapReply	*rs )
 {
-	struct berval dn = { 0, NULL };
+	struct berval dn = BER_BVNULL;
 	char		*last;
 	ber_tag_t	tag;
 	ber_len_t	len;
@@ -101,9 +101,7 @@ do_modify(
 	Debug( LDAP_DEBUG_ARGS, "do_modify: dn (%s)\n", dn.bv_val, 0, 0 );
 #endif
 
-
 	/* collect modifications & save for later */
-
 	for ( tag = ber_first_element( op->o_ber, &len, &last );
 	    tag != LBER_DEFAULT;
 	    tag = ber_next_element( op->o_ber, &len, last ) )
@@ -114,10 +112,10 @@ do_modify(
 		tmp.sml_nvalues = NULL;
 
 		if ( ber_scanf( op->o_ber, "{i{m[W]}}", &mop,
-		    &tmp.sml_type, &tmp.sml_values )
-		    == LBER_ERROR )
+		    &tmp.sml_type, &tmp.sml_values ) == LBER_ERROR )
 		{
-			send_ldap_discon( op, rs, LDAP_PROTOCOL_ERROR, "decoding modlist error" );
+			send_ldap_discon( op, rs, LDAP_PROTOCOL_ERROR,
+				"decoding modlist error" );
 			rs->sr_err = SLAPD_DISCONNECT;
 			goto cleanup;
 		}
@@ -367,7 +365,7 @@ do_modify(
 			if (rs->sr_ref != default_referral) ber_bvarray_free( rs->sr_ref );
 		} else {
 			send_ldap_error( op, rs, LDAP_UNWILLING_TO_PERFORM,
-				"referral missing" );
+				"no global superior knowledge" );
 		}
 		goto cleanup;
 	}
@@ -398,21 +396,25 @@ do_modify(
 		modv = slapi_int_modifications2ldapmods( &modlist );
 		slapi_pblock_set( pb, SLAPI_MODIFY_MODS, (void *)modv );
 
-		rs->sr_err = slapi_int_call_plugins( op->o_bd, SLAPI_PLUGIN_PRE_MODIFY_FN, pb );
+		rs->sr_err = slapi_int_call_plugins( op->o_bd,
+			SLAPI_PLUGIN_PRE_MODIFY_FN, pb );
 		if ( rs->sr_err < 0 ) {
 			/*
 			 * A preoperation plugin failure will abort the
 			 * entire operation.
 			 */
 #ifdef NEW_LOGGING
-			LDAP_LOG( OPERATION, INFO, "do_modify: modify preoperation plugin "
-					"failed\n", 0, 0, 0 );
+			LDAP_LOG( OPERATION, INFO,
+				"do_modify: modify preoperation plugin failed\n",
+				0, 0, 0 );
 #else
-			Debug(LDAP_DEBUG_TRACE, "do_modify: modify preoperation plugin failed.\n",
-					0, 0, 0);
+			Debug(LDAP_DEBUG_TRACE,
+				"do_modify: modify preoperation plugin failed.\n",
+				0, 0, 0);
 #endif
-			if ( ( slapi_pblock_get( op->o_pb, SLAPI_RESULT_CODE, (void *)&rs->sr_err ) != 0 )  ||
-				 rs->sr_err == LDAP_SUCCESS ) {
+			if ( ( slapi_pblock_get( op->o_pb, SLAPI_RESULT_CODE,
+				(void *)&rs->sr_err ) != 0 ) || rs->sr_err == LDAP_SUCCESS )
+			{
 				rs->sr_err = LDAP_OTHER;
 			}
 			slapi_int_free_ldapmods( modv );
@@ -457,16 +459,13 @@ do_modify(
 	 */
 	if ( op->o_bd->be_modify ) {
 		/* do the update here */
-		int repl_user = be_isupdate( op->o_bd, &op->o_ndn );
+		int repl_user = be_isupdate( op );
 
 		/* Multimaster slapd does not have to check for replicator dn
 		 * because it accepts each modify request
 		 */
 #ifndef SLAPD_MULTIMASTER
-		if ( LDAP_STAILQ_EMPTY( &op->o_bd->be_syncinfo ) &&
-			( !op->o_bd->be_update_ndn.bv_len || repl_user ))
-#else
-		if ( LDAP_STAILQ_EMPTY( &op->o_bd->be_syncinfo ))
+		if ( !SLAP_SHADOW(op->o_bd) || repl_user )
 #endif
 		{
 			int update = op->o_bd->be_update_ndn.bv_len;
@@ -512,18 +511,8 @@ do_modify(
 #ifndef SLAPD_MULTIMASTER
 		/* send a referral */
 		} else {
-			BerVarray defref = NULL;
-			if ( !LDAP_STAILQ_EMPTY( &op->o_bd->be_syncinfo )) {
-				syncinfo_t *si;
-				LDAP_STAILQ_FOREACH( si, &op->o_bd->be_syncinfo, si_next ) {
-					struct berval tmpbv;
-					ber_dupbv( &tmpbv, &si->si_provideruri_bv[0] );
-					ber_bvarray_add( &defref, &tmpbv );
-				}
-			} else {
-				defref = op->o_bd->be_update_refs
-						? op->o_bd->be_update_refs : default_referral;
-			}
+			BerVarray defref = op->o_bd->be_update_refs
+				? op->o_bd->be_update_refs : default_referral;
 			if ( defref != NULL ) {
 				rs->sr_ref = referral_rewrite( defref,
 					NULL, &op->o_req_dn,
@@ -535,9 +524,8 @@ do_modify(
 					ber_bvarray_free( rs->sr_ref );
 				}
 			} else {
-				send_ldap_error( op, rs,
-						LDAP_UNWILLING_TO_PERFORM,
-		    				"referral missing" );
+				send_ldap_error( op, rs, LDAP_UNWILLING_TO_PERFORM,
+					"shadow context; no update referral" );
 			}
 #endif
 		}
@@ -549,19 +537,20 @@ do_modify(
 #if defined( LDAP_SLAPI )
 	} /* modlist != NULL */
 
-	if ( pb != NULL && slapi_int_call_plugins( op->o_bd, SLAPI_PLUGIN_POST_MODIFY_FN, pb ) < 0 ) {
+	if ( pb != NULL && slapi_int_call_plugins( op->o_bd,
+		SLAPI_PLUGIN_POST_MODIFY_FN, pb ) < 0 )
+	{
 #ifdef NEW_LOGGING
-		LDAP_LOG( OPERATION, INFO, "do_modify: modify postoperation plugins "
-				"failed\n", 0, 0, 0 );
+		LDAP_LOG( OPERATION, INFO,
+			"do_modify: modify postoperation plugins failed\n", 0, 0, 0 );
 #else
-		Debug(LDAP_DEBUG_TRACE, "do_modify: modify postoperation plugins "
-				"failed.\n", 0, 0, 0);
+		Debug(LDAP_DEBUG_TRACE,
+			"do_modify: modify postoperation plugins failed.\n", 0, 0, 0);
 #endif
 	}
 #endif /* defined( LDAP_SLAPI ) */
 
 cleanup:
-
 	slap_graduate_commit_csn( op );
 
 	op->o_tmpfree( op->o_req_dn.bv_val, op->o_tmpmemctx );
@@ -615,7 +604,7 @@ int slap_mods_check(
 		if( !slap_syntax_is_binary( ad->ad_type->sat_syntax )
 			&& slap_ad_is_binary( ad ))
 		{
-			/* attribute requires binary transfer */
+			/* attribute does not require binary transfer */
 			snprintf( textbuf, textlen,
 				"%s: disallows ;binary transfer",
 				ml->sml_type.bv_val );
@@ -776,6 +765,65 @@ int slap_mods_check(
 				ml->sml_nvalues[nvals].bv_val = NULL;
 				ml->sml_nvalues[nvals].bv_len = 0;
 			}
+
+			if( nvals ) {
+				/* check for duplicates */
+				int		i, j;
+				MatchingRule *mr = ad->ad_type->sat_equality;
+
+				/* check if the values we're adding already exist */
+				if( mr == NULL || !mr->smr_match ) {
+					for ( i = 1; ml->sml_values[i].bv_val != NULL; i++ ) {
+						/* test asserted values against themselves */
+						for( j = 0; j < i; j++ ) {
+							if ( bvmatch( &ml->sml_values[i],
+								&ml->sml_values[j] ) )
+							{
+								/* value exists already */
+								snprintf( textbuf, textlen,
+									"%s: value #%d provided more than once",
+									ml->sml_desc->ad_cname.bv_val, j );
+								*text = textbuf;
+								return LDAP_TYPE_OR_VALUE_EXISTS;
+							}
+						}
+					}
+
+				} else {
+					int rc;
+					int match;
+
+					for ( i = 1; ml->sml_values[i].bv_val != NULL; i++ ) {
+						/* test asserted values against themselves */
+						for( j = 0; j < i; j++ ) {
+							rc = value_match( &match, ml->sml_desc, mr,
+								SLAP_MR_EQUALITY
+									| SLAP_MR_VALUE_OF_ATTRIBUTE_SYNTAX
+									| SLAP_MR_ASSERTED_VALUE_NORMALIZED_MATCH
+									| SLAP_MR_ATTRIBUTE_VALUE_NORMALIZED_MATCH,
+								ml->sml_nvalues
+									? &ml->sml_nvalues[i]
+									: &ml->sml_values[i],
+								ml->sml_nvalues
+									? &ml->sml_nvalues[j]
+									: &ml->sml_values[j],
+								text );
+							if ( rc == LDAP_SUCCESS && match == 0 ) {
+								/* value exists already */
+								snprintf( textbuf, textlen,
+									"%s: value #%d provided more than once",
+									ml->sml_desc->ad_cname.bv_val, j );
+								*text = textbuf;
+								return LDAP_TYPE_OR_VALUE_EXISTS;
+
+							} else if ( rc != LDAP_SUCCESS ) {
+								return rc;
+							}
+						}
+					}
+				}
+			}
+
 		}
 	}
 

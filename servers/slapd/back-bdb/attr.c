@@ -1,5 +1,5 @@
 /* attr.c - backend routines for dealing with attributes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/attr.c,v 1.15.2.2 2004/01/01 18:16:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/attr.c,v 1.15.2.3 2004/04/12 18:20:13 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -156,12 +156,9 @@ bdb_attr_index_config(
 		}
 
 		if( IS_SLAP_INDEX( mask, SLAP_INDEX_APPROX ) && !(
-			( ad->ad_type->sat_approx
+			ad->ad_type->sat_approx
 				&& ad->ad_type->sat_approx->smr_indexer
-				&& ad->ad_type->sat_approx->smr_filter )
-			&& ( ad->ad_type->sat_equality
-				&& ad->ad_type->sat_equality->smr_indexer
-				&& ad->ad_type->sat_equality->smr_filter ) ) )
+				&& ad->ad_type->sat_approx->smr_filter ) )
 		{
 			fprintf( stderr, "%s: line %d: "
 				"approx index of attribute \"%s\" disallowed\n",

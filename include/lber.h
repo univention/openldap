@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/lber.h,v 1.83.2.8 2004/01/01 18:16:28 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/lber.h,v 1.83.2.9 2004/03/17 20:15:31 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -152,7 +152,7 @@ typedef struct lber_memory_fns {
 #define LBER_OPT_SOCKBUF_DEBUG		0x1002
 
 /* on/off values */
-extern char ber_pvt_opt_on;
+LBER_V( char ) ber_pvt_opt_on;
 #define LBER_OPT_ON		((void *) &ber_pvt_opt_on)
 #define LBER_OPT_OFF	((void *) 0)
 

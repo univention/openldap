@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/search.c,v 1.60.2.5 2004/01/01 18:16:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/search.c,v 1.60.2.11 2004/04/12 16:08:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -58,17 +58,18 @@ meta_back_search( Operation *op, SlapReply *rs )
 	struct metaconn *lc;
 	struct metasingleconn *lsc;
 	struct timeval	tv = { 0, 0 };
-	LDAPMessage	*res, *e;
-	int	rc = 0, *msgid, sres = LDAP_NO_SUCH_OBJECT;
+	LDAPMessage	*res = NULL, *e;
+	int	rc = 0, *msgid, sres = LDAP_SUCCESS;
 	char *err = NULL;
-	struct berval match = { 0, NULL }, mmatch = { 0, NULL };
+	struct berval match = BER_BVNULL, mmatch = BER_BVNULL;
 	BerVarray v2refs = NULL;
 		
 	int i, last = 0, candidates = 0, initial_candidates = 0,
 			candidate_match = 0;
-	struct slap_limits_set *limit = NULL;
-	int isroot = 0;
 	dncookie dc;
+
+	int	is_scope = 0,
+		is_filter = 0;
 
 	/*
 	 * controls are set in ldap_back_dobind()
@@ -99,54 +100,6 @@ meta_back_search( Operation *op, SlapReply *rs )
 		return -1;
 	}
 	
-	/* if not root, get appropriate limits */
-	if ( be_isroot( op->o_bd, &op->o_ndn ) ) {
-		isroot = 1;
-	} else {
-		( void ) get_limits( op->o_bd, &op->o_ndn, &limit );
-	}
-
-	/* if no time limit requested, rely on remote server limits */
-	/* if requested limit higher than hard limit, abort */
-	if ( !isroot && op->oq_search.rs_tlimit > limit->lms_t_hard ) {
-		/* no hard limit means use soft instead */
-		if ( limit->lms_t_hard == 0
-				&& limit->lms_t_soft > -1
-				&& op->oq_search.rs_tlimit > limit->lms_t_soft ) {
-			op->oq_search.rs_tlimit = limit->lms_t_soft;
-			
-		/* positive hard limit means abort */
-		} else if ( limit->lms_t_hard > 0 ) {
-			rs->sr_err = LDAP_ADMINLIMIT_EXCEEDED;
-			send_ldap_result( op, rs );
-			rc = 0;
-			goto finish;
-		}
-		
-		/* negative hard limit means no limit */
-	}
-	
-	/* if no size limit requested, rely on remote server limits */
-	/* if requested limit higher than hard limit, abort */
-	if ( !isroot && op->oq_search.rs_slimit > limit->lms_s_hard ) {
-		/* no hard limit means use soft instead */
-		if ( limit->lms_s_hard == 0
-				&& limit->lms_s_soft > -1
-				&& op->oq_search.rs_slimit > limit->lms_s_soft ) {
-			op->oq_search.rs_slimit = limit->lms_s_soft;
-			
-		/* positive hard limit means abort */
-		} else if ( limit->lms_s_hard > 0 ) {
-			rs->sr_err = LDAP_ADMINLIMIT_EXCEEDED;
-			send_ldap_result( op, rs );
-			rc = 0;
-			goto finish;
-		}
-		
-		/* negative hard limit means no limit */
-	}
-
-
 	dc.conn = op->o_conn;
 	dc.rs = rs;
 
@@ -155,10 +108,10 @@ meta_back_search( Operation *op, SlapReply *rs )
 	 */
 	for ( i = 0, lsc = lc->conns; !META_LAST(lsc); ++i, ++lsc ) {
 		struct berval	realbase = op->o_req_dn;
-		int		realscope = op->oq_search.rs_scope;
+		int		realscope = op->ors_scope;
 		ber_len_t	suffixlen = 0;
-		struct berval	mbase = { 0, NULL }; 
-		struct berval	mfilter = { 0, NULL };
+		struct berval	mbase = BER_BVNULL; 
+		struct berval	mfilter = BER_BVNULL;
 		char		**mapped_attrs = NULL;
 
 		if ( lsc->candidate != META_CANDIDATE ) {
@@ -167,17 +120,17 @@ meta_back_search( Operation *op, SlapReply *rs )
 		}
 
 		/* should we check return values? */
-		if ( op->oq_search.rs_deref != -1 ) {
+		if ( op->ors_deref != -1 ) {
 			ldap_set_option( lsc->ld, LDAP_OPT_DEREF,
-					( void * )&op->oq_search.rs_deref);
+					( void * )&op->ors_deref);
 		}
-		if ( op->oq_search.rs_tlimit != -1 ) {
+		if ( op->ors_tlimit != -1 ) {
 			ldap_set_option( lsc->ld, LDAP_OPT_TIMELIMIT,
-					( void * )&op->oq_search.rs_tlimit);
+					( void * )&op->ors_tlimit);
 		}
-		if ( op->oq_search.rs_slimit != -1 ) {
+		if ( op->ors_slimit != -1 ) {
 			ldap_set_option( lsc->ld, LDAP_OPT_SIZELIMIT,
-					( void * )&op->oq_search.rs_slimit);
+					( void * )&op->ors_slimit);
 		}
 
 		dc.rwmap = &li->targets[ i ]->rwmap;
@@ -187,7 +140,7 @@ meta_back_search( Operation *op, SlapReply *rs )
 		 */
 		suffixlen = li->targets[ i ]->suffix.bv_len;
 		if ( suffixlen > op->o_req_ndn.bv_len ) {
-			switch ( op->oq_search.rs_scope ) {
+			switch ( op->ors_scope ) {
 			case LDAP_SCOPE_SUBTREE:
 				/*
 				 * make the target suffix the new base
@@ -198,6 +151,8 @@ meta_back_search( Operation *op, SlapReply *rs )
 				if ( dnIsSuffix( &li->targets[ i ]->suffix,
 						&op->o_req_ndn ) ) {
 					realbase = li->targets[ i ]->suffix;
+					is_scope++;
+
 				} else {
 					/*
 					 * this target is no longer candidate
@@ -218,6 +173,7 @@ meta_back_search( Operation *op, SlapReply *rs )
 					 */
 					realbase = li->targets[ i ]->suffix;
 					realscope = LDAP_SCOPE_BASE;
+					is_scope++;
 					break;
 				} /* else continue with the next case */
 
@@ -266,9 +222,17 @@ meta_back_search( Operation *op, SlapReply *rs )
 		 * Maps filter
 		 */
 		rc = ldap_back_filter_map_rewrite( &dc,
-				op->oq_search.rs_filter,
+				op->ors_filter,
 				&mfilter, BACKLDAP_MAP );
-		if ( rc != 0 ) {
+		switch ( rc ) {
+		case LDAP_SUCCESS:
+			is_filter++;
+			break;
+
+		case LDAP_COMPARE_FALSE:
+			rc = 0;
+
+		default:
 			/*
 			 * this target is no longer candidate
 			 */
@@ -280,7 +244,7 @@ meta_back_search( Operation *op, SlapReply *rs )
 		 * Maps required attributes
 		 */
 		rc = ldap_back_map_attrs( &li->targets[ i ]->rwmap.rwm_at,
-				op->oq_search.rs_attrs, BACKLDAP_MAP,
+				op->ors_attrs, BACKLDAP_MAP,
 				&mapped_attrs );
 		if ( rc != LDAP_SUCCESS ) {
 			/*
@@ -295,12 +259,12 @@ meta_back_search( Operation *op, SlapReply *rs )
 		 */
 		msgid[ i ] = ldap_search( lsc->ld, mbase.bv_val, realscope,
 				mfilter.bv_val, mapped_attrs,
-				op->oq_search.rs_attrsonly ); 
+				op->ors_attrsonly ); 
 		if ( mapped_attrs ) {
 			free( mapped_attrs );
 			mapped_attrs = NULL;
 		}
-		if ( mfilter.bv_val != op->oq_search.rs_filterstr.bv_val ) {
+		if ( mfilter.bv_val != op->ors_filterstr.bv_val ) {
 			free( mfilter.bv_val );
 			mfilter.bv_val = NULL;
 		}
@@ -349,8 +313,8 @@ new_candidate:;
 				break;
 			}
 
-			if ( op->oq_search.rs_slimit > 0
-					&& rs->sr_nentries == op->oq_search.rs_slimit ) {
+			if ( op->ors_slimit > 0
+					&& rs->sr_nentries == op->ors_slimit ) {
 				rs->sr_err = LDAP_SIZELIMIT_EXCEEDED;
 				rs->sr_v2ref = v2refs;
 				send_ldap_result( op, rs );
@@ -368,6 +332,11 @@ new_candidate:;
 					0, &tv, &res );
 
 			if ( rc == 0 ) {
+				/* timeout exceeded */
+
+				/* FIXME: res should not need to be freed */
+				assert( res == NULL );
+
 				continue;
 
 			} else if ( rc == -1 ) {
@@ -379,11 +348,18 @@ new_candidate:;
 				send_ldap_result( op, rs );
 				
 				/* anything else needs be done? */
+
+				/* FIXME: res should not need to be freed */
+				assert( res == NULL );
+
 				goto finish;
 
 			} else if ( rc == LDAP_RES_SEARCH_ENTRY ) {
 				e = ldap_first_entry( lsc->ld, res );
 				meta_send_entry( op, rs, lc, i, e );
+
+				ldap_msgfree( res );
+				res = NULL;
 
 				/*
 				 * If scope is BASE, we need to jump out
@@ -392,13 +368,13 @@ new_candidate:;
 				 * this should correspond to the sole
 				 * entry that has the base DN
 				 */
-				if ( op->oq_search.rs_scope == LDAP_SCOPE_BASE
+				if ( op->ors_scope == LDAP_SCOPE_BASE
 						&& rs->sr_nentries > 0 ) {
 					candidates = 0;
 					sres = LDAP_SUCCESS;
 					break;
 				}
-				ldap_msgfree( res );
+
 				gotit = 1;
 
 			} else if ( rc == LDAP_RES_SEARCH_REFERENCE ) {
@@ -446,10 +422,15 @@ new_candidate:;
 					rs->sr_ctrls = NULL;
 				}
 
+				ldap_msgfree( res );
+				res = NULL;
+
 			} else {
 				rs->sr_err = ldap_result2error( lsc->ld,
 						res, 1 );
-				sres = ldap_back_map_result( rs );
+				res = NULL;
+
+				sres = slap_map_api2result( rs );
 				if ( err != NULL ) {
 					free( err );
 				}
@@ -514,7 +495,7 @@ new_candidate:;
 	 */
 	if ( candidate_match == initial_candidates
 			&& match.bv_val != NULL && *match.bv_val ) {
-		dc.ctx = "matchedDn";
+		dc.ctx = "matchedDN";
 		dc.rwmap = &li->targets[ last ]->rwmap;
 
 		if ( ldap_back_dn_massage( &dc, &match, &mmatch ) ) {
@@ -529,6 +510,10 @@ new_candidate:;
 	 * FIXME: we should handle error codes and return the more 
 	 * important/reasonable
 	 */
+	if ( is_scope == 0 ) {
+		sres = LDAP_NO_SUCH_OBJECT;
+	}
+
 	if ( sres == LDAP_SUCCESS && v2refs ) {
 		sres = LDAP_REFERRAL;
 	}
@@ -573,7 +558,7 @@ meta_send_entry(
 	Entry 			ent = {0};
 	BerElement 		ber = *e->lm_ber;
 	Attribute 		*attr, **attrp;
-	struct berval 		dummy = { 0, NULL };
+	struct berval 		dummy = BER_BVNULL;
 	struct berval 		*bv, bdn;
 	const char 		*text;
 	dncookie		dc;
@@ -733,7 +718,8 @@ meta_send_entry(
 		attrp = &attr->a_next;
 	}
 	rs->sr_entry = &ent;
-	rs->sr_attrs = op->oq_search.rs_attrs;
+	rs->sr_attrs = op->ors_attrs;
+	rs->sr_flags = 0;
 	send_search_entry( op, rs );
 	rs->sr_entry = NULL;
 	rs->sr_attrs = NULL;

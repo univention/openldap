@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/modify.c,v 1.21.2.3 2004/01/01 18:16:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/modify.c,v 1.21.2.6 2004/04/15 01:41:49 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -41,7 +41,7 @@ meta_back_modify( Operation *op, SlapReply *rs )
 	LDAPMod			*mods = NULL;
 	Modifications		*ml;
 	int			candidate = -1, i;
-	struct berval		mdn = { 0, NULL };
+	struct berval		mdn = BER_BVNULL;
 	struct berval		mapped;
 	dncookie		dc;
 
@@ -65,7 +65,7 @@ meta_back_modify( Operation *op, SlapReply *rs )
 	dc.rwmap = &li->targets[ candidate ]->rwmap;
 	dc.conn = op->o_conn;
 	dc.rs = rs;
-	dc.ctx = "modifyDn";
+	dc.ctx = "modifyDN";
 
 	if ( ldap_back_dn_massage( &dc, &op->o_req_dn, &mdn ) ) {
 		rc = -1;
@@ -114,15 +114,15 @@ meta_back_modify( Operation *op, SlapReply *rs )
 		 */
 		if ( strcmp( ml->sml_desc->ad_type->sat_syntax->ssyn_oid,
 					SLAPD_DN_SYNTAX ) == 0 ) {
-			( void )ldap_dnattr_rewrite( &dc, ml->sml_bvalues );
+			( void )ldap_dnattr_rewrite( &dc, ml->sml_values );
 		}
 
-		if ( ml->sml_bvalues != NULL ){
-			for (j = 0; ml->sml_bvalues[ j ].bv_val; j++);
+		if ( ml->sml_values != NULL ){
+			for (j = 0; ml->sml_values[ j ].bv_val; j++);
 			mods[ i ].mod_bvalues = (struct berval **)ch_malloc((j+1) *
 				sizeof(struct berval *));
-			for (j = 0; ml->sml_bvalues[ j ].bv_val; j++)
-				mods[ i ].mod_bvalues[ j ] = &ml->sml_bvalues[j];
+			for (j = 0; ml->sml_values[ j ].bv_val; j++)
+				mods[ i ].mod_bvalues[ j ] = &ml->sml_values[j];
 			mods[ i ].mod_bvalues[ j ] = NULL;
 
 		} else {

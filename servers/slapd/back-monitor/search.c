@@ -1,5 +1,5 @@
 /* search.c - monitor backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/search.c,v 1.24.2.3 2004/01/01 18:16:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/search.c,v 1.24.2.4 2004/03/18 00:56:29 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2004 The OpenLDAP Foundation.
@@ -92,6 +92,7 @@ monitor_send_children(
 		rc = test_filter( op, e, op->oq_search.rs_filter );
 		if ( rc == LDAP_COMPARE_TRUE ) {
 			rs->sr_entry = e;
+			rs->sr_flags = 0;
 			send_search_entry( op, rs );
 			rs->sr_entry = NULL;
 		}
@@ -155,6 +156,7 @@ monitor_back_search( Operation *op, SlapReply *rs )
 		rc = test_filter( op, e, op->oq_search.rs_filter );
  		if ( rc == LDAP_COMPARE_TRUE ) {
 			rs->sr_entry = e;
+			rs->sr_flags = 0;
 			send_search_entry( op, rs );
 			rs->sr_entry = NULL;
 		}
@@ -175,6 +177,7 @@ monitor_back_search( Operation *op, SlapReply *rs )
 		rc = test_filter( op, e, op->oq_search.rs_filter );
 		if ( rc == LDAP_COMPARE_TRUE ) {
 			rs->sr_entry = e;
+			rs->sr_flags = 0;
 			send_search_entry( op, rs );
 			rs->sr_entry = NULL;
 		}

@@ -1,5 +1,5 @@
 /* backend.c - routines for dealing with back-end databases */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.206.2.13 2004/01/17 18:36:41 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.206.2.18 2004/06/04 03:39:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -51,91 +51,97 @@
  * imported into slapd without appropriate __declspec(dllimport) directives.
  */
 
-#if defined(SLAPD_BDB) && !defined(SLAPD_BDB_DYNAMIC)
+#if SLAPD_BDB == SLAPD_MOD_STATIC
 #include "back-bdb/external.h"
 #endif
-#if defined(SLAPD_DNSSRV) && !defined(SLAPD_DNSSRV_DYNAMIC)
+#if SLAPD_DNSSRV == SLAPD_MOD_STATIC
 #include "back-dnssrv/external.h"
 #endif
-#if defined(SLAPD_HDB) && !defined(SLAPD_HDB_DYNAMIC)
+#if SLAPD_HDB == SLAPD_MOD_STATIC
 #include "back-hdb/external.h"
 #endif
-#if defined(SLAPD_LDAP) && !defined(SLAPD_LDAP_DYNAMIC)
+#if SLAPD_LDAP == SLAPD_MOD_STATIC
 #include "back-ldap/external.h"
 #endif
-#if defined(SLAPD_LDBM) && !defined(SLAPD_LDBM_DYNAMIC)
+#if SLAPD_LDBM == SLAPD_MOD_STATIC
 #include "back-ldbm/external.h"
 #endif
-#if defined(SLAPD_META) && !defined(SLAPD_META_DYNAMIC)
+#if SLAPD_META == SLAPD_MOD_STATIC
 #include "back-meta/external.h"
 #endif
-#if defined(SLAPD_MONITOR) && !defined(SLAPD_MONITOR_DYNAMIC)
+#if SLAPD_MONITOR == SLAPD_MOD_STATIC
 #include "back-monitor/external.h"
 #endif
-#if defined(SLAPD_NULL) && !defined(SLAPD_NULL_DYNAMIC)
+#if SLAPD_NULL == SLAPD_MOD_STATIC
 #include "back-null/external.h"
 #endif
-#if defined(SLAPD_PASSWD) && !defined(SLAPD_PASSWD_DYNAMIC)
+#if SLAPD_PASSWD == SLAPD_MOD_STATIC
 #include "back-passwd/external.h"
 #endif
-#if defined(SLAPD_PERL) && !defined(SLAPD_PERL_DYNAMIC)
+#if SLAPD_PERL == SLAPD_MOD_STATIC
 #include "back-perl/external.h"
 #endif
-#if defined(SLAPD_SHELL) && !defined(SLAPD_SHELL_DYNAMIC)
+#if SLAPD_RELAY == SLAPD_MOD_STATIC
+#include "back-relay/external.h"
+#endif
+#if SLAPD_SHELL == SLAPD_MOD_STATIC
 #include "back-shell/external.h"
 #endif
-#if defined(SLAPD_TCL) && !defined(SLAPD_TCL_DYNAMIC)
+#if SLAPD_TCL == SLAPD_MOD_STATIC
 #include "back-tcl/external.h"
 #endif
-#if defined(SLAPD_SQL) && !defined(SLAPD_SQL_DYNAMIC)
+#if SLAPD_SQL == SLAPD_MOD_STATIC
 #include "back-sql/external.h"
 #endif
-#if defined(SLAPD_PRIVATE) && !defined(SLAPD_PRIVATE_DYNAMIC)
+#if SLAPD_PRIVATE == SLAPD_MOD_STATIC
 #include "private/external.h"
 #endif
 
 static BackendInfo binfo[] = {
-#if defined(SLAPD_BDB) && !defined(SLAPD_BDB_DYNAMIC)
+#if SLAPD_BDB == SLAPD_MOD_STATIC
 	{"bdb",	bdb_initialize},
 #endif
-#if defined(SLAPD_DNSSRV) && !defined(SLAPD_DNSSRV_DYNAMIC)
+#if SLAPD_DNSSRV == SLAPD_MOD_STATIC
 	{"dnssrv",	dnssrv_back_initialize},
 #endif
-#if defined(SLAPD_HDB) && !defined(SLAPD_HDB_DYNAMIC)
+#if SLAPD_HDB == SLAPD_MOD_STATIC
 	{"hdb",	hdb_initialize},
 #endif
-#if defined(SLAPD_LDAP) && !defined(SLAPD_LDAP_DYNAMIC)
+#if SLAPD_LDAP == SLAPD_MOD_STATIC
 	{"ldap",	ldap_back_initialize},
 #endif
-#if defined(SLAPD_LDBM) && !defined(SLAPD_LDBM_DYNAMIC)
+#if SLAPD_LDBM == SLAPD_MOD_STATIC
 	{"ldbm",	ldbm_back_initialize},
 #endif
-#if defined(SLAPD_META) && !defined(SLAPD_META_DYNAMIC)
+#if SLAPD_META == SLAPD_MOD_STATIC
 	{"meta",	meta_back_initialize},
 #endif
-#if defined(SLAPD_MONITOR) && !defined(SLAPD_MONITOR_DYNAMIC)
+#if SLAPD_MONITOR == SLAPD_MOD_STATIC
 	{"monitor",	monitor_back_initialize},
 #endif
-#if defined(SLAPD_NULL) && !defined(SLAPD_NULL_DYNAMIC)
+#if SLAPD_NULL == SLAPD_MOD_STATIC
 	{"null",	null_back_initialize},
 #endif
-#if defined(SLAPD_PASSWD) && !defined(SLAPD_PASSWD_DYNAMIC)
+#if SLAPD_PASSWD == SLAPD_MOD_STATIC
 	{"passwd",	passwd_back_initialize},
 #endif
-#if defined(SLAPD_PERL) && !defined(SLAPD_PERL_DYNAMIC)
+#if SLAPD_PERL == SLAPD_MOD_STATIC
 	{"perl",	perl_back_initialize},
 #endif
-#if defined(SLAPD_SHELL) && !defined(SLAPD_SHELL_DYNAMIC)
+#if SLAPD_RELAY == SLAPD_MOD_STATIC
+	{"relay",	relay_back_initialize},
+#endif
+#if SLAPD_SHELL == SLAPD_MOD_STATIC
 	{"shell",	shell_back_initialize},
 #endif
-#if defined(SLAPD_TCL) && !defined(SLAPD_TCL_DYNAMIC)
+#if SLAPD_TCL == SLAPD_MOD_STATIC
 	{"tcl",		tcl_back_initialize},
 #endif
-#if defined(SLAPD_SQL) && !defined(SLAPD_SQL_DYNAMIC)
+#if SLAPD_SQL == SLAPD_MOD_STATIC
 	{"sql",		sql_back_initialize},
 #endif
 	/* for any private backend */
-#if defined(SLAPD_PRIVATE) && !defined(SLAPD_PRIVATE_DYNAMIC)
+#if SLAPD_PRIVATE == SLAPD_MOD_STATIC
 	{"private",	private_back_initialize},
 #endif
 	{NULL}
@@ -296,7 +302,9 @@ int backend_startup(Backend *be)
 	if(be != NULL) {
 		/* startup a specific backend database */
 
-		LDAP_TAILQ_INIT( &be->be_pending_csn_list );
+		be->be_pending_csn_list = (struct be_pcl *)
+								ch_calloc( 1, sizeof( struct be_pcl ));
+		LDAP_TAILQ_INIT( be->be_pending_csn_list );
 
 #ifdef NEW_LOGGING
 		LDAP_LOG( BACKEND, DETAIL1, "backend_startup:  starting \"%s\"\n",
@@ -375,7 +383,9 @@ int backend_startup(Backend *be)
 		/* append global access controls */
 		acl_append( &backendDB[i].be_acl, global_acl );
 
-		LDAP_TAILQ_INIT( &backendDB[i].be_pending_csn_list );
+		backendDB[i].be_pending_csn_list = (struct be_pcl *)
+								ch_calloc( 1, sizeof( struct be_pcl ));
+		LDAP_TAILQ_INIT( backendDB[i].be_pending_csn_list );
 
 		if ( backendDB[i].be_suffix == NULL ) {
 #ifdef NEW_LOGGING
@@ -409,6 +419,21 @@ int backend_startup(Backend *be)
 
 		if ( !LDAP_STAILQ_EMPTY( &backendDB[i].be_syncinfo )) {
 			syncinfo_t *si;
+
+			if ( !( backendDB[i].be_search && backendDB[i].be_add &&
+				backendDB[i].be_modify && backendDB[i].be_delete )) {
+#ifdef NEW_LOGGING
+				LDAP_LOG( BACKEND, CRIT, 
+					"backend_startup: database(%d) does not support "
+					"operations required for syncrepl", i, 0, 0 );
+#else
+				Debug( LDAP_DEBUG_ANY,
+					"backend_startup: database(%d) does not support "
+					"operations required for syncrepl", i, 0, 0 );
+#endif
+				continue;
+			}
+
 			LDAP_STAILQ_FOREACH( si, &backendDB[i].be_syncinfo, si_next ) {
 				si->si_be = &backendDB[i];
 				init_syncrepl( si );
@@ -693,7 +718,7 @@ be_issuffix(
 }
 
 int
-be_isroot( Backend *be, struct berval *ndn )
+be_isroot_dn( Backend *be, struct berval *ndn )
 {
 	if ( !ndn->bv_len ) {
 		return( 0 );
@@ -707,7 +732,29 @@ be_isroot( Backend *be, struct berval *ndn )
 }
 
 int
-be_isupdate( Backend *be, struct berval *ndn )
+be_sync_update( Operation *op )
+{
+	return ( SLAP_SYNC_SHADOW( op->o_bd ) && syncrepl_isupdate( op ) );
+}
+
+int
+be_slurp_update( Operation *op )
+{
+	return ( SLAP_SLURP_SHADOW( op->o_bd ) && be_isupdate_dn( op->o_bd, &op->o_ndn ));
+}
+
+int
+be_shadow_update( Operation *op )
+{
+#if 0
+	return ( be_sync_update( op ) || be_slurp_update( op ) );
+#endif
+	/* NOTE: this is slightly more efficient */
+	return ( SLAP_SHADOW( op->o_bd ) && ( syncrepl_isupdate( op ) || be_isupdate_dn( op->o_bd, &op->o_ndn ) ) );
+}
+
+int
+be_isupdate_dn( Backend *be, struct berval *ndn )
 {
 	if ( !ndn->bv_len ) {
 		return( 0 );
@@ -727,12 +774,18 @@ be_root_dn( Backend *be )
 }
 
 int
+be_isroot( Operation *op )
+{
+	return be_isroot_dn( op->o_bd, &op->o_ndn );
+}
+
+int
 be_isroot_pw( Operation *op )
 {
 	int result;
 	char *errmsg;
 
-	if ( ! be_isroot( op->o_bd, &op->o_req_ndn ) ) {
+	if ( ! be_isroot_dn( op->o_bd, &op->o_req_ndn ) ) {
 		return 0;
 	}
 
@@ -1268,6 +1321,14 @@ backend_group(
 						case LDAP_SCOPE_SUBTREE:
 							if ( !dnIsSuffix( op_ndn, &nbase )) goto loopit;
 							break;
+#ifdef LDAP_SCOPE_SUBORDINATE
+						case LDAP_SCOPE_SUBORDINATE:
+							if ( dn_match( &nbase, op_ndn ) &&
+								!dnIsSuffix(op_ndn, &nbase ))
+							{
+								goto loopit;
+							}
+#endif
 						}
 						filter = str2filter_x( op, ludp->lud_filter );
 						if ( filter ) {

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.88.2.8 2004/01/01 18:16:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.88.2.16 2004/06/04 03:39:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -33,6 +33,7 @@
 #define LDAP_X_SCOPE_REGEX	((ber_int_t) 0x0020)
 #define LDAP_X_SCOPE_CHILDREN	((ber_int_t) 0x0030)
 #define LDAP_X_SCOPE_SUBTREE	((ber_int_t) 0x0040)
+#define LDAP_X_SCOPE_ONELEVEL	((ber_int_t) 0x0050)
 
 /*
  * IDs in DNauthzid form can now have a type specifier, that
@@ -210,30 +211,35 @@ static int slap_parseURI( Operation *op, struct berval *uri,
 			bv.bv_val++;
 
 			if ( !strncasecmp( bv.bv_val, "exact:", sizeof( "exact:" ) - 1 ) ) {
-				bv.bv_val += sizeof( "exact" ) - 1;
+				bv.bv_val += sizeof( "exact:" ) - 1;
 				*scope = LDAP_X_SCOPE_EXACT;
 
 			} else if ( !strncasecmp( bv.bv_val, "regex:", sizeof( "regex:" ) - 1 ) ) {
-				bv.bv_val += sizeof( "regex" ) - 1;
+				bv.bv_val += sizeof( "regex:" ) - 1;
 				*scope = LDAP_X_SCOPE_REGEX;
 
 			} else if ( !strncasecmp( bv.bv_val, "children:", sizeof( "chldren:" ) - 1 ) ) {
-				bv.bv_val += sizeof( "children" ) - 1;
+				bv.bv_val += sizeof( "children:" ) - 1;
 				*scope = LDAP_X_SCOPE_CHILDREN;
 
 			} else if ( !strncasecmp( bv.bv_val, "subtree:", sizeof( "subtree:" ) - 1 ) ) {
-				bv.bv_val += sizeof( "subtree" ) - 1;
+				bv.bv_val += sizeof( "subtree:" ) - 1;
 				*scope = LDAP_X_SCOPE_SUBTREE;
+
+			} else if ( !strncasecmp( bv.bv_val, "onelevel:", sizeof( "onelevel:" ) - 1 ) ) {
+				bv.bv_val += sizeof( "onelevel:" ) - 1;
+				*scope = LDAP_X_SCOPE_ONELEVEL;
 
 			} else {
 				return LDAP_PROTOCOL_ERROR;
 			}
+		} else {
+			if ( bv.bv_val[ 0 ] != ':' ) {
+				return LDAP_PROTOCOL_ERROR;
+			}
+			*scope = LDAP_X_SCOPE_EXACT;
+			bv.bv_val++;
 		}
-
-		if ( bv.bv_val[ 0 ] != ':' ) {
-			return LDAP_PROTOCOL_ERROR;
-		}
-		bv.bv_val++;
 
 		bv.bv_val += strspn( bv.bv_val, " " );
 		/* jump here in case no type specification was present
@@ -244,6 +250,7 @@ is_dn:		bv.bv_len = uri->bv_len - (bv.bv_val - uri->bv_val);
 		case LDAP_X_SCOPE_EXACT:
 		case LDAP_X_SCOPE_CHILDREN:
 		case LDAP_X_SCOPE_SUBTREE:
+		case LDAP_X_SCOPE_ONELEVEL:
 			rc = dnNormalize( 0, NULL, NULL, &bv, nbase, op->o_tmpmemctx );
 			if( rc != LDAP_SUCCESS ) {
 				*scope = -1;
@@ -270,9 +277,9 @@ is_dn:		bv.bv_len = uri->bv_len - (bv.bv_val - uri->bv_val);
 		Connection	c = *op->o_conn;
 		char		buf[ SLAP_LDAPDN_MAXLEN ];
 		struct berval	id,
-				user = { 0, NULL },
-				realm = { 0, NULL },
-				mech = { 0, NULL };
+				user = BER_BVNULL,
+				realm = BER_BVNULL,
+				mech = BER_BVNULL;
 
 		if ( sizeof( buf ) <= uri->bv_len ) {
 			return LDAP_INVALID_SYNTAX;
@@ -555,6 +562,7 @@ static int sasl_sc_sasl2dn( Operation *o, SlapReply *rs )
 	if( ndn->bv_val ) {
 		o->o_tmpfree(ndn->bv_val, o->o_tmpmemctx);
 		ndn->bv_val = NULL;
+		ndn->bv_len = 0;
 
 #ifdef NEW_LOGGING
 		LDAP_LOG( TRANSPORT, DETAIL1,
@@ -625,9 +633,7 @@ int slap_sasl_match( Operation *opx, struct berval *rule,
 		&op.ors_filterstr );
 	if( rc != LDAP_SUCCESS ) goto CONCLUDED;
 
-	/* Massive shortcut: search scope == base */
 	switch ( op.oq_search.rs_scope ) {
-	case LDAP_SCOPE_BASE:
 	case LDAP_X_SCOPE_EXACT:
 exact_match:
 		if ( dn_match( &op.o_req_ndn, assertDN ) ) {
@@ -639,6 +645,7 @@ exact_match:
 
 	case LDAP_X_SCOPE_CHILDREN:
 	case LDAP_X_SCOPE_SUBTREE:
+	case LDAP_X_SCOPE_ONELEVEL:
 	{
 		int	d = assertDN->bv_len - op.o_req_ndn.bv_len;
 
@@ -654,7 +661,30 @@ exact_match:
 			bv.bv_val = assertDN->bv_val + d;
 
 			if ( bv.bv_val[ -1 ] == ',' && dn_match( &op.o_req_ndn, &bv ) ) {
-				rc = LDAP_SUCCESS;
+				switch ( op.oq_search.rs_scope ) {
+				case LDAP_X_SCOPE_SUBTREE:
+				case LDAP_X_SCOPE_CHILDREN:
+					rc = LDAP_SUCCESS;
+					break;
+
+				case LDAP_X_SCOPE_ONELEVEL:
+				{
+					struct berval	pdn;
+
+					dnParent( assertDN, &pdn );
+					/* the common portion of the DN
+					 * already matches, so only check
+					 * if parent DN of assertedDN 
+					 * is all the pattern */
+					if ( pdn.bv_len == op.o_req_ndn.bv_len ) {
+						rc = LDAP_SUCCESS;
+					}
+					break;
+				}
+				default:
+					/* at present, impossible */
+					assert( 0 );
+				}
 			}
 		}
 		goto CONCLUDED;
@@ -720,6 +750,9 @@ exact_match:
 	op.o_conn = opx->o_conn;
 	op.o_connid = opx->o_connid;
 	op.o_req_dn = op.o_req_ndn;
+	op.oq_search.rs_slimit = 1;
+	op.oq_search.rs_tlimit = -1;
+	op.o_sync_slog_size = -1;
 
 	op.o_bd->be_search( &op, &rs );
 
@@ -730,10 +763,10 @@ exact_match:
 	}
 
 CONCLUDED:
-	if( op.o_req_dn.bv_len ) ch_free( op.o_req_dn.bv_val );
-	if( op.o_req_ndn.bv_len ) sl_free( op.o_req_ndn.bv_val, opx->o_tmpmemctx );
+	if( op.o_req_dn.bv_val && op.o_req_dn.bv_val != op.o_req_ndn.bv_val ) ch_free( op.o_req_dn.bv_val );
+	if( op.o_req_ndn.bv_val ) sl_free( op.o_req_ndn.bv_val, opx->o_tmpmemctx );
 	if( op.oq_search.rs_filter ) filter_free_x( opx, op.oq_search.rs_filter );
-	if( op.ors_filterstr.bv_len ) ch_free( op.ors_filterstr.bv_val );
+	if( op.ors_filterstr.bv_val ) ch_free( op.ors_filterstr.bv_val );
 
 #ifdef NEW_LOGGING
 	LDAP_LOG( TRANSPORT, ENTRY, 
@@ -819,7 +852,7 @@ void slap_sasl2dn( Operation *opx,
 	slap_callback cb = { NULL, sasl_sc_sasl2dn, NULL, NULL };
 	Operation op = {0};
 	SlapReply rs = {REP_RESULT};
-	struct berval regout = { 0, NULL };
+	struct berval regout = BER_BVNULL;
 
 #ifdef NEW_LOGGING
 	LDAP_LOG( TRANSPORT, ENTRY, 
@@ -851,9 +884,7 @@ void slap_sasl2dn( Operation *opx,
 	/* Must do an internal search */
 	op.o_bd = select_backend( &op.o_req_ndn, 0, 1 );
 
-	/* Massive shortcut: search scope == base */
 	switch ( op.oq_search.rs_scope ) {
-	case LDAP_SCOPE_BASE:
 	case LDAP_X_SCOPE_EXACT:
 		*sasldn = op.o_req_ndn;
 		op.o_req_ndn.bv_len = 0;
@@ -863,11 +894,16 @@ void slap_sasl2dn( Operation *opx,
 	case LDAP_X_SCOPE_REGEX:
 	case LDAP_X_SCOPE_SUBTREE:
 	case LDAP_X_SCOPE_CHILDREN:
+	case LDAP_X_SCOPE_ONELEVEL:
 		/* correctly parsed, but illegal */
 		goto FINISHED;
 
+	case LDAP_SCOPE_BASE:
 	case LDAP_SCOPE_ONELEVEL:
 	case LDAP_SCOPE_SUBTREE:
+#ifdef LDAP_SCOPE_SUBORDINATE
+	case LDAP_SCOPE_SUBORDINATE:
+#endif
 		/* do a search */
 		break;
 
@@ -907,6 +943,7 @@ void slap_sasl2dn( Operation *opx,
 #endif
 	op.oq_search.rs_deref = LDAP_DEREF_NEVER;
 	op.oq_search.rs_slimit = 1;
+	op.oq_search.rs_tlimit = -1;
 	op.oq_search.rs_attrsonly = 1;
 	op.o_req_dn = op.o_req_ndn;
 
@@ -966,7 +1003,9 @@ int slap_sasl_authorized( Operation *op,
 	}
 
 	/* Allow the manager to authorize as any DN. */
-	if( op->o_conn->c_authz_backend && be_isroot( op->o_conn->c_authz_backend, authcDN )) {
+	if( op->o_conn->c_authz_backend &&
+		be_isroot_dn( op->o_conn->c_authz_backend, authcDN ))
+	{
 		rc = LDAP_SUCCESS;
 		goto DONE;
 	}

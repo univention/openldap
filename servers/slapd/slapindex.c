@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/tools/slapindex.c,v 1.18.2.2 2004/01/01 18:16:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapindex.c,v 1.1.2.1 2004/03/17 20:59:57 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -32,12 +32,13 @@
 #include "slapcommon.h"
 
 int
-main( int argc, char **argv )
+slapindex( int argc, char **argv )
 {
 	ID id;
 	int rc = EXIT_SUCCESS;
+	const char *progname = "slapindex";
 
-	slap_tool_init( "slapindex", SLAPINDEX, argc, argv );
+	slap_tool_init( progname, SLAPINDEX, argc, argv );
 
 	if( !be->be_entry_open ||
 		!be->be_entry_close ||

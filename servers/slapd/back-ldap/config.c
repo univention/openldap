@@ -1,5 +1,5 @@
 /* config.c - ldap backend configuration file routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/config.c,v 1.44.2.4 2004/01/01 18:16:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/config.c,v 1.44.2.7 2004/04/06 18:16:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2004 The OpenLDAP Foundation.
@@ -70,15 +70,63 @@ ldap_back_db_config(
 
 	/* URI of server to query (preferred over "server" directive) */
 	} else if ( strcasecmp( argv[0], "uri" ) == 0 ) {
+		LDAPURLDesc	tmplud;
+
 		if (argc != 2) {
-			fprintf( stderr,
-	"%s: line %d: missing address in \"uri <address>\" line\n",
-			    fname, lineno );
+			fprintf( stderr, "%s: line %d: "
+				"missing uri "
+				"in \"uri <uri>\" line\n",
+				fname, lineno );
 			return( 1 );
 		}
-		if (li->url != NULL)
-			ch_free(li->url);
-		li->url = ch_strdup(argv[1]);
+		if ( li->url != NULL ) {
+			ch_free( li->url );
+		}
+		if ( li->lud != NULL ) {
+			ldap_free_urldesc( li->lud );
+		}
+
+		if ( ldap_url_parse( argv[ 1 ], &li->lud ) != LDAP_URL_SUCCESS ) {
+			fprintf( stderr, "%s: line %d: "
+				"unable to parse uri \"%s\" "
+				"in \"uri <uri>\" line\n",
+				fname, lineno, argv[ 1 ] );
+			return 1;
+		}
+
+		if ( ( li->lud->lud_dn != NULL && li->lud->lud_dn[0] != '\0' )
+				|| li->lud->lud_attrs != NULL
+				|| li->lud->lud_filter != NULL
+				|| li->lud->lud_exts != NULL )
+		{
+			fprintf( stderr, "%s: line %d: "
+				"warning, only protocol, "
+				"host and port allowed "
+				"in \"uri <uri>\" line\n",
+				fname, lineno );
+		}
+
+#if 0
+		tmplud = *lud;
+		tmplud.lud_dn = "";
+		tmplud.lud_attrs = NULL;
+		tmplud.lud_filter = NULL;
+		if ( !ldap_is_ldapi_url( argv[ 1 ] ) ) {
+			tmplud.lud_exts = NULL;
+			tmplud.lud_crit_exts = 0;
+		}
+		
+		li->url = ldap_url_desc2str( &tmplud );
+		if ( li->url == NULL ) {
+			fprintf( stderr, "%s: line %d: "
+				"unable to rebuild uri \"%s\" "
+				"in \"uri <uri>\" line\n",
+				fname, lineno, argv[ 1 ] );
+			return 1;
+		}
+#else
+		li->url = ch_strdup( argv[ 1 ] );
+#endif
 
 	/* name to use for ldap_back_group */
 	} else if ( strcasecmp( argv[0], "binddn" ) == 0 ) {
@@ -349,6 +397,7 @@ ldap_back_map_config(
 				/*
 				 * FIXME: this should become an err
 				 */
+				goto error_return;
 			}
 		}
 
@@ -374,6 +423,7 @@ ldap_back_map_config(
 				/*
 				 * FIXME: this should become an err
 				 */
+				goto error_return;
 			}
 
 			ad = NULL;
@@ -394,7 +444,6 @@ ldap_back_map_config(
 		fprintf( stderr,
 			"%s: line %d: duplicate mapping found (ignored)\n",
 			fname, lineno );
-		/* FIXME: free stuff */
 		goto error_return;
 	}
 
@@ -468,16 +517,16 @@ ldap_back_exop_whoami(
 		}
 		ch_free(c.ldctl_value.bv_val);
 		if (rs->sr_err != LDAP_SUCCESS) {
-			rs->sr_err = ldap_back_map_result(rs);
+			rs->sr_err = slap_map_api2result( rs );
 		}
 	} else {
 	/* else just do the same as before */
 		bv = (struct berval *) ch_malloc( sizeof(struct berval) );
 		if( op->o_dn.bv_len ) {
-			bv->bv_len = op->o_dn.bv_len + sizeof("dn:")-1;
+			bv->bv_len = op->o_dn.bv_len + sizeof("dn:") - 1;
 			bv->bv_val = ch_malloc( bv->bv_len + 1 );
-			AC_MEMCPY( bv->bv_val, "dn:", sizeof("dn:")-1 );
-			AC_MEMCPY( &bv->bv_val[sizeof("dn:")-1], op->o_dn.bv_val,
+			AC_MEMCPY( bv->bv_val, "dn:", sizeof("dn:") - 1 );
+			AC_MEMCPY( &bv->bv_val[sizeof("dn:") - 1], op->o_dn.bv_val,
 				op->o_dn.bv_len );
 			bv->bv_val[bv->bv_len] = '\0';
 		} else {
@@ -586,102 +635,6 @@ suffix_massage_config(
 	ch_free( rargv[ 1 ] );
 	ch_free( rargv[ 2 ] );
 
-#if 0
-	/*
-	 * FIXME: this is no longer required since now we map filters
-	 * based on the parsed filter structure, so we can deal directly
-	 * with attribute types and values.  The rewriteContext 
-	 * "searchFilter" now refers to the value of attrbutes
-	 * with DN syntax.
-	 */
-
-	/*
-	 * the filter should be rewritten as
-	 * 
-	 * rewriteRule
-	 * 	"(.*)member=([^)]+),o=Foo Bar,[ ]?c=US(.*)"
-	 * 	"%1member=%2,dc=example,dc=com%3"
-	 *
-	 * where "o=Foo Bar, c=US" is the virtual naming context,
-	 * and "dc=example, dc=com" is the real naming context
-	 */
-	rargv[ 0 ] = "rewriteContext";
-	rargv[ 1 ] = "searchFilter";
-	rargv[ 2 ] = NULL;
-	rewrite_parse( info, "<suffix massage>", ++line, 2, rargv );
-
-#if 1 /* rewrite filters */
-	{
-		/*
-		 * Note: this is far more optimistic than desirable:
-		 * for any AVA value ending with the virtual naming
-		 * context the terminal part will be replaced by the
-		 * real naming context; a better solution would be to
-		 * walk the filter looking for DN-valued attributes,
-		 * and only rewrite those that require rewriting
-		 */
-		char 	vbuf_[BUFSIZ], *vbuf = vbuf_,
-			rbuf_[BUFSIZ], *rbuf = rbuf_;
-		int 	len;
-
-		len = snprintf( vbuf, sizeof( vbuf_ ), 
-				"(.*)%s\\)(.*)", nvnc->bv_val );
-		if ( len == -1 ) {
-			/* 
-			 * traditional behavior: snprintf returns -1 
-			 * if buffer is insufficient
-			 */
-			return -1;
-
-		} else if ( len >= (int)sizeof( vbuf_ ) ) {
-			/* 
-			 * C99: snprintf returns the required size 
-			 */
-			vbuf = ch_malloc( len + 1 );
-			len = snprintf( vbuf, len,
-					"(.*)%s\\)(.*)", nvnc->bv_val );
-			assert( len > 0 );
-		}
-
-		len = snprintf( rbuf, sizeof( rbuf_ ), "%%1%s)%%2", 
-				nrnc->bv_val );
-		if ( len == -1 ) {
-			return -1;
-
-		} else if ( len >= (int)sizeof( rbuf_ ) ) {
-			rbuf = ch_malloc( len + 1 );
-			len = snprintf( rbuf, sizeof( rbuf_ ), "%%1%s)%%2", 
-					nrnc->bv_val );
-			assert( len > 0 );
-		}
-		
-		rargv[ 0 ] = "rewriteRule";
-		rargv[ 1 ] = vbuf;
-		rargv[ 2 ] = rbuf;
-		rargv[ 3 ] = ":";
-		rargv[ 4 ] = NULL;
-		rewrite_parse( info, "<suffix massage>", ++line, 4, rargv );
-
-		if ( vbuf != vbuf_ ) {
-			ch_free( vbuf );
-		}
-
-		if ( rbuf != rbuf_ ) {
-			ch_free( rbuf );
-		}
-	}
-#endif /* rewrite filters */
-#endif
-
-#if 0 /*  "matched" is not normalized */
-	rargv[ 0 ] = "rewriteContext";
-	rargv[ 1 ] = "matchedDn";
-	rargv[ 2 ] = "alias";
-	rargv[ 3 ] = "searchResult";
-	rargv[ 4 ] = NULL;
-	rewrite_parse( info, "<suffix massage>", ++line, 4, rargv );
-#else /* normalize "matched" */
-
 	rargv[ 0 ] = "rewriteContext";
 	rargv[ 1 ] = "matchedDN";
 	rargv[ 2 ] = "alias";
@@ -695,18 +648,6 @@ suffix_massage_config(
 	rargv[ 3 ] = "searchResult";
 	rargv[ 4 ] = NULL;
 	rewrite_parse( info, "<suffix massage>", ++line, 4, rargv );
-
-#if 0
-	rargv[ 0 ] = "rewriteRule";
-	rargv[ 1 ] = suffix_massage_regexize( prnc->bv_val );
-	rargv[ 2 ] = suffix_massage_patternize( nvnc->bv_val );
-	rargv[ 3 ] = ":";
-	rargv[ 4 ] = NULL;
-	rewrite_parse( info, "<suffix massage>", ++line, 4, rargv );
-	ch_free( rargv[ 1 ] );
-	ch_free( rargv[ 2 ] );
-#endif /* 0 */
-#endif /* normalize "matched" */
 
 	return 0;
 }

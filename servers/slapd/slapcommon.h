@@ -1,5 +1,5 @@
 /* slapcommon.h - common definitions for the slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/tools/slapcommon.h,v 1.13.2.4 2004/01/01 18:16:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.h,v 1.1.2.2 2004/03/18 01:01:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -18,39 +18,57 @@
 #define SLAPCOMMON_H_ 1
 
 #define SLAPD_TOOLS 1
-#include "../slap.h"
+#include "slap.h"
 
 enum slaptool {
-	SLAPCAT=1,	/* database -> LDIF tool */
-	SLAPADD,	/* LDIF -> database tool */
+	SLAPADD=1,	/* LDIF -> database tool */
+	SLAPCAT,	/* database -> LDIF tool */
+	SLAPDN,		/* DN check w/ syntax tool */
 	SLAPINDEX,	/* database index tool */
-	SLAPTEST	/* database testing tool */
+	SLAPPASSWD,	/* password generation tool */
+	SLAPTEST,	/* slapd.conf test tool */
+	SLAPLAST
 };
 
 #define SLAP_TOOL_CTXCSN_KEEP	0
 #define SLAP_TOOL_CTXCSN_ENTRY	1
 #define SLAP_TOOL_CTXCSN_BATCH	2
 
-extern	char	*progname;
-extern	char	*conffile;
-extern	Backend *be;
-extern	int		appendmode;
-extern	int		verbose;
-extern	int		update_ctxcsn;
-extern	int		retrieve_ctxcsn;
-extern	int		retrieve_synccookie;
-extern	int		replica_promotion;
-extern	int		replica_demotion;
-extern	char    *replica_id_string;
-extern	char    **replica_id_strlist;
-extern	int     *replica_id_list;
-extern	int		continuemode;
-extern	int		nosubordinates;
-extern	int		dryrun;
-extern	struct berval	sub_ndn;
+typedef struct tool_vars {
+	Backend *tv_be;
+	int tv_verbose;
+	int tv_update_ctxcsn;
+	int tv_retrieve_ctxcsn;
+	int tv_retrieve_synccookie;
+	int tv_replica_promotion;
+	int tv_replica_demotion;
+	char    *tv_replica_id_string;
+	char    **tv_replica_id_strlist;
+	int     *tv_replica_id_list;
+	int tv_continuemode;
+	int tv_nosubordinates;
+	int tv_dryrun;
+	struct berval tv_sub_ndn;
+	FILE	*tv_ldiffp;
+} tool_vars;
 
-extern	char	*ldiffile;
-extern	FILE	*ldiffp;
+extern tool_vars tool_globals;
+
+#define	be tool_globals.tv_be
+#define verbose tool_globals.tv_verbose
+#define update_ctxcsn tool_globals.tv_update_ctxcsn
+#define retrieve_ctxcsn tool_globals.tv_retrieve_ctxcsn
+#define retrieve_synccookie tool_globals.tv_retrieve_synccookie
+#define replica_promotion tool_globals.tv_replica_promotion
+#define replica_demotion tool_globals.tv_replica_demotion
+#define replica_id_string tool_globals.tv_replica_id_string
+#define replica_id_strlist tool_globals.tv_replica_id_strlist
+#define replica_id_list tool_globals.tv_replica_id_list
+#define continuemode tool_globals.tv_continuemode
+#define nosubordinates tool_globals.tv_nosubordinates
+#define dryrun tool_globals.tv_dryrun
+#define sub_ndn tool_globals.tv_sub_ndn
+#define ldiffp tool_globals.tv_ldiffp
 
 void slap_tool_init LDAP_P((
 	const char* name,

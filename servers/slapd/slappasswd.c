@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/tools/slappasswd.c,v 1.15.2.6 2004/01/10 18:26:47 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slappasswd.c,v 1.2.2.1 2004/03/17 20:59:57 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -55,16 +55,17 @@ usage(const char *s)
 }
 
 int
-main( int argc, char *argv[] )
+slappasswd( int argc, char *argv[] )
 {
 	char	*scheme = "{SSHA}";
 	char	*newpw = NULL;
 	char	*pwfile = NULL;
 	const char *text;
+	const char *progname = "slappasswd";
 
 	int		i;
 	struct berval passwd;
-	struct berval *hash = NULL;
+	struct berval hash;
 
 	while( (i = getopt( argc, argv,
 		"c:d:h:s:T:vu" )) != EOF )
@@ -101,12 +102,12 @@ main( int argc, char *argv[] )
 			break;
 
 		default:
-			usage (argv[0]);
+			usage ( progname );
 		}
 	}
 
 	if( argc - optind != 0 ) {
-		usage( argv[0] );
+		usage( progname );
 	} 
 
 	if( pwfile != NULL ) {
@@ -130,20 +131,20 @@ main( int argc, char *argv[] )
 		passwd.bv_len = strlen(passwd.bv_val);
 	}
 
-	hash = lutil_passwd_hash( &passwd, scheme, &text );
-	if( hash == NULL || hash->bv_val == NULL ) {
+	lutil_passwd_hash( &passwd, scheme, &hash, &text );
+	if( hash.bv_val == NULL ) {
 		fprintf( stderr,
 			"Password generation failed for scheme %s: %s\n",
 			scheme, text ? text : "" );
 		return EXIT_FAILURE;
 	}
 
-	if( lutil_passwd( hash, &passwd, NULL, &text ) ) {
+	if( lutil_passwd( &hash, &passwd, NULL, &text ) ) {
 		fprintf( stderr, "Password verification failed. %s\n",
 			text ? text : "" );
 		return EXIT_FAILURE;
 	}
 
-	printf( "%s\n" , hash->bv_val );
+	printf( "%s\n" , hash.bv_val );
 	return EXIT_SUCCESS;
 }

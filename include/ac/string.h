@@ -1,5 +1,5 @@
 /* Generic string.h */
-/* $OpenLDAP: pkg/ldap/include/ac/string.h,v 1.39.2.2 2004/01/01 18:16:28 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ac/string.h,v 1.39.2.3 2004/04/11 16:57:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -88,5 +88,7 @@ int (strncasecmp)();
 		if((n) == 1) *((char*)(d)) = *((char*)(s)); \
 		else AC_MEMCPY( (d), (s), (n) ); \
 	} while(0)
+
+#define STRLENOF(s)	(sizeof(s)-1)
 
 #endif /* _AC_STRING_H */

@@ -1,5 +1,5 @@
 /* abandon.c */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/abandon.c,v 1.31.2.3 2004/01/01 18:16:29 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/abandon.c,v 1.31.2.4 2004/02/23 22:08:05 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -186,7 +186,12 @@ do_abandon(
 			ld->ld_errno = LDAP_NO_MEMORY;
 
 		} else {
-			LDAP_NEXT_MSGID(ld, i);
+	/*
+	 * We already have the mutex in LDAP_R_COMPILE, so
+	 * don't try to get it again.
+	 *		LDAP_NEXT_MSGID(ld, i);
+	 */
+			i = ++(ld)->ld_msgid;
 #ifdef LDAP_CONNECTIONLESS
 			if ( LDAP_IS_UDP(ld) ) {
 			    err = ber_write( ber, ld->ld_options.ldo_peer,

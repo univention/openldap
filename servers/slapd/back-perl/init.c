@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/init.c,v 1.30.2.4 2004/01/01 18:16:39 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/init.c,v 1.30.2.6 2004/04/28 23:23:16 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -15,20 +15,6 @@
  * <http://www.OpenLDAP.org/license.html>.
  */
 
-#include <EXTERN.h>
-#include <perl.h>
-#undef _ /* #defined by both Perl and ac/localize.h */
-
-#ifdef HAVE_WIN32_ASPERL
-#include "asperl_undefs.h"
-#endif
-
-#include "portable.h"
-	
-#include <stdio.h>
-
-#include "slap.h"
-
 #include "perl_back.h"
 
 
@@ -38,7 +24,7 @@ EXT void boot_DynaLoader LDAP_P((PERL_BACK_BOOT_DYNALOADER_PARAMS));
 PerlInterpreter *PERL_INTERPRETER = NULL;
 ldap_pvt_thread_mutex_t	perl_interpreter_mutex;
 
-#ifdef SLAPD_PERL_DYNAMIC
+#if SLAPD_PERL == SLAPD_MOD_DYNAMIC
 
 int init_module(int argc, char *argv[])
 {
@@ -52,7 +38,7 @@ int init_module(int argc, char *argv[])
 	return 0;
 }
 
-#endif /* SLAPD_PERL_DYNAMIC */
+#endif /* SLAPD_PERL */
 
 
 /**********************************************************

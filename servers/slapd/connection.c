@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.230.2.12 2004/01/17 18:36:41 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.230.2.18 2004/04/28 23:07:36 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -92,6 +92,8 @@ static ldap_pvt_thread_start_t connection_operation;
  */
 int connections_init(void)
 {
+	int i;
+
 	assert( connections == NULL );
 
 	if( connections != NULL) {
@@ -125,6 +127,8 @@ int connections_init(void)
 
 	assert( connections[0].c_struct_state == SLAP_C_UNINITIALIZED );
 	assert( connections[dtblsize-1].c_struct_state == SLAP_C_UNINITIALIZED );
+
+	for (i=0; i<dtblsize; i++) connections[i].c_conn_idx = i;
 
 	/*
 	 * per entry initialization of the Connection array initialization
@@ -1163,15 +1167,16 @@ operations_error:
 	return NULL;
 }
 
+static const Listener dummy_list = { {0, ""}, {0, ""} };
+
 int connection_client_setup(
 	ber_socket_t s,
-	Listener *l,
 	ldap_pvt_thread_start_t *func,
 	void *arg )
 {
 	Connection *c;
 
-	if ( connection_init( s, l, "", "", CONN_IS_CLIENT, 0, NULL ) < 0 ) {
+	if ( connection_init( s, (Listener *)&dummy_list, "", "", CONN_IS_CLIENT, 0, NULL ) < 0 ) {
 		return -1;
 	}
 
@@ -1274,7 +1279,7 @@ int connection_read(ber_socket_t s)
 
 #ifdef HAVE_TLS
 	if ( c->c_is_tls && c->c_needs_tls_accept ) {
-		rc = ldap_pvt_tls_accept( c->c_sb, NULL );
+		rc = ldap_pvt_tls_accept( c->c_sb, slap_tls_ctx );
 		if ( rc < 0 ) {
 #if 0 /* required by next #if 0 */
 			struct timeval tv;
@@ -1313,7 +1318,7 @@ int connection_read(ber_socket_t s)
 
 		} else if ( rc == 0 ) {
 			void *ssl;
-			struct berval authid = { 0, NULL };
+			struct berval authid = BER_BVNULL;
 
 			c->c_needs_tls_accept = 0;
 
@@ -1435,8 +1440,7 @@ int connection_read(ber_socket_t s)
 
 static int
 connection_input(
-	Connection *conn
-)
+	Connection *conn )
 {
 	Operation *op;
 	ber_tag_t	tag;
@@ -1448,6 +1452,7 @@ connection_input(
 	Sockaddr	peeraddr;
 	char 		*cdn = NULL;
 #endif
+	char *defer = NULL;
 
 	if ( conn->c_currentber == NULL &&
 		( conn->c_currentber = ber_alloc()) == NULL )
@@ -1617,28 +1622,34 @@ connection_input(
 	 * Bind, or if it's closing. Also, don't let any single conn
 	 * use up all the available threads, and don't execute if we're
 	 * currently blocked on output. And don't execute if there are
-	 * already pending ops, let them go first.
-	 *
-	 * But always allow Abandon through; it won't cost much.
+	 * already pending ops, let them go first.  Abandon operations
+	 * get exceptions to some, but not all, cases.
 	 */
-	if ( tag != LDAP_REQ_ABANDON && (conn->c_conn_state == SLAP_C_BINDING
-		|| conn->c_conn_state == SLAP_C_CLOSING
-		|| conn->c_n_ops_executing >= connection_pool_max/2
-		|| conn->c_n_ops_pending
-		|| conn->c_writewaiter))
-	{
+	if (tag != LDAP_REQ_ABANDON && conn->c_conn_state == SLAP_C_CLOSING) {
+		defer = "closing";
+	} else if (tag != LDAP_REQ_ABANDON && conn->c_writewaiter) {
+		defer = "awaiting write";
+	} else if (conn->c_n_ops_executing >= connection_pool_max/2) {
+		defer = "too many executing";
+	} else if (conn->c_conn_state == SLAP_C_BINDING) {
+		defer = "binding";
+	} else if (tag != LDAP_REQ_ABANDON && conn->c_n_ops_pending) {
+		defer = "pending operations";
+	}
+
+	if( defer ) {
 		int max = conn->c_dn.bv_len
 			? slap_conn_max_pending_auth
 			: slap_conn_max_pending;
 
 #ifdef NEW_LOGGING
 		LDAP_LOG( CONNECTION, INFO, 
-			"connection_input: conn %lu deferring operation\n",
-			conn->c_connid, 0, 0 );
+			"connection_input: conn %lu deferring operation: %s\n",
+			conn->c_connid, defer, 0 );
 #else
 		Debug( LDAP_DEBUG_ANY,
-			"connection_input: conn=%lu deferring operation\n",
-			conn->c_connid, 0, 0 );
+			"connection_input: conn=%lu deferring operation: %s\n",
+			conn->c_connid, defer, 0 );
 #endif
 		conn->c_n_ops_pending++;
 		LDAP_STAILQ_INSERT_TAIL( &conn->c_pending_ops, op, o_next );
@@ -1848,3 +1859,26 @@ int connection_write(ber_socket_t s)
 	return 0;
 }
 
+void
+connection_fake_init(
+	Connection *conn,
+	Operation *op,
+	void *ctx )
+{
+	conn->c_connid = -1;
+	conn->c_send_ldap_result = slap_send_ldap_result;
+	conn->c_send_search_entry = slap_send_search_entry;
+	conn->c_send_search_reference = slap_send_search_reference;
+	conn->c_listener = (Listener *)&dummy_list;
+	conn->c_peer_name = slap_empty_bv;
+
+	/* set memory context */
+	op->o_tmpmemctx = sl_mem_create( SLMALLOC_SLAB_SIZE, ctx );
+	op->o_tmpmfuncs = &sl_mfuncs;
+	op->o_threadctx = ctx;
+
+	op->o_conn = conn;
+	op->o_connid = op->o_conn->c_connid;
+
+	op->o_time = slap_get_time();
+}

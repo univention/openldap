@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/add.c,v 1.21.2.3 2004/01/01 18:16:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/add.c,v 1.21.2.5 2004/04/12 16:08:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -40,7 +40,7 @@ meta_back_add( Operation *op, SlapReply *rs )
 	int i, candidate = -1;
 	Attribute *a;
 	LDAPMod **attrs;
-	struct berval mdn = { 0, NULL }, mapped;
+	struct berval mdn = BER_BVNULL, mapped;
 	dncookie dc;
 
 #ifdef NEW_LOGGING
@@ -73,7 +73,7 @@ meta_back_add( Operation *op, SlapReply *rs )
 	dc.rwmap = &li->targets[ candidate ]->rwmap;
 	dc.conn = op->o_conn;
 	dc.rs = rs;
-	dc.ctx = "addDn";
+	dc.ctx = "addDN";
 
 	if ( ldap_back_dn_massage( &dc, &op->o_req_dn, &mdn ) ) {
 		send_ldap_result( op, rs );

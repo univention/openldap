@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/starttls.c,v 1.28.2.2 2004/01/01 18:16:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/starttls.c,v 1.28.2.3 2004/06/04 03:39:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -77,9 +77,7 @@ starttls_extop ( Operation *op, SlapReply *rs )
 	}
 
 	/* fail if TLS could not be initialized */
-	if (ldap_pvt_tls_get_option( NULL, LDAP_OPT_X_TLS_CTX, &ctx ) != 0
-		|| ctx == NULL)
-	{
+	if ( slap_tls_ctx == NULL ) {
 		if (default_referral != NULL) {
 			/* caller will put the referral in the result */
 			rc = LDAP_REFERRAL;

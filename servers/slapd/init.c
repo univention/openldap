@@ -1,5 +1,5 @@
 /* init.c - initialize various things */
-/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.59.2.5 2004/01/01 18:16:33 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.59.2.7 2004/05/21 02:11:38 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -138,7 +138,8 @@ slap_init( int mode, const char *name )
 	
 			(void) ldap_pvt_thread_initialize();
 
-			ldap_pvt_thread_pool_init(&connection_pool, connection_pool_max, 0);
+			ldap_pvt_thread_pool_init( &connection_pool,
+				connection_pool_max, 0);
 
 			ldap_pvt_thread_mutex_init( &entry2str_mutex );
 			ldap_pvt_thread_mutex_init( &replog_mutex );
@@ -231,9 +232,6 @@ int slap_shutdown( Backend *be )
 		slap_name, 0, 0 );
 #endif
 
-
-	slap_sasl_destroy();
-
 	/* let backends do whatever cleanup they need to do */
 	rc = backend_shutdown( be ); 
 
@@ -261,6 +259,8 @@ int slap_destroy(void)
 
 
 	rc = backend_destroy();
+
+	slap_sasl_destroy();
 
 	entry_destroy();
 

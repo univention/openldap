@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/ldap_log.h,v 1.29.2.4 2004/01/01 18:16:28 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap_log.h,v 1.29.2.5 2004/02/23 22:08:05 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -114,6 +114,12 @@ LDAP_BEGIN_DECL
 #   ifdef LDAP_SYSLOG
     extern int	ldap_syslog;
     extern int	ldap_syslog_level;
+
+#	ifdef HAVE_EBCDIC
+#	define syslog	eb_syslog
+	extern void eb_syslog(int pri, const char *fmt, ...);
+#	endif
+
 #   endif /* LDAP_SYSLOG */
 
 /* this doesn't below as part of ldap.h */

@@ -1,5 +1,5 @@
 /* add.c - ldap ldbm back-end add routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/add.c,v 1.73.2.6 2004/01/01 18:16:37 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/add.c,v 1.73.2.8 2004/04/12 18:20:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -247,7 +247,7 @@ ldbm_back_add(
 	} else {
 		assert( pdn.bv_val == NULL || *pdn.bv_val == '\0' );
 
-		if ( !be_isroot( op->o_bd, &op->o_ndn )
+		if (( !be_isroot(op) && !be_shadow_update(op) )
 			&& !is_entry_glue( op->oq_add.rs_e ))
 		{
 			ldap_pvt_thread_rdwr_wunlock(&li->li_giant_rwlock);

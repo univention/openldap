@@ -1,5 +1,5 @@
 /* modrdn.c - ldbm backend modrdn routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/modrdn.c,v 1.130.2.6 2004/01/01 18:16:37 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/modrdn.c,v 1.130.2.9 2004/04/12 18:20:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -42,8 +42,8 @@ ldbm_back_modrdn(
 	AttributeDescription *entry = slap_schema.si_ad_entry;
 	struct ldbminfo	*li = (struct ldbminfo *) op->o_bd->be_private;
 	struct berval	p_dn, p_ndn;
-	struct berval	new_dn = { 0, NULL}, new_ndn = { 0, NULL };
-	struct berval	old_ndn = { 0, NULL };
+	struct berval	new_dn = BER_BVNULL, new_ndn = BER_BVNULL;
+	struct berval	old_ndn = BER_BVNULL;
 	Entry		*e, *p = NULL;
 	Entry		*matched;
 	/* LDAP v2 supporting correct attribute handling. */
@@ -246,9 +246,10 @@ ldbm_back_modrdn(
 
 	} else {
 		/* no parent, must be root to modify rdn */
-		isroot = be_isroot( op->o_bd, &op->o_ndn );
+		isroot = be_isroot( op );
 		if ( ! isroot ) {
-			if ( be_issuffix( op->o_bd, (struct berval *)&slap_empty_bv ) || be_isupdate( op->o_bd, &op->o_ndn ) ) {
+			if ( be_issuffix( op->o_bd, (struct berval *)&slap_empty_bv )
+				|| be_shadow_update( op ) ) {
 				int	can_access;
 				p = (Entry *)&slap_entry_root;
 				
@@ -418,11 +419,12 @@ ldbm_back_modrdn(
 
 			/* no parent, must be root to modify newSuperior */
 			if ( isroot == -1 ) {
-				isroot = be_isroot( op->o_bd, &op->o_ndn );
+				isroot = be_isroot( op );
 			}
 
 			if ( ! isroot ) {
-				if ( be_issuffix( op->o_bd, (struct berval *)&slap_empty_bv ) || be_isupdate( op->o_bd, &op->o_ndn ) ) {
+				if ( be_issuffix( op->o_bd, (struct berval *)&slap_empty_bv )
+					|| be_shadow_update( op ) ) {
 					int	can_access;
 					np = (Entry *)&slap_entry_root;
 				
@@ -614,28 +616,46 @@ ldbm_back_modrdn(
     		goto return_results;
 	}
 	
-	/* add new one */
-	if ( dn2id_add( op->o_bd, &e->e_nname, e->e_id ) != 0 ) {
-		send_ldap_error( op, rs, LDAP_OTHER,
-			"DN index add failed" );
-		goto return_results;
-	}
+	/*
+	 * NOTE: the backend MUST delete then add the entry,
+	 *		otherwise indexing may get hosed
+	 * FIXME: if a new ID was used, the add could be done first.
+	 *		that would be safer.
+	 */
+
 	/* delete old one */
 	if ( dn2id_delete( op->o_bd, &old_ndn, e->e_id ) != 0 ) {
-		/* undo add of new one */
-		dn2id_delete( op->o_bd, &e->e_nname, e->e_id );
 		send_ldap_error( op, rs, LDAP_OTHER,
 			"DN index delete fail" );
+		goto return_results;
+	}
+
+	/* add new one */
+	if ( dn2id_add( op->o_bd, &e->e_nname, e->e_id ) != 0 ) {
+		/* try to repair old entry - probably hopeless */
+        if( dn2id_add( op->o_bd, &old_ndn, e->e_id) != 0 ) {
+			send_ldap_error( op, rs, LDAP_OTHER,
+				"DN index add and repair failed" );
+		} else {
+			send_ldap_error( op, rs, LDAP_OTHER,
+				"DN index add failed" );
+		}
 		goto return_results;
 	}
 
 	/* id2entry index */
 	if ( id2entry_add( op->o_bd, e ) != 0 ) {
 		/* Try to undo */
-		dn2id_delete( op->o_bd, &e->e_nname, e->e_id );
-		dn2id_add( op->o_bd, &old_ndn, e->e_id );
-		send_ldap_error( op, rs, LDAP_OTHER,
-			"entry update failed" );
+		int rc;
+		rc = dn2id_delete( op->o_bd, &e->e_nname, e->e_id );
+		rc |= dn2id_add( op->o_bd, &old_ndn, e->e_id );
+		if( rc ) {
+			send_ldap_error( op, rs, LDAP_OTHER,
+				"entry update and repair failed" );
+		} else {
+			send_ldap_error( op, rs, LDAP_OTHER,
+				"entry update failed" );
+		}
 		goto return_results;
 	}
 
