@@ -119,7 +119,7 @@
 #     --enable-ldap	  enable ldap backend [no]
 --enable-ldap
 #     --with-ldap-module	  module type static|dynamic [static]
---with-ldap-module=dynamic
+--with-ldap-module=static
 #     --enable-ldbm	  enable ldbm backend [no]
 --enable-ldbm
 #     --with-ldbm-api       with LDBM API auto|berkeley|bcompat|mdbm|gdbm [auto]

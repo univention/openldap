@@ -7,6 +7,8 @@ openldap2 (2.1.30-4) testing-proposed-updates unstable; urgency=low
       install executables without stripping them by using the "-s"
       option. They will be stripped by dh_strip later, which is aware
       of DEB_BUILD_OPTIONS. Closes: #264448.
+  * Torsten Landschoff <torsten@debian.org>
+    + debian/configure.options: Build back-ldap statically (closes: #238444).
 
  -- 
 
