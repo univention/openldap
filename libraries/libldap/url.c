@@ -1,5 +1,5 @@
 /* LIBLDAP url.c -- LDAP URL (RFC 2255) related routines */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/url.c,v 1.74.2.3 2004/01/01 18:16:30 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/url.c,v 1.74.2.6 2004/08/30 00:59:22 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -72,6 +72,34 @@ int ldap_pvt_url_scheme2proto( const char *scheme )
 #ifdef LDAP_CONNECTIONLESS
 	if( strcmp("cldap", scheme) == 0 ) {
 		return LDAP_PROTO_UDP;
+	}
+#endif
+
+	return -1;
+}
+
+int ldap_pvt_url_scheme_port( const char *scheme, int port )
+{
+	assert( scheme );
+
+	if( port ) return port;
+	if( scheme == NULL ) return port;
+
+	if( strcmp("ldap", scheme) == 0 ) {
+		return LDAP_PORT;
+	}
+
+	if( strcmp("ldapi", scheme) == 0 ) {
+		return -1;
+	}
+
+	if( strcmp("ldaps", scheme) == 0 ) {
+		return LDAPS_PORT;
+	}
+
+#ifdef LDAP_CONNECTIONLESS
+	if( strcmp("cldap", scheme) == 0 ) {
+		return LDAP_PORT;
 	}
 #endif
 
@@ -537,6 +565,8 @@ ldap_url_parse_ext( LDAP_CONST char *url_in, LDAPURLDesc **ludpp )
 	}
 
 	if ( q != NULL ) {
+		char	*next;
+
 		*q++ = '\0';
 		ldap_pvt_hex_unescape( q );
 
@@ -546,7 +576,12 @@ ldap_url_parse_ext( LDAP_CONST char *url_in, LDAPURLDesc **ludpp )
 			return LDAP_URL_ERR_BADURL;
 		}
 
-		ludp->lud_port = atoi( q );
+		ludp->lud_port = strtol( q, &next, 10 );
+		if ( next == NULL || next[0] != '\0' ) {
+			LDAP_FREE( url );
+			ldap_free_urldesc( ludp );
+			return LDAP_URL_ERR_BADURL;
+		}
 	}
 
 	ldap_pvt_hex_unescape( url );
@@ -908,7 +943,7 @@ ldap_url_parselist_ext (LDAPURLDesc **ludlist, const char *url, const char *sep 
 
 	urls = ldap_str2charray(url, sep);
 	if (urls == NULL)
-		return LDAP_NO_MEMORY;
+		return LDAP_URL_ERR_MEM;
 
 	/* count the URLs... */
 	for (i = 0; urls[i] != NULL; i++) ;
@@ -925,7 +960,7 @@ ldap_url_parselist_ext (LDAPURLDesc **ludlist, const char *url, const char *sep 
 		*ludlist = ludp;
 	}
 	ldap_charray_free(urls);
-	return LDAP_SUCCESS;
+	return LDAP_URL_SUCCESS;
 }
 
 int
@@ -986,9 +1021,14 @@ ldap_url_parsehosts(
 				}
 			}
 			if (p != NULL) {
+				char	*next;
+
 				*p++ = 0;
 				ldap_pvt_hex_unescape(p);
-				ludp->lud_port = atoi(p);
+				ludp->lud_port = strtol( p, &next, 10 );
+				if ( next == NULL || next[0] != '\0' ) {
+					return LDAP_PARAM_ERROR;
+				}
 			}
 		}
 		ldap_pvt_hex_unescape(ludp->lud_host);

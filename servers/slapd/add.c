@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/add.c,v 1.162.2.12 2004/05/21 02:11:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/add.c,v 1.162.2.16 2004/09/25 02:55:39 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -82,7 +82,7 @@ do_add( Operation *op, SlapReply *rs )
 		Debug( LDAP_DEBUG_ANY, "do_add: ber_scanf failed\n", 0, 0, 0 );
 #endif
 		send_ldap_discon( op, rs, LDAP_PROTOCOL_ERROR, "decoding error" );
-		return -1;
+		return SLAPD_DISCONNECT;
 	}
 
 	e = (Entry *) ch_calloc( 1, sizeof(Entry) );
@@ -125,12 +125,12 @@ do_add( Operation *op, SlapReply *rs )
 		if ( rtag == LBER_ERROR ) {
 #ifdef NEW_LOGGING
 			LDAP_LOG( OPERATION, ERR, 
-				   "do_add: conn %d	 decoding error \n", op->o_connid, 0, 0 );
+				"do_add: conn %d decoding error \n", op->o_connid, 0, 0 );
 #else
 			Debug( LDAP_DEBUG_ANY, "do_add: decoding error\n", 0, 0, 0 );
 #endif
 			send_ldap_discon( op, rs, LDAP_PROTOCOL_ERROR, "decoding error" );
-			rs->sr_err = -1;
+			rs->sr_err = SLAPD_DISCONNECT;
 			goto done;
 		}
 
@@ -168,7 +168,7 @@ do_add( Operation *op, SlapReply *rs )
 		Debug( LDAP_DEBUG_ANY, "do_add: ber_scanf failed\n", 0, 0, 0 );
 #endif
 		send_ldap_discon( op, rs, LDAP_PROTOCOL_ERROR, "decoding error" );
-		rs->sr_err = -1;
+		rs->sr_err = SLAPD_DISCONNECT;
 		goto done;
 	}
 
@@ -279,7 +279,7 @@ do_add( Operation *op, SlapReply *rs )
 					assert( (*modtail)->sml_desc != NULL );
 				}
 				rs->sr_err = slap_mods_opattrs( op, modlist, modtail,
-					&rs->sr_text, textbuf, textlen );
+					&rs->sr_text, textbuf, textlen, 1 );
 				if( rs->sr_err != LDAP_SUCCESS ) {
 					send_ldap_result( op, rs );
 					goto done;
@@ -383,7 +383,6 @@ do_add( Operation *op, SlapReply *rs )
 #endif /* LDAP_SLAPI */
 
 done:
-
 	slap_graduate_commit_csn( op );
 
 	if( modlist != NULL ) {
@@ -447,24 +446,32 @@ slap_mods2entry(
 
 			/* should check for duplicates */
 
-			AC_MEMCPY( &attr->a_vals[i], mods->sml_values,
-				sizeof( struct berval ) * j );
-
-			/* trim the mods array */
-			ch_free( mods->sml_values );
-			mods->sml_values = NULL;
+			if ( dup ) {
+				for ( j = 0; mods->sml_values[j].bv_val; j++ ) {
+					ber_dupbv( &attr->a_vals[i+j], &mods->sml_values[j] );
+				}
+				BER_BVZERO( &attr->a_vals[i+j] );	
+			} else {
+				AC_MEMCPY( &attr->a_vals[i], mods->sml_values,
+					sizeof( struct berval ) * j );
+				ch_free( mods->sml_values );
+				mods->sml_values = NULL;
+			}
 
 			if( mods->sml_nvalues ) {
 				attr->a_nvals = ch_realloc( attr->a_nvals,
 					sizeof( struct berval ) * (i+j) );
-
-				AC_MEMCPY( &attr->a_nvals[i], mods->sml_nvalues,
-					sizeof( struct berval ) * j );
-
-				/* trim the mods array */
-				ch_free( mods->sml_nvalues );
-				mods->sml_nvalues = NULL;
-
+				if ( dup ) {
+					for ( j = 0; mods->sml_nvalues[j].bv_val; j++ ) {
+						ber_dupbv( &attr->a_nvals[i+j], &mods->sml_nvalues[j] );
+					}
+					BER_BVZERO( &attr->a_nvals[i+j] );	
+				} else {
+					AC_MEMCPY( &attr->a_nvals[i], mods->sml_nvalues,
+						sizeof( struct berval ) * j );
+					ch_free( mods->sml_nvalues );
+					mods->sml_nvalues = NULL;
+				}
 			} else {
 				attr->a_nvals = attr->a_vals;
 			}

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.208.2.14 2004/03/18 00:43:12 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.208.2.16 2004/10/20 20:06:51 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -80,6 +80,9 @@ LDAP_BEGIN_DECL
 #define LDAP_NO_ATTRS				"1.1"
 #define LDAP_ALL_USER_ATTRIBUTES	"*"
 #define LDAP_ALL_OPERATIONAL_ATTRIBUTES	"+" /* RFC 3673 */
+
+/* RFC 2251:  maxInt INTEGER ::= 2147483647 -- (2^^31 - 1) -- */
+#define LDAP_MAXINT (2147483647)
 
 /*
  * LDAP_OPTions
@@ -315,6 +318,9 @@ typedef struct ldapcontrol {
 #define LDAP_TAG_EXOP_REQ_VALUE ((ber_tag_t) 0x81U)	/* context specific + primitive */
 #define LDAP_TAG_EXOP_RES_OID   ((ber_tag_t) 0x8aU)	/* context specific + primitive */
 #define LDAP_TAG_EXOP_RES_VALUE ((ber_tag_t) 0x8bU)	/* context specific + primitive */
+
+#define LDAP_TAG_IM_RES_OID   ((ber_tag_t) 0x80U)	/* context specific + primitive */
+#define LDAP_TAG_IM_RES_VALUE ((ber_tag_t) 0x81U)	/* context specific + primitive */
 
 #define LDAP_TAG_SASL_RES_CREDS	((ber_tag_t) 0x87U)	/* context specific + primitive */
 

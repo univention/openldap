@@ -1,5 +1,5 @@
 /* common.c - common routines for the ldap client tools */
-/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.16.2.6 2004/03/17 19:54:53 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.16.2.9 2004/09/23 22:34:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -147,8 +147,8 @@ tool_args( int argc, char **argv )
 	int i;
 
 	while (( i = getopt( argc, argv, options )) != EOF ) {
-		int crit;
-		char *control, *cvalue;
+		int crit, ival;
+		char *control, *cvalue, *next;
 		switch( i ) {
 		case 'c':	/* continuous operation mode */
 			contoper++;
@@ -157,7 +157,12 @@ tool_args( int argc, char **argv )
 			referrals++;
 			break;
 		case 'd':
-			debug |= atoi( optarg );
+			ival = strtol( optarg, &next, 10 );
+			if (next == NULL || next[0] != '\0') {
+				fprintf( stderr, "%s: unable to parse debug value \"%s\"\n", prog, optarg);
+				exit(EXIT_FAILURE);
+			}
+			debug |= ival;
 			break;
 		case 'D':	/* bind DN */
 			if( binddn != NULL ) {
@@ -358,10 +363,20 @@ tool_args( int argc, char **argv )
 				fprintf( stderr, "%s: -p previously specified\n", prog );
 				exit( EXIT_FAILURE );
 			}
-			ldapport = atoi( optarg );
+			ival = strtol( optarg, &next, 10 );
+			if ( next == NULL || next[0] != '\0' ) {
+				fprintf( stderr, "%s: unable to parse port number \"%s\"\n", prog, optarg );
+				exit( EXIT_FAILURE );
+			}
+			ldapport = ival;
 			break;
 		case 'P':
-			switch( atoi(optarg) ) {
+			ival = strtol( optarg, &next, 10 );
+			if ( next == NULL || next[0] != '\0' ) {
+				fprintf( stderr, "%s: unabel to parse protocol version \"%s\"\n", prog, optarg );
+				exit( EXIT_FAILURE );
+			}
+			switch( ival ) {
 			case 2:
 				if( protocol == LDAP_VERSION3 ) {
 					fprintf( stderr, "%s: -P 2 incompatible with version %d\n",
@@ -672,8 +687,8 @@ tool_conn_setup( int not, void (*private_setup)( LDAP * ) )
 		rc = ldap_initialize( &ld, ldapuri );
 		if( rc != LDAP_SUCCESS ) {
 			fprintf( stderr,
-				"Could not create LDAP session handle (%d): %s\n",
-				rc, ldap_err2string(rc) );
+				"Could not create LDAP session handle for URI=%s (%d): %s\n",
+				ldapuri, rc, ldap_err2string(rc) );
 			exit( EXIT_FAILURE );
 		}
 

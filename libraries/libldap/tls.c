@@ -1,5 +1,5 @@
 /* tls.c - Handle tls/ssl using SSLeay or OpenSSL. */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/tls.c,v 1.106.2.4 2004/06/09 22:16:25 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/tls.c,v 1.106.2.6 2004/09/07 22:34:42 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -880,7 +880,8 @@ tls_get_cert( SSL *s )
 }
 
 int
-ldap_pvt_tls_get_peer_dn( void *s, struct berval *dn, LDAPDN_rewrite_dummy *func, unsigned flags )
+ldap_pvt_tls_get_peer_dn( void *s, struct berval *dn,
+	LDAPDN_rewrite_dummy *func, unsigned flags )
 {
 	X509 *x;
 	X509_NAME *xn;
@@ -1142,6 +1143,7 @@ ldap_int_tls_config( LDAP *ld, int option, const char *arg )
 	case LDAP_OPT_X_TLS_CERTFILE:
 	case LDAP_OPT_X_TLS_KEYFILE:
 	case LDAP_OPT_X_TLS_RANDOM_FILE:
+	case LDAP_OPT_X_TLS_CIPHER_SUITE:
 		return ldap_pvt_tls_set_option( ld, option, (void *) arg );
 
 	case LDAP_OPT_X_TLS_REQUIRE_CERT:

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/sets.c,v 1.17.2.2 2004/01/01 18:16:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sets.c,v 1.17.2.3 2004/08/30 16:34:38 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -209,8 +209,8 @@ slap_set_filter (SLAP_SET_GATHER gatherer,
 	SetCookie *cp, struct berval *fbv,
 	struct berval *user, struct berval *this, BerVarray *results)
 {
-#define IS_SET(x)	( (long)(x) >= 256 )
-#define IS_OP(x)	( (long)(x) < 256 )
+#define IS_SET(x)	( (unsigned long)(x) >= 256 )
+#define IS_OP(x)	( (unsigned long)(x) < 256 )
 #define SF_ERROR(x)	do { rc = -1; goto _error; } while (0)
 #define SF_TOP()	( (BerVarray)( (stp < 0) ? 0 : stack[stp] ) )
 #define SF_POP()	( (BerVarray)( (stp < 0) ? 0 : stack[stp--] ) )
@@ -220,7 +220,7 @@ slap_set_filter (SLAP_SET_GATHER gatherer,
 	} while (0)
 
 	BerVarray set, lset;
-	BerVarray stack[64];
+	BerVarray stack[64] = { 0 };
 	int len, op, rc, stp;
 	char c, *filter = fbv->bv_val;
 

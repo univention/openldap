@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.157.2.11 2004/04/28 23:07:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.157.2.13 2004/10/09 04:26:50 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -91,7 +91,6 @@ const char Versionstr[] =
 #endif
 
 #ifdef LOG_LOCAL4
-
 #define DEFAULT_SYSLOG_USER  LOG_LOCAL4
 
 typedef struct _str2intDispatch {
@@ -99,7 +98,6 @@ typedef struct _str2intDispatch {
 	int	 abbr;
 	int	 intVal;
 } STRDISP, *STRDISP_P;
-
 
 /* table to compute syslog-options to integer */
 static STRDISP	syslog_types[] = {
@@ -111,11 +109,16 @@ static STRDISP	syslog_types[] = {
 	{ "LOCAL5", sizeof("LOCAL5"), LOG_LOCAL5 },
 	{ "LOCAL6", sizeof("LOCAL6"), LOG_LOCAL6 },
 	{ "LOCAL7", sizeof("LOCAL7"), LOG_LOCAL7 },
+#ifdef LOG_USER
+	{ "USER", sizeof("USER"), LOG_USER },
+#endif
+#ifdef LOG_DAEMON
+	{ "DAEMON", sizeof("DAEMON"), LOG_DAEMON },
+#endif
 	{ NULL, 0, 0 }
 };
 
-static int   cnvt_str2int( char *, STRDISP_P, int );
-
+static int cnvt_str2int( char *, STRDISP_P, int );
 #endif	/* LOG_LOCAL4 */
 
 #define CHECK_NONE	0x00
@@ -636,6 +639,9 @@ int main( int argc, char **argv )
 #endif
 	(void) SIGNAL( SIGINT, slap_sig_shutdown );
 	(void) SIGNAL( SIGTERM, slap_sig_shutdown );
+#ifdef SIGTRAP
+	(void) SIGNAL( SIGTRAP, slap_sig_shutdown );
+#endif
 #ifdef LDAP_SIGCHLD
 	(void) SIGNAL( LDAP_SIGCHLD, wait4child );
 #endif

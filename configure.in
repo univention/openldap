@@ -1,4 +1,4 @@
-dnl $OpenLDAP: pkg/ldap/configure.in,v 1.478.2.19 2004/04/16 15:21:40 kurt Exp $
+dnl $OpenLDAP: pkg/ldap/configure.in,v 1.478.2.21 2004/07/26 18:15:05 hyc Exp $
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
 dnl Copyright 1998-2004 The OpenLDAP Foundation.
@@ -19,7 +19,7 @@ dnl at top of generated configure script.  Prints simple copyright.
 define([AC_INIT_BINSH],
 [[#! /bin/sh
 # $]OpenLDAP[$
-# from] translit([$OpenLDAP: pkg/ldap/configure.in,v 1.478.2.19 2004/04/16 15:21:40 kurt Exp $], $")] [
+# from] translit([$OpenLDAP: pkg/ldap/configure.in,v 1.478.2.21 2004/07/26 18:15:05 hyc Exp $], $")] [
 
 # This work is part of OpenLDAP Software <http://www.openldap.org/>.
 #
@@ -897,6 +897,11 @@ fi
 if test $ac_cv_func_res_query = no ; then 
 	AC_CHECK_LIB(resolv, __res_query)
 	ac_cv_func_res_query=$ac_cv_lib_resolv___res_query
+fi
+
+if test $ac_cv_func_res_query = no ; then 
+	AC_CHECK_LIB(resolv, _res_9_query)
+	ac_cv_func_res_query=$ac_cv_lib_resolv_res_9_query
 fi
 
 if test "$ac_cv_func_res_query" = yes ; then
@@ -1902,6 +1907,12 @@ if test $ol_link_ldbm = no -a $ol_enable_ldbm != no ; then
 
 	AC_MSG_WARN(disabling LDBM)
 	ol_enable_ldbm=no
+fi
+
+if test $ol_enable_bdb = yes -o \
+	$ol_enable_hdb = yes -o \
+	$ol_enable_ldbm = yes ; then
+	SLAPD_LIBS="$SLAPD_LIBS \$(LDBM_LIBS)"
 fi
 
 dnl ----------------------------------------------------------------

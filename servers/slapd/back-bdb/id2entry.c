@@ -1,5 +1,5 @@
 /* id2entry.c - routines to deal with the id2entry database */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/id2entry.c,v 1.47.2.3 2004/01/01 18:16:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/id2entry.c,v 1.47.2.6 2004/08/30 02:40:16 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -202,6 +202,10 @@ int bdb_entry_release(
 			SLAP_TRUNCATE_MODE, SLAP_UNDEFINED_MODE */
  
 	if ( slapMode == SLAP_SERVER_MODE ) {
+		/* If not in our cache, just free it */
+		if ( !e->e_private ) {
+			return bdb_entry_return( e );
+		}
 		/* free entry and reader or writer lock */
 		if ( o ) {
 			boi = (struct bdb_op_info *)o->o_private;
@@ -261,7 +265,7 @@ int bdb_entry_get(
 #endif
 
 	if( op ) boi = (struct bdb_op_info *) op->o_private;
-	if( boi != NULL && op->o_bd == boi->boi_bdb ) {
+	if( boi != NULL && op->o_bd->be_private == boi->boi_bdb->be_private ) {
 		txn = boi->boi_txn;
 		locker = boi->boi_locker;
 	}
@@ -372,15 +376,23 @@ return_results:
 	if( rc != LDAP_SUCCESS ) {
 		/* free entry */
 		bdb_cache_return_entry_rw(bdb->bi_dbenv, &bdb->bi_cache, e, rw, &lock);
+
 	} else {
-		*ent = e;
-		/* big drag. we need a place to store a read lock so we can
-		 * release it later??
-		 */
-		if ( op && !boi ) {
-			boi = op->o_tmpcalloc(1,sizeof(struct bdb_op_info),op->o_tmpmemctx);
-			boi->boi_lock = lock;
-			op->o_private = boi;
+		if ( slapMode == SLAP_SERVER_MODE ) {
+			*ent = e;
+			/* big drag. we need a place to store a read lock so we can
+			 * release it later??
+			 */
+			if ( op && !boi ) {
+				boi = op->o_tmpcalloc(1,sizeof(struct bdb_op_info),op->o_tmpmemctx);
+				boi->boi_lock = lock;
+				boi->boi_bdb = op->o_bd;
+				op->o_private = boi;
+			}
+
+		} else {
+			*ent = entry_dup( e );
+			bdb_cache_return_entry_rw(bdb->bi_dbenv, &bdb->bi_cache, e, rw, &lock);
 		}
 	}
 

@@ -1,5 +1,5 @@
 /* oc.c - object class routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/oc.c,v 1.55.2.3 2004/04/28 23:26:30 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/oc.c,v 1.55.2.4 2004/06/29 21:45:49 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -469,6 +469,7 @@ oc_add(
 	}
 
 	if ( code != 0 ) return code;
+	if( user && op ) return SLAP_SCHERR_CLASS_BAD_SUP;
 
 	code = oc_create_required( soc, soc->soc_at_oids_must, &op, err );
 	if ( code != 0 ) return code;
@@ -476,7 +477,7 @@ oc_add(
 	code = oc_create_allowed( soc, soc->soc_at_oids_may, &op, err );
 	if ( code != 0 ) return code;
 
-	if( user && op ) return SLAP_SCHERR_CLASS_BAD_SUP;
+	if( user && op ) return SLAP_SCHERR_CLASS_BAD_USAGE;
 
 	code = oc_insert(soc,err);
 	return code;

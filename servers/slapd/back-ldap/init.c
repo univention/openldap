@@ -1,5 +1,5 @@
 /* init.c - initialize ldap backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/init.c,v 1.43.2.10 2004/04/12 18:20:13 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/init.c,v 1.43.2.12 2004/08/30 18:50:25 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2004 The OpenLDAP Foundation.
@@ -46,14 +46,21 @@ int init_module(int argc, char *argv[]) {
 
 #endif /* SLAPD_LDAP */
 
+static int
+ldap_back_open(
+	BackendInfo *bi
+)
+{
+	bi->bi_controls = slap_known_controls;
+	return 0;
+}
+
 int
 ldap_back_initialize(
     BackendInfo	*bi
 )
 {
-	bi->bi_controls = slap_known_controls;
-
-	bi->bi_open = 0;
+	bi->bi_open = ldap_back_open;
 	bi->bi_config = 0;
 	bi->bi_close = 0;
 	bi->bi_destroy = 0;
@@ -146,7 +153,6 @@ ldap_back_db_init(
 	ldap_back_map_init( &li->rwmap.rwm_oc, &mapping );
 	ldap_back_map_init( &li->rwmap.rwm_at, &mapping );
 
-	li->be = be;
 	be->be_private = li;
 	SLAP_DBFLAGS(be) |= SLAP_DBFLAG_NOLASTMOD;
 

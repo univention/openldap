@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/util.c,v 1.16.2.5 2004/04/12 18:20:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/util.c,v 1.16.2.7 2004/09/24 14:09:15 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -52,6 +52,10 @@ char backsql_def_delentry_query[] = "DELETE FROM ldap_entries WHERE id=?";
 char backsql_def_insentry_query[] = 
 	"INSERT INTO ldap_entries (dn,oc_map_id,parent,keyval) "
 	"VALUES (?,?,?,?)";
+char backsql_def_delobjclasses_query[] = "DELETE FROM ldap_entry_objclasses "
+	"WHERE entry_id=?";
+char backsql_def_delreferrals_query[] = "DELETE FROM ldap_referrals "
+	"WHERE entry_id=?";
 char backsql_def_subtree_cond[] = "ldap_entries.dn LIKE CONCAT('%',?)";
 char backsql_def_upper_subtree_cond[] = "(ldap_entries.dn) LIKE CONCAT('%',?)";
 char backsql_id_query[] = "SELECT id,keyval,oc_map_id FROM ldap_entries WHERE ";
@@ -59,7 +63,7 @@ char backsql_id_query[] = "SELECT id,keyval,oc_map_id FROM ldap_entries WHERE ";
 char backsql_def_concat_func[] = "CONCAT(?,?)";
 
 /* TimesTen */
-char backsql_check_dn_ru_query[] = "SELECT dn_ru from ldap_entries";
+char backsql_check_dn_ru_query[] = "SELECT dn_ru FROM ldap_entries";
 
 struct berbuf *
 backsql_strcat( struct berbuf *dest, ... )
@@ -73,7 +77,7 @@ backsql_strcat( struct berbuf *dest, ... )
 			|| dest->bb_val.bv_len == strlen( dest->bb_val.bv_val ) );
  
 #ifdef BACKSQL_TRACE
-	Debug( LDAP_DEBUG_TRACE, "==>backsql_strcat()\n" );
+	Debug( LDAP_DEBUG_TRACE, "==>backsql_strcat()\n", 0, 0, 0 );
 #endif /* BACKSQL_TRACE */
 
 	va_start( strs, dest );
@@ -110,7 +114,8 @@ backsql_strcat( struct berbuf *dest, ... )
 
 #ifdef BACKSQL_TRACE
 			Debug( LDAP_DEBUG_TRACE, "backsql_strcat(): "
-				"new buflen=%d, dest=%p\n", dest->bb_len, dest, 0 );
+				"new buflen=%d, dest=%p\n",
+				dest->bb_len, dest, 0 );
 #endif /* BACKSQL_TRACE */
 		}
 		AC_MEMCPY( dest->bb_val.bv_val + cdlen, cstr, cslen + 1 );
@@ -120,7 +125,7 @@ backsql_strcat( struct berbuf *dest, ... )
 
 #ifdef BACKSQL_TRACE
 	Debug( LDAP_DEBUG_TRACE, "<==backsql_strcat() (dest=\"%s\")\n", 
-			dest, 0, 0 );
+			dest->bb_val.bv_val, 0, 0 );
 #endif /* BACKSQL_TRACE */
 
 	dest->bb_val.bv_len = cdlen;
@@ -141,7 +146,7 @@ backsql_strfcat( struct berbuf *dest, const char *fmt, ... )
 			|| dest->bb_val.bv_len == strlen( dest->bb_val.bv_val ) );
  
 #ifdef BACKSQL_TRACE
-	Debug( LDAP_DEBUG_TRACE, "==>backsql_strfcat()\n" );
+	Debug( LDAP_DEBUG_TRACE, "==>backsql_strfcat()\n", 0, 0, 0 );
 #endif /* BACKSQL_TRACE */
 
 	va_start( strs, fmt );
@@ -172,7 +177,7 @@ backsql_strfcat( struct berbuf *dest, const char *fmt, ... )
 			cslen = va_arg( strs, ber_len_t );
 			cstr = va_arg( strs, char * );
 			break;
-			
+
 		/* string */
 		case 's':
 			cstr = va_arg( strs, char * );
@@ -231,7 +236,7 @@ backsql_strfcat( struct berbuf *dest, const char *fmt, ... )
 
 #ifdef BACKSQL_TRACE
 	Debug( LDAP_DEBUG_TRACE, "<==backsql_strfcat() (dest=\"%s\")\n", 
-			dest, 0, 0 );
+			dest->bb_val.bv_val, 0, 0 );
 #endif /* BACKSQL_TRACE */
 
 	dest->bb_val.bv_len = cdlen;
@@ -313,18 +318,18 @@ backsql_get_table_spec( char **p )
 	s = q;
 
 	BACKSQL_NEXT_WORD;
-	if ( !strcasecmp( s, "as" ) ) {
+	if ( strcasecmp( s, "AS" ) == 0 ) {
 		s = q;
 		BACKSQL_NEXT_WORD;
 	}
 
-#if 0
-	backsql_strcat( &res, " AS ", s, NULL );
-	/* oracle doesn't understand AS :( and other RDBMSes don't need it */
-#endif
-
-	/* table alias */
-	backsql_strfcat( &res, "cs", ' ', s );
+	/* oracle doesn't understand "AS" :( and other RDBMSes don't need it */
+#ifdef BACKSQL_ALIASING_QUOTE
+	backsql_strfcat( &res, "scsc", " " BACKSQL_ALIASING,
+			BACKSQL_ALIASING_QUOTE, s, BACKSQL_ALIASING_QUOTE );
+#else /* ! BACKSQL_ALIASING */
+	backsql_strcat( &res, " " BACKSQL_ALIASING, s, NULL );
+#endif /* ! BACKSQL_ALIASING */
 
 	return res.bb_val.bv_val;
 }
@@ -340,7 +345,8 @@ backsql_merge_from_clause(
 #ifdef BACKSQL_TRACE
 	Debug( LDAP_DEBUG_TRACE, "==>backsql_merge_from_clause(): "
 		"dest_from=\"%s\",src_from=\"%s\"\n",
- 		dest_from ? dest_from->bb_val.bv_val : "<NULL>", src_from, 0 );
+ 		dest_from ? dest_from->bb_val.bv_val : "<NULL>",
+		src_from->bv_val, 0 );
 #endif /* BACKSQL_TRACE */
 
 	srcc = ch_strdup( src_from->bv_val );

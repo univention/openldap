@@ -1,5 +1,5 @@
 /* acl.c - routines to parse and check acl's */
-/* $OpenLDAP: pkg/ldap/servers/slapd/acl.c,v 1.189.2.16 2004/05/13 08:12:37 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/acl.c,v 1.189.2.18 2004/08/30 17:47:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -1359,7 +1359,11 @@ dn_match_cleanup:;
 			/* get the aci attribute */
 			at = attr_find( e->e_attrs, b->a_aci_at );
 			if ( at != NULL ) {
+#if 0
+				/* FIXME: this breaks acl caching;
+				 * see also ACL_RECORD_VALUE_STATE below */
 				ACL_RECORD_VALUE_STATE;
+#endif
 				/* the aci is an multi-valued attribute.  The
 				* rights are determined by OR'ing the individual
 				* rights given by the acis.
@@ -1388,47 +1392,56 @@ dn_match_cleanup:;
 				while ( parent_ndn.bv_val != old_parent_ndn.bv_val ){
 					old_parent_ndn = parent_ndn;
 					Debug(LDAP_DEBUG_ACL, "checking ACI of %s\n", parent_ndn.bv_val, 0, 0);
-					ret=backend_attribute(op, NULL, &parent_ndn, b->a_aci_at, &bvals);
+					ret = backend_attribute(op, NULL, &parent_ndn, b->a_aci_at, &bvals, ACL_AUTH);
 					switch(ret){
-						case LDAP_SUCCESS :
-							if(bvals){
-								for( i = 0; bvals[i].bv_val != NULL; i++){
-									ACL_RECORD_VALUE_STATE;
-									if (aci_mask(op, e, desc, val, &bvals[i], matches,
-											&grant, &deny, &aci_bv_children) != 0) {
-										tgrant |= grant;
-										tdeny |= deny;
-										/* evaluation stops as soon as either a "deny" or a 
-										 * "grant" directive matches.
-										 */
-										if( (tgrant != ACL_PRIV_NONE) || (tdeny != ACL_PRIV_NONE) ){
-											stop=1;
-										}
-									}
-									Debug(LDAP_DEBUG_ACL, "<= aci_mask grant %s deny %s\n", 
-										accessmask2str(tgrant,accessmaskbuf),
-										accessmask2str(tdeny, accessmaskbuf1), 0);
+					case LDAP_SUCCESS :
+						stop = 0;
+						if (!bvals){
+							break;
+						}
+
+						for( i = 0; bvals[i].bv_val != NULL; i++){
+#if 0
+							/* FIXME: this breaks acl caching;
+							 * see also ACL_RECORD_VALUE_STATE above */
+							ACL_RECORD_VALUE_STATE;
+#endif
+							if (aci_mask(op, e, desc, val, &bvals[i], matches,
+									&grant, &deny, &aci_bv_children) != 0) {
+								tgrant |= grant;
+								tdeny |= deny;
+								/* evaluation stops as soon as either a "deny" or a 
+								 * "grant" directive matches.
+								 */
+								if( (tgrant != ACL_PRIV_NONE) || (tdeny != ACL_PRIV_NONE) ){
+									stop = 1;
 								}
 							}
-							stop=0;
-							break;
-						case LDAP_NO_SUCH_ATTRIBUTE:
-							/* just go on if the aci-Attribute is not present in
-							 * the current entry 
-							 */
-							Debug(LDAP_DEBUG_ACL, "no such attribute\n", 0, 0, 0);
-							stop=0;
-							break;
-						case LDAP_NO_SUCH_OBJECT:
-							/* We have reached the base object */
-							Debug(LDAP_DEBUG_ACL, "no such object\n", 0, 0, 0);
-							stop=1;
-							break;
-						default:
-							stop=1;
-							break;
+							Debug(LDAP_DEBUG_ACL, "<= aci_mask grant %s deny %s\n", 
+								accessmask2str(tgrant,accessmaskbuf),
+								accessmask2str(tdeny, accessmaskbuf1), 0);
+						}
+						break;
+
+					case LDAP_NO_SUCH_ATTRIBUTE:
+						/* just go on if the aci-Attribute is not present in
+						 * the current entry 
+						 */
+						Debug(LDAP_DEBUG_ACL, "no such attribute\n", 0, 0, 0);
+						stop = 0;
+						break;
+
+					case LDAP_NO_SUCH_OBJECT:
+						/* We have reached the base object */
+						Debug(LDAP_DEBUG_ACL, "no such object\n", 0, 0, 0);
+						stop = 1;
+						break;
+
+					default:
+						stop = 1;
+						break;
 					}
-					if(stop){
+					if (stop){
 						break;
 					}
 					dnParent(&old_parent_ndn, &parent_ndn);
@@ -1751,7 +1764,7 @@ aci_set_gather (SetCookie *cookie, struct berval *name, struct berval *attr)
 		AttributeDescription *desc = NULL;
 		if (slap_bv2ad(attr, &desc, &text) == LDAP_SUCCESS) {
 			backend_attribute(cp->op,
-				cp->e, &ndn, desc, &bvals);
+				cp->e, &ndn, desc, &bvals, ACL_NONE);
 		}
 		sl_free(ndn.bv_val, cp->op->o_tmpmemctx);
 	}
@@ -1769,12 +1782,9 @@ aci_match_set (
 	struct berval set = BER_BVNULL;
 	int rc = 0;
 	AciSetCookie cookie;
-	Operation op2 = *op;
-
-	op2.o_conn = NULL;
 
 	if (setref == 0) {
-		ber_dupbv_x( &set, subj, op2.o_tmpmemctx );
+		ber_dupbv_x( &set, subj, op->o_tmpmemctx );
 
 	} else {
 		struct berval subjdn, ndn = BER_BVNULL;
@@ -1797,9 +1807,9 @@ aci_match_set (
 		 * as the length of the dn to be normalized
 		 */
 		if ( slap_bv2ad(&setat, &desc, &text) == LDAP_SUCCESS ) {
-			if ( dnNormalize(0, NULL, NULL, &subjdn, &ndn, op2.o_tmpmemctx) == LDAP_SUCCESS )
+			if ( dnNormalize(0, NULL, NULL, &subjdn, &ndn, op->o_tmpmemctx) == LDAP_SUCCESS )
 			{
-				backend_attribute(&op2, e, &ndn, desc, &bvals);
+				backend_attribute( op, e, &ndn, desc, &bvals, ACL_NONE );
 				if ( bvals != NULL && bvals[0].bv_val != NULL ) {
 					int i;
 					set = bvals[0];
@@ -1808,18 +1818,18 @@ aci_match_set (
 					bvals[0].bv_val = bvals[i-1].bv_val;
 					bvals[i-1].bv_val = NULL;
 				}
-				ber_bvarray_free_x(bvals, op2.o_tmpmemctx);
-				sl_free(ndn.bv_val, op2.o_tmpmemctx);
+				ber_bvarray_free_x(bvals, op->o_tmpmemctx);
+				sl_free(ndn.bv_val, op->o_tmpmemctx);
 			}
 		}
 	}
 
 	if (set.bv_val != NULL) {
-		cookie.op = &op2;
+		cookie.op = op;
 		cookie.e = e;
 		rc = (slap_set_filter(aci_set_gather, (SetCookie *)&cookie, &set,
-			&op2.o_ndn, &e->e_nname, NULL) > 0);
-		sl_free(set.bv_val, op2.o_tmpmemctx);
+			&op->o_ndn, &e->e_nname, NULL) > 0);
+		sl_free(set.bv_val, op->o_tmpmemctx);
 	}
 
 	return(rc);

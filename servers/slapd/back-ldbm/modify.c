@@ -1,5 +1,5 @@
 /* modify.c - ldbm backend modify routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/modify.c,v 1.100.2.6 2004/04/12 17:52:51 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/modify.c,v 1.100.2.7 2004/09/23 22:32:13 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -339,6 +339,7 @@ ldbm_back_modify(
 
 	/* FIXME: dn2entry() should return non-glue entry */
 	if (( e == NULL ) || ( !manageDSAit && e && is_entry_glue( e ))) {
+		BerVarray deref = NULL;
 		if ( matched != NULL ) {
 			rs->sr_matched = ch_strdup( matched->e_dn );
 			rs->sr_ref = is_entry_referral( matched )
@@ -346,7 +347,6 @@ ldbm_back_modify(
 				: NULL;
 			cache_return_entry_r( &li->li_cache, matched );
 		} else {
-			BerVarray deref = NULL;
 			if ( !LDAP_STAILQ_EMPTY( &op->o_bd->be_syncinfo )) {
 				syncinfo_t *si;
 				LDAP_STAILQ_FOREACH( si, &op->o_bd->be_syncinfo, si_next ) {
@@ -358,7 +358,7 @@ ldbm_back_modify(
 				deref = default_referral;
 			}
 			rs->sr_ref = referral_rewrite( deref, NULL, &op->o_req_dn,
-							LDAP_SCOPE_DEFAULT );
+						LDAP_SCOPE_DEFAULT );
 		}
 
 		ldap_pvt_thread_rdwr_wunlock(&li->li_giant_rwlock);
@@ -366,6 +366,9 @@ ldbm_back_modify(
 		send_ldap_result( op, rs );
 
 		if ( rs->sr_ref ) ber_bvarray_free( rs->sr_ref );
+		if ( deref != default_referral ) {
+			ber_bvarray_free( deref );
+		}
 		free( (char *)rs->sr_matched );
 
 		rs->sr_ref = NULL;

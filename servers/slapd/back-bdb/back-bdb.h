@@ -1,5 +1,5 @@
 /* back-bdb.h - bdb back-end header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/back-bdb.h,v 1.92.2.7 2004/01/01 18:16:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/back-bdb.h,v 1.92.2.9 2004/07/16 19:51:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -73,10 +73,6 @@ LDAP_BEGIN_DECL
 /* The minimum we can function with */
 #define MINIMUM_SEARCH_STACK_DEPTH	8
 
-/* for the IDL cache */
-#define SLAP_IDL_CACHE	1
-
-#ifdef SLAP_IDL_CACHE
 typedef struct bdb_idl_cache_entry_s {
 	struct berval kstr;
 	ldap_pvt_thread_rdwr_t idl_entry_rwlock;
@@ -85,18 +81,24 @@ typedef struct bdb_idl_cache_entry_s {
 	struct bdb_idl_cache_entry_s* idl_lru_prev;
 	struct bdb_idl_cache_entry_s* idl_lru_next;
 } bdb_idl_cache_entry_t;
-#endif
 
 /* BDB backend specific entry info */
 typedef struct bdb_entry_info {
 	struct bdb_entry_info *bei_parent;
 	ID bei_id;
 
-	int bei_state;
+	/* we use the bei_id as a lockobj, but we need to make the size != 4
+	 * to avoid conflicting with BDB's internal locks. So add a byte here
+	 * that is always zero.
+	 */
+	char bei_lockpad;
+						
+	short bei_state;
 #define	CACHE_ENTRY_DELETED	1
 #define	CACHE_ENTRY_NO_KIDS	2
 #define	CACHE_ENTRY_NOT_LINKED	4
 #define CACHE_ENTRY_NO_GRANDKIDS	8
+#define	CACHE_ENTRY_LOADING	0x10
 
 	/*
 	 * remaining fields require backend cache lock to access
@@ -129,6 +131,7 @@ typedef struct bdb_cache {
 	EntryInfo	*c_lrutail;	/* lru - rem lru entries from here */
 	ldap_pvt_thread_rdwr_t c_rwlock;
 	ldap_pvt_thread_mutex_t lru_mutex;
+	u_int32_t	c_locker;	/* used by lru cleaner */
 } Cache;
  
 #define CACHE_READ_LOCK                0
@@ -173,7 +176,6 @@ struct bdb_info {
 	LDAP_LIST_HEAD(pl, slap_op) bi_psearch_list;
 	ldap_pvt_thread_rdwr_t bi_pslist_rwlock;
 	LDAP_LIST_HEAD(se, slap_session_entry) bi_session_list;
-#ifdef SLAP_IDL_CACHE
 	int		bi_idl_cache_max_size;
 	int		bi_idl_cache_size;
 	Avlnode		*bi_idl_tree;
@@ -181,7 +183,6 @@ struct bdb_info {
 	bdb_idl_cache_entry_t	*bi_idl_lru_tail;
 	ldap_pvt_thread_rdwr_t bi_idl_tree_rwlock;
 	ldap_pvt_thread_mutex_t bi_idl_tree_lrulock;
-#endif
 };
 
 #define bi_id2entry	bi_databases[BDB_ID2ENTRY]

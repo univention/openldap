@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/extended.c,v 1.54.2.10 2004/01/17 19:07:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/extended.c,v 1.54.2.11 2004/06/29 21:45:49 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -163,7 +163,7 @@ do_extended(
 			op->o_protocol, 0 ,0 );
 #endif
 		send_ldap_discon( op, rs, LDAP_PROTOCOL_ERROR, "requires LDAPv3" );
-		rs->sr_err = -1;
+		rs->sr_err = SLAPD_DISCONNECT;
 		goto done;
 	}
 
@@ -175,7 +175,7 @@ do_extended(
 		Debug( LDAP_DEBUG_ANY, "do_extended: ber_scanf failed\n", 0, 0 ,0 );
 #endif
 		send_ldap_discon( op, rs, LDAP_PROTOCOL_ERROR, "decoding error" );
-		rs->sr_err = -1;
+		rs->sr_err = SLAPD_DISCONNECT;
 		goto done;
 	}
 
@@ -211,7 +211,7 @@ do_extended(
 			Debug( LDAP_DEBUG_ANY, "do_extended: ber_scanf failed\n", 0, 0 ,0 );
 #endif
 			send_ldap_discon( op, rs, LDAP_PROTOCOL_ERROR, "decoding error" );
-			rs->sr_err = -1;
+			rs->sr_err = SLAPD_DISCONNECT;
 			goto done;
 		}
 	}

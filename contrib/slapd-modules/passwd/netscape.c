@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/netscape.c,v 1.1.2.1 2004/02/23 21:46:40 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/netscape.c,v 1.1.2.2 2004/07/25 21:52:01 hyc Exp $ */
 /*
  * Copyright 1998-2004 The OpenLDAP Foundation.
  * All rights reserved.
@@ -36,7 +36,7 @@ static int chk_ns_mta_md5(
 	int i;
 
 	if( passwd->bv_len != NS_MTA_MD5_PASSLEN ) {
-		return 1;
+		return LUTIL_PASSWD_ERR;
 	}
 
 	/* hash credentials with salt */
@@ -72,7 +72,7 @@ static int chk_ns_mta_md5(
 
 	/* compare */
 	return memcmp((char *)passwd->bv_val,
-		(char *)buffer, sizeof(buffer)) ? 1 : 0;
+		(char *)buffer, sizeof(buffer)) ? LUTIL_PASSWD_ERR : LUTIL_PASSWD_OK;
 }
 
 int init_module(int argc, char *argv[]) {

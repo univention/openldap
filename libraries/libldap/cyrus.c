@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.88.2.15 2004/05/21 17:29:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.88.2.18 2004/08/28 13:35:42 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -306,10 +306,14 @@ sb_sasl_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
    	}
 
 	/* Decode the packet */
-	ret = sasl_decode( p->sasl_context, p->sec_buf_in.buf_base,
-		p->sec_buf_in.buf_end,
-		(SASL_CONST char **)&p->buf_in.buf_base,
-		(unsigned *)&p->buf_in.buf_end );
+	{
+		unsigned tmpsize = p->buf_in.buf_end;
+		ret = sasl_decode( p->sasl_context, p->sec_buf_in.buf_base,
+			p->sec_buf_in.buf_end,
+			(SASL_CONST char **)&p->buf_in.buf_base,
+			(unsigned *)&tmpsize );
+		p->buf_in.buf_end = tmpsize;
+	}
 
 	/* Drop the packet from the input buffer */
 	sb_sasl_drop_packet( &p->sec_buf_in, sbiod->sbiod_sb->sb_debug );
@@ -343,12 +347,12 @@ sb_sasl_write( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 	/* Are there anything left in the buffer? */
 	if ( p->buf_out.buf_ptr != p->buf_out.buf_end ) {
 		ret = ber_pvt_sb_do_write( sbiod, &p->buf_out );
-		if ( ret < 0 )
-			return ret;
+		if ( ret < 0 ) return ret;
+
 		/* Still have something left?? */
 		if ( p->buf_out.buf_ptr != p->buf_out.buf_end ) {
 			errno = EAGAIN;
-			return 0;
+			return -1;
 		}
 	}
 
@@ -358,25 +362,32 @@ sb_sasl_write( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 #else
 	ber_pvt_sb_buf_destroy( &p->buf_out );
 #endif
-	if ( len > *p->sasl_maxbuf - 100 )
+	if ( len > *p->sasl_maxbuf - 100 ) {
 		len = *p->sasl_maxbuf - 100;	/* For safety margin */
-	ret = sasl_encode( p->sasl_context, buf, len,
-		(SASL_CONST char **)&p->buf_out.buf_base,
-		(unsigned *)&p->buf_out.buf_size );
+	}
+
+	{
+		unsigned tmpsize = p->buf_out.buf_size;
+		ret = sasl_encode( p->sasl_context, buf, len,
+			(SASL_CONST char **)&p->buf_out.buf_base,
+			&tmpsize );
+		p->buf_out.buf_size = tmpsize;
+	}
+
 	if ( ret != SASL_OK ) {
 		ber_log_printf( LDAP_DEBUG_ANY, sbiod->sbiod_sb->sb_debug,
 			"sb_sasl_write: failed to encode packet: %s\n",
 			sasl_errstring( ret, NULL, NULL ) );
+		errno = EIO;
 		return -1;
 	}
 	p->buf_out.buf_end = p->buf_out.buf_size;
 
 	ret = ber_pvt_sb_do_write( sbiod, &p->buf_out );
-	if ( ret <= 0 ) {
-		/* caller will retry, so clear this buffer out */
-		p->buf_out.buf_ptr = p->buf_out.buf_end;
-		return ret;
-	}
+
+	/* return number of bytes encoded, not written, to ensure
+	 * no byte is encoded twice (even if only sent once).
+	 */
 	return len;
 }
 
@@ -388,8 +399,7 @@ sb_sasl_ctrl( Sockbuf_IO_Desc *sbiod, int opt, void *arg )
 	p = (struct sb_sasl_data *)sbiod->sbiod_pvt;
 
 	if ( opt == LBER_SB_OPT_DATA_READY ) {
-		if ( p->buf_in.buf_ptr != p->buf_in.buf_end )
-			return 1;
+		if ( p->buf_in.buf_ptr != p->buf_in.buf_end ) return 1;
 	}
 	
 	return LBER_SBIOD_CTRL_NEXT( sbiod, opt, arg );
@@ -593,7 +603,7 @@ ldap_int_sasl_bind(
 		rc = ldap_open_defconn( ld );
 		if( rc < 0 ) return ld->ld_errno;
 
-		ber_sockbuf_ctrl( ld->ld_sb, LBER_SB_OPT_GET_FD, &sd );
+		ber_sockbuf_ctrl( ld->ld_defconn->lconn_sb, LBER_SB_OPT_GET_FD, &sd );
 
 		if( sd == AC_SOCKET_INVALID ) {
 			ld->ld_errno = LDAP_LOCAL_ERROR;
@@ -611,7 +621,7 @@ ldap_int_sasl_bind(
 		ld->ld_defconn->lconn_sasl_authctx = NULL;
 	}
 
-	{ char *saslhost = ldap_host_connected_to( ld->ld_sb, "localhost" );
+	{ char *saslhost = ldap_host_connected_to( ld->ld_defconn->lconn_sb, "localhost" );
 	rc = ldap_int_sasl_open( ld, ld->ld_defconn, saslhost );
 	LDAP_FREE( saslhost );
 	}
@@ -621,7 +631,7 @@ ldap_int_sasl_bind(
 	ctx = ld->ld_defconn->lconn_sasl_authctx;
 
 	/* Check for TLS */
-	ssl = ldap_pvt_tls_sb_ctx( ld->ld_sb );
+	ssl = ldap_pvt_tls_sb_ctx( ld->ld_defconn->lconn_sb );
 	if ( ssl ) {
 		struct berval authid = BER_BVNULL;
 		ber_len_t fac;
@@ -821,7 +831,7 @@ ldap_int_sasl_bind(
 			if ( ld->ld_defconn->lconn_sasl_sockctx ) {
 				oldctx = ld->ld_defconn->lconn_sasl_sockctx;
 				sasl_dispose( &oldctx );
-				ldap_pvt_sasl_remove( ld->ld_sb );
+				ldap_pvt_sasl_remove( ld->ld_defconn->lconn_sb );
 			}
 			ldap_pvt_sasl_install( ld->ld_conns->lconn_sb, ctx );
 			ld->ld_defconn->lconn_sasl_sockctx = ctx;

@@ -1,5 +1,5 @@
 /* search.c - ldbm backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/search.c,v 1.108.2.10 2004/04/27 09:21:20 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/search.c,v 1.108.2.11 2004/06/16 18:19:57 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -231,7 +231,9 @@ searchit:
 		}
 
 		/* check time limit */
-		if ( op->ors_tlimit != -1 && slap_get_time() > stoptime ) {
+		if ( op->ors_tlimit != SLAP_NO_LIMIT
+				&& slap_get_time() > stoptime )
+		{
 			rs->sr_err = LDAP_TIMELIMIT_EXCEEDED;
 			send_ldap_result( op, rs );
 			rc = LDAP_SUCCESS;

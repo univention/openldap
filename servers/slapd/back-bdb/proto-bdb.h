@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.77.2.8 2004/01/01 18:16:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.77.2.10 2004/07/16 19:51:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -203,7 +203,6 @@ BI_entry_get_rw bdb_entry_get;
 /*
  * idl.c
  */
-#ifdef SLAP_IDL_CACHE
 
 #define bdb_idl_cache_get			BDB_SYMBOL(idl_cache_get)
 #define bdb_idl_cache_put			BDB_SYMBOL(idl_cache_put)
@@ -228,7 +227,6 @@ bdb_idl_cache_del(
 	struct bdb_info	*bdb,
 	DB		*db,
 	DBT		*key );
-#endif
 
 #define bdb_idl_first				BDB_SYMBOL(idl_first)
 #define bdb_idl_next				BDB_SYMBOL(idl_next)
@@ -537,9 +535,18 @@ int bdb_locker_id( Operation *op, DB_ENV *env, int *locker );
 #define bdb_abandon					BDB_SYMBOL(abandon)
 #define bdb_cancel					BDB_SYMBOL(cancel)
 #define bdb_do_search				BDB_SYMBOL(do_search)
+#define bdb_psearch				BDB_SYMBOL(psearch)
 
 BI_op_abandon bdb_abandon;
 BI_op_cancel bdb_cancel;
+
+int bdb_psearch(
+	Operation       *op,
+	SlapReply	*rs,
+	Operation       *ps_op,
+	Entry           *entry,
+	int             psearch_type
+);
 
 int bdb_do_search(
 	Operation       *op,
@@ -548,7 +555,6 @@ int bdb_do_search(
 	Entry           *entry,
 	int             psearch_type
 );
-#define	bdb_psearch(op, rs, sop, e, ps_type)	bdb_do_search(op, rs, sop, e, ps_type)
 
 /*
  * trans.c

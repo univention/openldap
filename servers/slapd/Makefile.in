@@ -1,5 +1,5 @@
 ## Makefile.in for slapd
-# $OpenLDAP: pkg/ldap/servers/slapd/Makefile.in,v 1.124.2.12 2004/04/12 18:07:40 kurt Exp $
+# $OpenLDAP: pkg/ldap/servers/slapd/Makefile.in,v 1.124.2.14 2004/07/25 22:31:04 hyc Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2004 The OpenLDAP Foundation.
@@ -71,7 +71,7 @@ XDEFS = $(MODULES_CPPFLAGS)
 XLDFLAGS = $(MODULES_LDFLAGS)
 
 XLIBS = $(SLAPD_STATIC_DEPENDS) $(SLAPD_L) liboverlays.a
-XXLIBS = $(LDBM_LIBS) $(SLAPD_LIBS) $(SECURITY_LIBS) $(LUTIL_LIBS)
+XXLIBS = $(SLAPD_LIBS) $(SECURITY_LIBS) $(LUTIL_LIBS)
 XXXLIBS = $(LTHREAD_LIBS) $(SLAPI_LIBS) $(MODULES_LIBS)
 
 BUILD_OPT = "--enable-slapd"
@@ -259,7 +259,7 @@ slapd: $(SLAPD_DEPENDS) @LIBSLAPI@
 		$(WRAP_LIBS)
 	rm -f $(SLAPTOOLS)
 	for i in $(SLAPTOOLS); do \
-		$(LN_S) slapd $$i; done
+		$(LN_S) slapd$(EXEEXT) $$i$(EXEEXT); done
 
 
 sslapd: version.o
@@ -421,6 +421,6 @@ install-tools: FORCE
 	cd $(DESTDIR)$(sbindir); \
 	rm -f $(SLAPTOOLS); \
 	for i in $(SLAPTOOLS); do \
-		$(LN_S) $(libexecdir)/slapd $$i; \
+		$(LN_S) $(libexecdir)/slapd$(EXEEXT) $$i$(EXEEXT); \
 	done
 

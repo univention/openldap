@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.429.2.22 2004/04/28 23:26:30 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.429.2.27 2004/09/12 20:22:39 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -266,7 +266,8 @@ LDAP_SLAPD_F (int) backend_attribute LDAP_P((
 	Entry *target,
 	struct berval *entry_ndn,
 	AttributeDescription *entry_at,
-	BerVarray *vals
+	BerVarray *vals,
+	slap_access_t access
 ));
 
 LDAP_SLAPD_F (Attribute *) backend_operational(
@@ -379,6 +380,7 @@ LDAP_SLAPD_F (void) connection_fake_init LDAP_P((
 	Connection *conn,
 	Operation *op,
 	void *threadctx ));
+LDAP_SLAPD_F (void) connection_assign_nextid LDAP_P((Connection *));
 
 /*
  * cr.c
@@ -420,6 +422,7 @@ LDAP_SLAPD_F (void) slapd_remove LDAP_P((ber_socket_t s, int wasactive, int wake
 
 LDAP_SLAPD_F (RETSIGTYPE) slap_sig_shutdown LDAP_P((int sig));
 LDAP_SLAPD_F (RETSIGTYPE) slap_sig_wake LDAP_P((int sig));
+LDAP_SLAPD_F (void) slap_wake_listener LDAP_P((void));
 
 LDAP_SLAPD_F (void) slapd_set_write LDAP_P((ber_socket_t s, int wake));
 LDAP_SLAPD_F (void) slapd_clr_write LDAP_P((ber_socket_t s, int wake));
@@ -462,6 +465,8 @@ LDAP_SLAPD_F (int) dnMatch LDAP_P((
 LDAP_SLAPD_F (int) dnIsSuffix LDAP_P((
 	const struct berval *dn, const struct berval *suffix ));
 
+LDAP_SLAPD_F (int) dnIsOneLevelRDN LDAP_P(( struct berval *rdn ));
+
 LDAP_SLAPD_F (int) dnExtractRdn LDAP_P((
 	struct berval *dn, struct berval *rdn, void *ctx ));
 
@@ -476,6 +481,7 @@ LDAP_SLAPD_F (void) build_new_dn LDAP_P((
 	void *memctx ));
 
 LDAP_SLAPD_F (void) dnParent LDAP_P(( struct berval *dn, struct berval *pdn ));
+LDAP_SLAPD_F (void) dnRdn LDAP_P(( struct berval *dn, struct berval *rdn ));
 
 LDAP_SLAPD_F (int) dnX509normalize LDAP_P(( void *x509_name, struct berval *out ));
 
@@ -503,6 +509,7 @@ LDAP_SLAPD_F (void) entry_flatsize LDAP_P((
 LDAP_SLAPD_F (int) entry_decode LDAP_P(( struct berval *bv, Entry **e ));
 LDAP_SLAPD_F (int) entry_encode LDAP_P(( Entry *e, struct berval *bv ));
 
+LDAP_SLAPD_F (void) entry_clean LDAP_P(( Entry *e ));
 LDAP_SLAPD_F (void) entry_free LDAP_P(( Entry *e ));
 LDAP_SLAPD_F (int) entry_cmp LDAP_P(( Entry *a, Entry *b ));
 LDAP_SLAPD_F (int) entry_dn_cmp LDAP_P(( const void *v_a, const void *v_b ));
@@ -687,7 +694,8 @@ LDAP_SLAPD_F( int ) slap_mods_opattrs(
 	Modifications *mods,
 	Modifications **modlist,
 	const char **text,
-	char *textbuf, size_t textlen );
+	char *textbuf, size_t textlen,
+	int manage_ctxcsn );
 
 /*
  * mods.c
@@ -1139,6 +1147,7 @@ LDAP_SLAPD_F (struct berval *) slap_uuidstr_from_normalized LDAP_P((
 					struct berval *, struct berval *, void * ));
 LDAP_SLAPD_F (int) syncrepl_isupdate LDAP_P(( Operation * ));
 LDAP_SLAPD_F (int) syncrepl_isupdate_dn LDAP_P(( Backend *, struct berval * ));
+LDAP_SLAPD_F (void) syncinfo_free LDAP_P(( syncinfo_t * ));
 
 /* syntax.c */
 LDAP_SLAPD_F (Syntax *) syn_find LDAP_P((

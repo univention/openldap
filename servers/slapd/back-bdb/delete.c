@@ -1,5 +1,5 @@
 /* delete.c - bdb backend delete routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/delete.c,v 1.79.2.12 2004/04/12 18:20:13 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/delete.c,v 1.79.2.18 2004/09/23 22:32:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -48,14 +48,18 @@ bdb_delete( Operation *op, SlapReply *rs )
 	Entry       *ctxcsn_e;
 	int         ctxcsn_added = 0;
 
+	LDAPControl **preread_ctrl = NULL;
 	LDAPControl *ctrls[SLAP_MAX_RESPONSE_CONTROLS];
 	int num_ctrls = 0;
 
 	int	parent_is_glue = 0;
 	int parent_is_leaf = 0;
 
+	ctrls[num_ctrls] = 0;
+
 #ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ARGS,  "==> bdb_delete: %s\n", op->o_req_dn.bv_val, 0, 0 );
+	LDAP_LOG ( OPERATION, ARGS, "==> bdb_delete: %s\n",
+		op->o_req_dn.bv_val, 0, 0 );
 #else
 	Debug( LDAP_DEBUG_ARGS, "==> bdb_delete: %s\n",
 		op->o_req_dn.bv_val, 0, 0 );
@@ -66,6 +70,10 @@ retry:	/* transaction retry */
 		if( e != NULL ) {
 			bdb_unlocked_cache_return_entry_w(&bdb->bi_cache, e);
 			e = NULL;
+		}
+		if( p != NULL ) {
+			bdb_unlocked_cache_return_entry_r(&bdb->bi_cache, p);
+			p = NULL;
 		}
 #ifdef NEW_LOGGING
 		LDAP_LOG ( OPERATION, DETAIL1, 
@@ -150,6 +158,8 @@ retry:	/* transaction retry */
 
 	/* FIXME : dn2entry() should return non-glue entry */
 	if ( e == NULL || ( !manageDSAit && is_entry_glue( e ))) {
+		BerVarray deref = NULL;
+
 #ifdef NEW_LOGGING
 		LDAP_LOG ( OPERATION, ARGS, 
 			"<=- bdb_delete: no such object %s\n", op->o_req_dn.bv_val, 0, 0);
@@ -168,7 +178,6 @@ retry:	/* transaction retry */
 			matched = NULL;
 
 		} else {
-			BerVarray deref = NULL;
 			if ( !LDAP_STAILQ_EMPTY( &op->o_bd->be_syncinfo )) {
 				syncinfo_t *si;
 				LDAP_STAILQ_FOREACH( si, &op->o_bd->be_syncinfo, si_next ) {
@@ -180,7 +189,7 @@ retry:	/* transaction retry */
 				deref = default_referral;
 			}
 			rs->sr_ref = referral_rewrite( deref, NULL, &op->o_req_dn,
-				LDAP_SCOPE_DEFAULT );
+					LDAP_SCOPE_DEFAULT );
 		}
 
 		rs->sr_err = LDAP_REFERRAL;
@@ -188,6 +197,9 @@ retry:	/* transaction retry */
 
 		if ( rs->sr_ref != default_referral ) {
 			ber_bvarray_free( rs->sr_ref );
+		}
+		if ( deref != default_referral ) {
+			ber_bvarray_free( deref );
 		}
 		free( (char *)rs->sr_matched );
 		rs->sr_ref = NULL;
@@ -197,7 +209,19 @@ retry:	/* transaction retry */
 		goto done;
 	}
 
-	bdb_cache_find_id( op, ltid, eip->bei_id, &eip, 0, locker, &plock );
+	rc = bdb_cache_find_id( op, ltid, eip->bei_id, &eip, 0, locker, &plock );
+	switch( rc ) {
+	case DB_LOCK_DEADLOCK:
+	case DB_LOCK_NOTGRANTED:
+		goto retry;
+	case 0:
+	case DB_NOTFOUND:
+		break;
+	default:
+		rs->sr_err = LDAP_OTHER;
+		rs->sr_text = "internal error";
+		goto return_results;
+	}
 	if ( eip ) p = eip->bei_e;
 
 	if ( pdn.bv_len != 0 ) {
@@ -218,9 +242,6 @@ retry:	/* transaction retry */
 		/* check parent for "children" acl */
 		rs->sr_err = access_allowed( op, p,
 			children, NULL, ACL_WRITE, NULL );
-
-		bdb_unlocked_cache_return_entry_r(&bdb->bi_cache, p);
-		p = NULL;
 
 		if ( !rs->sr_err  ) {
 			switch( opinfo.boi_err ) {
@@ -346,8 +367,12 @@ retry:	/* transaction retry */
 
 	/* pre-read */
 	if( op->o_preread ) {
+		if( preread_ctrl == NULL ) {
+			preread_ctrl = &ctrls[num_ctrls++];
+			ctrls[num_ctrls] = NULL;
+		}
 		if( slap_read_controls( op, rs, e,
-			&slap_pre_read_bv, &ctrls[num_ctrls] ) )
+			&slap_pre_read_bv, preread_ctrl ) )
 		{
 #ifdef NEW_LOGGING
 			LDAP_LOG ( OPERATION, DETAIL1, 
@@ -358,7 +383,6 @@ retry:	/* transaction retry */
 #endif
 			goto return_results;
 		}
-		ctrls[++num_ctrls] = NULL;
 	}
 
 	/* nested transaction */
@@ -480,8 +504,6 @@ retry:	/* transaction retry */
 		goto return_results;
 	}
 
-	bdb_cache_find_id( op, lt2, eip->bei_id, &eip, 0, locker, &plock );
-	if ( eip ) p = eip->bei_e;
 	if ( pdn.bv_len != 0 ) {
 		parent_is_glue = is_entry_glue(p);
 		rs->sr_err = bdb_cache_children( op, lt2, p );
@@ -545,8 +567,13 @@ retry:	/* transaction retry */
 			goto return_results;
 		}
 	} else {
-		bdb_cache_delete( &bdb->bi_cache, e, bdb->bi_dbenv,
+		rc = bdb_cache_delete( &bdb->bi_cache, e, bdb->bi_dbenv,
 			locker, &lock );
+		switch( rc ) {
+		case DB_LOCK_DEADLOCK:
+		case DB_LOCK_NOTGRANTED:
+			goto retry;
+		}
 
 		if ( LDAP_STAILQ_EMPTY( &op->o_bd->be_syncinfo )) {
 			if ( ctxcsn_added ) {
@@ -556,11 +583,35 @@ retry:	/* transaction retry */
 		}
 
 		if ( rs->sr_err == LDAP_SUCCESS && !op->o_no_psearch ) {
-			ldap_pvt_thread_rdwr_rlock( &bdb->bi_pslist_rwlock );
-			LDAP_LIST_FOREACH( ps_list, &bdb->bi_psearch_list, o_ps_link ) {
-				bdb_psearch( op, rs, ps_list, e, LDAP_PSEARCH_BY_DELETE );
+			Attribute *a;
+			a = attr_find( e->e_attrs, slap_schema.si_ad_entryCSN );
+			if ( a ) {
+				if( (void *) e->e_attrs != (void *) (e+1)) {
+					attr_delete( &e->e_attrs, slap_schema.si_ad_entryCSN );
+					attr_merge_normalize_one( e, slap_schema.si_ad_entryCSN,
+					&op->o_sync_csn, NULL );
+				} else {
+					a->a_vals[0] = op->o_sync_csn;
+				}
+			} else {
+				/* Hm, the entryCSN ought to exist. ??? */
 			}
-			ldap_pvt_thread_rdwr_runlock( &bdb->bi_pslist_rwlock );
+			ldap_pvt_thread_rdwr_wlock( &bdb->bi_pslist_rwlock );
+			LDAP_LIST_FOREACH( ps_list, &bdb->bi_psearch_list, o_ps_link ) {
+				rc = bdb_psearch( op, rs, ps_list, e, LDAP_PSEARCH_BY_DELETE );
+				if ( rc ) {
+#ifdef NEW_LOGGING
+					LDAP_LOG ( OPERATION, ERR,
+						"bdb_delete: persistent search failed (%d,%d)\n",
+						rc, rs->sr_err, 0 );
+#else
+					Debug( LDAP_DEBUG_TRACE,
+						"bdb_delete: persistent search failed (%d,%d)\n",
+						rc, rs->sr_err, 0 );
+#endif
+				}
+			}
+			ldap_pvt_thread_rdwr_wunlock( &bdb->bi_pslist_rwlock );
 		}
 
 		rs->sr_err = TXN_COMMIT( ltid, 0 );
@@ -615,6 +666,9 @@ return_results:
 	}
 
 done:
+	if ( p )
+		bdb_unlocked_cache_return_entry_r(&bdb->bi_cache, p);
+
 	/* free entry */
 	if( e != NULL ) {
 		if ( rs->sr_err == LDAP_SUCCESS ) {
@@ -630,5 +684,9 @@ done:
 		op->o_private = NULL;
 	}
 
+	if( preread_ctrl != NULL ) {
+		slap_sl_free( (*preread_ctrl)->ldctl_value.bv_val, &op->o_tmpmemctx );
+		slap_sl_free( *preread_ctrl, &op->o_tmpmemctx );
+	}
 	return rs->sr_err;
 }

@@ -1,5 +1,5 @@
 /* entry.c - routines for dealing with entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.115.2.6 2004/01/01 18:16:33 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.115.2.7 2004/08/30 15:44:19 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -395,7 +395,7 @@ entry2str(
 }
 
 void
-entry_free( Entry *e )
+entry_clean( Entry *e )
 {
 	/* free an entry structure */
 	assert( e != NULL );
@@ -405,23 +405,29 @@ entry_free( Entry *e )
 	e->e_private = NULL;
 
 	/* free DNs */
-	if ( e->e_dn != NULL ) {
-		free( e->e_dn );
-		e->e_dn = NULL;
+	if ( !BER_BVISNULL( &e->e_name ) ) {
+		free( e->e_name.bv_val );
+		BER_BVZERO( &e->e_name );
 	}
-	if ( e->e_ndn != NULL ) {
-		free( e->e_ndn );
-		e->e_ndn = NULL;
+	if ( !BER_BVISNULL( &e->e_nname ) ) {
+		free( e->e_nname.bv_val );
+		BER_BVZERO( &e->e_nname );
 	}
 
-	if ( e->e_bv.bv_val != NULL ) {
+	if ( !BER_BVISNULL( &e->e_bv ) ) {
 		free( e->e_bv.bv_val );
-		e->e_bv.bv_val = NULL;
+		BER_BVZERO( &e->e_bv );
 	}
 
 	/* free attributes */
 	attrs_free( e->e_attrs );
 	e->e_attrs = NULL;
+}
+
+void
+entry_free( Entry *e )
+{
+	entry_clean( e );
 
 	free( e );
 }

@@ -1,5 +1,5 @@
 /* slap.h - stand alone ldap server include file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.452.2.19 2004/06/04 03:39:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.452.2.30 2004/10/16 17:49:31 jongchoi Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -148,9 +148,9 @@ LDAP_BEGIN_DECL
 #define OID_CHAR(c)	( OID_LEADCHAR(c) || OID_SEPARATOR(c) )
 
 #define ATTR_LEADCHAR(c)	( DESC_LEADCHAR(c) || OID_LEADCHAR(c) )
-#define ATTR_CHAR(c)	( DESC_CHAR((c)) || (c) == '.' )
+#define ATTR_CHAR(c)	( DESC_CHAR((c)) || OID_SEPARATOR(c) )
 
-#define AD_LEADCHAR(c)	( ATTR_CHAR(c) )
+#define AD_LEADCHAR(c)	( ATTR_LEADCHAR(c) )
 #define AD_CHAR(c)		( ATTR_CHAR(c) || (c) == ';' )
 
 #define SLAP_NUMERIC(c) ( ASCII_DIGIT(c) || ASCII_SPACE(c) )
@@ -610,6 +610,8 @@ typedef struct slap_attribute_type {
 #else
 #define SLAP_AT_HIDE		0x8000U /* hide attribute */
 #endif
+#define	SLAP_AT_DYNAMIC		0x0400U	/* dynamically generated */
+
 	slap_mask_t					sat_flags;
 
 	LDAP_SLIST_ENTRY(slap_attribute_type) sat_next;
@@ -1300,6 +1302,10 @@ struct slap_limits_set {
 	int	lms_s_pr_total;
 };
 
+/* Note: this is different from LDAP_NO_LIMIT (0); slapd internal use only */
+#define SLAP_NO_LIMIT			-1
+#define SLAP_MAX_LIMIT			2147483647
+
 struct slap_limits {
 	unsigned		lm_flags;	/* type of pattern */
 #define SLAP_LIMITS_UNDEFINED		0x0000U
@@ -1384,14 +1390,17 @@ typedef struct syncinfo_s {
         char				*si_authcId;
         char				*si_authzId;
 		int					si_schemachecking;
-        Filter				*si_filter;
         struct berval		si_filterstr;
         struct berval		si_base;
         int					si_scope;
         int					si_attrsonly;
         char				**si_attrs;
+        char				**si_exattrs;
         int					si_type;
         time_t				si_interval;
+		time_t				*si_retryinterval;
+		int					*si_retrynum_init;
+		int					*si_retrynum;
 		struct sync_cookie	si_syncCookie;
         int					si_manageDSAit;
         int					si_slimit;
@@ -1552,6 +1561,7 @@ struct slap_backend_db {
 	BerVarray	be_update_refs;	/* where to refer modifying clients to */
 	struct		be_pcl	*be_pending_csn_list;
 	ldap_pvt_thread_mutex_t					be_pcl_mutex;
+	ldap_pvt_thread_mutex_t					*be_pcl_mutexp;
 	struct berval							be_context_csn;
 	ldap_pvt_thread_mutex_t					be_context_csn_mutex;
 	LDAP_STAILQ_HEAD( be_si, syncinfo_s )	be_syncinfo; /* For syncrepl */
@@ -1836,6 +1846,7 @@ struct slap_backend_info {
 
 	slap_mask_t	bi_flags; /* backend flags */
 #define SLAP_BFLAG_MONITOR			0x0001U /* a monitor backend */
+#define SLAP_BFLAG_NOLASTMODCMD		0x0010U
 #define SLAP_BFLAG_INCREMENT		0x0100U
 #define SLAP_BFLAG_ALIASES			0x1000U
 #define SLAP_BFLAG_REFERRALS		0x2000U
@@ -1849,6 +1860,8 @@ struct slap_backend_info {
 #define SLAP_REFERRALS(be)	(SLAP_BFLAGS(be) & SLAP_BFLAG_REFERRALS)
 #define SLAP_SUBENTRIES(be)	(SLAP_BFLAGS(be) & SLAP_BFLAG_SUBENTRIES)
 #define SLAP_DYNAMIC(be)	(SLAP_BFLAGS(be) & SLAP_BFLAG_DYNAMIC)
+#define SLAP_NOLASTMODCMD(be)	(SLAP_BFLAGS(be) & SLAP_BFLAG_NOLASTMODCMD)
+#define SLAP_LASTMODCMD(be)	(!SLAP_NOLASTMODCMD(be))
 
 	char **bi_controls;		/* supported controls */
 
@@ -1908,7 +1921,6 @@ typedef unsigned long PagedResultsCookie;
 typedef struct slap_paged_state {
 	Backend *ps_be;
 	PagedResultsCookie ps_cookie;
-	ID ps_id;
 	int ps_count;
 } PagedResultsState;
 
@@ -2046,6 +2058,7 @@ typedef struct slap_op {
 	char o_do_not_cache;	/* don't cache groups from this op */
 	char o_is_auth_check;	/* authorization in progress */
 
+#define SLAP_IGNORED_CONTROL -1
 #define SLAP_NO_CONTROL 0
 #define SLAP_NONCRITICAL_CONTROL 1
 #define SLAP_CRITICAL_CONTROL 2
@@ -2125,6 +2138,7 @@ typedef struct slap_op {
 
 	void	*o_threadctx;		/* thread pool thread context */
 	void	*o_tmpmemctx;		/* slab malloc context */
+	void	*o_savmemctx;
 	BerMemoryFunctions *o_tmpmfuncs;
 #define	o_tmpalloc	o_tmpmfuncs->bmf_malloc
 #define o_tmpcalloc	o_tmpmfuncs->bmf_calloc

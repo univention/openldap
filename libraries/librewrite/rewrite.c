@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/rewrite.c,v 1.6.2.4 2004/01/01 18:16:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/rewrite.c,v 1.6.2.5 2004/06/28 18:19:47 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -30,6 +30,7 @@
 #include <stdio.h>
 
 #include <rewrite.h>
+#include <ldap.h>
 
 int ldap_debug;
 int ldap_syslog;
@@ -120,17 +121,28 @@ apply(
 int
 main( int argc, char *argv[] )
 {
-	FILE *fin = NULL;
-	char *rewriteContext = REWRITE_DEFAULT_CONTEXT;
+	FILE	*fin = NULL;
+	char	*rewriteContext = REWRITE_DEFAULT_CONTEXT;
+	int	debug = 0;
+	char	*next;
 
 	while ( 1 ) {
-		int opt = getopt( argc, argv, "f:hr:" );
+		int opt = getopt( argc, argv, "d:f:hr:" );
 
 		if ( opt == EOF ) {
 			break;
 		}
 
 		switch ( opt ) {
+		case 'd':
+			debug = strtol( optarg, &next, 10 );
+			if ( next == NULL || next[0] != '\0' ) {
+				fprintf( stderr, "illegal log level '%s'\n",
+						optarg );
+				exit( EXIT_FAILURE );
+			}
+			break;
+
 		case 'f':
 			fin = fopen( optarg, "r" );
 			if ( fin == NULL ) {
@@ -159,6 +171,11 @@ main( int argc, char *argv[] )
 			rewriteContext = optarg;
 			break;
 		}
+	}
+	
+	if ( debug != 0 ) {
+		ber_set_option(NULL, LBER_OPT_DEBUG_LEVEL, &debug);
+		ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, &debug);
 	}
 	
 	if ( optind >= argc ) {

@@ -1,5 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/lutil_lockf.h,v 1.13.2.2 2004/01/01 18:16:28 kurt Exp $ */
-/* $OpenLDAP: pkg/ldap/include/lutil_lockf.h,v 1.13.2.2 2004/01/01 18:16:28 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/lutil_lockf.h,v 1.13.2.3 2004/07/25 21:54:26 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.

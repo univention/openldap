@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.273.2.10 2004/04/12 18:13:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.273.2.12 2004/08/30 15:44:19 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -1535,6 +1535,11 @@ slapd_daemon_task(
 			FD_CLR( slap_listeners[l]->sl_sd, &readfds );
 			FD_CLR( slap_listeners[l]->sl_sd, &writefds );
 
+#  ifdef LDAP_PF_LOCAL
+			/* FIXME: apparently accept doesn't fill
+			 * the sun_path sun_path member */
+			from.sa_un_addr.sun_path[0] = '\0';
+#  endif /* LDAP_PF_LOCAL */
 			s = accept( slap_listeners[l]->sl_sd,
 				(struct sockaddr *) &from, &len );
 			if ( s == AC_SOCKET_INVALID ) {
@@ -2141,4 +2146,9 @@ void slapd_add_internal(ber_socket_t s, int isactive) {
 
 Listener ** slapd_get_listeners(void) {
 	return slap_listeners;
+}
+
+void slap_wake_listener()
+{
+	WAKE_LISTENER(1);
 }

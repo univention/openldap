@@ -1,5 +1,5 @@
 /* ldapsearch -- a tool for searching LDAP directories */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapsearch.c,v 1.170.2.13 2004/05/21 02:11:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapsearch.c,v 1.170.2.15 2004/08/28 13:35:42 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -116,7 +116,7 @@ usage( void )
 	fprintf( stderr, _("             [!]sync=ro[/<cookie>]            (LDAP Sync refreshOnly)\n"));
 	fprintf( stderr, _("                     rp[/<cookie>][/<slimit>] (LDAP Sync refreshAndPersist)\n"));
 	fprintf( stderr, _("  -F prefix  URL prefix for files (default: %s)\n"), def_urlpre);
-	fprintf( stderr, _("  -l limit   time limit (in seconds) for search\n"));
+	fprintf( stderr, _("  -l limit   time limit (in seconds, or \"none\" or \"max\") for search\n"));
 	fprintf( stderr, _("  -L         print responses in LDIFv1 format\n"));
 	fprintf( stderr, _("  -LL        print responses in LDIF format without comments\n"));
 	fprintf( stderr, _("  -LLL       print responses in LDIF format without comments\n"));
@@ -127,7 +127,7 @@ usage( void )
 	fprintf( stderr, _("  -tt        write all values to files in temporary directory\n"));
 	fprintf( stderr, _("  -T path    write files to directory specified by path (default: %s)\n"), def_tmpdir);
 	fprintf( stderr, _("  -u         include User Friendly entry names in the output\n"));
-	fprintf( stderr, _("  -z limit   size limit (in entries) for search\n"));
+	fprintf( stderr, _("  -z limit   size limit (in entries, or \"none\" or \"max\") for search\n"));
 	tool_common_usage();
 	exit( EXIT_FAILURE );
 }
@@ -232,8 +232,8 @@ const char options[] = "a:Ab:E:F:l:Ls:S:tT:uz:"
 int
 handle_private_option( int i )
 {
-	int crit;
-	char *control, *cvalue;
+	int crit, ival;
+	char *control, *cvalue, *next;
 	switch ( i ) {
 	case 'a':	/* set alias deref option */
 		if ( strcasecmp( optarg, "never" ) == 0 ) {
@@ -408,8 +408,14 @@ handle_private_option( int i )
 				}
 				if ( cookiep != NULL && *cookiep != '\0' )
 					ber_str2bv( cookiep, 0, 0, &sync_cookie );
-				if ( slimitp != NULL && *slimitp != '\0' )
-					sync_slimit = atoi( slimitp );
+				if ( slimitp != NULL && *slimitp != '\0' ) {
+					ival = strtol( slimitp, &next, 10 );
+					if ( next == NULL || next[0] != '\0' ) {
+						fprintf( stderr, _("Unable to parse sync control value \"%s\"\n"), slimitp );
+						exit( EXIT_FAILURE );
+					}
+					sync_slimit = ival;
+				}
 			} else {
 				fprintf( stderr, _("sync control value \"%s\" invalid\n"),
 					cvalue );
@@ -428,8 +434,22 @@ handle_private_option( int i )
 		urlpre = strdup( optarg );
 		break;
 	case 'l':	/* time limit */
-		timelimit = atoi( optarg );
-		if( timelimit < 0 ) {
+		if ( strcasecmp( optarg, "none" ) == 0 ) {
+			timelimit = 0;
+
+		} else if ( strcasecmp( optarg, "max" ) == 0 ) {
+			timelimit = LDAP_MAXINT;
+
+		} else {
+			ival = strtol( optarg, &next, 10 );
+			if ( next == NULL || next[0] != '\0' ) {
+				fprintf( stderr,
+					_("Unable to parse time limit \"%s\"\n"), optarg );
+				exit( EXIT_FAILURE );
+			}
+			timelimit = ival;
+		}
+		if( timelimit < 0 || timelimit > LDAP_MAXINT ) {
 			fprintf( stderr, _("%s: invalid timelimit (%d) specified\n"),
 				prog, timelimit );
 			exit( EXIT_FAILURE );
@@ -464,7 +484,31 @@ handle_private_option( int i )
 		++includeufn;
 		break;
 	case 'z':	/* size limit */
-		sizelimit = atoi( optarg );
+		if ( strcasecmp( optarg, "none" ) == 0 ) {
+			sizelimit = 0;
+
+		} else if ( strcasecmp( optarg, "max" ) == 0 ) {
+			sizelimit = LDAP_MAXINT;
+
+		} else {
+			ival = strtol( optarg, &next, 10 );
+			if ( next == NULL || next[0] != '\0' ) {
+				fprintf( stderr,
+					_("Unable to parse size limit \"%s\"\n"), optarg );
+				exit( EXIT_FAILURE );
+			}
+			sizelimit = ival;
+		}
+		if( sizelimit < 0 || sizelimit > LDAP_MAXINT ) {
+			fprintf( stderr, _("%s: invalid sizelimit (%d) specified\n"),
+				prog, sizelimit );
+			exit( EXIT_FAILURE );
+		}
+		if( sizelimit < 0 ) {
+			fprintf( stderr, _("%s: invalid sizelimit (%d) specified\n"),
+				prog, timelimit );
+			exit( EXIT_FAILURE );
+		}
 		break;
 	default:
 		return 0;
@@ -483,7 +527,7 @@ private_conn_setup( LDAP *ld )
 		fprintf( stderr, _("Could not set LDAP_OPT_DEREF %d\n"), deref );
 		exit( EXIT_FAILURE );
 	}
-	if (timelimit != -1 &&
+	if (timelimit > 0 &&
 		ldap_set_option( ld, LDAP_OPT_TIMELIMIT, (void *) &timelimit )
 			!= LDAP_OPT_SUCCESS )
 	{
@@ -491,7 +535,7 @@ private_conn_setup( LDAP *ld )
 			_("Could not set LDAP_OPT_TIMELIMIT %d\n"), timelimit );
 		exit( EXIT_FAILURE );
 	}
-	if (sizelimit != -1 &&
+	if (sizelimit > 0 &&
 		ldap_set_option( ld, LDAP_OPT_SIZELIMIT, (void *) &sizelimit )
 			!= LDAP_OPT_SUCCESS )
 	{
@@ -615,7 +659,7 @@ getNextPage:
 		|| domainScope
 #endif
 #ifdef LDAP_CONTROL_PAGEDRESULTS
-		|| pageSize
+		|| pagedResults
 #endif
 		|| ldapsync
 		|| subentries || valuesReturnFilter )
@@ -790,7 +834,7 @@ getNextPage:
 				valuesReturnFilter > 1 ? _("critical ") : "", vrFilter );
 		}
 #ifdef LDAP_CONTROL_PAGEDRESULTS
-		if ( pageSize ) {
+		if ( pagedResults ) {
 			printf(_("\n# with pagedResults %scontrol: size=%d"),
 				(pagedResults > 1) ? _("critical ") : "", 
 				pageSize );
@@ -858,7 +902,7 @@ getNextPage:
 			}
 		}
 
-		goto getNextPage;	
+		goto getNextPage;
 	}
 #endif
 
@@ -990,8 +1034,14 @@ static int dosearch(
 			case LDAP_RES_SEARCH_RESULT:
 				rc = print_result( ld, msg, 1 );
 #ifdef LDAP_CONTROL_PAGEDRESULTS
-				if ( pageSize != 0 ) { 
-					rc = parse_page_control( ld, msg, &cookie );
+				if ( pageSize != 0 ) {
+					if ( rc == LDAP_SUCCESS ) {
+						rc = parse_page_control( ld, msg, &cookie );
+					} else {
+						morePagedResults = 0;
+					}
+				} else {
+					morePagedResults = 0;
 				}
 #endif
 
@@ -1045,18 +1095,18 @@ static int dosearch(
 done:
 	ldap_msgfree( res );
 #ifdef LDAP_CONTROL_PAGEDRESULTS
-	if ( pageSize != 0 ) { 
-		npagedresponses = npagedresponses + nresponses;
-		npagedentries = npagedentries + nentries;
-		npagedreferences = npagedreferences + nreferences;
-		npagedextended = npagedextended + nextended;
-		npagedpartial = npagedpartial + npartial;
+	if ( pagedResults ) { 
+		npagedresponses += nresponses;
+		npagedentries += nentries;
+		npagedextended += nextended;
+		npagedpartial += npartial;
+		npagedreferences += nreferences;
 		if ( ( morePagedResults == 0 ) && ( ldif < 2 ) ) {
 			printf( _("\n# numResponses: %d\n"), npagedresponses );
-			if( nentries ) printf( _("# numEntries: %d\n"), npagedentries );
-			if( nextended ) printf( _("# numExtended: %d\n"), npagedextended );
-			if( npartial ) printf( _("# numPartial: %d\n"), npagedpartial );
-			if( nreferences ) printf( _("# numReferences: %d\n"), npagedreferences );
+			if( npagedentries ) printf( _("# numEntries: %d\n"), npagedentries );
+			if( npagedextended ) printf( _("# numExtended: %d\n"), npagedextended );
+			if( npagedpartial ) printf( _("# numPartial: %d\n"), npagedpartial );
+			if( npagedreferences ) printf( _("# numReferences: %d\n"), npagedreferences );
 		}
 	} else
 #endif

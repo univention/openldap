@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.182.2.11 2004/04/28 22:57:24 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.182.2.13 2004/09/12 20:22:38 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -398,6 +398,18 @@ do_modify(
 
 		rs->sr_err = slapi_int_call_plugins( op->o_bd,
 			SLAPI_PLUGIN_PRE_MODIFY_FN, pb );
+
+		/*
+		 * It's possible that the preoperation plugin changed the
+		 * modification array, so we need to convert it back to
+		 * a Modification list.
+		 *
+		 * Calling slapi_int_modifications2ldapmods() destroyed modlist so
+		 * we don't need to free it.
+		 */
+		slapi_pblock_get( pb, SLAPI_MODIFY_MODS, (void **)&modv );
+		modlist = slapi_int_ldapmods2modifications( modv );
+
 		if ( rs->sr_err < 0 ) {
 			/*
 			 * A preoperation plugin failure will abort the
@@ -421,17 +433,6 @@ do_modify(
 			modv = NULL;
 			goto cleanup;
 		}
-
-		/*
-		 * It's possible that the preoperation plugin changed the
-		 * modification array, so we need to convert it back to
-		 * a Modification list.
-		 *
-		 * Calling slapi_int_modifications2ldapmods() destroyed modlist so
-		 * we don't need to free it.
-		 */
-		slapi_pblock_get( pb, SLAPI_MODIFY_MODS, (void **)&modv );
-		modlist = slapi_int_ldapmods2modifications( modv );
 	}
 
 	/*
@@ -445,10 +446,6 @@ do_modify(
 	 * However, the post-operation plugin should still be 
 	 * called.
 	 */
-	if ( modlist == NULL ) {
-		rs->sr_err = LDAP_SUCCESS;
-		send_ldap_result( op, rs );
-	} else {
 #endif /* defined( LDAP_SLAPI ) */
 
 	/*
@@ -490,7 +487,7 @@ do_modify(
 				}
 
 				rs->sr_err = slap_mods_opattrs( op, modlist, modtail,
-					&rs->sr_text, textbuf, textlen );
+					&rs->sr_text, textbuf, textlen, 1 );
 				if( rs->sr_err != LDAP_SUCCESS ) {
 					send_ldap_result( op, rs );
 					goto cleanup;
@@ -535,8 +532,6 @@ do_modify(
 	}
 
 #if defined( LDAP_SLAPI )
-	} /* modlist != NULL */
-
 	if ( pb != NULL && slapi_int_call_plugins( op->o_bd,
 		SLAPI_PLUGIN_POST_MODIFY_FN, pb ) < 0 )
 	{
@@ -835,7 +830,8 @@ int slap_mods_opattrs(
 	Modifications *mods,
 	Modifications **modtail,
 	const char **text,
-	char *textbuf, size_t textlen )
+	char *textbuf, size_t textlen,
+	int manage_ctxcsn )
 {
 	struct berval name, timestamp, csn;
 	struct berval nname;
@@ -864,7 +860,7 @@ int slap_mods_opattrs(
 #endif /* HAVE_GMTIME_R */
 		lutil_gentime( timebuf, sizeof(timebuf), ltm );
 
-		slap_get_csn( op, csnbuf, sizeof(csnbuf), &csn, 1 );
+		slap_get_csn( op, csnbuf, sizeof(csnbuf), &csn, manage_ctxcsn );
 
 #ifndef HAVE_GMTIME_R
 		ldap_pvt_thread_mutex_unlock( &gmtime_mutex );

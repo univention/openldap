@@ -1,5 +1,5 @@
 /* bind.c - ldap backend bind function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.57.2.7 2004/04/12 16:01:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.57.2.9 2004/07/09 16:32:00 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -209,6 +209,20 @@ static void myprint( Avlnode *root )
 }
 #endif /* PRINT_CONNTREE */
 
+int
+ldap_back_freeconn( Operation *op, struct ldapconn *lc )
+{
+	struct ldapinfo	*li = (struct ldapinfo *) op->o_bd->be_private;
+
+	ldap_pvt_thread_mutex_lock( &li->conn_mutex );
+	lc = avl_delete( &li->conntree, (caddr_t)lc,
+			ldap_back_conn_cmp );
+	ldap_back_conn_free( (void *)lc );
+	ldap_pvt_thread_mutex_unlock( &li->conn_mutex );
+
+	return 0;
+}
+
 struct ldapconn *
 ldap_back_getconn(Operation *op, SlapReply *rs)
 {
@@ -229,8 +243,8 @@ ldap_back_getconn(Operation *op, SlapReply *rs)
 	}
 	
 	/* Internal searches are privileged and shared. So is root. */
-	if ( op->o_do_not_cache || be_isroot_dn( li->be, &op->o_ndn ) ) {
-		lc_curr.local_dn = li->be->be_rootndn;
+	if ( op->o_do_not_cache || be_isroot( op ) ) {
+		lc_curr.local_dn = op->o_bd->be_rootndn;
 		lc_curr.conn = NULL;
 		is_priv = 1;
 	} else {
@@ -516,16 +530,16 @@ ldap_back_op_result(struct ldapconn *lc, Operation *op, SlapReply *rs,
 	if ( ERR_OK( rs->sr_err ) ) {
 		/* if result parsing fails, note the failure reason */
 		if ( ldap_result( lc->ld, msgid, 1, NULL, &res ) == -1 ) {
-			ldap_get_option(lc->ld, LDAP_OPT_ERROR_NUMBER,
-					&rs->sr_err);
+			ldap_get_option( lc->ld, LDAP_OPT_ERROR_NUMBER,
+					&rs->sr_err );
 
 		/* otherwise get the result; if it is not
 		 * LDAP_SUCCESS, record it in the reply
 		 * structure (this includes 
 		 * LDAP_COMPARE_{TRUE|FALSE}) */
 		} else {
-			int rc = ldap_parse_result(lc->ld, res, &rs->sr_err,
-					&match, &text, NULL, NULL, 1);
+			int rc = ldap_parse_result( lc->ld, res, &rs->sr_err,
+					&match, &text, NULL, NULL, 1 );
 			rs->sr_text = text;
 			if ( rc != LDAP_SUCCESS ) rs->sr_err = rc;
 		}

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/controls.c,v 1.72.2.16 2004/05/21 02:11:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/controls.c,v 1.72.2.20 2004/06/29 21:45:49 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -598,6 +598,7 @@ int get_ctrls(
 
 			if (( sc->sc_mask & tagmask ) == tagmask ) {
 				/* available extension */
+				int	rc;
 
 				if( !sc->sc_parse ) {
 					rs->sr_err = LDAP_OTHER;
@@ -605,9 +606,12 @@ int get_ctrls(
 					goto return_results;
 				}
 
-				rs->sr_err = sc->sc_parse( op, rs, c );
-				assert( rs->sr_err != LDAP_UNAVAILABLE_CRITICAL_EXTENSION );
-				if( rs->sr_err != LDAP_SUCCESS ) goto return_results;
+				rc = sc->sc_parse( op, rs, c );
+				assert( rc != LDAP_UNAVAILABLE_CRITICAL_EXTENSION );
+				if ( rc ) {
+					rs->sr_err = rc;
+					goto return_results;
+				}
 
 				if ( sc->sc_mask & SLAP_CTRL_FRONTEND ) {
 					/* kludge to disable backend_control() check */
@@ -633,6 +637,7 @@ int get_ctrls(
 			rs->sr_text = "critical extension is not recognized";
 			goto return_results;
 		}
+next_ctrl:;
 	}
 
 return_results:
@@ -839,10 +844,11 @@ static int parsePagedResults (
 	SlapReply *rs,
 	LDAPControl *ctrl )
 {
-	ber_tag_t tag;
-	ber_int_t size;
-	BerElement *ber;
-	struct berval cookie = BER_BVNULL;
+	int		rc = LDAP_SUCCESS;
+	ber_tag_t	tag;
+	ber_int_t	size;
+	BerElement	*ber;
+	struct berval	cookie = BER_BVNULL;
 
 	if ( op->o_pagedresults != SLAP_NO_CONTROL ) {
 		rs->sr_text = "paged results control specified multiple times";
@@ -874,16 +880,17 @@ static int parsePagedResults (
 	}
 
 	tag = ber_scanf( ber, "{im}", &size, &cookie );
-	(void) ber_free( ber, 1 );
 
 	if( tag == LBER_ERROR ) {
 		rs->sr_text = "paged results control could not be decoded";
-		return LDAP_PROTOCOL_ERROR;
+		rc = LDAP_PROTOCOL_ERROR;
+		goto done;
 	}
 
 	if( size < 0 ) {
 		rs->sr_text = "paged results control size invalid";
-		return LDAP_PROTOCOL_ERROR;
+		rc = LDAP_PROTOCOL_ERROR;
+		goto done;
 	}
 
 	if( cookie.bv_len ) {
@@ -891,7 +898,8 @@ static int parsePagedResults (
 		if( cookie.bv_len != sizeof( reqcookie ) ) {
 			/* bad cookie */
 			rs->sr_text = "paged results cookie is invalid";
-			return LDAP_PROTOCOL_ERROR;
+			rc = LDAP_PROTOCOL_ERROR;
+			goto done;
 		}
 
 		AC_MEMCPY( &reqcookie, cookie.bv_val, sizeof( reqcookie ));
@@ -899,27 +907,55 @@ static int parsePagedResults (
 		if ( reqcookie > op->o_pagedresults_state.ps_cookie ) {
 			/* bad cookie */
 			rs->sr_text = "paged results cookie is invalid";
-			return LDAP_PROTOCOL_ERROR;
+			rc = LDAP_PROTOCOL_ERROR;
+			goto done;
 
 		} else if ( reqcookie < op->o_pagedresults_state.ps_cookie ) {
 			rs->sr_text = "paged results cookie is invalid or old";
-			return LDAP_UNWILLING_TO_PERFORM;
+			rc = LDAP_UNWILLING_TO_PERFORM;
+			goto done;
 		}
 
 	} else {
 		/* Initial request.  Initialize state. */
+#if 0
+		if ( op->o_conn->c_pagedresults_state.ps_cookie != 0 ) {
+			/* There's another pagedResults control on the
+			 * same connection; reject new pagedResults controls 
+			 * (allowed by RFC2696) */
+			rs->sr_text = "paged results cookie unavailable; try later";
+			rc = LDAP_UNWILLING_TO_PERFORM;
+			goto done;
+		}
+#endif
 		op->o_pagedresults_state.ps_cookie = 0;
-		op->o_pagedresults_state.ps_id = NOID;
 		op->o_pagedresults_state.ps_count = 0;
 	}
 
 	op->o_pagedresults_size = size;
 
-	op->o_pagedresults = ctrl->ldctl_iscritical
-		? SLAP_CRITICAL_CONTROL
-		: SLAP_NONCRITICAL_CONTROL;
+	/* NOTE: according to RFC 2696 3.:
 
-	return LDAP_SUCCESS;
+    If the page size is greater than or equal to the sizeLimit value, the
+    server should ignore the control as the request can be satisfied in a
+    single page.
+	 
+	 * NOTE: this assumes that the op->ors_slimit be set
+	 * before the controls are parsed.     
+	 */
+	if ( op->ors_slimit > 0 && size >= op->ors_slimit ) {
+		op->o_pagedresults = SLAP_IGNORED_CONTROL;
+
+	} else if ( ctrl->ldctl_iscritical ) {
+		op->o_pagedresults = SLAP_CRITICAL_CONTROL;
+
+	} else {
+		op->o_pagedresults = SLAP_NONCRITICAL_CONTROL;
+	}
+
+done:;
+	(void)ber_free( ber, 1 );
+	return rc;
 }
 
 static int parseAssert (

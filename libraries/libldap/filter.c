@@ -1,5 +1,5 @@
 /* search.c */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/filter.c,v 1.20.2.3 2004/01/01 18:16:29 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/filter.c,v 1.20.2.6 2004/09/23 23:17:09 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -639,7 +639,7 @@ put_simple_filter(
 
 				if( rule == NULL ) {
 					/* one colon */
-					if ( strcmp(dn, "dn") == 0 ) {
+					if ( strcasecmp(dn, "dn") == 0 ) {
 						/* must have attribute */
 						if( !ldap_is_desc( str ) ) {
 							goto done;
@@ -656,7 +656,7 @@ put_simple_filter(
 					/* two colons */
 					*rule++ = '\0';
 
-					if ( strcmp(dn, "dn") != 0 ) {
+					if ( strcasecmp(dn, "dn") != 0 ) {
 						/* must have "dn" */
 						goto done;
 					}
@@ -968,7 +968,7 @@ put_vrFilter( BerElement *ber, const char *str_in )
 				0, 0, 0 );
 #endif
 			next = strchr( str, '\0' );
-			if ( put_simple_filter( ber, str ) == -1 ) {
+			if ( put_simple_vrFilter( ber, str ) == -1 ) {
 				rc = -1;
 				goto done;
 			}
@@ -1090,7 +1090,6 @@ put_simple_vrFilter(
 
 		{
 			char *rule = strchr( str, ':' );
-			*rule++ = '\0';
 
 			if( rule == NULL ) {
 				/* must have attribute */
@@ -1098,11 +1097,9 @@ put_simple_vrFilter(
 					goto done;
 				}
 				rule = "";
-			
 			} else {
 				*rule++ = '\0';
 			}
-
 
 			if ( *str == '\0' && ( !rule || *rule == '\0' ) ) {
 				/* must have either type or rule */

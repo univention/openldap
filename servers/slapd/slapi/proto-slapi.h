@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/proto-slapi.h,v 1.8.2.7 2004/03/18 01:01:04 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/proto-slapi.h,v 1.8.2.8 2004/06/16 22:45:33 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2002-2004 The OpenLDAP Foundation.
@@ -37,9 +37,9 @@ extern int slapi_entry_attr_find( Slapi_Entry *e, char *type, Slapi_Attr **attr 
 extern char *slapi_entry_attr_get_charptr( const Slapi_Entry *e, const char *type );
 extern int slapi_entry_attr_delete( Slapi_Entry *e, char *type );
 extern int slapi_entry_attr_get_int( const Slapi_Entry *e, const char *type );
-extern int slapi_entry_attr_get_long( const Slapi_Entry *e, const char *type );
-extern int slapi_entry_attr_get_uint( const Slapi_Entry *e, const char *type );
-extern int slapi_entry_attr_get_ulong( const Slapi_Entry *e, const char *type );
+extern long slapi_entry_attr_get_long( const Slapi_Entry *e, const char *type );
+extern unsigned int slapi_entry_attr_get_uint( const Slapi_Entry *e, const char *type );
+extern unsigned long slapi_entry_attr_get_ulong( const Slapi_Entry *e, const char *type );
 extern int slapi_entry_attr_hasvalue( Slapi_Entry *e, const char *type, const char *value );
 extern int slapi_entry_attr_merge_sv( Slapi_Entry *e, const char *type, Slapi_Value **vals );
 extern void slapi_entry_attr_set_charptr(Slapi_Entry* e, const char *type, const char *value);

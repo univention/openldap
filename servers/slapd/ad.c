@@ -1,5 +1,5 @@
 /* ad.c - routines for dealing with attribute descriptions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.59.2.4 2004/01/01 18:16:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.59.2.5 2004/07/16 19:26:05 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -46,7 +46,7 @@ static int ad_keystring(
 {
 	ber_len_t i;
 
-	if( !AD_CHAR( bv->bv_val[0] ) ) {
+	if( !AD_LEADCHAR( bv->bv_val[0] ) ) {
 		return 1;
 	}
 
@@ -137,14 +137,14 @@ int slap_bv2ad(
 	assert( ad != NULL );
 	assert( *ad == NULL ); /* temporary */
 
-	if( bv == NULL || bv->bv_len == 0 ) {
-		*text = "empty attribute description";
+	if( bv == NULL || BER_BVISNULL( bv ) || BER_BVISEMPTY( bv ) ) {
+		*text = "empty AttributeDescription";
 		return rtn;
 	}
 
 	/* make sure description is IA5 */
 	if( ad_keystring( bv ) ) {
-		*text = "attribute description contains inappropriate characters";
+		*text = "AttributeDescription contains inappropriate characters";
 		return rtn;
 	}
 
@@ -663,13 +663,13 @@ int slap_bv2undef_ad(
 	assert( ad != NULL );
 
 	if( bv == NULL || bv->bv_len == 0 ) {
-		*text = "empty attribute description";
+		*text = "empty AttributeDescription";
 		return LDAP_UNDEFINED_TYPE;
 	}
 
 	/* make sure description is IA5 */
 	if( ad_keystring( bv ) ) {
-		*text = "attribute description contains inappropriate characters";
+		*text = "AttributeDescription contains inappropriate characters";
 		return LDAP_UNDEFINED_TYPE;
 	}
 

@@ -1,5 +1,5 @@
 /* init.c - initialize bdb backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.132.2.8 2004/04/12 18:20:13 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.132.2.11 2004/10/16 17:49:32 jongchoi Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -71,8 +71,8 @@ bdb_db_init( BackendDB *be )
 	LDAP_LOG( BACK_BDB, ENTRY, "bdb_db_init", 0, 0, 0 );
 #else
 	Debug( LDAP_DEBUG_ANY,
-		"bdb_db_init: Initializing BDB database\n",
-		0, 0, 0 );
+		"bdb_db_init: Initializing %s database\n",
+		be->bd_info->bi_type, 0, 0 );
 #endif
 
 	/* allocate backend-database-specific stuff */
@@ -196,14 +196,15 @@ bdb_db_open( BackendDB *be )
 	bdb->bi_dbenv->set_errcall( bdb->bi_dbenv, bdb_errcall );
 	bdb->bi_dbenv->set_lk_detect( bdb->bi_dbenv, bdb->bi_lock_detect );
 
-#ifdef SLAP_IDL_CACHE
+	/* One long-lived TXN per thread, two TXNs per write op */
+	bdb->bi_dbenv->set_tx_max( bdb->bi_dbenv, connection_pool_max * 3 );
+
 	if ( bdb->bi_idl_cache_max_size ) {
 		bdb->bi_idl_tree = NULL;
 		ldap_pvt_thread_rdwr_init( &bdb->bi_idl_tree_rwlock );
 		ldap_pvt_thread_mutex_init( &bdb->bi_idl_tree_lrulock );
 		bdb->bi_idl_cache_size = 0;
 	}
-#endif
 
 #ifdef BDB_SUBDIRS
 	{
@@ -447,6 +448,8 @@ bdb_db_open( BackendDB *be )
 		return rc;
 	}
 
+	XLOCK_ID(bdb->bi_dbenv, &bdb->bi_cache.c_locker);
+
 	/* <insert> open (and create) index databases */
 	return 0;
 }
@@ -457,9 +460,7 @@ bdb_db_close( BackendDB *be )
 	int rc;
 	struct bdb_info *bdb = (struct bdb_info *) be->be_private;
 	struct bdb_db_info *db;
-#ifdef SLAP_IDL_CACHE
 	bdb_idl_cache_entry_t *entry, *next_entry;
-#endif
 
 	while( bdb->bi_ndatabases-- ) {
 		db = bdb->bi_databases[bdb->bi_ndatabases];
@@ -474,7 +475,6 @@ bdb_db_close( BackendDB *be )
 
 	bdb_cache_release_all (&bdb->bi_cache);
 
-#ifdef SLAP_IDL_CACHE
 	if ( bdb->bi_idl_cache_max_size ) {
 		ldap_pvt_thread_rdwr_wlock ( &bdb->bi_idl_tree_rwlock );
 		avl_free( bdb->bi_idl_tree, NULL );
@@ -489,7 +489,8 @@ bdb_db_close( BackendDB *be )
 		}
 		ldap_pvt_thread_rdwr_wunlock ( &bdb->bi_idl_tree_rwlock );
 	}
-#endif
+
+	XLOCK_ID_FREE(bdb->bi_dbenv, bdb->bi_cache.c_locker);
 
 	return 0;
 }
@@ -499,6 +500,9 @@ bdb_db_destroy( BackendDB *be )
 {
 	int rc;
 	struct bdb_info *bdb = (struct bdb_info *) be->be_private;
+	Operation *ps = NULL;
+	Operation *psn = NULL;
+	void *saved_tmpmemctx = NULL;
 
 	/* close db environment */
 	if( bdb->bi_dbenv ) {
@@ -540,12 +544,78 @@ bdb_db_destroy( BackendDB *be )
 	ldap_pvt_thread_rdwr_destroy ( &bdb->bi_pslist_rwlock );
 	ldap_pvt_thread_mutex_destroy( &bdb->bi_lastid_mutex );
 	ldap_pvt_thread_mutex_destroy( &bdb->bi_database_mutex );
-#ifdef SLAP_IDL_CACHE
 	if ( bdb->bi_idl_cache_max_size ) {
 		ldap_pvt_thread_rdwr_destroy( &bdb->bi_idl_tree_rwlock );
 		ldap_pvt_thread_mutex_destroy( &bdb->bi_idl_tree_lrulock );
 	}
-#endif
+
+	ps = LDAP_LIST_FIRST( &bdb->bi_psearch_list );
+
+	if ( ps ) {
+		psn = LDAP_LIST_NEXT( ps, o_ps_link );
+		if ( ps->o_savmemctx ) {
+			ps->o_tmpmemctx = ps->o_savmemctx;
+			ps->o_tmpmfuncs = &sl_mfuncs;
+			ber_set_option(ps->o_ber, LBER_OPT_BER_MEMCTX, &ps->o_savmemctx);
+		}
+		saved_tmpmemctx = ps->o_tmpmemctx;
+
+		if (!BER_BVISNULL(&ps->o_req_dn)) {
+			slap_sl_free( ps->o_req_dn.bv_val, ps->o_tmpmemctx);
+		}
+		if (!BER_BVISNULL(&ps->o_req_ndn)) {
+			slap_sl_free( ps->o_req_ndn.bv_val, ps->o_tmpmemctx);
+		}
+		if (!BER_BVISNULL(&ps->ors_filterstr)) {
+			slap_sl_free( ps->ors_filterstr.bv_val, ps->o_tmpmemctx);
+		}
+		if (ps->ors_filter != NULL) {
+			filter_free_x( ps, ps->ors_filter );
+		}
+		if (ps->ors_attrs != NULL) {
+			ps->o_tmpfree(ps->ors_attrs, ps->o_tmpmemctx);
+		}
+
+		slap_op_free( ps );
+
+		if ( saved_tmpmemctx ) {
+			sl_mem_destroy( NULL, saved_tmpmemctx );
+		}
+	}
+
+	while ( psn ) {
+		ps = psn;
+		psn = LDAP_LIST_NEXT( ps, o_ps_link );
+
+		if ( ps->o_savmemctx ) {
+			ps->o_tmpmemctx = ps->o_savmemctx;
+			ps->o_tmpmfuncs = &sl_mfuncs;
+			ber_set_option(ps->o_ber, LBER_OPT_BER_MEMCTX, &ps->o_savmemctx);
+		}
+		saved_tmpmemctx = ps->o_tmpmemctx;
+
+		if (!BER_BVISNULL(&ps->o_req_dn)) {
+			slap_sl_free( ps->o_req_dn.bv_val, ps->o_tmpmemctx);
+		}
+		if (!BER_BVISNULL(&ps->o_req_ndn)) {
+			slap_sl_free( ps->o_req_ndn.bv_val, ps->o_tmpmemctx);
+		}
+		if (!BER_BVISNULL(&ps->ors_filterstr)) {
+			slap_sl_free( ps->ors_filterstr.bv_val, ps->o_tmpmemctx);
+		}
+		if (ps->ors_filter != NULL) {
+			filter_free_x( ps, ps->ors_filter );
+		}
+		if (ps->ors_attrs != NULL) {
+			ps->o_tmpfree(ps->ors_attrs, ps->o_tmpmemctx);
+		}
+
+		slap_op_free( ps );
+
+		if ( saved_tmpmemctx ) {
+			sl_mem_destroy( NULL, saved_tmpmemctx );
+		}
+	}
 
 	ch_free( bdb );
 	be->be_private = NULL;

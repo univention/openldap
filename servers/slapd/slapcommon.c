@@ -1,5 +1,5 @@
 /* slapcommon.c - common routine for the slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.c,v 1.2.2.4 2004/04/12 18:13:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.c,v 1.2.2.6 2004/09/10 16:42:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -448,7 +448,7 @@ slap_tool_init(
 	mal_leaktrace(1);
 #endif
 
-	if ( slap_startup( be ) ) {
+	if ( !dryrun && slap_startup( be ) ) {
 		fprintf( stderr, "slap_startup failed\n" );
 		exit( EXIT_FAILURE );
 	}
@@ -456,7 +456,9 @@ slap_tool_init(
 
 void slap_tool_destroy( void )
 {
-	slap_shutdown( be );
+	if ( !dryrun && be != NULL ) {
+		slap_shutdown( be );
+	}
 	slap_destroy();
 #ifdef SLAPD_MODULES
 	if ( slapMode == SLAP_SERVER_MODE ) {

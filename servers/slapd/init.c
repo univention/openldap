@@ -1,5 +1,5 @@
 /* init.c - initialize various things */
-/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.59.2.7 2004/05/21 02:11:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.59.2.8 2004/09/23 22:32:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -257,6 +257,9 @@ int slap_destroy(void)
 		slap_name, 0, 0 );
 #endif
 
+	if ( default_referral ) {
+		ber_bvarray_free( default_referral );
+	}
 
 	rc = backend_destroy();
 

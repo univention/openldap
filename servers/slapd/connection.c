@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.230.2.18 2004/04/28 23:07:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.230.2.20 2004/08/30 15:44:19 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -45,6 +45,8 @@
 /* protected by connections_mutex */
 static ldap_pvt_thread_mutex_t connections_mutex;
 static Connection *connections = NULL;
+
+static ldap_pvt_thread_mutex_t conn_nextid_mutex;
 static unsigned long conn_nextid = 0;
 
 /* structure state (protected by connections_mutex) */
@@ -109,6 +111,7 @@ int connections_init(void)
 
 	/* should check return of every call */
 	ldap_pvt_thread_mutex_init( &connections_mutex );
+	ldap_pvt_thread_mutex_init( &conn_nextid_mutex );
 
 	connections = (Connection *) ch_calloc( dtblsize, sizeof(Connection) );
 
@@ -176,6 +179,7 @@ int connections_destroy(void)
 	connections = NULL;
 
 	ldap_pvt_thread_mutex_destroy( &connections_mutex );
+	ldap_pvt_thread_mutex_destroy( &conn_nextid_mutex );
 	return 0;
 }
 
@@ -607,7 +611,9 @@ long connection_init(
 #endif
 	}
 
+	ldap_pvt_thread_mutex_lock( &conn_nextid_mutex );
 	id = c->c_connid = conn_nextid++;
+	ldap_pvt_thread_mutex_unlock( &conn_nextid_mutex );
 
 	c->c_conn_state = SLAP_C_INACTIVE;
 	c->c_struct_state = SLAP_C_USED;
@@ -948,7 +954,7 @@ void connection_done( Connection *c )
 static void *
 connection_operation( void *ctx, void *arg_v )
 {
-	int rc = SLAPD_DISCONNECT;
+	int rc = LDAP_OTHER;
 	Operation *op = arg_v;
 	SlapReply rs = {REP_RESULT};
 	ber_tag_t tag = op->o_tag;
@@ -966,6 +972,36 @@ connection_operation( void *ctx, void *arg_v )
 
 	op->o_threadctx = ctx;
 
+	switch ( tag ) {
+	case LDAP_REQ_BIND:
+	case LDAP_REQ_UNBIND:
+	case LDAP_REQ_ADD:
+	case LDAP_REQ_DELETE:
+	case LDAP_REQ_MODRDN:
+	case LDAP_REQ_MODIFY:
+	case LDAP_REQ_COMPARE:
+	case LDAP_REQ_SEARCH:
+	case LDAP_REQ_ABANDON:
+	case LDAP_REQ_EXTENDED:
+		break;
+	default:
+#ifdef NEW_LOGGING
+		LDAP_LOG( CONNECTION, INFO, "connection_operation: "
+			"conn %lu unknown LDAP request 0x%lx\n",
+			conn->c_connid, tag, 0 );
+#else
+		Debug( LDAP_DEBUG_ANY, "connection_operation: "
+			"conn %lu unknown LDAP request 0x%lx\n",
+			conn->c_connid, tag, 0 );
+#endif
+		op->o_tag = LBER_ERROR;
+		rs.sr_err = LDAP_PROTOCOL_ERROR;
+		rs.sr_text = "unknown LDAP request";
+		send_ldap_disconnect( op, &rs );
+		rc = SLAPD_DISCONNECT;
+		goto operations_error;
+	}
+
 	if( conn->c_sasl_bind_in_progress && tag != LDAP_REQ_BIND ) {
 #ifdef NEW_LOGGING
 		LDAP_LOG( CONNECTION, ERR, 
@@ -978,6 +1014,7 @@ connection_operation( void *ctx, void *arg_v )
 #endif
 		send_ldap_error( op, &rs, LDAP_OPERATIONS_ERROR,
 			"SASL bind in progress" );
+		rc = LDAP_OPERATIONS_ERROR;
 		goto operations_error;
 	}
 
@@ -1053,29 +1090,15 @@ connection_operation( void *ctx, void *arg_v )
 		break;
 
 	default:
-#ifdef NEW_LOGGING
-		LDAP_LOG( CONNECTION, INFO, 
-			"connection_operation: conn %lu unknown LDAP request 0x%lx\n",
-			conn->c_connid, tag, 0 );
-#else
-		Debug( LDAP_DEBUG_ANY, "unknown LDAP request 0x%lx\n",
-			tag, 0, 0 );
-#endif
-		op->o_tag = LBER_ERROR;
-		rs.sr_err = LDAP_PROTOCOL_ERROR;
-		rs.sr_text = "unknown LDAP request";
-		send_ldap_disconnect( op, &rs );
-		rc = -1;
-		break;
+		/* not reachable */
+		assert( 0 );
 	}
 
-#ifdef SLAPD_MONITOR
-	oldtag = tag;
-#endif /* SLAPD_MONITOR */
+operations_error:
 	if( rc == SLAPD_DISCONNECT ) tag = LBER_ERROR;
 
-operations_error:
 	ldap_pvt_thread_mutex_lock( &num_ops_mutex );
+
 	num_ops_completed++;
 #ifdef SLAPD_MONITOR
 	switch (oldtag) {
@@ -1109,6 +1132,9 @@ operations_error:
 	case LDAP_REQ_EXTENDED:
 		num_ops_completed_[SLAP_OP_EXTENDED]++;
 		break;
+	default:
+		/* not reachable */
+		assert( 0 );
 	}
 #endif /* SLAPD_MONITOR */
 	ldap_pvt_thread_mutex_unlock( &num_ops_mutex );
@@ -1116,7 +1142,6 @@ operations_error:
 	if ( op->o_cancel == SLAP_CANCEL_REQ ) {
 		op->o_cancel = LDAP_TOO_LATE;
 	}
-
 	while ( op->o_cancel != SLAP_CANCEL_NONE &&
 		op->o_cancel != SLAP_CANCEL_DONE )
 	{
@@ -1128,14 +1153,17 @@ operations_error:
 	ber_set_option( op->o_ber, LBER_OPT_BER_MEMCTX, &memctx_null );
 
 	if ( op->o_cancel != SLAP_CANCEL_ACK &&
-				( op->o_sync_mode & SLAP_SYNC_PERSIST ) ) {
+		( op->o_sync_mode & SLAP_SYNC_PERSIST ) )
+	{
 		sl_mem_detach( ctx, memctx );
-	} else if (( op->o_sync_slog_size != -1 )) {
+
+	} else if ( op->o_sync_slog_size != -1 ) {
 		sl_mem_detach( ctx, memctx );
 		LDAP_STAILQ_REMOVE( &conn->c_ops, op, slap_op, o_next);
 		LDAP_STAILQ_NEXT(op, o_next) = NULL;
 		conn->c_n_ops_executing--;
 		conn->c_n_ops_completed++;
+
 	} else {
 		LDAP_STAILQ_REMOVE( &conn->c_ops, op, slap_op, o_next);
 		LDAP_STAILQ_NEXT(op, o_next) = NULL;
@@ -1161,24 +1189,23 @@ operations_error:
 	}
 
 	connection_resched( conn );
-
 	ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
-
 	return NULL;
 }
 
-static const Listener dummy_list = { {0, ""}, {0, ""} };
+static const Listener dummy_list = { BER_BVC(""), BER_BVC("") };
 
 int connection_client_setup(
 	ber_socket_t s,
 	ldap_pvt_thread_start_t *func,
 	void *arg )
 {
+	int rc;
 	Connection *c;
 
-	if ( connection_init( s, (Listener *)&dummy_list, "", "", CONN_IS_CLIENT, 0, NULL ) < 0 ) {
-		return -1;
-	}
+	rc = connection_init( s, (Listener *)&dummy_list, "", "",
+		CONN_IS_CLIENT, 0, NULL );
+	if ( rc < 0 ) return -1;
 
 	c = connection_get( s );
 	c->c_clientfunc = func;
@@ -1190,15 +1217,13 @@ int connection_client_setup(
 }
 
 void connection_client_enable(
-	ber_socket_t s
-)
+	ber_socket_t s )
 {
 	slapd_set_read( s, 1 );
 }
 
 void connection_client_stop(
-	ber_socket_t s
-)
+	ber_socket_t s )
 {
 	Connection *c;
 
@@ -1333,14 +1358,13 @@ int connection_read(ber_socket_t s)
 			rc = dnX509peerNormalize( ssl, &authid );
 			if ( rc != LDAP_SUCCESS ) {
 #ifdef NEW_LOGGING
-				LDAP_LOG( CONNECTION, INFO, 
-					"connection_read: conn %lu unable to get TLS client DN, "
-					"error %d\n", c->c_connid, rc, 0 );
+				LDAP_LOG( CONNECTION, INFO, "connection_read: "
+					"conn %lu unable to get TLS client DN, error %d\n",
+					c->c_connid, rc, 0 );
 #else
-				Debug( LDAP_DEBUG_TRACE,
-				"connection_read(%d): unable to get TLS client DN "
-				"error=%d id=%lu\n",
-				s, rc, c->c_connid );
+				Debug( LDAP_DEBUG_TRACE, "connection_read(%d): "
+					"unable to get TLS client DN, error=%d id=%lu\n",
+					s, rc, c->c_connid );
 #endif
 			}
 			slap_sasl_external( c, c->c_tls_ssf, &authid );
@@ -1573,6 +1597,10 @@ connection_input(
 	op->o_preread_attrs = NULL;
 	op->o_postread_attrs = NULL;
 	op->o_vrFilter = NULL;
+	/* clear state if the connection is being reused from inactive */
+	if ( conn->c_conn_state == SLAP_C_INACTIVE ) {
+		memset( &conn->c_pagedresults_state, 0, sizeof( conn->c_pagedresults_state ) );
+	}
 	op->o_pagedresults_state = conn->c_pagedresults_state;
 
 	op->o_res_ber = NULL;
@@ -1870,6 +1898,7 @@ connection_fake_init(
 	conn->c_send_search_entry = slap_send_search_entry;
 	conn->c_send_search_reference = slap_send_search_reference;
 	conn->c_listener = (Listener *)&dummy_list;
+	conn->c_peer_domain = slap_empty_bv;
 	conn->c_peer_name = slap_empty_bv;
 
 	/* set memory context */
@@ -1882,3 +1911,12 @@ connection_fake_init(
 
 	op->o_time = slap_get_time();
 }
+
+void
+connection_assign_nextid( Connection *conn )
+{
+	ldap_pvt_thread_mutex_lock( &conn_nextid_mutex );
+	conn->c_connid = conn_nextid++;
+	ldap_pvt_thread_mutex_unlock( &conn_nextid_mutex );
+}
+

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/modrdn.c,v 1.114.2.9 2004/04/12 18:20:12 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/modrdn.c,v 1.114.2.11 2004/09/12 20:22:39 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -537,7 +537,7 @@ slap_modrdn2mods(
 				desc->ad_type->sat_syntax,
 				desc->ad_type->sat_equality,
 				&mod_tmp->sml_values[0],
-				&mod_tmp->sml_nvalues[0], op->o_tmpmemctx );
+				&mod_tmp->sml_nvalues[0], NULL );
 			mod_tmp->sml_nvalues[1].bv_val = NULL;
 		} else {
 			mod_tmp->sml_nvalues = NULL;
@@ -630,7 +630,8 @@ done:
 			/* empty */
 		}
 
-		rs->sr_err = slap_mods_opattrs( op, mod, modtail, &rs->sr_text, textbuf, textlen );
+		rs->sr_err = slap_mods_opattrs( op, mod, modtail,
+						&rs->sr_text, textbuf, textlen, 1 );
 	}
 
 	/* LDAP v2 supporting correct attribute handling. */

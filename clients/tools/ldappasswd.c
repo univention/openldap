@@ -1,5 +1,5 @@
 /* ldappasswd -- a tool for change LDAP passwords */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldappasswd.c,v 1.117.2.7 2004/03/17 19:54:53 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldappasswd.c,v 1.117.2.8 2004/08/28 13:39:00 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -67,7 +67,7 @@ usage( void )
 {
 	fprintf( stderr, _("Change password of an LDAP user\n\n"));
 	fprintf( stderr,_("usage: %s [options] [user]\n"), prog);
-	fprintf( stderr, _("  user: the autentication identity, commonly a DN\n"));
+	fprintf( stderr, _("  user: the authentication identity, commonly a DN\n"));
 	fprintf( stderr, _("Password change options:\n"));
 	fprintf( stderr, _("  -a secret  old password\n"));
 	fprintf( stderr, _("  -A         prompt for old password\n"));

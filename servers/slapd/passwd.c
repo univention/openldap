@@ -1,5 +1,5 @@
 /* passwd.c - password extended operation routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.53.2.12 2004/04/06 18:16:00 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.53.2.13 2004/09/12 20:22:39 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -199,7 +199,7 @@ int passwd_extop(
 					 * if it cares... */
 
 		rs->sr_err = slap_mods_opattrs( &op2, ml, qpw->rs_modtail, &rs->sr_text,
-			NULL, 0 );
+			NULL, 0, 1 );
 		
 		if ( rs->sr_err == LDAP_SUCCESS ) {
 			rs->sr_err = op2.o_bd->be_modify( &op2, rs );

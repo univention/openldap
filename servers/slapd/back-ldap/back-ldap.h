@@ -1,5 +1,5 @@
 /* back-ldap.h - ldap backend header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.42.2.7 2004/04/06 20:29:28 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.42.2.9 2004/07/09 16:32:00 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2004 The OpenLDAP Foundation.
@@ -35,7 +35,6 @@ LDAP_BEGIN_DECL
 
 struct slap_conn;
 struct slap_op;
-struct slap_backend_db;
 
 struct ldapconn {
 	struct slap_conn	*conn;
@@ -79,7 +78,6 @@ struct ldaprwmap {
 };
 
 struct ldapinfo {
-	struct slap_backend_db	*be;
 	char		*url;
 	LDAPURLDesc	*lud;
 	struct berval binddn;
@@ -120,6 +118,7 @@ typedef struct dncookie {
 #endif
 } dncookie;
 
+int ldap_back_freeconn( Operation *op, struct ldapconn *lc );
 struct ldapconn *ldap_back_getconn(struct slap_op *op, struct slap_rep *rs);
 int ldap_back_dobind(struct ldapconn *lc, Operation *op, SlapReply *rs);
 int ldap_back_map_result(SlapReply *rs);

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_pblock.c,v 1.12.2.8 2004/03/18 01:01:04 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_pblock.c,v 1.12.2.9 2004/09/03 23:17:54 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2002-2004 The OpenLDAP Foundation.
@@ -213,6 +213,12 @@ isOkNetscapeParam( int param )
 	case SLAPI_PLUGIN_COMPUTE_EVALUATOR_FN:
 	case SLAPI_PLUGIN_COMPUTE_SEARCH_REWRITER_FN:
 	case SLAPI_PLUGIN_ACL_ALLOW_ACCESS:
+	case SLAPI_X_PLUGIN_PRE_GROUP_FN:
+	case SLAPI_X_PLUGIN_POST_GROUP_FN:
+	case SLAPI_X_GROUP_ENTRY:
+	case SLAPI_X_GROUP_ATTRIBUTE:
+	case SLAPI_X_GROUP_OPERATION_DN:
+	case SLAPI_X_GROUP_TARGET_ENTRY:
 		return LDAP_SUCCESS;
 	default:
 		return INVALID_PARAM;

@@ -1,5 +1,5 @@
 /* bind.c - decode an ldap bind operation and pass it to a backend db */
-/* $OpenLDAP: pkg/ldap/servers/slapd/bind.c,v 1.157.2.12 2004/04/12 18:13:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/bind.c,v 1.157.2.14 2004/08/30 15:44:19 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -41,8 +41,7 @@
 int
 do_bind(
     Operation	*op,
-    SlapReply	*rs
-)
+    SlapReply	*rs )
 {
 	BerElement *ber = op->o_ber;
 	ber_int_t version;
@@ -117,7 +116,7 @@ do_bind(
 		Debug( LDAP_DEBUG_ANY, "bind: ber_scanf failed\n", 0, 0, 0 );
 #endif
 		send_ldap_discon( op, rs, LDAP_PROTOCOL_ERROR, "decoding error" );
-		rs->sr_err = -1;
+		rs->sr_err = SLAPD_DISCONNECT;
 		goto cleanup;
 	}
 
@@ -308,11 +307,9 @@ do_bind(
 				ber_dupbv( &op->o_conn->c_ndn, &op->o_conn->c_dn );
 			}
 			op->o_tmpfree( op->orb_edn.bv_val, op->o_tmpmemctx );
-			op->orb_edn.bv_val = NULL;
-			op->orb_edn.bv_len = 0;
+			BER_BVZERO( &op->orb_edn );
 			op->o_conn->c_authmech = op->o_conn->c_sasl_bind_mech;
-			op->o_conn->c_sasl_bind_mech.bv_val = NULL;
-			op->o_conn->c_sasl_bind_mech.bv_len = 0;
+			BER_BVZERO( &op->o_conn->c_sasl_bind_mech );
 			op->o_conn->c_sasl_bind_in_progress = 0;
 
 			op->o_conn->c_sasl_ssf = op->orb_ssf;
@@ -522,22 +519,10 @@ do_bind(
 	 */
 
 	if ( (op->o_bd = select_backend( &op->o_req_ndn, 0, 0 )) == NULL ) {
-		if ( default_referral ) {
-			rs->sr_ref = referral_rewrite( default_referral,
-				NULL, &op->o_req_dn, LDAP_SCOPE_DEFAULT );
-			if (!rs->sr_ref) rs->sr_ref = default_referral;
-
-			rs->sr_err = LDAP_REFERRAL;
-			send_ldap_result( op, rs );
-
-			if (rs->sr_ref != default_referral) ber_bvarray_free( rs->sr_ref );
-
-		} else {
-			/* noSuchObject is not allowed to be returned by bind */
-			rs->sr_err = LDAP_INVALID_CREDENTIALS;
-			send_ldap_result( op, rs );
-		}
-
+		/* don't return referral for bind requests */
+		/* noSuchObject is not allowed to be returned by bind */
+		rs->sr_err = LDAP_INVALID_CREDENTIALS;
+		send_ldap_result( op, rs );
 		goto cleanup;
 	}
 

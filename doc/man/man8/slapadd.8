@@ -1,5 +1,5 @@
 .TH SLAPADD 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man8/slapadd.8,v 1.15.2.5 2004/02/23 22:08:04 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man8/slapadd.8,v 1.15.2.7 2004/07/25 21:53:13 hyc Exp $
 .\" Copyright 1998-2004 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
@@ -18,8 +18,6 @@ slapadd \- Add entries to a SLAPD database
 .B [\-i rid1,rid2,...]
 .B [\-f slapd.conf]
 .B [\-l ldif-file]
-.B 
-.LP
 .SH DESCRIPTION
 .LP
 .B Slapadd
@@ -113,7 +111,7 @@ use
 .BR ldapadd (1)
 when adding new entries into an existing directory.
 .SH EXAMPLES
-To import a entries specified in file
+To import the entries specified in file
 .B ldif
 into your
 .BR slapd (8)

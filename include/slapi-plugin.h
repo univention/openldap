@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/slapi-plugin.h,v 1.20.2.6 2004/01/01 18:16:28 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/slapi-plugin.h,v 1.20.2.8 2004/09/03 23:17:53 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -52,9 +52,9 @@ int slapi_entry_attr_merge( Slapi_Entry *e, char *type, struct berval **vals );
 int slapi_entry_attr_find( Slapi_Entry *e, char *type, Slapi_Attr **attr );
 char *slapi_entry_attr_get_charptr( const Slapi_Entry *e, const char *type );
 int slapi_entry_attr_get_int( const Slapi_Entry *e, const char *type );
-int slapi_entry_attr_get_long( const Slapi_Entry *e, const char *type );
-int slapi_entry_attr_get_uint( const Slapi_Entry *e, const char *type );
-int slapi_entry_attr_get_ulong( const Slapi_Entry *e, const char *type );
+long slapi_entry_attr_get_long( const Slapi_Entry *e, const char *type );
+unsigned int slapi_entry_attr_get_uint( const Slapi_Entry *e, const char *type );
+unsigned long slapi_entry_attr_get_ulong( const Slapi_Entry *e, const char *type );
 int slapi_attr_get_values( Slapi_Attr *attr, struct berval ***vals );
 char *slapi_dn_normalize( char *dn );
 char *slapi_dn_normalize_case( char *dn );
@@ -143,6 +143,7 @@ int slapi_valueset_next_value( Slapi_ValueSet *vs, int index, Slapi_Value **v);
 int slapi_valueset_count( const Slapi_ValueSet *vs);
 void slapi_valueset_set_valueset(Slapi_ValueSet *vs1, const Slapi_ValueSet *vs2);
 
+/* locks and synchronization */
 typedef struct slapi_mutex	Slapi_Mutex;
 typedef struct slapi_condvar	Slapi_CondVar;
 Slapi_Mutex *slapi_new_mutex( void );
@@ -153,6 +154,10 @@ Slapi_CondVar *slapi_new_condvar( Slapi_Mutex *mutex );
 void slapi_destroy_condvar( Slapi_CondVar *cvar );
 int slapi_wait_condvar( Slapi_CondVar *cvar, struct timeval *timeout );
 int slapi_notify_condvar( Slapi_CondVar *cvar, int notify_all );
+
+/* thread-safe LDAP connections */
+LDAP *slapi_ldap_init( char *ldaphost, int ldapport, int secure, int shared );
+void slapi_ldap_unbind( LDAP *ld );
 
 char *slapi_ch_malloc( unsigned long size );
 void slapi_ch_free( void **ptr );
@@ -499,12 +504,21 @@ void slapi_set_object_extension(int objecttype, void *object,
 #define SLAPI_RESULT_TEXT                       882
 #define SLAPI_RESULT_MATCHED                    883
 
+/* managedsait control */
+#define SLAPI_MANAGEDSAIT       		1000
+
 /* audit plugin defines */
 #define SLAPI_PLUGIN_AUDIT_DATA                1100
 #define SLAPI_PLUGIN_AUDIT_FN                  1101
 
-/* managedsait control */
-#define SLAPI_MANAGEDSAIT       		1000
+/* backend_group extension */
+#define SLAPI_X_PLUGIN_PRE_GROUP_FN		1202 
+#define SLAPI_X_PLUGIN_POST_GROUP_FN		1203
+
+#define SLAPI_X_GROUP_ENTRY			1250 /* group entry */
+#define SLAPI_X_GROUP_ATTRIBUTE			1251 /* member attribute */
+#define SLAPI_X_GROUP_OPERATION_DN		1252 /* asserted value */
+#define SLAPI_X_GROUP_TARGET_ENTRY		1253 /* target entry */
 
 /* config stuff */
 #define SLAPI_CONFIG_FILENAME			40

@@ -15,4 +15,4 @@ directory may be stale, expired, or otherwise out of date.
 Please go to <http://www.ietf.org/> for latest revisions (and
 status).
 
-$OpenLDAP: pkg/ldap/doc/drafts/README,v 1.7.4.1 2003/12/15 22:05:19 kurt Exp $
+$OpenLDAP: pkg/ldap/doc/drafts/README,v 1.7.4.4 2004/10/09 01:02:28 kurt Exp $

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.10.2.10 2004/06/08 19:36:54 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.10.2.12 2004/07/17 14:27:00 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2004 The OpenLDAP Foundation.
@@ -869,8 +869,8 @@ remove_query_data (
 	op->o_req_ndn = op->o_bd->be_nsuffix[0];
 	op->ors_scope = LDAP_SCOPE_SUBTREE;
 	op->ors_deref = LDAP_DEREF_NEVER;
-	op->ors_slimit = -1;
-	op->ors_tlimit = -1;
+	op->ors_slimit = SLAP_NO_LIMIT;
+	op->ors_tlimit = SLAP_NO_LIMIT;
 	op->ors_filter = &filter;
 	op->ors_filterstr.bv_val = filter_str;
 	op->ors_filterstr.bv_len = strlen(filter_str);
@@ -1866,12 +1866,7 @@ proxy_cache_open(
 	cache_manager *cm = on->on_bi.bi_private;
 	int rc = 0;
 
-	if ( cm->db.bd_info->bi_db_open ) {
-		cm->db.be_pending_csn_list = (struct be_pcl *)
-							ch_calloc( 1, sizeof( struct be_pcl ));
-		LDAP_TAILQ_INIT( cm->db.be_pending_csn_list );
-		rc = cm->db.bd_info->bi_db_open( &cm->db );
-	}
+	rc = backend_startup_one( &cm->db );
 
 	/* There is no runqueue in TOOL mode */
 	if ( slapMode & SLAP_SERVER_MODE ) {

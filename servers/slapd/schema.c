@@ -1,5 +1,5 @@
 /* schema.c - routines to manage schema definitions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema.c,v 1.90.2.3 2004/01/01 18:16:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema.c,v 1.90.2.4 2004/08/30 15:52:51 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -65,27 +65,20 @@ schema_info( Entry **entry, const char **text )
 	ber_dupbv( &e->e_nname, &global_schemandn );
 	e->e_private = NULL;
 
-	vals[0].bv_val = "subentry";
-	vals[0].bv_len = sizeof("subentry")-1;
-	if( attr_merge_one( e, ad_structuralObjectClass, vals, vals ) )
-	{
+	BER_BVSTR( &vals[0], "subentry" );
+	if( attr_merge_one( e, ad_structuralObjectClass, vals, NULL ) ) {
 		/* Out of memory, do something about it */
 		entry_free( e );
 		*text = "out of memory";
 		return LDAP_OTHER;
 	}
 
-	vals[0].bv_val = "top";
-	vals[0].bv_len = sizeof("top")-1;
-	vals[1].bv_val = "subentry";
-	vals[1].bv_len = sizeof("subentry")-1;
-	vals[2].bv_val = "subschema";
-	vals[2].bv_len = sizeof("subschema")-1;
-	vals[3].bv_val = "extensibleObject";
-	vals[3].bv_len = sizeof("extensibleObject")-1;
-	vals[4].bv_val = NULL;
-	if( attr_merge( e, ad_objectClass, vals, vals ) )
-	{
+	BER_BVSTR( &vals[0], "top" );
+	BER_BVSTR( &vals[1], "subentry" );
+	BER_BVSTR( &vals[2], "subschema" );
+	BER_BVSTR( &vals[3], "extensibleObject" );
+	BER_BVZERO( &vals[4] );
+	if ( attr_merge( e, ad_objectClass, vals, NULL ) ) {
 		/* Out of memory, do something about it */
 		entry_free( e );
 		*text = "out of memory";
@@ -121,8 +114,7 @@ schema_info( Entry **entry, const char **text )
 		nvals[0].bv_len = global_schemandn.bv_len -
 			(nvals[0].bv_val - global_schemandn.bv_val);
 
-		if( attr_merge_one( e, desc, vals, nvals ) )
-		{
+		if ( attr_merge_one( e, desc, vals, nvals ) ) {
 			/* Out of memory, do something about it */
 			entry_free( e );
 			*text = "out of memory";
@@ -162,15 +154,13 @@ schema_info( Entry **entry, const char **text )
 		vals[0].bv_val = timebuf;
 		vals[0].bv_len = strlen( timebuf );
 
-		if( attr_merge_one( e, ad_createTimestamp, vals, vals ) )
-		{
+		if( attr_merge_one( e, ad_createTimestamp, vals, NULL ) ) {
 			/* Out of memory, do something about it */
 			entry_free( e );
 			*text = "out of memory";
 			return LDAP_OTHER;
 		}
-		if( attr_merge_one( e, ad_modifyTimestamp, vals, vals ) )
-		{
+		if( attr_merge_one( e, ad_modifyTimestamp, vals, NULL ) ) {
 			/* Out of memory, do something about it */
 			entry_free( e );
 			*text = "out of memory";

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.165.2.15 2004/04/12 18:20:12 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.165.2.17 2004/09/12 20:22:39 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -483,6 +483,7 @@ slap_auxprop_lookup(
 			op.o_req_dn = op.o_req_ndn;
 			op.ors_scope = LDAP_SCOPE_BASE;
 			op.ors_deref = LDAP_DEREF_NEVER;
+			op.ors_tlimit = SLAP_NO_LIMIT;
 			op.ors_slimit = 1;
 			op.ors_filter = &generic_filter;
 			op.ors_filterstr = generic_filterstr;
@@ -568,7 +569,7 @@ slap_auxprop_store(
 
 	if ( rc == LDAP_SUCCESS ) {
 		rc = slap_mods_opattrs( &op, modlist, modtail, &text, textbuf,
-			textlen );
+			textlen, 1 );
 	}
 
 	if ( rc == LDAP_SUCCESS ) {

@@ -1,5 +1,5 @@
 /* dn2id.c - routines to deal with the dn2id index */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2id.c,v 1.84.2.7 2004/03/18 01:01:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2id.c,v 1.84.2.10 2004/07/18 10:37:48 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -382,7 +382,6 @@ bdb_dn2id_children(
 	((char *)key.data)[0] = DN_ONE_PREFIX;
 	AC_MEMCPY( &((char *)key.data)[1], e->e_nname.bv_val, key.size - 1 );
 
-#ifdef SLAP_IDL_CACHE
 	if ( bdb->bi_idl_cache_size ) {
 		rc = bdb_idl_cache_get( bdb, db, &key, NULL );
 		if ( rc != LDAP_NO_SUCH_OBJECT ) {
@@ -390,7 +389,6 @@ bdb_dn2id_children(
 			return rc;
 		}
 	}
-#endif
 	/* we actually could do a empty get... */
 	DBTzero( &data );
 	data.data = &id;
@@ -519,8 +517,8 @@ hdb_dup_compare(
 	const DBT *curkey
 )
 {
-	char *u = (char *)&(((diskNode *)(usrkey->data))->nrdnlen);
-	char *c = (char *)&(((diskNode *)(curkey->data))->nrdnlen);
+	signed char *u = (signed char *)&(((diskNode *)(usrkey->data))->nrdnlen);
+	signed char *c = (signed char *)&(((diskNode *)(curkey->data))->nrdnlen);
 	int rc, i;
 
 	/* data is not aligned, cannot compare directly */
@@ -630,11 +628,21 @@ hdb_dn2id_add(
 	key.size = sizeof(ID);
 	key.flags = DB_DBT_USERMEM;
 
-#ifdef SLAP_IDL_CACHE
+	/* Need to make dummy root node once. Subsequent attempts
+	 * will fail harmlessly.
+	 */
+	if ( eip->bei_id == 0 ) {
+		diskNode dummy = {0};
+		data.data = &dummy;
+		data.size = sizeof(diskNode);
+		data.flags = DB_DBT_USERMEM;
+
+		db->put( db, txn, &key, &data, DB_NODUPDATA );
+	}
+
 	if ( bdb->bi_idl_cache_size ) {
 		bdb_idl_cache_del( bdb, db, &key );
 	}
-#endif
 	data.data = d;
 	data.size = sizeof(diskNode) + rlen + nrlen;
 	data.flags = DB_DBT_USERMEM;
@@ -680,11 +688,9 @@ hdb_dn2id_delete(
 	data.dlen = data.size;
 	data.flags = DB_DBT_USERMEM | DB_DBT_PARTIAL;
 
-#ifdef SLAP_IDL_CACHE
 	if ( bdb->bi_idl_cache_size ) {
 		bdb_idl_cache_del( bdb, db, &key );
 	}
-#endif
 	rc = db->cursor( db, txn, &cursor, bdb->bi_db_opflags );
 	if ( rc ) return rc;
 
@@ -851,14 +857,12 @@ hdb_dn2id_children(
 	key.data = &e->e_id;
 	key.flags = DB_DBT_USERMEM;
 
-#ifdef SLAP_IDL_CACHE
 	if ( bdb->bi_idl_cache_size ) {
 		rc = bdb_idl_cache_get( bdb, db, &key, NULL );
 		if ( rc != LDAP_NO_SUCH_OBJECT ) {
 			return rc;
 		}
 	}
-#endif
 	DBTzero(&data);
 	data.data = &d;
 	data.ulen = sizeof(d);
@@ -926,7 +930,6 @@ hdb_dn2idl_internal(
 	struct dn2id_cookie *cx
 )
 {
-#ifdef SLAP_IDL_CACHE
 	if ( cx->bdb->bi_idl_cache_size ) {
 		cx->rc = bdb_idl_cache_get(cx->bdb, cx->db, &cx->key, cx->tmp);
 		if ( cx->rc == DB_NOTFOUND ) {
@@ -936,7 +939,6 @@ hdb_dn2idl_internal(
 			goto gotit;
 		}
 	}
-#endif
 	BDB_IDL_ZERO( cx->tmp );
 
 	if ( !cx->ei ) {
@@ -1032,11 +1034,9 @@ hdb_dn2idl_internal(
 	}
 
 saveit:
-#ifdef SLAP_IDL_CACHE
 	if ( cx->bdb->bi_idl_cache_max_size ) {
 		bdb_idl_cache_put( cx->bdb, cx->db, &cx->key, cx->tmp, cx->rc );
 	}
-#endif
 	;
 gotit:
 	if ( !BDB_IDL_IS_ZERO( cx->tmp )) {
@@ -1102,7 +1102,7 @@ hdb_dn2idl(
 #endif
 
 	cx.id = e->e_id;
-	cx.ei = BEI(e);
+	cx.ei = e->e_id ? BEI(e) : &bdb->bi_cache.c_dntree;
 	cx.bdb = bdb;
 	cx.db = cx.bdb->bi_dn2id->bdi_db;
 	cx.prefix = op->ors_scope == LDAP_SCOPE_ONELEVEL

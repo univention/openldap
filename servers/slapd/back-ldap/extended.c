@@ -1,5 +1,5 @@
 /* extended.c - ldap backend extended routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/extended.c,v 1.9.2.6 2004/04/12 16:00:58 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/extended.c,v 1.9.2.7 2004/07/09 16:32:00 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2004 The OpenLDAP Foundation.
@@ -145,6 +145,9 @@ ldap_back_exop_passwd(
 	if (rc == LDAP_SUCCESS) {
 		if (ldap_result(lc->ld, msgid, 1, NULL, &res) == -1) {
 			ldap_get_option(lc->ld, LDAP_OPT_ERROR_NUMBER, &rc);
+			ldap_back_freeconn( op, lc );
+			lc = NULL;
+
 		} else {
 			/* sigh. parse twice, because parse_passwd doesn't give
 			 * us the err / match / msg info.

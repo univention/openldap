@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.88.2.16 2004/06/04 03:39:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.88.2.19 2004/09/01 20:53:54 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2004 The OpenLDAP Foundation.
@@ -749,9 +749,11 @@ exact_match:
 #endif
 	op.o_conn = opx->o_conn;
 	op.o_connid = opx->o_connid;
-	op.o_req_dn = op.o_req_ndn;
+	/* use req_ndn as req_dn instead of non-pretty base of uri */
+	if( !BER_BVISNULL( &op.o_req_dn ) ) ch_free( op.o_req_dn.bv_val );
+	ber_dupbv_x( &op.o_req_dn, &op.o_req_ndn, op.o_tmpmemctx );
 	op.oq_search.rs_slimit = 1;
-	op.oq_search.rs_tlimit = -1;
+	op.oq_search.rs_tlimit = SLAP_NO_LIMIT;
 	op.o_sync_slog_size = -1;
 
 	op.o_bd->be_search( &op, &rs );
@@ -763,8 +765,8 @@ exact_match:
 	}
 
 CONCLUDED:
-	if( op.o_req_dn.bv_val && op.o_req_dn.bv_val != op.o_req_ndn.bv_val ) ch_free( op.o_req_dn.bv_val );
-	if( op.o_req_ndn.bv_val ) sl_free( op.o_req_ndn.bv_val, opx->o_tmpmemctx );
+	if( !BER_BVISNULL( &op.o_req_dn ) ) sl_free( op.o_req_dn.bv_val, opx->o_tmpmemctx );
+	if( !BER_BVISNULL( &op.o_req_ndn ) ) sl_free( op.o_req_ndn.bv_val, opx->o_tmpmemctx );
 	if( op.oq_search.rs_filter ) filter_free_x( opx, op.oq_search.rs_filter );
 	if( op.ors_filterstr.bv_val ) ch_free( op.ors_filterstr.bv_val );
 
@@ -808,8 +810,7 @@ slap_sasl_check_authz( Operation *op,
 	   assertDN->bv_val, ad->ad_cname.bv_val, searchDN->bv_val);
 #endif
 
-	rc = backend_attribute( op, NULL,
-		searchDN, ad, &vals );
+	rc = backend_attribute( op, NULL, searchDN, ad, &vals, ACL_AUTH );
 	if( rc != LDAP_SUCCESS ) goto COMPLETE;
 
 	/* Check if the *assertDN matches any **vals */
@@ -943,9 +944,11 @@ void slap_sasl2dn( Operation *opx,
 #endif
 	op.oq_search.rs_deref = LDAP_DEREF_NEVER;
 	op.oq_search.rs_slimit = 1;
-	op.oq_search.rs_tlimit = -1;
+	op.oq_search.rs_tlimit = SLAP_NO_LIMIT;
 	op.oq_search.rs_attrsonly = 1;
-	op.o_req_dn = op.o_req_ndn;
+	/* use req_ndn as req_dn instead of non-pretty base of uri */
+	if( !BER_BVISNULL( &op.o_req_dn ) ) ch_free( op.o_req_dn.bv_val );
+	ber_dupbv_x( &op.o_req_dn, &op.o_req_ndn, op.o_tmpmemctx );
 
 	op.o_bd->be_search( &op, &rs );
 	
@@ -953,8 +956,8 @@ FINISHED:
 	if( sasldn->bv_len ) {
 		opx->o_conn->c_authz_backend = op.o_bd;
 	}
-	if( op.o_req_dn.bv_len ) ch_free( op.o_req_dn.bv_val );
-	if( op.o_req_ndn.bv_len ) sl_free( op.o_req_ndn.bv_val, opx->o_tmpmemctx );
+	if( !BER_BVISNULL( &op.o_req_dn ) ) sl_free( op.o_req_dn.bv_val, opx->o_tmpmemctx );
+	if( !BER_BVISNULL( &op.o_req_ndn ) ) sl_free( op.o_req_ndn.bv_val, opx->o_tmpmemctx );
 	if( op.oq_search.rs_filter ) filter_free_x( opx, op.oq_search.rs_filter );
 	if( op.ors_filterstr.bv_len ) ch_free( op.ors_filterstr.bv_val );
 

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_utils.c,v 1.86.2.11 2004/04/12 18:20:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_utils.c,v 1.86.2.14 2004/09/03 23:17:54 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2002-2004 The OpenLDAP Foundation.
@@ -348,7 +348,7 @@ slapi_entry_attr_get_int( const Slapi_Entry *e, const char *type )
 #endif
 }
 
-int
+long
 slapi_entry_attr_get_long( const Slapi_Entry *e, const char *type )
 {
 #ifdef LDAP_SLAPI
@@ -373,7 +373,7 @@ slapi_entry_attr_get_long( const Slapi_Entry *e, const char *type )
 #endif
 }
 
-int
+unsigned int
 slapi_entry_attr_get_uint( const Slapi_Entry *e, const char *type )
 {
 #ifdef LDAP_SLAPI
@@ -398,7 +398,7 @@ slapi_entry_attr_get_uint( const Slapi_Entry *e, const char *type )
 #endif
 }
 
-int
+unsigned long
 slapi_entry_attr_get_ulong( const Slapi_Entry *e, const char *type )
 {
 #ifdef LDAP_SLAPI
@@ -2638,10 +2638,38 @@ Slapi_Attr *slapi_attr_dup( const Slapi_Attr *attr )
 int slapi_attr_add_value( Slapi_Attr *a, const Slapi_Value *v )
 {
 #ifdef LDAP_SLAPI
-	/*
-	 * FIXME: here we may lose alignment between a_vals/a_nvals
-	 */
-	return value_add_one( &a->a_vals, (Slapi_Value *)v );
+	struct berval nval;
+	struct berval *nvalp;
+	int rc;
+	AttributeDescription *desc = a->a_desc;
+
+	if ( desc->ad_type->sat_equality &&
+	     desc->ad_type->sat_equality->smr_normalize ) {
+		rc = (*desc->ad_type->sat_equality->smr_normalize)(
+			SLAP_MR_VALUE_OF_ATTRIBUTE_SYNTAX,
+			desc->ad_type->sat_syntax,
+			desc->ad_type->sat_equality,
+			(Slapi_Value *)v, &nval, NULL );
+		if ( rc != LDAP_SUCCESS ) {
+			return rc;
+		}
+		nvalp = &nval;
+	} else {
+		nvalp = NULL;
+	}
+
+	rc = value_add_one( &a->a_vals, (Slapi_Value *)v );
+	if ( rc == 0 && nvalp != NULL ) {
+		rc = value_add_one( &a->a_nvals, nvalp );
+	} else {
+		a->a_nvals = a->a_vals;
+	}
+
+	if ( nvalp != NULL ) {
+		slapi_ch_free_string( &nval.bv_val );
+	}
+
+	return rc;
 #else
 	return -1;
 #endif
@@ -3422,6 +3450,10 @@ Modifications *slapi_int_ldapmods2modifications (LDAPMod **mods)
 	Modifications *modlist = NULL, **modtail;
 	LDAPMod **modp;
 
+	if ( mods == NULL ) {
+		return NULL;
+	}
+
 	modtail = &modlist;
 
 	for( modp = mods; *modp != NULL; modp++ ) {
@@ -3584,7 +3616,7 @@ int slapi_int_compute_output_ber(computed_attr_context *c, Slapi_Attr *a, Slapi_
 		return 1;
 	}
 
-	if ( !c->cac_attrsonly ) {
+	if ( !c->cac_attrsonly && a->a_vals != NULL ) {
 		for ( i = 0; a->a_vals[i].bv_val != NULL; i++ ) {
 			if ( !access_allowed( op, e,
 				desc, &a->a_vals[i], ACL_READ, &c->cac_acl_state)) {
