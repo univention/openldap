@@ -12,6 +12,10 @@ openldap2 (2.1.21-2) unstable; urgency=low
       back_ldap now included as module.  back_ldap and back_meta appear
       to load fine, though order may matter.  Closes: #196995.
 
+  * Torsten Landschoff <torsten@debian.org>:
+    + doc/man/man8/slapd.8: Refer to slapd.conf(5) for a description of 
+      the debugging level (closes: #176980).
+
  --
 
 openldap2 (2.1.21-1) unstable; urgency=low
@@ -61,7 +65,7 @@ openldap2 (2.1.21-1) unstable; urgency=low
     + debian/slapd.postinst: fixed typos and check for the existence of
       slapd.conf before reading it.
 
- --
+ -- Torsten Landschoff <torsten@debian.org>  Thu, 19 Jun 2003 17:35:32 +0200
 
 openldap2 (2.1.17-3) unstable; urgency=low
 
