@@ -27,7 +27,7 @@ builddir	:= $(rootdir)/debian/build
 
 $(builddir)/Makefile:
 	mkdir -p $(builddir)
-	autoconf && autoheader && cd $(builddir) && CFLAGS="$(CFLAGS)" $(rootdir)/configure \
+	cd $(builddir) && CFLAGS="$(CFLAGS)" $(rootdir)/configure \
 		$(CONFIG) 
 	perl debian/check_config
 	$(MAKE) -C $(builddir) depend

@@ -26755,11 +26755,12 @@ echo "$as_me: error: Kerberos detection failed" >&2;}
 fi
 
 ol_link_tls=no
-if test $ol_with_tls != no ; then
 
+if test $ol_with_tls = yes \
+	-o $ol_with_tls = auto \
+	-o $ol_with_tls = gnutls ; then
 
-
-for ac_header in openssl/ssl.h ssl.h gnutls/gnutls.h
+for ac_header in gnutls/gnutls.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
@@ -26980,8 +26981,165 @@ if test $ac_cv_lib_gnutls_gnutls_init = yes; then
 
 fi
 
+	fi
+fi
 
-	elif test $ac_cv_header_openssl_ssl_h = yes \
+if test $ol_with_tls = yes \
+	-o $ol_with_tls = auto \
+	-o $ol_with_tls = ssleay \
+	-o $ol_with_tls = openssl ; then
+
+
+for ac_header in openssl/ssl.h ssl.h
+do
+as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
+else
+  # Is the header compilable?
+echo "$as_me:$LINENO: checking $ac_header usability" >&5
+echo $ECHO_N "checking $ac_header usability... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <$ac_header>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_header_compiler=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6
+
+# Is the header present?
+echo "$as_me:$LINENO: checking $ac_header presence" >&5
+echo $ECHO_N "checking $ac_header presence... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <$ac_header>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
+  yes:no: )
+    { echo "$as_me:$LINENO: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the compiler's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the compiler's result" >&2;}
+    ac_header_preproc=yes
+    ;;
+  no:yes:* )
+    { echo "$as_me:$LINENO: WARNING: $ac_header: present but cannot be compiled" >&5
+echo "$as_me: WARNING: $ac_header: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header:     check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: $ac_header:     check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: see the Autoconf documentation" >&5
+echo "$as_me: WARNING: $ac_header: see the Autoconf documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&5
+echo "$as_me: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: $ac_header: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: $ac_header: in the future, the compiler will take precedence" >&5
+echo "$as_me: WARNING: $ac_header: in the future, the compiler will take precedence" >&2;}
+    (
+      cat <<\_ASBOX
+## ------------------------------------------ ##
+## Report this to the AC_PACKAGE_NAME lists.  ##
+## ------------------------------------------ ##
+_ASBOX
+    ) |
+      sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+echo "$as_me:$LINENO: checking for $ac_header" >&5
+echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
+if eval "test \"\${$as_ac_Header+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  eval "$as_ac_Header=\$ac_header_preproc"
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
+
+fi
+if test `eval echo '${'$as_ac_Header'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+
+done
+
+
+	if test $ac_cv_header_openssl_ssl_h = yes \
 		-o $ac_cv_header_ssl_h = yes ; then
 		echo "$as_me:$LINENO: checking for SSLeay_add_ssl_algorithms in -lssl" >&5
 echo $ECHO_N "checking for SSLeay_add_ssl_algorithms in -lssl... $ECHO_C" >&6
@@ -27047,7 +27205,8 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_ssl_SSLeay_add_ssl_algorithms" >&5
 echo "${ECHO_T}$ac_cv_lib_ssl_SSLeay_add_ssl_algorithms" >&6
 if test $ac_cv_lib_ssl_SSLeay_add_ssl_algorithms = yes; then
-  have_ssleay=yes
+
+			have_ssleay=yes
 			need_rsaref=no
 else
   have_ssleay=no
@@ -27119,7 +27278,8 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_ssl_SSL_library_init" >&5
 echo "${ECHO_T}$ac_cv_lib_ssl_SSL_library_init" >&6
 if test $ac_cv_lib_ssl_SSL_library_init = yes; then
-  have_ssleay=yes
+
+				have_ssleay=yes
 				need_rsaref=no
 else
   have_ssleay=no
@@ -27192,7 +27352,8 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_ssl_ssl3_accept" >&5
 echo "${ECHO_T}$ac_cv_lib_ssl_ssl3_accept" >&6
 if test $ac_cv_lib_ssl_ssl3_accept = yes; then
-  have_ssleay=yes
+
+				have_ssleay=yes
 				need_rsaref=yes
 else
   have_ssleay=no
@@ -27223,10 +27384,6 @@ _ACEOF
 			fi
 		fi
 	fi
-
-else
-	{ echo "$as_me:$LINENO: WARNING: TLS data protection not supported!" >&5
-echo "$as_me: WARNING: TLS data protection not supported!" >&2;}
 fi
 
 if test $ol_link_tls = yes ; then
@@ -27236,16 +27393,12 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 
-elif test $ol_with_tls = auto ; then
-	{ echo "$as_me:$LINENO: WARNING: Could not locate TLS/SSL package" >&5
-echo "$as_me: WARNING: Could not locate TLS/SSL package" >&2;}
-	{ echo "$as_me:$LINENO: WARNING: TLS data protection not supported!" >&5
-echo "$as_me: WARNING: TLS data protection not supported!" >&2;}
-
 elif test $ol_with_tls != no ; then
 	{ { echo "$as_me:$LINENO: error: Could not locate TLS/SSL package" >&5
 echo "$as_me: error: Could not locate TLS/SSL package" >&2;}
    { (exit 1); exit 1; }; }
+	{ echo "$as_me:$LINENO: WARNING: TLS data protection not supported!" >&5
+echo "$as_me: WARNING: TLS data protection not supported!" >&2;}
 fi
 
 if test $ol_enable_lmpasswd != no; then

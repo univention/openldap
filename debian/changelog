@@ -7,6 +7,12 @@ openldap2 (2.1.30-6) experimental; urgency=low
   * debian/move_files: Move the ucdata files into the slapd package (which
     is no longer build) as libldap2 (where they used to be) does not use
     them (closes: #298270).
+  * Apply patch from #278875 to allow building against OpenSSL if 
+    requested by user (closes: #278875). Run autoconf to recreate configure.
+  * debian/check_config: Make check more robust for different autoconf
+    versions.
+  * debian/rules: Remove automatic invocation of autoheader and autoconf
+    as they failed here.
 
  --
 

@@ -1228,37 +1228,49 @@ fi
 dnl ----------------------------------------------------------------
 dnl TLS/SSL
 ol_link_tls=no
-if test $ol_with_tls != no ; then
-	AC_CHECK_HEADERS(openssl/ssl.h ssl.h gnutls/gnutls.h)
+
+if test $ol_with_tls = yes \
+	-o $ol_with_tls = auto \
+	-o $ol_with_tls = gnutls ; then
+	AC_CHECK_HEADERS(gnutls/gnutls.h)
 
 	if test $ac_cv_header_gnutls_gnutls_h = yes ; then
-		AC_CHECK_LIB(gnutls, gnutls_init,
-			[
+		AC_CHECK_LIB(gnutls, gnutls_init, [
 			ol_with_tls=found
 			ol_link_tls=yes
 			TLS_LIBS="`libgnutls-config --libs`"
 			], [],
 			[-ltasn1 -lgcrypt])
+	fi
+fi
 
-	elif test $ac_cv_header_openssl_ssl_h = yes \
+if test $ol_with_tls = yes \
+	-o $ol_with_tls = auto \
+	-o $ol_with_tls = ssleay \
+	-o $ol_with_tls = openssl ; then
+	AC_CHECK_HEADERS(openssl/ssl.h ssl.h)
+
+	if test $ac_cv_header_openssl_ssl_h = yes \
 		-o $ac_cv_header_ssl_h = yes ; then
-		AC_CHECK_LIB(ssl, SSLeay_add_ssl_algorithms, 
-			[have_ssleay=yes
+		AC_CHECK_LIB(ssl, SSLeay_add_ssl_algorithms, [
+			have_ssleay=yes
 			need_rsaref=no],
 			[have_ssleay=no],
 			[-lcrypto])
 			
 		if test $have_ssleay = no ; then
-			AC_CHECK_LIB(ssl, SSL_library_init,
-				[have_ssleay=yes
-				need_rsaref=no], [have_ssleay=no],
+			AC_CHECK_LIB(ssl, SSL_library_init, [
+				have_ssleay=yes
+				need_rsaref=no],
+				[have_ssleay=no],
 				[-lcrypto])
 		fi
 
 		if test $have_ssleay = no ; then
-			AC_CHECK_LIB(ssl, ssl3_accept, 
-				[have_ssleay=yes
-				need_rsaref=yes], [have_ssleay=no],
+			AC_CHECK_LIB(ssl, ssl3_accept, [
+				have_ssleay=yes
+				need_rsaref=yes],
+				[have_ssleay=no],
 				[-lcrypto -lRSAglue -lrsaref])
 		fi
 
@@ -1266,12 +1278,12 @@ if test $ol_with_tls != no ; then
 			ol_with_tls=found
 			ol_link_tls=yes
 
-			AC_DEFINE(HAVE_SSLEAY, 1, 
-				[define if you have SSLeay or OpenSSL])
+			AC_DEFINE(HAVE_SSLEAY, 1, [
+				define if you have SSLeay or OpenSSL])
 
 			if test $need_rsaref = yes; then
-				AC_DEFINE(HAVE_RSAREF, 1, 
-					[define if you have RSAref])
+				AC_DEFINE(HAVE_RSAREF, 1, [
+					define if you have RSAref])
 
 				TLS_LIBS="-lssl -lcrypto -lRSAglue -lrsaref"
 			else
@@ -1279,20 +1291,14 @@ if test $ol_with_tls != no ; then
 			fi
 		fi
 	fi
-
-else
-	AC_WARN([TLS data protection not supported!])
 fi
 
 if test $ol_link_tls = yes ; then
 	AC_DEFINE(HAVE_TLS, 1, [define if you have TLS])
 
-elif test $ol_with_tls = auto ; then
-	AC_WARN([Could not locate TLS/SSL package])
-	AC_WARN([TLS data protection not supported!])
-
 elif test $ol_with_tls != no ; then
 	AC_ERROR([Could not locate TLS/SSL package])
+	AC_WARN([TLS data protection not supported!])
 fi
 
 dnl ----------------------------------------------------------------
