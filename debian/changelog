@@ -13,6 +13,9 @@ openldap2 (2.1.17-2) unstable; urgency=low
       latter does not seem to work (reported by Daniel Lutz).
     + debian/control: Add Replaces: entry for openldapd since ldif.5.gz
       was included in the potato package of that name (closes: #190660).
+    + debian/control: Tighten the build dependency on libtldl3-dev as
+      versions before 1.4.3 required the .la file for dynamic binding
+      (thanks to Josip Rodin for pointing this out).
 
  -- Torsten Landschoff <torsten@debian.org>  Sat, 19 Apr 2003 02:28:32 +0200
 
