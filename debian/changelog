@@ -34,6 +34,8 @@ openldap2 (2.1.17-3) unstable; urgency=low
     + debian/control: Enforce libldap2 to be the same version as slapd
       as slapd (legitimately) uses internal functions of that library
       (closes: #190164).
+    + debian/slapd.postinst: Fix the regexp for finding the database
+      definitions.
 
   * Steve Langasek <vorlon@debian.org>:
     + debian/slapd.preinst: don't use debconf or ldapsearch in the

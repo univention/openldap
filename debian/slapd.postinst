@@ -111,7 +111,7 @@ then
 
 modulepath      /usr/lib/ldap
 EOF
-    sed -n 's/^database[[:space:]]+\([a-z]+\)/moduleload      back_\1/p' \
+    sed -n 's/^database[[:space:]]\+\([a-z]\+\)/moduleload      back_\1/p' \
     	/etc/ldap/slapd.conf >>$TMPFILE
     echo >>$TMPFILE
     cat /etc/ldap/slapd.conf >>$TMPFILE
