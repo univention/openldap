@@ -11,6 +11,8 @@ openldap2 (2.1.17-2) unstable; urgency=low
       Andre Luis Lopes (closes: #189933).
     + Use [[:space:]] instead of [\t ] in sed invocation since the 
       latter does not seem to work (reported by Daniel Lutz).
+    + debian/control: Add Replaces: entry for openldapd since ldif.5.gz
+      was included in the potato package of that name (closes: #190660).
 
  -- Torsten Landschoff <torsten@debian.org>  Sat, 19 Apr 2003 02:28:32 +0200
 
