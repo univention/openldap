@@ -22,6 +22,8 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
       /var/spool/slurpd (avoids passing it via -t in init.d).
     - servers/{slapd,slurpd}/Makefile.in: Install binaries into sbindir
       instead of libexecdir.
+    - debian/control: Add Stephen Frost to the Uploaders field. Thanks
+      for your help, Stephen!
 
   * Roland Bauerschmidt <rb@debian.org>
     - debian/control:
