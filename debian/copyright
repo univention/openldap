@@ -383,6 +383,8 @@ UoC2
 
 NOTE: The Regents have since retroactively removed the advertising
 clause from above.
+See:
+ftp://ftp.cs.berkeley.edu/pub/4bsd/README.Impt.License.Change
 
 -----------------------------------
 
@@ -395,7 +397,38 @@ UoM
  * may not be used to endorse or promote products derived from this
  * software without specific prior written permission. This software
  * is provided ``as is'' without express or implied warranty.
+---
+After discussing this license with the OpenLDAP Foundation we received
+clarification on it:
+---
 
+  * To: Stephen Frost <sfrost@snowman.net>
+  * Subject: Re: OpenLDAP Licenseing issues
+  * From: "Kurt D. Zeilenga" <Kurt@OpenLDAP.org>
+  * Date: Wed, 28 May 2003 10:55:44 -0700
+  * Cc: Steve Langasek <vorlon@netexpress.net>,debian-legal@lists.debian.org, openldap-devel@OpenLDAP.org
+  * In-reply-to: <20030528162613.GB8524@ns.snowman.net>
+  * Message-id: <5.2.0.9.0.20030528094229.02924780@127.0.0.1>
+  * Old-return-path: <Kurt@OpenLDAP.org>
+
+Steven,
+
+The OpenLDAP Foundation believes it the Regents' statement grants a
+license to redistribute derived works and is confident that the University,
+who is quite aware of our actions (as they actively participate in them),
+does not consider our actions to infringe on their rights.  You are
+welcomed to your opinions. I suggest, however, that before you rely
+on your or other people's opinions (including ours), that you consult
+with a lawyer familiar with applicable law and the particulars of your
+situation.
+
+The Foundation sees no reason for it to expend its limited resources
+seeking clarifications which it believes are unnecessary.  You are,
+of course, welcomed to expend time and energy seeking clarifications
+you think are necessary.  I suggest you contact University's general
+counsel office (http://www.umich.edu/~vpgc/).
+
+Regards, Kurt
 -----------------------------------
 
 
