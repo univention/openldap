@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/ri.c,v 1.21.2.5 2003/03/03 17:10:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/ri.c,v 1.21.2.6 2003/09/09 23:03:14 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -212,6 +212,7 @@ Ri_init(
 
     /* Initialize private data */
     (*ri)->ri_hostname = NULL;
+    (*ri)->ri_uri = NULL;
     (*ri)->ri_ldp = NULL;
     (*ri)->ri_bind_dn = NULL;
     (*ri)->ri_password = NULL;

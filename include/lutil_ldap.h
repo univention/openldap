@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/lutil_ldap.h,v 1.5.2.1 2003/03/03 17:10:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/lutil_ldap.h,v 1.5.2.2 2003/09/29 08:50:56 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
@@ -21,6 +21,10 @@
  */
 
 LDAP_BEGIN_DECL
+
+LDAP_LUTIL_F( void )
+lutil_sasl_freedefs LDAP_P((
+	void *defaults ));
 
 LDAP_LUTIL_F( void * )
 lutil_sasl_defaults LDAP_P((

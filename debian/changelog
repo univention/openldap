@@ -1,6 +1,7 @@
-openldap2 (2.1.22-4) unstable; urgency=low
+openldap2 (2.1.23-1) unstable; urgency=low
 
   * Roland Bauerschmidt <rb@debian.org>:
+    + New upstream version.
     + Applied fix for admin password breakage from Michael Beattie
       <mjb@debian.org>. Closes: #214270.
     + Added Dutch Debconf template translation by cobaco@linux.be.
