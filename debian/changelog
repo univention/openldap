@@ -7,6 +7,8 @@ openldap2 (2.1.17-2) unstable; urgency=low
       libdevel and extra respectively (dinstall message).
     + debian/slapd.preinst: Only query the object classes of the root
       dn if there was no error parsing the config.
+    + Update templates for po-debconf using the patch submitted by 
+      Andre Luis Lopes (closes: #189933).
 
  -- Torsten Landschoff <torsten@debian.org>  Sat, 19 Apr 2003 02:28:32 +0200
 

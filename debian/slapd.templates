@@ -1,51 +1,52 @@
 Template: slapd/domain
 Type: string
-Description: Enter the domain name
+_Description: Enter the domain name
  The domain name is used to construct the base DN of your LDAP directory.
  Entering foo.bar.org will give you the base DN dc=foo, dc=bar, dc=org.
 
 Template: shared/organization
 Type: string
-Description: Enter the name of your organization
- Whatever you enter here will be stored as the name of your organization 
- in the base DN of your LDAP directory.
+_Description: Enter the name of your organization
+ Whatever you enter here will be stored as the name of your organization in
+ the base DN of your LDAP directory.
 
 Template: slapd/admin
 Type: string
-Description: Admin entry
- The admin entry is the entry in the directory which has full read
- and write access. 
+_Description: Admin entry
+ The admin entry is the entry in the directory which has full read and
+ write access.
 
 Template: slapd/password1
 Type: password
-Description: Admin password
+_Description: Admin password
   Please enter the password for the admin entry in your LDAP directory.
 
 Template: slapd/password2
 Type: password
-Description: Verify password
- Please reenter the admin password for your LDAP directory for verification.
+_Description: Verify password
+ Please reenter the admin password for your LDAP directory for
+ verification.
 
 Template: slapd/password_mismatch
 Type: note
-Description: passwords do not match
+_Description: passwords do not match
  You need to enter the admin password twice. Please note that differences
  such as uppercase/lowercase and added whitespace matter.
 
 Template: slapd/purge_database
 Type: boolean
-Description: Do you want your database to be removed when slapd is purged?
+_Description: Do you want your database to be removed when slapd is purged?
 
 Template: slapd/internal/adminpw
 Type: password
-Description: encrypted admin password
+_Description: encrypted admin password
 
 Template: slapd/autoconf_modules
 Type: boolean
 Default: true
-Description: Change configuration to load backend modules
- With OpenLDAP 2.1 backends are not longer built into the server but 
- are instead dynamically loaded at startup. This means that the slapd
+_Description: Change configuration to load backend modules
+ With OpenLDAP 2.1 backends are not longer built into the server but are
+ instead dynamically loaded at startup. This means that the slapd
  configuration has to be changed to load the modules for the backends you
  are using. If you select this option I'll try to fix the configuration for
  you. For more information read /usr/share/doc/slapd/README.Debian.
@@ -53,9 +54,9 @@ Description: Change configuration to load backend modules
 Template: slapd/fix_directory
 Type: boolean
 Default: true
-Description: Fix LDAP directory on upgrade
- The installation scripts of the old OpenLDAP 2.0 packages create a 
- directory that does not conform to the ldap schema. The new version 
- is more strict about this and you won't be able to access your 
- directory after the upgrade without fixing it. If you select this option
- I'll try to fix it for you automagically.
+_Description: Fix LDAP directory on upgrade
+ The installation scripts of the old OpenLDAP 2.0 packages create a
+ directory that does not conform to the ldap schema. The new version is
+ more strict about this and you won't be able to access your directory
+ after the upgrade without fixing it. If you select this option I'll try to
+ fix it for you automagically.
