@@ -59,6 +59,8 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
     - debian/slapd.postinst:
       - properly remove temporary files on errors. Closes: #160412.
       - install init.d link if slapd.conf already exists. Closes: #159542.
+      - run db_stop even if package isn't configured for the first time. This
+        prevents hanging during upgrades.
     - added debian/slapd.default and use it from debian/slapd.init.
       Closes: #160964.
     - added debian/slapd.README.Debian

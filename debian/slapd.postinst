@@ -46,6 +46,8 @@ userPassword: $adminpass
 EOF
 
   echo "done"
+else
+  db_stop
 fi
 
 #DEBHELPER#
