@@ -52,6 +52,10 @@ openldap2 (2.1.21-2) unstable; urgency=low
       suffix to the name of the output file, and add the
       get_database_list function here as well.
 
+  * Roland Bauerschmidt <rb@debian.org>:
+    + debian/rules: call dh_makeshlibs with -plibldap2 rather than just
+      with libldap2
+
  --
 
 openldap2 (2.1.21-1) unstable; urgency=low
