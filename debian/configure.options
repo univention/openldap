@@ -21,6 +21,7 @@
 #   --datadir=DIR           read-only architecture-independent data in DIR
 #                           [PREFIX/share]
 #   --sysconfdir=DIR        read-only single-machine data in DIR [PREFIX/etc]
+--sysconfdir=/etc
 #   --sharedstatedir=DIR    modifiable architecture-independent data in DIR
 #                           [PREFIX/com]
 #   --localstatedir=DIR     modifiable single-machine data in DIR [PREFIX/var]
