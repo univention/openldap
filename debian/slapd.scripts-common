@@ -43,6 +43,25 @@ supported_backend() {
   return 1
 }
 
+# Print out the information about one database
+write_database_info() {
+  backend=$1
+  suffix=$2
+  directory=$3
+
+  if supported_backend "$backend"; then
+    # If no directory was given use the compiled in value
+    if [ -z "$directory" ]; then
+      # TODO: This should be somewhere in /var - needs tweaking of 
+      # configure.options
+      directory=/usr/share/ldap/openldap-data
+    fi
+    echo $backend '"'$suffix'"' '"'$directory'"'
+  else
+    echo "Warning: Backend $backend not supported by automatic upgrade." >&2
+  fi
+}
+
 # Get the list of configured databases from the slapd configuration file
 get_database_list() {
   (merge_logical_lines < $SLAPD_CONF && echo database) | \
@@ -79,4 +98,28 @@ is_initial_configuration() {
     return 0
   fi
   return 1
+}
+
+# Check, if the user wants an LDIF dump of the directory
+# XXX: Currently dumps unconditionally
+ldif_dump_wanted() {
+  return 0
+}
+
+# Ask for the filename of the dump file
+# XXX: Currently just uses /var/backups/ldap/$OLD_VERSION/slapd-${suffix}-slapcat.ldif
+ldif_dump_location() {
+  local suffix=$1
+  echo "/var/backups/ldap/$OLD_VERSION/slapd-${suffix}-slapcat.ldif"
+}
+
+# Create directory for dump file
+create_ldif_dump_location() {
+  # Make our backup directory if it does not exist already
+  if [ -d /var/backups/ldap ]; then
+    chmod 700 /var/backups/ldap
+  else
+    mkdir -p -m 700 /var/backups/ldap
+  fi
+  mkdir -p -m 700 /var/backups/ldap/$OLD_VERSION/
 }

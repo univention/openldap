@@ -6,25 +6,6 @@ set -e
 # various helper functions and $OLD_VERSION and $SLAPD_CONF
 #SCRIPTSCOMMON#
 
-# Print out the information about one database
-write_database_info() {
-  backend=$1
-  suffix=$2
-  directory=$3
-
-  if supported_backend "$backend"; then
-    # If no directory was given use the compiled in value
-    if [ -z "$directory" ]; then
-      # TODO: This should be somewhere in /var - needs tweaking of 
-      # configure.options
-      directory=/usr/share/ldap/openldap-data
-    fi
-    echo $backend '"'$suffix'"' '"'$directory'"'
-  else
-    echo "Warning: Backend $backend not supported by automatic upgrade." >&2
-  fi
-}
-
 # Check if the user wants to configure everything himself
 manual_configuration_wanted() {
   db_get slapd/no_configuration
@@ -83,7 +64,7 @@ create_new_directory() {
   echo -n "Creating initial LDAP directory... "
   touch /var/lib/slapd/suffix_change
 
-  cat <<EOF|slapadd
+  cat <<EOF | slapadd
 dn: $basedn
 objectClass: top
 objectClass: dcObject
@@ -190,6 +171,76 @@ extend_existing_allow_directive() {
   fi
 }
 
+# Check if the preinst slapcat worked or not, if not, go ahead and
+# attempt to slapcat here with the new version of slapcat
+export_database() {
+  suffix="$1"
+  location="$2"
+
+  if [ ! -e "$location" ]; then
+    echo -n "  Dumping directory to $location with new slapcat... "
+    slapcat -b "$suffix" > "$location" || SLAPCAT_FAIL=1
+    if [ "$SLAPCAT_FAIL" = "1" ]; then
+      echo "failed"
+      rm -f "$location"
+      db_input high slapd/upgrade_slapcat_failure || true
+    else
+      echo "done"
+    fi
+  fi
+}
+
+# Fix the directory when upgrading from before 2.1 and the root
+# dn has no structural objectclass
+fix_ldif() {
+  location="$1"
+  fixed_location="$2"
+
+  # We should now have a valid ldif file, created either in the
+  # preinst or above.  If we don't, then the user has been
+  # notified and just give up.
+
+  if [ -e "$location" ]; then
+    db_get shared/organization
+    organization="$RET"
+    if [ -z "$organization" ]; then organization=Unknown; fi
+    /usr/share/slapd/fix_ldif -w -o "$organization" < "$location" > "$fixed_location"
+  fi
+}
+
+move_old_database_directory_away() {
+  suffix=$1
+  directory=$2
+
+  if [ -n "$directory" ]; then
+    echo -n "  Moving old database files to /var/backups/ldap/$OLD_VERSION/... "
+    mkdir -p "/var/backups/ldap/$OLD_VERSION/$suffix"
+    mv "$directory"/* "/var/backups/ldap/$OLD_VERSION/$suffix/"
+    echo "done"
+  fi
+}
+
+# If a dump file from the old version exists we want to recreate the
+# directory from it
+import_database() {
+  suffix="$1"
+  location="$2"
+
+  if [ -e "$location" ]; then
+    echo -n "  Recreating directory from $location... "
+    SLAPADD_FAIL=0
+    slapadd -b "$suffix" -u -l "$location" || SLAPADD_FAIL=1
+    if [ "$SLAPADD_FAIL" = "1" ]; then
+      echo "failed"
+      db_input high slapd/upgrade_slapadd_failure || true
+    else
+      slapadd -b "$suffix" -l "$location"
+      echo "done"
+    fi
+  fi
+}
+
+
 # MAIN
 
 . /usr/share/debconf/confmodule
@@ -206,10 +257,37 @@ configure_v2_protocol_support
 
 if upgrading_version_pre21; then
   autoconfigure_modules
-  # TODO: When do we want to backup the old directory?
-  # TODO: Dump of the old directory
+
+  get_database_list | while read backend suffix directory
+  do
+    suffix=`eval echo $suffix`
+    directory=`eval echo $directory`
+    echo "Processing directory $suffix..."
+
+    location=`ldif_dump_location "$suffix"`
+    # XXX: to be truly idempotent, we should make sure we don't try to
+    # overwrite this ldif file on a second pass after already having
+    # moved some of the files aside below.
+  
+    if [ ! -f "/var/lib/slapd/upgrade_2.0-$suffix" ]; then
+      if ldif_dump_wanted; then
+        export_database "$suffix" "$location"
+        fix_ldif "$location" "${location}.fixed"
+      fi
+      move_old_database_directory_away "$suffix" "$directory"
+      touch "/var/lib/slapd/upgrade_2.0-$suffix"
+    fi
+    import_database "$suffix" "${location}.fixed"
+
+  # Since this is actually a subshell, we need to explicitly
+  # call exit: otherwise, the errors won't be caught, and the rm command
+  # below gets run!
+  done || exit $?
+  
 fi
 
 db_stop || true
 
 #DEBHELPER#
+
+rm -f /var/lib/slapd/upgrade_2.0-*

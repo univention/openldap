@@ -59,7 +59,10 @@ openldap2 (2.1.22-2) unstable; urgency=high
       debian/dh_installscripts-common.
     + debian/slapd.preinst: before dumping the database, check if the
       backend is supported
-    + debian/slapd.postinst: add -q to grep call for allow bind_v2
+    + debian/slapd.postinst:
+      - add -q to grep call for allow bind_v2
+      - readded pre-2.1 (woody) upgrade path (that is, dumping, fixing
+        and reimporting the database)
 
  -- Stephen Frost <sfrost@debian.org>  Fri, 18 Jul 2003 14:13:04 -0400
 

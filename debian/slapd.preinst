@@ -6,24 +6,6 @@ set -e
 # various helper functions and $OLD_VERSION and $SLAPD_CONF
 #SCRIPTSCOMMON#
 
-# Ask for the filename of the dump file
-# XXX: Currently just uses /var/backups/ldap/$OLD_VERSION/slapd-${suffix}-slapcat.ldif
-ldif_dump_location() {
-  local suffix=$1
-  echo "/var/backups/ldap/$OLD_VERSION/slapd-${suffix}-slapcat.ldif"
-}
-
-# Create directory for dump file
-create_ldif_dump_location() {
-  # Make our backup directory if it does not exist already
-  if [ -d /var/backups/ldap ]; then
-    chmod 700 /var/backups/ldap
-  else
-    mkdir -p -m 700 /var/backups/ldap
-  fi
-  mkdir -p -m 700 /var/backups/ldap/$OLD_VERSION/
-}
-
 # Make sure slapd is shut down before mucking with the db files
 # and whatnot...  Use this function
 stop_slapd() {
@@ -53,15 +35,22 @@ then
 
   get_database_list | while read backend suffix directory
   do
-    if ! supported_backend "$backend"; then
-       continue
+    suffix=`eval echo $suffix`
+    echo "Processing directory $suffix..."
+    
+    location=`ldif_dump_location "$suffix"`
+
+    if ldif_dump_wanted; then
+      echo -n "  Dumping directory to $location with old slapcat... "
+      slapcat -b "$suffix" > "$location" || SLAPCAT_FAIL=1
+      if [ "$SLAPCAT_FAIL" = "1" ]; then
+        echo "failed"
+        rm -f "$location"
+      else
+        echo "done"
+      fi
     fi
 
-    # parse out the quotes; we no longer need them for grouping
-    suffix=`eval echo $suffix`
-
-    location=`ldif_dump_location "$suffix"`
-    slapcat -b "$suffix" > "$location" || rm -f "$location"
   done || exit $?
 fi
 
