@@ -9,6 +9,7 @@ openldap2 (2.1.23-2) unstable; urgency=low
       about it. Closes: #216797.
     + debian/slapd.{templates,config,postinst,conf}: Ask which
       database backend to use (BDB or LDBM).
+    + debian/slapd.README.Debian: cleanup
 
  -- Roland Bauerschmidt <rb@debian.org>  Sat, 18 Oct 2003 19:59:56 +0200
 

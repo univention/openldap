@@ -1,39 +1,47 @@
 Notes about Debian's slapd package
 ----------------------------------
 
-Starting with OpenLDAP 2.1, backend modules are compiled as dynamically
-loadable shared objects. As a consequence thereof, you need to specify
-the path of the modules and the modules to load in your slapd.conf file
-for now. This can be done by lines such as the following:
+++ When upgrading from OpenLDAP 2.0
 
-modulepath      /usr/lib/ldap
-moduleload      back_bdb
+   Starting with OpenLDAP 2.1, backend modules are compiled as dynamically
+   loadable shared objects in Debian. As a consequence thereof, you need to
+   specify the path of the modules and the modules to load in your slapd.conf
+   file for now. This can be done by lines such as the following:
+   
+   modulepath      /usr/lib/ldap
+   moduleload      back_bdb
+   
+   for the BDB database backend module.
+   
+   While the BDB backend is the recommended choice of the OpenLDAP developers,
+   the LDBM backend has proven to be more reliable for some Debian users,
+   especially when the BDB database wasn't properly configured. When using the
+   BDB backend, make sure to do so. For information on how to tune BDB, see
+   http://www.openldap.org/faq/data/cache/893.html.
+   
+   To switch the database backend, you should export your current database
+   in LDIF format with the slapcat command (be sure to stop slapd before
+   doing so if you're using LDBM), move the old database files away, change
+   /etc/ldap/slapd.conf, and then reimport your database from the LDIF file
+   via slapadd.
+   
+++ If slapd depends on other service (such as SQL)
 
-for the BDB database backend module.
+   In the event that you are running slapd with a different back-end module
+   that depends on other programs (such as an SQL database) you may need to
+   adjust the runlevels of slapd to start after the SQL database.
 
-The new BDB database backend is the recommended backend to use. In
-comparison to the formerly recommended LDBM backend (which still exists
-for compatibility reasons), it is supposed to be both faster and safer
-to use, i.e. hot backups are now possible with the BDB database backend
-and the like.
+++ Creating NSS flat files from LDAP
 
-To switch to the BDB backend, you should export your current database
-in LDIF format with the slapcat command (be sure to stop slapd before
-doing so), move the old database files away, change /etc/ldap/slapd.conf,
-and then reimport your database from the LDIF file via slapadd.
+   If you have need to create passwd/shadow/etc files from an LDAP
+   directory there is now a script included with these Debian packages
+   which may help you.  The script is in /usr/share/slapd/ and is named
+   'ldiftopasswd'.  In general you should be able to do:
+      ldapsearch | ldiftopasswd
+   and it will generate the files for you.  You will need appropriate
+   privileges, of course.
 
- -- Roland Bauerschmidt <rb@debian.org>  Wed, 19 Mar 2003 15:50:32 +0100
-
-In the event that you are running slapd with a different back-end module
-that depends on other programs (Such as an SQL database) you may need to
-adjust the runlevels of slapd to start after the SQL database.
-
-If you have need to create passwd/shadow/etc files from an LDAP
-directory there is now a script included with these Debian packages
-which may help you.  The script is in /usr/share/slapd/ and is named
-'ldiftopasswd'.  In general you should be able to do:
-ldapsearch | ldiftopasswd
-and it will generate the files for you.  You will need appropriate
-privleges, of course.
-
- -- Stephen Frost <sfrost@debian.org> Thu, 12 Jun 2003 12:42:52 -0400
+ -- The Debian OpenLDAP maintainers
+     Torsten Landschoff <torsten@debian.org>
+     Roland Bauerschmidt <rb@debian.org>
+     Stephen Frost <sfrost@debian.org>
