@@ -1,5 +1,62 @@
 OpenLDAP 2.1 Change Log
 
+OpenLDAP 2.1.25 Release
+	Build Environment
+		Fix LDBM link bug (ITS#2863)
+
+OpenLDAP 2.1.24 Release
+	Fixed slapd "exact" v "base" handling (ITS#2782)
+	Fixed slapd running as NT service (ITS#2769)
+	Fixed slapd SASL internal searches (ITS#2825)
+	Fixed slapd extended op referrals (ITS#2678, ITS#2781)
+	Fixed slapd group ACL caching (ITS#2779)
+	Fixed slapd berbuf align bugs
+	Fixed slurpd memory leaks (ITS#2423, ITS#2620)
+	Fixed slurpd TLS retry (ITS#2570)
+	Fixed back-bdb compatibility with BDB 4.2 (ITS#2848)
+	Fixed lunicode insufficient buffer allocation bug (ITS#2727)
+	Fixed libldap destructor bug (ITS#2758)
+	Fixed libldap SASL maxbuf usage (ITS#2770)
+	Fixed libldap_r pthread support (ITS#2820)
+	Fixed liblutil NS_MTA_MD5 hash (ITS#2773)
+	Added lutil_passwd extensions
+	Build Environment
+		Added Berkeley DB 4.2 detection (ITS#2839)
+		Fixed liblber libdir handling (ITS#2797)
+		Fixed libldbm dependency (ITS#2726)
+		Fixed perl LDFLAGS (ITS#2764)
+	Documentation
+		Updated release documents
+		Misc man page updates (ITS#2822, ITS#2823)
+		Fixed README in ldapsasl (ITS#2838)
+
+OpenLDAP 2.1.23 Release
+	Fixed ldapmodify NULL dn bug (ITS#2645)
+	Fixed ldappasswd -y handling bug (ITS#2696)
+	Fixed slapd subordinate replication bug (ITS#2130)
+	Fixed slapd deferring Abandon (ITS#2649)
+	Fixed slapd deprecated code (removed) (ITS#2651)
+	Fixed slapd slave without updateref bug (ITS#2678)
+	Fixed slapd ACL caching (ITS#2679)
+	Fixed back-bdb cache crash (ITS#2682, ITS#2759)
+	Fixed portability issue in ldapsasl (ITS#2691)
+	Fixed slurpd pid file handling (ITS#2761)
+	Fixed LMHASH bug (ITS#2566)
+	Fixed NS-MTA-MD5 buffer size bug (ITS#2662)
+	Added replica uri keyword (ITS#2594)
+	Added replica-pidfile, replica-argsfile keywords
+	Build Environment
+		Fix <saslplug.h> inclusion (ITS#2762)
+
+OpenLDAP 2.1.22 Release
+	Fixed slapd yielding select fix (ITS#2603)
+	Fixed slapadd dnfree bug (ITS#2587)
+	Fixed slappasswd usage help (ITS#2565)
+	Fixed back-bdb filter index crash (ITS#2596)
+	Build Environment
+		Fixed back-ldap/meta conflict (ITS#2608)
+		Fixed slapd compilation bug (ITS#2605)
+
 OpenLDAP 2.1.21 Release
 	Fixed liblber ber_get_next trickle bug (ITS#2490)
 	Fixed ldapsearch -p without -h bug (ITS#2532)

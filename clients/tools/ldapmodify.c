@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodify.c,v 1.109.2.15 2003/03/29 15:45:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodify.c,v 1.109.2.17 2003/10/11 23:21:01 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -809,6 +809,11 @@ domodify(
 {
     int			i, j, k, notascii, op;
     struct berval	*bvp;
+
+	if ( dn == NULL ) {
+	fprintf( stderr, "%s: no DN specified\n", prog );
+	return( LDAP_PARAM_ERROR );
+	}
 
     if ( pmods == NULL ) {
 	fprintf( stderr, "%s: no attributes to change or add (entry=\"%s\")\n",

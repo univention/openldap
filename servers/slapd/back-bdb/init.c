@@ -1,5 +1,5 @@
 /* init.c - initialize bdb backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.75.2.23 2003/03/29 15:45:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.75.2.24 2003/11/29 12:59:10 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -98,6 +98,7 @@ bdb_db_init( BackendDB *be )
 	LDAP_LIST_INIT (&bdb->psearch_list);
 #endif
 
+	ldap_pvt_thread_mutex_init( &bdb->bi_database_mutex );
 	ldap_pvt_thread_mutex_init( &bdb->bi_lastid_mutex );
 	ldap_pvt_thread_mutex_init( &bdb->bi_cache.lru_mutex );
 	ldap_pvt_thread_rdwr_init ( &bdb->bi_cache.c_rwlock );
@@ -379,14 +380,14 @@ bdb_db_open( BackendDB *be )
 #ifdef HAVE_EBCDIC
 		strcpy( path, bdbi_databases[i].file );
 		__atoe( path );
-		rc = DB_OPEN( db->bdi_db, NULL,
+		rc = DB_OPEN( db->bdi_db,
 			path,
 		/*	bdbi_databases[i].name, */ NULL,
 			bdbi_databases[i].type,
 			bdbi_databases[i].flags | flags | DB_AUTO_COMMIT,
 			bdb->bi_dbenv_mode );
 #else
-		rc = DB_OPEN( db->bdi_db, NULL,
+		rc = DB_OPEN( db->bdi_db,
 			bdbi_databases[i].file,
 		/*	bdbi_databases[i].name, */ NULL,
 			bdbi_databases[i].type,
@@ -524,6 +525,7 @@ bdb_db_destroy( BackendDB *be )
 	ldap_pvt_thread_rdwr_destroy ( &bdb->bi_cache.c_rwlock );
 	ldap_pvt_thread_mutex_destroy( &bdb->bi_cache.lru_mutex );
 	ldap_pvt_thread_mutex_destroy( &bdb->bi_lastid_mutex );
+	ldap_pvt_thread_mutex_destroy( &bdb->bi_database_mutex );
 
 	ch_free( bdb );
 	be->be_private = NULL;

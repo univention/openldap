@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.163.2.19 2003/05/18 19:58:56 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.163.2.23 2003/12/03 01:32:40 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -421,7 +421,6 @@ long connection_init(
 		c->c_dn.bv_len = 0;
 		c->c_ndn.bv_val = NULL;
 		c->c_ndn.bv_len = 0;
-		c->c_groups = NULL;
 
 		c->c_listener = NULL;
 		c->c_peer_domain.bv_val = NULL;
@@ -461,7 +460,6 @@ long connection_init(
     assert( c->c_authmech.bv_val == NULL );
     assert( c->c_dn.bv_val == NULL );
     assert( c->c_ndn.bv_val == NULL );
-    assert( c->c_groups == NULL );
     assert( c->c_listener == NULL );
     assert( c->c_peer_domain.bv_val == NULL );
     assert( c->c_peer_name.bv_val == NULL );
@@ -472,6 +470,7 @@ long connection_init(
 	assert( c->c_sasl_extra == NULL );
 	assert( c->c_sasl_bindop == NULL );
 	assert( c->c_currentber == NULL );
+	assert( c->c_writewaiter == 0 );
 
 	c->c_listener = listener;
 	ber_str2bv( dnsname, 0, 1, &c->c_peer_domain );
@@ -596,15 +595,6 @@ void connection2anonymous( Connection *c )
 	c->c_ndn.bv_len = 0;
 
 	c->c_authz_backend = NULL;
-	
-	{
-		GroupAssertion *g, *n;
-		for (g = c->c_groups; g; g=n) {
-			n = g->ga_next;
-			free(g);
-		}
-		c->c_groups = NULL;
-	}
 }
 
 static void
@@ -676,6 +666,7 @@ connection_destroy( Connection *c )
 		ber_sockbuf_ctrl( c->c_sb, LBER_SB_OPT_SET_MAX_INCOMING, &max );
 	}
 
+	c->c_writewaiter = 0;
     c->c_conn_state = SLAP_C_INVALID;
     c->c_struct_state = SLAP_C_UNUSED;
 }
@@ -1475,12 +1466,14 @@ connection_input(
 	 * use up all the available threads, and don't execute if we're
 	 * currently blocked on output. And don't execute if there are
 	 * already pending ops, let them go first.
+	 *
+	 * But always allow Abandon through; it won't cost much.
 	 */
-	if ( conn->c_conn_state == SLAP_C_BINDING
+	if ( tag != LDAP_REQ_ABANDON && (conn->c_conn_state == SLAP_C_BINDING
 		|| conn->c_conn_state == SLAP_C_CLOSING
 		|| conn->c_n_ops_executing >= connection_pool_max/2
 		|| conn->c_n_ops_pending
-		|| conn->c_writewaiter)
+		|| conn->c_writewaiter))
 	{
 		int max = conn->c_dn.bv_len ? slap_conn_max_pending_auth
 			 : slap_conn_max_pending;

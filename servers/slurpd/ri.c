@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/ri.c,v 1.21.2.5 2003/03/03 17:10:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/ri.c,v 1.21.2.7 2003/11/19 08:02:37 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -169,6 +169,10 @@ Ri_process(
 	re = new_re;
 	rq->rq_unlock( rq );
 	if ( sglob->slurpd_shutdown ) {
+	    if ( ri->ri_ldp ) { 
+	    	ldap_unbind( ri->ri_ldp );
+		ri->ri_ldp = NULL;
+	    }
 	    return 0;
 	}
     }
@@ -212,6 +216,7 @@ Ri_init(
 
     /* Initialize private data */
     (*ri)->ri_hostname = NULL;
+    (*ri)->ri_uri = NULL;
     (*ri)->ri_ldp = NULL;
     (*ri)->ri_bind_dn = NULL;
     (*ri)->ri_password = NULL;

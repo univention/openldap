@@ -1,4 +1,4 @@
-dnl $OpenLDAP: pkg/ldap/build/openldap.m4,v 1.98.2.13 2003/04/04 01:45:49 kurt Exp $
+dnl $OpenLDAP: pkg/ldap/build/openldap.m4,v 1.98.2.15 2003/12/02 18:05:49 kurt Exp $
 dnl
 dnl Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
 dnl All rights reserved.
@@ -312,6 +312,10 @@ dnl Try to locate appropriate library
 AC_DEFUN([OL_BERKELEY_DB_LINK],
 [ol_cv_lib_db=no
 OL_BERKELEY_DB_TRY(ol_cv_db_none)
+OL_BERKELEY_DB_TRY(ol_cv_db_db42,[-ldb42])
+OL_BERKELEY_DB_TRY(ol_cv_db_db_42,[-ldb-42])
+OL_BERKELEY_DB_TRY(ol_cv_db_db_4_dot_2,[-ldb-4.2])
+OL_BERKELEY_DB_TRY(ol_cv_db_db_4_2,[-ldb-4-2])
 OL_BERKELEY_DB_TRY(ol_cv_db_db41,[-ldb41])
 OL_BERKELEY_DB_TRY(ol_cv_db_db_41,[-ldb-41])
 OL_BERKELEY_DB_TRY(ol_cv_db_db_4_dot_1,[-ldb-4.1])
@@ -1209,10 +1213,10 @@ AC_DEFUN([OL_SASL_COMPAT],
 #if SASL_VERSION_MAJOR == 1  && SASL_VERSION_MINOR >= 5
 	char *__sasl_compat = "1.5.x okay";
 #elif SASL_VERSION_MAJOR == 2  && SASL_VERSION_MINOR > 1
-	__sasl_compat "2.2+ or better okay (we guess)";
+	char *__sasl_compat = "2.2+ or better okay (we guess)";
 #elif SASL_VERSION_MAJOR == 2  && SASL_VERSION_MINOR == 1 \
 	&& SASL_VERSION_STEP >=3
-	__sasl_compat = "2.1.3+ or better okay";
+	char *__sasl_compat = "2.1.3+ or better okay";
 #endif
 	],	[ol_cv_sasl_compat=yes], [ol_cv_sasl_compat=no])])
 ])

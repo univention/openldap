@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_posix.c,v 1.25.2.9 2003/03/03 17:10:05 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_posix.c,v 1.25.2.10 2003/11/13 02:35:57 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
@@ -121,7 +121,12 @@ ldap_pvt_thread_create( ldap_pvt_thread_t * thread,
 	pthread_attr_setdetachstate(&attr, detach);
 #endif
 #endif
+
+#if HAVE_PTHREADS < 5
+	rtn = pthread_create( thread, attr, start_routine, arg );
+#else
 	rtn = pthread_create( thread, &attr, start_routine, arg );
+#endif
 #if HAVE_PTHREADS > 5
 	pthread_attr_destroy(&attr);
 #else
