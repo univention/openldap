@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/dnssrv.c,v 1.15.2.7 2002/10/10 23:38:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/dnssrv.c,v 1.15.2.9 2003/03/03 17:10:04 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -43,8 +43,8 @@ int ldap_dn2domain(
 	LDAPRDN *rdn = NULL;
 	LDAPAVA *ava = NULL;
 	struct berval domain = { 0, NULL };
-	const static struct berval DC = BER_BVC("DC");
-	const static struct berval DCOID = BER_BVC("0.9.2342.19200300.100.1.25");
+	static const struct berval DC = BER_BVC("DC");
+	static const struct berval DCOID = BER_BVC("0.9.2342.19200300.100.1.25");
 
 	assert( dn_in != NULL );
 	assert( domainp != NULL );

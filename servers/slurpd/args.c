@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/args.c,v 1.20.2.2 2002/07/28 19:05:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/args.c,v 1.20.2.5 2003/03/24 03:56:09 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*
@@ -44,6 +44,7 @@ usage( char *name )
 #else /* LDAP_API_FEATURE_X_OPENLDAP_V2_KBIND */
     fprintf( stderr, "\t\t[-t tmp-dir] [-o]\n" );
 #endif /* LDAP_API_FEATURE_X_OPENLDAP_V2_KBIND */
+    fprintf( stderr, "\t\t[-n service-name]\n" );
 }
 
 
@@ -67,7 +68,7 @@ doargs(
 	g->myname = strdup( g->myname + 1 );
     }
 
-    while ( (i = getopt( argc, argv, "d:f:or:t:" )) != EOF ) {
+    while ( (i = getopt( argc, argv, "d:f:n:or:t:" )) != EOF ) {
 	switch ( i ) {
 	case 'd':	/* set debug level and 'do not detach' flag */
 	    g->no_detach = 1;
@@ -108,6 +109,10 @@ doargs(
 	    break;
 	case 'f':	/* slapd config file */
 	    g->slapd_configfile = strdup( optarg );
+	    break;
+	case 'n':	/* NT service name */
+	    if ( g->serverName ) free( g->serverName );
+	    g->serverName = strdup( optarg );
 	    break;
 	case 'o':
 	    g->one_shot_mode = 1;

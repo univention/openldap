@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/print.c,v 1.10.2.1 2002/09/17 02:45:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/print.c,v 1.10.2.2 2003/03/03 17:10:05 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

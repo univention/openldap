@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.55.2.6 2002/11/26 18:22:25 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.55.2.9 2003/02/10 19:23:41 kurt Exp $
 
 DATADIR=$SRCDIR/data
 PROGDIR=./progs
@@ -35,6 +35,7 @@ LDIFFILTER=$SRCDIR/scripts/acfilter.sh
 SUBFILTER=$SRCDIR/scripts/subfilter.sh
 UNDIFFFILTER=$SRCDIR/scripts/undiff.sh
 CONFFILTER=$SRCDIR/scripts/conf.sh
+STRIPATTR=$SRCDIR/scripts/stripattr.sh
 
 SLAPADD="../servers/slapd/tools/slapadd $LDAP_VERBOSE"
 SLAPCAT="../servers/slapd/tools/slapcat $LDAP_VERBOSE"
@@ -43,6 +44,7 @@ SLAPINDEX="../servers/slapd/tools/slapindex $LDAP_VERBOSE"
 unset DIFF_OPTIONS
 DIFF="diff -iu"
 CMP="diff -i"
+BCMP="diff -iB"
 CMPOUT=/dev/null
 SLAPD="../servers/slapd/slapd -s0"
 SLURPD=../servers/slurpd/slurpd

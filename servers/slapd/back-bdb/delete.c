@@ -1,7 +1,7 @@
 /* delete.c - bdb backend delete routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/delete.c,v 1.48.2.9 2002/10/29 01:24:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/delete.c,v 1.48.2.13 2003/05/16 02:53:02 hyc Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -35,7 +35,7 @@ bdb_delete(
 	DB_TXN		*ltid = NULL;
 	struct bdb_op_info opinfo;
 
-	u_int32_t	locker;
+	u_int32_t	locker = 0;
 	DB_LOCK		lock;
 #if 0
 	u_int32_t	lockid;
@@ -44,7 +44,7 @@ bdb_delete(
 
 	int		noop = 0;
 
-#ifdef LDAP_CLIENT_UPDATE
+#if defined(LDAP_CLIENT_UPDATE) || defined(LDAP_SYNC)
 	Operation* ps_list;
 #endif
 
@@ -59,6 +59,7 @@ bdb_delete(
 retry:	/* transaction retry */
 		if( e != NULL ) {
 			bdb_unlocked_cache_return_entry_w(&bdb->bi_cache, e);
+			e = NULL;
 		}
 #ifdef NEW_LOGGING
 		LDAP_LOG ( OPERATION, DETAIL1, 
@@ -70,6 +71,7 @@ retry:	/* transaction retry */
 		rc = TXN_ABORT( ltid );
 		ltid = NULL;
 		op->o_private = NULL;
+		op->o_do_not_cache = opinfo.boi_acl_cache;
 		if( rc != 0 ) {
 			rc = LDAP_OTHER;
 			text = "internal error";
@@ -104,7 +106,9 @@ retry:	/* transaction retry */
 
 	opinfo.boi_bdb = be;
 	opinfo.boi_txn = ltid;
+	opinfo.boi_locker = locker;
 	opinfo.boi_err = 0;
+	opinfo.boi_acl_cache = op->o_do_not_cache;
 	op->o_private = &opinfo;
 
 	if ( !be_issuffix( be, ndn ) ) {
@@ -161,13 +165,13 @@ retry:	/* transaction retry */
 		bdb_unlocked_cache_return_entry_r(&bdb->bi_cache, p);
 		p = NULL;
 
-		switch( opinfo.boi_err ) {
-		case DB_LOCK_DEADLOCK:
-		case DB_LOCK_NOTGRANTED:
-			goto retry;
-		}
-
 		if ( !rc  ) {
+			switch( opinfo.boi_err ) {
+			case DB_LOCK_DEADLOCK:
+			case DB_LOCK_NOTGRANTED:
+				goto retry;
+			}
+
 #ifdef NEW_LOGGING
 			LDAP_LOG ( OPERATION, DETAIL1, 
 				"<=- bdb_delete: no write access to parent\n", 0, 0, 0 );
@@ -194,13 +198,13 @@ retry:	/* transaction retry */
 
 				p = NULL;
 
-				switch( opinfo.boi_err ) {
-				case DB_LOCK_DEADLOCK:
-				case DB_LOCK_NOTGRANTED:
-					goto retry;
-				}
-
 				if ( !rc  ) {
+					switch( opinfo.boi_err ) {
+					case DB_LOCK_DEADLOCK:
+					case DB_LOCK_NOTGRANTED:
+						goto retry;
+					}
+
 #ifdef NEW_LOGGING
 					LDAP_LOG ( OPERATION, DETAIL1, 
 						"<=- bdb_delete: no access to parent\n", 0, 0, 0 );
@@ -297,13 +301,13 @@ retry:	/* transaction retry */
 	rc = access_allowed( be, conn, op, e,
 		entry, NULL, ACL_WRITE, NULL );
 
-	switch( opinfo.boi_err ) {
-	case DB_LOCK_DEADLOCK:
-	case DB_LOCK_NOTGRANTED:
-		goto retry;
-	}
-
 	if ( !rc  ) {
+		switch( opinfo.boi_err ) {
+		case DB_LOCK_DEADLOCK:
+		case DB_LOCK_NOTGRANTED:
+			goto retry;
+		}
+
 #ifdef NEW_LOGGING
 		LDAP_LOG ( OPERATION, DETAIL1, 
 			"<=- bdb_delete: no write access to entry\n", 0, 0, 0 );
@@ -381,8 +385,6 @@ retry:	/* transaction retry */
 		case DB_LOCK_DEADLOCK:
 		case DB_LOCK_NOTGRANTED:
 			goto retry;
-		default:
-			rc = LDAP_OTHER;
 		}
 #ifdef NEW_LOGGING
 		LDAP_LOG ( OPERATION, ERR, 
@@ -393,6 +395,7 @@ retry:	/* transaction retry */
 			db_strerror(rc), rc, 0 );
 #endif
 		text = "DN index delete failed";
+		rc = LDAP_OTHER;
 		goto return_results;
 	}
 
@@ -403,8 +406,6 @@ retry:	/* transaction retry */
 		case DB_LOCK_DEADLOCK:
 		case DB_LOCK_NOTGRANTED:
 			goto retry;
-		default:
-			rc = LDAP_OTHER;
 		}
 #ifdef NEW_LOGGING
 		LDAP_LOG ( OPERATION, ERR, 
@@ -416,6 +417,7 @@ retry:	/* transaction retry */
 			db_strerror(rc), rc, 0 );
 #endif
 		text = "entry delete failed";
+		rc = LDAP_OTHER;
 		goto return_results;
 	}
 
@@ -426,8 +428,6 @@ retry:	/* transaction retry */
 		case DB_LOCK_DEADLOCK:
 		case DB_LOCK_NOTGRANTED:
 			goto retry;
-		default:
-			rc = LDAP_OTHER;
 		}
 #ifdef NEW_LOGGING
 		LDAP_LOG ( OPERATION, ERR, 
@@ -437,6 +437,7 @@ retry:	/* transaction retry */
 			0, 0, 0 );
 #endif
 		text = "entry index delete failed";
+		rc = LDAP_OTHER;
 		goto return_results;
 	}
 
@@ -493,13 +494,13 @@ retry:	/* transaction retry */
 return_results:
 	send_ldap_result( conn, op, rc, NULL, text, NULL, NULL );
 
-#ifdef LDAP_CLIENT_UPDATE
+#if defined(LDAP_CLIENT_UPDATE) || defined(LDAP_SYNC)
         if ( rc == LDAP_SUCCESS && !noop ) {
 		LDAP_LIST_FOREACH( ps_list, &bdb->psearch_list, link ) {
-			bdb_psearch( be, conn, op, ps_list, e, LCUP_PSEARCH_BY_DELETE );
+			bdb_psearch( be, conn, op, ps_list, e, LDAP_PSEARCH_BY_DELETE );
 		}
 	}
-#endif /* LDAP_CLIENT_UPDATE */
+#endif
 
 	if(rc == LDAP_SUCCESS && bdb->bi_txn_cp ) {
 		ldap_pvt_thread_yield();

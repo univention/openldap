@@ -68,5 +68,16 @@ SUPPORT / FEEDBACK / PROBLEM REPORTS / DISCUSSIONS
 	this system for software enquiries.  Please direct these
 	to an appropriate mailing list.
 
+
+CONTRIBUTING
+
+	See http://www.openldap.org/devel/contributing.html for how to
+	contribute code or documentation to OpenLDAP.  Use the Issue Tracking
+	System <http://www.openldap.org/its/> to submit contributions.
+	While you are encouraged to coordinate and discuss the development
+	activities on the openldap-devel@openldap.org mailing list prior
+	to submission, it is noted that contributions must be submitted
+	using the Issue Tracking System to be considered.
+
 ---
-$OpenLDAP: pkg/ldap/README,v 1.34.2.8 2002/10/06 00:56:30 kurt Exp $
+$OpenLDAP: pkg/ldap/README,v 1.34.2.9 2003/04/23 00:26:23 kurt Exp $

@@ -1,7 +1,7 @@
 /* tools.c - tools for slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/tools.c,v 1.34.2.2 2002/11/28 22:22:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/tools.c,v 1.34.2.3 2003/03/03 17:10:10 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/ldap_op.c,v 1.33.2.5 2002/07/28 19:05:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/ldap_op.c,v 1.33.2.7 2003/03/12 20:49:23 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*
@@ -762,6 +762,7 @@ do_bind(
 	return( BIND_ERR_BADRI );
     }
 
+retry:
     if ( ri->ri_ldp != NULL ) {
 	ldrc = ldap_unbind( ri->ri_ldp );
 	if ( ldrc != LDAP_SUCCESS ) {
@@ -868,6 +869,8 @@ do_bind(
 				ri->ri_ldp = NULL;
 				return BIND_ERR_TLS_FAILED;
 			}
+			ri->ri_tls = TLS_OFF;
+			goto retry;
 		}
 	}
 

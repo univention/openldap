@@ -1,7 +1,7 @@
 .TH SLAPD-LDAP 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2002 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2003 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-ldap.5,v 1.4.2.2 2002/06/20 20:12:26 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-ldap.5,v 1.4.2.7 2003/04/26 21:52:00 kurt Exp $
 .SH NAME
 slapd-ldap \- LDAP backend to slapd
 .SH SYNOPSIS
@@ -37,7 +37,14 @@ modification should not be used, as they could be passed to the target
 servers, generating an error.
 .TP
 .B uri <ldapurl>
-LDAP server to use.
+LDAP server to use.  Multiple URIs can be set in in a single
+.B ldapurl
+argument, resulting in the underlying library automatically 
+call the first server of the list that responds, e.g. 
+
+\fBuri "ldap://host/ ldap://backup-host"\fP
+
+The URI list is space- or comma-separated.
 .TP
 .B server <hostport>
 Obsolete option; same as `uri ldap://<hostport>/'.
@@ -61,7 +68,7 @@ DNs ending with <suffix> in a request are changed to end with <remote
 suffix> before sending the request to the remote server, and <remote
 suffix> in the results are changed back to <suffix> before returning
 them to the client.
-The <suffix> field must be defined as a valid suffix (or suffixAlias?)
+The <suffix> field must be defined as a valid suffix
 for the current database.
 .TP
 .B map "{attribute | objectclass} [<local name> | *] {<foreign name> | *}"

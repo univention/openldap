@@ -1,7 +1,7 @@
 /* attr.c - backend routines for dealing with attributes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/attr.c,v 1.29.2.2 2002/08/29 02:10:48 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/attr.c,v 1.29.2.4 2003/05/07 22:29:11 hyc Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -23,20 +23,23 @@ typedef struct ldbm_attrinfo {
 
 static int
 ainfo_type_cmp(
-	AttributeDescription *desc,
-    AttrInfo	*a
+	const void *v_desc,
+	const void *v_a
 )
 {
-	return desc - a->ai_desc;
+	const AttributeDescription *desc = v_desc;
+	const AttrInfo             *a    = v_a;
+	return SLAP_PTRCMP(desc, a->ai_desc);
 }
 
 static int
 ainfo_cmp(
-    AttrInfo	*a,
-    AttrInfo	*b
+	const void	*v_a,
+	const void	*v_b
 )
 {
-	return a->ai_desc - b->ai_desc;
+	const AttrInfo *a = v_a, *b = v_b;
+	return SLAP_PTRCMP(a->ai_desc, b->ai_desc);
 }
 
 void
@@ -47,8 +50,7 @@ attr_mask(
 {
 	AttrInfo	*a;
 
-	a = (AttrInfo *) avl_find( li->li_attrs, desc,
-	    (AVL_CMP) ainfo_type_cmp );
+	a = avl_find( li->li_attrs, desc, ainfo_type_cmp );
 	
 	*indexmask = a != NULL ? a->ai_indexmask : 0;
 }
@@ -195,7 +197,7 @@ attr_index_config(
 		a->ai_indexmask = mask;
 
 		rc = avl_insert( &li->li_attrs, (caddr_t) a,
-			(AVL_CMP) ainfo_cmp, (AVL_DUP) avl_dup_error );
+		                 ainfo_cmp, avl_dup_error );
 
 		if( rc ) {
 			fprintf( stderr, "%s: line %d: duplicate index definition "

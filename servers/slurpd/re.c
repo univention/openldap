@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/re.c,v 1.26.2.3 2002/07/28 19:05:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/re.c,v 1.26.2.6 2003/03/03 17:10:11 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*
@@ -33,10 +33,10 @@
 #include <ac/string.h>
 #include <ac/ctype.h>
 
+#include "../slapd/slap.h"
+
 #include "slurp.h"
 #include "globals.h"
-
-#include "../slapd/slap.h"
 
 /* Forward references */
 static Rh 	*get_repl_hosts LDAP_P(( char *, int *, char ** ));
@@ -587,7 +587,7 @@ Re_write(
 	    goto bad;
 	}
     } else {			/* write multiple "replica:" lines */
-	for ( i = 0; re->re_replicas[ i ].rh_hostname != NULL; i++ ) {
+	for ( i = 0; re->re_replicas && re->re_replicas[ i ].rh_hostname != NULL; i++ ) {
 	    if ( fprintf( fp, "replica: %s:%d\n",
 		    re->re_replicas[ i ].rh_hostname,
 		    re->re_replicas[ i ].rh_port ) < 0 ) {

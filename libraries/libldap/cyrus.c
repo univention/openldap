@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.45.2.15 2002/12/19 22:00:58 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.45.2.20 2003/05/24 23:10:36 kurt Exp $ */
 /*
- * Copyright 1999-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1999-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -599,32 +599,23 @@ ldap_int_sasl_bind(
 			}
 		}
 
-#if SASL_VERSION_MAJOR >= 2
-		/* XXX the application should free interact results. */
-		if ( prompts != NULL && prompts->result != NULL ) {
-			LDAP_FREE( (void *)prompts->result );
-			prompts->result = NULL;
-		}
-#endif
-
 		if( saslrc == SASL_INTERACT ) {
 			int res;
 			if( !interact ) break;
 			res = (interact)( ld, flags, defaults, prompts );
-			if( res != LDAP_SUCCESS ) {
-				break;
-			}
+
+			if( res != LDAP_SUCCESS ) break;
 		}
 	} while ( saslrc == SASL_INTERACT );
 
 	ccred.bv_len = credlen;
 
 	if ( (saslrc != SASL_OK) && (saslrc != SASL_CONTINUE) ) {
-		ld->ld_errno = sasl_err2ldap( saslrc );
+		rc = ld->ld_errno = sasl_err2ldap( saslrc );
 #if SASL_VERSION_MAJOR >= 2
-		ld->ld_error = (char *)sasl_errdetail( ctx );
+		ld->ld_error = LDAP_STRDUP( sasl_errdetail( ctx ) );
 #endif
-		return ld->ld_errno;
+		goto done;
 	}
 
 	do {
@@ -656,7 +647,8 @@ ldap_int_sasl_bind(
 #endif
 				ber_bvfree( scred );
 			}
-			return ld->ld_errno;
+			rc = ld->ld_errno;
+			goto done;
 		}
 
 		if( rc == LDAP_SUCCESS && saslrc == SASL_OK ) {
@@ -673,7 +665,8 @@ ldap_int_sasl_bind(
 					rc, saslrc, scred->bv_len );
 #endif
 				ber_bvfree( scred );
-				return ld->ld_errno = LDAP_LOCAL_ERROR;
+				rc = ld->ld_errno = LDAP_LOCAL_ERROR;
+				goto done;
 			}
 			break;
 		}
@@ -694,21 +687,11 @@ ldap_int_sasl_bind(
 				saslrc, 0, 0 );
 #endif
 
-#if SASL_VERSION_MAJOR >= 2
-			/* XXX the application should free interact results. */
-			if ( prompts != NULL && prompts->result != NULL ) {
-				LDAP_FREE( (void *)prompts->result );
-				prompts->result = NULL;
-			}
-#endif
-
 			if( saslrc == SASL_INTERACT ) {
 				int res;
 				if( !interact ) break;
 				res = (interact)( ld, flags, defaults, prompts );
-				if( res != LDAP_SUCCESS ) {
-					break;
-				}
+				if( res != LDAP_SUCCESS ) break;
 			}
 		} while ( saslrc == SASL_INTERACT );
 
@@ -718,21 +701,21 @@ ldap_int_sasl_bind(
 		if ( (saslrc != SASL_OK) && (saslrc != SASL_CONTINUE) ) {
 			ld->ld_errno = sasl_err2ldap( saslrc );
 #if SASL_VERSION_MAJOR >= 2
-			ld->ld_error = (char *)sasl_errdetail( ctx );
+			ld->ld_error = LDAP_STRDUP( sasl_errdetail( ctx ) );
 #endif
-			return ld->ld_errno;
+			rc = ld->ld_errno;
+			goto done;
 		}
 	} while ( rc == LDAP_SASL_BIND_IN_PROGRESS );
 
-	if ( rc != LDAP_SUCCESS ) {
-		return rc;
-	}
+	if ( rc != LDAP_SUCCESS ) goto done;
 
 	if ( saslrc != SASL_OK ) {
 #if SASL_VERSION_MAJOR >= 2
-		ld->ld_error = (char *)sasl_errdetail( ctx );
+		ld->ld_error = LDAP_STRDUP( sasl_errdetail( ctx ) );
 #endif
-		return ld->ld_errno = sasl_err2ldap( saslrc );
+		rc = ld->ld_errno = sasl_err2ldap( saslrc );
+		goto done;
 	}
 
 	if( flags != LDAP_SASL_QUIET ) {
@@ -741,14 +724,12 @@ ldap_int_sasl_bind(
 			fprintf( stderr, "SASL username: %s\n", data );
 		}
 
-#if SASL_VERSION_MAJOR >= 2
-		saslrc = sasl_getprop( ctx, SASL_DEFUSERREALM, (SASL_CONST void **) &data );
-#else
+#if SASL_VERSION_MAJOR < 2
 		saslrc = sasl_getprop( ctx, SASL_REALM, (SASL_CONST void **) &data );
-#endif
 		if( saslrc == SASL_OK && data && *data ) {
 			fprintf( stderr, "SASL realm: %s\n", data );
 		}
+#endif
 	}
 
 	saslrc = sasl_getprop( ctx, SASL_SSF, (SASL_CONST void **) &ssf );
@@ -766,6 +747,7 @@ ldap_int_sasl_bind(
 		}
 	}
 
+done:
 	return rc;
 }
 

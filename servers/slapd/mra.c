@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/mra.c,v 1.13.2.5 2002/09/01 04:01:23 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/mra.c,v 1.13.2.6 2003/03/03 17:10:07 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /* mra.c - routines for dealing with extensible matching rule assertions */

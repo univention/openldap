@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  *
  * Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
@@ -97,9 +97,10 @@ meta_back_modrdn(
 
 	lc = meta_back_getconn( li, conn, op, META_OP_REQUIRE_SINGLE,
 			ndn, &candidate );
-	if ( !lc || !meta_back_dobind( lc, op ) || !meta_back_is_valid( lc, candidate ) ) {
-		send_ldap_result( conn, op, LDAP_OTHER,
-				NULL, NULL, NULL, NULL );
+	if ( !lc || !meta_back_dobind( lc, op ) 
+			|| !meta_back_is_valid( lc, candidate ) ) {
+ 		send_ldap_result( conn, op, LDAP_OTHER,
+ 				NULL, NULL, NULL, NULL );
 		return -1;
 	}
 

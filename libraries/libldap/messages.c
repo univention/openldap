@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/messages.c,v 1.9.2.1 2002/06/06 15:54:13 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/messages.c,v 1.9.2.2 2003/03/03 17:10:05 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*

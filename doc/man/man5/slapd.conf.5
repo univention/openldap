@@ -1,7 +1,7 @@
 .TH SLAPD.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2002 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2003 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.87.2.16 2002/11/26 17:24:47 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.87.2.25 2003/05/24 23:04:34 kurt Exp $
 .SH NAME
 slapd.conf \- configuration file for slapd, the stand-alone LDAP daemon
 .SH SYNOPSIS
@@ -78,7 +78,9 @@ and the "OpenLDAP's Administrator's Guide" for details.
 Specify a set of features (separated by white space) to
 allow (default none).
 .B bind_v2
-allows acceptance of LDAPv2 bind requests.
+allows acceptance of LDAPv2 bind requests.  Note that
+.BR slapd (8)
+does not truely implement LDAPv2 (RFC 1777), now Historic (RFC 3494).
 .B bind_anon_cred
 allows anonymous bind when credentials are not empty (e.g.
 when DN is empty).
@@ -93,6 +95,32 @@ The ( absolute ) name of a file that will hold the
 .B slapd
 server's command line options
 if started without the debugging command line option.
+.TP
+.B attributeoptions [option-name]...
+Define tagging attribute options or option tag/range prefixes.
+Options must not end with `-', prefixes must end with `-'.
+The `lang-' prefix is predefined.
+If you use the
+.B attributeoptions
+directive, `lang-' will no longer be defined and you must specify it
+explicitly if you want it defined.
+
+An attribute description with a tagging option is a subtype of that
+attribute description without the option.
+Except for that, options defined this way have no special semantics.
+Prefixes defined this way work like the `lang-' options:
+They define a prefix for tagging options starting with the prefix.
+That is, if you define the prefix `x-foo-', you can use the option
+`x-foo-bar'.
+Furthermore, in a search or compare, a prefix or range name (with
+a trailing `-') matches all options starting with that name, as well
+as the option with the range name sans the trailing `-'.
+That is, `x-foo-bar-' matches `x-foo-bar' and `x-foo-bar-baz'.
+
+RFC2251 reserves options beginning with `x-' for private experiments.
+Other options should be registered with IANA, see RFC3383 section 3.4.
+OpenLDAP also has the `binary' option built in, but this is a transfer
+option, not a tagging option.
 .HP
 .hy 0
 .B attributetype "(\ <oid> [NAME\ <name>] [OBSOLETE]\
@@ -113,6 +141,16 @@ description.)
 .B concurrency <integer>
 Specify a desired level of concurrency.  Provided to the underlying
 thread system as a hint.  The default is not to provide any hint.
+.TP
+.B conn_max_pending <integer>
+Specify the maximum number of pending requests for an anonymous session.
+If requests are submitted faster than the server can process them, they
+will be queued up to this limit. If the limit is exceeded, the session
+is closed. The default is 100.
+.TP
+.B conn_max_pending_auth <integer>
+Specify the maximum number of pending requests for an authenticated session.
+The default is 1000.
 .\".TP
 .\".B debug <subsys> <level>
 .\"Specify a logging level for a particular subsystem.  The subsystems include
@@ -181,14 +219,6 @@ disallow (default none).
 disables acceptance of anonymous bind requests.
 .B bind_simple
 disables simple (bind) authentication.
-.B bind_simple_unprotected
-disables simple (bind) authentication when confidentiality
-protection (e.g. TLS) is not in place.  The
-.B security
-directive's
-.B simple_bind
-option provides fine grain control over the confidentiality
-protection required for simple bind.
 .B bind_krbv4
 disables Kerberos V4 (bind) authentication.
 .B tls_2_anon
@@ -520,8 +550,8 @@ may be used to require no conditions (useful for clearly globally
 set conditions within a particular database).
 .TP
 .B reverse-lookup on | off
-Enable/disable client name reverse lookup (default is 
-.BR on 
+Enable/disable client name unverified reverse lookup (default is 
+.BR off 
 if compiled with --enable-rlookups).
 .TP
 .B rootDSE <file>
@@ -645,7 +675,7 @@ The
 .B nodict
 flag disables mechanisms susceptible to passive dictionary attacks.
 The
-.B noanonyous
+.B noanonymous
 flag disables mechanisms which support anonymous login.
 The
 .B forwardsec
@@ -743,7 +773,7 @@ meaningful if you are using Kerberos authentication.
 .TP
 .B threads <integer>
 Specify the maximum size of the primary thread pool.
-The default is 32.
+The default is 16.
 .TP
 .B timelimit {<integer>|unlimited}
 .TP
@@ -1007,13 +1037,6 @@ required for each database definition.
 If the suffix of one database is "inside" that of another, the database
 with the inner suffix must come first in the configuration file.
 .TP
-.B suffixalias <alias> <aliased suffix>
-Specify an alternate suffix that may be used to reference an already defined
-database suffix. Operations specifying DNs residing under the alias 
-will execute as if they had specified the aliased suffix.
-.I This feature is no supported in this version of
-.BI slapd (8).
-.TP
 .B subordinate
 Specify that the current backend database is a subordinate of another
 backend database. A subordinate database may have only one suffix. This
@@ -1052,6 +1075,12 @@ Here is a short example of a configuration file:
 .nf
 include   SYSCONFDIR/schema/core.schema
 pidfile   LOCALSTATEDIR/slapd.pid
+
+# Subtypes of "name" (e.g. "cn" and "ou") with the
+# option ";x-hidden" can be searched for/compared,
+# but are not shown.  See \fBslapd.access\fP(5).
+attributeoptions x-hidden lang-
+access to attr=name;x-hidden by * =cs
 
 database  bdb
 suffix    "dc=our-domain,dc=com"

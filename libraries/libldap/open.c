@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/open.c,v 1.85.2.4 2002/12/19 22:00:58 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/open.c,v 1.85.2.9 2003/04/28 23:41:55 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*  Portions
@@ -21,6 +21,8 @@
 #include <ac/socket.h>
 #include <ac/string.h>
 #include <ac/time.h>
+
+#include <ac/unistd.h>
 
 #include "ldap-int.h"
 #include "ldap_log.h"
@@ -236,7 +238,6 @@ ldap_int_open_connection(
 #endif
 	char *host;
 	int port, proto;
-	long addr;
 
 #ifdef NEW_LOGGING
 	LDAP_LOG ( CONNECTION, ENTRY, "ldap_int_open_connection\n", 0, 0, 0 );
@@ -248,10 +249,8 @@ ldap_int_open_connection(
 		case LDAP_PROTO_TCP:
 			port = srv->lud_port;
 
-			addr = 0;
 			if ( srv->lud_host == NULL || *srv->lud_host == 0 ) {
 				host = NULL;
-				addr = htonl( INADDR_LOOPBACK );
 			} else {
 				host = srv->lud_host;
 			}
@@ -265,7 +264,7 @@ ldap_int_open_connection(
 			}
 
 			rc = ldap_connect_to_host( ld, conn->lconn_sb,
-				proto, host, addr, port, async );
+				proto, host, port, async );
 
 			if ( rc == -1 ) return rc;
 
@@ -280,15 +279,13 @@ ldap_int_open_connection(
 			sasl_host = ldap_host_connected_to( conn->lconn_sb );
 #endif
 			break;
-#ifdef LDAP_CONNECTIONLESS
 
+#ifdef LDAP_CONNECTIONLESS
 		case LDAP_PROTO_UDP:
 			port = srv->lud_port;
 
-			addr = 0;
 			if ( srv->lud_host == NULL || *srv->lud_host == 0 ) {
 				host = NULL;
-				addr = htonl( INADDR_LOOPBACK );
 			} else {
 				host = srv->lud_host;
 			}
@@ -297,7 +294,7 @@ ldap_int_open_connection(
 
 			LDAP_IS_UDP(ld) = 1;
 			rc = ldap_connect_to_host( ld, conn->lconn_sb,
-				proto, host, addr, port, async );
+				proto, host, port, async );
 
 			if ( rc == -1 ) return rc;
 #ifdef LDAP_DEBUG
@@ -306,6 +303,10 @@ ldap_int_open_connection(
 #endif
 			ber_sockbuf_add_io( conn->lconn_sb, &ber_sockbuf_io_udp,
 				LBER_SBIOD_LEVEL_PROVIDER, NULL );
+
+			ber_sockbuf_add_io( conn->lconn_sb, &ber_sockbuf_io_readahead,
+				LBER_SBIOD_LEVEL_PROVIDER, NULL );
+
 			break;
 #endif
 		case LDAP_PROTO_IPC:
@@ -331,17 +332,13 @@ ldap_int_open_connection(
 			break;
 	}
 
-	ber_sockbuf_add_io( conn->lconn_sb, &ber_sockbuf_io_readahead,
-		LBER_SBIOD_LEVEL_PROVIDER, NULL );
-
 #ifdef LDAP_DEBUG
 	ber_sockbuf_add_io( conn->lconn_sb, &ber_sockbuf_io_debug,
 		INT_MAX, (void *)"ldap_" );
 #endif
 
 #ifdef LDAP_CONNECTIONLESS
-	if( proto == LDAP_PROTO_UDP )
-		return 0;
+	if( proto == LDAP_PROTO_UDP ) return 0;
 #endif
 
 #ifdef HAVE_CYRUS_SASL
@@ -351,9 +348,16 @@ ldap_int_open_connection(
 		ldap_int_sasl_open( ld, conn, sasl_host );
 		LDAP_FREE( sasl_host );
 	}
+#ifdef LDAP_PF_LOCAL
 	if( proto == LDAP_PROTO_IPC ) {
-		ldap_int_sasl_external( ld, conn, "nobody", LDAP_PVT_SASL_LOCAL_SSF );
+		char authid[sizeof("uidNumber=4294967295+gidNumber=4294967295,"
+			"cn=peercred,cn=external,cn=auth")];
+		sprintf( authid, "uidNumber=%d+gidNumber=%d,"
+			"cn=peercred,cn=external,cn=auth",
+			(int) geteuid(), (int) getegid() );
+		ldap_int_sasl_external( ld, conn, authid, LDAP_PVT_SASL_LOCAL_SSF );
 	}
+#endif
 #endif
 
 #ifdef HAVE_TLS

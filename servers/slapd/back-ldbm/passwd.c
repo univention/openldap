@@ -1,7 +1,7 @@
 /* passwd.c - ldbm backend password routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/passwd.c,v 1.40.2.3 2002/08/05 19:09:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/passwd.c,v 1.40.2.5 2003/03/24 03:54:12 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -38,8 +38,8 @@ ldbm_back_exop_passwd(
 	struct berval id = { 0, NULL };
 	struct berval new = { 0, NULL };
 
-	struct berval dn;
-	struct berval ndn;
+	struct berval dn = { 0, NULL };
+	struct berval ndn = { 0, NULL };
 
 	assert( reqoid != NULL );
 	assert( strcmp( LDAP_EXOP_MODIFY_PASSWD, reqoid ) == 0 );

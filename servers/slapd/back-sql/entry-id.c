@@ -263,9 +263,11 @@ backsql_has_children(
 	return rc;
 }
 
-int
-backsql_get_attr_vals( backsql_at_map_rec *at, backsql_srch_info *bsi )
+static int
+backsql_get_attr_vals( void *v_at, void *v_bsi )
 {
+	backsql_at_map_rec *at  = v_at;
+	backsql_srch_info  *bsi = v_bsi;
 	RETCODE		rc;
 	SQLHSTMT	sth;
 	BACKSQL_ROW_NTS	row;
@@ -403,7 +405,7 @@ backsql_id2entry( backsql_srch_info *bsi, Entry *e, backsql_entryID *eid )
 	} else {
 		Debug( LDAP_DEBUG_TRACE, "backsql_id2entry(): "
 			"retrieving all attributes\n", 0, 0, 0 );
-		avl_apply( bsi->oc->attrs, (AVL_APPLY)backsql_get_attr_vals,
+		avl_apply( bsi->oc->attrs, backsql_get_attr_vals,
 				bsi, 0, AVL_INORDER );
 	}
 
@@ -416,12 +418,16 @@ backsql_id2entry( backsql_srch_info *bsi, Entry *e, backsql_entryID *eid )
 		const char	*text = NULL;
 		char		textbuf[ 1024 ];
 		size_t		textlen = sizeof( textbuf );
-		struct berval	bv[ 2 ] = { bsi->oc->oc->soc_cname, BER_BVNULL };
+		struct berval	bv[ 2 ];
 		struct berval	soc;
 		AttributeDescription	*ad_soc
 			= slap_schema.si_ad_structuralObjectClass;
+		int rc;
 
-		int rc = structural_class( bv, &soc, NULL, 
+		bv[ 0 ] = bsi->oc->oc->soc_cname;
+		bv[ 1 ].bv_val = NULL;
+
+		rc = structural_class( bv, &soc, NULL, 
 				&text, textbuf, textlen );
 		if ( rc != LDAP_SUCCESS ) {
 			entry_free( e );

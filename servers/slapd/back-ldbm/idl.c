@@ -1,7 +1,7 @@
 /* idl.c - ldap id list handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/idl.c,v 1.66.2.6 2002/12/30 03:49:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/idl.c,v 1.66.2.9 2003/03/13 03:35:27 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -258,6 +258,8 @@ idl_fetch(
 		idl_free( tmp[i] );
 	}
 	free( (char *) tmp );
+
+	assert( ID_BLOCK_NIDS(idl) == nids );
 
 #ifdef LDBM_DEBUG_IDL
 	idl_check(idl);
@@ -551,20 +553,24 @@ idl_insert_key(
 
 #ifndef USE_INDIRECT_NIDS
 	/* select the block to try inserting into *//* XXX linear search XXX */
-	for ( i = 0; !ID_BLOCK_NOID(idl, i) && id > ID_BLOCK_ID(idl, i); i++ )
+	for ( i = 0; !ID_BLOCK_NOID(idl, i) && id >= ID_BLOCK_ID(idl, i); i++ )
 		;	/* NULL */
 #else
 	i = idl_find(idl, id);
-	if (ID_BLOCK_ID(idl, i) < id)
+	if (ID_BLOCK_ID(idl, i) <= id)
 		i++;
 #endif
-
 	if ( i != 0 ) {
 		i--;
 		first = 0;
 	} else {
 		first = 1;
 	}
+
+	/* At this point, the following condition must be true:
+	 * ID_BLOCK_ID(idl, i) <= id && id < ID_BLOCK_ID(idl, i+1)
+	 * except when i is the first or the last block.
+	 */
 
 	/* get the block */
 	cont_alloc( &k2, &key );
@@ -627,10 +633,11 @@ idl_insert_key(
 #else
 		if ( !first && (unsigned long)(i + 1) < ID_BLOCK_NIDS(idl) ) {
 #endif
+			Datum k3;
 			/* read it in */
-			cont_alloc( &k2, &key );
-			cont_id( &k2, ID_BLOCK_ID(idl, i + 1) );
-			if ( (tmp2 = idl_fetch_one( be, db, k2 )) == NULL ) {
+			cont_alloc( &k3, &key );
+			cont_id( &k3, ID_BLOCK_ID(idl, i + 1) );
+			if ( (tmp2 = idl_fetch_one( be, db, k3 )) == NULL ) {
 #ifdef NEW_LOGGING
 				LDAP_LOG( INDEX, ERR,
 					   "idl_insert_key: idl_fetch_one returned NULL\n", 0, 0, 0);
@@ -641,7 +648,7 @@ idl_insert_key(
 #endif
 
 				/* split the original block */
-				cont_free( &k2 );
+				cont_free( &k3 );
 				goto split;
 			}
 
@@ -681,7 +688,7 @@ idl_insert_key(
 			    db->dbc_maxids )) ) {
 			case 1:		/* id inserted first in block */
 				rc = idl_change_first( be, db, key, idl,
-				    i + 1, k2, tmp2 );
+				    i + 1, k3, tmp2 );
 				/* FALL */
 
 			case 2:		/* id already there - how? */
@@ -705,6 +712,8 @@ idl_insert_key(
 
 				idl_free( tmp );
 				idl_free( tmp2 );
+				cont_free( &k3 );
+				cont_free( &k2 );
 				idl_free( idl );
 				return( 0 );
 
@@ -713,6 +722,7 @@ idl_insert_key(
 			}
 
 			idl_free( tmp2 );
+			cont_free( &k3 );
 		}
 
 split:

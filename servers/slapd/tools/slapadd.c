@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/tools/slapadd.c,v 1.40.2.8 2002/11/28 22:22:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/tools/slapadd.c,v 1.40.2.11 2003/03/03 17:10:11 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 #include "portable.h"
@@ -261,7 +261,7 @@ main( int argc, char **argv )
 
 	ch_free( buf );
 
-	be->be_entry_close( be );
+	if( be->be_entry_close( be )) rc = EXIT_FAILURE;
 
 	if( be->be_sync ) {
 		be->be_sync( be );

@@ -1,7 +1,7 @@
 /* cache.c - routines to maintain an in-core cache of entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.1.2.7 2002/11/11 02:42:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.1.2.12 2003/05/10 21:58:11 hyc Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -19,7 +19,9 @@
 
 /* BDB backend specific entry info -- visible only to the cache */
 typedef struct bdb_entry_info {
+#if 0
 	ldap_pvt_thread_rdwr_t	bei_rdwr;	/* reader/writer lock */
+#endif
 
 	/*
 	 * remaining fields require backend cache lock to access
@@ -101,6 +103,7 @@ bdb_cache_entry_rdwr_unlock(Entry *e, int rw)
 }
 #endif	/* unused */
 
+#if 0
 static int
 bdb_cache_entry_rdwr_init(Entry *e)
 {
@@ -112,6 +115,7 @@ bdb_cache_entry_rdwr_destroy(Entry *e)
 {
 	return ldap_pvt_thread_rdwr_destroy( &BEI(e)->bei_rdwr );
 }
+#endif
 
 static int
 bdb_cache_entry_private_init( Entry *e )
@@ -125,11 +129,13 @@ bdb_cache_entry_private_init( Entry *e )
 
 	e->e_private = ch_calloc(1, sizeof(struct bdb_entry_info));
 
+#if 0
 	if( bdb_cache_entry_rdwr_init( e ) != 0 ) {
 		free( BEI(e) );
 		e->e_private = NULL;
 		return 1;
 	} 
+#endif
 
 	return 0;
 }
@@ -205,7 +211,9 @@ bdb_cache_entry_private_destroy( Entry *e )
 {
 	assert( e->e_private );
 
+#if 0
 	bdb_cache_entry_rdwr_destroy( e );
+#endif
 
 	free( e->e_private );
 	e->e_private = NULL;
@@ -491,7 +499,7 @@ bdb_cache_add_entry_rw(
 	}
 
 	if ( avl_insert( &cache->c_dntree, (caddr_t) e,
-		(AVL_CMP) entry_dn_cmp, avl_dup_error ) != 0 )
+	                 entry_dn_cmp, avl_dup_error ) != 0 )
 	{
 		/* free cache write lock */
 		ldap_pvt_thread_rdwr_wunlock( &cache->c_rwlock );
@@ -513,7 +521,7 @@ bdb_cache_add_entry_rw(
 
 	/* id tree */
 	if ( avl_insert( &cache->c_idtree, (caddr_t) e,
-		(AVL_CMP) entry_id_cmp, avl_dup_error ) != 0 )
+	                 entry_id_cmp, avl_dup_error ) != 0 )
 	{
 #ifdef NEW_LOGGING
 		LDAP_LOG( CACHE, DETAIL1, 
@@ -527,7 +535,7 @@ bdb_cache_add_entry_rw(
 
 		/* delete from dn tree inserted above */
 		if ( avl_delete( &cache->c_dntree, (caddr_t) e,
-			(AVL_CMP) entry_dn_cmp ) == NULL )
+		                 entry_dn_cmp ) == NULL )
 		{
 #ifdef NEW_LOGGING
 			LDAP_LOG( CACHE, INFO, 
@@ -554,7 +562,7 @@ bdb_cache_add_entry_rw(
 	case DB_LOCK_NOTGRANTED :
 		/* undo avl changes immediately */
 		if ( avl_delete( &cache->c_idtree, (caddr_t) e,
-			(AVL_CMP) entry_id_cmp ) == NULL ) {
+		                 entry_id_cmp ) == NULL ) {
 #ifdef NEW_LOGGING
 			LDAP_LOG( CACHE, INFO, 
 				"bdb_cache_add_entry: can't delete (%s) from cache.\n", 
@@ -564,7 +572,7 @@ bdb_cache_add_entry_rw(
 #endif
 		}
 		if ( avl_delete( &cache->c_dntree, (caddr_t) e,
-				(AVL_CMP) entry_dn_cmp ) == NULL ) {
+		                 entry_dn_cmp ) == NULL ) {
 #ifdef NEW_LOGGING
 			LDAP_LOG( CACHE, INFO, 
 				"bdb_cache_add_entry: can't delete (%s) from cache.\n", 
@@ -653,7 +661,7 @@ bdb_cache_update_entry(
 	assert( e->e_private );
 
 	if ( avl_insert( &cache->c_dntree, (caddr_t) e,
-		(AVL_CMP) entry_dn_cmp, avl_dup_error ) != 0 )
+	                 entry_dn_cmp, avl_dup_error ) != 0 )
 	{
 #ifdef NEW_LOGGING
 		LDAP_LOG( CACHE, DETAIL1, 
@@ -672,7 +680,7 @@ bdb_cache_update_entry(
 
 	/* id tree */
 	if ( avl_insert( &cache->c_idtree, (caddr_t) e,
-		(AVL_CMP) entry_id_cmp, avl_dup_error ) != 0 )
+	                 entry_id_cmp, avl_dup_error ) != 0 )
 	{
 #ifdef NEW_LOGGING
 		LDAP_LOG( CACHE, DETAIL1, 
@@ -686,7 +694,7 @@ bdb_cache_update_entry(
 
 		/* delete from dn tree inserted above */
 		if ( avl_delete( &cache->c_dntree, (caddr_t) e,
-			(AVL_CMP) entry_dn_cmp ) == NULL )
+		                 entry_dn_cmp ) == NULL )
 		{
 #ifdef NEW_LOGGING
 			LDAP_LOG( CACHE, INFO, 
@@ -774,7 +782,7 @@ try_again:
 	ldap_pvt_thread_rdwr_rlock( &cache->c_rwlock );
 
 	if ( (ep = (Entry *) avl_find( cache->c_dntree, (caddr_t) &e,
-		(AVL_CMP) entry_dn_cmp )) != NULL )
+	                               entry_dn_cmp )) != NULL )
 	{
 		int state;
 		count++;
@@ -794,7 +802,7 @@ try_again:
 		/*
 		 * entry is deleted or not fully created yet
 		 */
-		if ( state != CACHE_ENTRY_READY ) {
+		if ( state != CACHE_ENTRY_READY && state != CACHE_ENTRY_COMMITTED ) {
 			assert(state != CACHE_ENTRY_UNDEFINED);
 
 			/* free cache read lock */
@@ -874,7 +882,7 @@ try_again:
 	ldap_pvt_thread_rdwr_rlock( &cache->c_rwlock );
 
 	if ( (ep = (Entry *) avl_find( cache->c_idtree, (caddr_t) &e,
-		(AVL_CMP) entry_id_cmp )) != NULL )
+	                               entry_id_cmp )) != NULL )
 	{
 		int state;
 		ID	ep_id;
@@ -889,7 +897,7 @@ try_again:
 		/*
 		 * entry is deleted or not fully created yet
 		 */
-		if ( state != CACHE_ENTRY_READY ) {
+		if ( state != CACHE_ENTRY_READY && state != CACHE_ENTRY_COMMITTED ) {
 
 			assert(state != CACHE_ENTRY_UNDEFINED);
 
@@ -944,6 +952,9 @@ try_again:
 			goto try_again;
 		}
 
+		/* Mark entry in-use */
+		BEI(ep)->bei_refcnt++;
+
 		/* free cache read lock */
 		ldap_pvt_thread_rdwr_runlock( &cache->c_rwlock );
 		/* set lru mutex */
@@ -951,8 +962,6 @@ try_again:
 		/* lru */
 		LRU_DELETE( cache, ep );
 		LRU_ADD( cache, ep );
-		
-		BEI(ep)->bei_refcnt++;
 
 		/* free lru mutex */
 		ldap_pvt_thread_mutex_unlock( &cache->lru_mutex );
@@ -1029,15 +1038,13 @@ bdb_cache_delete_entry_internal(
 	int rc = 0;	/* return code */
 
 	/* dn tree */
-	if ( avl_delete( &cache->c_dntree, (caddr_t) e, (AVL_CMP) entry_dn_cmp )
-		== NULL )
+	if ( avl_delete( &cache->c_dntree, (caddr_t) e, entry_dn_cmp ) == NULL )
 	{
 		rc = -1;
 	}
 
 	/* id tree */
-	if ( avl_delete( &cache->c_idtree, (caddr_t) e, (AVL_CMP) entry_id_cmp )
-		== NULL )
+	if ( avl_delete( &cache->c_idtree, (caddr_t) e, entry_id_cmp ) == NULL )
 	{
 		rc = -1;
 	}
@@ -1137,16 +1144,24 @@ bdb_locker_id( Operation *op, DB_ENV *env, int *locker )
 {
 	int i, rc, lockid;
 	void *data;
+	void *ctx;
 
-	if ( !env || !op || !locker ) return -1;
+	if ( !env || !locker ) return -1;
+
+	/* If no op was provided, try to find the ctx anyway... */
+	if ( op ) {
+		ctx = op->o_threadctx;
+	} else {
+		ctx = ldap_pvt_thread_pool_context( &connection_pool );
+	}
 
 	/* Shouldn't happen unless we're single-threaded */
-	if ( !op->o_threadctx ) {
+	if ( !ctx ) {
 		*locker = 0;
 		return 0;
 	}
 
-	if ( ldap_pvt_thread_pool_getkey( op->o_threadctx, env, &data, NULL ) ) {
+	if ( ldap_pvt_thread_pool_getkey( ctx, env, &data, NULL ) ) {
 		for ( i=0, rc=1; rc != 0 && i<4; i++ ) {
 			rc = XLOCK_ID( env, &lockid );
 			if (rc) ldap_pvt_thread_yield();
@@ -1155,7 +1170,7 @@ bdb_locker_id( Operation *op, DB_ENV *env, int *locker )
 			return rc;
 		}
 		data = (void *)lockid;
-		if ( ( rc = ldap_pvt_thread_pool_setkey( op->o_threadctx, env,
+		if ( ( rc = ldap_pvt_thread_pool_setkey( ctx, env,
 			data, bdb_locker_id_free ) ) ) {
 			XLOCK_ID_FREE( env, lockid );
 #ifdef NEW_LOGGING

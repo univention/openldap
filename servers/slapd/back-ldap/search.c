@@ -1,7 +1,7 @@
 /* search.c - ldap backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.55.2.10 2002/11/26 17:33:47 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.55.2.12 2003/03/12 22:27:57 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /* This is an altered version */
@@ -76,10 +76,8 @@ ldap_back_search(
 	char *match = NULL, *err = NULL;
 	char *mapped_filter = NULL, **mapped_attrs = NULL;
 	struct berval mbase;
-#ifdef ENABLE_REWRITE
 	char *mmatch = NULL;
 	struct berval mfilter = { 0, NULL };
-#endif /* ENABLE_REWRITE */
 	struct slap_limits_set *limit = NULL;
 	int isroot = 0;
 	BerVarray v2refs = NULL;
@@ -235,7 +233,7 @@ ldap_back_search(
 #else /* !ENABLE_REWRITE */
 			filterstr,
 #endif /* !ENABLE_REWRITE */
-		       	0);
+		       	BACKLDAP_MAP);
 	if ( mapped_filter == NULL ) {
 #ifdef ENABLE_REWRITE
 		mapped_filter = mfilter.bv_val;
@@ -250,7 +248,7 @@ ldap_back_search(
 	}
 #endif /* ENABLE_REWRITE */
 
-	mapped_attrs = ldap_back_map_attrs(&li->at_map, attrs, 0);
+	mapped_attrs = ldap_back_map_attrs(&li->at_map, attrs, BACKLDAP_MAP);
 	if ( mapped_attrs == NULL && attrs) {
 		for (count=0; attrs[count].an_name.bv_val; count++);
 		mapped_attrs = ch_malloc( (count+1) * sizeof(char *));
@@ -389,20 +387,26 @@ fail:;
 		mmatch, err, v2refs, NULL, count );
 
 #else /* !ENABLE_REWRITE */
+	if ( match != NULL ) {
+		struct berval dn, mdn;
+
+		ber_str2bv(match, 0, 0, &dn);
+		ldap_back_dn_massage(li, &dn, &mdn, 0, 0);
+		mmatch = mdn.bv_val;
+	}
+
 	if ( v2refs ) {
 		sres = LDAP_REFERRAL;
 	}
 	send_search_result( conn, op, sres,
-		match, err, v2refs, NULL, count );
+		mmatch, err, v2refs, NULL, count );
 #endif /* !ENABLE_REWRITE */
 
 finish:;
 	if ( match ) {
-#ifdef ENABLE_REWRITE
 		if ( mmatch != match ) {
 			free( mmatch );
 		}
-#endif /* ENABLE_REWRITE */
 		LDAP_FREE(match);
 	}
 	if ( err ) {
@@ -491,8 +495,8 @@ ldap_send_entry(
 	attrp = &ent.e_attrs;
 
 	while ( ber_scanf( &ber, "{m", &a ) != LBER_ERROR ) {
-		ldap_back_map(&li->at_map, &a, &mapped, 1);
-		if (mapped.bv_val == NULL)
+		ldap_back_map(&li->at_map, &a, &mapped, BACKLDAP_REMAP);
+		if (mapped.bv_val == NULL || mapped.bv_val[0] == '\0')
 			continue;
 		attr = (Attribute *)ch_malloc( sizeof(Attribute) );
 		if (attr == NULL)
@@ -536,8 +540,9 @@ ldap_send_entry(
 
 			for ( last = 0; attr->a_vals[last].bv_val; last++ ) ;
 			for ( i = 0, bv = attr->a_vals; bv->bv_val; bv++, i++ ) {
-				ldap_back_map(&li->oc_map, bv, &mapped, 1);
-				if (mapped.bv_val == NULL) {
+				ldap_back_map(&li->oc_map, bv, &mapped,
+						BACKLDAP_REMAP);
+				if (mapped.bv_val == NULL || mapped.bv_val[0] == '\0') {
 					LBER_FREE(bv->bv_val);
 					bv->bv_val = NULL;
 					if (--last < 0)
@@ -612,6 +617,9 @@ ldap_send_entry(
 				}
 #else /* !ENABLE_REWRITE */
 				ldap_back_dn_massage( li, bv, &newval, 0, 0 );
+				if ( bv->bv_val != newval.bv_val ) {
+					LBER_FREE( bv->bv_val );
+				}
 				*bv = newval;
 #endif /* !ENABLE_REWRITE */
 			}

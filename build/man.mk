@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/ldap/build/man.mk,v 1.23.2.1 2002/06/20 20:12:23 kurt Exp $
-## Copyright 1998-2002 The OpenLDAP Foundation
+# $OpenLDAP: pkg/ldap/build/man.mk,v 1.23.2.2 2003/03/03 17:10:01 kurt Exp $
+## Copyright 1998-2003 The OpenLDAP Foundation
 ## COPYING RESTRICTIONS APPLY.  See COPYRIGHT File in top level directory
 ## of this package for details.
 ##---------------------------------------------------------------------------

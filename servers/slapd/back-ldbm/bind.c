@@ -1,7 +1,7 @@
 /* bind.c - ldbm backend bind and unbind routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/bind.c,v 1.60.2.1 2002/07/28 19:16:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/bind.c,v 1.60.2.2 2003/02/09 16:31:38 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -269,7 +269,7 @@ return_results:;
 	cache_return_entry_r( &li->li_cache, e );
 	ldap_pvt_thread_rdwr_runlock(&li->li_giant_rwlock);
 
-	/* front end with send result on success (rc==0) */
+	/* front end will send result on success (rc==0) */
 	return( rc );
 }
 

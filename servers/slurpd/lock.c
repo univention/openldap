@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/lock.c,v 1.15.2.3 2002/09/25 14:11:00 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/lock.c,v 1.15.2.4 2003/03/03 17:10:11 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*

@@ -1,7 +1,7 @@
 /* schema_init.c - init builtin schema */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_init.c,v 1.202.2.20 2003/01/03 17:08:44 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_init.c,v 1.202.2.25 2003/05/07 22:13:39 hyc Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -364,7 +364,9 @@ nameUIDNormalize(
 	int rc;
 
 	ber_dupbv( &out, val );
-	if( out.bv_len != 0 ) {
+	if( out.bv_len == 0 ) {
+		*normalized = out;
+	} else {
 		struct berval uid = { 0, NULL };
 
 		if( out.bv_val[out.bv_len-1] == 'B'
@@ -1246,8 +1248,8 @@ static int caseExactIgnoreIndexer(
 	BerVarray values,
 	BerVarray *keysp )
 {
-	int i;
-	unsigned casefold;
+	int i,j;
+	unsigned casefold,wasspace;
 	size_t slen, mlen;
 	BerVarray keys;
 	HASH_CONTEXT   HASHcontext;
@@ -1272,8 +1274,32 @@ static int caseExactIgnoreIndexer(
 		? LDAP_UTF8_CASEFOLD : LDAP_UTF8_NOCASEFOLD;
 
 	for( i=0; values[i].bv_val != NULL; i++ ) {
-		struct berval value;
+		struct berval value, nvalue;
 		UTF8bvnormalize( &values[i], &value, casefold );
+
+		/* collapse spaces (in place) */
+		nvalue.bv_len = 0;
+		nvalue.bv_val = value.bv_val;
+
+		wasspace=1;
+		for( j=0; j<value.bv_len; j++) {
+			if ( ASCII_SPACE( value.bv_val[j] )) {
+				if( wasspace++ == 0 ) {
+					nvalue.bv_val[nvalue.bv_len++] = value.bv_val[j];
+				}
+			} else {
+				wasspace = 0;
+				nvalue.bv_val[nvalue.bv_len++] = value.bv_val[j];
+			}
+		}
+
+		if( nvalue.bv_len == 0 ) {
+			nvalue.bv_val = " ";
+			nvalue.bv_len = sizeof(" ")-1;
+		} else {
+			if( wasspace ) --nvalue.bv_len;
+			nvalue.bv_val[nvalue.bv_len] = '\0';
+		}
 
 		HASH_Init( &HASHcontext );
 		if( prefix != NULL && prefix->bv_len > 0 ) {
@@ -1285,11 +1311,10 @@ static int caseExactIgnoreIndexer(
 		HASH_Update( &HASHcontext,
 			mr->smr_oid, mlen );
 		HASH_Update( &HASHcontext,
-			value.bv_val, value.bv_len );
+			nvalue.bv_val, nvalue.bv_len );
 		HASH_Final( HASHdigest, &HASHcontext );
 
 		free( value.bv_val );
-
 		ber_dupbv( &keys[i], &digest );
 	}
 
@@ -1367,11 +1392,11 @@ static int caseExactIgnoreSubstringsIndexer(
 	BerVarray values,
 	BerVarray *keysp )
 {
-	unsigned casefold;
-	ber_len_t i, nkeys;
+	unsigned casefold, wasspace;
+	ber_len_t i, j, nkeys;
 	size_t slen, mlen;
 	BerVarray keys;
-	BerVarray nvalues;
+	BerVarray tvalues, nvalues;
 
 	HASH_CONTEXT   HASHcontext;
 	unsigned char	HASHdigest[HASH_BYTES];
@@ -1391,10 +1416,39 @@ static int caseExactIgnoreSubstringsIndexer(
 	casefold = ( mr != caseExactSubstringsMatchingRule )
 		? LDAP_UTF8_CASEFOLD : LDAP_UTF8_NOCASEFOLD;
 
+	tvalues = ch_malloc( sizeof( struct berval ) * (i+1) );
 	nvalues = ch_malloc( sizeof( struct berval ) * (i+1) );
+
 	for( i=0; values[i].bv_val != NULL; i++ ) {
-		UTF8bvnormalize( &values[i], &nvalues[i], casefold );
+		UTF8bvnormalize( &values[i], &tvalues[i], casefold );
+
+		/* collapse spaces (in place) */
+		nvalues[i].bv_len = 0;
+		nvalues[i].bv_val = tvalues[i].bv_val;
+
+		wasspace=1;
+		for( j=0; j<tvalues[i].bv_len; j++) {
+			if ( ASCII_SPACE( tvalues[i].bv_val[j] )) {
+				if( wasspace++ == 0 ) {
+					nvalues[i].bv_val[nvalues[i].bv_len++] =
+						tvalues[i].bv_val[j];
+				}
+			} else {
+				wasspace = 0;
+				nvalues[i].bv_val[nvalues[i].bv_len++] = tvalues[i].bv_val[j];
+			}
+		}
+
+		if( nvalues[i].bv_len == 0 ) {
+			nvalues[i].bv_val = " ";
+			nvalues[i].bv_len = sizeof(" ")-1;
+		} else {
+			if( wasspace ) --nvalues[i].bv_len;
+			nvalues[i].bv_val[nvalues[i].bv_len] = '\0';
+		}
 	}
+
+	tvalues[i].bv_val = NULL;
 	nvalues[i].bv_val = NULL;
 	values = nvalues;
 
@@ -1432,7 +1486,8 @@ static int caseExactIgnoreSubstringsIndexer(
 	if( nkeys == 0 ) {
 		/* no keys to generate */
 		*keysp = NULL;
-		ber_bvarray_free( nvalues );
+		ber_bvarray_free( tvalues );
+		ch_free( nvalues );
 		return LDAP_SUCCESS;
 	}
 
@@ -1533,7 +1588,8 @@ static int caseExactIgnoreSubstringsIndexer(
 		*keysp = NULL;
 	}
 
-	ber_bvarray_free( nvalues );
+	ber_bvarray_free( tvalues );
+	ch_free( nvalues );
 
 	return LDAP_SUCCESS;
 }
@@ -3029,9 +3085,10 @@ static int caseIgnoreIA5SubstringsIndexer(
 {
 	ber_len_t i, nkeys;
 	size_t slen, mlen;
-	BerVarray keys;
+	BerVarray keys, nvals;
 	HASH_CONTEXT   HASHcontext;
 	unsigned char	HASHdigest[HASH_BYTES];
+	int rc = LDAP_SUCCESS;
 	struct berval digest;
 	digest.bv_val = HASHdigest;
 	digest.bv_len = sizeof(HASHdigest);
@@ -3039,42 +3096,60 @@ static int caseIgnoreIA5SubstringsIndexer(
 	/* we should have at least one value at this point */
 	assert( values != NULL && values[0].bv_val != NULL );
 
+	/* count values, create new array for normalized copy */
+	for( i=0; values[i].bv_val != NULL; i++ ) ;
+	nvals = ch_malloc( sizeof( struct berval ) * (i+1) );
+	nvals[i].bv_val = NULL;
+
 	nkeys=0;
 	for( i=0; values[i].bv_val != NULL; i++ ) {
+		if( mr->smr_normalize ) {
+			rc = (mr->smr_normalize)( use, syntax, mr, &values[i], &nvals[i] );
+			if( rc != LDAP_SUCCESS ) {
+				break;
+			}
+		} else if ( syntax->ssyn_normalize ) {
+			rc = (syntax->ssyn_normalize)( syntax, &values[i], &nvals[i] );
+			if( rc != LDAP_SUCCESS ) {
+				break;
+			}
+		} else {
+			ber_dupbv( &nvals[i], &values[i] );
+		}
 		/* count number of indices to generate */
-		if( values[i].bv_len < SLAP_INDEX_SUBSTR_MINLEN ) {
+		if( nvals[i].bv_len < SLAP_INDEX_SUBSTR_MINLEN ) {
 			continue;
 		}
 
 		if( flags & SLAP_INDEX_SUBSTR_INITIAL ) {
-			if( values[i].bv_len >= SLAP_INDEX_SUBSTR_MAXLEN ) {
+			if( nvals[i].bv_len >= SLAP_INDEX_SUBSTR_MAXLEN ) {
 				nkeys += SLAP_INDEX_SUBSTR_MAXLEN -
 					( SLAP_INDEX_SUBSTR_MINLEN - 1);
 			} else {
-				nkeys += values[i].bv_len - ( SLAP_INDEX_SUBSTR_MINLEN - 1 );
+				nkeys += nvals[i].bv_len - ( SLAP_INDEX_SUBSTR_MINLEN - 1 );
 			}
 		}
 
 		if( flags & SLAP_INDEX_SUBSTR_ANY ) {
-			if( values[i].bv_len >= SLAP_INDEX_SUBSTR_MAXLEN ) {
-				nkeys += values[i].bv_len - ( SLAP_INDEX_SUBSTR_MAXLEN - 1 );
+			if( nvals[i].bv_len >= SLAP_INDEX_SUBSTR_MAXLEN ) {
+				nkeys += nvals[i].bv_len - ( SLAP_INDEX_SUBSTR_MAXLEN - 1 );
 			}
 		}
 
 		if( flags & SLAP_INDEX_SUBSTR_FINAL ) {
-			if( values[i].bv_len >= SLAP_INDEX_SUBSTR_MAXLEN ) {
+			if( nvals[i].bv_len >= SLAP_INDEX_SUBSTR_MAXLEN ) {
 				nkeys += SLAP_INDEX_SUBSTR_MAXLEN -
 					( SLAP_INDEX_SUBSTR_MINLEN - 1);
 			} else {
-				nkeys += values[i].bv_len - ( SLAP_INDEX_SUBSTR_MINLEN - 1 );
+				nkeys += nvals[i].bv_len - ( SLAP_INDEX_SUBSTR_MINLEN - 1 );
 			}
 		}
 	}
 
-	if( nkeys == 0 ) {
+	if( nkeys == 0 || rc != LDAP_SUCCESS ) {
 		/* no keys to generate */
 		*keysp = NULL;
-		return LDAP_SUCCESS;
+		goto done;
 	}
 
 	keys = ch_malloc( sizeof( struct berval ) * (nkeys+1) );
@@ -3083,20 +3158,18 @@ static int caseIgnoreIA5SubstringsIndexer(
 	mlen = mr->smr_oidlen;
 
 	nkeys=0;
-	for( i=0; values[i].bv_val != NULL; i++ ) {
+	for( i=0; nvals[i].bv_val != NULL; i++ ) {
 		int j,max;
-		struct berval value;
 
-		if( values[i].bv_len < SLAP_INDEX_SUBSTR_MINLEN ) continue;
+		if( nvals[i].bv_len < SLAP_INDEX_SUBSTR_MINLEN ) continue;
 
-		ber_dupbv( &value, &values[i] );
-		ldap_pvt_str2lower( value.bv_val );
+		ldap_pvt_str2lower( nvals[i].bv_val );
 
 		if( ( flags & SLAP_INDEX_SUBSTR_ANY ) &&
-			( value.bv_len >= SLAP_INDEX_SUBSTR_MAXLEN ) )
+			( nvals[i].bv_len >= SLAP_INDEX_SUBSTR_MAXLEN ) )
 		{
 			char pre = SLAP_INDEX_SUBSTR_PREFIX;
-			max = value.bv_len - ( SLAP_INDEX_SUBSTR_MAXLEN - 1);
+			max = nvals[i].bv_len - ( SLAP_INDEX_SUBSTR_MAXLEN - 1);
 
 			for( j=0; j<max; j++ ) {
 				HASH_Init( &HASHcontext );
@@ -3112,7 +3185,7 @@ static int caseIgnoreIA5SubstringsIndexer(
 				HASH_Update( &HASHcontext,
 					mr->smr_oid, mlen );
 				HASH_Update( &HASHcontext,
-					&value.bv_val[j],
+					&nvals[i].bv_val[j],
 					SLAP_INDEX_SUBSTR_MAXLEN );
 				HASH_Final( HASHdigest, &HASHcontext );
 
@@ -3120,8 +3193,8 @@ static int caseIgnoreIA5SubstringsIndexer(
 			}
 		}
 
-		max = SLAP_INDEX_SUBSTR_MAXLEN < value.bv_len
-			? SLAP_INDEX_SUBSTR_MAXLEN : value.bv_len;
+		max = SLAP_INDEX_SUBSTR_MAXLEN < nvals[i].bv_len
+			? SLAP_INDEX_SUBSTR_MAXLEN : nvals[i].bv_len;
 
 		for( j=SLAP_INDEX_SUBSTR_MINLEN; j<=max; j++ ) {
 			char pre;
@@ -3140,7 +3213,7 @@ static int caseIgnoreIA5SubstringsIndexer(
 				HASH_Update( &HASHcontext,
 					mr->smr_oid, mlen );
 				HASH_Update( &HASHcontext,
-					value.bv_val, j );
+					nvals[i].bv_val, j );
 				HASH_Final( HASHdigest, &HASHcontext );
 
 				ber_dupbv( &keys[nkeys++], &digest );
@@ -3160,15 +3233,13 @@ static int caseIgnoreIA5SubstringsIndexer(
 				HASH_Update( &HASHcontext,
 					mr->smr_oid, mlen );
 				HASH_Update( &HASHcontext,
-					&value.bv_val[value.bv_len-j], j );
+					&nvals[i].bv_val[nvals[i].bv_len-j], j );
 				HASH_Final( HASHdigest, &HASHcontext );
 
 				ber_dupbv( &keys[nkeys++], &digest );
 			}
 
 		}
-
-		free( value.bv_val );
 	}
 
 	if( nkeys > 0 ) {
@@ -3179,7 +3250,11 @@ static int caseIgnoreIA5SubstringsIndexer(
 		*keysp = NULL;
 	}
 
-	return LDAP_SUCCESS;
+done:
+	for( i=0; nvals[i].bv_val != NULL; i++ ) ch_free( nvals[i].bv_val );
+	ch_free( nvals );
+
+	return rc;
 }
 
 static int caseIgnoreIA5SubstringsFilter(
@@ -3506,7 +3581,7 @@ integerBitAndMatch(
 	long lValue, lAssertedValue;
 
 	/* safe to assume integers are NUL terminated? */
-	lValue = strtoul(value->bv_val, NULL, 10);
+	lValue = strtol(value->bv_val, NULL, 10);
 	if(( lValue == LONG_MIN || lValue == LONG_MAX) && errno == ERANGE ) {
 		return LDAP_CONSTRAINT_VIOLATION;
 	}
@@ -3534,7 +3609,7 @@ integerBitOrMatch(
 	long lValue, lAssertedValue;
 
 	/* safe to assume integers are NUL terminated? */
-	lValue = strtoul(value->bv_val, NULL, 10);
+	lValue = strtol(value->bv_val, NULL, 10);
 	if(( lValue == LONG_MIN || lValue == LONG_MAX) && errno == ERANGE ) {
 		return LDAP_CONSTRAINT_VIOLATION;
 	}

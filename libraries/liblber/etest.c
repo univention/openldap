@@ -1,7 +1,7 @@
 /* test.c - lber encoding test program */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/etest.c,v 1.24.2.1 2002/04/15 15:21:45 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/etest.c,v 1.24.2.2 2003/03/03 17:10:04 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /* Portions

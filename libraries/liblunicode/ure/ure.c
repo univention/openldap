@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblunicode/ure/ure.c,v 1.11.2.1 2002/04/15 15:21:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblunicode/ure/ure.c,v 1.11.2.2 2003/02/08 23:50:39 kurt Exp $ */
 /*
- * Copyright 2000-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*

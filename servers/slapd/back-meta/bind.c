@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  *
  * Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
@@ -76,6 +76,8 @@
 #include "slap.h"
 #include "../back-ldap/back-ldap.h"
 #include "back-meta.h"
+
+static LDAP_REBIND_PROC	meta_back_rebind;
 
 static int
 meta_back_do_single_bind(
@@ -293,6 +295,15 @@ meta_back_do_single_bind(
 		lc->conns[ candidate ].bound = META_BOUND;
 		lc->bound_target = candidate;
 
+		if ( li->savecred ) {
+			if ( lc->conns[ candidate ].cred.bv_val )
+				ch_free( lc->conns[ candidate ].cred.bv_val );
+			ber_dupbv( &lc->conns[ candidate ].cred, cred );
+			ldap_set_rebind_proc( lc->conns[ candidate ].ld, 
+					meta_back_rebind, 
+					&lc->conns[ candidate ] );
+		}
+
 		if ( li->cache.ttl != META_DNCACHE_DISABLED
 				&& ndn->bv_len != 0 ) {
 			( void )meta_dncache_update_entry( &li->cache,
@@ -372,17 +383,15 @@ meta_back_dobind( struct metaconn *lc, Operation *op )
 #ifdef NEW_LOGGING
 			LDAP_LOG( BACK_META, WARNING,
 					"meta_back_dobind: (anonymous)"
-					" bind as \"%s\" failed"
-					" with error \"%s\"\n",
-					lsc->bound_dn.bv_val,
-					ldap_err2string( rc ), 0 );
+					" bind failed"
+					" with error %d (%s)\n",
+					rc, ldap_err2string( rc ), 0 );
 #else /* !NEW_LOGGING */
 			Debug( LDAP_DEBUG_ANY,
 					"==>meta_back_dobind: (anonymous)"
-					" bind as \"%s\" failed"
-					" with error \"%s\"\n%s",
-					lsc->bound_dn.bv_val,
-					ldap_err2string( rc ), "" );
+					" bind failed"
+					" with error %d (%s)\n",
+					rc, ldap_err2string( rc ), 0 );
 #endif /* !NEW_LOGGING */
 
 			/*
@@ -426,6 +435,21 @@ meta_back_is_valid( struct metaconn *lc, int candidate )
 	}
 
 	return 0;
+}
+
+/*
+ * meta_back_rebind
+ *
+ * This is a callback used for chasing referrals using the same
+ * credentials as the original user on this session.
+ */
+static int 
+meta_back_rebind( LDAP *ld, LDAP_CONST char *url, ber_tag_t request,
+	ber_int_t msgid, void *params )
+{
+	struct metasingleconn *lc = params;
+
+	return ldap_bind_s( ld, lc->bound_dn.bv_val, lc->cred.bv_val, LDAP_AUTH_SIMPLE );
 }
 
 /*

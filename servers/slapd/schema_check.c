@@ -1,7 +1,7 @@
 /* schema_check.c - routines to enforce schema definitions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_check.c,v 1.50.2.7 2002/10/29 01:26:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_check.c,v 1.50.2.10 2003/03/24 03:54:12 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -21,6 +21,10 @@ static char * oc_check_required(
 	ObjectClass *oc,
 	struct berval *ocname );
 
+static int entry_naming_check(
+	Entry *e,
+	const char** text,
+	char *textbuf, size_t textlen );
 /*
  * entry_schema_check - check that entry e conforms to the schema required
  * by its object class(es).
@@ -52,11 +56,9 @@ entry_schema_check(
 	int subentry = is_entry_subentry( e );
 	int collectiveSubentry = 0;
 
-#if 0
 	if( subentry ) {
 		collectiveSubentry = is_entry_collectiveAttributeSubentry( e );
 	}
-#endif
 
 	*text = textbuf;
 
@@ -214,9 +216,16 @@ entry_schema_check(
 
 	} else if ( sc != oc ) {
 		snprintf( textbuf, textlen, 
-			"structural object class modification from '%s' to '%s' not allowed",
+			"structural object class modification "
+			"from '%s' to '%s' not allowed",
 			asc->a_vals[0].bv_val, nsc.bv_val );
 		return LDAP_NO_OBJECT_CLASS_MODS;
+	}
+
+	/* naming check */
+	rc = entry_naming_check( e, text, textbuf, textlen );
+	if ( rc != LDAP_SUCCESS ) {
+		return rc;
 	}
 
 #ifdef SLAP_EXTENDED_SCHEMA
@@ -792,3 +801,72 @@ int mods_structural_class(
 	return structural_class( ocmod->sml_bvalues, sc, NULL,
 		text, textbuf, textlen );
 }
+
+
+static int
+entry_naming_check(
+	Entry *e,
+	const char** text,
+	char *textbuf, size_t textlen )
+{
+	/* naming check */
+	LDAPRDN		*rdn = NULL;
+	const char	*p = NULL;
+	ber_len_t	cnt;
+	int		rc = LDAP_SUCCESS;
+
+	/*
+	 * Get attribute type(s) and attribute value(s) of our RDN
+	 */
+	if ( ldap_bv2rdn( &e->e_name, &rdn, (char **)&p,
+		LDAP_DN_FORMAT_LDAP ) )
+	{
+		*text = "unrecongized attribute type(s) in RDN";
+		return LDAP_INVALID_DN_SYNTAX;
+	}
+
+	/* Check that each AVA of the RDN is present in the entry */
+	/* FIXME: Should also check that each AVA lists a distinct type */
+	for ( cnt = 0; rdn[0][cnt]; cnt++ ) {
+		LDAPAVA *ava = rdn[0][cnt];
+		AttributeDescription *desc = NULL;
+		Attribute *attr;
+		const char *errtext;
+
+		rc = slap_bv2ad( &ava->la_attr, &desc, &errtext );
+		if ( rc != LDAP_SUCCESS ) {
+			snprintf( textbuf, textlen, "%s (in RDN)", errtext );
+			break;
+		}
+
+		/* find the naming attribute */
+		attr = attr_find( e->e_attrs, desc );
+		if ( attr == NULL ) {
+			snprintf( textbuf, textlen, 
+				"naming attribute '%s' is not present in entry",
+				ava->la_attr.bv_val );
+			rc = LDAP_NAMING_VIOLATION;
+			break;
+		}
+
+ 
+		if( ava->la_flags & LDAP_AVA_BINARY ) {
+			snprintf( textbuf, textlen, 
+				"value of naming attribute '%s' in unsupported BER form",
+				ava->la_attr.bv_val );
+			rc = LDAP_NAMING_VIOLATION;
+		}
+
+		if ( value_find( desc, attr->a_vals, &ava->la_value ) != 0 ) {
+			snprintf( textbuf, textlen, 
+				"value of naming attribute '%s' is not present in entry",
+				ava->la_attr.bv_val );
+			rc = LDAP_NAMING_VIOLATION;
+			break;
+		}
+	}
+
+	ldap_rdnfree( rdn );
+	return rc;
+}
+

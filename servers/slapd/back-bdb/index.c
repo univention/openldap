@@ -1,7 +1,7 @@
 /* index.c - routines for dealing with attribute indexes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/index.c,v 1.24.2.2 2002/08/09 22:14:29 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/index.c,v 1.24.2.5 2003/03/26 17:56:38 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -22,7 +22,6 @@ static struct berval presence_key = {LUTIL_HASH_BYTES, presence_keyval};
 static slap_mask_t index_mask(
 	Backend *be,
 	AttributeDescription *desc,
-	char **dbname,
 	struct berval *atname )
 {
 	AttributeType *at;
@@ -32,20 +31,18 @@ static slap_mask_t index_mask(
 
 	if( mask ) {
 		*atname = desc->ad_cname;
-		*dbname = desc->ad_cname.bv_val;
 		return mask;
 	}
 
-	/* If there is a language tag, did we ever index the base
+	/* If there is a tagging option, did we ever index the base
 	 * type? If so, check for mask, otherwise it's not there.
 	 */
-	if( slap_ad_is_lang( desc ) && desc != desc->ad_type->sat_ad ) {
-		/* has language tag */
+	if( slap_ad_is_tagged( desc ) && desc != desc->ad_type->sat_ad ) {
+		/* has tagging option */
 		bdb_attr_mask( be->be_private, desc->ad_type->sat_ad, &mask );
 
-		if ( mask && ( mask ^ SLAP_INDEX_NOLANG ) ) {
+		if ( mask && ( mask ^ SLAP_INDEX_NOTAGS ) ) {
 			*atname = desc->ad_type->sat_cname;
-			*dbname = desc->ad_type->sat_cname.bv_val;
 			return mask;
 		}
 	}
@@ -59,7 +56,6 @@ static slap_mask_t index_mask(
 
 		if ( mask && ( mask ^ SLAP_INDEX_NOSUBTYPES ) ) {
 			*atname = at->sat_cname;
-			*dbname = at->sat_cname.bv_val;
 			return mask;
 		}
 	}
@@ -72,10 +68,9 @@ int bdb_index_is_indexed(
 	AttributeDescription *desc )
 {
 	slap_mask_t mask;
-	char *dbname;
 	struct berval prefix;
 
-	mask = index_mask( be, desc, &dbname, &prefix );
+	mask = index_mask( be, desc, &prefix );
 
 	if( mask == 0 ) {
 		return LDAP_INAPPROPRIATE_MATCHING;
@@ -95,15 +90,14 @@ int bdb_index_param(
 	int rc;
 	slap_mask_t mask;
 	DB *db;
-	char *dbname;
 
-	mask = index_mask( be, desc, &dbname, prefixp );
+	mask = index_mask( be, desc, prefixp );
 
 	if( mask == 0 ) {
 		return LDAP_INAPPROPRIATE_MATCHING;
 	}
 
-	rc = bdb_db_cache( be, dbname, &db );
+	rc = bdb_db_cache( be, NULL, prefixp->bv_val, &db );
 
 	if( rc != LDAP_SUCCESS ) {
 		return rc;
@@ -150,7 +144,6 @@ done:
 static int indexer(
 	Backend *be,
 	DB_TXN *txn,
-	char *dbname,
 	struct berval *atname,
 	BerVarray vals,
 	ID id,
@@ -165,16 +158,17 @@ static int indexer(
 
 	assert( mask );
 
-	rc = bdb_db_cache( be, dbname, &db );
+	rc = bdb_db_cache( be, txn, atname->bv_val, &db );
 	
 	if ( rc != LDAP_SUCCESS ) {
 #ifdef NEW_LOGGING
 		LDAP_LOG( INDEX, ERR, 
-			"bdb_index_read: Could not open DB %s\n", dbname, 0, 0 );
+			"bdb_index_read: Could not open DB %s\n",
+			atname->bv_val, 0, 0 );
 #else
 		Debug( LDAP_DEBUG_ANY,
-			"<= bdb_index_read NULL (could not open %s)\n",
-			dbname, 0, 0 );
+			"bdb_index_read: Could not open DB %s\n",
+			atname->bv_val, 0, 0 );
 #endif
 		return LDAP_OTHER;
 	}
@@ -262,7 +256,7 @@ static int index_at_values(
 	Backend *be,
 	DB_TXN *txn,
 	AttributeType *type,
-	struct berval *lang,
+	struct berval *tags,
 	BerVarray vals,
 	ID id,
 	int op )
@@ -273,7 +267,7 @@ static int index_at_values(
 	if( type->sat_sup ) {
 		/* recurse */
 		rc = index_at_values( be, txn,
-			type->sat_sup, lang,
+			type->sat_sup, tags,
 			vals, id, op );
 
 		if( rc ) return rc;
@@ -285,27 +279,25 @@ static int index_at_values(
 	}
 
 	if( mask ) {
-		rc = indexer( be, txn, type->sat_cname.bv_val,
-			&type->sat_cname,
+		rc = indexer( be, txn, &type->sat_cname,
 			vals, id, op,
 			mask );
 
 		if( rc ) return rc;
 	}
 
-	if( lang->bv_len ) {
+	if( tags->bv_len ) {
 		AttributeDescription *desc;
 
 		mask = 0;
 
-		desc = ad_find_lang( type, lang );
+		desc = ad_find_tags( type, tags );
 		if( desc ) {
 			bdb_attr_mask( be->be_private, desc, &mask );
 		}
 
 		if( mask ) {
-			rc = indexer( be, txn, desc->ad_cname.bv_val,
-				&desc->ad_cname,
+			rc = indexer( be, txn, &desc->ad_cname,
 				vals, id, op,
 				mask );
 
@@ -329,7 +321,7 @@ int bdb_index_values(
 	int rc;
 
 	rc = index_at_values( be, txn,
-		desc->ad_type, &desc->ad_lang,
+		desc->ad_type, &desc->ad_tags,
 		vals, id, op );
 
 	return rc;

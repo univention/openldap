@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblber/memory.c,v 1.46.2.3 2002/10/17 15:08:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/memory.c,v 1.46.2.5 2003/03/03 17:10:04 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 #include "portable.h"
@@ -53,7 +53,7 @@ struct ber_mem_hdr {
 };
 
 /* Pattern at top of allocated space */
-#define LLBER_MEM_JUNK 0xdeaddadaU
+#define LBER_MEM_JUNK 0xdeaddadaU
 
 static const struct ber_mem_hdr ber_int_mem_hdr = { LBER_MEM_JUNK, 0, 0 };
 

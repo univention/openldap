@@ -1,7 +1,7 @@
 /* passwd.c - bdb backend password routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/passwd.c,v 1.27.2.5 2002/08/05 19:10:53 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/passwd.c,v 1.27.2.9 2003/03/24 03:54:12 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -38,10 +38,10 @@ bdb_exop_passwd(
 	struct berval id = { 0, NULL };
 	struct berval new = { 0, NULL };
 
-	struct berval dn;
-	struct berval ndn;
+	struct berval dn = { 0, NULL };
+	struct berval ndn = { 0, NULL };
 
-	u_int32_t	locker;
+	u_int32_t	locker = 0;
 	DB_LOCK		lock;
 
 	assert( reqoid != NULL );
@@ -112,7 +112,7 @@ bdb_exop_passwd(
 retry:	/* transaction retry */
 		if ( e != NULL ) {
 			bdb_cache_delete_entry(&bdb->bi_cache, e);
-			bdb_cache_return_entry_w(bdb->bi_dbenv, &bdb->bi_cache, e, &lock);
+			bdb_unlocked_cache_return_entry_w(&bdb->bi_cache, e);
 		}
 #ifdef NEW_LOGGING
 		LDAP_LOG ( ACL, DETAIL1, "bdb_exop_passwd: retrying...\n", 0, 0, 0 );
@@ -122,6 +122,7 @@ retry:	/* transaction retry */
 		rc = TXN_ABORT( ltid );
 		ltid = NULL;
 		op->o_private = NULL;
+		op->o_do_not_cache = opinfo.boi_acl_cache;
 		if( rc != 0 ) {
 			rc = LDAP_OTHER;
 			*text = "internal error";
@@ -153,7 +154,9 @@ retry:	/* transaction retry */
 
 	opinfo.boi_bdb = be;
 	opinfo.boi_txn = ltid;
+	opinfo.boi_locker = locker;
 	opinfo.boi_err = 0;
+	opinfo.boi_acl_cache = op->o_do_not_cache;
 	op->o_private = &opinfo;
 
 	/* get entry */
@@ -220,6 +223,9 @@ retry:	/* transaction retry */
 		rc = bdb_modify_internal( be, conn, op, ltid,
 			&ml, e, text, textbuf, textlen );
 
+		if ( (rc == LDAP_INSUFFICIENT_ACCESS) && opinfo.boi_err ) {
+			rc = opinfo.boi_err;
+		}
 		switch(rc) {
 		case DB_LOCK_DEADLOCK:
 		case DB_LOCK_NOTGRANTED:
@@ -263,11 +269,15 @@ retry:	/* transaction retry */
 
 done:
 	if( e != NULL ) {
-		bdb_cache_return_entry_w( bdb->bi_dbenv, &bdb->bi_cache, e, &lock );
+		bdb_unlocked_cache_return_entry_w( &bdb->bi_cache, e );
 	}
 		
 	if( hash.bv_val != NULL ) {
 		free( hash.bv_val );
+	}
+
+	if( ndn.bv_val != NULL ) {
+		free( ndn.bv_val );
 	}
 
 	if( ltid != NULL ) {

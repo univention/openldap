@@ -1,7 +1,7 @@
 /* extended.c - bdb backend extended routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/extended.c,v 1.8.2.1 2002/08/05 19:10:53 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/extended.c,v 1.8.2.2 2003/03/03 17:10:07 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

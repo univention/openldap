@@ -1,7 +1,7 @@
 /* group.c - bdb backend acl group routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/group.c,v 1.9.2.9 2002/12/11 01:23:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/group.c,v 1.9.2.12 2003/04/25 08:30:00 hyc Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -42,8 +42,9 @@ bdb_group(
 	const char *group_oc_name = NULL;
 	const char *group_at_name = group_at->ad_cname.bv_val;
 
-	u_int32_t	locker;
+	u_int32_t	locker = 0;
 	DB_LOCK		lock;
+	int		free_lock_id = 0;
 
 	if( group_oc->soc_names && group_oc->soc_names[0] ) {
 		group_oc_name = group_oc->soc_names[0];
@@ -70,18 +71,20 @@ bdb_group(
 
 	Debug( LDAP_DEBUG_ARGS,
 		"=> bdb_group: tr ndn: \"%s\"\n",
-		target->e_ndn, 0, 0 ); 
+		target ? target->e_ndn : "", 0, 0 ); 
 #endif
 
 	if( op ) boi = (struct bdb_op_info *) op->o_private;
 	if( boi != NULL && be == boi->boi_bdb ) {
 		txn = boi->boi_txn;
+		locker = boi->boi_locker;
 	}
 
 	if ( txn ) {
 		locker = TXN_ID( txn );
-	} else {
+	} else if ( !locker ) {
 		rc = LOCK_ID ( bdb->bi_dbenv, &locker );
+		free_lock_id = 1;
 		switch(rc) {
 		case 0:
 			break;
@@ -90,7 +93,7 @@ bdb_group(
 		}
 	}
 
-	if (dn_match(&target->e_name, gr_ndn)) {
+	if ( target != NULL && dn_match( &target->e_nname, gr_ndn )) {
 		/* we already have a LOCKED copy of the entry */
 		e = target;
 #ifdef NEW_LOGGING
@@ -104,14 +107,22 @@ bdb_group(
 	} else {
 dn2entry_retry:
 		/* can we find group entry */
-		rc = bdb_dn2entry_r( be, NULL, gr_ndn, &e, NULL, 0, locker, &lock ); 
+		rc = bdb_dn2entry_r( be, txn, gr_ndn, &e, NULL, 0, locker, &lock ); 
 		if( rc ) {
-			if ( rc == DB_LOCK_DEADLOCK || rc == DB_LOCK_NOTGRANTED )
+			if ( boi ) boi->boi_err = rc;
+			if ( rc == DB_LOCK_DEADLOCK || rc == DB_LOCK_NOTGRANTED ) {
+				if ( txn ) {
+				/* must let owning txn abort, but our result
+				 * is still inconclusive, so don't let it
+				 * get cached.
+				 */
+					op->o_do_not_cache = 1;
+					return( 1 );
+				}
+				ldap_pvt_thread_yield();
 				goto dn2entry_retry;
-			if( txn ) {
-				boi->boi_err = rc;
 			}
-			else {
+			if ( free_lock_id ) {
 				LOCK_ID_FREE ( bdb->bi_dbenv, locker );
 			}
 			return( 1 );
@@ -125,7 +136,7 @@ dn2entry_retry:
 				"=> bdb_group: cannot find group: \"%s\"\n",
 					gr_ndn->bv_val, 0, 0 ); 
 #endif
-			if ( txn == NULL ) {
+			if ( free_lock_id ) {
 				LOCK_ID_FREE ( bdb->bi_dbenv, locker );
 			}
 			return( 1 );
@@ -205,8 +216,10 @@ dn2entry_retry:
 		group_oc_name, group_at_name, 0 ); 
 #endif
 
-	if( value_find_ex( group_at, SLAP_MR_VALUE_NORMALIZED_MATCH,
-		attr->a_vals, op_ndn ) != LDAP_SUCCESS ) {
+	if( value_find_ex( group_at,
+		SLAP_MR_VALUE_NORMALIZED_MATCH,
+		attr->a_vals, op_ndn ) != LDAP_SUCCESS )
+	{
 #ifdef NEW_LOGGING
 		LDAP_LOG( BACK_BDB, DETAIL1, 
 			"bdb_group: \"%s\" not in \"%s\": %s\n",
@@ -236,7 +249,7 @@ return_results:
 		bdb_cache_return_entry_r( bdb->bi_dbenv, &bdb->bi_cache, e, &lock );
 	}
 
-	if ( txn == NULL ) {
+	if ( free_lock_id ) {
 		LOCK_ID_FREE ( bdb->bi_dbenv, locker );
 	}
 

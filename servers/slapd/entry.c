@@ -1,7 +1,7 @@
 /* entry.c - routines for dealing with entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.90.2.6 2002/12/03 21:52:30 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.90.2.10 2003/05/07 22:29:10 hyc Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -87,6 +87,7 @@ str2entry( char *s )
 	e->e_id = NOID;
 
 	/* dn + attributes */
+	vals[0].bv_len = 0;
 	vals[1].bv_val = NULL;
 
 	next = s;
@@ -384,21 +385,22 @@ entry_free( Entry *e )
 int
 entry_cmp( Entry *e1, Entry *e2 )
 {
-	return( e1 < e2 ? -1 : (e1 > e2 ? 1 : 0) );
+	return SLAP_PTRCMP( e1, e2 );
 }
 
 int
-entry_dn_cmp( Entry *e1, Entry *e2 )
+entry_dn_cmp( const void *v_e1, const void *v_e2 )
 {
 	/* compare their normalized UPPERCASED dn's */
-	int rc = e1->e_nname.bv_len - e2->e_nname.bv_len;
-	if (rc) return rc;
-	return( strcmp( e1->e_ndn, e2->e_ndn ) );
+	const Entry *e1 = v_e1, *e2 = v_e2;
+
+	return ber_bvcmp( &e1->e_nname, &e2->e_nname );
 }
 
 int
-entry_id_cmp( Entry *e1, Entry *e2 )
+entry_id_cmp( const void *v_e1, const void *v_e2 )
 {
+	const Entry *e1 = v_e1, *e2 = v_e2;
 	return( e1->e_id < e2->e_id ? -1 : (e1->e_id > e2->e_id ? 1 : 0) );
 }
 
@@ -521,7 +523,7 @@ int entry_encode(Entry *e, struct berval *bv)
 		    entry_putlen(&ptr, i);
 		    for (i=0; a->a_vals[i].bv_val; i++) {
 			entry_putlen(&ptr, a->a_vals[i].bv_len);
-			memcpy(ptr, a->a_vals[i].bv_val,
+			AC_MEMCPY(ptr, a->a_vals[i].bv_val,
 				a->a_vals[i].bv_len);
 			ptr += a->a_vals[i].bv_len;
 			*ptr++ = '\0';
@@ -534,7 +536,7 @@ int entry_encode(Entry *e, struct berval *bv)
 
 /* Retrieve an Entry that was stored using entry_encode above.
  * We malloc a single block with the size stored above for the Entry
- * and all if its Attributes. We also must lookup the stored
+ * and all of its Attributes. We also must lookup the stored
  * attribute names to get AttributeDescriptions. To detect if the
  * attributes of an Entry are later modified, we note that e->e_attr
  * is always a constant offset from (e).

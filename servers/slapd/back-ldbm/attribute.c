@@ -1,7 +1,7 @@
 /* attribute.c - ldbm backend acl attribute routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/attribute.c,v 1.17.2.3 2002/09/06 01:22:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/attribute.c,v 1.17.2.4 2003/03/03 17:10:09 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

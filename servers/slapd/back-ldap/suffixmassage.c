@@ -1,5 +1,5 @@
 /* suffixmassage.c - massages ldap backend dns */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/suffixmassage.c,v 1.4.2.3 2002/07/28 19:16:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/suffixmassage.c,v 1.4.2.4 2003/02/09 16:31:38 kurt Exp $ */
 
 /* 
  * Copyright 1999, Howard Chu, All rights reserved. <hyc@highlandsun.com>

@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/ldap/libraries/libavl/Makefile.in,v 1.12.2.1 2002/07/28 19:18:11 kurt Exp $
-## Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP: pkg/ldap/libraries/libavl/Makefile.in,v 1.12.2.2 2003/02/08 23:53:24 kurt Exp $
+## Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
 ## COPYING RESTRICTIONS APPLY, see COPYRIGHT file
 ##
 ## LIBAVL

@@ -1,7 +1,7 @@
 /* add.c - ldap BerkeleyDB back-end add routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/add.c,v 1.55.2.7 2002/10/29 01:24:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/add.c,v 1.55.2.9 2003/02/26 15:17:50 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -34,7 +34,7 @@ bdb_add(
 #ifdef BDB_SUBENTRIES
 	int subentry;
 #endif
-	u_int32_t	locker;
+	u_int32_t	locker = 0;
 	DB_LOCK		lock;
 #if 0
 	u_int32_t	lockid;
@@ -42,7 +42,7 @@ bdb_add(
 #endif
 	int		noop = 0;
 
-#ifdef LDAP_CLIENT_UPDATE
+#if defined(LDAP_CLIENT_UPDATE) || defined(LDAP_SYNC)
 	Operation* ps_list;
 #endif
 
@@ -99,6 +99,7 @@ retry:	/* transaction retry */
 		rc = TXN_ABORT( ltid );
 		ltid = NULL;
 		op->o_private = NULL;
+		op->o_do_not_cache = opinfo.boi_acl_cache;
 		if( rc != 0 ) {
 			rc = LDAP_OTHER;
 			text = "internal error";
@@ -132,7 +133,9 @@ retry:	/* transaction retry */
 
 	opinfo.boi_bdb = be;
 	opinfo.boi_txn = ltid;
+	opinfo.boi_locker = locker;
 	opinfo.boi_err = 0;
+	opinfo.boi_acl_cache = op->o_do_not_cache;
 	op->o_private = &opinfo;
 	
 	/*
@@ -215,13 +218,13 @@ retry:	/* transaction retry */
 		rc = access_allowed( be, conn, op, p,
 			children, NULL, ACL_WRITE, NULL );
 
-		switch( opinfo.boi_err ) {
-		case DB_LOCK_DEADLOCK:
-		case DB_LOCK_NOTGRANTED:
-			goto retry;
-		}
-
 		if ( ! rc ) {
+			switch( opinfo.boi_err ) {
+			case DB_LOCK_DEADLOCK:
+			case DB_LOCK_NOTGRANTED:
+				goto retry;
+			}
+
 #ifdef NEW_LOGGING
 			LDAP_LOG ( OPERATION, DETAIL1, 
 				"bdb_add: no write access to parent\n", 0, 0, 0 );
@@ -315,13 +318,13 @@ retry:	/* transaction retry */
 
 				p = NULL;
 
-				switch( opinfo.boi_err ) {
-				case DB_LOCK_DEADLOCK:
-				case DB_LOCK_NOTGRANTED:
-					goto retry;
-				}
-
 				if ( ! rc ) {
+					switch( opinfo.boi_err ) {
+					case DB_LOCK_DEADLOCK:
+					case DB_LOCK_NOTGRANTED:
+						goto retry;
+					}
+
 #ifdef NEW_LOGGING
 					LDAP_LOG ( OPERATION, DETAIL1, 
 						"bdb_add: no write access to parent\n", 0, 0, 0 );
@@ -378,13 +381,13 @@ retry:	/* transaction retry */
 	rc = access_allowed( be, conn, op, e,
 		entry, NULL, ACL_WRITE, NULL );
 
-	switch( opinfo.boi_err ) {
-	case DB_LOCK_DEADLOCK:
-	case DB_LOCK_NOTGRANTED:
-		goto retry;
-	}
-
 	if ( ! rc ) {
+		switch( opinfo.boi_err ) {
+		case DB_LOCK_DEADLOCK:
+		case DB_LOCK_NOTGRANTED:
+			goto retry;
+		}
+
 #ifdef NEW_LOGGING
 		LDAP_LOG ( OPERATION, DETAIL1, 
 			"bdb_add: no write access to entry\n", 0, 0, 0 );
@@ -547,10 +550,10 @@ return_results:
 	send_ldap_result( conn, op, rc,
 		NULL, text, NULL, NULL );
 
-#ifdef LDAP_CLIENT_UPDATE
+#if defined(LDAP_CLIENT_UPDATE) || defined(LDAP_SYNC)
 	if ( rc == LDAP_SUCCESS && !noop ) {
 		LDAP_LIST_FOREACH ( ps_list, &bdb->psearch_list, link ) {
-			bdb_psearch( be, conn, op, ps_list, e, LCUP_PSEARCH_BY_ADD );
+			bdb_psearch( be, conn, op, ps_list, e, LDAP_PSEARCH_BY_ADD );
 		}
 	}
 #endif /* LDAP_CLIENT_UPDATE */

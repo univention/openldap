@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/getvalues.c,v 1.15.2.5 2002/10/10 01:24:51 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/getvalues.c,v 1.15.2.6 2003/03/03 17:10:04 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*  Portions

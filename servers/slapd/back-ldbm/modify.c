@@ -1,7 +1,7 @@
 /* modify.c - ldbm backend modify routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/modify.c,v 1.88.2.3 2002/07/28 19:16:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/modify.c,v 1.88.2.5 2003/02/09 17:41:28 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -65,7 +65,8 @@ int ldbm_modify_internal(
 			Debug(LDAP_DEBUG_ARGS, "ldbm_modify_internal: add\n", 0, 0, 0);
 #endif
 
-			rc = modify_add_values( e, mod, text, textbuf, textlen );
+			rc = modify_add_values( e, mod, get_permissiveModify(op),
+				text, textbuf, textlen );
 			if( rc != LDAP_SUCCESS ) {
 #ifdef NEW_LOGGING
 				LDAP_LOG( BACK_LDBM, INFO, 
@@ -84,7 +85,8 @@ int ldbm_modify_internal(
 			Debug(LDAP_DEBUG_ARGS, "ldbm_modify_internal: delete\n", 0, 0, 0);
 #endif
 
-			rc = modify_delete_values( e, mod, text, textbuf, textlen );
+			rc = modify_delete_values( e, mod, get_permissiveModify(op),
+				text, textbuf, textlen );
 			assert( rc != LDAP_TYPE_OR_VALUE_EXISTS );
 			if( rc != LDAP_SUCCESS ) {
 #ifdef NEW_LOGGING
@@ -104,7 +106,8 @@ int ldbm_modify_internal(
 			Debug(LDAP_DEBUG_ARGS, "ldbm_modify_internal: replace\n", 0, 0, 0);
 #endif
 
-			rc = modify_replace_values( e, mod, text, textbuf, textlen );
+			rc = modify_replace_values( e, mod, get_permissiveModify(op),
+				text, textbuf, textlen );
 			if( rc != LDAP_SUCCESS ) {
 #ifdef NEW_LOGGING
 				LDAP_LOG( BACK_LDBM, INFO, 
@@ -129,7 +132,8 @@ int ldbm_modify_internal(
 			 */
 			mod->sm_op = LDAP_MOD_ADD;
 
-			rc = modify_add_values( e, mod, text, textbuf, textlen );
+			rc = modify_add_values( e, mod, get_permissiveModify(op),
+				text, textbuf, textlen );
 			if ( rc == LDAP_TYPE_OR_VALUE_EXISTS ) {
 				rc = LDAP_SUCCESS;
 			}

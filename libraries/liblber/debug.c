@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblber/debug.c,v 1.4.2.3 2002/11/11 02:20:41 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/debug.c,v 1.4.2.5 2003/03/03 17:10:04 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -77,7 +77,7 @@ int lutil_mnem2subsys( const char *subsys )
     return -1;
 }
 
-void lutil_set_all_backends( level )
+void lutil_set_all_backends( int level )
 {
     int i;
 
