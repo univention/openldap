@@ -10,7 +10,7 @@ close CONF;
 print "done\n";
 
 print "Checking if sasl2 was found... ";
-if (not grep /s%\@SASL_LIBS@%-lsasl2\%g/, @CONF) {
+if (not grep /SASL_LIBS.*-lsasl2/, @CONF) {
 	print "no\n";
 	die "SASL2 support not enabled";
 }
