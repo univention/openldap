@@ -40,6 +40,7 @@ Medium projects
 ---------------
 Implement authPassword (RFC 3112)
 Implement DIT Structure Rules and Name Forms
+Implement LDAP Assertion Control
 Implement LDAP Transactions extension
 Redesign slapd memory allocation fault handling
 Localize tools
@@ -47,6 +48,7 @@ Localize tools
 
 Small projects
 --------------
+Add DSML capabilities to command line tools
 Add dumpasn1 logging support
 Add tests to test suite
 Convert utfconv.txt into man page(s).
@@ -63,4 +65,4 @@ JLDAP TODO items, see:
   http://www.openldap.org/devel/cvsweb.cgi/~checkout~/design/todo.txt?rev=1&cvsroot=JLDAP
 
 ---
-$OpenLDAP: pkg/ldap/doc/devel/todo,v 1.91.2.16 2003/02/14 16:09:04 kurt Exp $
+$OpenLDAP: pkg/ldap/doc/devel/todo,v 1.91.2.17 2003/05/15 19:38:50 kurt Exp $

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.5.2.7 2003/03/31 16:48:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.5.2.9 2003/05/22 22:22:17 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -514,7 +514,12 @@ tool_args( int argc, char **argv )
 #endif
 	}
 
-	if( ldapuri != NULL ) {
+	if( ldapuri == NULL ) {
+		if( ldapport && ( ldaphost == NULL )) {
+			fprintf( stderr, "%s: -p without -h is invalid.\n", prog );
+			exit( EXIT_FAILURE );
+		}
+	} else {
 		if( ldaphost != NULL ) {
 			fprintf( stderr, "%s: -H incompatible with -h\n", prog );
 			exit( EXIT_FAILURE );
@@ -670,6 +675,7 @@ tool_bind( LDAP *ld )
 			sasl_mech, NULL, NULL,
 			sasl_flags, lutil_sasl_interact, defaults );
 
+		lutil_sasl_freedefs( defaults );
 		if( rc != LDAP_SUCCESS ) {
 			ldap_perror( ld, "ldap_sasl_interactive_bind_s" );
 			exit( EXIT_FAILURE );

@@ -1,5 +1,5 @@
 /* filterindex.c - generate the list of candidate entries from a filter */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/filterindex.c,v 1.40.2.3 2003/02/09 16:31:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/filterindex.c,v 1.40.2.5 2003/05/14 20:04:55 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -47,6 +47,22 @@ filter_candidates(
 
 	result = NULL;
 	switch ( f->f_choice ) {
+	case SLAPD_FILTER_COMPUTED:
+		switch( f->f_result ) {
+		case SLAPD_COMPARE_UNDEFINED:
+		/* This technically is not the same as FALSE, but it
+		 * certainly will produce no matches.
+		 */
+		/* FALLTHRU */
+		case LDAP_COMPARE_FALSE:
+			result = NULL;
+			break;
+		case LDAP_COMPARE_TRUE:
+			result = idl_allids( be );
+			break;
+		}
+		break;
+
 	case SLAPD_FILTER_DN_ONE:
 #ifdef NEW_LOGGING
 		LDAP_LOG( FILTER, DETAIL1, 

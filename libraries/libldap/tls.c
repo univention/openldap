@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/tls.c,v 1.69.2.14 2003/02/08 23:28:51 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/tls.c,v 1.69.2.15 2003/05/06 13:02:21 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -1724,9 +1724,6 @@ ldap_start_tls_s ( LDAP *ld,
 
 	rc = ldap_extended_operation_s( ld, LDAP_EXOP_START_TLS,
 		NULL, serverctrls, clientctrls, &rspoid, &rspdata );
-	if ( rc != LDAP_SUCCESS ) {
-		return rc;
-	}
 
 	if ( rspoid != NULL ) {
 		LDAP_FREE(rspoid);
@@ -1736,7 +1733,9 @@ ldap_start_tls_s ( LDAP *ld,
 		ber_bvfree( rspdata );
 	}
 
-	rc = ldap_int_tls_start( ld, ld->ld_defconn, NULL );
+	if ( rc == LDAP_SUCCESS ) {
+		rc = ldap_int_tls_start( ld, ld->ld_defconn, NULL );
+	}
 #else
 	rc = LDAP_NOT_SUPPORTED;
 #endif

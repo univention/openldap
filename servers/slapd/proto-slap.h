@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.329.2.26 2003/03/29 15:45:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.329.2.27 2003/05/07 22:29:11 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -1080,6 +1080,9 @@ LDAP_SLAPD_F (int) value_add LDAP_P((
 LDAP_SLAPD_F (int) value_add_one LDAP_P((
 	BerVarray *vals,
 	struct berval *addval ));
+
+/* assumes (x) > (y) returns 1 if true, 0 otherwise */
+#define SLAP_PTRCMP(x, y) ((x) < (y) ? -1 : (x) > (y))
 
 /*
  * Other...

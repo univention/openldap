@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/starttls.c,v 1.22.2.2 2003/03/03 17:10:07 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/starttls.c,v 1.22.2.3 2003/05/18 19:58:56 kurt Exp $ */
 /* 
  * Copyright 1999-2003 The OpenLDAP Foundation.
  * All rights reserved.
@@ -66,7 +66,7 @@ starttls_extop (
 		( conn->c_dn.bv_len != 0 ) )
 	{
 		Statslog( LDAP_DEBUG_STATS,
-			"conn=%lu op=%lu AUTHZ anonymous mech=starttls ssf=0",
+			"conn=%lu op=%lu AUTHZ anonymous mech=starttls ssf=0\n",
 			op->o_connid, op->o_opid, 0, 0, 0 );
 
 		/* force to anonymous */

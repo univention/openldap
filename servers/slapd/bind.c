@@ -1,5 +1,5 @@
 /* bind.c - decode an ldap bind operation and pass it to a backend db */
-/* $OpenLDAP: pkg/ldap/servers/slapd/bind.c,v 1.109.2.14 2003/02/21 19:57:30 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/bind.c,v 1.109.2.15 2003/05/18 19:58:56 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -70,7 +70,7 @@ do_bind(
 	/* log authorization identity demotion */
 	if ( conn->c_dn.bv_len ) {
 		Statslog( LDAP_DEBUG_STATS,
-			"conn=%lu op=%lu BIND anonymous mech=implicit ssf=0",
+			"conn=%lu op=%lu BIND anonymous mech=implicit ssf=0\n",
 			op->o_connid, op->o_opid, 0, 0, 0 );
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.45.2.17 2003/03/03 17:10:04 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.45.2.20 2003/05/24 23:10:36 kurt Exp $ */
 /*
  * Copyright 1999-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -529,7 +529,6 @@ ldap_int_sasl_bind(
 	sasl_ssf_t		*ssf = NULL;
 	sasl_conn_t	*ctx;
 	sasl_interact_t *prompts = NULL;
-	const void *promptresult = NULL;
 	unsigned credlen;
 	struct berval ccred;
 	ber_socket_t		sd;
@@ -590,9 +589,6 @@ ldap_int_sasl_bind(
 			&credlen,
 			&mech );
 
-		/* Cyrus SASL library doesn't initialize the prompt result pointer */
-		if( promptresult == NULL && prompts != NULL ) prompts->result = NULL;
-
 		if( pmech == NULL && mech != NULL ) {
 			pmech = mech;
 
@@ -608,11 +604,6 @@ ldap_int_sasl_bind(
 			if( !interact ) break;
 			res = (interact)( ld, flags, defaults, prompts );
 
-			/* keep a pointer to the prompt result so we can free it
-			 * after Cyrus SASL has consumed the prompts.
-			 */
-			promptresult = prompts->result;
-
 			if( res != LDAP_SUCCESS ) break;
 		}
 	} while ( saslrc == SASL_INTERACT );
@@ -622,7 +613,7 @@ ldap_int_sasl_bind(
 	if ( (saslrc != SASL_OK) && (saslrc != SASL_CONTINUE) ) {
 		rc = ld->ld_errno = sasl_err2ldap( saslrc );
 #if SASL_VERSION_MAJOR >= 2
-		ld->ld_error = (char *)sasl_errdetail( ctx );
+		ld->ld_error = LDAP_STRDUP( sasl_errdetail( ctx ) );
 #endif
 		goto done;
 	}
@@ -688,9 +679,6 @@ ldap_int_sasl_bind(
 				(SASL_CONST char **)&ccred.bv_val,
 				&credlen );
 
-			/* SASL library doesn't initialize the prompt result pointer */
-			if( promptresult == NULL && prompts != NULL ) prompts->result = NULL;
-
 #ifdef NEW_LOGGING
 				LDAP_LOG ( TRANSPORT, DETAIL1, 
 					"ldap_int_sasl_bind: sasl_client_step: %d\n", saslrc,0,0 );
@@ -703,12 +691,6 @@ ldap_int_sasl_bind(
 				int res;
 				if( !interact ) break;
 				res = (interact)( ld, flags, defaults, prompts );
-
-				/* keep a pointer to the prompt result so we can free it
-				 * after Cyrus SASL has consumed the prompts.
-				 */
-				promptresult = prompts->result;
-
 				if( res != LDAP_SUCCESS ) break;
 			}
 		} while ( saslrc == SASL_INTERACT );
@@ -719,7 +701,7 @@ ldap_int_sasl_bind(
 		if ( (saslrc != SASL_OK) && (saslrc != SASL_CONTINUE) ) {
 			ld->ld_errno = sasl_err2ldap( saslrc );
 #if SASL_VERSION_MAJOR >= 2
-			ld->ld_error = (char *)sasl_errdetail( ctx );
+			ld->ld_error = LDAP_STRDUP( sasl_errdetail( ctx ) );
 #endif
 			rc = ld->ld_errno;
 			goto done;
@@ -730,7 +712,7 @@ ldap_int_sasl_bind(
 
 	if ( saslrc != SASL_OK ) {
 #if SASL_VERSION_MAJOR >= 2
-		ld->ld_error = (char *)sasl_errdetail( ctx );
+		ld->ld_error = LDAP_STRDUP( sasl_errdetail( ctx ) );
 #endif
 		rc = ld->ld_errno = sasl_err2ldap( saslrc );
 		goto done;
@@ -742,14 +724,12 @@ ldap_int_sasl_bind(
 			fprintf( stderr, "SASL username: %s\n", data );
 		}
 
-#if SASL_VERSION_MAJOR >= 2
-		saslrc = sasl_getprop( ctx, SASL_DEFUSERREALM, (SASL_CONST void **) &data );
-#else
+#if SASL_VERSION_MAJOR < 2
 		saslrc = sasl_getprop( ctx, SASL_REALM, (SASL_CONST void **) &data );
-#endif
 		if( saslrc == SASL_OK && data && *data ) {
 			fprintf( stderr, "SASL realm: %s\n", data );
 		}
+#endif
 	}
 
 	saslrc = sasl_getprop( ctx, SASL_SSF, (SASL_CONST void **) &ssf );
@@ -768,8 +748,6 @@ ldap_int_sasl_bind(
 	}
 
 done:
-	/* free the last prompt result */
-	LDAP_FREE((void*)promptresult);
 	return rc;
 }
 

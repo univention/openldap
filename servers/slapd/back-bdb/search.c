@@ -1,5 +1,5 @@
 /* search.c - search operation */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.54.2.21 2003/03/24 03:54:12 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.54.2.22 2003/04/18 03:07:44 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -338,7 +338,7 @@ dn2entry_retry:
 		rc = base_candidate( be, e, candidates );
 
 	} else {
-		BDB_IDL_ALL( bdb, candidates );
+		BDB_IDL_ZERO( candidates );
 		rc = search_candidates( be, op, e, filter,
 			scope, deref, candidates );
 	}

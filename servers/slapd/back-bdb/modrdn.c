@@ -1,5 +1,5 @@
 /* modrdn.c - bdb backend modrdn routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modrdn.c,v 1.63.2.17 2003/03/26 17:56:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modrdn.c,v 1.63.2.18 2003/05/16 02:53:02 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -131,7 +131,7 @@ retry:	/* transaction retry */
 			db_strerror(rc), rc, 0 );
 #else
 		Debug( LDAP_DEBUG_TRACE,
-			"bdb_delete: txn_begin failed: %s (%d)\n",
+			"bdb_modrdn: txn_begin failed: %s (%d)\n",
 			db_strerror(rc), rc, 0 );
 #endif
 		rc = LDAP_OTHER;

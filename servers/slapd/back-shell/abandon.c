@@ -1,5 +1,5 @@
 /* abandon.c - shell backend abandon function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/abandon.c,v 1.13.2.5 2003/03/03 17:10:10 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/abandon.c,v 1.13.2.6 2003/05/23 10:45:18 hallvard Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -28,17 +28,16 @@ shell_back_abandon(
 	pid_t			pid;
 	Operation		*o;
 
-	/* no abandon command defined - just kill the process handling it */
 	if ( si->si_abandon == NULL ) {
-		ldap_pvt_thread_mutex_lock( &conn->c_mutex );
-		pid = -1;
-		LDAP_STAILQ_FOREACH( o, &conn->c_ops, o_next ) {
-			if ( o->o_msgid == msgid ) {
-				pid = (pid_t) o->o_private;
-				break;
-			}
+		return 0;
+	}
+
+	pid = -1;
+	LDAP_STAILQ_FOREACH( o, &conn->c_ops, o_next ) {
+		if ( o->o_msgid == msgid ) {
+			pid = (pid_t) o->o_private;
+			break;
 		}
-		ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
 	}
 
 	if ( pid == -1 ) {

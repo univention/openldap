@@ -1,5 +1,50 @@
 OpenLDAP 2.1 Change Log
 
+OpenLDAP 2.1.21 Release
+	Fixed liblber ber_get_next trickle bug (ITS#2490)
+	Fixed ldapsearch -p without -h bug (ITS#2532)
+	Fixed slapd option ordering bug (ITS#2217)
+	Fixed slapd debug in signal handler hang (ITS#2550)
+	Fixed back-bdb unindexed filter bug (ITS#2522)
+	Fixed back-shell pid abandon bug (ITS#2519)
+	Removed lint
+	Documentation
+		Misc man page updates
+
+OpenLDAP 2.1.20 Release
+	Fixed slapd idletimeout behavior (ITS#2374)
+	Fixed slapd accept() fail busyloop (ITS#2482)
+	Fixed slapd regex lookup mutex issue (ITS#2505)
+	Fixed back-bdb/ldbm filter indexing bugs (ITS#2506) (ITS#2507)
+	Fixed back-bdb cache consistency bug (ITS#2470)
+	Fixed libldap ldap_get_attribute_ber bug
+	Documentation
+		Misc man page updates
+
+OpenLDAP 2.1.19 Release
+	Fixed slapd substring index normalization (ITS#2468)
+	Fixed back-bdb attribute index tracking (ITS#2496)
+	Documentation
+		Misc man page updates
+
+OpenLDAP 2.1.18 Release
+	Fixed slapd slave update when updateref missing bug (ITS#2435)
+	Fixed slapd SLP reg/dereg bugs (ITS#2438) (ITS#2442)
+	Fixed slapd crash on uniqueMember= filter (ITS#2447)
+	Fixed slapd subordinate database crash
+	Fixed slapd ACL group DN crash (ITS#2467)
+	Fixed slapd substring normalization bug (ITS#2468)
+	Fixed back-bdb search filter empty value bug (ITS#2453)
+	Fixed back-bdb/ldbm filter index computed/undefined bugs (ITS#2449)
+	Fixed SASL interactive free bug (ITS#2423)
+	Fixed libldap sasl interactive internal error bug (ITS#2475)
+	Fixed libldap ldap_host_connected_to portability bug (ITS#2459)
+	Fixed liblber multi-value decode bug (ITS#2458)
+	Fixed liblber over read bug (ITS#2465)
+	Fixed ldappasswd -y support (ITS#2441)
+	Documentation
+		Misc man page updates
+
 OpenLDAP 2.1.17 Release
 	Fixed libldap_r thread pool context bug (ITS#2404)
 	Fixed libldap T.61 convert bug (ITS#2388)
@@ -28,8 +73,9 @@ OpenLDAP 2.1.16 Release
 	Fixed slurpd TLS failure handling (ITS#2253)
 	Fixed back-meta NULL deref bug (ITS#2359)
 	Fixed back-ldap memory corruption (ITS#2362)
-    Fixed back-bdb IDL cache leak (ITS#2367)
-    Fixed slapd index large db files bug (ITS#2368)
+	Fixed back-ldbm IDL corruption (ITS#2348)
+	Fixed back-bdb IDL cache leak (ITS#2367)
+	Fixed slapd index large db files bug (ITS#2368)
 	Updated back-perl (ITS#2356)
 	Removed ldaptcl from distribution
 	Removed lint

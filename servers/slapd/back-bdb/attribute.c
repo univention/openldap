@@ -1,5 +1,5 @@
 /* attribute.c - bdb backend acl attribute routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/attribute.c,v 1.12.2.9 2003/02/26 15:17:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/attribute.c,v 1.12.2.10 2003/04/25 08:30:00 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -112,7 +112,7 @@ dn2entry_retry:
 			ldap_pvt_thread_yield();
 			goto dn2entry_retry;
 		default:
-			boi->boi_err = rc;
+			if ( boi ) boi->boi_err = rc;
 			if ( free_lock_id ) {
 				LOCK_ID_FREE( bdb->bi_dbenv, locker );
 			}

@@ -1,5 +1,5 @@
 /* group.c - bdb backend acl group routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/group.c,v 1.9.2.11 2003/02/26 15:17:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/group.c,v 1.9.2.12 2003/04/25 08:30:00 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -109,7 +109,7 @@ dn2entry_retry:
 		/* can we find group entry */
 		rc = bdb_dn2entry_r( be, txn, gr_ndn, &e, NULL, 0, locker, &lock ); 
 		if( rc ) {
-			boi->boi_err = rc;
+			if ( boi ) boi->boi_err = rc;
 			if ( rc == DB_LOCK_DEADLOCK || rc == DB_LOCK_NOTGRANTED ) {
 				if ( txn ) {
 				/* must let owning txn abort, but our result

@@ -1,5 +1,5 @@
 .TH LDAPMODIFY 1 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man1/ldapmodify.1,v 1.32.2.8 2003/03/13 03:09:40 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man1/ldapmodify.1,v 1.32.2.9 2003/05/24 23:03:36 kurt Exp $
 .\" Copyright 1998-2003 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
@@ -341,7 +341,7 @@ exists and has the contents:
 the command:
 .LP
 .nf
-    ldapadd -f /tmp/entrymods
+    ldapadd -f /tmp/newentry
 .fi
 .LP
 will add a new entry for Babs Jensen, using the values from the
@@ -349,7 +349,7 @@ file
 .B /tmp/newentry.
 .LP
 Assuming that the file
-.B /tmp/newentry
+.B /tmp/entrymods
 exists and has the contents:
 .LP
 .nf
