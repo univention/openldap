@@ -89,7 +89,12 @@ then
   stop_slapd
 
   # Make our backup directory if it does not exist already
-  mkdir -p /var/backups/ldap/$oldver/
+  if [ -d /var/backups/ldap ]; then
+    chmod 700 /var/backups/ldap
+  else
+    mkdir -p -m 700 /var/backups/ldap
+  fi
+  mkdir -p -m 700 /var/backups/ldap/$oldver/
 
   get_database_list | while read backend suffix directory
   do

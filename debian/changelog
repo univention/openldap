@@ -1,4 +1,4 @@
-openldap2 (2.1.22-2) unstable; urgency=low
+openldap2 (2.1.22-2) unstable; urgency=high
 
   * Stephen Frost <sfrost@debian.org>
     + servers/slapd/daemon.c: Apply patch from head for select handling.
@@ -33,6 +33,12 @@ openldap2 (2.1.22-2) unstable; urgency=low
       manpages which are correct at the moment anyway), all this change
       does should be changing the default location of the ldapi socket
       from /var/lib/ldapi to /var/run/ldapi. Closes: #160965.
+    + libraries/libldap/tls.c: In get_ca_list, walk through CACERTDIR
+      manually if building against GNUTLS (since there is no equivalent
+      to SSL_add_dir_cert_subjects_to_stack). Closes: #205609.
+    + debian/slapd.preinst: create /var/backups/ldap/$oldver with
+      permissions 0700. Also change permissions for /var/backups/ldap
+      to 0700 if it already exists. Closes: #209019.
 
  -- Stephen Frost <sfrost@debian.org>  Fri, 18 Jul 2003 14:13:04 -0400
 

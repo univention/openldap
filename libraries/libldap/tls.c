@@ -10,6 +10,9 @@
 #include "ldap_config.h"
 
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include <ac/stdlib.h>
 #include <ac/errno.h>
@@ -460,10 +463,33 @@ get_ca_list( char * bundle, char * dir )
 		ca_list = SSL_load_client_CA_file( bundle );
 #endif
 	}
-#if !defined(HAVE_GNUTLS_GNUTLS_H) && (defined(HAVE_DIRENT_H) || defined(dirent))
+#if (defined(HAVE_DIRENT_H) || defined(dirent))
 	if ( dir ) {
+#ifdef HAVE_GNUTLS_GNUTLS_H
+		DIR *d;
+		struct dirent *de;
+		/* FIXME: this probably needs to be fixed to deal with PATH_MAX
+		 * if available and allocate memory dynamically otherwise and such */
+		char ca_file[BUFSIZ];
+		struct stat st;
+		
+		d = opendir( dir );
+		while ( (de=readdir(d)) != NULL ) {
+			snprintf( ca_file, BUFSIZ, "%s/%s", dir, de->d_name );
+		
+			stat( ca_file, &st );
+			if ( !S_ISREG(st.st_mode) )
+				continue;
+			
+			if ( !ca_list )
+				gnutls_certificate_allocate_credentials( &ca_list );
+			gnutls_certificate_set_x509_trust_file( ca_list,
+				ca_file, GNUTLS_X509_FMT_PEM );
+		}
+		closedir( d );
+#else
 		int freeit = 0;
-
+		
 		if ( !ca_list ) {
 			ca_list = sk_X509_NAME_new_null();
 			freeit = 1;
@@ -473,6 +499,7 @@ get_ca_list( char * bundle, char * dir )
 			sk_X509_NAME_free( ca_list );
 			ca_list = NULL;
 		}
+#endif
 	}
 #endif
 	return ca_list;
