@@ -234,7 +234,7 @@ allow bind_v2:" > $TMPFILE
       rm $TMPFILE
       echo
       echo "Failed to add LDAP V2 allow, original slapd.conf untouched."
-      read
+      read unused
     fi
   fi
 fi

@@ -1,3 +1,14 @@
+openldap2 (2.1.22-1) unstable; urgency=low
+
+  * Stephen Frost <sfrost@debian.org>:
+    + New upstream version (minor changes).
+    + debian/control: Change build-deps to autoconf2.13, Closes: #201482
+    + debian/rules: Add dh_compress -i for binary-indep.
+    + debian/slapd.postinst: Give variable for read (avoids bashism).
+    + configure/.in: Use upstream's version of back-meta/back-ldap fix.
+
+ -- Stephen Frost <sfrost@debian.org>  Wed, 16 Jul 2003 08:42:23 -0400
+
 openldap2 (2.1.21-2) unstable; urgency=low
 
   * Stephen Frost <sfrost@debian.org>:

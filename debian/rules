@@ -31,6 +31,7 @@ binary-indep:
 	dh_installdocs -i
 	dh_installdebconf -i
 	dh_installdeb -i
+	dh_compress -i
 	dh_gencontrol -i
 	dh_md5sums -i
 	dh_builddeb -i

@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/configure,v 1.437.2.40 2003/04/04 20:41:20 kurt Exp $
+# $OpenLDAP: pkg/ldap/configure,v 1.437.2.41 2003/06/21 17:18:19 kurt Exp $
 # from OpenLDAP: pkg/ldap/configure.in,v 1.408.2.33 2003/03/05 23:48:30 kurt Exp  
 
 # Copyright 1998-2003 The OpenLDAP Foundation.  All Rights Reserved.
@@ -23077,9 +23077,6 @@ if test "$ol_enable_meta" != no ; then
 	fi
 	if test "$ol_enable_rewrite" = no ; then
 		{ echo "configure: error: need --enable-rewrite to use --enable-meta" 1>&2; exit 1; }
-	fi
-        if test "$ol_enable_ldap" = no ; then
-                { echo "configure: error: need --enable-ldap to use --enable-meta" 1>&2; exit 1; }
 	fi
 	cat >> confdefs.h <<\EOF
 #define SLAPD_META 1
