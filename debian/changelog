@@ -31,6 +31,8 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
     - build/mod.mk: Use -m 644 instead of -m 755 in installing shared
       libraries. Shared libraries should not be marked as executable
       (lintian).
+    - debian/libldap2.conffiles: Remove, since we are using version 4
+      of debhelper which tags everything in /etc as conffile by default.
 
   * Roland Bauerschmidt <rb@debian.org>
     - debian/control:
