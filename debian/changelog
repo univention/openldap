@@ -2,6 +2,8 @@ openldap2 (2.1.25-1) unstable; urgency=low
 
   * Roland Bauerschmidt <rb@debian.org>:
     + New upstream version.
+      - Build against libdb4.2. Hopefully, this resolves the BDB
+        lock ups when configured improperly.
     + debian/control: Have ldap-utils depend on the same version of
       libldap2, and libldap2 conflict with ldap-utils (<= 2.1.23-1).
       Closes: #216661.
@@ -11,6 +13,20 @@ openldap2 (2.1.25-1) unstable; urgency=low
     + debian/slapd.{templates,config,postinst,conf}: Ask which
       database backend to use (BDB or LDBM).
     + debian/slapd.README.Debian: cleanup
+    + servers/slapd/back-bdb/dbcache.c: Turn off subdatabases. This
+      is an incompatible database format change, but according to
+      Howard Chu "using them (subdatabases) is known to cause deadlocks
+      on multiprocessor machines, among other issues."
+    + debian/control: add Recommends: db4.2-util to slapd
+    + debian/control: add Recommends: libsasl2-modules to slapd and
+      ldap-utils. Closes: #224058.
+    + debian/slapd.{scripts-common,preinst,postinst}: Extended dump
+      and restore code to deal with different versions for different
+      backends.
+    + debian/control: Geez, centipede seems to have vanished a long
+      time ago. So don't claim it's included in the slapd package.
+    + debian/slapd.docs: created with servers/slapd/back-sql/
+      rdbms_depends. Closes: #225807.
   
   * Torsten Landschoff <torsten@debian.org>:
     + debian/move_files: Install slappasswd into ldap-utils instead 

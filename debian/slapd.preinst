@@ -28,7 +28,7 @@ stop_slapd() {
 # Packages until at least 2.0.27-4 did not stop the daemon on upgrade so
 # we do that before installation
 
-if upgrading_version_pre21 && [ -x "/usr/sbin/slapcat" ]
+if database_might_need_reload && [ -x "/usr/sbin/slapcat" ]
 then
   stop_slapd
   create_ldif_dump_location
@@ -36,12 +36,11 @@ then
   get_database_list | while read backend suffix directory
   do
     suffix=`eval echo $suffix`
-    echo "Processing directory $suffix..."
-    
+    #echo "Processing directory $suffix..."
     location=`ldif_dump_location "$suffix"`
 
-    if ldif_dump_wanted; then
-      echo -n "  Dumping directory to $location with old slapcat... "
+    if database_needs_reload "$backend" || database_needs_fixing; then
+      echo -n "Dumping directory $suffix to $location with old slapcat... "
       slapcat -b "$suffix" > "$location" || SLAPCAT_FAIL=1
       if [ "$SLAPCAT_FAIL" = "1" ]; then
         echo "failed"

@@ -12,19 +12,21 @@ Section: net
 Priority: optional
 Architecture: any
 Depends: ${shlibs:Depends}, debconf (>= 0.2.50), coreutils (>= 4.5.1-1) | fileutils (>= 4.0i-1), psmisc, libldap2 (= ${Source-Version}), perl (>> 5.8.0) | libmime-base64-perl
+Recommends: db4.2-util, libsasl2-modules
 Suggests: ldap-utils
 Conflicts: umich-ldapd, ldap-server, libbind-dev, bind-dev
 Provides: ldap-server
 Description: OpenLDAP server (slapd)
  This is the OpenLDAP (Lightweight Directory Access Protocol) standalone
  server (slapd). The server can be used to provide a standalone directory
- service and also includes the slurpd replication server and centipede.
+ service and also includes the slurpd replication server.
 
 Package: ldap-utils
 Section: net
 Priority: optional
 Architecture: any
 Depends: ${shlibs:Depends}, libldap2 (= ${Source-Version})
+Recommends: libsasl2-modules
 Conflicts: umich-ldap-utils, openldap-utils, ldap-client
 Replaces: openldap-utils, slapd (<< 2.1.25), openldapd
 Provides: ldap-client, openldap-utils

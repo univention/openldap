@@ -1,5 +1,9 @@
 # This file can be included with #SCRIPTSCOMMON#
 
+ANY_DATABASE_FORMAT_CHANGED="2.1.25-1"
+DATABASE_FORMAT_CHANGED_BDB="2.1.25-1"
+DATABASE_FORMAT_CHANGED_LDBM="2.1.12-1"
+
 # Make the version we are upgrading from globally available
 OLD_VERSION="$2"
 
@@ -16,6 +20,34 @@ fi
 # Check if we are upgrading from a version prior to OpenLDAP 2.1
 upgrading_version_pre21() {
   if dpkg --compare-versions "$OLD_VERSION" lt-nl 2.1; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+# Check if any database backend would require a reload
+database_might_need_reload() {
+  if dpkg --compare-versions "$OLD_VERSION" lt-nl "$ANY_DATABASE_FORMAT_CHANGED"; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+# Check if database with backend passed needs to be reloaded
+database_needs_reload() {
+  backend="$1"
+  format_changed=$(eval echo '$DATABASE_FORMAT_CHANGED_'`echo "$backend"|tr a-z A-Z`)
+  if dpkg --compare-versions "$OLD_VERSION" lt-nl "$format_changed"; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+database_needs_fixing() {
+  if dpkg --compare-versions "$OLD_VERSION" lt-nl "2.1"; then
     return 0
   else
     return 1

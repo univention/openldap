@@ -261,27 +261,38 @@ configure_v2_protocol_support
 
 if upgrading_version_pre21; then
   autoconfigure_modules
+fi
 
+if database_might_need_reload; then
   get_database_list | while read backend suffix directory
   do
     suffix=`eval echo $suffix`
     directory=`eval echo $directory`
+    location=`ldif_dump_location "$suffix"`
+
+    if ! test -e "$location"; then
+      continue
+    fi
+    
     echo "Processing directory $suffix..."
 
-    location=`ldif_dump_location "$suffix"`
     # XXX: to be truly idempotent, we should make sure we don't try to
     # overwrite this ldif file on a second pass after already having
     # moved some of the files aside below.
   
-    if [ ! -f "/var/lib/slapd/upgrade_2.0-$suffix" ]; then
-      if ldif_dump_wanted; then
+    if [ ! -f "/var/lib/slapd/upgrade-$suffix" ]; then
+      if database_needs_reload "$backend" || database_needs_fixing; then
         export_database "$suffix" "$location"
-        fix_ldif "$location" "${location}.fixed"
+        if database_needs_fixing; then
+          fix_ldif "$location" "${location}.new"
+        else
+	  cp -a "$location" "$location.new"
+	fi
+        move_old_database_directory_away "$suffix" "$directory"
+        touch "/var/lib/slapd/upgrade-$suffix"
       fi
-      move_old_database_directory_away "$suffix" "$directory"
-      touch "/var/lib/slapd/upgrade_2.0-$suffix"
     fi
-    import_database "$suffix" "${location}.fixed"
+    import_database "$suffix" "${location}.new"
 
   # Since this is actually a subshell, we need to explicitly
   # call exit: otherwise, the errors won't be caught, and the rm command
@@ -294,4 +305,4 @@ db_stop || true
 
 #DEBHELPER#
 
-rm -f /var/lib/slapd/upgrade_2.0-*
+rm -f /var/lib/slapd/upgrade-*

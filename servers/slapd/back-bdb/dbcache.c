@@ -111,7 +111,7 @@ bdb_db_cache(
 	__atoe( file );
 #endif
 	rc = DB_OPEN( db->bdi_db,
-		file, name,
+		file, NULL,
 		DB_HASH, bdb->bi_db_opflags | DB_CREATE | DB_THREAD,
 		bdb->bi_dbenv_mode );
 
