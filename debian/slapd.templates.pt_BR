@@ -1,0 +1,208 @@
+Template: slapd/suffix_type
+Type: select
+Choices: domain or host, location, custom
+Choices-pt_BR: domínio ou host, localização, personalizado
+Default: domain or host
+Description: Directory suffix style:
+ The LDAP directory suffix is the root of your LDAP database.
+ You can select one of three possible suffix styles:
+ .
+ Domain or host style uses the fully qualified hostname of
+ your machine as the basis.
+ .
+ Location uses country and organization name.
+ .
+ Custom allows you to speficy your own root root using
+ whatever suffix you want.
+Description-pt_BR: Estilo de sufixo de diretório :
+ O sufixo do diretório LDAP é a raíz de sua base de dados LDAP.
+ Você pode selecionar uma dentre três opções de estilos de sufixo :
+ .
+ O estilo domínio ou host utiliza o hostname totalmente qualificado de
+ sua máquina como base.
+ .
+ Localização usa nomes de país e organização.
+ .
+ Personalizado lhe permite especificar sua própria raíz usando o sufixo
+ que você deseja.
+
+Template: slapd/domain
+Type: string
+Description: Enter the domain name
+Description-pt_BR: Informe o nome do domínio
+
+Template: slapd/custom_suffix
+Type: string
+Description: Enter your suffix:
+ Please enter the desired directory suffix for your directory
+ using standard LDAP DN syntax.
+Description-pt_BR: Informe seu sufixo :
+ Por favor informe o sufixo de diretório desejado para seu diretório
+ usando a sintaxe padrão de DN LDAP.
+
+Template: shared/locale/countrycode
+Type: string
+Description: Enter your country's two digit code:
+Description-pt_BR: Informe o código de dois dígitos de seu país :
+
+Template: shared/organization
+Type: string
+Description: Enter the name of your organization:
+Description-pt_BR: Informe o nome de sua organização :
+
+Template: slapd/ldif_file
+Type: string
+Description: Path to ldif file:
+ You need to give the full path of the file containing the
+ ldif formatted entries to be entered into the database.
+Description-pt_BR: Caminho para o arquivo ldif :
+ É necessário informar o caminho completo do arquivo contendo as entradas
+ em formato ldif a serem inseridas na base de dados.
+
+Template: slapd/ldif_noexist
+Type: note
+Description: ${ldif} does not exist
+ Please supply an exiting file in ldif format is needed to
+ initialize the directory.
+Description-pt_BR: ${ldif} não existe
+ Por favor informe um arquivo existente no formato ldif. O mesmo é
+ necessário para inicializar o diretório.
+
+Template: slapd/conf_exists
+Type: note
+Description: slapd is already configured
+ You can use this configure system only once for the slapd daemon. Please
+ either manually change the configuration in ${conf} or remove both it
+ and your databases and rerun this configuration.
+Description-pt_BR: slapd já está configurado
+ Você pode usar este sistema de configuração somente uma vez para o daemon
+ slapd. Por favor modifique manualmente a configuração em ${conf} ou
+ remova ambos este arquivo e sua base de dados e execute novamente esta
+ configuração.
+
+Template: slapd/unknown_class
+Type: note
+Description: Unknown object class used
+ The root DN for your directory uses an unknown object class so
+ the directory can not be initialized. Valid object classes are:
+ .
+  dcObject (dc)
+  organizationalUnit (ou)
+  country (c)
+  organization (o)
+Description-pt_BR: Classe de objeto usada desconhecido
+ A raíz DN para seu diretório utiliza um objeto de classe desconhecido,
+ sendo assim o diretório não pode ser inicializado. Classes de objetos
+ válidos são :
+ .
+  dcObject (dc)
+  organizationalUnit (ou)
+  country (c)
+  organization (o)
+
+Template: slapd/fill_method
+Type: select
+Choices: auto, ldif
+Default: auto
+Description: Directory initialization method:
+ The LDAP directory can be initialized either via an existing
+ LDIF datafile, or automatically using information you supply.
+Description-pt_BR: Método de inicialização do diretório :
+ O diretório LDAP pode ser inicializado através de um arquivo de dados
+ LDIF existente ou automaticamente usando a informação que você
+ fornecer.
+
+Template: slapd/internal/dn
+Type: string
+Description: Directory DN
+Description-pt_BR: DN do diretório
+
+Template: slapd/internal/admin
+Type: string
+Description: Admin entry
+ The admin entry is the entry in the directory which has full read
+ and write access. 
+Description-pt_BR: Entrada administrativa
+ A entrada adminstrativa é a entrada no diretório que possui acesso
+ completo de leitura e escrita.
+
+Template: slapd/internal/adminpw
+Type: password
+Description: encrypted admin password
+Description-pt_BR: Senha administrativa encriptada
+
+Template: slapd/password1
+Type: password
+Description: Admin password:
+  Please enter the password for the admin entry in your LDAP directory.
+Description-pt_BR: Senha administrativa :
+ Por favor informe a senha para a entrada administrativa em seu
+ diretório LDAP.
+
+Template: slapd/password2
+Type: password
+Description: Verify password:
+Description-pt_BR: Repita a senha :
+
+Template: slapd/password_mismatch
+Type: note
+Description: passwords do not match
+ You need to enter the admin password twice. Please note that differences
+ such as uppercase/lowercase and added whitespace matter.
+Description-pt_BR: Senhas não são idênticas
+ É necessário informar a senha administrativa duas vezes. Por favor note
+ que diferenças como caixa alta/caixa baixa e espaços adicionais importam.
+
+Template: slapd/no_password
+Type: note
+Description: LDAP admin password
+ The slapd package generated a random password to the admin entry
+ in your new LDAP directory. The password is: ${password}.
+Description-pt_BR: Senha administrativa do LDAP
+ O pacote slapd gerou uma senha randômica para a entrada administrativa
+ em seu novo diretório LDAP. A senha é : ${password}.
+
+Template: slapd/replicate
+Type: boolean
+Default: false
+Description: Replicate to another LDAP server:
+ It is possible to replicate changes made in this LDAP server to another
+ server.
+Description-pt_BR: Replicar para outro servidor LDAP :
+ É possível replicar as mudanças feitas neste servidor LDAP para outro
+ servidor.
+
+Template: slapd/slurpd/host
+Type: string
+Description: LDAP server:
+ The fully qualified hostname of the remote LDAP server to replicate
+ data to.
+Description-pt_BR: Servidor LDAP :
+ O hostname totalmente qualificado do servidor LDAP remoto para o qual
+ os dados serão replicados.
+
+Template: slapd/slurpd/port
+Type: string
+Default: 389
+Description: Port on remote server:
+ The port on which the LDAP server runs on the remote server. This
+ is almost always the default LDAP port (389).
+Description-pt_BR: Porta no servidor remoto :
+ A porta na qual o servidor LDAP está sendo executado no servidor remoto.
+ A porta é geralmente a porta LDAP padrão (389).
+
+Template: slapd/slurpd/binddn
+Type: string
+Description: bind DN:
+ This is the DN used to bind to the remote LDAP server. It needs to have
+ full write access to the data being replicated.
+Description-pt_BR: Ligação DN :
+ O DN usado para se conectar ao servidor LDAP remoto. É preciso possuir
+ acesso completo de escrita aos dados sendo replicados.
+
+Template: slapd/slurpd/credentials
+Type: password
+Description: Password:
+ This the password used to bind to the remote LDAP server.
+Dscription-pt_BR: Senha :
+ A senha usada para se conectar ao servidor LDAP remoto.

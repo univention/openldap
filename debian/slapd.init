@@ -1,0 +1,61 @@
+#!/bin/sh
+
+test -e /usr/sbin/slapd || exit 0
+test -f /etc/ldap/slapd.conf || exit 0
+
+set -e
+
+start() {
+	echo -n "Starting OpenLDAP: slapd"
+	trap 'echo " - failed."' 0
+	start-stop-daemon --start --quiet --pidfile "$pf" --exec /usr/sbin/slapd
+	if [ "$doslurp" ] ; then
+		echo -n " slurpd"
+		start-stop-daemon --start --quiet --exec /usr/sbin/slurpd -- -t /var/spool/slurpd
+	fi
+	trap "-" 0
+	echo .
+}
+
+stop() {
+	echo -n "Stopping OpenLDAP: slapd"
+	trap 'echo " - failed."' 0
+	start-stop-daemon --stop --quiet --retry 10 --pidfile "$pf" --exec /usr/sbin/slapd
+	if [ "$doslurp" ] ; then
+		echo -n " slurpd"
+		start-stop-daemon --stop --quiet --retry 10 --exec /usr/sbin/slurpd
+	fi
+	trap "-" 0
+	echo .
+}
+
+pf=$(sed -ne 's/^pidfile[[:space:]]\+\(.\+\)/\1/p' /etc/ldap/slapd.conf)
+if [ -z "$pf" ] ; then
+	pf="/var/run/slapd.pid"
+fi
+
+if grep -q '^replica' /etc/ldap/slapd.conf > /dev/null 2>&1 ; then
+	doslurp="yes"
+else
+	doslurp=""
+fi
+
+if [ "$1" = "start" ] ; then
+	start
+elif [ "$1" = "stop" ] ; then
+	stop
+elif [ "$1" = "restart" -o "$1" = "force-reload" ] ; then
+	stop
+	start
+else
+	cat <<EOF >&2
+
+Usage:
+	$0 (start|stop|restart|force-reload)
+
+EOF
+	exit 1
+fi
+
+exit 0
+

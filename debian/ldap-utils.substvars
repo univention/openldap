@@ -1,0 +1,1 @@
+shlibs:Depends=libc6 (>= 2.3.1-1), libldap2, libsasl2 (>= 2.1.10-1), libssl0.9.7
