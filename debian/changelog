@@ -1,33 +1,33 @@
 openldap2.1 (2.1.12-1) experimental; urgency=low
-  
+
   * Initial release of OpenLDAP 2.1 packages. Closes: #167566, #178014.
     - this includes support for the >= and <= operators. Closes: #159078.
-  
+
   * Torsten Landschoff <torsten@debian.org>
     - debian/check_config: Added script to check if OpenLDAP was configured
       the way we want it.
-    - Don't build special TLS packages anymore - SSL is enabled in the 
+    - Don't build special TLS packages anymore - SSL is enabled in the
       stock ldap library. Everything else will just give me more headaches.
     - Build against libsasl2 instead of libsasl1. Closes: #176462.
-    - debian/control: 
+    - debian/control:
       - Build-depend on debhelper 4.0 as debian/rules uses DH_COMPAT=4.
       - Depend on coreutils | fileutils. Closes: #175704.
       - Make libldap2 conflict with libldap2-tls which is obsolete now.
-    - debian/rules: Move the long list of configure options to a new 
+    - debian/rules: Move the long list of configure options to a new
       file debian/configure.options and read $(CONFIG) from that file.
     - configure with --enable-aci. Closes: #101602.
     - debian/slapd.init: Rewrite and add comments.
       - Add support for running as non-root (closes: #111765, #157037).
     - servers/slapd/main.c (main): Remove pid file on exit (closes: #162284).
-    - servers/slurpd/slurp.h: Change the default spool directory to 
+    - servers/slurpd/slurp.h: Change the default spool directory to
       /var/spool/slurpd (avoids passing it via -t in init.d).
     - servers/{slapd,slurpd}/Makefile.in: Install binaries into sbindir
       instead of libexecdir.
     - debian/control: Add Stephen Frost to the Uploaders field. Thanks
       for your help, Stephen!
     - contrib/ldapc++/config.{guess,sub}: Replaced with current files from
-      autotools-dev (lintian). Not actually neccessary since this part of 
-      the package is not currently built but I think this is the best way 
+      autotools-dev (lintian). Not actually neccessary since this part of
+      the package is not currently built but I think this is the best way
       to shut up lintian :)
     - build/mod.mk: Use -m 644 instead of -m 755 in installing shared
       libraries. Shared libraries should not be marked as executable
@@ -37,12 +37,12 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
     - debian/rules: Change the mode of everything upstream installed into
       /etc to 0644 as required by policy (lintian).
     - debian/rules: Call dh_installdeb later in the binary target so that
-      the conffiles are already there for listing. Without this nothing in 
+      the conffiles are already there for listing. Without this nothing in
       /etc gets tagged as conffile... (lintian).
     - debian/rules: Pass the start and stop priority of slapd to
       dh_installinit in preparation for a postinst supported by debhelper.
     - debian/rules: Call dh_installdirs again.
-    - Rewrite slapd.config, slapd.postinst, slapd.templates - a first try 
+    - Rewrite slapd.config, slapd.postinst, slapd.templates - a first try
       in getting slapd to configure itself. Way to go.
 
   * Roland Bauerschmidt <rb@debian.org>
@@ -78,7 +78,7 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
       CVS
     - Correct free of SASL interact results; already in OpenLDAP upstream CVS
     - Duplicate the DN from SASL to ensure '\0' termination; already in
-      OpenLDAP upstream CVS 
+      OpenLDAP upstream CVS
     - debian/control: added Replaces: slapd (<< 2.1) for ldap-utils due to
       ldif.5 move.
     - Add modulepath /usr/lib/ldap to default slapd config
@@ -88,7 +88,7 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
     - Modified backend types to be built as modules for dynamic loading
     - Fixed pt_BR translation
 
- -- Torsten Landschoff <torsten@debian.org>  Sat,  8 Mar 2003 19:10:02 +0100
+ -- Roland Bauerschmidt <rb@debian.org>  Sat, 15 Mar 2003 21:35:24 +0100
 
 openldap2 (2.0.27-3) unstable; urgency=high
 
