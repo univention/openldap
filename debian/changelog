@@ -17,6 +17,7 @@ openldap2 (2.1.17-3) unstable; urgency=low
       replication anymore anyway. Closes: #151511
     + debian/copy_slapd_dev_files: Added to copy the include files for
       building slapd back-ends.
+    + debian/control: Add warning about libslapd2-dev
     + debian/control: Add build-depend on po-debconf for dh_installdebconf
     + debian/slapd.default: Add option for settings SLAPD_CONF file
     + debian/slapd.init: Changed to use SLAPD_CONF, setting it to

@@ -66,3 +66,7 @@ Depends: libldap2 (= ${Source-Version})
 Description: OpenLDAP slapd back-end development headers
  This package allows development of back-ends for the OpenLDAP slapd.
  It includes headers used when developing a back-end for slapd.
+ These headers are, per upstream, *not* intended to be used outside of
+ their build system so you are on your own with them.  Things can and
+ probably will break, feel free to file bugs about them but don't expect
+ them to be fixed.
