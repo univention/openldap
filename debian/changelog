@@ -27,6 +27,7 @@ openldap2 (2.1.17-3) unstable; urgency=low
       it out to build the libslapd2-dev deb.  Added -k to dh_clean since we're
       building arch and indep debs now.
     + Maintainer upload, acknowledge NMU. Closes: #98039.
+    + Add debian/po/fr.po from 194740.  Closes: #194740
 
   * Torsten Landschoff <torsten@debian.org>:
     + debian/control: Enforce libldap2 to be the same version as slapd
