@@ -12,6 +12,7 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
     - debian/control:
       - build-depend on libdb4.1-dev instead of libdb4.0-de
       - conflict, replace, and provide libldap2-tls (libldap2)
+      - removed ldap-gateways binary package
     - debian/rules: build with BDB backend
     - debian/slapd.dirs: added to create /var/lib/ldap and /var/spool/slurpd
 
