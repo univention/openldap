@@ -1400,6 +1400,7 @@ if test $ol_with_threads = auto -o $ol_with_threads = yes \
 		
 dnl		OL_PTHREAD_TRY([-mt],		[ol_cv_pthread_mt])
 		OL_PTHREAD_TRY([-kthread],	[ol_cv_pthread_kthread])
+		OL_PTHREAD_TRY([-lpthread],	[ol_cv_pthread_lpthread])
 		OL_PTHREAD_TRY([-pthread],	[ol_cv_pthread_pthread])
 		OL_PTHREAD_TRY([-pthreads],	[ol_cv_pthread_pthreads])
 		OL_PTHREAD_TRY([-mthreads],	[ol_cv_pthread_mthreads])

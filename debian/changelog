@@ -30,6 +30,13 @@ openldap2 (2.1.22-2) unstable; urgency=high
       - Now the #DEBHELPER# part is always reached so that the daemon 
         will be restarted even if no automatic configuration is wanted
         (closes: #204008).
+    + Fixed the undefined symbols in libldap_r.so.2 (closes: #195990).
+    | configure.in: Try -lpthread before -pthread to link the thread
+      library. libtool does not pass -pthread through, -lpthread seems
+      to work though.
+    | libraries/libldap_r/Makefile.in: Add $(LTHREAD_LIBS) to 
+      UNIX_LINK_LIBS so that pthread is linked when creating a shared library
+      as well.
 
   * Roland Bauerschmidt <rb@debian.org>:
     + debian/configure.options: change --localstatedir=/var/lib to
