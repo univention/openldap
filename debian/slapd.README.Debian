@@ -23,3 +23,9 @@ doing so), move the old database files away, change /etc/ldap/slapd.conf,
 and then reimport your database from the LDIF file via slapadd.
 
  -- Roland Bauerschmidt <rb@debian.org>  Wed, 19 Mar 2003 15:50:32 +0100
+
+In the event that you are running slapd with a different back-end module
+that depends on other programs (Such as an SQL database) you may need to
+adjust the runlevels of slapd to start after the SQL database.
+
+ -- Stephen Frost <sfrost@debian.org> Thu, 12 Jun 2003 12:42:52 -0400

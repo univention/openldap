@@ -30,6 +30,8 @@ openldap2 (2.1.17-4) unstable; urgency=low
       stop slapd).  Closes: #189777.
     + debian/slapd.postinst: Check if directories exist before attempting
       to mkdir them.  Closes: #189947
+    + debian/slapd.README.debian: Add note about runlevel issue. 
+      Closes: #175736
 
  --
 
