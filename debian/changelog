@@ -27,6 +27,9 @@ openldap2 (2.1.22-2) unstable; urgency=high
       inconsistency in the initial configuration.
     + debian/slapd.postinst: Rewritten to eliminate all that spaghetti. 
       Did not yet implement all old features again...
+      - Now the #DEBHELPER# part is always reached so that the daemon 
+        will be restarted even if no automatic configuration is wanted
+        (closes: #204008).
 
   * Roland Bauerschmidt <rb@debian.org>:
     + debian/configure.options: change --localstatedir=/var/lib to
