@@ -19,6 +19,7 @@ openldap2 (2.1.22-2) unstable; urgency=low
     + debian/rules: Don't run the upstream install target if we did not 
       rebuild the whole tree. Makes debugging maintainer script much more
       tolerable.
+    + debian/slapd.config: Cleaned up and restructured for readability.
 
   * Roland Bauerschmidt <rb@debian.org>:
     + debian/configure.options: change --localstatedir=/var/lib to
