@@ -85,7 +85,7 @@ fi
 
 # On upgrades from pre-2.1 we might have to update the configuration 
 # file for loading the backend modules.
-if dpkg --compare-versions "$2" lt-nl 2.1
+if dpkg --compare-versions "$2" lt-nl 2.1 \
    && ! grep -q modulepath /etc/ldap/slapd.conf
 then
   db_get slapd/autoconf_modules || true
