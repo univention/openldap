@@ -72,10 +72,6 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
     - Modified backend types to be built as modules for dynamic loading
     - Fixed pt_BR translation
 
-  * unassigned (FIXME)
-    - FIXME: Warning about changed that might break current setups. Closes: #112425.
-    - FIXME: Fix directories created by old debconf stuff.
-
  -- Torsten Landschoff <torsten@debian.org>  Mon, 10 Feb 2003 22:32:06 +0100
 
 openldap2 (2.0.27-3) unstable; urgency=high
