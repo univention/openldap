@@ -15,7 +15,7 @@ openldap2 (2.1.29-1) unstable; urgency=low
     + debian/slapd.{scripts-common,postinst,preinst,config}: Add new
       function read_slapd_conf that evaluates include statements.
 
- --  <sfrost@debian.org>  Fri,  5 Mar 2004 20:54:39 -0500
+ -- Torsten Landschoff <torsten@debian.org>  Mon, 12 Apr 2004 15:27:55 +0200
 
 openldap2 (2.1.26-1) unstable; urgency=low
 
