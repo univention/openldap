@@ -20,6 +20,9 @@ openldap2 (2.1.22-2) unstable; urgency=low
       rebuild the whole tree. Makes debugging maintainer script much more
       tolerable.
     + debian/slapd.config: Cleaned up and restructured for readability.
+    + debian/slapd.templates: Replaced the invalid_suffix template with 
+      invalid_config which is more general and can be used for any
+      inconsistency in the initial configuration.
 
   * Roland Bauerschmidt <rb@debian.org>:
     + debian/configure.options: change --localstatedir=/var/lib to

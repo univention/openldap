@@ -5,13 +5,14 @@ _Description: Do you want to omit the configuration of slapd?
  If you choose yes here, no default configuration or database will be
  created.
 
-Template: slapd/invalid_suffix
+Template: slapd/invalid_config
 Type: boolean
-Default: false
-_Description: Do you want to omit the configuration of slapd?
- You did not enter valid values for either the domain or organization.
- If you choose yes here, no default configuration or database will be
- created.
+Default: true
+_Description: Retry configuration
+ The configuration you entered is invalid. Make sure that the suffix
+ and organization are not left empty and that the admin passwords 
+ match. If you decide not to retry the configuration the LDAP server
+ will not be set up. Run dpkg-reconfigure if you want to retry later.
 
 Template: slapd/domain
 Type: string
