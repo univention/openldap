@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/cancel.c,v 1.5.2.4 2003/03/03 17:10:07 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/cancel.c,v 1.5.2.5 2004/06/06 04:35:59 hyc Exp $ */
 /* cancel.c - LDAP cancel extended operation */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
@@ -69,6 +69,7 @@ int cancel_extop(
 	LDAP_STAILQ_FOREACH( op, &conn->c_pending_ops, o_next ) {
 		if ( op->o_msgid == opid ) {
 			LDAP_STAILQ_REMOVE( &conn->c_pending_ops, op, slap_op, o_next );
+			conn->c_n_ops_pending--;
 			slap_op_free( op );
 			found = 1;
 			break;
