@@ -11,11 +11,11 @@ moduleload      back_bdb.la
 
 for the BDB database backend module.
 
-Starting with OpenLDAP 2.1, BDB is the recommended database backend to
-use. In comparision to the formerly recommended LDBM backend (which
-still exists for compatibility reasons), it is supposed to be both
-faster and safer to use, i.e. hot backups are now possible with the BDB
-database backend and the like.
+The new BDB database backend is the recommended backend to use. In
+comparision to the formerly recommended LDBM backend (which still exists
+for compatibility reasons), it is supposed to be both faster and safer
+to use, i.e. hot backups are now possible with the BDB database backend
+and the like.
 
 To switch to the BDB backend, you should export your current database
 in LDIF format with the slapcat command (be sure to stop slapd before
