@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/clients/tools/ldappasswd.c,v 1.94.2.11 2003/09/15 17:07:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldappasswd.c,v 1.94.2.12 2003/12/17 23:30:20 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -54,7 +54,7 @@ usage( void )
 
 
 const char options[] = "a:As:St:T:"
-	"Cd:D:e:h:H:InO:p:QR:U:vVw:WxX:y:Y:Z";
+	"d:D:e:h:H:InO:p:QR:U:vVw:WxX:y:Y:Z";
 
 int
 handle_private_option( int i )

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.150.2.22 2003/12/03 01:32:39 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.150.2.23 2004/01/21 07:56:34 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -987,7 +987,7 @@ backend_check_restrictions(
 		if( requires & SLAP_REQUIRE_STRONG ) {
 			/* should check mechanism */
 			if( ( op->o_transport_ssf < ssf->sss_transport
-				&& op->o_authmech.bv_len == 0 ) || op->o_dn.bv_len == 0 )
+				&& op->o_authtype == LDAP_AUTH_SIMPLE ) || op->o_dn.bv_len == 0 )
 			{
 				*text = "strong authentication required";
 				return LDAP_STRONG_AUTH_REQUIRED;
@@ -995,7 +995,7 @@ backend_check_restrictions(
 		}
 
 		if( requires & SLAP_REQUIRE_SASL ) {
-			if( op->o_authmech.bv_len == 0 || op->o_dn.bv_len == 0 ) {
+			if( op->o_authtype != LDAP_AUTH_SASL || op->o_dn.bv_len == 0 ) {
 				*text = "SASL authentication required";
 				return LDAP_STRONG_AUTH_REQUIRED;
 			}

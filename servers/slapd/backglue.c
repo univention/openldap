@@ -1,5 +1,5 @@
 /* backglue.c - backend glue routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.38.2.9 2003/04/20 07:21:20 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.38.2.11 2004/01/21 03:45:22 hyc Exp $ */
 /*
  * Copyright 2001-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -488,7 +488,8 @@ glue_tool_entry_first (
 		}
 
 	}
-	if (!glueBack || glueBack->be_entry_open (glueBack, glueMode) != 0)
+	if (!glueBack || !glueBack->be_entry_open || !glueBack->be_entry_first
+		|| glueBack->be_entry_open (glueBack, glueMode) != 0)
 		return NOID;
 
 	return glueBack->be_entry_first (glueBack);
@@ -509,15 +510,16 @@ glue_tool_entry_next (
 	rc = glueBack->be_entry_next (glueBack);
 
 	/* If we ran out of entries in one database, move on to the next */
-	if (rc == NOID) {
-		glueBack->be_entry_close (glueBack);
+	while (rc == NOID) {
+		if ( glueBack->be_entry_close )
+			glueBack->be_entry_close (glueBack);
 		for (i=0; i<gi->nodes; i++) {
 			if (gi->n[i].be == glueBack)
 				break;
 		}
 		if (i == 0) {
 			glueBack = NULL;
-			rc = NOID;
+			break;
 		} else {
 			glueBack = gi->n[i-1].be;
 			rc = glue_tool_entry_first (b0);
