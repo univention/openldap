@@ -36,7 +36,7 @@ openldap2 (2.1.25-1) unstable; urgency=low
     + debian/control: Use libdb4.2-dev instead of libdb4.1-dev as a
       number of problems seem to be related to DB 4.1.
 
- -- Roland Bauerschmidt <rb@debian.org>  Sat, 18 Oct 2003 19:59:56 +0200
+ -- Torsten Landschoff <torsten@debian.org>  Fri,  6 Feb 2004 20:48:22 +0100
 
 openldap2 (2.1.23-1) unstable; urgency=low
 
