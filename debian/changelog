@@ -9,6 +9,8 @@ openldap2 (2.1.30-4) testing-proposed-updates unstable; urgency=low
       of DEB_BUILD_OPTIONS. Closes: #264448.
   * Torsten Landschoff <torsten@debian.org>
     + debian/configure.options: Build back-ldap statically (closes: #238444).
+    + libraries/libldap/Makefile.in: Link with thread libraries
+      (closes: #266688).
 
  -- 
 
