@@ -51,6 +51,7 @@ _Description: passwords do not match
 
 Template: slapd/purge_database
 Type: boolean
+Default: false
 _Description: Do you want your database to be removed when slapd is purged?
 
 Template: slapd/internal/adminpw
