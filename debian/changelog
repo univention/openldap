@@ -15,6 +15,8 @@ openldap2 (2.1.21-2) unstable; urgency=low
   * Torsten Landschoff <torsten@debian.org>:
     + doc/man/man8/slapd.8: Refer to slapd.conf(5) for a description of 
       the debugging level (closes: #176980).
+    + debian/move_files: Kill of the static archives of our backend 
+      modules as they are of absolutely no use.
 
  --
 
