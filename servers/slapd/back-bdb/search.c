@@ -1,5 +1,5 @@
 /* search.c - search operation */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.54.2.22 2003/04/18 03:07:44 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.54.2.24 2003/12/02 03:30:24 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <ac/string.h>
 
+#include "lber_pvt.h"
 #include "back-bdb.h"
 #include "idl.h"
 #include "external.h"
@@ -1143,8 +1144,8 @@ send_pagerequest_response(
 	int		tentries )
 {
 	LDAPControl	ctrl, *ctrls[2];
-	char berbuf[LBER_ELEMENT_SIZEOF];
-	BerElement	*ber = (BerElement *)berbuf;
+	BerElementBuffer berbuf;
+	BerElement	*ber = (BerElement *)&berbuf;
 	struct berval	cookie = { 0, NULL };
 	PagedResultsCookie respcookie;
 
@@ -1209,8 +1210,8 @@ bdb_build_lcup_update_ctrl(
 	int rc;
 	const char *text = NULL;
 
-	char berbuf[LBER_ELEMENT_SIZEOF];
-	BerElement *ber = (BerElement *)berbuf;
+	BerElementBuffer berbuf;
+	BerElement	*ber = (BerElement *)&berbuf;
 
 	struct berval entrycsn_bv = { 0, NULL };
 
@@ -1299,8 +1300,8 @@ bdb_build_lcup_done_ctrl(
 	struct berval	*latest_entrycsn_bv	)
 {
 	int ret, rc;
-	char berbuf[LBER_ELEMENT_SIZEOF];
-	BerElement *ber = (BerElement *)berbuf;
+	BerElementBuffer berbuf;
+	BerElement	*ber = (BerElement *)&berbuf;
 
 	ber_init2( ber, NULL, LBER_USE_DER );
 
@@ -1350,8 +1351,8 @@ bdb_build_sync_state_ctrl(
 	int rc;
 	const char *text = NULL;
 
-	char berbuf[LBER_ELEMENT_SIZEOF];
-	BerElement *ber = (BerElement *)berbuf;
+	BerElementBuffer berbuf;
+	BerElement	*ber = (BerElement *)&berbuf;
 
 	struct berval entryuuid_bv	= { 0, NULL };
 	struct berval entrycsn_bv	= { 0, NULL };
@@ -1438,8 +1439,8 @@ bdb_build_sync_done_ctrl(
 	struct berval	*latest_entrycsn_bv	)
 {
 	int ret,rc;
-	char berbuf[LBER_ELEMENT_SIZEOF];
-	BerElement *ber = (BerElement *)berbuf;
+	BerElementBuffer berbuf;
+	BerElement	*ber = (BerElement *)&berbuf;
 
 	ber_init2( ber, NULL, LBER_USE_DER );
 
@@ -1486,8 +1487,8 @@ bdb_send_ldap_intermediate(
 	struct berval *cookie,
 	LDAPControl **ctrls	)
 {
-	char berbuf[LBER_ELEMENT_SIZEOF];
-	BerElement *ber = (BerElement *)berbuf;
+	BerElementBuffer berbuf;
+	BerElement	*ber = (BerElement *)&berbuf;
 	struct berval rspdata;
 
 	int ret, rc;

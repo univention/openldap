@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/lber.h,v 1.78.2.2 2003/02/09 17:02:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/lber.h,v 1.78.2.3 2003/12/02 03:21:34 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
@@ -154,7 +154,6 @@ typedef struct lber_memory_fns {
 #define LBER_OPT_SUCCESS	(0)
 #define LBER_OPT_ERROR		(-1)
 
-#define LBER_ELEMENT_SIZEOF (256) /* must be >= sizeof(BerElement) */
 typedef struct berelement BerElement;
 typedef struct sockbuf Sockbuf;
 typedef struct seqorset Seqorset;

@@ -1,5 +1,5 @@
 /* result.c - routines to send ldap results, errors, and referrals */
-/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.130.2.21 2003/02/28 17:07:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.130.2.23 2003/12/02 03:30:24 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -15,6 +15,8 @@
 #include <ac/ctype.h>
 #include <ac/time.h>
 #include <ac/unistd.h>
+
+#include "lber_pvt.h"
 
 #include "slap.h"
 
@@ -234,8 +236,8 @@ send_ldap_response(
 	LDAPControl **ctrls
 )
 {
-	char berbuf[LBER_ELEMENT_SIZEOF];
-	BerElement	*ber = (BerElement *)berbuf;
+	BerElementBuffer berbuf;
+	BerElement	*ber = (BerElement *)&berbuf;
 	int		rc;
 	long	bytes;
 
@@ -717,8 +719,8 @@ slap_send_search_entry(
 	LDAPControl **ctrls
 )
 {
-	char berbuf[LBER_ELEMENT_SIZEOF];
-	BerElement	*ber = (BerElement *)berbuf;
+	BerElementBuffer berbuf;
+	BerElement	*ber = (BerElement *)&berbuf;
 	Attribute	*a, *aa;
 	int		i, j, rc=-1, bytes;
 	char		*edn;
@@ -1341,8 +1343,8 @@ slap_send_search_reference(
     BerVarray *v2refs
 )
 {
-	char berbuf[LBER_ELEMENT_SIZEOF];
-	BerElement	*ber = (BerElement *)berbuf;
+	BerElementBuffer berbuf;
+	BerElement	*ber = (BerElement *)&berbuf;
 	int rc;
 	int bytes;
 

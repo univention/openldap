@@ -1,5 +1,5 @@
 /* index.c - routines for dealing with attribute indexes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/index.c,v 1.24.2.5 2003/03/26 17:56:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/index.c,v 1.24.2.6 2003/11/29 12:59:10 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -97,7 +97,7 @@ int bdb_index_param(
 		return LDAP_INAPPROPRIATE_MATCHING;
 	}
 
-	rc = bdb_db_cache( be, NULL, prefixp->bv_val, &db );
+	rc = bdb_db_cache( be, prefixp->bv_val, &db );
 
 	if( rc != LDAP_SUCCESS ) {
 		return rc;
@@ -158,7 +158,7 @@ static int indexer(
 
 	assert( mask );
 
-	rc = bdb_db_cache( be, txn, atname->bv_val, &db );
+	rc = bdb_db_cache( be, atname->bv_val, &db );
 	
 	if ( rc != LDAP_SUCCESS ) {
 #ifdef NEW_LOGGING

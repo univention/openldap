@@ -1,5 +1,5 @@
 /* bind.c - bdb backend bind routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/bind.c,v 1.16.2.7 2003/02/09 16:31:37 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/bind.c,v 1.16.2.8 2003/10/29 21:32:17 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -225,10 +225,12 @@ dn2entry_retry:
 			goto done;
 		}
 
-		if ( slap_passwd_check( conn, a, cred ) != 0 ) {
+		{ const char *err = NULL;
+		if ( slap_passwd_check( conn, a, cred, &err ) != 0 ) {
 			send_ldap_result( conn, op, rc = LDAP_INVALID_CREDENTIALS,
-				NULL, NULL, NULL, NULL );
+				NULL, err, NULL, NULL );
 			goto done;
+		}
 		}
 
 		rc = 0;

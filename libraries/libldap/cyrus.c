@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.45.2.20 2003/05/24 23:10:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.45.2.21 2003/12/03 01:00:50 hyc Exp $ */
 /*
  * Copyright 1999-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -177,7 +177,7 @@ sb_sasl_remove( Sockbuf_IO_Desc *sbiod )
 }
 
 static ber_len_t
-sb_sasl_pkt_length( const unsigned char *buf, unsigned max, int debuglevel )
+sb_sasl_pkt_length( const unsigned char *buf, int debuglevel )
 {
 	ber_len_t		size;
 
@@ -201,7 +201,7 @@ sb_sasl_pkt_length( const unsigned char *buf, unsigned max, int debuglevel )
 
 /* Drop a processed packet from the input buffer */
 static void
-sb_sasl_drop_packet ( Sockbuf_Buf *sec_buf_in, unsigned max, int debuglevel )
+sb_sasl_drop_packet ( Sockbuf_Buf *sec_buf_in, int debuglevel )
 {
 	ber_slen_t			len;
 
@@ -212,7 +212,7 @@ sb_sasl_drop_packet ( Sockbuf_Buf *sec_buf_in, unsigned max, int debuglevel )
    
 	if ( len >= 4 ) {
 		sec_buf_in->buf_end = sb_sasl_pkt_length( sec_buf_in->buf_base,
-			max, debuglevel);
+			debuglevel);
 	}
 	else {
 		sec_buf_in->buf_end = 0;
@@ -261,7 +261,7 @@ sb_sasl_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 
 	/* The new packet always starts at p->sec_buf_in.buf_base */
 	ret = sb_sasl_pkt_length( p->sec_buf_in.buf_base,
-		*p->sasl_maxbuf, sbiod->sbiod_sb->sb_debug );
+		sbiod->sbiod_sb->sb_debug );
 
 	/* Grow the packet buffer if neccessary */
 	if ( ( p->sec_buf_in.buf_size < (ber_len_t) ret ) && 
@@ -296,8 +296,7 @@ sb_sasl_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 		(unsigned *)&p->buf_in.buf_end );
 
 	/* Drop the packet from the input buffer */
-	sb_sasl_drop_packet( &p->sec_buf_in,
-			*p->sasl_maxbuf, sbiod->sbiod_sb->sb_debug );
+	sb_sasl_drop_packet( &p->sec_buf_in, sbiod->sbiod_sb->sb_debug );
 
 	if ( ret != SASL_OK ) {
 		ber_log_printf( LDAP_DEBUG_ANY, sbiod->sbiod_sb->sb_debug,

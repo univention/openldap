@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.150.2.18 2003/10/11 23:19:22 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.150.2.22 2003/12/03 01:32:39 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -314,22 +314,6 @@ int backend_startup(Backend *be)
 
 	/* open each backend database */
 	for( i = 0; i < nBackendDB; i++ ) {
-		if ( backendDB[i].be_update_ndn.bv_val && (
-			!backendDB[i].be_update_refs &&
-			!default_referral ) ) {
-#ifdef NEW_LOGGING
-			LDAP_LOG( BACKEND, CRIT, 
-				"backend_startup: slave \"%s\" updateref missing\n",
-				backendDB[i].be_suffix[0].bv_val, 0, 0 );
-				
-#else
-			Debug( LDAP_DEBUG_ANY,
-				"backend_startup: slave \"%s\" updateref missing\n",
-				backendDB[i].be_suffix[0].bv_val, 0, 0 );
-#endif
-			return -1;
-		}
-
 		/* append global access controls */
 		acl_append( &backendDB[i].be_acl, global_acl );
 
@@ -654,6 +638,7 @@ be_isroot_pw( Backend *be,
 	struct berval *cred )
 {
 	int result;
+	char *errmsg;
 
 	if ( ! be_isroot( be, ndn ) ) {
 		return 0;
@@ -670,7 +655,7 @@ be_isroot_pw( Backend *be,
 #endif
 #endif
 
-	result = lutil_passwd( &be->be_rootpw, cred, NULL );
+	result = lutil_passwd( &be->be_rootpw, cred, NULL, NULL );
 
 #if defined( SLAPD_CRYPT ) || defined( SLAPD_SPASSWD )
 #ifdef SLAPD_SPASSWD
@@ -1126,17 +1111,13 @@ backend_group(
 		}
 	} 
 
-	ldap_pvt_thread_mutex_lock( &conn->c_mutex );
-
-	for (g = conn->c_groups; g; g=g->ga_next) {
+	for (g = op->o_groups; g; g=g->ga_next) {
 		if (g->ga_be != be || g->ga_oc != group_oc ||
 			g->ga_at != group_at || g->ga_len != gr_ndn->bv_len)
 			continue;
 		if (strcmp( g->ga_ndn, gr_ndn->bv_val ) == 0)
 			break;
 	}
-
-	ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
 
 	if (g) {
 		return g->ga_res;
@@ -1155,10 +1136,8 @@ backend_group(
 			g->ga_res = res;
 			g->ga_len = gr_ndn->bv_len;
 			strcpy(g->ga_ndn, gr_ndn->bv_val);
-			ldap_pvt_thread_mutex_lock( &conn->c_mutex );
-			g->ga_next = conn->c_groups;
-			conn->c_groups = g;
-			ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
+			g->ga_next = op->o_groups;
+			op->o_groups = g;
 		}
 
 		return res;

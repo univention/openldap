@@ -1,5 +1,5 @@
 /* aclparse.c - routines to parse and check acl's */
-/* $OpenLDAP: pkg/ldap/servers/slapd/aclparse.c,v 1.94.2.7 2003/02/09 16:31:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/aclparse.c,v 1.94.2.8 2003/10/19 17:16:21 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -179,7 +179,9 @@ parse_acl(
 						} else {
 							acl_regex_normalized_dn( right, &a->acl_dn_pat );
 						}
-					} else if ( strcasecmp( style, "base" ) == 0 ) {
+					} else if ( strcasecmp( style, "base" ) == 0
+						|| strcasecmp( style, "exact" ) == 0 )
+					{
 						a->acl_dn_style = ACL_STYLE_BASE;
 						ber_str2bv( right, 0, 1, &a->acl_dn_pat );
 					} else if ( strcasecmp( style, "one" ) == 0 ) {
@@ -301,9 +303,9 @@ parse_acl(
 					|| strcasecmp( style, "regex" ) == 0 )
 				{
 					sty = ACL_STYLE_REGEX;
-				} else if ( strcasecmp( style, "exact" ) == 0 ) {
-					sty = ACL_STYLE_EXACT;
-				} else if ( strcasecmp( style, "base" ) == 0 ) {
+				} else if ( strcasecmp( style, "exact" ) == 0 ||
+					strcasecmp( style, "base" ) == 0 )
+				{
 					sty = ACL_STYLE_BASE;
 				} else if ( strcasecmp( style, "one" ) == 0 ) {
 					sty = ACL_STYLE_ONE;

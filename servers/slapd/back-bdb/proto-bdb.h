@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.44.2.11 2003/03/24 03:54:12 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.44.2.12 2003/11/29 12:59:10 hyc Exp $ */
 /*
  * Copyright 2000-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -51,7 +51,6 @@ BI_acl_attribute bdb_attribute;
 int
 bdb_db_cache(
     Backend	*be,
-    DB_TXN *tid,
     const char *name,
 	DB **db );
 

@@ -1,5 +1,5 @@
 /* operation.c - routines to deal with pending ldap operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.25.2.7 2003/03/29 15:45:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.25.2.8 2003/12/03 01:32:40 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -75,6 +75,14 @@ slap_op_free( Operation *op )
 		free( op->o_sync_state.bv_val );
 	}
 #endif
+	{
+		GroupAssertion *g, *n;
+		for (g = op->o_groups; g; g=n) {
+			n = g->ga_next;
+			free( g );
+		}
+		op->o_groups = NULL;
+        }
 
 #if defined( LDAP_SLAPI )
 	if ( op->o_pb != NULL ) {

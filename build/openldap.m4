@@ -1,4 +1,4 @@
-dnl $OpenLDAP: pkg/ldap/build/openldap.m4,v 1.98.2.14 2003/10/10 00:21:14 kurt Exp $
+dnl $OpenLDAP: pkg/ldap/build/openldap.m4,v 1.98.2.15 2003/12/02 18:05:49 kurt Exp $
 dnl
 dnl Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
 dnl All rights reserved.
@@ -312,6 +312,10 @@ dnl Try to locate appropriate library
 AC_DEFUN([OL_BERKELEY_DB_LINK],
 [ol_cv_lib_db=no
 OL_BERKELEY_DB_TRY(ol_cv_db_none)
+OL_BERKELEY_DB_TRY(ol_cv_db_db42,[-ldb42])
+OL_BERKELEY_DB_TRY(ol_cv_db_db_42,[-ldb-42])
+OL_BERKELEY_DB_TRY(ol_cv_db_db_4_dot_2,[-ldb-4.2])
+OL_BERKELEY_DB_TRY(ol_cv_db_db_4_2,[-ldb-4-2])
 OL_BERKELEY_DB_TRY(ol_cv_db_db41,[-ldb41])
 OL_BERKELEY_DB_TRY(ol_cv_db_db_41,[-ldb-41])
 OL_BERKELEY_DB_TRY(ol_cv_db_db_4_dot_1,[-ldb-4.1])

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/ldap_op.c,v 1.33.2.8 2003/09/09 23:03:14 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/ldap_op.c,v 1.33.2.10 2003/12/03 02:08:49 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -750,6 +750,7 @@ do_bind(
 )
 {
     int		ldrc;
+    int		do_tls = ri->ri_tls;
 
     *lderr = 0;
 
@@ -872,7 +873,7 @@ retry:
 	}
 	ldap_set_option(ri->ri_ldp, LDAP_OPT_RESTART, LDAP_OPT_ON);
 
-	if( ri->ri_tls ) {
+	if( do_tls ) {
 		int err;
 		err = ldap_start_tls_s(ri->ri_ldp, NULL, NULL);
 
@@ -894,7 +895,7 @@ retry:
 				ri->ri_ldp = NULL;
 				return BIND_ERR_TLS_FAILED;
 			}
-			ri->ri_tls = TLS_OFF;
+			do_tls = TLS_OFF;
 			goto retry;
 		}
 	}
@@ -968,13 +969,14 @@ retry:
 	}
 
 	{
-		char *passwd = ri->ri_password ? ber_strdup( ri->ri_password ) : NULL;
 		void *defaults = lutil_sasl_defaults( ri->ri_ldp, ri->ri_saslmech,
-		    ri->ri_realm, ri->ri_authcId, passwd, ri->ri_authzId );
+		    ri->ri_realm, ri->ri_authcId, ri->ri_password, ri->ri_authzId );
 
 		ldrc = ldap_sasl_interactive_bind_s( ri->ri_ldp, ri->ri_bind_dn,
 		    ri->ri_saslmech, NULL, NULL,
 		    LDAP_SASL_QUIET, lutil_sasl_interact, defaults );
+
+		lutil_sasl_freedefs( defaults );
 		if ( ldrc != LDAP_SUCCESS ) {
 #ifdef NEW_LOGGING
 			LDAP_LOG ( OPERATION, ERR, "do_bind: "
@@ -989,9 +991,6 @@ retry:
 			ri->ri_ldp = NULL;
 			return( BIND_ERR_SASL_FAILED );
 		}
-
-		ber_memfree( passwd );
-		ber_memfree( defaults );
 	}
 	break;
 #else

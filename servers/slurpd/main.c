@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/main.c,v 1.23.2.9 2003/10/10 00:15:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/main.c,v 1.23.2.10 2003/11/19 08:02:37 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -287,6 +287,10 @@ stop:
 #endif
     /* destroy the thread package */
     ldap_pvt_thread_destroy();
+
+#ifdef HAVE_TLS
+    ldap_pvt_tls_destroy();
+#endif
 
 #ifdef NEW_LOGGING
 	LDAP_LOG ( SLURPD, RESULTS, "main: slurpd terminated\n", 0, 0, 0 );

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/lber_pvt.h,v 1.19.2.3 2003/03/03 17:10:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/lber_pvt.h,v 1.19.2.4 2003/12/02 03:20:31 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
@@ -20,6 +20,22 @@
 #include <lber.h>
 
 LDAP_BEGIN_DECL
+
+/* for allocating aligned buffers (on the stack) */
+#define LBER_ALIGNED_BUFFER(uname,size) \
+	union uname { \
+		char buffer[size]; \
+		/* force alignment */ \
+		int ialign; \
+		long lalign; \
+		float falign; \
+		double dalign; \
+		char* palign; \
+	}
+
+#define LBER_ELEMENT_SIZEOF (256) /* must be >= sizeof(BerElement) */
+typedef LBER_ALIGNED_BUFFER(lber_berelement_u,LBER_ELEMENT_SIZEOF)
+	BerElementBuffer;
 
 typedef struct sockbuf_buf {
 	ber_len_t		buf_size;
