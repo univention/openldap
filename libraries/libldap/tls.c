@@ -425,10 +425,16 @@ ldap_pvt_tls_init_def_ctx( void )
 		SSL_CTX_set_verify( tls_def_ctx, i,
 			tls_opt_require_cert == LDAP_OPT_X_TLS_ALLOW ?
 			tls_verify_ok : tls_verify_cb );
-/* XXX: what's this good for? */
+
+		/* Set RSA/DH params callback */
 #ifdef HAVE_GNUTLS_GNUTLS_H
-		ldap_gnutls_need_rsa_params( tls_def_ctx->creds );
-		ldap_gnutls_need_dh_params( tls_def_ctx->creds );
+#if 0
+		/* we need GNUTLS 1.0.9 for this; unfortunately, the version in Debian
+		 *    is only 1.0.4 */
+		gnutls_certificate_set_params_function( tls_def_ctx->creds, tls_gnutls_params_cb );
+#else
+		tls_gnutls_set_params( tls_def_ctx->creds );
+#endif
 #else
 		SSL_CTX_set_tmp_rsa_callback( tls_def_ctx, tls_tmp_rsa_cb );
 		/* SSL_CTX_set_tmp_dh_callback( tls_def_ctx, tls_tmp_dh_cb ); */

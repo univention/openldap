@@ -350,180 +350,207 @@ read_datum(int fd, gnutls_datum *d)
 	return 1;
 }
 
-void
-ldap_gnutls_need_rsa_params(gnutls_certificate_credentials creds)
+static gnutls_rsa_params
+tls_gnutls_need_rsa_params(void)
 {
 	static const char cache_name[] = "/var/run/slapd/params_cache_rsa";
-	static gnutls_rsa_params rsa_params = NULL;
+	gnutls_rsa_params rsa_params = NULL;
 	int cache_fd;
 	int bits = RSA_BITS;
 	gnutls_datum m, e, d, p, q, u;
 	int read_ok = 0;
 
-	if (rsa_params == NULL) {
-
-		/* Initialize the RSA parameters */
-		gnutls_error = gnutls_rsa_params_init(&rsa_params);
-		if (gnutls_error < 0) {
+	/* Initialize the RSA parameters */
+	gnutls_error = gnutls_rsa_params_init(&rsa_params);
+	if (gnutls_error < 0) {
 #ifdef NEW_LOGGING
-			LDAP_LOG ( TRANSPORT, ERR,
-			    "init_rsa_dh: TLS: gnutls_rsa_params_init failed.\n",0,0,0);
+		LDAP_LOG ( TRANSPORT, ERR,
+		    "init_rsa_dh: TLS: gnutls_rsa_params_init failed.\n",0,0,0);
 #else
-			Debug ( LDAP_DEBUG_ANY,
-			    "init_rsa_dh: TLS: gnutls_rsa_params_init failed.\n",0,0,0);
+		Debug ( LDAP_DEBUG_ANY,
+		    "init_rsa_dh: TLS: gnutls_rsa_params_init failed.\n",0,0,0);
 #endif
-			return gnutls_error;
-		}
-
-		cache_fd = open(cache_name,O_RDONLY,0);
-		if (cache_fd != -1) {
-
-			/* read_datum will allocate memory for X.data, we need to free it later */
-			if (read_datum(cache_fd, &m) &&
-			    read_datum(cache_fd, &e) &&
-			    read_datum(cache_fd, &d) &&
-			    read_datum(cache_fd, &p) &&
-			    read_datum(cache_fd, &q) &&
-			    read_datum(cache_fd, &u)) {
-
-				read_ok = 1;
-
-				gnutls_error = gnutls_rsa_params_import_raw(rsa_params, &m, &e, &d, &p, &q, &u);
-
-				/* Free the data parts which read_datum allocated */
-				free(m.data);
-				free(e.data);
-				free(d.data);
-				free(p.data);
-				free(q.data);
-				free(u.data);
-
-			} else {
-				read_ok = -1;
-			}
-			close(cache_fd);
-		}
-
-		if (read_ok <= 0) {
-			char temp_cache_name[sizeof(cache_name) + 10];
-
-			/* Not able to read from the file so we generate new parameters */
-			gnutls_error = gnutls_rsa_params_generate2(rsa_params, RSA_BITS);
-			if (gnutls_error < 0) return gnutls_error;
-
-			/* gnutls_rsa_params_export_raw will allocate the memory for the params */
-			gnutls_error = gnutls_rsa_params_export_raw(rsa_params, &m, &e, &d, &p, &q, &u, &bits);
-			if (gnutls_error < 0) return gnutls_error;
-			sprintf(temp_cache_name, "%s-%d", cache_name, (int) getpid());
-
-			/* Ignore errors... Not everybody has /var/run/slapd/ world writeable... */
-			cache_fd = open(temp_cache_name, O_WRONLY|O_CREAT, 0600);
-			if (cache_fd != -1) {
-				int ren;
-
-				ren = write_datum(cache_fd, &m) &&
-				      write_datum(cache_fd, &e) &&
-				      write_datum(cache_fd, &d) &&
-				      write_datum(cache_fd, &p) &&
-				      write_datum(cache_fd, &q) &&
-				      write_datum(cache_fd, &u);
-
-				close(cache_fd);
-				if (ren) {
-					rename(temp_cache_name, cache_name);
-				}
-			}
-
-			/* Free the parameters that are allocated by gnutls_rsa_params_export_raw */
-			gnutls_free(m.data);
-			gnutls_free(e.data);
-			gnutls_free(d.data);
-			gnutls_free(p.data);
-			gnutls_free(q.data);
-			gnutls_free(u.data);
-		}
-
+		return NULL;
 	}
-	
-	gnutls_certificate_set_rsa_export_params(creds, rsa_params);
+
+	cache_fd = open(cache_name,O_RDONLY,0);
+	if (cache_fd != -1) {
+
+		/* read_datum will allocate memory for X.data, we need to free it later */
+		if (read_datum(cache_fd, &m) &&
+		    read_datum(cache_fd, &e) &&
+		    read_datum(cache_fd, &d) &&
+		    read_datum(cache_fd, &p) &&
+		    read_datum(cache_fd, &q) &&
+		    read_datum(cache_fd, &u)) {
+
+			read_ok = 1;
+
+			gnutls_error = gnutls_rsa_params_import_raw(rsa_params, &m, &e, &d, &p, &q, &u);
+
+			/* Free the data parts which read_datum allocated */
+			free(m.data);
+			free(e.data);
+			free(d.data);
+			free(p.data);
+			free(q.data);
+			free(u.data);
+
+		} else {
+			read_ok = -1;
+		}
+		close(cache_fd);
+	}
+
+	if (read_ok <= 0) {
+		char temp_cache_name[sizeof(cache_name) + 10];
+
+		/* Not able to read from the file so we generate new parameters */
+		gnutls_error = gnutls_rsa_params_generate2(rsa_params, RSA_BITS);
+		if (gnutls_error < 0) return gnutls_error;
+
+		/* gnutls_rsa_params_export_raw will allocate the memory for the params */
+		gnutls_error = gnutls_rsa_params_export_raw(rsa_params, &m, &e, &d, &p, &q, &u, &bits);
+		if (gnutls_error < 0) return gnutls_error;
+		sprintf(temp_cache_name, "%s-%d", cache_name, (int) getpid());
+
+		/* Ignore errors... Not everybody has /var/run/slapd/ world writeable... */
+		unlink(temp_cache_name);
+		cache_fd = open(temp_cache_name, O_WRONLY|O_CREAT|O_EXCL, 0600);
+		if (cache_fd != -1) {
+			int ren;
+
+			ren = write_datum(cache_fd, &m) &&
+			      write_datum(cache_fd, &e) &&
+			      write_datum(cache_fd, &d) &&
+			      write_datum(cache_fd, &p) &&
+			      write_datum(cache_fd, &q) &&
+			      write_datum(cache_fd, &u);
+
+			close(cache_fd);
+			if (ren) {
+				rename(temp_cache_name, cache_name);
+			}
+		}
+
+		/* Free the parameters that are allocated by gnutls_rsa_params_export_raw */
+		gnutls_free(m.data);
+		gnutls_free(e.data);
+		gnutls_free(d.data);
+		gnutls_free(p.data);
+		gnutls_free(q.data);
+		gnutls_free(u.data);
+	}
+
+	return rsa_params;
 }
 
-void
-ldap_gnutls_need_dh_params(gnutls_certificate_credentials creds)
+static gnutls_dh_params
+tls_gnutls_need_dh_params(void)
 {
 	static const char cache_name[] = "/var/run/slapd/params_cache_dh";
-	static gnutls_dh_params dh_params = NULL;
+	gnutls_dh_params dh_params = NULL;
 	int cache_fd, bits = DH_BITS;
 	gnutls_datum prime, generator;
 	int read_ok = 0;
 
-	if (dh_params == NULL) {
-		
-		/* Initialize the DH parameters */
-		gnutls_error = gnutls_dh_params_init(&dh_params);
-		if (gnutls_error < 0) {
+	/* Initialize the DH parameters */
+	gnutls_error = gnutls_dh_params_init(&dh_params);
+	if (gnutls_error < 0) {
 #ifdef NEW_LOGGING
-			LDAP_LOG ( TRANSPORT, ERR,
-			    "init_rsa_dh: TLS: gnutls_dh_params_init failed.\n",0,0,0);
+		LDAP_LOG ( TRANSPORT, ERR,
+		    "init_rsa_dh: TLS: gnutls_dh_params_init failed.\n",0,0,0);
 #else			
-			Debug ( LDAP_DEBUG_ANY,
-			    "init_rsa_dh: TLS: gnutls_dh_params_init failed.\n",0,0,0);
+		Debug ( LDAP_DEBUG_ANY,
+		    "init_rsa_dh: TLS: gnutls_dh_params_init failed.\n",0,0,0);
 #endif
-			return gnutls_error;
-		}
+		return NULL;
+	}
 
-		cache_fd = open(cache_name,O_RDONLY,0);
+	cache_fd = open(cache_name,O_RDONLY,0);
+	if (cache_fd != -1) {
+
+		/* read_datum will allocate X.data, need to free it later */
+		if (read_datum(cache_fd, &prime) &&
+		    read_datum(cache_fd, &generator)) {
+
+			read_ok = 1;
+
+			gnutls_dh_params_import_raw(dh_params,&prime,&generator);
+
+			/* Free the .data's allocated by read_datum */
+			free(prime.data);
+			free(generator.data);
+		} else {
+			read_ok = -1;
+		}
+		close(cache_fd);
+	}
+	if (read_ok <= 0) {
+		char temp_cache_name[sizeof(cache_name) + 10];
+
+		gnutls_error = gnutls_dh_params_generate2(dh_params, DH_BITS);
+		if (gnutls_error < 0) return gnutls_error;
+
+		gnutls_error = gnutls_dh_params_export_raw(dh_params, &prime, &generator, &bits);
+		if (gnutls_error < 0) return gnutls_error;
+		sprintf(temp_cache_name, "%s-%d", cache_name, (int) getpid());
+
+		/* Ignore errors... Not everybody has /var/run/slapd/ world writeable... */
+		unlink(temp_cache_name);
+		cache_fd = open(temp_cache_name, O_WRONLY|O_CREAT|O_EXCL, 0600);
 		if (cache_fd != -1) {
+			int ren;
 
-			/* read_datum will allocate X.data, need to free it later */
-			if (read_datum(cache_fd, &prime) &&
-			    read_datum(cache_fd, &generator)) {
+			ren = write_datum(cache_fd, &prime) &&
+			      write_datum(cache_fd, &generator);
 
-				read_ok = 1;
-
-				gnutls_dh_params_import_raw(dh_params,&prime,&generator);
-
-				/* Free the .data's allocated by read_datum */
-				free(prime.data);
-				free(generator.data);
-			} else {
-				read_ok = -1;
-			}
 			close(cache_fd);
-		}
-		if (read_ok <= 0) {
-			char temp_cache_name[sizeof(cache_name) + 10];
 
-			gnutls_error = gnutls_dh_params_generate2(dh_params, DH_BITS);
-			if (gnutls_error < 0) return gnutls_error;
-
-			gnutls_error = gnutls_dh_params_export_raw(dh_params, &prime, &generator, &bits);
-			if (gnutls_error < 0) return gnutls_error;
-			sprintf(temp_cache_name, "%s-%d", cache_name, (int) getpid());
-
-			/* Ignore errors... Not everybody has /var/run/slapd/ world writeable... */
-			cache_fd = open(temp_cache_name, O_WRONLY|O_CREAT, 0600);
-			if (cache_fd != -1) {
-				int ren;
-
-				ren = write_datum(cache_fd, &prime) &&
-				      write_datum(cache_fd, &generator);
-
-				close(cache_fd);
-
-				if (ren) {
-					rename(temp_cache_name, cache_name);
-				}
+			if (ren) {
+				rename(temp_cache_name, cache_name);
 			}
-
-			gnutls_free(prime.data);
-			gnutls_free(generator.data);
 		}
-	
+
+		gnutls_free(prime.data);
+		gnutls_free(generator.data);
 	}
 	
-	gnutls_certificate_set_dh_params(creds, dh_params);
+	return dh_params;
 }
+
+#if 0
+/* we need GNUTLS 1.0.9 for this; unfortunately, the version in Debian
+   is only 1.0.4 */
+int
+tls_gnutls_params_cb( gnutls_session session, gnutls_params_type type, 
+		gnutls_params_st *st )
+{
+	if (type == GNUTLS_PARAMS_RSA_EXPORT) {
+		st->params.rsa_export = tls_gnutls_need_rsa_params();
+		if (st->params.rsa_export == NULL) return -1
+	} else if (type == GNUTLS_PARAMS_DH) {
+		st->params.dh = tls_gnutls_need_dh_params();;
+		if (st->params.dh == NULL) return -1;
+	} else return -1;
+
+	st->type = type;
+	st->deinit = 1;
+
+	return 0;
+}
+#else
+void
+tls_gnutls_set_params( gnutls_certificate_credentials cred )
+{
+	gnutls_rsa_params rsa_params = tls_gnutls_need_rsa_params();
+	gnutls_dh_params dh_params = tls_gnutls_need_dh_params();
+
+	gnutls_certificate_set_rsa_export_params( cred, rsa_params );
+	gnutls_certificate_set_dh_params( cred, dh_params );
+}
+#endif
+
 
 void
 SSL_CTX_set_verify( SSL_CTX *ctx, int mode,
@@ -620,14 +647,6 @@ SSL_do_handshake( SSL *ssl, gnutls_connection_end end )
 		   if we don't require ca verification? */
 		gnutls_credentials_set(ssl->session, GNUTLS_CRD_CERTIFICATE, 
 		                       ssl->creds);
-
-		/* FIXME: I moved this to tls.c:~430; this can probably be
-		   removed
-		if (end == GNUTLS_SERVER && ssl->creds) {
-			ldap_gnutls_need_rsa_params(ssl->creds);
-			ldap_gnutls_need_dh_params(ssl->creds);
-		}
-		*/
 	}
 
 	gnutls_error = gnutls_handshake(ssl->session);

@@ -235,7 +235,13 @@ X509 *SSL_get_peer_certificate( SSL *ssl );
 int SSL_get_verify_result( SSL *ssl );
 void SSL_set_bio( SSL *ssl, BIO *rbio, BIO *wbio );
 
-void ldap_gnutls_need_rsa_params(gnutls_certificate_credentials creds);
-void ldap_gnutls_need_dh_params(gnutls_certificate_credentials creds);
+#if 0
+/* we need GNUTLS 1.0.9 for this; unfortunately, the version in Debian
+   is only 1.0.4 */
+int tls_gnutls_params_cb( gnutls_session session,
+		gnutls_params_type type, gnutls_params_st *st );
+#else
+void tls_gnutls_set_params ( gnutls_certificate_credentials cred );
+#endif
 #endif
 #endif

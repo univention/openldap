@@ -3,12 +3,27 @@ openldap2 (2.1.30-3) unstable; urgency=high
   * Urgeny high since previous releases were hardly usable (at least
     with TLS).
   * Roland Bauerschmidt <rb@debian.org>
-    + libraries/libldap/gnutls.c: Allocate dh_params and rsa_params
-      just once and always reference to the same structure. Previously,
-      it was allocated for each connection and freed right after the
-      first gnutls_handshake, though still referenced by GNUTLS.
-      Finally. Many thanks to Matthias Urlichs who helped debugging a
-      lot. Closes: #244827.
+    + libraries/libldap/gnutls.c, libraries/libldap/tls.c,
+      include/ldap_pvt_gnutls.h: Add code to use callback with
+      gnutls_certificate_set_params_function to generate dh_params and
+      rsa_params (this is also the way, it's done with OpenSSL).
+      Unfortunately, the param callback is only available in GNUTLS
+      1.0.9 (or better), whereas Debian still has 1.0.4. For now, we'll
+      just initialize the credentials when initializing the TLS context
+      as a workaround. This has the disadvantage that they're shared by
+      all sessions and we can hardly exchange them. On the other hand
+      though, allocating them for each session doesn't work as
+      previously assumed since the credentials structure is also shared
+      by all sessions. That is also the reason for the previous
+      segmentation faults as the *global* param structure was recreated
+      and freed for every session. Many thanks to Matthias Urlichs who
+      helped debugging a lot and is also considering to fix up the new
+      GNUTLS version... Closes: #244827.
+    + libraries/libldap/gnutls.c: in tls_gnutls_need_{dh,rsa}_params
+      (formerly ldap_gnutls_need_...), create temp files more securely,
+      doing unlink before opening and opening them with O_EXCL. This is
+      necessary because under Linux 2.6 all threads have the same PID.
+      Thanks to Andrew Suffield for pointing this out.
 
  -- 
 
