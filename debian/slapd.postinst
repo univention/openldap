@@ -21,6 +21,34 @@ ldif_dump_location() {
   echo "/var/backups/slapd-$oldver.ldif"
 }
 
+# Make sure slapd is shut down before mucking with the db files
+# and whatnot...  Use this function
+stop_slapd() {
+        # Source the init script configuration
+        if [ -f "/etc/default/slapd" ]; then
+                . /etc/default/slapd
+        fi
+
+        # Load the default location of the slapd config file
+        if [ -z "$SLAPD_CONF" ]; then
+                SLAPD_CONF="/etc/ldap/slapd.conf"
+        fi
+
+        # Find out the name of slapd's pid file
+        if [ -z "$SLAPD_PIDFILE" ]; then
+                SLAPD_PIDFILE=`sed -ne 's/^pidfile[[:space:]]\+\(.\+\)/\1/p' \
+                        "$SLAPD_CONF"`
+        fi
+
+        # Use the pidfile if it is there, if not then just do without
+        if [ -z "$SLAPD_PIDFILE" ]; then
+                start-stop-daemon --stop --quiet --oknodo --retry 10 \
+                        --exec /usr/sbin/slapd 2>&1`"
+        else
+                start-stop-daemon --stop --quiet --oknodo --retry 10 --pidfile \"$SLAPD_PIDFILE\" \
+                        --exec /usr/sbin/slapd 2>&1`"
+        fi
+}
 
 # Only create a new directory on a fresh install or on reconfigure
 if [ "$1" = configure -a -z "$2" ] || [ "$1" = reconfigure ] \
@@ -32,6 +60,9 @@ if [ "$1" = configure -a -z "$2" ] || [ "$1" = reconfigure ] \
   organization="$RET"
   db_get slapd/internal/adminpw
   adminpass="$RET"
+
+  # Make sure the daemon is shut down
+  stop_slapd
 
   TMPFILE=`mktemp -q /etc/ldap/slapd.conf.XXXXXX`
   if [ ! -e /etc/ldap/slapd.conf ]; then
@@ -96,6 +127,58 @@ EOF
   echo "done"
 fi
 
+# Check for adding ldap_v2 support
+# This could probably be reused to add other things
+# to the allow line if we want in the future...
+db_get slapd/allow_ldap_v2
+if [ "$RET" = "true" ]; then
+  CONF=/etc/ldap/slapd.conf
+
+  # Check if it is there already
+  TEST=`grep -E "^[     ]*allow[        ][^#]*bind_v2" $CONF `
+  if [ -z "$TEST" ]; then
+    echo -n "Adding 'allow bind_v2' to slapd config..."
+    
+    TMPFILE=`mktemp -q $CONF.XXXXXX`
+    chmod --reference=$CONF $TMPFILE
+    
+    # Check if there is an allow line there already
+    ALLOWC=`grep -E "^[    #]*allow" $CONF`
+    if [ -z "$ALLOWC" ]; then
+      # No allow line there, add one
+      echo "# Allow LDAPv2 binds" > $TMPFILE
+      echo "allow bind_v2" >> $TMPFILE
+      cat $CONF >> $TMPFILE
+    else
+      # Allow line exists already
+      # Check if it is real or commented out
+      ALLOW=`grep -E "^[        ]*allow[        ]" $CONF `
+      if [ ! -z "$ALLOW" ]; then
+        # It's real, hack it up...
+        COMMENT=`echo $ALLOWC | cut -f2- -d'#'`
+        OPTIONS=`echo $ALLOWC | sed -e 's:^[    ]*allow[        ]*::' -e 's:\#.*::'`
+        cat $CONF | sed -e "s:$ALLOWC:allow bind_v2 $OPTIONS # $COMMENT:" > $TMPFILE
+      else
+        # Must be commented out, uncomment and add our option
+        OPTIONS=`echo $ALLOWC | sed -e 's:^[    #]*allow[       ]*::'`
+	echo
+	echo $ALLOW
+	echo $ALLOWC
+        cat $CONF | sed -e "s:$ALLOWC:allow bind_v2 # $OPTIONS:" > $TMPFILE
+      fi
+    fi
+    if [ -s "$TMPFILE" ]; then
+      mv $TMPFILE $CONF
+      echo done
+    else
+      rm $TMPFILE
+      echo
+      echo "Failed to add LDAP V2 allow, original slapd.conf untouched."
+      read
+    fi
+  fi
+fi
+
 # On upgrades from pre-2.1 we might have to update the configuration 
 # file for loading the backend modules.
 if dpkg --compare-versions "$2" lt-nl 2.1 \
@@ -126,6 +209,8 @@ if dpkg --compare-versions "$2" lt-nl 2.1 \
    && [ ! -f /var/lib/slapd/upgrade_2.0 ]
 then
   if ldif_dump_wanted; then
+    stop_slapd
+
     location=`ldif_dump_location`
     echo -n "Dumping directory to $location... "
     # XXX: to be truly idempotent, we should make sure we don't try to
@@ -139,8 +224,15 @@ then
     # has no structural objectclass
     # XXX: can we use slapcat to determine if we need to prompt for this?
     # If not, the prompting should move to the config script.
-    slapcat | /usr/share/slapd/fix_ldif -w -o "$organization" > $location
-    echo "done"
+    SLAPCAT_FAIL=0
+    slapcat > $location || SLAPCAT_FAIL=1
+    if [ "$SLAPCAT_FAIL" = "1" ]; then
+      echo "failed"
+      db_input slapd/upgrade_slapcat_failure
+    else
+      echo "done"
+      /usr/share/slapd/fix_ldif -w -o "$organization" < $location > ${location}.fixed
+    fi
   fi
 
   echo -n "Moving old database files to /var/backups/slapd-$oldver... "
@@ -154,10 +246,17 @@ fi
 # If a dump file from the old version exists we want to recreate the
 # directory from it
 if dpkg --compare-versions "$2" lt-nl 2.1 \
-	&& [ -e /var/backups/slapd-$oldver.ldif ]; then
-  echo -n "Recreating directory from /var/backups/slapd-$oldver.ldif... "
-  slapadd -l /var/backups/slapd-$oldver.ldif
-  echo done
+	&& [ -e `ldif_dump_location`.fixed ]; then
+  echo -n "Recreating directory from `ldif_dump_location`.fixed"
+  SLAPADD_FAIL=0
+  slapadd -u -l `ldif_dump_location`.fixed || SLAPADD_FAIL=1
+  if [ "$SLAPADD_FAIL" = "1" ]; then
+    echo "failed"
+    db_input slapd/upgrade_slapadd_failure
+  else
+    slapadd -l `ldif_dump_location`.fixed
+    echo "done"
+  fi
 fi
 
 db_stop

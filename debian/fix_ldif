@@ -112,6 +112,7 @@
 
 use Data::Dumper;
 use Getopt::Long;
+use MIME::Base64;
 
 my $origDN = '.origDN';	# Attribute stores original DN
 
@@ -125,10 +126,20 @@ $opt_write = 1 if $opt_fix;
 while (@_ = &GetEntry)	# Loop per entry (exit on EOF)
 {
     my $dn = shift @_;
-    next if ! $dn =~ /^dn: /i;
-    $dn =~ s/dn: (.*)/$1/;	# DN had better not be encoded
+    # Check if base64 encoded
+    next if ! $dn =~ /^dn::? /i;
+    if($dn =~ /^dn:: /i) {
+      $dn =~ s/dn:: (.*)/$1/;
+      $dn = decode_base64($dn);
+      $dn =~ s/\s$//;
+      $encoded = 1;
+    } else {
+      $dn =~ s/dn: (.*)/$1/;
+      $encoded = 0;
+    }
     my $cdn = &canon($dn);
     $entries{$cdn}{$origDN} = $dn;
+    $entries{$cdn}{"encoded"} = $encoded;
 
     #
     # Infer the suffix.
@@ -386,7 +397,12 @@ sub write_out
 {
     my ($dn) = @_;
     my $odn = $entries{$dn}{$origDN};
-    print "dn: $odn\n";
+    if ($entries{$dn}{"encoded"} == 1) {
+      $encoded = encode_base64($odn,"");
+      print "dn:: $encoded\n";
+    } else {
+      print "dn: $odn\n";
+    }
     foreach my $attr (keys %{$entries{$dn}})
     {
 	next if $attr eq $origDN;

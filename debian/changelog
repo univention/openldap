@@ -1,15 +1,33 @@
 openldap2 (2.1.17-4) unstable; urgency=low
 
   * Stephen Frost <sfrost@debian.org>:
-    + Add libbind-dev and bind-dev to the conflicts for slapd, the libs
-      in them can end up being used even when not compiled against causing
-      getaddrinfo() to fail. Closes: #166777
-    + Flush out the copyright file to include all found copyrights and updates
-      to those.
-    + Add clarification to copyright file.
-    + Add clarification of JC license to copyright file.
-    + More clearly inform users of important config change.  Closes: #194192.
-    + Remove patch from build-depends (dpkg-dev depends on it...)
+    + debian/control: Add libbind-dev and bind-dev to the conflicts for 
+      slapd, the libs in them can end up being used even when not 
+      compiled against causing getaddrinfo() to fail. Closes: #166777
+    + debian/copyright: Flush out the copyright file to include all found 
+      copyrights and updates to those.
+    + debian/copyright: Add clarification of MA license
+    + debian/copyright: Add clarification of JC license
+    + debian/slapd.templates: More clearly inform users of important 
+      config change.  Closes: #194192.
+    + debian/control: Remove patch from build-depends (dpkg-dev depends on it)
+    + debian/fix_ldif: Correctly handle base64-encoded DNs.  Closes: #197014.
+    + debian/slapd.templates: Added templates for asking about LDAPv2 support 
+      and telling the user of slapcat/slapadd failures during upgrade. 
+    + debian/slapd.postinst: Added support for adding LDAPv2 support
+    + debian/slapd.postinst: Modified to handle slapcat/slapadd failure.
+    + debian/slapd.postinst: Use ldif_dump_location in more places...
+    + debian/slapd.prerm: Check if upgrade failed and assume bad old init.d
+      script was used and attempt to shut down slapd with --oknodo in case
+      slapd isn't running.  Closes: #193854. (Again)
+    + debian/slapd.conf: Add commented out allow line
+    + debian/rules: Tell dh_installinit to not touch slapd.prerm now.
+    + debian/slapd.postinst: Do a dry-run with slapadd first and check if
+      that worked or not.  If it did not work then tell the user, otherwise
+      do a real slapadd which should work.
+    + debian/slapd.postinst: Make sure slapd is stopped before doing
+      slapadd/slapcat's and the like. (Note: The woody version does not
+      stop slapd).
 
  --
 

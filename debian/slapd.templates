@@ -54,6 +54,17 @@ _Description: Change configuration to load backend modules
  will fail and the package will not be installed.  For more information 
  read /usr/share/doc/slapd/README.Debian.
 
+Template: slapd/allow_ldap_v2
+Type: boolean
+Default: false
+_Description: LDAPv2 protocol off by default
+ slapd now defaults to having the old LDAPv2 protocol not allowed.
+ Programs and users are generally expected to be upgraded to LDAPv3.
+ If you have old programs which have not been moved to use LDAPv3
+ and you still need LDAPv2 support then select this option and
+ 'allow bind_v2' will be added to your slapd.conf to tell slapd to
+ accept LDAPv2 connections.
+
 Template: slapd/fix_directory
 Type: boolean
 Default: true
@@ -73,3 +84,33 @@ _Description: Move aside current database and create a new one?
  requires moving aside the current LDAP database and creating a new one.
  Are you sure you want to abandon the current database? (A backup will
  be made.)
+
+Template: slapd/upgrade_slapcat_failure
+Type: note
+_Description: slapcat failed during upgrade
+ When attempting to upgrade your LDAP directory there was an error.
+ This error occured when performing the 'slapcat' which attempts to
+ extract your LDAP directory.  This failure could be because of an
+ incorrect config file.  For example, if the appropriate moduleload
+ lines for your backend database type are missing.  This failure
+ will cause 'slapadd' later to fail too.  The old database files are
+ about to be moved to /var/backups.  If you want to try this upgrade
+ again then move the old database files back into place, fix whatever
+ caused slapcat to fail, and run:
+ slapcat | /usr/share/slapd/fix_ldif -w -o "$organization" > $location
+ Move the database files back to a backup area and then try and
+ slapadd from $location.
+
+Template: slapd/upgrade_slapadd_failure
+Type: note
+_Description: slapadd failed during upgrade
+ When attempting to upgrade your LDAP directory there was an error.
+ This error occured when performing the 'slapadd' which attempts to
+ populate an empty new LDAP directory using the information from your
+ original LDAP directory.  Your original LDAP directory files have
+ been saved in /var/backups.  The results of the attempted upgrade
+ is the ldif file in /var/backups.  slapadd may have failed due to
+ a configuration problem (in which case slapcat would have failed
+ too) or due to a problem in the ldif.  If the problem was with the
+ ldif then you may be able to fix it and attempt the slapadd again.
+
