@@ -1,8 +1,17 @@
 /* dbcache.c - manage cache of open databases */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dbcache.c,v 1.15.2.7 2003/03/29 15:45:43 kurt Exp $ */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dbcache.c,v 1.28.2.4 2004/01/01 18:16:35 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 2000-2004 The OpenLDAP Foundation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
 
 #include "portable.h"
@@ -46,56 +55,37 @@ bdb_db_hash(
 int
 bdb_db_cache(
 	Backend	*be,
-	DB_TXN *tid,
 	const char *name,
 	DB **dbout )
 {
 	int i;
 	int rc;
-	int flags;
 	struct bdb_info *bdb = (struct bdb_info *) be->be_private;
 	struct bdb_db_info *db;
 	char *file;
-	DBT lockobj;
-	DB_LOCK lock;
-	u_int32_t locker = 0;
 
 	*dbout = NULL;
 
-	for( i=BDB_NDB; bdb->bi_databases[i]; i++ ) {
+	for( i=BDB_NDB; i < bdb->bi_ndatabases; i++ ) {
 		if( !strcmp( bdb->bi_databases[i]->bdi_name, name) ) {
 			*dbout = bdb->bi_databases[i]->bdi_db;
 			return 0;
 		}
 	}
 
-	lockobj.data = "bdb_db_cache";
-	lockobj.size = sizeof("bdb_db_cache");
-
-	if (tid) {
-		locker = TXN_ID( tid );
-	} else {
-#ifdef BDB_REUSE_LOCKERS
-#define	op	NULL	/* implicit arg in LOCK_ID */
-#endif
-		rc = LOCK_ID( bdb->bi_dbenv, &locker );
-		if (rc) return rc;
-	}
-	rc = LOCK_GET( bdb->bi_dbenv, locker, 0, &lockobj,
-		DB_LOCK_WRITE, &lock );
-	if (rc) return rc;
+	ldap_pvt_thread_mutex_lock( &bdb->bi_database_mutex );
 
 	/* check again! may have been added by another thread */
-	for( i=BDB_NDB; bdb->bi_databases[i]; i++ ) {
+	for( i=BDB_NDB; i < bdb->bi_ndatabases; i++ ) {
 		if( !strcmp( bdb->bi_databases[i]->bdi_name, name) ) {
 			*dbout = bdb->bi_databases[i]->bdi_db;
-			LOCK_PUT( bdb->bi_dbenv, &lock);
+			ldap_pvt_thread_mutex_unlock( &bdb->bi_database_mutex );
 			return 0;
 		}
 	}
 
 	if( i >= BDB_INDICES ) {
-		LOCK_PUT( bdb->bi_dbenv, &lock);
+		ldap_pvt_thread_mutex_unlock( &bdb->bi_database_mutex );
 		return -1;
 	}
 
@@ -114,7 +104,7 @@ bdb_db_cache(
 			"bdb_db_cache: db_create(%s) failed: %s (%d)\n",
 			bdb->bi_dbenv_home, db_strerror(rc), rc );
 #endif
-		LOCK_PUT( bdb->bi_dbenv, &lock);
+		ldap_pvt_thread_mutex_unlock( &bdb->bi_database_mutex );
 		return rc;
 	}
 
@@ -129,11 +119,9 @@ bdb_db_cache(
 #ifdef HAVE_EBCDIC
 	__atoe( file );
 #endif
-	flags = bdb->bi_db_opflags | DB_CREATE | DB_THREAD;
-	if ( !tid ) flags |= DB_AUTO_COMMIT;
-	rc = DB_OPEN( db->bdi_db, tid,
-		file, name,
-		DB_HASH, flags,
+	rc = DB_OPEN( db->bdi_db,
+		file, NULL /* name */,
+		DB_HASH, bdb->bi_db_opflags | DB_CREATE | DB_THREAD,
 		bdb->bi_dbenv_mode );
 
 	ch_free( file );
@@ -148,16 +136,15 @@ bdb_db_cache(
 			"bdb_db_cache: db_open(%s) failed: %s (%d)\n",
 			name, db_strerror(rc), rc );
 #endif
-		LOCK_PUT( bdb->bi_dbenv, &lock);
+		ldap_pvt_thread_mutex_unlock( &bdb->bi_database_mutex );
 		return rc;
 	}
 
-	bdb->bi_databases[i+1] = NULL;
 	bdb->bi_databases[i] = db;
 	bdb->bi_ndatabases = i+1;
 
 	*dbout = db->bdi_db;
 
-	LOCK_PUT( bdb->bi_dbenv, &lock );
+	ldap_pvt_thread_mutex_unlock( &bdb->bi_database_mutex );
 	return 0;
 }

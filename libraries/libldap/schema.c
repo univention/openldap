@@ -1,8 +1,18 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/schema.c,v 1.53.2.7 2003/03/03 17:10:05 kurt Exp $ */
-/*
- * Copyright 1999-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+/* $OpenLDAP: pkg/ldap/libraries/libldap/schema.c,v 1.61.2.2 2004/01/01 18:16:30 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 1998-2004 The OpenLDAP Foundation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
+
 /*
  * schema.c:  parsing routines used by servers and clients to process
  *	schema definitions
@@ -3233,27 +3243,27 @@ ldap_str2nameform( LDAP_CONST char * s,
 }
 
 static char *const err2text[] = {
-	"Success",
-	"Out of memory",
-	"Unexpected token",
-	"Missing opening parenthesis",
-	"Missing closing parenthesis",
-	"Expecting digit",
-	"Expecting a name",
-	"Bad description",
-	"Bad superiors",
-	"Duplicate option",
-	"Unexpected end of data",
-	"Missing required field",
-	"Out of order field"
+	N_("Success"),
+	N_("Out of memory"),
+	N_("Unexpected token"),
+	N_("Missing opening parenthesis"),
+	N_("Missing closing parenthesis"),
+	N_("Expecting digit"),
+	N_("Expecting a name"),
+	N_("Bad description"),
+	N_("Bad superiors"),
+	N_("Duplicate option"),
+	N_("Unexpected end of data"),
+	N_("Missing required field"),
+	N_("Out of order field")
 };
 
 char *
 ldap_scherr2str(int code)
 {
 	if ( code < 0 || code >= (int)(sizeof(err2text)/sizeof(char *)) ) {
-		return "Unknown error";
+		return _("Unknown error");
 	} else {
-		return err2text[code];
+		return _(err2text[code]);
 	}
 }

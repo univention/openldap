@@ -1,20 +1,17 @@
-# $OpenLDAP: pkg/ldap/servers/slapd/tools/Makefile.in,v 1.67.2.6 2003/02/09 16:31:39 kurt Exp $
-## Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
-## COPYING RESTRICTIONS APPLY, see COPYRIGHT file
-#-----------------------------------------------------------------------------
-# Portions Copyright (c) 1995 Regents of the University of Michigan.
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms are permitted
-# provided that this notice is preserved and that due credit is given
-# to the University of Michigan at Ann Arbor. The name of the University
-# may not be used to endorse or promote products derived from this
-# software without specific prior written permission. This software
-# is provided ``as is'' without express or implied warranty.
-#
-#       Stand alone LDAP server tools makefile
-#
-#-----------------------------------------------------------------------------
+# Makefile.in for slapd tools
+# $OpenLDAP: pkg/ldap/servers/slapd/tools/Makefile.in,v 1.84.2.6 2004/01/01 18:16:42 kurt Exp $
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 1998-2004 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
 
 LDAP_INCDIR= ../../../include       
 LDAP_LIBDIR= ../../../libraries
@@ -25,9 +22,9 @@ XLDFLAGS = $(MODULES_LDFLAGS)
 
 XLIBS = $(SLAPD_L) $(LDBM_LIBS)
 XXLIBS = $(SLAPD_LIBS) \
-	$(LDBM_LIBS) $(SECURITY_LIBS) \
-	$(LDIF_LIBS) $(LUTIL_LIBS)
-XXXLIBS = $(LTHREAD_LIBS) $(MODULES_LIBS)
+	$(LDBM_LIBS) $(SECURITY_LIBS) $(LUTIL_LIBS)
+XXXLIBS = $(LTHREAD_LIBS)
+SLAPI_DEP_LIBS = $(LIBS) @LIBSLAPITOOLS@ @SLAPI_LIBS@ $(MODULES_LIBS)
 
 STATIC_DEPENDS=@SLAPD_NO_STATIC@ ../libbackends.a
 
@@ -36,7 +33,7 @@ PROGRAMS=slapadd slapcat slapindex slappasswd
 SRCS = mimic.c slapcommon.c \
 	slapadd.c slapcat.c slapindex.c slappasswd.c
 
-SLAPD_OBJS = ../config.o ../ch_malloc.o ../cr.o ../backend.o \
+SLAPD_OBJS = ../globals.o ../config.o ../ch_malloc.o ../cr.o ../backend.o \
 		../module.o ../aclparse.o ../filterentry.o ../schema.o \
 		../schema_check.o ../schema_init.o ../schema_prep.o \
 		../schemaparse.o ../ad.o ../at.o ../mr.o ../oc.o \
@@ -45,7 +42,8 @@ SLAPD_OBJS = ../config.o ../ch_malloc.o ../cr.o ../backend.o \
 		../init.o ../controls.o ../kerberos.o ../passwd.o \
 		../index.o ../extended.o ../starttls.o ../sets.o ../mra.o \
 		../referral.o ../backglue.o ../oidm.o ../mods.o ../operation.o \
-		../cancel.o
+		../cancel.o ../sl_malloc.o ../backover.o ../ctxcsn.o ../syncrepl.o \
+		../ldapsync.o ../sessionlog.o
 
 SLAPOBJS = $(SLAPD_OBJS) slapcommon.o mimic.o
 
@@ -57,13 +55,16 @@ build-progs: $(PROGRAMS)
 # SLAP Tools
 #
 slapadd:	slapadd.o $(STATIC_DEPENDS) $(SLAPOBJS) $(SLAPD_L) 
-	$(LTLINK) -o $@ slapadd.o $(SLAPOBJS) $(STATIC_DEPENDS) $(LIBS)
+	$(LTLINK) -o $@ slapadd.o $(SLAPOBJS) $(STATIC_DEPENDS) \
+	$(SLAPI_DEP_LIBS)
 
 slapcat:	slapcat.o $(STATIC_DEPENDS) $(SLAPOBJS) $(SLAPD_L) 
-	$(LTLINK) -o $@ slapcat.o $(SLAPOBJS) $(STATIC_DEPENDS) $(LIBS)
+	$(LTLINK) -o $@ slapcat.o $(SLAPOBJS) $(STATIC_DEPENDS) \
+	$(SLAPI_DEP_LIBS)
 
 slapindex:	slapindex.o $(STATIC_DEPENDS) $(SLAPOBJS) $(SLAPD_L) 
-	$(LTLINK) -o $@ slapindex.o $(SLAPOBJS) $(STATIC_DEPENDS) $(LIBS)
+	$(LTLINK) -o $@ slapindex.o $(SLAPOBJS) $(STATIC_DEPENDS) \
+	$(SLAPI_DEP_LIBS)
 
 slappasswd:		slappasswd.o $(SLAPD_L) 
 	$(LTLINK) -o $@ slappasswd.o $(LIBS)

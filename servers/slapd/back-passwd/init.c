@@ -1,5 +1,18 @@
 /* init.c - initialize passwd backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/init.c,v 1.19.2.1 2002/05/22 14:25:55 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/init.c,v 1.22.2.3 2004/01/01 18:16:38 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 1998-2004 The OpenLDAP Foundation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
+ */
 
 #include "portable.h"
 
@@ -14,7 +27,7 @@ ldap_pvt_thread_mutex_t passwd_mutex;
 
 #ifdef SLAPD_PASSWD_DYNAMIC
 
-int back_passwd_LTX_init_module(int argc, char *argv[]) {
+int init_module(int argc, char *argv[]) {
     BackendInfo bi;
 
     memset( &bi, '\0', sizeof(bi) );
@@ -57,8 +70,6 @@ passwd_back_initialize(
 
 	bi->bi_extended = 0;
 
-	bi->bi_acl_group = 0;
-	bi->bi_acl_attribute = 0;
 	bi->bi_chk_referrals = 0;
 
 	bi->bi_connection_init = 0;

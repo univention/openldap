@@ -3,7 +3,6 @@ with slapd(8).
 
 File                    Description
 ----                    -----------
-collective.schema		Collective attributes
 corba.schema            Corba Object (RFC 2714)
 core.schema             OpenLDAP "core"
 cosine.schema           COSINE Pilot
@@ -15,12 +14,14 @@ openldap.schema         OpenLDAP Project (FYI)
 
 Additional "generally useful" schema definitions can be submitted
 using the OpenLDAP Issue Tracking System <http://www.openldap.org/its/>.
-Such submissions should include a stable reference (e.g. a URL) to
-a mature, open specification (e.g., an RFC) describing the schema.
+Submissions should include a stable reference to a mature, open
+technical specification (e.g., an RFC) for the schema.
 
 ---
 
-Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
+This notice applies to all files in this directory.
+
+Copyright 1998-2004 The OpenLDAP Foundation, Redwood City, California, USA
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -28,6 +29,11 @@ modification, are permitted only as authorized by the OpenLDAP
 Public License.  A copy of this license is available at
 http://www.OpenLDAP.org/license.html or in file LICENSE in the
 top-level directory of the distribution.
+
+---
+
+This notice applies to all schema in this directory which are derived
+from RFCs and other Internet Standards documents.
 
 Portions Copyright 1991-2003, The Internet Society.  All Rights Reserved.
 
@@ -56,5 +62,6 @@ OF THE INFORMATION HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY
 IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR
 PURPOSE.
 
+
 ---
-$OpenLDAP: pkg/ldap/servers/slapd/schema/README,v 1.14.2.4 2003/03/31 16:21:43 kurt Exp $
+$OpenLDAP: pkg/ldap/servers/slapd/schema/README,v 1.18.2.2 2004/01/01 18:16:41 kurt Exp $

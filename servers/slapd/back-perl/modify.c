@@ -1,46 +1,46 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/modify.c,v 1.8.2.3 2002/06/20 20:12:34 kurt Exp $ */
-/*
- *	 Copyright 1999, John C. Quillan, All rights reserved.
- *	 Portions Copyright 2002, myinternet Limited. All rights reserved.
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/modify.c,v 1.15.2.4 2004/01/01 18:16:39 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- *	 Redistribution and use in source and binary forms are permitted only
- *	 as authorized by the OpenLDAP Public License.	A copy of this
- *	 license is available at http://www.OpenLDAP.org/license.html or
- *	 in file LICENSE in the top-level directory of the distribution.
+ * Copyright 1999-2004 The OpenLDAP Foundation.
+ * Portions Copyright 1999 John C. Quillan.
+ * Portions Copyright 2002 myinternet Limited.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
+
+#include <EXTERN.h>
+#include <perl.h>
+#undef _ /* #defined by both Perl and ac/localize.h */
+
+#ifdef HAVE_WIN32_ASPERL
+#include "asperl_undefs.h"
+#endif
 
 #include "portable.h"
 
 #include <stdio.h>
 
 #include "slap.h"
-#ifdef HAVE_WIN32_ASPERL
-#include "asperl_undefs.h"
-#endif
-
-#include <EXTERN.h>
-#include <perl.h>
 
 #include "perl_back.h"
 
 int
 perl_back_modify(
-	Backend	*be,
-	Connection	*conn,
 	Operation	*op,
-	struct berval 	*dn,
-	struct berval 	*ndn,
-	Modifications	*modlist
-)
+	SlapReply	*rs )
 {
-	char test[500];
-	int return_code;
+	PerlBackend *perl_back = (PerlBackend *)op->o_bd->be_private;
+	Modifications *modlist = op->orm_modlist;
 	int count;
 	int i;
-	int err = 0;
-	char *matched = NULL, *info = NULL;
 
-	PerlBackend *perl_back = (PerlBackend *)be->be_private;
 
 	ldap_pvt_thread_mutex_lock( &perl_interpreter_mutex );	
 
@@ -49,7 +49,7 @@ perl_back_modify(
 		
 		PUSHMARK(sp);
 		XPUSHs( perl_back->pb_obj_ref );
-		XPUSHs(sv_2mortal(newSVpv( dn->bv_val , 0)));
+		XPUSHs(sv_2mortal(newSVpv( op->o_req_dn.bv_val , 0)));
 
 		for (; modlist != NULL; modlist = modlist->sml_next ) {
 			Modification *mods = &modlist->sml_mod;
@@ -93,15 +93,14 @@ perl_back_modify(
 			croak("Big trouble in back_modify\n");
 		}
 							 
-		return_code = POPi;
+		rs->sr_err = POPi;
 
 		PUTBACK; FREETMPS; LEAVE;
 	}
 
 	ldap_pvt_thread_mutex_unlock( &perl_interpreter_mutex );
 
-	send_ldap_result( conn, op, return_code,
-		NULL, NULL, NULL, NULL );
+	send_ldap_result( op, rs );
 
 	Debug( LDAP_DEBUG_ANY, "Perl MODIFY\n", 0, 0, 0 );
 	return( 0 );

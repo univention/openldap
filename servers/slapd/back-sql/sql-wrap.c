@@ -1,10 +1,21 @@
-/*
- *	 Copyright 1999, Dmitry Kovalev <mit@openldap.org>, All rights reserved.
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/sql-wrap.c,v 1.15.2.5 2004/01/20 23:44:21 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- *	 Redistribution and use in source and binary forms are permitted only
- *	 as authorized by the OpenLDAP Public License.	A copy of this
- *	 license is available at http://www.OpenLDAP.org/license.html or
- *	 in file LICENSE in the top-level directory of the distribution.
+ * Copyright 1999-2004 The OpenLDAP Foundation.
+ * Portions Copyright 1999 Dmitry Kovalev.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
+ */
+/* ACKNOWLEDGEMENTS:
+ * This work was initially developed by Dmitry Kovalev for inclusion
+ * by OpenLDAP Software.
  */
 
 #include "portable.h"
@@ -14,12 +25,10 @@
 #include <stdio.h>
 #include "ac/string.h"
 #include <sys/types.h>
+
 #include "slap.h"
 #include "ldap_pvt.h"
-#include "back-sql.h"
-#include "sql-types.h"
-#include "sql-wrap.h"
-#include "schema-map.h"
+#include "proto-sql.h"
 
 #define MAX_ATTR_LEN 16384
 
@@ -114,31 +123,6 @@ backsql_Prepare( SQLHDBC dbh, SQLHSTMT *sth, char *query, int timeout )
 
 	return SQLPrepare( *sth, query, SQL_NTS );
 }
-
-#if 0
-/*
- * Turned into macros --- see sql-wrap.h
- */
-RETCODE
-backsql_BindParamStr( SQLHSTMT sth, int par_ind, char *str, int maxlen )
-{
-	RETCODE		rc;
-
-	rc = SQLBindParameter( sth, (SQLUSMALLINT)par_ind, SQL_PARAM_INPUT,
-			SQL_C_CHAR, SQL_VARCHAR,
-         		(SQLUINTEGER)maxlen, 0, (SQLPOINTER)str,
-			(SQLUINTEGER)maxlen, NULL );
-	return rc;
-}
-
-RETCODE
-backsql_BindParamID( SQLHSTMT sth, int par_ind, unsigned long *id )
-{
-	return SQLBindParameter( sth, (SQLUSMALLINT)par_ind,
-			SQL_PARAM_INPUT, SQL_C_ULONG, SQL_INTEGER,
-			0, 0, (SQLPOINTER)id, 0, (SQLINTEGER*)NULL );
-}
-#endif
 
 RETCODE
 backsql_BindRowAsStrings( SQLHSTMT sth, BACKSQL_ROW_NTS *row )
@@ -385,13 +369,18 @@ backsql_open_db_conn( backsql_info *si, int ldap_cid, backsql_db_conn **pdbc )
 		Debug( LDAP_DEBUG_TRACE, "backsql_open_db_conn: "
 			"SQLGetInfo() failed:\n", 0, 0, 0 );
 		backsql_PrintErrors( si->db_env, dbc->dbh, SQL_NULL_HENV, rc );
+		return rc;
 	}
 	/* end TimesTen */
 
 	Debug( LDAP_DEBUG_TRACE, "backsql_open_db_conn(): "
 		"connected, adding to tree\n", 0, 0, 0 );
 	ldap_pvt_thread_mutex_lock( &si->dbconn_mutex );
-	avl_insert( &si->db_conns, dbc, backsql_cmp_connid, NULL );
+	if ( avl_insert( &si->db_conns, dbc, backsql_cmp_connid, avl_dup_error ) ) {
+		Debug( LDAP_DEBUG_TRACE, "backsql_open_db_conn: "
+			"duplicate connection ID\n", 0, 0, 0 );
+		return LDAP_OTHER;
+	}
 	ldap_pvt_thread_mutex_unlock( &si->dbconn_mutex );
 	Debug( LDAP_DEBUG_TRACE, "<==backsql_open_db_conn()\n", 0, 0, 0 );
 
@@ -401,13 +390,13 @@ backsql_open_db_conn( backsql_info *si, int ldap_cid, backsql_db_conn **pdbc )
 }
 
 int
-backsql_free_db_conn( Backend *be, Connection *ldapc )
+backsql_free_db_conn( Operation *op )
 {
-	backsql_info		*si = (backsql_info *)be->be_private;
+	backsql_info		*si = (backsql_info *)op->o_bd->be_private;
 	backsql_db_conn		tmp, *conn;
 
 	Debug( LDAP_DEBUG_TRACE, "==>backsql_free_db_conn()\n", 0, 0, 0 );
-	tmp.ldap_cid = ldapc->c_connid;
+	tmp.ldap_cid = op->o_connid;
 	ldap_pvt_thread_mutex_lock( &si->dbconn_mutex );
 	conn = avl_delete( &si->db_conns, &tmp, backsql_cmp_connid );
 	ldap_pvt_thread_mutex_unlock( &si->dbconn_mutex );
@@ -426,9 +415,9 @@ backsql_free_db_conn( Backend *be, Connection *ldapc )
 }
 
 int
-backsql_get_db_conn( Backend *be, Connection *ldapc, SQLHDBC *dbh )
+backsql_get_db_conn( Operation *op, SQLHDBC *dbh )
 {
-	backsql_info		*si = (backsql_info *)be->be_private;
+	backsql_info		*si = (backsql_info *)op->o_bd->be_private;
 	backsql_db_conn		*dbc;
 	backsql_db_conn		tmp;
 	int			rc = LDAP_SUCCESS;
@@ -438,7 +427,7 @@ backsql_get_db_conn( Backend *be, Connection *ldapc, SQLHDBC *dbh )
 	assert( dbh );
 	*dbh = SQL_NULL_HDBC;
 
-	tmp.ldap_cid = ldapc->c_connid;
+	tmp.ldap_cid = op->o_connid;
 
 	/*
 	 * we have one thread per connection, as I understand -- 
@@ -446,7 +435,7 @@ backsql_get_db_conn( Backend *be, Connection *ldapc, SQLHDBC *dbh )
 	 */
 	dbc = avl_find( si->db_conns, &tmp, backsql_cmp_connid );
 	if ( !dbc ) {
-		rc = backsql_open_db_conn( si, ldapc->c_connid, &dbc );
+		rc = backsql_open_db_conn( si, op->o_connid, &dbc );
 		if ( rc != LDAP_SUCCESS) {
 			Debug( LDAP_DEBUG_TRACE, "backsql_get_db_conn(): "
 				"could not get connection handle "
@@ -462,7 +451,7 @@ backsql_get_db_conn( Backend *be, Connection *ldapc, SQLHDBC *dbh )
 		rc = backsql_load_schema_map( si, dbc->dbh );
 		if ( rc != LDAP_SUCCESS ) {
 			ldap_pvt_thread_mutex_unlock( &si->schema_mutex );
-			backsql_free_db_conn( be, ldapc );
+			backsql_free_db_conn( op );
 			return rc;
 		}
 	}

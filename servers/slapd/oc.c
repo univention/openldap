@@ -1,8 +1,17 @@
 /* oc.c - object class routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/oc.c,v 1.34.2.9 2003/02/09 16:31:36 kurt Exp $ */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+/* $OpenLDAP: pkg/ldap/servers/slapd/oc.c,v 1.55.2.2 2004/01/01 18:16:34 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 1998-2004 The OpenLDAP Foundation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
 
 #include "portable.h"
@@ -119,7 +128,7 @@ int is_entry_objectclass(
 
 
 struct oindexrec {
-	struct berval	oir_name;
+	struct berval oir_name;
 	ObjectClass	*oir_oc;
 };
 
@@ -355,6 +364,7 @@ oc_insert(
 	struct oindexrec	*oir;
 	char			**names;
 
+	LDAP_SLIST_NEXT( soc, soc_next ) = NULL;
 	LDAP_SLIST_INSERT_HEAD( &oc_list, soc, soc_next );
 
 	if ( soc->soc_oid ) {
@@ -479,27 +489,30 @@ oc_add(
 int
 oc_schema_info( Entry *e )
 {
-	struct berval	vals[2];
-	ObjectClass	*oc;
-
 	AttributeDescription *ad_objectClasses = slap_schema.si_ad_objectClasses;
-
-	vals[1].bv_val = NULL;
+	ObjectClass	*oc;
+	struct berval	val;
+	struct berval	nval;
 
 	LDAP_SLIST_FOREACH( oc, &oc_list, soc_next ) {
 		if( oc->soc_flags & SLAP_OC_HIDE ) continue;
 
-		if ( ldap_objectclass2bv( &oc->soc_oclass, vals ) == NULL ) {
+		if ( ldap_objectclass2bv( &oc->soc_oclass, &val ) == NULL ) {
 			return -1;
 		}
 
 #if 0
 		Debug( LDAP_DEBUG_TRACE, "Merging oc [%ld] %s\n",
-	       (long) vals[0].bv_len, vals[0].bv_val, 0 );
+	       (long) val.bv_len, val.bv_val, 0 );
 #endif
-		if( attr_merge( e, ad_objectClasses, vals ) )
+		nval.bv_val = oc->soc_oid;
+		nval.bv_len = strlen(oc->soc_oid);
+
+		if( attr_merge_one( e, ad_objectClasses, &val, &nval ) )
+		{
 			return -1;
-		ldap_memfree( vals[0].bv_val );
+		}
+		ldap_memfree( val.bv_val );
 	}
 	return 0;
 }

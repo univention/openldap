@@ -1,8 +1,28 @@
 /* value.c - routines for dealing with values */
-/* $OpenLDAP: pkg/ldap/servers/slapd/value.c,v 1.47.2.10 2003/04/25 15:54:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/value.c,v 1.69.2.3 2004/01/01 18:16:35 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 1998-2004 The OpenLDAP Foundation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
+ */
 /*
- * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+ * Copyright (c) 1995 Regents of the University of Michigan.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms are permitted
+ * provided that this notice is preserved and that due credit is given
+ * to the University of Michigan at Ann Arbor. The name of the University
+ * may not be used to endorse or promote products derived from this
+ * software without specific prior written permission. This software
+ * is provided ``as is'' without express or implied warranty.
  */
 
 #include "portable.h"
@@ -123,189 +143,63 @@ value_add_one(
 	return LDAP_SUCCESS;
 }
 
-int
-value_validate(
+int asserted_value_validate_normalize( 
+	AttributeDescription *ad,
 	MatchingRule *mr,
-	struct berval *in,
-	const char **text )
-{
-	int rc;
-
-	if( mr == NULL ) {
-		*text = "inappropriate matching request";
-		return LDAP_INAPPROPRIATE_MATCHING;
-	}
-
-	if( mr->smr_syntax == NULL ) {
-		*text = "no assertion syntax";
-		return LDAP_INVALID_SYNTAX;
-	}
-
-	if( ! mr->smr_syntax->ssyn_validate ) {
-		*text = "no syntax validator";
-		return LDAP_INVALID_SYNTAX;
-	}
-
-	rc = (mr->smr_syntax->ssyn_validate)( mr->smr_syntax, in );
-
-	if( rc != LDAP_SUCCESS ) {
-		*text = "value is invalid";
-		return LDAP_INVALID_SYNTAX;
-	}
-
-	return LDAP_SUCCESS;
-}
-
-int
-value_normalize(
-	AttributeDescription *ad,
 	unsigned usage,
 	struct berval *in,
 	struct berval *out,
-	const char **text )
+	const char ** text,
+	void *ctx )
 {
 	int rc;
-	MatchingRule *mr;
+	struct berval pval;
+	pval.bv_val = NULL;
 
-	switch( usage & SLAP_MR_TYPE_MASK ) {
-	case SLAP_MR_NONE:
-	case SLAP_MR_EQUALITY:
-		mr = ad->ad_type->sat_equality;
-		break;
-	case SLAP_MR_ORDERING:
-		mr = ad->ad_type->sat_ordering;
-		break;
-	case SLAP_MR_SUBSTR:
-		/* normalize substrings per the the equality rule */
-		mr = ad->ad_type->sat_equality;
-		break;
-	case SLAP_MR_EXT:
-	default:
-		assert( 0 );
-		*text = "internal error";
-		return LDAP_OTHER;
-	}
+	/* we expect the value to be in the assertion syntax */
+	assert( !SLAP_MR_IS_VALUE_OF_ATTRIBUTE_SYNTAX(usage) );
 
 	if( mr == NULL ) {
 		*text = "inappropriate matching request";
 		return LDAP_INAPPROPRIATE_MATCHING;
 	}
 
-	/* we only support equality matching of binary attributes */
-	/* This is suspect, flexible certificate matching will hit this */
-	if( slap_ad_is_binary( ad ) && usage != SLAP_MR_EQUALITY ) {
-		*text = "inappropriate binary matching";
+	if( !mr->smr_match ) {
+		*text = "requested matching rule not supported";
 		return LDAP_INAPPROPRIATE_MATCHING;
 	}
 
-	if( mr->smr_normalize ) {
-		rc = (mr->smr_normalize)( usage,
-			ad->ad_type->sat_syntax,
-			mr, in, out );
-
-		if( rc != LDAP_SUCCESS ) {
-			*text = "unable to normalize value";
-			return LDAP_INVALID_SYNTAX;
-		}
-
-	} else if ( mr->smr_syntax->ssyn_normalize ) {
-		rc = (mr->smr_syntax->ssyn_normalize)(
-			ad->ad_type->sat_syntax,
-			in, out );
-
-		if( rc != LDAP_SUCCESS ) {
-			*text = "unable to normalize value";
-			return LDAP_INVALID_SYNTAX;
-		}
+	if( mr->smr_syntax->ssyn_pretty ) {
+		rc = (mr->smr_syntax->ssyn_pretty)( mr->smr_syntax, in, &pval, ctx );
+		in = &pval;
 
 	} else {
-		ber_dupbv( out, in );
+		rc = (mr->smr_syntax->ssyn_validate)( mr->smr_syntax, in );
 	}
-
-	return LDAP_SUCCESS;
-}
-
-int
-value_validate_normalize(
-	AttributeDescription *ad,
-	unsigned usage,
-	struct berval *in,
-	struct berval *out,
-	const char **text )
-{
-	int rc;
-	MatchingRule *mr;
-
-	switch( usage & SLAP_MR_TYPE_MASK ) {
-	case SLAP_MR_NONE:
-	case SLAP_MR_EQUALITY:
-		mr = ad->ad_type->sat_equality;
-		break;
-	case SLAP_MR_ORDERING:
-		mr = ad->ad_type->sat_ordering;
-		break;
-	case SLAP_MR_SUBSTR:
-		/* normalize substrings per the the equality rule */
-		mr = ad->ad_type->sat_equality;
-		break;
-	case SLAP_MR_EXT:
-	default:
-		assert( 0 );
-		*text = "internal error";
-		return LDAP_OTHER;
-	}
-
-	if( mr == NULL ) {
-		*text = "inappropriate matching request";
-		return LDAP_INAPPROPRIATE_MATCHING;
-	}
-
-	if( mr->smr_syntax == NULL ) {
-		*text = "no assertion syntax";
-		return LDAP_INVALID_SYNTAX;
-	}
-
-	if( ! mr->smr_syntax->ssyn_validate ) {
-		*text = "no syntax validator";
-		return LDAP_INVALID_SYNTAX;
-	}
-
-	rc = (mr->smr_syntax->ssyn_validate)( mr->smr_syntax, in );
 
 	if( rc != LDAP_SUCCESS ) {
-		*text = "value is invalid";
+		*text = "value does not conform to assertion syntax";
 		return LDAP_INVALID_SYNTAX;
 	}
 
-	/* we only support equality matching of binary attributes */
-	/* This is suspect, flexible certificate matching will hit this */
-	if( slap_ad_is_binary( ad ) && usage != SLAP_MR_EQUALITY ) {
-		*text = "inappropriate binary matching";
-		return LDAP_INAPPROPRIATE_MATCHING;
-	}
-
 	if( mr->smr_normalize ) {
-		rc = (mr->smr_normalize)( usage,
-			ad->ad_type->sat_syntax,
-			mr, in, out );
+		rc = (mr->smr_normalize)(
+			usage|SLAP_MR_VALUE_OF_ASSERTION_SYNTAX,
+			ad ? ad->ad_type->sat_syntax : NULL,
+			mr, in, out, ctx );
+
+		if( pval.bv_val ) ber_memfree_x( pval.bv_val, ctx );
 
 		if( rc != LDAP_SUCCESS ) {
-			*text = "unable to normalize value";
+			*text = "unable to normalize value for matching";
 			return LDAP_INVALID_SYNTAX;
 		}
 
-	} else if ( mr->smr_syntax->ssyn_normalize ) {
-		rc = (mr->smr_syntax->ssyn_normalize)(
-			ad->ad_type->sat_syntax,
-			in, out );
-
-		if( rc != LDAP_SUCCESS ) {
-			*text = "unable to normalize value";
-			return LDAP_INVALID_SYNTAX;
-		}
+	} else if ( pval.bv_val != NULL ) {
+		*out = pval;
 
 	} else {
-		ber_dupbv( out, in );
+		ber_dupbv_x( out, in, ctx );
 	}
 
 	return LDAP_SUCCESS;
@@ -332,27 +226,6 @@ value_match(
 		return LDAP_INAPPROPRIATE_MATCHING;
 	}
 
-	if( ad->ad_type->sat_syntax->ssyn_normalize ) {
-		rc = ad->ad_type->sat_syntax->ssyn_normalize(
-			ad->ad_type->sat_syntax, v1, &nv1 );
-
-		if( rc != LDAP_SUCCESS ) {
-			return LDAP_INAPPROPRIATE_MATCHING;
-		}
-	}
-
-	if ( SLAP_IS_MR_VALUE_SYNTAX_NONCONVERTED_MATCH( flags ) &&
-		mr->smr_convert )
-	{
-		rc = (mr->smr_convert)( v2, &nv2 );
-		if ( rc != LDAP_SUCCESS ) {
-			return LDAP_INVALID_SYNTAX;
-		}
-
-		/* let smr_match know we've converted the value */
-		flags |= SLAP_MR_VALUE_SYNTAX_CONVERTED_MATCH;
-	}
-
 	rc = (mr->smr_match)( match, flags,
 		ad->ad_type->sat_syntax,
 		mr,
@@ -364,12 +237,12 @@ value_match(
 	return rc;
 }
 
-
 int value_find_ex(
 	AttributeDescription *ad,
 	unsigned flags,
 	BerVarray vals,
-	struct berval *val )
+	struct berval *val,
+	void *ctx )
 {
 	int	i;
 	int rc;
@@ -380,32 +253,18 @@ int value_find_ex(
 		return LDAP_INAPPROPRIATE_MATCHING;
 	}
 
-	/* Take care of this here or ssyn_normalize later will hurt */
-	if ( SLAP_IS_MR_VALUE_SYNTAX_NONCONVERTED_MATCH( flags )
-		&& mr->smr_convert )
+	assert(SLAP_IS_MR_ATTRIBUTE_VALUE_NORMALIZED_MATCH( flags ));
+
+	if( !SLAP_IS_MR_ASSERTED_VALUE_NORMALIZED_MATCH( flags ) &&
+		mr->smr_normalize )
 	{
-		rc = (mr->smr_convert)( val, &nval );
-		if ( rc != LDAP_SUCCESS ) {
-			return LDAP_INVALID_SYNTAX;
-		}
+		rc = (mr->smr_normalize)(
+			flags & (SLAP_MR_TYPE_MASK|SLAP_MR_SUBTYPE_MASK|SLAP_MR_VALUE_OF_SYNTAX),
+			ad ? ad->ad_type->sat_syntax : NULL,
+			mr, val, &nval, ctx );
 
-		/* let value_match know we've done the version */
-		flags |= SLAP_MR_VALUE_SYNTAX_CONVERTED_MATCH;
-	}
-
-	if( !(flags & SLAP_MR_VALUE_NORMALIZED_MATCH) &&
-		mr->smr_syntax->ssyn_normalize ) {
-		struct berval nval_tmp = { 0, NULL };
-
-		rc = mr->smr_syntax->ssyn_normalize(
-			mr->smr_syntax,
-			nval.bv_val == NULL ? val : &nval, &nval_tmp );
-
-		free(nval.bv_val);
-		nval = nval_tmp;
 		if( rc != LDAP_SUCCESS ) {
-			free(nval.bv_val);
-			return LDAP_INAPPROPRIATE_MATCHING;
+			return LDAP_INVALID_SYNTAX;
 		}
 	}
 
@@ -417,11 +276,11 @@ int value_find_ex(
 			&vals[i], nval.bv_val == NULL ? val : &nval, &text );
 
 		if( rc == LDAP_SUCCESS && match == 0 ) {
-			free( nval.bv_val );
-			return LDAP_SUCCESS;
+			sl_free( nval.bv_val, ctx );
+			return rc;
 		}
 	}
 
-	free( nval.bv_val );
+	sl_free( nval.bv_val, ctx );
 	return LDAP_NO_SUCH_ATTRIBUTE;
 }

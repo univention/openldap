@@ -1,8 +1,17 @@
 /* schema.c - routines to manage schema definitions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema.c,v 1.79.2.8 2003/03/03 17:10:07 kurt Exp $ */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema.c,v 1.90.2.3 2004/01/01 18:16:35 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 1998-2004 The OpenLDAP Foundation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
 
 #include "portable.h"
@@ -32,6 +41,7 @@ schema_info( Entry **entry, const char **text )
 
 	Entry		*e;
 	struct berval	vals[5];
+	struct berval	nvals[5];
 
 	e = (Entry *) SLAP_CALLOC( 1, sizeof(Entry) );
 	if( e == NULL ) {
@@ -57,7 +67,8 @@ schema_info( Entry **entry, const char **text )
 
 	vals[0].bv_val = "subentry";
 	vals[0].bv_len = sizeof("subentry")-1;
-	if( attr_merge_one( e, ad_structuralObjectClass, vals ) ) {
+	if( attr_merge_one( e, ad_structuralObjectClass, vals, vals ) )
+	{
 		/* Out of memory, do something about it */
 		entry_free( e );
 		*text = "out of memory";
@@ -73,7 +84,8 @@ schema_info( Entry **entry, const char **text )
 	vals[3].bv_val = "extensibleObject";
 	vals[3].bv_len = sizeof("extensibleObject")-1;
 	vals[4].bv_val = NULL;
-	if( attr_merge( e, ad_objectClass, vals ) ) {
+	if( attr_merge( e, ad_objectClass, vals, vals ) )
+	{
 		/* Out of memory, do something about it */
 		entry_free( e );
 		*text = "out of memory";
@@ -103,7 +115,14 @@ schema_info( Entry **entry, const char **text )
 			return LDAP_OTHER;
 		}
 
-		if( attr_merge_one( e, desc, vals ) ) {
+		nvals[0].bv_val = strchr( global_schemandn.bv_val, '=' );
+		assert( nvals[0].bv_val );
+		nvals[0].bv_val++;
+		nvals[0].bv_len = global_schemandn.bv_len -
+			(nvals[0].bv_val - global_schemandn.bv_val);
+
+		if( attr_merge_one( e, desc, vals, nvals ) )
+		{
 			/* Out of memory, do something about it */
 			entry_free( e );
 			*text = "out of memory";
@@ -113,6 +132,9 @@ schema_info( Entry **entry, const char **text )
 
 	{
 		struct		tm *ltm;
+#ifdef HAVE_GMTIME_R
+		struct		tm ltm_buf;
+#endif
 		char		timebuf[ LDAP_LUTIL_GENTIME_BUFSIZE ];
 
 		/*
@@ -126,21 +148,29 @@ schema_info( Entry **entry, const char **text )
 		 * AND modified at server startup time ...
 		 */
 
+#ifdef HAVE_GMTIME_R
+		ltm = gmtime_r( &starttime, &ltm_buf );
+#else
 		ldap_pvt_thread_mutex_lock( &gmtime_mutex );
 		ltm = gmtime( &starttime );
+#endif /* HAVE_GMTIME_R */
 		lutil_gentime( timebuf, sizeof(timebuf), ltm );
+#ifndef HAVE_GMTIME_R
 		ldap_pvt_thread_mutex_unlock( &gmtime_mutex );
+#endif
 
 		vals[0].bv_val = timebuf;
 		vals[0].bv_len = strlen( timebuf );
 
-		if( attr_merge_one( e, ad_createTimestamp, vals ) ) {
+		if( attr_merge_one( e, ad_createTimestamp, vals, vals ) )
+		{
 			/* Out of memory, do something about it */
 			entry_free( e );
 			*text = "out of memory";
 			return LDAP_OTHER;
 		}
-		if( attr_merge_one( e, ad_modifyTimestamp, vals ) ) {
+		if( attr_merge_one( e, ad_modifyTimestamp, vals, vals ) )
+		{
 			/* Out of memory, do something about it */
 			entry_free( e );
 			*text = "out of memory";

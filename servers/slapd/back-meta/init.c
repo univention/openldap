@@ -1,73 +1,25 @@
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/init.c,v 1.20.2.5 2004/01/01 18:16:38 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
+ * Copyright 1999-2004 The OpenLDAP Foundation.
+ * Portions Copyright 2001-2003 Pierangelo Masarati.
+ * Portions Copyright 1999-2003 Howard Chu.
+ * All rights reserved.
  *
- * This work has been developed to fulfill the requirements
- * of SysNet s.n.c. <http:www.sys-net.it> and it has been donated
- * to the OpenLDAP Foundation in the hope that it may be useful
- * to the Open Source community, but WITHOUT ANY WARRANTY.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
  *
- * Permission is granted to anyone to use this software for any purpose
- * on any computer system, and to alter it and redistribute it, subject
- * to the following restrictions:
- *
- * 1. The author and SysNet s.n.c. are not responsible for the consequences
- *    of use of this software, no matter how awful, even if they arise from 
- *    flaws in it.
- *
- * 2. The origin of this software must not be misrepresented, either by
- *    explicit claim or by omission.  Since few users ever read sources,
- *    credits should appear in the documentation.
- *
- * 3. Altered versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.  Since few users
- *    ever read sources, credits should appear in the documentation.
- *    SysNet s.n.c. cannot be responsible for the consequences of the
- *    alterations.
- *
- * 4. This notice may not be removed or altered.
- *
- *
- * This software is based on the backend back-ldap, implemented
- * by Howard Chu <hyc@highlandsun.com>, and modified by Mark Valence
- * <kurash@sassafras.com>, Pierangelo Masarati <ando@sys-net.it> and other
- * contributors. The contribution of the original software to the present
- * implementation is acknowledged in this copyright statement.
- *
- * A special acknowledgement goes to Howard for the overall architecture
- * (and for borrowing large pieces of code), and to Mark, who implemented
- * from scratch the attribute/objectclass mapping.
- *
- * The original copyright statement follows.
- *
- * Copyright 1999, Howard Chu, All rights reserved. <hyc@highlandsun.com>
- *
- * Permission is granted to anyone to use this software for any purpose
- * on any computer system, and to alter it and redistribute it, subject
- * to the following restrictions:
- *
- * 1. The author is not responsible for the consequences of use of this
- *    software, no matter how awful, even if they arise from flaws in it.
- *
- * 2. The origin of this software must not be misrepresented, either by
- *    explicit claim or by omission.  Since few users ever read sources,
- *    credits should appear in the documentation.
- *
- * 3. Altered versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.  Since few users
- *    ever read sources, credits should appear in the
- *    documentation.
- *
- * 4. This notice may not be removed or altered.
- *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
 
 #include "portable.h"
 
 #include <stdio.h>
 
+#include <ac/string.h>
 #include <ac/socket.h>
 
 #include "slap.h"
@@ -77,7 +29,7 @@
 #ifdef SLAPD_META_DYNAMIC
 
 int
-back_meta_LTX_init_module( int argc, char *argv[] ) {
+init_module( int argc, char *argv[] ) {
     BackendInfo bi;
 
     memset( &bi, '\0', sizeof( bi ) );
@@ -120,8 +72,6 @@ meta_back_initialize(
 
 	bi->bi_extended = 0;
 
-	bi->bi_acl_group = meta_back_group;
-	bi->bi_acl_attribute = meta_back_attribute;
 	bi->bi_chk_referrals = 0;
 
 	bi->bi_connection_init = 0;
@@ -137,16 +87,25 @@ meta_back_db_init(
 {
 	struct metainfo	*li;
 
+	struct rewrite_info	*rwinfo;
+
+	rwinfo = rewrite_info_init( REWRITE_MODE_USE_DEFAULT );
+	if ( rwinfo == NULL ) {
+		return -1;
+	}
+
 	li = ch_calloc( 1, sizeof( struct metainfo ) );
 	if ( li == NULL ) {
+		rewrite_info_delete( &rwinfo );
  		return -1;
  	}
-	
+
 	/*
 	 * At present the default is no default target;
 	 * this may change
 	 */
 	li->defaulttarget = META_DEFAULT_TARGET_NONE;
+	li->rwinfo = rwinfo;
 
 	ldap_pvt_thread_mutex_init( &li->conn_mutex );
 	ldap_pvt_thread_mutex_init( &li->cache.mutex );
@@ -170,7 +129,10 @@ conn_free(
 		if ( lsc->bound_dn.bv_val ) {
 			ber_memfree( lsc->bound_dn.bv_val );
 		}
-		free( lsc );
+		if ( lsc->cred.bv_val ) {
+			memset( lsc->cred.bv_val, 0, lsc->cred.bv_len );
+			ber_memfree( lsc->cred.bv_val );
+		}
 	}
 	free( lc->conns );
 	free( lc );
@@ -202,13 +164,13 @@ target_free(
 	if ( lt->pseudorootpw.bv_val ) {
 		free( lt->pseudorootpw.bv_val );
 	}
-	if ( lt->rwinfo ) {
-		rewrite_info_delete( lt->rwinfo );
+	if ( lt->rwmap.rwm_rw ) {
+		rewrite_info_delete( &lt->rwmap.rwm_rw );
 	}
-	avl_free( lt->oc_map.remap, NULL );
-	avl_free( lt->oc_map.map, mapping_free );
-	avl_free( lt->at_map.remap, NULL );
-	avl_free( lt->at_map.map, mapping_free );
+	avl_free( lt->rwmap.rwm_oc.remap, NULL );
+	avl_free( lt->rwmap.rwm_oc.map, mapping_free );
+	avl_free( lt->rwmap.rwm_at.remap, NULL );
+	avl_free( lt->rwmap.rwm_at.map, mapping_free );
 }
 
 int

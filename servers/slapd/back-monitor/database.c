@@ -1,39 +1,28 @@
 /* database.c - deals with database subsystem */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/database.c,v 1.30.2.4 2004/01/01 18:16:38 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 2001-2004 The OpenLDAP Foundation.
+ * Portions Copyright 2001-2003 Pierangelo Masarati.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
-/*
- * Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
- * 
- * This work has beed deveolped for the OpenLDAP Foundation 
- * in the hope that it may be useful to the Open Source community, 
- * but WITHOUT ANY WARRANTY.
- * 
- * Permission is granted to anyone to use this software for any purpose
- * on any computer system, and to alter it and redistribute it, subject
- * to the following restrictions:
- * 
- * 1. The author and SysNet s.n.c. are not responsible for the consequences
- *    of use of this software, no matter how awful, even if they arise from
- *    flaws in it.
- * 
- * 2. The origin of this software must not be misrepresented, either by
- *    explicit claim or by omission.  Since few users ever read sources,
- *    credits should appear in the documentation.
- * 
- * 3. Altered versions must be plainly marked as such, and must not be
- *    misrepresented as being the original software.  Since few users
- *    ever read sources, credits should appear in the documentation.
- *    SysNet s.n.c. cannot be responsible for the consequences of the
- *    alterations.
- * 
- * 4. This notice may not be removed or altered.
+/* ACKNOWLEDGEMENTS:
+ * This work was initially developed by Pierangelo Masarati for inclusion
+ * in OpenLDAP Software.
  */
 
 #include "portable.h"
 
 #include <stdio.h>
+#include <ac/string.h>
 
 #include "slap.h"
 #include "back-monitor.h"
@@ -52,13 +41,8 @@ monitor_subsys_database_init(
 	Entry			*e, *e_database, *e_tmp;
 	int			i;
 	struct monitorentrypriv	*mp;
-	AttributeDescription 	*ad_nc = slap_schema.si_ad_namingContexts;
-	AttributeDescription 	*ad_mc = slap_schema.si_ad_monitorContext;
-	AttributeDescription 	*ad_seeAlso = NULL;
-	const char		*text = NULL;
 
 	assert( be != NULL );
-	assert( monitor_ad_desc != NULL );
 
 	mi = ( struct monitorinfo * )be->be_private;
 
@@ -80,24 +64,9 @@ monitor_subsys_database_init(
 		return( -1 );
 	}
 
-	if ( slap_str2ad( "seeAlso", &ad_seeAlso, &text ) != LDAP_SUCCESS ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG( OPERATION, CRIT,
-			"monitor_subsys_database_init: "
-			"unable to find 'seeAlso' attribute description\n",
-			0, 0, 0 );
-#else
-		Debug( LDAP_DEBUG_ANY,
-			"monitor_subsys_database_init: "
-			"unable to find 'seeAlso' attribute description\n",
-			0, 0, 0 );
-#endif
-		return( -1 );
-	}
-
 	e_tmp = NULL;
 	for ( i = nBackendDB; i--; ) {
-		char buf[1024];
+		char buf[ BACKMONITOR_BUFSIZE ];
 		int j;
 
 		be = &backendDB[i];
@@ -109,13 +78,22 @@ monitor_subsys_database_init(
 
 		snprintf( buf, sizeof( buf ),
 				"dn: cn=Database %d,%s\n"
-				SLAPD_MONITOR_OBJECTCLASSES
+				"objectClass: %s\n"
+				"structuralObjectClass: %s\n"
 				"cn: Database %d\n"
-				"description: %s",
+				"description: This object contains the type of the database.\n"
+				"%s: %s\n"
+				"createTimestamp: %s\n"
+				"modifyTimestamp: %s\n",
 				i,
 				monitor_subsys[SLAPD_MONITOR_DATABASE].mss_dn.bv_val,
+				mi->mi_oc_monitoredObject->soc_cname.bv_val,
+				mi->mi_oc_monitoredObject->soc_cname.bv_val,
 				i,
-				be->bd_info->bi_type );
+				mi->mi_ad_monitoredInfo->ad_cname.bv_val,
+				be->bd_info->bi_type,
+				mi->mi_startTime.bv_val,
+				mi->mi_startTime.bv_val );
 		
 		e = str2entry( buf );
 		if ( e == NULL ) {
@@ -136,11 +114,15 @@ monitor_subsys_database_init(
 		}
 		
 		if ( be->be_flags & SLAP_BFLAG_MONITOR ) {
-			attr_merge( e, ad_mc, be->be_suffix );
-			attr_merge( e_database, ad_mc, be->be_suffix );
+			attr_merge( e, slap_schema.si_ad_monitorContext,
+					be->be_suffix, be->be_nsuffix );
+			attr_merge( e_database, slap_schema.si_ad_monitorContext,
+					be->be_suffix, be->be_nsuffix );
 		} else {
-			attr_merge( e, ad_nc, be->be_suffix );
-			attr_merge( e_database, ad_nc, be->be_suffix );
+			attr_merge( e, slap_schema.si_ad_namingContexts,
+					be->be_suffix, be->be_nsuffix );
+			attr_merge( e_database, slap_schema.si_ad_namingContexts,
+					be->be_suffix, be->be_nsuffix );
 		}
 
 		for ( j = nBackendInfo; j--; ) {
@@ -152,7 +134,8 @@ monitor_subsys_database_init(
 					j, monitor_subsys[SLAPD_MONITOR_BACKEND].mss_dn.bv_val );
 				bv.bv_val = buf;
 				bv.bv_len = strlen( buf );
-				attr_merge_one( e, ad_seeAlso, &bv );
+				attr_merge_normalize_one( e, mi->mi_ad_seeAlso,
+						&bv, NULL );
 				break;
 			}
 		}
@@ -205,8 +188,9 @@ monitor_back_add_plugin( Backend *be, Entry *e_database )
 {
 	Slapi_PBlock		*pCurrentPB; 
 	int			i, rc = LDAP_SUCCESS;
+	struct monitorinfo	*mi = ( struct monitorinfo * )be->be_private;
 
-	if ( slapi_x_pblock_get_first( be, &pCurrentPB ) != LDAP_SUCCESS ) {
+	if ( slapi_int_pblock_get_first( be, &pCurrentPB ) != LDAP_SUCCESS ) {
 		/*
 		 * LDAP_OTHER is returned if no plugins are installed
 		 */
@@ -217,7 +201,7 @@ monitor_back_add_plugin( Backend *be, Entry *e_database )
 	i = 0;
 	do {
 		Slapi_PluginDesc	*srchdesc;
-		char			buf[1024];
+		char			buf[ BACKMONITOR_BUFSIZE ];
 		struct berval		bv;
 
 		rc = slapi_pblock_get( pCurrentPB, SLAPI_PLUGIN_DESCRIPTION,
@@ -239,11 +223,12 @@ monitor_back_add_plugin( Backend *be, Entry *e_database )
 
 		bv.bv_val = buf;
 		bv.bv_len = strlen( buf );
-		attr_merge_one( e_database, monitor_ad_desc, &bv );
+		attr_merge_normalize_one( e_database,
+				mi->mi_ad_monitoredInfo, &bv, NULL );
 
 		i++;
 
-	} while ( ( slapi_x_pblock_get_next( &pCurrentPB ) == LDAP_SUCCESS )
+	} while ( ( slapi_int_pblock_get_next( &pCurrentPB ) == LDAP_SUCCESS )
 			&& ( pCurrentPB != NULL ) );
 
 done:

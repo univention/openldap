@@ -1,14 +1,22 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/result.c,v 1.64.2.12 2003/02/28 17:07:14 kurt Exp $ */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+/* result.c - wait for an ldap result */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/result.c,v 1.84.2.4 2004/01/01 18:16:30 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 1998-2004 The OpenLDAP Foundation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
-/*  Portions
- *  Copyright (c) 1990 Regents of the University of Michigan.
- *  All rights reserved.
+/* Portions Copyright (c) 1990 Regents of the University of Michigan.
+ * All rights reserved.
  */
-/*---
- * This notice applies to changes, created by or for Novell, Inc.,
+/* This notice applies to changes, created by or for Novell, Inc.,
  * to preexisting works for which notices appear elsewhere in this file.
  *
  * Copyright (C) 1999, 2000 Novell, Inc. All Rights Reserved.
@@ -24,12 +32,13 @@
  *---
  * Modification to OpenLDAP source by Novell, Inc.
  * April 2000 sfs Add code to process V3 referrals and search results
- *
- *  result.c - wait for an ldap result
- */
-/* Note: A verbatim copy of version 2.0.1 of the OpenLDAP Public License 
+ *---
+ * Note: A verbatim copy of version 2.0.1 of the OpenLDAP Public License 
  * can be found in the file "build/LICENSE-2.0.1" in this distribution
  * of OpenLDAP Software.
+ */
+/* Portions Copyright (C) The Internet Society (1997)
+ * ASN.1 fragments are from RFC 2251; see RFC for full legal notices.
  */
 
 /*
@@ -97,6 +106,7 @@ ldap_result(
 	LDAPMessage **result )
 {
 	LDAPMessage	*lm;
+	int	rc;
 
 	assert( ld != NULL );
 	assert( result != NULL );
@@ -107,15 +117,22 @@ ldap_result(
 	Debug( LDAP_DEBUG_TRACE, "ldap_result msgid %d\n", msgid, 0, 0 );
 #endif
 
-    lm = chkResponseList(ld, msgid, all);
+#ifdef LDAP_R_COMPILE
+	ldap_pvt_thread_mutex_lock( &ld->ld_res_mutex );
+#endif
+	lm = chkResponseList(ld, msgid, all);
 
 	if ( lm == NULL ) {
-		return( wait4msg( ld, msgid, all, timeout, result ) );
+		rc = wait4msg( ld, msgid, all, timeout, result );
+	} else {
+		*result = lm;
+		ld->ld_errno = LDAP_SUCCESS;
+		rc = lm->lm_msgtype;
 	}
-
-	*result = lm;
-	ld->ld_errno = LDAP_SUCCESS;
-	return( lm->lm_msgtype );
+#ifdef LDAP_R_COMPILE
+	ldap_pvt_thread_mutex_unlock( &ld->ld_res_mutex );
+#endif
+	return( rc );
 }
 
 static LDAPMessage *
@@ -177,7 +194,7 @@ chkResponseList(
 			for ( tmp = lm; tmp != NULL; tmp = tmp->lm_chain ) {
 				if ( tmp->lm_msgtype != LDAP_RES_SEARCH_ENTRY
 				    && tmp->lm_msgtype != LDAP_RES_SEARCH_REFERENCE
-					&& tmp->lm_msgtype != LDAP_RES_EXTENDED_PARTIAL )
+					&& tmp->lm_msgtype != LDAP_RES_INTERMEDIATE )
 				{
 					break;
 				}
@@ -309,8 +326,6 @@ wait4msg(
 
 		    if ( lc == NULL ) {
 			    rc = ldap_int_select( ld, tvp );
-
-
 #ifdef LDAP_DEBUG
 			    if ( rc == -1 ) {
 #ifdef NEW_LOGGING
@@ -338,12 +353,18 @@ wait4msg(
 				    rc = -2;	/* select interrupted: loop */
 			    } else {
 				    rc = -2;
+#ifdef LDAP_R_COMPILE
+				    ldap_pvt_thread_mutex_lock( &ld->ld_req_mutex );
+#endif
 				    if ( ld->ld_requests &&
 						ld->ld_requests->lr_status == LDAP_REQST_WRITING &&
 						ldap_is_write_ready( ld,
 							ld->ld_requests->lr_conn->lconn_sb ) ) {
 						ldap_int_flush_request( ld, ld->ld_requests );
 					}
+#ifdef LDAP_R_COMPILE
+				    ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
+#endif
 				    for ( lc = ld->ld_conns; rc == -2 && lc != NULL;
 				        lc = nextlc ) {
 					    nextlc = lc->lconn_next;
@@ -420,18 +441,17 @@ try_read1msg(
 #endif
 
 retry:
-    if ( lc->lconn_ber == NULL ) {
+	if ( lc->lconn_ber == NULL ) {
 		lc->lconn_ber = ldap_alloc_ber_with_options(ld);
 
 		if( lc->lconn_ber == NULL ) {
 			return -1;
 		}
-    }
+	}
 
 	ber = lc->lconn_ber;
 	assert( LBER_VALID (ber) );
 
-retry2:
 	/* get the next message */
 	errno = 0;
 #ifdef LDAP_CONNECTIONLESS
@@ -442,8 +462,15 @@ retry2:
 	}
 nextresp3:
 #endif
-	if ( (tag = ber_get_next( sb, &len, ber ))
-	    != LDAP_TAG_MESSAGE ) {
+	tag = ber_get_next( sb, &len, ber );
+	if ( tag == LDAP_TAG_MESSAGE ) {
+		/*
+	 	 * We read a complete message.
+	 	 * The connection should no longer need this ber.
+	 	 */
+		lc->lconn_ber = NULL;
+	}
+	if ( tag != LDAP_TAG_MESSAGE ) {
 		if ( tag == LBER_DEFAULT) {
 #ifdef LDAP_DEBUG		   
 #ifdef NEW_LOGGING
@@ -467,12 +494,6 @@ nextresp3:
 		return -1;
 	}
 
-	/*
-     * We read a complete message.
-	 * The connection should no longer need this ber.
-	 */
-    lc->lconn_ber = NULL;
-
 	/* message id */
 	if ( ber_get_int( ber, &id ) == LBER_ERROR ) {
 		ber_free( ber, 1 );
@@ -488,12 +509,10 @@ nextresp3:
 		Debug( LDAP_DEBUG_ANY, "abandoned\n", 0, 0, 0);
 #endif
 retry_ber:
-		if ( ber_sockbuf_ctrl( sb, LBER_SB_OPT_DATA_READY, NULL ) ) {
-			ber_free_buf( ber );
-			ber_init2( ber, NULL, ld->ld_lberoptions );
-			goto retry2;
-		}
 		ber_free( ber, 1 );
+		if ( ber_sockbuf_ctrl( sb, LBER_SB_OPT_DATA_READY, NULL ) ) {
+			goto retry;
+		}
 		return( -2 );	/* continue looking */
 	}
 
@@ -650,11 +669,9 @@ nextresp2:
 	 * go through the following code.  This code also chases V2 referrals
 	 * and checks if all referrals have been chased.
 	 */
-	if ( (tag != LDAP_RES_SEARCH_ENTRY) && (v3ref > -1)
-#ifdef LDAP_RES_INTERMEDIATE_RESP
-		&& (tag != LDAP_RES_INTERMEDIATE_RESP )
-#endif
-	) {
+	if ( (tag != LDAP_RES_SEARCH_ENTRY) && (v3ref > -1) &&
+		(tag != LDAP_RES_INTERMEDIATE ))
+	{
 		/* For a v3 search referral/reference, only come here if already chased it */
 		if ( ld->ld_version >= LDAP_VERSION2 &&
 			( lr->lr_parent != NULL ||
@@ -926,8 +943,7 @@ lr->lr_res_matched ? lr->lr_res_matched : "" );
 	if ( l == NULL ) {
 		if ( foundit ) {
 			*result = new;
-			ld->ld_errno = LDAP_SUCCESS;
-			return( tag );
+			goto exit;
 		}
 
 		new->lm_next = ld->ld_responses;
@@ -948,7 +964,7 @@ lr->lr_res_matched ? lr->lr_res_matched : "" );
 	for ( tmp = l; (tmp->lm_chain != NULL) &&
 	    	((tmp->lm_chain->lm_msgtype == LDAP_RES_SEARCH_ENTRY) ||
 	    	 (tmp->lm_chain->lm_msgtype == LDAP_RES_SEARCH_REFERENCE) ||
-			 (tmp->lm_chain->lm_msgtype == LDAP_RES_EXTENDED_PARTIAL ));
+			 (tmp->lm_chain->lm_msgtype == LDAP_RES_INTERMEDIATE ));
 	    tmp = tmp->lm_chain )
 		;	/* NULL */
 	tmp->lm_chain = new;
@@ -960,11 +976,13 @@ lr->lr_res_matched ? lr->lr_res_matched : "" );
 		else
 			prev->lm_next = l->lm_next;
 		*result = l;
-		ld->ld_errno = LDAP_SUCCESS;
-		return( tag );
 	}
 
 exit:
+	if ( foundit ) {
+		ld->ld_errno = LDAP_SUCCESS;
+		return( tag );
+	}
 	if ( ber_sockbuf_ctrl( sb, LBER_SB_OPT_DATA_READY, NULL ) ) {
 		goto retry;
 	}
@@ -1098,7 +1116,7 @@ char * ldap_int_msgtype2str( ber_tag_t tag )
 	case LDAP_RES_COMPARE: return "compare";
 	case LDAP_RES_DELETE: return "delete";
 	case LDAP_RES_EXTENDED: return "extended-result";
-	case LDAP_RES_EXTENDED_PARTIAL: return "extended-partial";
+	case LDAP_RES_INTERMEDIATE: return "intermediate";
 	case LDAP_RES_MODIFY: return "modify";
 	case LDAP_RES_RENAME: return "rename";
 	case LDAP_RES_SEARCH_ENTRY: return "search-entry";
@@ -1139,6 +1157,7 @@ int
 ldap_msgdelete( LDAP *ld, int msgid )
 {
 	LDAPMessage	*lm, *prev;
+	int rc = 0;
 
 	assert( ld != NULL );
 
@@ -1149,24 +1168,30 @@ ldap_msgdelete( LDAP *ld, int msgid )
 #endif
 
 	prev = NULL;
+#ifdef LDAP_R_COMPILE
+	ldap_pvt_thread_mutex_lock( &ld->ld_res_mutex );
+#endif
 	for ( lm = ld->ld_responses; lm != NULL; lm = lm->lm_next ) {
 		if ( lm->lm_msgid == msgid )
 			break;
 		prev = lm;
 	}
 
-	if ( lm == NULL )
-		return( -1 );
+	if ( lm == NULL ) {
+		rc = -1;
+	} else {
+		if ( prev == NULL )
+			ld->ld_responses = lm->lm_next;
+		else
+			prev->lm_next = lm->lm_next;
+	}
+#ifdef LDAP_R_COMPILE
+	ldap_pvt_thread_mutex_unlock( &ld->ld_res_mutex );
+#endif
+	if ( lm && ldap_msgfree( lm ) == LDAP_RES_SEARCH_ENTRY )
+		rc = -1;
 
-	if ( prev == NULL )
-		ld->ld_responses = lm->lm_next;
-	else
-		prev->lm_next = lm->lm_next;
-
-	if ( ldap_msgfree( lm ) == LDAP_RES_SEARCH_ENTRY )
-		return( -1 );
-
-	return( 0 );
+	return( rc );
 }
 
 

@@ -1,13 +1,18 @@
-# $OpenLDAP: pkg/ldap/build/top.mk,v 1.69.2.4 2003/03/29 15:45:42 kurt Exp $
-## Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
+# $OpenLDAP: pkg/ldap/build/top.mk,v 1.78.2.4 2004/01/01 18:16:25 kurt Exp $
+## Copyright 1998-2004 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
 ## modification, are permitted only as authorized by the OpenLDAP
-## Public License.  A copy of this license is available at
-## http://www.OpenLDAP.org/license.html or in file LICENSE in the
-## top-level directory of the distribution.
+## Public License.
 ##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+##---------------------------------------------------------------------------
+#
+# Top-level Makefile template
+#
+
 PACKAGE= @PACKAGE@
 VERSION= @VERSION@
 RELEASEDATE= @OPENLDAP_RELEASE_DATE@
@@ -140,7 +145,6 @@ LDAP_INCPATH= -I$(LDAP_INCDIR) -I$(INCLUDEDIR)
 LDAP_LIBDIR= $(top_builddir)/libraries
 
 LUTIL_LIBS = @LUTIL_LIBS@
-LDIF_LIBS = @LDIF_LIBS@
 LDBM_LIBS = @LDBM_LIBS@
 LTHREAD_LIBS = @LTHREAD_LIBS@
 
@@ -148,19 +152,15 @@ LDAP_LIBLBER_LA = $(LDAP_LIBDIR)/liblber/liblber.la
 LDAP_LIBLDAP_LA = $(LDAP_LIBDIR)/libldap/libldap.la
 LDAP_LIBLDAP_R_LA = $(LDAP_LIBDIR)/libldap_r/libldap_r.la
 
-LDAP_LIBAVL_A = $(LDAP_LIBDIR)/libavl/libavl.a
-LDAP_LIBLDBM_A = $(LDAP_LIBDIR)/libldbm/libldbm.a
-LDAP_LIBLDIF_A = $(LDAP_LIBDIR)/libldif/libldif.a
 LDAP_LIBREWRITE_A = $(LDAP_LIBDIR)/librewrite/librewrite.a
 LDAP_LIBLUNICODE_A = $(LDAP_LIBDIR)/liblunicode/liblunicode.a
 LDAP_LIBLUTIL_A = $(LDAP_LIBDIR)/liblutil/liblutil.a
 
-LDAP_L = $(LDAP_LIBLUTIL_A) $(LDAP_LIBLDIF_A) \
+LDAP_L = $(LDAP_LIBLUTIL_A) \
 	$(LDAP_LIBLDAP_LA) $(LDAP_LIBLBER_LA)
-SLURPD_L = $(LDAP_LIBLDIF_A) $(LDAP_LIBLUTIL_A) \
+SLURPD_L = $(LDAP_LIBLUTIL_A) \
 	$(LDAP_LIBLDAP_R_LA) $(LDAP_LIBLBER_LA)
-SLAPD_L = $(LDAP_LIBAVL_A) $(LDAP_LIBLDBM_A) \
-	$(LDAP_LIBLUNICODE_A) $(LDAP_LIBREWRITE_A) \
+SLAPD_L = $(LDAP_LIBLUNICODE_A) $(LDAP_LIBREWRITE_A) \
 	$(SLURPD_L)
 
 WRAP_LIBS = @WRAP_LIBS@
@@ -182,7 +182,6 @@ SECURITY_LIBS = $(SASL_LIBS) $(KRB_LIBS) $(TLS_LIBS) $(AUTH_LIBS)
 MODULES_CPPFLAGS = @SLAPD_MODULES_CPPFLAGS@
 MODULES_LDFLAGS = @SLAPD_MODULES_LDFLAGS@
 MODULES_LIBS = @MODULES_LIBS@
-TERMCAP_LIBS = @TERMCAP_LIBS@
 SLAPD_PERL_LDFLAGS = @SLAPD_PERL_LDFLAGS@
 
 SLAPD_SQL_LDFLAGS = @SLAPD_SQL_LDFLAGS@

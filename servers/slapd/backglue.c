@@ -1,8 +1,17 @@
 /* backglue.c - backend glue routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.38.2.9 2003/04/20 07:21:20 hyc Exp $ */
-/*
- * Copyright 2001-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.60.2.9 2004/01/23 01:09:44 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 2001-2004 The OpenLDAP Foundation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
 
 /*
@@ -50,6 +59,8 @@ typedef struct glueinfo {
 static int glueMode;
 static BackendDB *glueBack;
 
+static slap_response glue_back_response;
+
 /* Just like select_backend, but only for our backends */
 static BackendDB *
 glue_back_select (
@@ -65,6 +76,8 @@ glue_back_select (
 	bv.bv_val = (char *) dn;
 
 	for (i = 0; i<gi->nodes; i++) {
+		assert( gi->n[i].be->be_nsuffix );
+
 		if (dnIsSuffix(&bv, &gi->n[i].be->be_nsuffix[0])) {
 			return gi->n[i].be;
 		}
@@ -166,194 +179,115 @@ glue_back_db_destroy (
 
 typedef struct glue_state {
 	int err;
-	int nentries;
+	int slimit;
 	int matchlen;
 	char *matched;
 	int nrefs;
 	BerVarray refs;
-	slap_callback *prevcb;
 } glue_state;
 
-static void
-glue_back_response (
-	Connection *conn,
-	Operation *op,
-	ber_tag_t tag,
-	ber_int_t msgid,
-	ber_int_t err,
-	const char *matched,
-	const char *text,
-	BerVarray ref,
-	const char *resoid,
-	struct berval *resdata,
-	struct berval *sasldata,
-	LDAPControl **ctrls
-)
+static int
+glue_back_response ( Operation *op, SlapReply *rs )
 {
 	glue_state *gs = op->o_callback->sc_private;
 
-	if (err == LDAP_SUCCESS || gs->err != LDAP_SUCCESS)
-		gs->err = err;
-	if (gs->err == LDAP_SUCCESS && gs->matched) {
-		free (gs->matched);
-		gs->matched = NULL;
-		gs->matchlen = 0;
-	}
-	if (gs->err != LDAP_SUCCESS && matched) {
-		int len;
-		len = strlen (matched);
-		if (len > gs->matchlen) {
-			if (gs->matched)
-				free (gs->matched);
-			gs->matched = ch_strdup (matched);
-			gs->matchlen = len;
+	switch(rs->sr_type) {
+	case REP_SEARCH:
+		if ( gs->slimit && rs->sr_nentries >= gs->slimit ) {
+			gs->err = LDAP_SIZELIMIT_EXCEEDED;
+			return -1;
+		}
+		/* fallthru */
+	case REP_SEARCHREF:
+		return SLAP_CB_CONTINUE;
+
+	default:
+		if (rs->sr_err == LDAP_SUCCESS ||
+			rs->sr_err == LDAP_SIZELIMIT_EXCEEDED ||
+			rs->sr_err == LDAP_TIMELIMIT_EXCEEDED ||
+			rs->sr_err == LDAP_ADMINLIMIT_EXCEEDED ||
+				gs->err != LDAP_SUCCESS)
+			gs->err = rs->sr_err;
+		if (gs->err == LDAP_SUCCESS && gs->matched) {
+			ch_free (gs->matched);
+			gs->matched = NULL;
+			gs->matchlen = 0;
+		}
+		if (gs->err != LDAP_SUCCESS && rs->sr_matched) {
+			int len;
+			len = strlen (rs->sr_matched);
+			if (len > gs->matchlen) {
+				if (gs->matched)
+					ch_free (gs->matched);
+				gs->matched = ch_strdup (rs->sr_matched);
+				gs->matchlen = len;
+			}
+		}
+		if (rs->sr_ref) {
+			int i, j, k;
+			BerVarray new;
+
+			for (i=0; rs->sr_ref[i].bv_val; i++);
+
+			j = gs->nrefs;
+			if (!j) {
+				new = ch_malloc ((i+1)*sizeof(struct berval));
+			} else {
+				new = ch_realloc(gs->refs,
+					(j+i+1)*sizeof(struct berval));
+			}
+			for (k=0; k<i; j++,k++) {
+				ber_dupbv( &new[j], &rs->sr_ref[k] );
+			}
+			new[j].bv_val = NULL;
+			gs->nrefs = j;
+			gs->refs = new;
 		}
 	}
-	if (ref) {
-		int i, j, k;
-		BerVarray new;
-
-		for (i=0; ref[i].bv_val; i++);
-
-		j = gs->nrefs;
-		if (!j) {
-			new = ch_malloc ((i+1)*sizeof(struct berval));
-		} else {
-			new = ch_realloc(gs->refs,
-				(j+i+1)*sizeof(struct berval));
-		}
-		for (k=0; k<i; j++,k++) {
-			ber_dupbv( &new[j], &ref[k] );
-		}
-		new[j].bv_val = NULL;
-		gs->nrefs = j;
-		gs->refs = new;
-	}
-}
-
-static void
-glue_back_sresult (
-	Connection *c,
-	Operation *op,
-	ber_int_t err,
-	const char *matched,
-	const char *text,
-	BerVarray refs,
-	LDAPControl **ctrls,
-	int nentries
-)
-{
-	glue_state *gs = op->o_callback->sc_private;
-
-	gs->nentries += nentries;
-	glue_back_response (c, op, 0, 0, err, matched, text, refs,
-			    NULL, NULL, NULL, ctrls);
+	return 0;
 }
 
 static int
-glue_back_sendentry (
-	BackendDB *be,
-	Connection *c,
-	Operation *op,
-	Entry *e,
-	AttributeName *an,
-	int ao,
-	LDAPControl **ctrls
-)
+glue_back_search ( Operation *op, SlapReply *rs )
 {
-	slap_callback *tmp = op->o_callback;
-	glue_state *gs = tmp->sc_private;
-	int rc;
-
-	op->o_callback = gs->prevcb;
-	if (op->o_callback && op->o_callback->sc_sendentry) {
-		rc = op->o_callback->sc_sendentry(be, c, op, e, an, ao, ctrls);
-	} else {
-		rc = send_search_entry(be, c, op, e, an, ao, ctrls);
-	}
-	op->o_callback = tmp;
-	return rc;
-}
-
-static int
-glue_back_sendreference (
-	BackendDB *be,
-	Connection *c,
-	Operation *op,
-	Entry *e,
-	BerVarray bv,
-	LDAPControl **ctrls,
-	BerVarray *v2
-)
-{
-	slap_callback *tmp = op->o_callback;
-	glue_state *gs = tmp->sc_private;
-	int rc;
-
-	op->o_callback = gs->prevcb;
-	if (op->o_callback && op->o_callback->sc_sendreference) {
-		rc = op->o_callback->sc_sendreference( be, c, op, e, bv, ctrls, v2 );
-	} else {
-		rc = send_search_reference( be, c, op, e, bv, ctrls, v2 );
-	}
-	op->o_callback = tmp;
-	return rc;
-}
-
-static int
-glue_back_search (
-	BackendDB *b0,
-	Connection *conn,
-	Operation *op,
-	struct berval *dn,
-	struct berval *ndn,
-	int scope,
-	int deref,
-	int slimit,
-	int tlimit,
-	Filter *filter,
-	struct berval *filterstr,
-	AttributeName *attrs,
-	int attrsonly
-)
-{
+	BackendDB *b0 = op->o_bd;
 	glueinfo *gi = (glueinfo *) b0->bd_info;
-	BackendDB *be;
-	int i, rc = 0, t2limit = 0, s2limit = 0;
+	int i;
 	long stoptime = 0;
-	glue_state gs = {0, 0, 0, NULL, 0, NULL, NULL};
-	slap_callback cb;
+	glue_state gs = {0, 0, 0, NULL, 0, NULL};
+	slap_callback cb = { NULL, glue_back_response, NULL, NULL };
+	int scope0, slimit0, tlimit0;
+	struct berval dn, ndn;
 
-	cb.sc_response = glue_back_response;
-	cb.sc_sresult = glue_back_sresult;
-	cb.sc_sendentry = glue_back_sendentry;
 	cb.sc_private = &gs;
 
-	gs.prevcb = op->o_callback;
+	cb.sc_next = op->o_callback;
 
-	if (tlimit) {
-		stoptime = slap_get_time () + tlimit;
+	if (op->ors_tlimit) {
+		stoptime = slap_get_time () + op->ors_tlimit;
 	}
 
-	switch (scope) {
+	switch (op->ors_scope) {
 	case LDAP_SCOPE_BASE:
-		be = glue_back_select (b0, ndn->bv_val);
+		op->o_bd = glue_back_select (b0, op->o_req_ndn.bv_val);
 
-		if (be && be->be_search) {
-			rc = be->be_search (be, conn, op, dn, ndn, scope,
-				   deref, slimit, tlimit, filter, filterstr,
-					    attrs, attrsonly);
+		if (op->o_bd && op->o_bd->be_search) {
+			rs->sr_err = op->o_bd->be_search( op, rs );
 		} else {
-			rc = LDAP_UNWILLING_TO_PERFORM;
-			send_ldap_result (conn, op, rc, NULL,
-				      "No search target found", NULL, NULL);
+			send_ldap_error(op, rs, LDAP_UNWILLING_TO_PERFORM,
+				      "No search target found");
 		}
-		return rc;
+		return rs->sr_err;
 
 	case LDAP_SCOPE_ONELEVEL:
 	case LDAP_SCOPE_SUBTREE:
 		op->o_callback = &cb;
-		rc = gs.err = LDAP_UNWILLING_TO_PERFORM;
+		rs->sr_err = gs.err = LDAP_UNWILLING_TO_PERFORM;
+		scope0 = op->ors_scope;
+		slimit0 = gs.slimit = op->ors_slimit;
+		tlimit0 = op->ors_tlimit;
+		dn = op->o_req_dn;
+		ndn = op->o_req_ndn;
 
 		/*
 		 * Execute in reverse order, most general first 
@@ -361,49 +295,49 @@ glue_back_search (
 		for (i = gi->nodes-1; i >= 0; i--) {
 			if (!gi->n[i].be || !gi->n[i].be->be_search)
 				continue;
-			if (tlimit) {
-				t2limit = stoptime - slap_get_time ();
-				if (t2limit <= 0) {
-					rc = gs.err = LDAP_TIMELIMIT_EXCEEDED;
+			if (tlimit0) {
+				op->ors_tlimit = stoptime - slap_get_time ();
+				if (op->ors_tlimit <= 0) {
+					rs->sr_err = gs.err = LDAP_TIMELIMIT_EXCEEDED;
 					break;
 				}
 			}
-			if (slimit) {
-				s2limit = slimit - gs.nentries;
-				if (s2limit <= 0) {
-					rc = gs.err = LDAP_SIZELIMIT_EXCEEDED;
+			if (slimit0) {
+				op->ors_slimit = slimit0 - rs->sr_nentries;
+				if (op->ors_slimit < 0) {
+					rs->sr_err = gs.err = LDAP_SIZELIMIT_EXCEEDED;
 					break;
 				}
 			}
-			rc = 0;
+			rs->sr_err = 0;
 			/*
 			 * check for abandon 
 			 */
 			if (op->o_abandon) {
 				goto done;
 			}
-			be = gi->n[i].be;
-			if (scope == LDAP_SCOPE_ONELEVEL && 
-				dn_match(&gi->n[i].pdn, ndn)) {
-				rc = be->be_search (be, conn, op,
-					&be->be_suffix[0], &be->be_nsuffix[0],
-					LDAP_SCOPE_BASE, deref,
-					s2limit, t2limit, filter, filterstr,
-					attrs, attrsonly);
+			op->o_bd = gi->n[i].be;
 
-			} else if (scope == LDAP_SCOPE_SUBTREE &&
-				dnIsSuffix(&be->be_nsuffix[0], ndn)) {
-				rc = be->be_search (be, conn, op,
-					&be->be_suffix[0], &be->be_nsuffix[0],
-					scope, deref,
-					s2limit, t2limit, filter, filterstr,
-					attrs, attrsonly);
+			assert( op->o_bd->be_suffix );
+			assert( op->o_bd->be_nsuffix );
+			
+			if (scope0 == LDAP_SCOPE_ONELEVEL && 
+				dn_match(&gi->n[i].pdn, &ndn))
+			{
+				op->ors_scope = LDAP_SCOPE_BASE;
+				op->o_req_dn = op->o_bd->be_suffix[0];
+				op->o_req_ndn = op->o_bd->be_nsuffix[0];
+				rs->sr_err = op->o_bd->be_search(op, rs);
 
-			} else if (dnIsSuffix(ndn, &be->be_nsuffix[0])) {
-				rc = be->be_search (be, conn, op, dn, ndn,
-					scope, deref,
-					s2limit, t2limit, filter, filterstr,
-					attrs, attrsonly);
+			} else if (scope0 == LDAP_SCOPE_SUBTREE &&
+				dnIsSuffix(&op->o_bd->be_nsuffix[0], &ndn))
+			{
+				op->o_req_dn = op->o_bd->be_suffix[0];
+				op->o_req_ndn = op->o_bd->be_nsuffix[0];
+				rs->sr_err = op->o_bd->be_search( op, rs );
+
+			} else if (dnIsSuffix(&ndn, &op->o_bd->be_nsuffix[0])) {
+				rs->sr_err = op->o_bd->be_search( op, rs );
 			}
 
 			switch ( gs.err ) {
@@ -422,19 +356,28 @@ glue_back_search (
 			}
 		}
 end_of_loop:;
+		op->ors_scope = scope0;
+		op->ors_slimit = slimit0;
+		op->ors_tlimit = tlimit0;
+		op->o_req_dn = dn;
+		op->o_req_ndn = ndn;
+
 		break;
 	}
-	op->o_callback = gs.prevcb;
+	op->o_callback = cb.sc_next;
+	rs->sr_err = gs.err;
+	rs->sr_matched = gs.matched;
+	rs->sr_ref = gs.refs;
 
-	send_search_result (conn, op, gs.err, gs.matched, NULL,
-		gs.refs, NULL, gs.nentries);
+	send_ldap_result( op, rs );
 
 done:
+	op->o_bd = b0;
 	if (gs.matched)
 		free (gs.matched);
 	if (gs.refs)
 		ber_bvarray_free(gs.refs);
-	return rc;
+	return rs->sr_err;
 }
 
 
@@ -488,7 +431,8 @@ glue_tool_entry_first (
 		}
 
 	}
-	if (!glueBack || glueBack->be_entry_open (glueBack, glueMode) != 0)
+	if (!glueBack || !glueBack->be_entry_open || !glueBack->be_entry_first ||
+		glueBack->be_entry_open (glueBack, glueMode) != 0)
 		return NOID;
 
 	return glueBack->be_entry_first (glueBack);
@@ -509,15 +453,16 @@ glue_tool_entry_next (
 	rc = glueBack->be_entry_next (glueBack);
 
 	/* If we ran out of entries in one database, move on to the next */
-	if (rc == NOID) {
-		glueBack->be_entry_close (glueBack);
+	while (rc == NOID) {
+		if ( glueBack && glueBack->be_entry_close )
+			glueBack->be_entry_close (glueBack);
 		for (i=0; i<gi->nodes; i++) {
 			if (gi->n[i].be == glueBack)
 				break;
 		}
 		if (i == 0) {
 			glueBack = NULL;
-			rc = NOID;
+			break;
 		} else {
 			glueBack = gi->n[i-1].be;
 			rc = glue_tool_entry_first (b0);
@@ -626,6 +571,8 @@ glue_sub_init( )
 			if ( SLAP_GLUE_LINKED( be ) ) {
 				continue;
 			}
+			assert( be->be_nsuffix );
+			assert( b1->be_nsuffix );
 			if (!dnIsSuffix(&be->be_nsuffix[0], &b1->be_nsuffix[0])) {
 				continue;
 			}
@@ -664,6 +611,10 @@ glue_sub_init( )
 				bi->bi_tool_entry_put = glue_tool_entry_put;
 				bi->bi_tool_entry_reindex = glue_tool_entry_reindex;
 				bi->bi_tool_sync = glue_tool_sync;
+				/* FIXME : will support later */
+				bi->bi_tool_dn2id_get = 0;
+				bi->bi_tool_id2entry_get = 0;
+				bi->bi_tool_entry_modify = 0;
 			} else {
 				gi = (glueinfo *)ch_realloc(gi,
 					sizeof(glueinfo) +

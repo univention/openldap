@@ -1,9 +1,28 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/tools/slapcommon.c,v 1.23.2.9 2003/03/24 03:40:52 kurt Exp $ */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
- */
 /* slapcommon.c - common routine for the slap tools */
+/* $OpenLDAP: pkg/ldap/servers/slapd/tools/slapcommon.c,v 1.42.2.6 2004/01/01 18:16:42 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Portions Copyright 1998-2003 Kurt D. Zeilenga.
+ * Portions Copyright 2003 IBM Corporation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
+ */
+/* ACKNOWLEDGEMENTS:
+ * This work was initially developed by Kurt Zeilenga for inclusion
+ * in OpenLDAP Software.  Additional signficant contributors include
+ *    Jong Hyuk Choi
+ *    Hallvard B. Furuseth
+ *    Howard Chu
+ *    Pierangelo Masarati
+ */
 
 #include "portable.h"
 
@@ -23,9 +42,18 @@ char	*progname	= NULL;
 char	*conffile	= SLAPD_DEFAULT_CONFIGFILE;
 int		truncatemode = 0;
 int		verbose		= 0;
+int		update_ctxcsn = SLAP_TOOL_CTXCSN_KEEP;
+int		retrieve_ctxcsn = 0;
+int		retrieve_synccookie = 0;
+int		replica_promotion = 0;
+int		replica_demotion = 0;
+char	*replica_id_string = NULL;
+char	**replica_id_strlist = NULL;
+int		*replica_id_list = NULL;
 int		continuemode = 0;
 int		nosubordinates = 0;
 int		dryrun = 0;
+struct berval	sub_ndn = { 0, NULL };
 
 char	*ldiffile	= NULL;
 FILE	*ldiffp		= NULL;
@@ -47,11 +75,11 @@ usage( int tool )
 
 	switch( tool ) {
 	case SLAPADD:
-		options = "\t[-l ldiffile] [-u]\n";
+		options = "\n\t[-l ldiffile] [-u] [-p [-w] | -r [-i syncreplidlist] [-w]]\n";
 		break;
 
 	case SLAPCAT:
-		options = "\t[-l ldiffile]\n";
+		options = "\t[-l ldiffile] [-m] [-k]\n";
 		break;
 
 	case SLAPINDEX:
@@ -82,6 +110,7 @@ slap_tool_init(
 {
 	char *options;
 	struct berval base = { 0, NULL };
+	char *subtree = NULL;
 	int rc, i, dbnum;
 	int mode = SLAP_TOOL_MODE;
 
@@ -98,15 +127,17 @@ slap_tool_init(
 
 	switch( tool ) {
 	case SLAPADD:
-		options = "b:cd:f:l:n:tuv";
+		options = "b:cd:f:i:l:n:prtuvWw";
 		break;
 
 	case SLAPINDEX:
 		options = "b:cd:f:n:v";
+		mode |= SLAP_TOOL_READMAIN;
 		break;
 
 	case SLAPCAT:
-		options = "b:cd:f:l:n:v";
+		options = "b:cd:f:kl:mn:s:v";
+		mode |= SLAP_TOOL_READMAIN | SLAP_TOOL_READONLY;
 		break;
 
 	default:
@@ -137,12 +168,53 @@ slap_tool_init(
 			conffile = strdup( optarg );
 			break;
 
+		case 'i': /* specify syncrepl id list */
+			replica_id_string = strdup( optarg );
+			if ( !isdigit( (unsigned char) *replica_id_string )) {
+				usage( tool );
+				exit( EXIT_FAILURE );
+			}
+			str2clist( &replica_id_strlist, replica_id_string, "," );
+			for ( i = 0; replica_id_strlist && replica_id_strlist[i]; i++ ) ;
+			replica_id_list = ch_calloc( i + 1, sizeof( int ) );
+			for ( i = 0; replica_id_strlist && replica_id_strlist[i]; i++ ) {
+				replica_id_list[i] = atoi( replica_id_strlist[i] );
+				if ( replica_id_list[i] >= 1000 ) {
+					fprintf(stderr,
+						"%s: syncrepl id %d is out of range [0..999]\n",
+						progname, replica_id_list[i] );
+					exit( EXIT_FAILURE );
+				}
+			}
+			replica_id_list[i] = -1;
+			break;
+
+		case 'k':	/* Retrieve sync cookie entry */
+			retrieve_synccookie = 1;
+			break;
+
 		case 'l':	/* LDIF file */
 			ldiffile = strdup( optarg );
 			break;
 
+		case 'm':	/* Retrieve ldapsync entry */
+			retrieve_ctxcsn = 1;
+			break;
+
 		case 'n':	/* which config file db to index */
 			dbnum = atoi( optarg ) - 1;
+			break;
+
+		case 'p':	/* replica promotion */
+			replica_promotion = 1;		
+			break;
+
+		case 'r':	/* replica demotion */
+			replica_demotion = 1;		
+			break;
+
+		case 's':	/* dump subtree */
+			subtree = strdup( optarg );
 			break;
 
 		case 't':	/* turn on truncate */
@@ -158,6 +230,15 @@ slap_tool_init(
 			verbose++;
 			break;
 
+		case 'W':	/* write context csn on every entry add */
+			update_ctxcsn = SLAP_TOOL_CTXCSN_BATCH;
+			/* FIXME : update_ctxcsn = SLAP_TOOL_CTXCSN_ENTRY; */
+			break;
+
+		case 'w':	/* write context csn on at the end */
+			update_ctxcsn = SLAP_TOOL_CTXCSN_BATCH;
+			break;
+
 		default:
 			usage( tool );
 			break;
@@ -166,6 +247,14 @@ slap_tool_init(
 
 	if ( ( argc != optind ) || (dbnum >= 0 && base.bv_val != NULL ) ) {
 		usage( tool );
+	}
+
+	if ( replica_promotion && replica_demotion ) {
+		usage( tool );
+	} else if ( !replica_promotion && !replica_demotion ) {
+		if ( update_ctxcsn != SLAP_TOOL_CTXCSN_KEEP ) {
+			usage( tool );
+		}
 	}
 
 	if ( ldiffile == NULL ) {
@@ -229,18 +318,34 @@ slap_tool_init(
 		exit( EXIT_FAILURE );
 	}
 
-	if( base.bv_val != NULL ) {
-		struct berval *nbase = NULL;
+	if( subtree ) {
+		struct berval val;
+		val.bv_val = subtree;
+		val.bv_len = strlen( subtree );
+		rc = dnNormalize( 0, NULL, NULL, &val, &sub_ndn, NULL );
+		if( rc != LDAP_SUCCESS ) {
+			fprintf( stderr, "Invalid subtree DN '%s'\n", optarg );
+			exit( EXIT_FAILURE );
+		}
 
-		rc = dnNormalize( NULL, &base, &nbase );
+		if( base.bv_val == NULL && dbnum == -1 )
+			base = val;
+		else
+			free( subtree );
+	}
+
+	if( base.bv_val != NULL ) {
+		struct berval nbase;
+
+		rc = dnNormalize( 0, NULL, NULL, &base, &nbase, NULL );
 		if( rc != LDAP_SUCCESS ) {
 			fprintf( stderr, "%s: slap_init invalid suffix (\"%s\")\n",
 				progname, base.bv_val );
 			exit( EXIT_FAILURE );
 		}
 
-		be = select_backend( nbase, 0, 0 );
-		ber_bvfree( nbase );
+		be = select_backend( &nbase, 0, 0 );
+		ber_memfree( nbase.bv_val );
 
 		if( be == NULL ) {
 			fprintf( stderr, "%s: slap_init no backend for \"%s\"\n",
@@ -307,7 +412,10 @@ slap_tool_init(
 	mal_leaktrace(1);
 #endif
 
-	slap_startup( be );
+	if ( slap_startup( be ) ) {
+		fprintf( stderr, "slap_startup failed\n" );
+		exit( EXIT_FAILURE );
+	}
 }
 
 void slap_tool_destroy( void )

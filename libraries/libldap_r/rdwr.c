@@ -1,12 +1,30 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/rdwr.c,v 1.18 2000/06/16 19:25:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/rdwr.c,v 1.19.2.2 2004/01/01 18:16:30 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 1998-2004 The OpenLDAP Foundation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
+ */
+/* This work was initially developed by Kurt D. Zeilenga for inclusion
+ * in OpenLDAP Software.  Additional significant contributors include:
+ *     Stuart Lynne
+ */
+
 /*
-** This is an improved implementation of Reader/Writer locks does
-** not protect writers from starvation.  That is, if a writer is
-** currently waiting on a reader, any new reader will get
-** the lock before the writer.
-**
-** Does not support cancellation nor does any status checking.
-*/
+ * This is an improved implementation of Reader/Writer locks does
+ * not protect writers from starvation.  That is, if a writer is
+ * currently waiting on a reader, any new reader will get
+ * the lock before the writer.
+ *
+ * Does not support cancellation nor does any status checking.
+ */
 /* Adapted from publically available examples for:
  *	"Programming with Posix Threads"
  *		by David R Butenhof, Addison-Wesley 

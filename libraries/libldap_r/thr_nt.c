@@ -1,15 +1,18 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_nt.c,v 1.20.2.3 2003/03/03 17:10:05 kurt Exp $ */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
+/* thr_nt.c - wrapper around NT threads */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_nt.c,v 1.24.2.3 2004/01/17 18:18:21 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 1998-2004 The OpenLDAP Foundation.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms are permitted only
- * as authorized by the OpenLDAP Public License.  A copy of this
- * license is available at http://www.OpenLDAP.org/license.html or
- * in file LICENSE in the top-level directory of the distribution.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
-
-/* thr_nt.c - wrapper around NT threads */
 
 #include "portable.h"
 
@@ -40,13 +43,17 @@ ldap_pvt_thread_create( ldap_pvt_thread_t * thread,
 {
 	unsigned tid;
 	HANDLE thd;
+	int rc = -1;
 
 	thd = (HANDLE) _beginthreadex(NULL, LDAP_PVT_THREAD_STACK_SIZE, (thrfunc_t *) start_routine,
 				      arg, 0, &tid);
 
-	*thread = (ldap_pvt_thread_t) thd;
-
-	return thd == NULL ? -1 : 0;
+	if ( thd ) {
+		*thread = (ldap_pvt_thread_t) tid;
+		CloseHandle( thd );
+		rc = 0;
+	}
+	return rc;
 }
 	
 void 
@@ -59,7 +66,12 @@ int
 ldap_pvt_thread_join( ldap_pvt_thread_t thread, void **thread_return )
 {
 	DWORD status;
-	status = WaitForSingleObject( (HANDLE) thread, INFINITE );
+	HANDLE thd;
+	HANDLE __stdcall OpenThread( int, int, int );
+
+	thd = OpenThread( SYNCHRONIZE, 0, thread );
+	status = WaitForSingleObject( thd, INFINITE );
+	CloseHandle( thd );
 	return status == WAIT_FAILED ? -1 : 0;
 }
 
@@ -155,7 +167,7 @@ ldap_pvt_thread_mutex_trylock( ldap_pvt_thread_mutex_t *mp )
 ldap_pvt_thread_t
 ldap_pvt_thread_self( void )
 {
-	return GetCurrentThread();
+	return GetCurrentThreadId();
 }
 
 #endif

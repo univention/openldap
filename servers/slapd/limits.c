@@ -1,7 +1,17 @@
 /* limits.c - routines to handle regex-based size and time limits */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+/* $OpenLDAP: pkg/ldap/servers/slapd/limits.c,v 1.30.2.2 2004/01/01 18:16:33 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 1998-2004 The OpenLDAP Foundation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
 
 #include "portable.h"
@@ -174,7 +184,7 @@ add_limits(
 			bv.bv_val = (char *) pattern;
 			bv.bv_len = strlen( pattern );
 
-			rc = dnNormalize2( NULL, &bv, &lm->lm_dn_pat );
+			rc = dnNormalize( 0, NULL, NULL, &bv, &lm->lm_dn_pat, NULL );
 			if ( rc != LDAP_SUCCESS ) {
 				ch_free( lm );
 				return( -1 );

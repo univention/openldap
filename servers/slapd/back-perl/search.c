@@ -1,25 +1,33 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/search.c,v 1.13.2.1 2002/04/18 15:20:02 kurt Exp $ */
-/*
- *	 Copyright 1999, John C. Quillan, All rights reserved.
- *	 Portions Copyright 2002, myinternet Limited. All rights reserved.
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/search.c,v 1.19.2.4 2004/01/01 18:16:39 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- *	 Redistribution and use in source and binary forms are permitted only
- *	 as authorized by the OpenLDAP Public License.	A copy of this
- *	 license is available at http://www.OpenLDAP.org/license.html or
- *	 in file LICENSE in the top-level directory of the distribution.
+ * Copyright 1999-2004 The OpenLDAP Foundation.
+ * Portions Copyright 1999 John C. Quillan.
+ * Portions Copyright 2002 myinternet Limited.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
+
+#include <EXTERN.h>
+#include <perl.h>
+#undef _ /* #defined by both Perl and ac/localize.h */
+
+#ifdef HAVE_WIN32_ASPERL
+#include "asperl_undefs.h"
+#endif
 
 #include "portable.h"
 
 #include <stdio.h>
 
 #include "slap.h"
-#ifdef HAVE_WIN32_ASPERL
-#include "asperl_undefs.h"
-#endif
-
-#include <EXTERN.h>
-#include <perl.h>
 
 #include "perl_back.h"
 
@@ -30,31 +38,15 @@
  **********************************************************/
 int
 perl_back_search(
-	Backend *be,
-	Connection *conn,
 	Operation *op,
-	struct berval *base,
-	struct berval *nbase,
-	int scope,
-	int deref,
-	int sizelimit,
-	int timelimit,
-	Filter *filter,
-	struct berval *filterstr,
-	AttributeName *attrs,
-	int attrsonly
-	)
+	SlapReply *rs )
 {
-	char test[500];
+	PerlBackend *perl_back = (PerlBackend *)op->o_bd->be_private;
 	int count ;
-	int err = 0;
-	char *matched = NULL, *info = NULL;
-	PerlBackend *perl_back = (PerlBackend *)be->be_private;
 	AttributeName *an;
 	Entry	*e;
 	char *buf;
 	int i;
-	int return_code;
 
 	ldap_pvt_thread_mutex_lock( &perl_interpreter_mutex );	
 
@@ -63,15 +55,15 @@ perl_back_search(
 
 		PUSHMARK(sp) ;
 		XPUSHs( perl_back->pb_obj_ref );
-		XPUSHs(sv_2mortal(newSVpv( nbase->bv_val , 0)));
-		XPUSHs(sv_2mortal(newSViv( scope )));
-		XPUSHs(sv_2mortal(newSViv( deref )));
-		XPUSHs(sv_2mortal(newSViv( sizelimit )));
-		XPUSHs(sv_2mortal(newSViv( timelimit )));
-		XPUSHs(sv_2mortal(newSVpv( filterstr->bv_val , 0)));
-		XPUSHs(sv_2mortal(newSViv( attrsonly )));
+		XPUSHs(sv_2mortal(newSVpv( op->o_req_ndn.bv_val , 0)));
+		XPUSHs(sv_2mortal(newSViv( op->ors_scope )));
+		XPUSHs(sv_2mortal(newSViv( op->ors_deref )));
+		XPUSHs(sv_2mortal(newSViv( op->ors_slimit )));
+		XPUSHs(sv_2mortal(newSViv( op->ors_tlimit )));
+		XPUSHs(sv_2mortal(newSVpv( op->ors_filterstr.bv_val , 0)));
+		XPUSHs(sv_2mortal(newSViv( op->ors_attrsonly )));
 
-		for ( an = attrs; an && an->an_name.bv_val; an++ ) {
+		for ( an = op->ors_attrs; an && an->an_name.bv_val; an++ ) {
 			XPUSHs(sv_2mortal(newSVpv( an->an_name.bv_val , 0)));
 		}
 		PUTBACK;
@@ -101,13 +93,14 @@ perl_back_search(
 					int send_entry;
 
 					if (perl_back->pb_filter_search_results)
-						send_entry = (test_filter( be, conn, op, e, filter ) == LDAP_COMPARE_TRUE);
+						send_entry = (test_filter( op, e, op->ors_filter ) == LDAP_COMPARE_TRUE);
 					else
 						send_entry = 1;
 
 					if (send_entry) {
-						send_search_entry( be, conn, op,
-							e, attrs, attrsonly, NULL );
+						rs->sr_entry = e;
+						rs->sr_attrs = op->ors_attrs;
+						send_search_entry( op, rs );
 					}
 
 					entry_free( e );
@@ -124,7 +117,7 @@ perl_back_search(
 		 * ex stack: <$res_2> <$res_1> <0>
 		 */
 
-		return_code = POPi;
+		rs->sr_err = POPi;
 
 
 
@@ -133,8 +126,7 @@ perl_back_search(
 
 	ldap_pvt_thread_mutex_unlock( &perl_interpreter_mutex );	
 
-	send_ldap_result( conn, op, return_code,
-		NULL, NULL, NULL, NULL );
+	send_ldap_result( op, rs );
 
 	return 0;
 }

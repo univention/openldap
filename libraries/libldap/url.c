@@ -1,14 +1,24 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/url.c,v 1.64.2.5 2003/03/03 17:10:05 kurt Exp $ */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+/* LIBLDAP url.c -- LDAP URL (RFC 2255) related routines */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/url.c,v 1.74.2.3 2004/01/01 18:16:30 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 1998-2004 The OpenLDAP Foundation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
-/*  Portions
- *  Copyright (c) 1996 Regents of the University of Michigan.
- *  All rights reserved.
- *
- *  LIBLDAP url.c -- LDAP URL (RFC 2255) related routines
- *
+/* Portions Copyright (c) 1996 Regents of the University of Michigan.
+ * All rights reserved.
+ */
+
+
+/*
  *  LDAP URLs look like this:
  *    ldap[is]://host:port[/[dn[?[attributes][?[scope][?[filter][?exts]]]]]]
  *
@@ -224,7 +234,7 @@ static int str2scope( const char *p )
 	if ( strcasecmp( p, "one" ) == 0 ) {
 		return LDAP_SCOPE_ONELEVEL;
 
-	} else if ( strcasecmp( p, "onetree" ) == 0 ) {
+	} else if ( strcasecmp( p, "onelevel" ) == 0 ) {
 		return LDAP_SCOPE_ONELEVEL;
 
 	} else if ( strcasecmp( p, "base" ) == 0 ) {
@@ -355,7 +365,7 @@ char * ldap_url_desc2str( LDAPURLDesc *u )
 	};
 
 	if( u->lud_port ) {
-		len+=6;
+		len += sizeof(":65535") - 1;
 	}
 
 	if( u->lud_host ) {

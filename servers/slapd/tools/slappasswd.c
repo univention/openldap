@@ -1,7 +1,21 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/tools/slappasswd.c,v 1.12.2.2 2003/03/31 16:48:17 kurt Exp $ */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+/* $OpenLDAP: pkg/ldap/servers/slapd/tools/slappasswd.c,v 1.15.2.6 2004/01/10 18:26:47 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Portions Copyright 1998-2003 Kurt D. Zeilenga.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
+ */
+/* ACKNOWLEDGEMENTS:
+ * This work was initially developed by Kurt Zeilenga for inclusion
+ * in OpenLDAP Software.
  */
 
 #include "portable.h"
@@ -34,7 +48,7 @@ usage(const char *s)
 		"  -c format\tcrypt(3) salt format\n"
 		"  -u\t\tgenerate RFC2307 values (default)\n"
 		"  -v\t\tincrease verbosity\n"
-		"  -T file\tread password from verbosity\n"
+		"  -T file\tread file for new password\n"
 		, s );
 
 	exit( EXIT_FAILURE );
@@ -46,6 +60,7 @@ main( int argc, char *argv[] )
 	char	*scheme = "{SSHA}";
 	char	*newpw = NULL;
 	char	*pwfile = NULL;
+	const char *text;
 
 	int		i;
 	struct berval passwd;
@@ -115,15 +130,17 @@ main( int argc, char *argv[] )
 		passwd.bv_len = strlen(passwd.bv_val);
 	}
 
-	hash = lutil_passwd_hash( &passwd, scheme );
-
+	hash = lutil_passwd_hash( &passwd, scheme, &text );
 	if( hash == NULL || hash->bv_val == NULL ) {
-		fprintf( stderr, "Password generation failed.\n");
+		fprintf( stderr,
+			"Password generation failed for scheme %s: %s\n",
+			scheme, text ? text : "" );
 		return EXIT_FAILURE;
 	}
 
-	if( lutil_passwd( hash, &passwd, NULL ) ) {
-		fprintf( stderr, "Password verification failed.\n");
+	if( lutil_passwd( hash, &passwd, NULL, &text ) ) {
+		fprintf( stderr, "Password verification failed. %s\n",
+			text ? text : "" );
 		return EXIT_FAILURE;
 	}
 

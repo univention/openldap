@@ -1,10 +1,21 @@
-/*
- *	 Copyright 1999, Dmitry Kovalev <mit@openldap.org>, All rights reserved.
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/init.c,v 1.23.2.7 2004/01/20 23:44:21 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- *	 Redistribution and use in source and binary forms are permitted only
- *	 as authorized by the OpenLDAP Public License.	A copy of this
- *	 license is available at http://www.OpenLDAP.org/license.html or
- *	 in file LICENSE in the top-level directory of the distribution.
+ * Copyright 1999-2004 The OpenLDAP Foundation.
+ * Portions Copyright 1999 Dmitry Kovalev.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
+ */
+/* ACKNOWLEDGEMENTS:
+ * This work was initially developed by Dmitry Kovalev for inclusion
+ * by OpenLDAP Software.
  */
 
 #include "portable.h"
@@ -13,17 +24,15 @@
 
 #include <stdio.h>
 #include <sys/types.h>
+
 #include "slap.h"
 #include "ldap_pvt.h"
-#include "back-sql.h"
-#include "sql-wrap.h"
-#include "schema-map.h"
-#include "util.h"
+#include "proto-sql.h"
 
 #ifdef SLAPD_SQL_DYNAMIC
 
 int
-backsql_LTX_init_module(
+init_module(
 	int 		argc, 
 	char 		*argv[] )
 {
@@ -37,19 +46,21 @@ backsql_LTX_init_module(
 	return 0;
 }
 
-#endif /* SLAPD_SHELL_DYNAMIC */
+#endif /* SLAPD_SQL_DYNAMIC */
 
 int
 sql_back_initialize(
 	BackendInfo	*bi )
 { 
 	static char *controls[] = {
+#if 0 /* needs updating */
 #ifdef LDAP_CONTROL_NOOP
 		LDAP_CONTROL_NOOP,
+#endif /* LDAP_CONTROL_NOOP */
 #endif
 #ifdef LDAP_CONTROL_VALUESRETURNFILTER
  		LDAP_CONTROL_VALUESRETURNFILTER,
-#endif
+#endif /* LDAP_CONTROL_VALUESRETURNFILTER */
 		NULL
 	};
 
@@ -68,23 +79,16 @@ sql_back_initialize(
 	bi->bi_db_close = backsql_db_close;
 	bi->bi_db_destroy = backsql_db_destroy;
 
-#ifdef BACKSQL_ALL_DONE
-	bi->bi_op_abandon = backsql_abandon;
-	bi->bi_op_compare = backsql_compare;
-#else
 	bi->bi_op_abandon = 0;
-	bi->bi_op_compare = 0;
-#endif
+	bi->bi_op_compare = backsql_compare;
 	bi->bi_op_bind = backsql_bind;
-	bi->bi_op_unbind = backsql_unbind;
+	bi->bi_op_unbind = 0;
 	bi->bi_op_search = backsql_search;
 	bi->bi_op_modify = backsql_modify;
 	bi->bi_op_modrdn = backsql_modrdn;
 	bi->bi_op_add = backsql_add;
 	bi->bi_op_delete = backsql_delete;
 	
-	bi->bi_acl_group = 0;
-	bi->bi_acl_attribute = 0;
 	bi->bi_chk_referrals = 0;
 	bi->bi_operational = backsql_operational;
  
@@ -168,11 +172,12 @@ backsql_db_open(
 	BackendDB 	*bd )
 {
 	backsql_info 	*si = (backsql_info*)bd->be_private;
-	Connection 	tmp;
 	SQLHDBC 	dbh;
 	ber_len_t	idq_len;
-	struct berval	bv;
+	struct berbuf	bb = BB_NULL;
 
+	Operation	otmp;
+		
 	Debug( LDAP_DEBUG_TRACE, "==>backsql_db_open(): "
 		"testing RDBMS connection\n", 0, 0, 0 );
 	if ( si->dbname == NULL ) {
@@ -221,7 +226,10 @@ backsql_db_open(
 			ber_str2bv( /* (? */ ")", 0, 1, &si->upper_func_close );
 		}
 	}
-	
+
+	/* normalize filter values only if necessary */
+	si->bi_caseIgnoreMatch = mr_find( "caseIgnoreMatch" );
+
 	if ( si->dbuser == NULL ) {
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"user name not specified "
@@ -234,12 +242,12 @@ backsql_db_open(
 		 * Prepare concat function for subtree search condition
 		 */
 		struct berval	concat;
-		ber_len_t	len = 0;
 		struct berval	values[] = {
 			{ sizeof( "'%'" ) - 1,	"'%'" },
 			{ sizeof( "?" ) - 1,	"?" },
 			{ 0,			NULL }
 		};
+		struct berbuf	bb = BB_NULL;
 
 		if ( backsql_prepare_pattern( si->concat_func, values, 
 				&concat ) ) {
@@ -253,16 +261,13 @@ backsql_db_open(
 			"(use \"subtree_cond\" directive in slapd.conf)\n", 
 			0, 0, 0);
 
-		si->subtree_cond.bv_val = NULL;
-		si->subtree_cond.bv_len = 0;
-
 		if ( si->upper_func.bv_val ) {
 
 			/*
 			 * UPPER(ldap_entries.dn) LIKE UPPER(CONCAT('%',?))
 			 */
 
-			backsql_strfcat( &si->subtree_cond, &len, "blbbb",
+			backsql_strfcat( &bb, "blbbb",
 					&si->upper_func,
 					(ber_len_t)sizeof( "(ldap_entries.dn) LIKE " ) - 1,
 						"(ldap_entries.dn) LIKE ",
@@ -276,11 +281,13 @@ backsql_db_open(
 			 * ldap_entries.dn LIKE CONCAT('%',?)
 			 */
 
-			backsql_strfcat( &si->subtree_cond, &len, "lb",
+			backsql_strfcat( &bb, "lb",
 					(ber_len_t)sizeof( "ldap_entries.dn LIKE " ) - 1,
 						"ldap_entries.dn LIKE ",
 					&concat );
 		}
+
+		si->subtree_cond = bb.bb_val;
 			
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"setting '%s' as default\n",
@@ -288,7 +295,7 @@ backsql_db_open(
 	}
 
 	if ( si->children_cond.bv_val == NULL ) {
-		ber_len_t	len = 0;
+		struct berbuf	bb = BB_NULL;
 
 		if ( si->upper_func.bv_val ) {
 
@@ -296,7 +303,7 @@ backsql_db_open(
 			 * UPPER(ldap_entries.dn) LIKE UPPER(CONCAT('%,',?))
 			 */
 
-			backsql_strfcat( &si->children_cond, &len, "blbl",
+			backsql_strfcat( &bb, "blbl",
 					&si->upper_func,
 					(ber_len_t)sizeof( "(ldap_entries.dn)=" ) - 1,
 						"(ldap_entries.dn)=",
@@ -309,10 +316,12 @@ backsql_db_open(
 			 * ldap_entries.dn LIKE CONCAT('%,',?)
 			 */
 
-			backsql_strfcat( &si->children_cond, &len, "l",
+			backsql_strfcat( &bb, "l",
 					(ber_len_t)sizeof( "ldap_entries.dn=?" ) - 1,
 						"ldap_entries.dn=?");
 		}
+
+		si->children_cond = bb.bb_val;
 			
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"setting '%s' as default\n",
@@ -369,9 +378,9 @@ backsql_db_open(
 		si->delentry_query = ch_strdup( backsql_def_delentry_query );
 	}
 
-
-	tmp.c_connid =- 1;
-	if ( backsql_get_db_conn( bd, &tmp, &dbh ) != LDAP_SUCCESS ) {
+	otmp.o_connid = -1;
+	otmp.o_bd = bd;
+	if ( backsql_get_db_conn( &otmp, &dbh ) != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"connection failed, exiting\n", 0, 0, 0 );
 		return 1;
@@ -383,23 +392,20 @@ backsql_db_open(
 	si->id_query = NULL;
 	idq_len = 0;
 
-	bv.bv_val = NULL;
-	bv.bv_len = 0;
 	if ( si->upper_func.bv_val == NULL ) {
-		backsql_strcat( &bv, &idq_len, backsql_id_query, 
-				"dn=?", NULL );
+		backsql_strcat( &bb, backsql_id_query, "dn=?", NULL );
 	} else {
 		if ( BACKSQL_HAS_LDAPINFO_DN_RU( si ) ) {
-			backsql_strcat( &bv, &idq_len, backsql_id_query,
+			backsql_strcat( &bb, backsql_id_query,
 					"dn_ru=?", NULL );
 		} else {
 			if ( BACKSQL_USE_REVERSE_DN( si ) ) {
-				backsql_strfcat( &bv, &idq_len, "sbl",
+				backsql_strfcat( &bb, "sbl",
 						backsql_id_query,
 						&si->upper_func, 
 						(ber_len_t)sizeof( "(dn)=?" ) - 1, "(dn)=?" );
 			} else {
-				backsql_strfcat( &bv, &idq_len, "sblbcb",
+				backsql_strfcat( &bb, "sblbcb",
 						backsql_id_query,
 						&si->upper_func, 
 						(ber_len_t)sizeof( "(dn)=" ) - 1, "(dn)=",
@@ -409,23 +415,23 @@ backsql_db_open(
 			}
 		}
 	}
-	si->id_query = bv.bv_val;
+	si->id_query = bb.bb_val.bv_val;
 
        	/*
 	 * Prepare children ID selection query
 	 */
 	si->has_children_query = NULL;
-	idq_len = 0;
 
-	bv.bv_val = NULL;
-	bv.bv_len = 0;
-	backsql_strfcat( &bv, &idq_len, "sb",
-			"SELECT COUNT(distinct subordinates.id) FROM ldap_entries,ldap_entries AS subordinates WHERE subordinates.parent=ldap_entries.id AND ",
+	bb.bb_val.bv_val = NULL;
+	bb.bb_val.bv_len = 0;
+	bb.bb_len = 0;
+	backsql_strfcat( &bb, "sb",
+			"SELECT COUNT(distinct subordinates.id) FROM ldap_entries,ldap_entries subordinates WHERE subordinates.parent=ldap_entries.id AND ",
 
 			&si->children_cond );
-	si->has_children_query = bv.bv_val;
+	si->has_children_query = bb.bb_val.bv_val;
  
-	backsql_free_db_conn( bd, &tmp );
+	backsql_free_db_conn( &otmp );
 	if ( !BACKSQL_SCHEMA_LOADED( si ) ) {
 		Debug( LDAP_DEBUG_TRACE, "backsql_db_open(): "
 			"test failed, schema map not loaded - exiting\n",
@@ -448,12 +454,14 @@ backsql_db_close(
 }
 
 int
-backsql_connection_destroy(
-	BackendDB 	*be,
-	Connection 	*conn )
+backsql_connection_destroy( Backend *bd, Connection *c )
 {
+	Operation o;
+	o.o_bd = bd;
+	o.o_connid = c->c_connid;
+
 	Debug( LDAP_DEBUG_TRACE, "==>backsql_connection_destroy()\n", 0, 0, 0 );
-	backsql_free_db_conn( be, conn );
+	backsql_free_db_conn( &o );
 	Debug( LDAP_DEBUG_TRACE, "<==backsql_connection_destroy()\n", 0, 0, 0 );
 	return 0;
 }

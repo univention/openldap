@@ -1,13 +1,16 @@
-/* $OpenLDAP: pkg/ldap/include/lutil.h,v 1.37.2.10 2003/03/03 17:10:03 kurt Exp $ */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
+/* $OpenLDAP: pkg/ldap/include/lutil.h,v 1.49.2.3 2004/01/01 18:16:28 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 1998-2004 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted only as authorized by the OpenLDAP
- * Public License.  A copy of this license is available at
- * http://www.OpenLDAP.org/license.html or in file LICENSE in the
- * top-level directory of the distribution.
+ * Public License.
+ *
+ * A copy of this license is available in file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
 
 #ifndef _LUTIL_H
@@ -26,7 +29,7 @@ LDAP_BEGIN_DECL
 /* Avoid floating point math through extra padding */
 
 #define LUTIL_BASE64_ENCODE_LEN(n)	(((n)+2)/3 * 4)
-#define LUTIL_BASE64_DECODE_LEN(n)	(((n)+3)/4 * 3)
+#define LUTIL_BASE64_DECODE_LEN(n)	((n)/4*3)
 
 /* ISC Base64 Routines */
 /* base64.c */
@@ -57,7 +60,7 @@ lutil_entropy LDAP_P((
 	ber_len_t nbytes ));
 
 /* passfile.c */
-struct berval; /* avoid pulling in lber.h */
+struct berval;	/* avoid pulling in lber.h */
 
 LDAP_LUTIL_F( int )
 lutil_get_filed_password LDAP_P((
@@ -65,6 +68,31 @@ lutil_get_filed_password LDAP_P((
 	struct berval * ));
 
 /* passwd.c */
+struct lutil_pw_scheme;
+
+typedef int (LUTIL_PASSWD_CHK_FUNC)(
+	const struct berval *scheme,
+	const struct berval *passwd,
+	const struct berval *cred,
+	const char **text );
+
+typedef struct berval * (LUTIL_PASSWD_HASH_FUNC) (
+	const struct berval *scheme,
+	const struct berval *passwd,
+	const char **text );
+
+LDAP_LUTIL_F( int )
+lutil_passwd_add LDAP_P((
+	struct berval *scheme,
+	LUTIL_PASSWD_CHK_FUNC *chk_fn,
+	LUTIL_PASSWD_HASH_FUNC *hash_fn ));
+
+LDAP_LUTIL_F( void )
+lutil_passwd_init LDAP_P(( void ));
+
+LDAP_LUTIL_F( void )
+lutil_passwd_destroy LDAP_P(( void ));
+
 LDAP_LUTIL_F( int )
 lutil_authpasswd LDAP_P((
 	const struct berval *passwd,	/* stored password */
@@ -87,7 +115,8 @@ LDAP_LUTIL_F( int )
 lutil_passwd LDAP_P((
 	const struct berval *passwd,	/* stored password */
 	const struct berval *cred,	/* user supplied value */
-	const char **methods ));
+	const char **methods,
+	const char **text ));			/* error message */
 
 LDAP_LUTIL_F( struct berval * )
 lutil_passwd_generate LDAP_P(( ber_len_t ));
@@ -95,7 +124,8 @@ lutil_passwd_generate LDAP_P(( ber_len_t ));
 LDAP_LUTIL_F( struct berval * )
 lutil_passwd_hash LDAP_P((
 	const struct berval *passwd,
-	const char *method ));
+	const char *method,
+	const char **text ));
 
 LDAP_LUTIL_F( int )
 lutil_passwd_scheme LDAP_P((
@@ -122,8 +152,10 @@ struct tm;
 
 /* use this macro to statically allocate buffer for lutil_gentime */
 #define LDAP_LUTIL_GENTIME_BUFSIZE	22
+#define lutil_gentime(s,m,t)	lutil_localtime((s),(m),(t),0)
 LDAP_LUTIL_F( size_t )
-lutil_gentime LDAP_P(( char *s, size_t max, const struct tm *tm ));
+lutil_localtime LDAP_P(( char *s, size_t smax, const struct tm *tm,
+			long delta ));
 
 #ifndef HAVE_MKSTEMP
 LDAP_LUTIL_F( int )

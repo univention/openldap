@@ -1,9 +1,17 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/tls.c,v 1.69.2.15 2003/05/06 13:02:21 kurt Exp $ */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+/* tls.c - Handle tls/ssl using SSLeay or OpenSSL. */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/tls.c,v 1.106.2.3 2004/01/01 18:16:30 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * tls.c - Handle tls/ssl using SSLeay or OpenSSL.
+ * Copyright 1998-2004 The OpenLDAP Foundation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
 
 #include "portable.h"
@@ -112,6 +120,7 @@ ldap_pvt_tls_destroy( void )
 	tls_def_ctx = NULL;
 
 	EVP_cleanup();
+	ERR_remove_state(0);
 	ERR_free_strings();
 
 	if ( tls_opt_certfile ) {
@@ -233,7 +242,7 @@ ldap_pvt_tls_init_def_ctx( void )
 		}
 
 		SSL_CTX_set_session_id_context( tls_def_ctx,
-			"OpenLDAP", sizeof("OpenLDAP")-1 );
+			(const unsigned char *) "OpenLDAP", sizeof("OpenLDAP")-1 );
 
 		if ( tls_opt_ciphersuite &&
 			!SSL_CTX_set_cipher_list( tls_def_ctx, ciphersuite ) )
@@ -857,45 +866,6 @@ ldap_pvt_tls_inplace ( Sockbuf *sb )
 	return HAS_TLS( sb ) ? 1 : 0;
 }
 
-void *
-ldap_pvt_tls_sb_ctx( Sockbuf *sb )
-{
-	void			*p;
-	
-	if (HAS_TLS( sb )) {
-		ber_sockbuf_ctrl( sb, LBER_SB_OPT_GET_SSL, (void *)&p );
-		return p;
-	}
-
-	return NULL;
-}
-
-int
-ldap_pvt_tls_get_strength( void *s )
-{
-	SSL_CIPHER *c;
-
-	c = SSL_get_current_cipher((SSL *)s);
-	return SSL_CIPHER_get_bits(c, NULL);
-}
-
-
-int
-ldap_pvt_tls_get_my_dn( void *s, struct berval *dn, LDAPDN_rewrite_dummy *func, unsigned flags )
-{
-	X509 *x;
-	X509_NAME *xn;
-	int rc;
-
-	x = SSL_get_certificate((SSL *)s);
-
-	if (!x) return LDAP_INVALID_CREDENTIALS;
-	
-	xn = X509_get_subject_name(x);
-	rc = ldap_X509dn2bv(xn, dn, (LDAPDN_rewrite_func *)func, flags );
-	return rc;
-}
-
 static X509 *
 tls_get_cert( SSL *s )
 {
@@ -1036,7 +1006,7 @@ ldap_pvt_tls_check_hostname( LDAP *ld, void *s, const char *name_in )
 				if (gn->type == GEN_DNS) {
 					if (ntype != IS_DNS) continue;
 
-					sn = ASN1_STRING_data(gn->d.ia5);
+					sn = (char *) ASN1_STRING_data(gn->d.ia5);
 					sl = ASN1_STRING_length(gn->d.ia5);
 
 					/* Is this an exact match? */
@@ -1060,7 +1030,7 @@ ldap_pvt_tls_check_hostname( LDAP *ld, void *s, const char *name_in )
 				} else if (gn->type == GEN_IPADD) {
 					if (ntype == IS_DNS) continue;
 
-					sn = ASN1_STRING_data(gn->d.ia5);
+					sn = (char *) ASN1_STRING_data(gn->d.ia5);
 					sl = ASN1_STRING_length(gn->d.ia5);
 
 #ifdef LDAP_PF_INET6
@@ -1102,7 +1072,8 @@ ldap_pvt_tls_check_hostname( LDAP *ld, void *s, const char *name_in )
 				"TLS: unable to get common name from peer certificate.\n",
 				0, 0, 0 );
 #endif
-			ld->ld_error = LDAP_STRDUP("TLS: unable to get CN from peer certificate");
+			ld->ld_error = LDAP_STRDUP(
+				_("TLS: unable to get CN from peer certificate"));
 
 		} else if (strcasecmp(name, buf)) {
 #ifdef NEW_LOGGING
@@ -1115,7 +1086,8 @@ ldap_pvt_tls_check_hostname( LDAP *ld, void *s, const char *name_in )
 				name, buf, 0 );
 #endif
 			ret = LDAP_CONNECT_ERROR;
-			ld->ld_error = LDAP_STRDUP("TLS: hostname does not match CN in peer certificate");
+			ld->ld_error = LDAP_STRDUP(
+				_("TLS: hostname does not match CN in peer certificate"));
 
 		} else {
 			ret = LDAP_SUCCESS;
@@ -1398,22 +1370,6 @@ ldap_int_tls_start ( LDAP *ld, LDAPConn *conn, LDAPURLDesc *srv )
 		if (ld->ld_errno != LDAP_SUCCESS) {
 			return ld->ld_errno;
 		}
-	}
-
-	/*
-	 * set SASL properties to TLS ssf and authid
-	 */
-	{
-		struct berval authid = { 0, NULL };
-		ber_len_t ssf;
-
-		/* we need to let SASL know */
-		ssf = ldap_pvt_tls_get_strength( ssl );
-		/* failure is OK, we just can't use SASL EXTERNAL */
-		(void) ldap_pvt_tls_get_my_dn( ssl, &authid, NULL, 0 );
-
-		(void) ldap_int_sasl_external( ld, conn, authid.bv_val, ssf );
-		LDAP_FREE( authid.bv_val );
 	}
 
 	return LDAP_SUCCESS;
@@ -1705,6 +1661,55 @@ tls_tmp_dh_cb( SSL *ssl, int is_export, int key_length )
 #endif
 #endif
 
+void *
+ldap_pvt_tls_sb_ctx( Sockbuf *sb )
+{
+#ifdef HAVE_TLS
+	void			*p;
+	
+	if (HAS_TLS( sb )) {
+		ber_sockbuf_ctrl( sb, LBER_SB_OPT_GET_SSL, (void *)&p );
+		return p;
+	}
+#endif
+
+	return NULL;
+}
+
+int
+ldap_pvt_tls_get_strength( void *s )
+{
+#ifdef HAVE_TLS
+	SSL_CIPHER *c;
+
+	c = SSL_get_current_cipher((SSL *)s);
+	return SSL_CIPHER_get_bits(c, NULL);
+#else
+	return 0;
+#endif
+}
+
+
+int
+ldap_pvt_tls_get_my_dn( void *s, struct berval *dn, LDAPDN_rewrite_dummy *func, unsigned flags )
+{
+#ifdef HAVE_TLS
+	X509 *x;
+	X509_NAME *xn;
+	int rc;
+
+	x = SSL_get_certificate((SSL *)s);
+
+	if (!x) return LDAP_INVALID_CREDENTIALS;
+	
+	xn = X509_get_subject_name(x);
+	rc = ldap_X509dn2bv(xn, dn, (LDAPDN_rewrite_func *)func, flags );
+	return rc;
+#else
+	return LDAP_NOT_SUPPORTED;
+#endif
+}
+
 int
 ldap_start_tls_s ( LDAP *ld,
 	LDAPControl **serverctrls,
@@ -1736,6 +1741,7 @@ ldap_start_tls_s ( LDAP *ld,
 	if ( rc == LDAP_SUCCESS ) {
 		rc = ldap_int_tls_start( ld, ld->ld_defconn, NULL );
 	}
+
 #else
 	rc = LDAP_NOT_SUPPORTED;
 #endif

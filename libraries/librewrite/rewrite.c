@@ -1,26 +1,21 @@
-/******************************************************************************
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/rewrite.c,v 1.6.2.4 2004/01/01 18:16:32 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright (C) 2000 Pierangelo Masarati, <ando@sys-net.it>
+ * Copyright 2000-2004 The OpenLDAP Foundation.
  * All rights reserved.
  *
- * Permission is granted to anyone to use this software for any purpose
- * on any computer system, and to alter it and redistribute it, subject
- * to the following restrictions:
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
  *
- * 1. The author is not responsible for the consequences of use of this
- * software, no matter how awful, even if they arise from flaws in it.
- *
- * 2. The origin of this software must not be misrepresented, either by
- * explicit claim or by omission.  Since few users ever read sources,
- * credits should appear in the documentation.
- *
- * 3. Altered versions must be plainly marked as such, and must not be
- * misrepresented as being the original software.  Since few users
- * ever read sources, credits should appear in the documentation.
- * 
- * 4. This notice may not be removed or altered.
- *
- ******************************************************************************/
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
+ */
+/* ACKNOWLEDGEMENT:
+ * This work was initially developed by Pierangelo Masarati for
+ * inclusion in OpenLDAP Software.
+ */
 
 #include <portable.h>
 
@@ -52,7 +47,7 @@ apply(
 	int rc;
 	void *cookie = &info;
 
-	info = rewrite_info_init(REWRITE_MODE_ERR);
+	info = rewrite_info_init( REWRITE_MODE_ERR );
 
 	if ( rewrite_read( fin, info ) != 0 ) {
 		exit( EXIT_FAILURE );
@@ -67,6 +62,8 @@ apply(
 			rewriteContext != NULL;
 			rewriteContext = sep,
 			sep ? sep = strchr( rewriteContext, ',' ) : NULL ) {
+		char	*errmsg = "";
+
 		if ( sep != NULL ) {
 			sep[ 0 ] = '\0';
 			sep++;
@@ -75,8 +72,35 @@ apply(
 		rc = rewrite_session( info, rewriteContext, string,
 				cookie, &result );
 		
-		fprintf( stdout, "%s -> %s\n", string, 
-				( result ? result : "unwilling to perform" ) );
+		switch ( rc ) {
+		case REWRITE_REGEXEC_OK:
+			errmsg = "ok";
+			break;
+
+		case REWRITE_REGEXEC_ERR:
+			errmsg = "error";
+			break;
+
+		case REWRITE_REGEXEC_STOP:
+			errmsg = "stop";
+			break;
+
+		case REWRITE_REGEXEC_UNWILLING:
+			errmsg = "unwilling to perform";
+			break;
+
+		default:
+			if (rc >= REWRITE_REGEXEC_USER) {
+				errmsg = "user-defined";
+			} else {
+				errmsg = "unknown";
+			}
+			break;
+		}
+		
+		fprintf( stdout, "%s -> %s [%d:%s]\n", string, 
+				( result ? result : "(null)" ),
+				rc, errmsg );
 		if ( result == NULL ) {
 			break;
 		}
@@ -84,7 +108,11 @@ apply(
 		string = result;
 	}
 
+	free( string );
+
 	rewrite_session_delete( info, cookie );
+
+	rewrite_info_delete( &info );
 
 	return result;
 }
@@ -128,7 +156,7 @@ main( int argc, char *argv[] )
 			exit( EXIT_SUCCESS );
 			
 		case 'r':
-			rewriteContext = strdup( optarg );
+			rewriteContext = optarg;
 			break;
 		}
 	}
@@ -138,6 +166,10 @@ main( int argc, char *argv[] )
 	}
 
 	apply( ( fin ? fin : stdin ), rewriteContext, argv[ optind ] );
+
+	if ( fin ) {
+		fclose( fin );
+	}
 
 	return 0;
 }

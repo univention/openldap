@@ -1,8 +1,17 @@
 /* filterindex.c - generate the list of candidate entries from a filter */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/filterindex.c,v 1.18.2.11 2003/05/23 00:31:33 hyc Exp $ */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/filterindex.c,v 1.44.2.3 2004/01/01 18:16:36 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 2000-2004 The OpenLDAP Foundation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
 
 #include "portable.h"
@@ -14,28 +23,28 @@
 #include "idl.h"
 
 static int presence_candidates(
-	Backend *be,
+	Operation *op,
 	AttributeDescription *desc,
 	ID *ids );
 
 static int equality_candidates(
-	Backend *be,
+	Operation *op,
 	AttributeAssertion *ava,
 	ID *ids,
 	ID *tmp );
 static int approx_candidates(
-	Backend *be,
+	Operation *op,
 	AttributeAssertion *ava,
 	ID *ids,
 	ID *tmp );
 static int substring_candidates(
-	Backend *be,
+	Operation *op,
 	SubstringsAssertion *sub,
 	ID *ids,
 	ID *tmp );
 
 static int list_candidates(
-	Backend *be,
+	Operation *op,
 	Filter *flist,
 	int ftype,
 	ID *ids,
@@ -44,7 +53,7 @@ static int list_candidates(
 
 int
 bdb_filter_candidates(
-	Backend	*be,
+	Operation *op,
 	Filter	*f,
 	ID *ids,
 	ID *tmp,
@@ -69,19 +78,23 @@ bdb_filter_candidates(
 			BDB_IDL_ZERO( ids );
 			break;
 		case LDAP_COMPARE_TRUE: {
-				struct bdb_info *bdb = (struct bdb_info *) be->be_private;
-				BDB_IDL_ALL( bdb, ids );
+			struct bdb_info *bdb = (struct bdb_info *)op->o_bd->be_private;
+			BDB_IDL_ALL( bdb, ids );
 			} break;
+		case LDAP_SUCCESS:
+		/* this is a pre-computed scope, leave it alone */
+			break;
 		}
 		break;
-
+#if 0	/* Not used any more, search calls bdb_dn2idl directly */
 	case SLAPD_FILTER_DN_ONE:
 #ifdef NEW_LOGGING
 		LDAP_LOG ( INDEX, ARGS, "=> bdb_filter_candidates: \tDN ONE\n", 0, 0, 0 );
 #else
 		Debug( LDAP_DEBUG_FILTER, "\tDN ONE\n", 0, 0, 0 );
 #endif
-		rc = bdb_dn2idl( be, f->f_dn, DN_ONE_PREFIX, ids );
+		rc = bdb_dn2idl( op->o_bd, f->f_dn, DN_ONE_PREFIX, ids,
+			stack, op->o_tmpmemctx );
 		if( rc == DB_NOTFOUND ) {
 			BDB_IDL_ZERO( ids );
 			rc = 0;
@@ -94,16 +107,17 @@ bdb_filter_candidates(
 #else
 		Debug( LDAP_DEBUG_FILTER, "\tDN SUBTREE\n", 0, 0, 0 );
 #endif
-		rc = bdb_dn2idl( be, f->f_dn, DN_SUBTREE_PREFIX, ids );
+		rc = bdb_dn2idl( op->o_bd, f->f_dn, DN_SUBTREE_PREFIX, ids,
+			stack, op->o_tmpmemctx );
 		break;
-
+#endif
 	case LDAP_FILTER_PRESENT:
 #ifdef NEW_LOGGING
 		LDAP_LOG ( INDEX, ARGS, "=> bdb_filter_candidates: \tPRESENT\n", 0, 0, 0 );
 #else
 		Debug( LDAP_DEBUG_FILTER, "\tPRESENT\n", 0, 0, 0 );
 #endif
-		rc = presence_candidates( be, f->f_desc, ids );
+		rc = presence_candidates( op, f->f_desc, ids );
 		break;
 
 	case LDAP_FILTER_EQUALITY:
@@ -112,7 +126,7 @@ bdb_filter_candidates(
 #else
 		Debug( LDAP_DEBUG_FILTER, "\tEQUALITY\n", 0, 0, 0 );
 #endif
-		rc = equality_candidates( be, f->f_ava, ids, tmp );
+		rc = equality_candidates( op, f->f_ava, ids, tmp );
 		break;
 
 	case LDAP_FILTER_APPROX:
@@ -121,7 +135,7 @@ bdb_filter_candidates(
 #else
 		Debug( LDAP_DEBUG_FILTER, "\tAPPROX\n", 0, 0, 0 );
 #endif
-		rc = approx_candidates( be, f->f_ava, ids, tmp );
+		rc = approx_candidates( op, f->f_ava, ids, tmp );
 		break;
 
 	case LDAP_FILTER_SUBSTRINGS:
@@ -130,7 +144,7 @@ bdb_filter_candidates(
 #else
 		Debug( LDAP_DEBUG_FILTER, "\tSUBSTRINGS\n", 0, 0, 0 );
 #endif
-		rc = substring_candidates( be, f->f_sub, ids, tmp );
+		rc = substring_candidates( op, f->f_sub, ids, tmp );
 		break;
 
 	case LDAP_FILTER_GE:
@@ -140,7 +154,7 @@ bdb_filter_candidates(
 #else
 		Debug( LDAP_DEBUG_FILTER, "\tGE\n", 0, 0, 0 );
 #endif
-		rc = presence_candidates( be, f->f_ava->aa_desc, ids );
+		rc = presence_candidates( op, f->f_ava->aa_desc, ids );
 		break;
 
 	case LDAP_FILTER_LE:
@@ -150,7 +164,7 @@ bdb_filter_candidates(
 #else
 		Debug( LDAP_DEBUG_FILTER, "\tLE\n", 0, 0, 0 );
 #endif
-		rc = presence_candidates( be, f->f_ava->aa_desc, ids );
+		rc = presence_candidates( op, f->f_ava->aa_desc, ids );
 		break;
 
 	case LDAP_FILTER_NOT:
@@ -160,7 +174,7 @@ bdb_filter_candidates(
 #else
 		Debug( LDAP_DEBUG_FILTER, "\tNOT\n", 0, 0, 0 );
 #endif
-                { struct bdb_info *bdb = (struct bdb_info *) be->be_private;
+		{ struct bdb_info *bdb = (struct bdb_info *) op->o_bd->be_private;
 		BDB_IDL_ALL( bdb, ids );
 		}
 		break;
@@ -171,7 +185,7 @@ bdb_filter_candidates(
 #else
 		Debug( LDAP_DEBUG_FILTER, "\tAND\n", 0, 0, 0 );
 #endif
-		rc = list_candidates( be, 
+		rc = list_candidates( op, 
 			f->f_and, LDAP_FILTER_AND, ids, tmp, stack );
 		break;
 
@@ -181,7 +195,7 @@ bdb_filter_candidates(
 #else
 		Debug( LDAP_DEBUG_FILTER, "\tOR\n", 0, 0, 0 );
 #endif
-		rc = list_candidates( be, 
+		rc = list_candidates( op, 
 			f->f_or, LDAP_FILTER_OR, ids, tmp, stack );
 		break;
 
@@ -193,7 +207,7 @@ bdb_filter_candidates(
 			(unsigned long) f->f_choice, 0, 0 );
 #endif
 		/* Must not return NULL, otherwise extended filters break */
-                { struct bdb_info *bdb = (struct bdb_info *) be->be_private;
+		{ struct bdb_info *bdb = (struct bdb_info *) op->o_bd->be_private;
 		BDB_IDL_ALL( bdb, ids );
 		}
 	}
@@ -215,14 +229,14 @@ bdb_filter_candidates(
 
 static int
 list_candidates(
-	Backend	*be,
+	Operation *op,
 	Filter	*flist,
 	int		ftype,
 	ID *ids,
 	ID *tmp,
 	ID *save )
 {
-	struct bdb_info *bdb = (struct bdb_info *) be->be_private;
+	struct bdb_info *bdb = (struct bdb_info *) op->o_bd->be_private;
 	int rc = 0;
 	Filter	*f;
 
@@ -232,7 +246,13 @@ list_candidates(
 	Debug( LDAP_DEBUG_FILTER, "=> bdb_list_candidates 0x%x\n", ftype, 0, 0 );
 #endif
 	for ( f = flist; f != NULL; f = f->f_next ) {
-		rc = bdb_filter_candidates( be, f, save, tmp,
+		/* ignore precomputed scopes */
+		if ( f->f_choice == SLAPD_FILTER_COMPUTED &&
+		     f->f_result == LDAP_SUCCESS ) {
+			continue;
+		}
+		BDB_IDL_ZERO( save );
+		rc = bdb_filter_candidates( op, f, save, tmp,
 			save+BDB_IDL_UM_SIZE );
 
 		if ( rc != 0 ) {
@@ -242,6 +262,7 @@ list_candidates(
 			}
 			break;
 		}
+
 		
 		if ( ftype == LDAP_FILTER_AND ) {
 			if ( f == flist ) {
@@ -289,11 +310,11 @@ list_candidates(
 
 static int
 presence_candidates(
-	Backend	*be,
+	Operation *op,
 	AttributeDescription *desc,
 	ID *ids )
 {
-	struct bdb_info *bdb = (struct bdb_info *) be->be_private;
+	struct bdb_info *bdb = (struct bdb_info *) op->o_bd->be_private;
 	DB *db;
 	int rc;
 	slap_mask_t mask;
@@ -313,7 +334,7 @@ presence_candidates(
 		return 0;
 	}
 
-	rc = bdb_index_param( be, desc, LDAP_FILTER_PRESENT,
+	rc = bdb_index_param( op->o_bd, desc, LDAP_FILTER_PRESENT,
 		&db, &mask, &prefix );
 
 	if( rc != LDAP_SUCCESS ) {
@@ -358,7 +379,7 @@ presence_candidates(
 		return -1;
 	}
 
-	rc = bdb_key_read( be, db, NULL, &prefix, ids );
+	rc = bdb_key_read( op->o_bd, db, NULL, &prefix, ids );
 
 	if( rc == DB_NOTFOUND ) {
 		BDB_IDL_ZERO( ids );
@@ -396,12 +417,12 @@ done:
 
 static int
 equality_candidates(
-	Backend	*be,
+	Operation *op,
 	AttributeAssertion *ava,
 	ID *ids,
 	ID *tmp )
 {
-	struct bdb_info *bdb = (struct bdb_info *) be->be_private;
+	struct bdb_info *bdb = (struct bdb_info *) op->o_bd->be_private;
 	DB	*db;
 	int i;
 	int rc;
@@ -420,7 +441,7 @@ equality_candidates(
 
 	BDB_IDL_ALL( bdb, ids );
 
-	rc = bdb_index_param( be, ava->aa_desc, LDAP_FILTER_EQUALITY,
+	rc = bdb_index_param( op->o_bd, ava->aa_desc, LDAP_FILTER_EQUALITY,
 		&db, &mask, &prefix );
 
 	if( rc != LDAP_SUCCESS ) {
@@ -467,7 +488,7 @@ equality_candidates(
 		mr,
 		&prefix,
 		&ava->aa_value,
-		&keys );
+		&keys, op->o_tmpmemctx );
 
 	if( rc != LDAP_SUCCESS ) {
 #ifdef NEW_LOGGING
@@ -498,7 +519,7 @@ equality_candidates(
 	}
 
 	for ( i= 0; keys[i].bv_val != NULL; i++ ) {
-		rc = bdb_key_read( be, db, NULL, &keys[i], tmp );
+		rc = bdb_key_read( op->o_bd, db, NULL, &keys[i], tmp );
 
 		if( rc == DB_NOTFOUND ) {
 			BDB_IDL_ZERO( ids );
@@ -543,7 +564,7 @@ equality_candidates(
 			break;
 	}
 
-	ber_bvarray_free( keys );
+	ber_bvarray_free_x( keys, op->o_tmpmemctx );
 
 #ifdef NEW_LOGGING
 	LDAP_LOG ( INDEX, RESULTS, 
@@ -563,12 +584,12 @@ equality_candidates(
 
 static int
 approx_candidates(
-	Backend	*be,
+	Operation *op,
 	AttributeAssertion *ava,
 	ID *ids,
 	ID *tmp )
 {
-	struct bdb_info *bdb = (struct bdb_info *) be->be_private;
+	struct bdb_info *bdb = (struct bdb_info *) op->o_bd->be_private;
 	DB	*db;
 	int i;
 	int rc;
@@ -587,7 +608,7 @@ approx_candidates(
 
 	BDB_IDL_ALL( bdb, ids );
 
-	rc = bdb_index_param( be, ava->aa_desc, LDAP_FILTER_APPROX,
+	rc = bdb_index_param( op->o_bd, ava->aa_desc, LDAP_FILTER_APPROX,
 		&db, &mask, &prefix );
 
 	if( rc != LDAP_SUCCESS ) {
@@ -639,7 +660,7 @@ approx_candidates(
 		mr,
 		&prefix,
 		&ava->aa_value,
-		&keys );
+		&keys, op->o_tmpmemctx );
 
 	if( rc != LDAP_SUCCESS ) {
 #ifdef NEW_LOGGING
@@ -670,7 +691,7 @@ approx_candidates(
 	}
 
 	for ( i= 0; keys[i].bv_val != NULL; i++ ) {
-		rc = bdb_key_read( be, db, NULL, &keys[i], tmp );
+		rc = bdb_key_read( op->o_bd, db, NULL, &keys[i], tmp );
 
 		if( rc == DB_NOTFOUND ) {
 			BDB_IDL_ZERO( ids );
@@ -715,7 +736,7 @@ approx_candidates(
 			break;
 	}
 
-	ber_bvarray_free( keys );
+	ber_bvarray_free_x( keys, op->o_tmpmemctx );
 
 #ifdef NEW_LOGGING
 	LDAP_LOG ( INDEX, RESULTS, 
@@ -733,12 +754,12 @@ approx_candidates(
 
 static int
 substring_candidates(
-	Backend	*be,
+	Operation *op,
 	SubstringsAssertion	*sub,
 	ID *ids,
 	ID *tmp )
 {
-	struct bdb_info *bdb = (struct bdb_info *) be->be_private;
+	struct bdb_info *bdb = (struct bdb_info *) op->o_bd->be_private;
 	DB	*db;
 	int i;
 	int rc;
@@ -757,7 +778,7 @@ substring_candidates(
 
 	BDB_IDL_ALL( bdb, ids );
 
-	rc = bdb_index_param( be, sub->sa_desc, LDAP_FILTER_SUBSTRINGS,
+	rc = bdb_index_param( op->o_bd, sub->sa_desc, LDAP_FILTER_SUBSTRINGS,
 		&db, &mask, &prefix );
 
 	if( rc != LDAP_SUCCESS ) {
@@ -805,7 +826,7 @@ substring_candidates(
 		mr,
 		&prefix,
 		sub,
-		&keys );
+		&keys, op->o_tmpmemctx );
 
 	if( rc != LDAP_SUCCESS ) {
 #ifdef NEW_LOGGING
@@ -836,7 +857,7 @@ substring_candidates(
 	}
 
 	for ( i= 0; keys[i].bv_val != NULL; i++ ) {
-		rc = bdb_key_read( be, db, NULL, &keys[i], tmp );
+		rc = bdb_key_read( op->o_bd, db, NULL, &keys[i], tmp );
 
 		if( rc == DB_NOTFOUND ) {
 			BDB_IDL_ZERO( ids );
@@ -881,7 +902,7 @@ substring_candidates(
 			break;
 	}
 
-	ber_bvarray_free( keys );
+	ber_bvarray_free_x( keys, op->o_tmpmemctx );
 
 #ifdef NEW_LOGGING
 	LDAP_LOG ( INDEX, RESULTS, 

@@ -1,8 +1,28 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.132.2.13 2003/03/27 03:04:06 hyc Exp $ */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.157.2.6 2004/01/01 18:16:33 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 1998-2004 The OpenLDAP Foundation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
+/* Portions Copyright (c) 1995 Regents of the University of Michigan.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms are permitted
+ * provided that this notice is preserved and that due credit is given
+ * to the University of Michigan at Ann Arbor. The name of the University
+ * may not be used to endorse or promote products derived from this
+ * software without specific prior written permission. This software
+ * is provided ``as is'' without express or implied warranty.
+ */
+
 #include "portable.h"
 
 #include <stdio.h>
@@ -21,7 +41,7 @@
 #include "ldif.h"
 
 #ifdef LDAP_SLAPI
-#include "slapi.h"
+#include "slapi/slapi.h"
 #endif
 
 #ifdef LDAP_SIGCHLD
@@ -83,6 +103,7 @@ static int   cnvt_str2int( char *, STRDISP_P, int );
 #endif	/* LOG_LOCAL4 */
 
 static int check_config = 0;
+static int version = 0;
 
 static void
 usage( char *name )
@@ -92,6 +113,7 @@ usage( char *name )
 	fprintf( stderr,
 		"\t-4\t\tIPv4 only\n"
 		"\t-6\t\tIPv6 only\n"
+		"\t-c cookie\tSync cookie of consumer\n"
 		"\t-d level\tDebug level" "\n"
 		"\t-f filename\tConfiguration file\n"
 #if defined(HAVE_SETUID) && defined(HAVE_SETGID)
@@ -109,6 +131,7 @@ usage( char *name )
 		"\t-t\t\tCheck configuration file and exit\n"
 #if defined(HAVE_SETUID) && defined(HAVE_SETGID)
 		"\t-u user\t\tUser (id or name) to run as\n"
+		"\t-V\t\tprint version info (-VV only)\n"
 #endif
     );
 }
@@ -144,12 +167,18 @@ int main( int argc, char **argv )
 	char	    *serverName = NULL;
 	int	    serverMode = SLAP_SERVER_MODE;
 
+	struct berval cookie = { 0, NULL };
+	struct sync_cookie *scp = NULL;
+	struct sync_cookie *scp_entry = NULL;
+
 #ifdef CSRIMALLOC
 	FILE *leakfile;
 	if( ( leakfile = fopen( "slapd.leak", "w" )) == NULL ) {
 		leakfile = stderr;
 	}
 #endif
+
+	sl_mem_init();
 
 #ifdef HAVE_NT_SERVICE_MANAGER
 	{
@@ -212,7 +241,7 @@ int main( int argc, char **argv )
 #endif
 
 	while ( (i = getopt( argc, argv,
-			     "d:f:h:s:n:t"
+			     "c:d:f:h:s:n:t:V"
 #if LDAP_PF_INET6
 				"46"
 #endif
@@ -239,7 +268,32 @@ int main( int argc, char **argv )
 		case 'h':	/* listen URLs */
 			if ( urls != NULL ) free( urls );
 			urls = ch_strdup( optarg );
-	    break;
+			break;
+
+		case 'c':	/* provide sync cookie, override if exist in replica */
+			scp = (struct sync_cookie *) ch_calloc( 1,
+										sizeof( struct sync_cookie ));
+			ber_str2bv( optarg, strlen( optarg ), 1, &cookie );
+			ber_bvarray_add( &scp->octet_str, &cookie );
+			slap_parse_sync_cookie( scp );
+
+			LDAP_STAILQ_FOREACH( scp_entry, &slap_sync_cookie, sc_next ) {
+				if ( scp->rid == scp_entry->rid ) {
+#ifdef NEW_LOGGING
+					LDAP_LOG( OPERATION, CRIT,
+							"main: duplicated replica id in cookies\n",
+							0, 0, 0 );
+#else
+					Debug( LDAP_DEBUG_ANY,
+						    "main: duplicated replica id in cookies\n",
+							0, 0, 0 );
+#endif
+					slap_sync_cookie_free( scp, 1 );
+					goto destroy;
+				}
+			}
+			LDAP_STAILQ_INSERT_TAIL( &slap_sync_cookie, scp, sc_next );
+			break;
 
 		case 'd':	/* set debug level and 'do not detach' flag */
 			no_detach = 1;
@@ -294,6 +348,9 @@ int main( int argc, char **argv )
 		case 't':
 			check_config++;
 			break;
+		case 'V':
+			version++;
+			break;
 
 		default:
 			usage( argv[0] );
@@ -312,11 +369,10 @@ int main( int argc, char **argv )
 	ldif_debug = slap_debug;
 #endif
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( SLAPD, INFO, "%s", Versionstr, 0, 0 );
-#else
-	Debug( LDAP_DEBUG_TRACE, "%s", Versionstr, 0, 0 );
-#endif
+	if ( version ) {
+		fprintf( stderr, "%s\n", Versionstr );
+		if ( version > 1 ) goto stop;
+	}
 
 	if( serverName == NULL ) {
 		if ( (serverName = strrchr( argv[0], *LDAP_DIRSEP )) == NULL ) {
@@ -330,6 +386,12 @@ int main( int argc, char **argv )
 	openlog( serverName, OPENLOG_OPTIONS, syslogUser );
 #elif LOG_DEBUG
 	openlog( serverName, OPENLOG_OPTIONS );
+#endif
+
+#ifdef NEW_LOGGING
+	LDAP_LOG( SLAPD, INFO, "%s", Versionstr, 0, 0 );
+#else
+	Debug( LDAP_DEBUG_ANY, "%s", Versionstr, 0, 0 );
 #endif
 
 	if( !check_config && slapd_daemon_init( urls ) != 0 ) {
@@ -360,7 +422,8 @@ int main( int argc, char **argv )
 #endif
 
 	extops_init();
- 	slap_op_init();
+	lutil_passwd_init();
+	slap_op_init();
 
 #ifdef SLAPD_MODULES
 	if ( module_init() != 0 ) {
@@ -370,18 +433,30 @@ int main( int argc, char **argv )
 	}
 #endif
 
-	if ( slap_init( serverMode, serverName ) != 0 ) {
-		rc = 1;
-		SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 18 );
-		goto destroy;
-	}
-
 	if ( slap_schema_init( ) != 0 ) {
 #ifdef NEW_LOGGING
 		LDAP_LOG( OPERATION, CRIT, "main: schema initialization error\n", 0, 0, 0 );
 #else
 		Debug( LDAP_DEBUG_ANY,
 		    "schema initialization error\n",
+		    0, 0, 0 );
+#endif
+
+		goto destroy;
+	}
+
+	if ( slap_init( serverMode, serverName ) != 0 ) {
+		rc = 1;
+		SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 18 );
+		goto destroy;
+	}
+
+	if ( slap_controls_init( ) != 0 ) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( OPERATION, CRIT, "main: controls initialization error\n", 0, 0, 0 );
+#else
+		Debug( LDAP_DEBUG_ANY,
+		    "controls initialization error\n",
 		    0, 0, 0 );
 #endif
 
@@ -399,7 +474,7 @@ int main( int argc, char **argv )
 #endif
 
 #ifdef LDAP_SLAPI
-	if ( slapi_init() != 0 ) {
+	if ( slapi_int_initialize() != 0 ) {
 #ifdef NEW_LOGGING
 		LDAP_LOG( OPERATION, CRIT, "main: slapi initialization error\n", 0, 0, 0 );
 #else
@@ -411,6 +486,10 @@ int main( int argc, char **argv )
 		goto destroy;
 	}
 #endif /* LDAP_SLAPI */
+
+	if ( overlay_init() ) {
+		goto destroy;
+	}
 
 	if ( read_config( configfile, 0 ) != 0 ) {
 		rc = 1;
@@ -509,6 +588,12 @@ int main( int argc, char **argv )
 	mal_leaktrace(1);
 #endif
 
+	/*
+	 * FIXME: moved here from slapd_daemon_task()
+	 * because back-monitor db_open() needs it
+	 */
+	time( &starttime );
+
 	if ( slap_startup( NULL )  != 0 ) {
 		rc = 1;
 		SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 21 );
@@ -571,6 +656,12 @@ destroy:
 	/* remember an error during destroy */
 	rc |= slap_destroy();
 
+	while ( !LDAP_STAILQ_EMPTY( &slap_sync_cookie )) {
+		scp = LDAP_STAILQ_FIRST( &slap_sync_cookie );
+		LDAP_STAILQ_REMOVE_HEAD( &slap_sync_cookie, sc_next );
+		ch_free( scp );
+	}
+
 #ifdef SLAPD_MODULES
 	module_kill();
 #endif
@@ -601,7 +692,11 @@ stop:
 #endif
 	slapd_daemon_destroy();
 
+	controls_destroy();
+
 	schema_destroy();
+
+	lutil_passwd_destroy();
 
 #ifdef HAVE_TLS
 	ldap_pvt_tls_destroy();

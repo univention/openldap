@@ -1,7 +1,7 @@
 .TH SLAPD.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2003 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2004 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.87.2.25 2003/05/24 23:04:34 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.133.2.7 2004/01/01 18:16:27 kurt Exp $
 .SH NAME
 slapd.conf \- configuration file for slapd, the stand-alone LDAP daemon
 .SH SYNOPSIS
@@ -35,7 +35,7 @@ is as follows:
     # comment - these options apply to every database
     <global configuration options>
     # first database definition & configuration options
-    database	<backend 1 type>
+    database <backend 1 type>
     <configuration options specific to backend 1>
     # subsequent database definitions & configuration options
     ...
@@ -45,9 +45,12 @@ As many backend-specific sections as desired may be included.  Global
 options can be overridden in a backend (for options that appear more
 than once, the last appearance in the
 .B slapd.conf
-file is used).  Blank lines and comment lines beginning with a `#'
-character are ignored. If a line begins with white space, it is
-considered a continuation of the previous line.
+file is used).
+.LP
+If a line begins with white space, it is considered a continuation
+of the previous line.  Blank lines and comment lines beginning with
+a `#' character are ignored.  (Note: continuation lines are unwrapped
+before comment processing is applied.)
 .LP
 Arguments on configuration lines are separated by white space. If an
 argument contains white space, the argument should be enclosed in
@@ -80,7 +83,7 @@ allow (default none).
 .B bind_v2
 allows acceptance of LDAPv2 bind requests.  Note that
 .BR slapd (8)
-does not truely implement LDAPv2 (RFC 1777), now Historic (RFC 3494).
+does not truly implement LDAPv2 (RFC 1777), now Historic (RFC 3494).
 .B bind_anon_cred
 allows anonymous bind when credentials are not empty (e.g.
 when DN is empty).
@@ -117,17 +120,25 @@ a trailing `-') matches all options starting with that name, as well
 as the option with the range name sans the trailing `-'.
 That is, `x-foo-bar-' matches `x-foo-bar' and `x-foo-bar-baz'.
 
-RFC2251 reserves options beginning with `x-' for private experiments.
-Other options should be registered with IANA, see RFC3383 section 3.4.
+RFC 2251 reserves options beginning with `x-' for private experiments.
+Other options should be registered with IANA, see RFC 3383 section 3.4.
 OpenLDAP also has the `binary' option built in, but this is a transfer
 option, not a tagging option.
 .HP
 .hy 0
-.B attributetype "(\ <oid> [NAME\ <name>] [OBSOLETE]\
+.B attributetype "(\ <oid>\
+ [NAME\ <name>]\
  [DESC\ <description>]\
- [SUP\ <oid>] [EQUALITY\ <oid>] [ORDERING\ <oid>]\
- [SUBSTR\ <oid>] [SYNTAX\ <oidlen>] [SINGLE\-VALUE] [COLLECTIVE]\
- [NO\-USER\-MODIFICATION] [USAGE\ <attributeUsage>]\ )"
+ [OBSOLETE]\
+ [SUP\ <oid>]\
+ [EQUALITY\ <oid>]\
+ [ORDERING\ <oid>]\
+ [SUBSTR\ <oid>]\
+ [SYNTAX\ <oidlen>]\
+ [SINGLE\-VALUE]\
+ [COLLECTIVE]\
+ [NO\-USER\-MODIFICATION]\
+ [USAGE\ <attributeUsage>]\ )"
 .RS
 Specify an attribute type using the LDAPv3 syntax defined in RFC 2252.
 The slapd parser extends the RFC 2252 definition by allowing string
@@ -227,6 +238,25 @@ disables Start TLS from forcing session to anonymous status (see also
 .B tls_authc
 disables StartTLS if authenticated (see also
 .BR tls_2_anon ).
+.HP
+.hy 0
+.B ditcontentrule "(\ <oid>\
+ [NAME\ <name>]\
+ [DESC\ <description>]\
+ [OBSOLETE]\
+ [AUX\ <oids>]\
+ [MUST\ <oids>]\
+ [MAY\ <oids>]\
+ [NOT\ <oids>]\ )"
+.RS
+Specify an DIT Content Rule using the LDAPv3 syntax defined in RFC 2252.
+The slapd parser extends the RFC 2252 definition by allowing string
+forms as well as numeric OIDs to be used for the attribute OID and
+attribute syntax OID.
+(See the
+.B objectidentifier
+description.) 
+.RE
 .TP
 .B gentlehup { on | off }
 A SIGHUP signal will only cause a 'gentle' shutdown-attempt:
@@ -271,10 +301,12 @@ with
 <style> ::= exact | base | one | subtree | children | regex | anonymous
 
 .RE
-.B Anonymous
-is hit when a search is performed without prior binding;
+The term
+.B anonymous
+matches all unauthenticated clients.
+the term
 .B users
-is hit when a search is performed by a successfully bound user;
+matches all authenticated clients;
 otherwise a
 .B regex
 dn pattern is assumed unless otherwise specified by qualifying 
@@ -284,7 +316,7 @@ with
 .B exact
 or
 .B base
-(which are synonims), to require an exact match; with
+(which are synonyms), to require an exact match; with
 .BR one, 
 to require exactly one level of depth match; with
 .BR subtree,
@@ -318,7 +350,7 @@ where
 is the number of seconds slapd will spend answering a search request.
 If no time limit is explicitly requested by the client, the 
 .BR soft
-limit is used; if the requested time limit exceedes the
+limit is used; if the requested time limit exceeds the
 .BR hard
 limit, an "Administrative limit exceeded" is returned.
 If the
@@ -343,7 +375,7 @@ is the maximum number of entries slapd will return answering a search
 request.
 If no size limit is explicitly requested by the client, the
 .BR soft
-limit is used; if the requested size limit exceedes the
+limit is used; if the requested size limit exceeds the
 .BR hard
 limit, an "Administrative limit exceeded" is returned.
 If the 
@@ -375,6 +407,17 @@ and
 .BR timelimit ;
 no limit is set on 
 .BR unchecked .
+
+If 
+.B pagedResults
+control is defined, additional size limits may be enforced; the syntax is
+.BR size.pr={<integer>|noEstimate} ,
+where
+.BR integer
+is the max page size if no explicit limit is set; the keyword
+.BR noEstimate
+inhibits the server to return an estimate of the total number
+of entries that will be returned.
 .RE
 .\".TP
 .\".B logfile <filename>
@@ -444,9 +487,14 @@ option are only usable if slapd was compiled with --enable-modules.
 Specify a list of directories to search for loadable modules. Typically
 the path is colon-separated but this depends on the operating system.
 .HP
-.B objectclass "( <oid> [NAME <name>] [DESC <description] [OBSOLETE]\
- [SUP <oids>] [{ ABSTRACT | STRUCTURAL | AUXILIARY }] [MUST <oids>]\
- [MAY <oids>] )"
+.hy 0
+.B objectclass "(\ <oid>\
+ [NAME\ <name>]\
+ [DESC\ <description]\
+ [OBSOLETE]\
+ [SUP\ <oids>]\
+ [{ ABSTRACT | STRUCTURAL | AUXILIARY }]\
+ [MUST\ <oids>] [MAY\ <oids>] )"
 .RS
 Specify an objectclass using the LDAPv3 syntax defined in RFC 2252.
 The slapd parser extends the RFC 2252 definition by allowing string
@@ -466,7 +514,7 @@ value "oid.xx" will be used.
 .B password-hash <hash>
 This option sets the hash to be used in generation of user
 passwords, stored in userPassword, during processing of
-LDAP Password Modify Extended Operations (RFC 3052).
+LDAP Password Modify Extended Operations (RFC 3062).
 The <hash> must be one of
 .BR {SSHA} ,
 .BR {SHA} ,
@@ -529,6 +577,19 @@ Specify the referral to pass back when
 cannot find a local database to handle a request.
 If specified multiple times, each url is provided.
 .TP
+.B replica-argsfile
+The ( absolute ) name of a file that will hold the 
+.B slurpd
+server's command line options
+if started without the debugging command line option.
+.TP
+.B replica-pidfile
+The ( absolute ) name of a file that will hold the 
+.B slurpd
+server's process ID ( see
+.BR getpid (2)
+) if started without the debugging command line option.
+.TP
 .B require <conditions>
 Specify a set of conditions (separated by white space) to
 require (default none).
@@ -579,9 +640,19 @@ flag will use rules in the
 .I saslAuthzTo
 attribute of the authentication DN.
 The
-.B both
-flag will allow both of the above. The rules are simply regular expressions
-specifying which DNs are allowed to perform proxy authorization. The
+.B any
+flag, an alias for the deprecated value of
+.BR both ,
+will allow any of the above, whatever succeeds first (checked in
+.BR to ,
+.B from
+sequence.
+The
+.B all
+flag requires both authorizations to succeed.
+The rules are simply regular expressions specifying which DNs are allowed 
+to perform proxy authorization.
+The
 .I saslAuthzFrom
 attribute in an entry specifies which other users
 are allowed to proxy login to this entry. The
@@ -603,8 +674,10 @@ Used to specify the fully qualified domain name used for SASL processing.
 Specify SASL realm.  Default is empty.
 .TP
 .B sasl-regexp <match> <replace>
-Used by the SASL authorization mechanism to convert a SASL authenticated 
-username to an LDAP DN. When an authorization request is received, the SASL 
+Used by the SASL mechanism to convert a SASL authenticated 
+username to an LDAP DN used for authorization purposes.  Note that
+the resultant DN need not refer to an existing entry to be considered
+valid.  When an authorization request is received, the SASL 
 .B USERNAME, REALM, 
 and
 .B MECHANISM
@@ -613,7 +686,7 @@ form
 .RS
 .RS
 .TP
-.B uid=<username>[,cn=<realm>],cn=<mechanism>,cn=auth
+.B UID=<username>[[,CN=<realm>],CN=<mechanism>,]CN=auth
 
 .RE
 This SASL name is then compared against the
@@ -625,11 +698,9 @@ string. If there are wildcard strings in the
 .B match
 regular expression that are enclosed in parenthesis, e.g. 
 .RS
-.RS
 .TP
-.B uid=(.*),cn=.*
+.B UID=([^,]*),CN=.*
 
-.RE
 .RE
 then the portion of the SASL name that matched the wildcard will be stored
 in the numbered placeholder variable $1. If there are other wildcard strings
@@ -638,15 +709,20 @@ placeholders can then be used in the
 .B replace
 string, e.g. 
 .RS
-.RS
 .TP
-.B cn=$1,ou=Accounts,dc=$2,dc=$4. 
+.B UID=$1,OU=Accounts,DC=example,DC=com 
 
 .RE
+The replaced SASL name can be either a DN or an LDAP URI. If the
+latter, the server will use the URI to search its own database(s)
+and, if the search returns exactly one entry, the SASL name is
+replaced by the DN of that entry.   The LDAP URI must have no
+hostport, attrs, or extensions components, e.g.
+.RS
+.TP
+.B ldap:///OU=Accounts,DC=example,DC=com??one?(UID=$1)
+
 .RE
-The replaced SASL name can be either a DN or an LDAP URI. If the latter, the slapd
-server will use the URI to search its own database, and if the search returns 
-exactly one entry, the SASL name is replaced by the DN of that entry.
 Multiple 
 .B sasl-regexp 
 options can be given in the configuration file to allow for multiple matching 
@@ -663,7 +739,7 @@ appear in the file, stopping at the first successful match.
 Used to specify Cyrus SASL security properties.
 The
 .B none
-flag (without any other properities) causes the flag properites
+flag (without any other properties) causes the flag properties
 default, "noanonymous,noplain", to be cleared.
 The
 .B noplain
@@ -794,7 +870,7 @@ for an explanation of the different flags.
 .TP
 .B ucdata-path <path>
 Specify the path to the directory containing the Unicode character
-tables. The default path is LOCALSTATEDIR/ucdata.
+tables. The default path is DATADIR/ucdata.
 .SH TLS OPTIONS
 If
 .B slapd
@@ -933,14 +1009,16 @@ createTimestamp attributes for entries.  By default, lastmod is on.
 .TP
 .B maxderefdepth <depth>
 Specifies the maximum number of aliases to dereference when trying to
-resolve an entry, used to avoid inifinite alias loops. The default is 1.
+resolve an entry, used to avoid infinite alias loops. The default is 1.
 .TP
 .B readonly on | off
 This option puts the database into "read-only" mode.  Any attempts to 
 modify the database will return an "unwilling to perform" error.  By
 default, readonly is off.
 .HP
-.B replica host=<hostname>[:port] [tls=yes|critical]
+.hy 0
+.B replica uri=ldap[s]://<hostname>[:port]|host=<hostname>[:port] 
+.B [starttls=yes|critical]
 .B [suffix=<suffix> [...]]
 .B bindmethod=simple|sasl [binddn=<simple DN>] [credentials=<simple password>]
 .B [saslmech=<SASL mech>] [secprops=<properties>] [realm=<realm>]
@@ -953,7 +1031,14 @@ Administrator's Guide" for detailed information on setting up a replicated
 directory service. Zero or more
 .B suffix
 instances can be used to select the subtrees that will be replicated
-(defaults to all the database). A
+(defaults to all the database). 
+.B host
+is deprecated in favor of the
+.B uri
+option.
+.B uri
+allows the replica LDAP server to be specified as an LDAP URI. 
+A
 .B bindmethod
 of
 .B simple
@@ -1023,7 +1108,7 @@ password can only be set if the rootdn is within the namingContext
 This option accepts all RFC 2307 userPassword formats known to
 the server (see 
 .B password-hash
-desription) as well as cleartext.
+description) as well as cleartext.
 .BR slappasswd (8) 
 may be used to generate a hash of a password.  Cleartext
 and \fB{CRYPT}\fP passwords are not recommended.  If empty
@@ -1048,25 +1133,214 @@ associated with a single namingContext should have identical rootdns.
 Behavior of other LDAP operations is unaffected by this setting. In
 particular, it is not possible to use moddn to move an entry from
 one subordinate to another subordinate within the namingContext.
+.HP
+.hy 0
+.B syncrepl rid=<replica ID>
+.B provider=ldap[s]://<hostname>[:port]
+.B [type=refreshOnly|refreshAndPersist]
+.B [interval=dd:hh:mm:ss]
+.B [searchbase=<base DN>]
+.B [filter=<filter str>]
+.B [scope=sub|one|base]
+.B [attrs=<attr list>]
+.B [attrsonly]
+.B [sizelimit=<limit>]
+.B [timelimit=<limit>]
+.B [schemachecking=on|off]
+.B [updatedn=<dn>]
+.B [bindmethod=simple|sasl]
+.B [binddn=<dn>]
+.B [saslmech=<mech>]
+.B [authcid=<identity>]
+.B [authzid=<identity>]
+.B [credentials=<passwd>]
+.B [realm=<realm>]
+.B [secprops=<properties>]
+.RS
+Specify the current database as a replica which is kept up-to-date with the 
+master content by establishing the current
+.BR slapd (8)
+as a replication consumer site running a
+.B syncrepl
+replication engine.
+The replica content is kept synchronized to the master content using
+the LDAP Content Synchronization protocol. Refer to the
+"OpenLDAP Administrator's Guide" for detailed information on
+setting up a replicated
+.B slapd
+directory service using the 
+.B syncrepl
+replication engine.
+.B rid
+identifies the current
+.B syncrepl
+directive within the replication consumer site.
+It is a non-negative integer having no more than three digits.
+.B provider
+specifies the replication provider site containing the master content
+as an LDAP URI. If <port> is not given, the standard LDAP port number
+(389 or 636) is used. The content of the
+.B syncrepl
+replica is defined using a search
+specification as its result set. The consumer
+.B slapd
+will send search requests to the provider
+.B slapd
+according to the search specification. The search specification includes
+.B searchbase, scope, filter, attrs, attrsonly, sizelimit,
+and
+.B timelimit
+parameters as in the normal search specification.
+The search specification for the LDAP Content Synchronization operation
+has the same value syntax and the same default values as in the
+.BR ldapsearch (1)
+client search tool.
+The LDAP Content Synchronization protocol has two operation types.
+In the
+.B refreshOnly
+operation, the next synchronization search operation
+is periodically rescheduled at an interval time (specified by 
+.B interval
+parameter; 1 day by default)
+after each synchronization operation finishes.
+In the
+.B refreshAndPersist
+operation, a synchronization search remains persistent in the provider slapd.
+Further updates to the master replica will generate
+.B searchResultEntry
+to the consumer slapd as the search responses to the persistent
+synchronization search. The schema checking can be enforced at the LDAP Sync
+consumer site by turning on the
+.B schemachecking
+parameter. The default is off.
+The
+.B updatedn
+parameter specifies the DN in the consumer site
+which is allowed to make changes to the replica.
+The DN should have read/write access to the replica database.
+Generally, this DN
+.I should not
+be the same as the
+.BR rootdn .
+A
+.B bindmethod
+of 
+.B simple
+requires the options 
+.B binddn
+and 
+.B credentials
+and should only be used when adequate security services
+(e.g. TLS or IPSEC) are in place.
+A
+.B bindmethod
+of
+.B sasl
+requires the option
+.B saslmech.
+Depending on the mechanism, an authentication identity and/or
+credentials can be specified using
+.B authcid
+and
+.B credentials.
+The
+.B authzid
+parameter may be used to specify an authorization identity.
+Specific security properties (as with the
+.B sasl-secprops
+keyword above) for a SASL bind can be set with the
+.B secprops
+option. A non default SASL realm can be set with the
+.B realm 
+option.
+.RE
 .TP
 .B updatedn <dn>
 This option is only applicable in a slave
-.B slapd.
-It specifies the DN allowed to make changes to the replica (typically,
-this is the DN
+.B slapd. 
+It specifies the DN permitted to update (subject to access controls)
+the replica (typically, this is the DN
 .BR slurpd (8)
-binds as when making changes to the replica).
+binds to update the replica).  Generally, this DN
+.I should not
+be the same as the
+.BR rootdn .
 .TP
 .B updateref <url>
 Specify the referral to pass back when
 .BR slapd (8)
 is asked to modify a replicated local database.
 If specified multiple times, each url is provided.
+
 .SH DATABASE-SPECIFIC OPTIONS
 Each database may allow specific configuration options; they are
-documented separately in the
+documented separately in the backends' manual pages.
+.SH BACKENDS
+The following backends can be compiled into slapd.
+They are documented in the
 .BR slapd-<backend> (5)
 manual pages.
+.TP
+.B bdb
+This is the recommended backend for a normal slapd database.
+However, it takes more care than with the LDBM backend to configure
+it properly.
+It uses the Sleepycat Berkeley DB (BDB) package to store data.
+.TP
+.B ldbm
+This is the database backend which is easiest to configure.
+However, it does not offer the data durability features of the BDB
+backend.
+It uses Berkeley DB or GDBM to store data.
+.TP
+.B dnssrv
+This backend is experimental.
+It serves up referrals based upon SRV resource records held in the
+Domain Name System.
+.TP
+.B ldap
+This backend acts as a proxy to forward incoming requests to another
+LDAP server.
+.TP
+.B meta
+This backend performs basic LDAP proxying with respect to a set of
+remote LDAP servers. It is an enhancement of the ldap backend. The
+proxy cache extension of meta backend provides answering of search
+requests from the proxy using results of previously cached requests.
+.TP
+.B monitor
+This backend provides information about the running status of the slapd
+daemon.
+.TP
+.B null
+Operations in this backend succeed but do nothing.
+.TP
+.B passwd
+This backend is provided for demonstration purposes only.
+It serves up user account information from the system
+.BR passwd (5)
+file.
+.TP
+.B perl
+This backend embeds a
+.BR perl (1)
+interpreter into slapd.
+It runs Perl subroutines to implement LDAP operations.
+.TP
+.B shell
+This backend executes external programs to implement LDAP operations.
+It is is primarily intended to be used in prototypes.
+.TP
+.B sql
+This backend is experimental.
+It services LDAP requests from an SQL database.
+.TP
+.B tcl
+This backend is experimental.
+It embeds a
+.BR Tcl (3tcl)
+interpreter into slapd.
+It runs Tcl commands to implement LDAP operations.
 .SH EXAMPLES
 .LP
 Here is a short example of a configuration file:
@@ -1086,7 +1360,7 @@ database  bdb
 suffix    "dc=our-domain,dc=com"
 # The database directory MUST exist prior to
 # running slapd AND should only be accessible
-# by the slapd/tools. Mode 700 recommended.
+# by the slapd/tools. Mode 0700 recommended.
 directory LOCALSTATEDIR/openldap-data
 # Indices to maintain
 index     objectClass  eq
@@ -1115,25 +1389,26 @@ default slapd configuration file
 .BR slapd-ldap (5),
 .BR slapd-ldbm (5),
 .BR slapd-meta (5),
+.BR slapd-monitor (5),
 .BR slapd-null (5),
 .BR slapd-passwd (5),
 .BR slapd-perl (5),
 .BR slapd-shell (5),
 .BR slapd-sql (5),
 .BR slapd-tcl (5),
-.BR slapd.replog (5),
 .BR slapd.access (5),
-.BR locale (5),
+.BR slapd.plugin (5),
+.BR slapd.replog (5),
 .BR slapd (8),
 .BR slapadd (8),
 .BR slapcat (8),
 .BR slapindex (8),
-.BR slappassword (8),
+.BR slappasswd (8),
 .BR slurpd (8),
 .LP
 "OpenLDAP Administrator's Guide" (http://www.OpenLDAP.org/doc/admin/)
 .SH ACKNOWLEDGEMENTS
-.B	OpenLDAP
+.B OpenLDAP
 is developed and maintained by The OpenLDAP Project (http://www.openldap.org/).
-.B	OpenLDAP
+.B OpenLDAP
 is derived from University of Michigan LDAP 3.3 Release.  

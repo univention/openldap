@@ -1,8 +1,17 @@
 /* init.c - initialize bdb backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.75.2.23 2003/03/29 15:45:43 kurt Exp $ */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.132.2.6 2004/01/01 18:16:36 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 2000-2004 The OpenLDAP Foundation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
 
 #include "portable.h"
@@ -16,18 +25,14 @@
 #include "external.h"
 #include <lutil.h>
 
-static struct bdbi_database {
+static const struct bdbi_database {
 	char *file;
 	char *name;
 	int type;
 	int flags;
 } bdbi_databases[] = {
 	{ "id2entry" BDB_SUFFIX, "id2entry", DB_BTREE, 0 },
-#ifdef BDB_HIER
-	{ "id2parent" BDB_SUFFIX, "id2parent", DB_BTREE, 0 },
-#else
 	{ "dn2id" BDB_SUFFIX, "dn2id", DB_BTREE, 0 },
-#endif
 	{ NULL, NULL, 0, 0 }
 };
 
@@ -72,6 +77,7 @@ bdb_db_init( BackendDB *be )
 
 	/* indicate system schema supported */
 	be->be_flags |=
+		SLAP_BFLAG_INCREMENT |
 #ifdef BDB_SUBENTRIES
 		SLAP_BFLAG_SUBENTRIES |
 #endif
@@ -94,16 +100,14 @@ bdb_db_init( BackendDB *be )
 	bdb->bi_search_stack_depth = DEFAULT_SEARCH_STACK_DEPTH;
 	bdb->bi_search_stack = NULL;
 
-#if defined(LDAP_CLIENT_UPDATE) || defined(LDAP_SYNC)
-	LDAP_LIST_INIT (&bdb->psearch_list);
-#endif
+	LDAP_LIST_INIT (&bdb->bi_psearch_list);
 
+	ldap_pvt_thread_mutex_init( &bdb->bi_database_mutex );
 	ldap_pvt_thread_mutex_init( &bdb->bi_lastid_mutex );
+	ldap_pvt_thread_rdwr_init ( &bdb->bi_pslist_rwlock );
 	ldap_pvt_thread_mutex_init( &bdb->bi_cache.lru_mutex );
+	ldap_pvt_thread_mutex_init( &bdb->bi_cache.c_dntree.bei_kids_mutex );
 	ldap_pvt_thread_rdwr_init ( &bdb->bi_cache.c_rwlock );
-#ifdef BDB_HIER
-	ldap_pvt_thread_rdwr_init( &bdb->bi_tree_rdwr );
-#endif
 
 	be->be_private = bdb;
 
@@ -194,13 +198,21 @@ bdb_db_open( BackendDB *be )
 	if( !(slapMode & SLAP_TOOL_MODE) ) flags |= DB_RECOVER;
 #endif
 
+	/* If a key was set, use shared memory for the BDB environment */
+	if ( bdb->bi_shm_key ) {
+		bdb->bi_dbenv->set_shm_key( bdb->bi_dbenv, bdb->bi_shm_key );
+		flags |= DB_SYSTEM_MEM;
+	}
+
 	bdb->bi_dbenv->set_errpfx( bdb->bi_dbenv, be->be_suffix[0].bv_val );
 	bdb->bi_dbenv->set_errcall( bdb->bi_dbenv, bdb_errcall );
 	bdb->bi_dbenv->set_lk_detect( bdb->bi_dbenv, bdb->bi_lock_detect );
 
 #ifdef SLAP_IDL_CACHE
 	if ( bdb->bi_idl_cache_max_size ) {
-		ldap_pvt_thread_mutex_init( &bdb->bi_idl_tree_mutex );
+		bdb->bi_idl_tree = NULL;
+		ldap_pvt_thread_rdwr_init( &bdb->bi_idl_tree_rwlock );
+		ldap_pvt_thread_mutex_init( &bdb->bi_idl_tree_lrulock );
 		bdb->bi_idl_cache_size = 0;
 	}
 #endif
@@ -332,7 +344,7 @@ bdb_db_open( BackendDB *be )
 		}
 	}
 
-	flags = DB_THREAD | DB_CREATE | bdb->bi_db_opflags;
+	flags = DB_THREAD | bdb->bi_db_opflags;
 
 	bdb->bi_databases = (struct bdb_db_info **) ch_malloc(
 		BDB_INDICES * sizeof(struct bdb_db_info *) );
@@ -362,15 +374,32 @@ bdb_db_open( BackendDB *be )
 				bdb_bt_compare );
 			rc = db->bdi_db->set_pagesize( db->bdi_db,
 				BDB_ID2ENTRY_PAGESIZE );
+			if ( slapMode & SLAP_TOOL_READMAIN ) {
+				flags |= DB_RDONLY;
+			} else {
+				flags |= DB_CREATE;
+			}
 		} else {
-#ifdef BDB_HIER
-			rc = db->bdi_db->set_bt_compare( db->bdi_db,
-				bdb_bt_compare );
-#else
 			rc = db->bdi_db->set_flags( db->bdi_db, 
 				DB_DUP | DB_DUPSORT );
+#ifndef BDB_HIER
 			rc = db->bdi_db->set_dup_compare( db->bdi_db,
 				bdb_bt_compare );
+			if ( slapMode & SLAP_TOOL_READONLY ) {
+				flags |= DB_RDONLY;
+			} else {
+				flags |= DB_CREATE;
+			}
+#else
+			rc = db->bdi_db->set_dup_compare( db->bdi_db,
+				bdb_dup_compare );
+			rc = db->bdi_db->set_bt_compare( db->bdi_db,
+				bdb_bt_compare );
+			if ( slapMode & (SLAP_TOOL_READONLY|SLAP_TOOL_READMAIN) ) {
+				flags |= DB_RDONLY;
+			} else {
+				flags |= DB_CREATE;
+			}
 #endif
 			rc = db->bdi_db->set_pagesize( db->bdi_db,
 				BDB_PAGESIZE );
@@ -379,18 +408,18 @@ bdb_db_open( BackendDB *be )
 #ifdef HAVE_EBCDIC
 		strcpy( path, bdbi_databases[i].file );
 		__atoe( path );
-		rc = DB_OPEN( db->bdi_db, NULL,
+		rc = DB_OPEN( db->bdi_db,
 			path,
 		/*	bdbi_databases[i].name, */ NULL,
 			bdbi_databases[i].type,
-			bdbi_databases[i].flags | flags | DB_AUTO_COMMIT,
+			bdbi_databases[i].flags | flags,
 			bdb->bi_dbenv_mode );
 #else
-		rc = DB_OPEN( db->bdi_db, NULL,
+		rc = DB_OPEN( db->bdi_db,
 			bdbi_databases[i].file,
 		/*	bdbi_databases[i].name, */ NULL,
 			bdbi_databases[i].type,
-			bdbi_databases[i].flags | flags | DB_AUTO_COMMIT,
+			bdbi_databases[i].flags | flags,
 			bdb->bi_dbenv_mode );
 #endif
 
@@ -407,6 +436,7 @@ bdb_db_open( BackendDB *be )
 			return rc;
 		}
 
+		flags &= ~(DB_CREATE | DB_RDONLY);
 		db->bdi_name = bdbi_databases[i].name;
 		bdb->bi_databases[i] = db;
 	}
@@ -430,9 +460,6 @@ bdb_db_open( BackendDB *be )
 	}
 
 	/* <insert> open (and create) index databases */
-#ifdef BDB_HIER
-	rc = bdb_build_tree( be );
-#endif
 	return 0;
 }
 
@@ -460,17 +487,20 @@ bdb_db_close( BackendDB *be )
 	bdb_cache_release_all (&bdb->bi_cache);
 
 #ifdef SLAP_IDL_CACHE
-	ldap_pvt_thread_mutex_lock ( &bdb->bi_idl_tree_mutex );
-	entry = bdb->bi_idl_lru_head;
-	while ( entry != NULL ) {
-		next_entry = entry->idl_lru_next;
-		avl_delete( &bdb->bi_idl_tree, (caddr_t) entry, bdb_idl_entry_cmp );
-		free( entry->idl );
-		free( entry->kstr.bv_val );
-		free( entry );
-		entry = next_entry;
+	if ( bdb->bi_idl_cache_max_size ) {
+		ldap_pvt_thread_rdwr_wlock ( &bdb->bi_idl_tree_rwlock );
+		avl_free( bdb->bi_idl_tree, NULL );
+		entry = bdb->bi_idl_lru_head;
+		while ( entry != NULL ) {
+			next_entry = entry->idl_lru_next;
+			if ( entry->idl )
+				free( entry->idl );
+			free( entry->kstr.bv_val );
+			free( entry );
+			entry = next_entry;
+		}
+		ldap_pvt_thread_rdwr_wunlock ( &bdb->bi_idl_tree_rwlock );
 	}
-	ldap_pvt_thread_mutex_unlock ( &bdb->bi_idl_tree_mutex );
 #endif
 
 	return 0;
@@ -498,8 +528,6 @@ bdb_db_destroy( BackendDB *be )
 #endif
 		}
 
-		bdb_cache_release_all (&bdb->bi_cache);
-
 		rc = bdb->bi_dbenv->close( bdb->bi_dbenv, 0 );
 		bdb->bi_dbenv = NULL;
 		if( rc != 0 ) {
@@ -518,12 +546,18 @@ bdb_db_destroy( BackendDB *be )
 
 	if( bdb->bi_dbenv_home ) ch_free( bdb->bi_dbenv_home );
 
-#ifdef BDB_HIER
-	ldap_pvt_thread_rdwr_destroy( &bdb->bi_tree_rdwr );
-#endif
 	ldap_pvt_thread_rdwr_destroy ( &bdb->bi_cache.c_rwlock );
 	ldap_pvt_thread_mutex_destroy( &bdb->bi_cache.lru_mutex );
+	ldap_pvt_thread_mutex_destroy( &bdb->bi_cache.c_dntree.bei_kids_mutex );
+	ldap_pvt_thread_rdwr_destroy ( &bdb->bi_pslist_rwlock );
 	ldap_pvt_thread_mutex_destroy( &bdb->bi_lastid_mutex );
+	ldap_pvt_thread_mutex_destroy( &bdb->bi_database_mutex );
+#ifdef SLAP_IDL_CACHE
+	if ( bdb->bi_idl_cache_max_size ) {
+		ldap_pvt_thread_rdwr_destroy( &bdb->bi_idl_tree_rwlock );
+		ldap_pvt_thread_mutex_destroy( &bdb->bi_idl_tree_lrulock );
+	}
+#endif
 
 	ch_free( bdb );
 	be->be_private = NULL;
@@ -531,12 +565,17 @@ bdb_db_destroy( BackendDB *be )
 	return 0;
 }
 
-#ifdef SLAPD_BDB_DYNAMIC
-int back_bdb_LTX_init_module( int argc, char *argv[] ) {
+#if	(defined(SLAPD_BDB_DYNAMIC) && !defined(BDB_HIER)) || \
+	(defined(SLAPD_HDB_DYNAMIC) && defined(BDB_HIER))
+int init_module( int argc, char *argv[] ) {
 	BackendInfo bi;
 
 	memset( &bi, '\0', sizeof(bi) );
+#ifdef BDB_HIER
+	bi.bi_type = "hdb";
+#else
 	bi.bi_type = "bdb";
+#endif
 	bi.bi_init = bdb_initialize;
 
 	backend_add( &bi );
@@ -550,18 +589,14 @@ bdb_initialize(
 )
 {
 	static char *controls[] = {
+		LDAP_CONTROL_ASSERT,
 		LDAP_CONTROL_MANAGEDSAIT,
 		LDAP_CONTROL_NOOP,
-#ifdef LDAP_CONTROL_PAGEDRESULTS
 		LDAP_CONTROL_PAGEDRESULTS,
-#endif
- 		LDAP_CONTROL_VALUESRETURNFILTER,
 #ifdef LDAP_CONTROL_SUBENTRIES
 		LDAP_CONTROL_SUBENTRIES,
 #endif
-#ifdef LDAP_CLIENT_UPDATE
-		LDAP_CONTROL_CLIENT_UPDATE,
-#endif
+ 		LDAP_CONTROL_VALUESRETURNFILTER,
 		NULL
 	};
 
@@ -596,13 +631,14 @@ bdb_initialize(
 		{
 #ifdef NEW_LOGGING
 			LDAP_LOG( BACK_BDB, ERR, 
-				"bdb_db_initialize: version mismatch: "
-				"\texpected: %s \tgot: %s\n", DB_VERSION_STRING, version, 0 );
+				"bdb_initialize: BDB library version mismatch:"
+				" expected " DB_VERSION_STRING ","
+				" got %s\n", version, 0, 0 );
 #else
 			Debug( LDAP_DEBUG_ANY,
-				"bdb_initialize: version mismatch\n"
-				"\texpected: " DB_VERSION_STRING "\n"
-				"\tgot: %s \n", version, 0, 0 );
+				"bdb_initialize: BDB library version mismatch:"
+				" expected " DB_VERSION_STRING ","
+				" got %s\n", version, 0, 0 );
 #endif
 		}
 
@@ -653,32 +689,16 @@ bdb_initialize(
 
 	bi->bi_op_unbind = 0;
 
-#ifdef LDAP_CLIENT_UPDATE
 	bi->bi_op_abandon = bdb_abandon;
 	bi->bi_op_cancel = bdb_cancel;
-#else
-	bi->bi_op_abandon = 0;
-	bi->bi_op_cancel = 0;
-#endif
 
 	bi->bi_extended = bdb_extended;
-
-#if 1
-	/*
-	 * these routines (and their callers) are not yet designed
-	 * to work with transaction.  Using them may cause deadlock.
-	 */
-	bi->bi_acl_group = bdb_group;
-	bi->bi_acl_attribute = bdb_attribute;
-#else
-	bi->bi_acl_group = 0;
-	bi->bi_acl_attribute = 0;
-#endif
 
 	bi->bi_chk_referrals = bdb_referrals;
 	bi->bi_operational = bdb_operational;
 	bi->bi_has_subordinates = bdb_hasSubordinates;
 	bi->bi_entry_release_rw = bdb_entry_release;
+	bi->bi_entry_get_rw = bdb_entry_get;
 
 	/*
 	 * hooks for slap tools
@@ -691,6 +711,9 @@ bdb_initialize(
 	bi->bi_tool_entry_put = bdb_tool_entry_put;
 	bi->bi_tool_entry_reindex = bdb_tool_entry_reindex;
 	bi->bi_tool_sync = 0;
+	bi->bi_tool_dn2id_get = bdb_tool_dn2id_get;
+	bi->bi_tool_id2entry_get = bdb_tool_id2entry_get;
+	bi->bi_tool_entry_modify = bdb_tool_entry_modify;
 
 	bi->bi_connection_init = 0;
 	bi->bi_connection_destroy = 0;
