@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/add.c,v 1.109.2.9 2003/02/10 19:22:46 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/add.c,v 1.109.2.10 2003/03/26 17:56:38 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -455,13 +455,9 @@ slap_mods2entry(
 
 			} else {
 				int		rc;
-				const char	*text = NULL;
-				char		textbuf[ SLAP_TEXT_BUFLEN ]  = { '\0' };
-				
 				rc = modify_check_duplicates( mods->sml_desc, mr,
 						NULL, mods->sml_bvalues, 0,
-						&text, textbuf, sizeof( textbuf ) );
-
+						text, textbuf, textlen );
 				if ( rc != LDAP_SUCCESS ) {
 					return rc;
 				}

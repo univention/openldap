@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/tools/slapcommon.c,v 1.23.2.8 2003/03/05 23:48:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/tools/slapcommon.c,v 1.23.2.9 2003/03/24 03:40:52 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -47,7 +47,7 @@ usage( int tool )
 
 	switch( tool ) {
 	case SLAPADD:
-		options = "\t[-l ldiffile]\n";
+		options = "\t[-l ldiffile] [-u]\n";
 		break;
 
 	case SLAPCAT:

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/args.c,v 1.20.2.4 2003/03/03 17:10:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/args.c,v 1.20.2.5 2003/03/24 03:56:09 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -110,7 +110,7 @@ doargs(
 	case 'f':	/* slapd config file */
 	    g->slapd_configfile = strdup( optarg );
 	    break;
-	case 'n':	/* NT service name *.
+	case 'n':	/* NT service name */
 	    if ( g->serverName ) free( g->serverName );
 	    g->serverName = strdup( optarg );
 	    break;

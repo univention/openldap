@@ -1,5 +1,5 @@
 /* modify.c - bdb backend modify routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modify.c,v 1.44.2.12 2003/03/13 03:35:26 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modify.c,v 1.44.2.13 2003/04/03 00:01:14 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -385,9 +385,9 @@ retry:	/* transaction retry */
 			goto return_results;
 		default:
 			rc = LDAP_OTHER;
+			text = "internal error";
+			goto return_results;
 		}
-		text = "internal error";
-		goto return_results;
 	}
 
 	/* acquire and lock entry */

@@ -1,5 +1,5 @@
 /* schema_check.c - routines to enforce schema definitions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_check.c,v 1.50.2.9 2003/02/27 17:05:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_check.c,v 1.50.2.10 2003/03/24 03:54:12 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -845,15 +845,23 @@ entry_naming_check(
 			snprintf( textbuf, textlen, 
 				"naming attribute '%s' is not present in entry",
 				ava->la_attr.bv_val );
-			rc = LDAP_NO_SUCH_ATTRIBUTE;
+			rc = LDAP_NAMING_VIOLATION;
 			break;
+		}
+
+ 
+		if( ava->la_flags & LDAP_AVA_BINARY ) {
+			snprintf( textbuf, textlen, 
+				"value of naming attribute '%s' in unsupported BER form",
+				ava->la_attr.bv_val );
+			rc = LDAP_NAMING_VIOLATION;
 		}
 
 		if ( value_find( desc, attr->a_vals, &ava->la_value ) != 0 ) {
 			snprintf( textbuf, textlen, 
 				"value of naming attribute '%s' is not present in entry",
 				ava->la_attr.bv_val );
-			rc = LDAP_NO_SUCH_ATTRIBUTE;
+			rc = LDAP_NAMING_VIOLATION;
 			break;
 		}
 	}

@@ -1,4 +1,4 @@
-dnl $OpenLDAP: pkg/ldap/build/openldap.m4,v 1.98.2.12 2003/03/03 16:57:04 kurt Exp $
+dnl $OpenLDAP: pkg/ldap/build/openldap.m4,v 1.98.2.13 2003/04/04 01:45:49 kurt Exp $
 dnl
 dnl Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
 dnl All rights reserved.
@@ -442,7 +442,7 @@ AC_DEFUN([OL_BDB_COMPAT],
 #	define DB_VERSION_MINOR 0
 #endif
 
-/* require 4.0 or later */
+/* require 4.1 or later */
 #if (DB_VERSION_MAJOR >= 4) && (DB_VERSION_MINOR >= 1)
 	__db_version_compat
 #endif

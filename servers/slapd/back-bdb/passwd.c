@@ -1,5 +1,5 @@
 /* passwd.c - bdb backend password routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/passwd.c,v 1.27.2.8 2003/02/26 15:17:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/passwd.c,v 1.27.2.9 2003/03/24 03:54:12 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -38,8 +38,8 @@ bdb_exop_passwd(
 	struct berval id = { 0, NULL };
 	struct berval new = { 0, NULL };
 
-	struct berval dn;
-	struct berval ndn;
+	struct berval dn = { 0, NULL };
+	struct berval ndn = { 0, NULL };
 
 	u_int32_t	locker = 0;
 	DB_LOCK		lock;
@@ -274,6 +274,10 @@ done:
 		
 	if( hash.bv_val != NULL ) {
 		free( hash.bv_val );
+	}
+
+	if( ndn.bv_val != NULL ) {
+		free( ndn.bv_val );
 	}
 
 	if( ltid != NULL ) {

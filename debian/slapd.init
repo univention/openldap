@@ -44,6 +44,24 @@ if [ "$SLAPD_GROUP" ]; then
 	SLAPD_OPTIONS="-g $SLAPD_GROUP $SLAPD_OPTIONS"
 fi
 
+# Tell the user that something went wrong and give some hints for
+# resolving the problem.
+report_failure() {
+	if [ -n "$reason" ]; then
+		echo " - failed: "
+		echo $reason
+	else
+		echo " - failed."
+		cat <<EOF
+The operation failed but no output was produced. For hints on what went
+wrong please refer to the system's logfiles (e.g. /var/log/syslog) or
+try running the daemon in Debug mode like via "slapd -d 16383" (warning:
+this will create copious output).
+EOF
+	fi
+}
+
+
 # Start the slapd daemon and capture the error message if any to 
 # $reason.
 start_slapd() {
@@ -87,7 +105,7 @@ stop_slurpd() {
 # Start the OpenLDAP daemons
 start() {
 	echo -n "Starting OpenLDAP:"
-	trap 'echo " - failed:"; echo $reason' 0
+	trap 'report_failure' 0
 	start_slapd
 	start_slurpd
 	trap "-" 0
@@ -97,7 +115,7 @@ start() {
 # Stop the OpenLDAP daemons
 stop() {
 	echo -n "Stopping OpenLDAP:"
-	trap 'echo " - failed:"; echo $reason' 0
+	trap 'report_failure' 0
 	stop_slurpd
 	stop_slapd
 	trap "-" 0

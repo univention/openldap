@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/main.c,v 1.23.2.6 2003/03/03 17:10:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/main.c,v 1.23.2.7 2003/03/26 15:45:13 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -185,6 +185,12 @@ int main( int argc, char **argv )
 	lutil_detach( 0, 0 );
 #endif
 
+    if ( (rc = lutil_pair( sglob->wake_sds )) < 0 ) {
+	SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 16 );
+	rc = 1;
+	goto stop;
+    }
+	
 #ifdef HAVE_NT_EVENT_LOG
 	if (is_NT_Service) lutil_LogStartedEvent( sglob->serverName, ldap_debug, sglob->slapd_configfile, "n/a" );
 #endif

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.5.2.4 2003/02/27 17:05:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.5.2.7 2003/03/31 16:48:16 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -84,11 +84,11 @@ tool_common_usage( void )
 "  -U authcid SASL authentication identity\n",
 "  -v         run in verbose mode (diagnostics to standard output)\n",
 "  -V         print version info (-VV only)\n",
-"  -w passwd  bind passwd (for simple authentication)\n",
-"  -W         prompt for bind passwd\n",
+"  -w passwd  bind password (for simple authentication)\n",
+"  -W         prompt for bind password\n",
 "  -x         Simple authentication\n",
 "  -X authzid SASL authorization identity (\"dn:<dn>\" or \"u:<user>\")\n",
-"  -y file    Read passwd from file\n",
+"  -y file    Read password from file\n",
 "  -Y mech    SASL mechanism\n",
 "  -Z         Start TLS request (-ZZ to require successful response)\n",
 NULL
@@ -114,10 +114,10 @@ tool_args( int argc, char **argv )
 		char *control, *cvalue;
 		switch( i ) {
 		case 'c':	/* continuous operation mode */
-			contoper = 1;
+			contoper++;
 			break;
 		case 'C':
-			referrals = 1;
+			referrals++;
 			break;
 		case 'd':
 			debug |= atoi( optarg );
@@ -260,10 +260,10 @@ tool_args( int argc, char **argv )
 			break;
 		case 'M':
 			/* enable Manage DSA IT */
-			manageDSAit = 1;
+			manageDSAit++;
 			break;
 		case 'n':	/* print operations, don't actually do them */
-			not = 1;
+			not++;
 			break;
 		case 'O':
 #ifdef HAVE_CYRUS_SASL
@@ -372,7 +372,7 @@ tool_args( int argc, char **argv )
 #endif
 			break;
 		case 'v':	/* verbose mode */
-			verbose = 1;
+			verbose++;
 			break;
 		case 'V':	/* version */
 			version++;
@@ -389,7 +389,7 @@ tool_args( int argc, char **argv )
 			passwd.bv_len = strlen( passwd.bv_val );
 			break;
 		case 'W':
-			want_bindpw = 1;
+			want_bindpw++;
 			break;
 		case 'y':
 			pw_file = optarg;
@@ -440,7 +440,7 @@ tool_args( int argc, char **argv )
 			break;
 		case 'Z':
 #ifdef HAVE_TLS
-			use_tls = 1;
+			use_tls++;
 #else
 			fprintf( stderr, "%s: not compiled with TLS support\n", prog );
 			exit( EXIT_FAILURE );

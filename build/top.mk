@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/build/top.mk,v 1.69.2.3 2003/02/09 16:01:46 kurt Exp $
+# $OpenLDAP: pkg/ldap/build/top.mk,v 1.69.2.4 2003/03/29 15:45:42 kurt Exp $
 ## Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
 ## All rights reserved.
 ##
@@ -66,7 +66,7 @@ LIBVERSION = @OPENLDAP_LIBVERSION@
 LTVERSION = -version-info $(LIBVERSION)
 
 # libtool --only flag for libraries: platform specific
-NT_LTONLY_LIB = --only-$(BUILD_LIBS_DYNAMIC)
+NT_LTONLY_LIB = # --only-$(BUILD_LIBS_DYNAMIC)
 LTONLY_LIB = $(@PLAT@_LTONLY_LIB)
 
 # libtool --only flag for modules: depends on linkage of module

@@ -1,5 +1,5 @@
 /* schemaparse.c - routines to parse config file objectclass definitions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/oidm.c,v 1.1.2.3 2003/02/09 16:31:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/oidm.c,v 1.1.2.4 2003/03/29 15:45:43 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -73,15 +73,14 @@ void
 oidm_destroy()
 {
 	OidMacro *om;
-
 	while( !LDAP_SLIST_EMPTY( &om_list )) {
 		om = LDAP_SLIST_FIRST( &om_list );
+		LDAP_SLIST_REMOVE_HEAD( &om_list, som_next );
 
 		ldap_charray_free(om->som_names);
 		free(om->som_oid.bv_val);
 		free(om);
 		
-		LDAP_SLIST_REMOVE_HEAD( &om_list, som_next );
 	}
 }
 

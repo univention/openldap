@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/servers/slurpd/Makefile.in,v 1.27.2.2 2003/03/03 16:57:06 kurt Exp $
+# $OpenLDAP: pkg/ldap/servers/slurpd/Makefile.in,v 1.27.2.3 2003/03/29 15:45:44 kurt Exp $
 ## Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
 ## COPYING RESTRICTIONS APPLY, see COPYRIGHT file
 ##
@@ -42,9 +42,11 @@ slurpd:	version.o
 sslurpd:	version.o
 	$(LTLINK) -static -o $@ $(OBJS) version.o $(LIBS)
 
-version.c: $(OBJS) $(SLURPD_L)
+version.c: Makefile
 	@-$(RM) $@
 	$(MKVERSION) slurpd > $@
+
+version.o: version.c $(OBJS) $(SLURPD_L)
 
 install-local-srv: FORCE
 	-$(MKDIR) $(DESTDIR)$(sbindir)

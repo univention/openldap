@@ -1,3 +1,13 @@
+openldap2.1 (2.1.17-1) unstable; urgency=low
+
+  * New upstream release.
+  * Torsten Landschoff <torsten@debian.org>:
+    + debian/slapd.init: Improve the error reporting. If nothing is output
+      by the failing command don't leave the user alone but print a hint
+      to look into the logfile etc.
+
+ -- Torsten Landschoff <torsten@debian.org>  Thu, 17 Apr 2003 18:51:09 +0200
+
 openldap2.1 (2.1.16-1) unstable; urgency=low
 
   * New upstream release.

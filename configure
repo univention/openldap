@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/configure,v 1.437.2.39 2003/03/10 02:35:55 kurt Exp $
+# $OpenLDAP: pkg/ldap/configure,v 1.437.2.40 2003/04/04 20:41:20 kurt Exp $
 # from OpenLDAP: pkg/ldap/configure.in,v 1.408.2.33 2003/03/05 23:48:30 kurt Exp  
 
 # Copyright 1998-2003 The OpenLDAP Foundation.  All Rights Reserved.
@@ -19115,7 +19115,7 @@ else
 #	define DB_VERSION_MINOR 0
 #endif
 
-/* require 4.0 or later */
+/* require 4.1 or later */
 #if (DB_VERSION_MAJOR >= 4) && (DB_VERSION_MINOR >= 1)
 	__db_version_compat
 #endif

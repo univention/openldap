@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.329.2.24 2003/02/09 17:41:27 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.329.2.26 2003/03/29 15:45:43 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -720,6 +720,8 @@ LDAP_SLAPD_F (int) parse_oidm LDAP_P((
 /*
  * operation.c
  */
+LDAP_SLAPD_F (void) slap_op_init LDAP_P(( void ));
+LDAP_SLAPD_F (void) slap_op_destroy LDAP_P(( void ));
 LDAP_SLAPD_F (void) slap_op_free LDAP_P(( Operation *op ));
 LDAP_SLAPD_F (Operation *) slap_op_alloc LDAP_P((
 	BerElement *ber, ber_int_t msgid,
@@ -1086,6 +1088,8 @@ LDAP_SLAPD_V(unsigned) num_subordinates;
 
 LDAP_SLAPD_V (ber_len_t) sockbuf_max_incoming;
 LDAP_SLAPD_V (ber_len_t) sockbuf_max_incoming_auth;
+LDAP_SLAPD_V (int)		slap_conn_max_pending;
+LDAP_SLAPD_V (int)		slap_conn_max_pending_auth;
 
 LDAP_SLAPD_V (slap_mask_t)	global_restrictops;
 LDAP_SLAPD_V (slap_mask_t)	global_allows;

@@ -1,7 +1,7 @@
 .TH SLAPD.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" Copyright 1998-2003 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.87.2.21 2003/03/12 19:08:25 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.87.2.23 2003/03/27 03:19:52 hyc Exp $
 .SH NAME
 slapd.conf \- configuration file for slapd, the stand-alone LDAP daemon
 .SH SYNOPSIS
@@ -115,6 +115,16 @@ description.)
 .B concurrency <integer>
 Specify a desired level of concurrency.  Provided to the underlying
 thread system as a hint.  The default is not to provide any hint.
+.TP
+.B conn_max_pending <integer>
+Specify the maximum number of pending requests for an anonymous session.
+If requests are submitted faster than the server can process them, they
+will be queued up to this limit. If the limit is exceeded, the session
+is closed. The default is 100.
+.TP
+.B conn_max_pending_auth <integer>
+Specify the maximum number of pending requests for an authenticated session.
+The default is 1000.
 .\".TP
 .\".B debug <subsys> <level>
 .\"Specify a logging level for a particular subsystem.  The subsystems include
@@ -647,7 +657,7 @@ The
 .B nodict
 flag disables mechanisms susceptible to passive dictionary attacks.
 The
-.B noanonyous
+.B noanonymous
 flag disables mechanisms which support anonymous login.
 The
 .B forwardsec

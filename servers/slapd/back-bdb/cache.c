@@ -1,5 +1,5 @@
 /* cache.c - routines to maintain an in-core cache of entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.1.2.9 2003/02/26 15:17:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.1.2.11 2003/03/29 15:45:43 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -19,7 +19,9 @@
 
 /* BDB backend specific entry info -- visible only to the cache */
 typedef struct bdb_entry_info {
+#if 0
 	ldap_pvt_thread_rdwr_t	bei_rdwr;	/* reader/writer lock */
+#endif
 
 	/*
 	 * remaining fields require backend cache lock to access
@@ -101,6 +103,7 @@ bdb_cache_entry_rdwr_unlock(Entry *e, int rw)
 }
 #endif	/* unused */
 
+#if 0
 static int
 bdb_cache_entry_rdwr_init(Entry *e)
 {
@@ -112,6 +115,7 @@ bdb_cache_entry_rdwr_destroy(Entry *e)
 {
 	return ldap_pvt_thread_rdwr_destroy( &BEI(e)->bei_rdwr );
 }
+#endif
 
 static int
 bdb_cache_entry_private_init( Entry *e )
@@ -125,11 +129,13 @@ bdb_cache_entry_private_init( Entry *e )
 
 	e->e_private = ch_calloc(1, sizeof(struct bdb_entry_info));
 
+#if 0
 	if( bdb_cache_entry_rdwr_init( e ) != 0 ) {
 		free( BEI(e) );
 		e->e_private = NULL;
 		return 1;
 	} 
+#endif
 
 	return 0;
 }
@@ -205,7 +211,9 @@ bdb_cache_entry_private_destroy( Entry *e )
 {
 	assert( e->e_private );
 
+#if 0
 	bdb_cache_entry_rdwr_destroy( e );
+#endif
 
 	free( e->e_private );
 	e->e_private = NULL;
@@ -1135,16 +1143,24 @@ bdb_locker_id( Operation *op, DB_ENV *env, int *locker )
 {
 	int i, rc, lockid;
 	void *data;
+	void *ctx;
 
-	if ( !env || !op || !locker ) return -1;
+	if ( !env || !locker ) return -1;
+
+	/* If no op was provided, try to find the ctx anyway... */
+	if ( op ) {
+		ctx = op->o_threadctx;
+	} else {
+		ctx = ldap_pvt_thread_pool_context( &connection_pool );
+	}
 
 	/* Shouldn't happen unless we're single-threaded */
-	if ( !op->o_threadctx ) {
+	if ( !ctx ) {
 		*locker = 0;
 		return 0;
 	}
 
-	if ( ldap_pvt_thread_pool_getkey( op->o_threadctx, env, &data, NULL ) ) {
+	if ( ldap_pvt_thread_pool_getkey( ctx, env, &data, NULL ) ) {
 		for ( i=0, rc=1; rc != 0 && i<4; i++ ) {
 			rc = XLOCK_ID( env, &lockid );
 			if (rc) ldap_pvt_thread_yield();
@@ -1153,7 +1169,7 @@ bdb_locker_id( Operation *op, DB_ENV *env, int *locker )
 			return rc;
 		}
 		data = (void *)lockid;
-		if ( ( rc = ldap_pvt_thread_pool_setkey( op->o_threadctx, env,
+		if ( ( rc = ldap_pvt_thread_pool_setkey( ctx, env,
 			data, bdb_locker_id_free ) ) ) {
 			XLOCK_ID_FREE( env, lockid );
 #ifdef NEW_LOGGING

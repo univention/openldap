@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.132.2.12 2003/03/03 16:57:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.132.2.13 2003/03/27 03:04:06 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -360,6 +360,7 @@ int main( int argc, char **argv )
 #endif
 
 	extops_init();
+ 	slap_op_init();
 
 #ifdef SLAPD_MODULES
 	if ( module_init() != 0 ) {
@@ -573,6 +574,8 @@ destroy:
 #ifdef SLAPD_MODULES
 	module_kill();
 #endif
+
+	slap_op_destroy();
 
 	extops_kill();
 

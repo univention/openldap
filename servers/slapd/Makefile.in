@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/servers/slapd/Makefile.in,v 1.99.2.6 2003/02/09 17:41:27 kurt Exp $
+# $OpenLDAP: pkg/ldap/servers/slapd/Makefile.in,v 1.99.2.8 2003/03/31 16:48:17 kurt Exp $
 ##
 ## Makefile.in for slapd
 ##
@@ -275,9 +275,11 @@ libbackends.a: .backend
 	fi
 	@ls -l libbackends.a; echo ""
 
-version.c: $(OBJS) $(SLAPD_LIBDEPEND) 
+version.c: Makefile
 	@-$(RM) $@
 	$(MKVERSION) -s -n Versionstr slapd > $@
+
+version.o: version.c $(OBJS) $(SLAPD_LIBDEPEND) 
 
 depend-local-srv: FORCE
 	@for i in back-* shell-backends tools; do \
@@ -347,6 +349,11 @@ all-cffiles: slapd $(SLAPD_DYNAMIC_BACKENDS) tools
 
 install-schema: FORCE
 	@-$(MKDIR) $(DESTDIR)$(schemadir)
+	i="$(srcdir)/schema/README" ; \
+	SF=`basename $$i` ; \
+	SD="$(DESTDIR)$(schemadir)/$$SF" ; \
+	echo $(INSTALL) $(INSTALLFLAGS) -m 444 $$i $$SD ; \
+	$(INSTALL) $(INSTALLFLAGS) -m 444 $$i $$SD
 	for i in $(srcdir)/schema/*.schema ; do \
 		SF=`basename $$i` ; \
 		SD="$(DESTDIR)$(schemadir)/$$SF" ; \

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/util-int.c,v 1.33.2.4 2003/03/05 23:48:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/util-int.c,v 1.33.2.5 2003/03/24 03:08:11 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -32,6 +32,13 @@
 #include <ac/unistd.h>
 
 #include "ldap-int.h"
+
+#ifndef h_errno
+/* newer systems declare this in <netdb.h> for you, older ones don't.
+ * harmless to declare it again (unless defined by a macro).
+ */
+extern int h_errno;
+#endif
 
 #ifndef LDAP_R_COMPILE
 # undef HAVE_REENTRANT_FUNCTIONS

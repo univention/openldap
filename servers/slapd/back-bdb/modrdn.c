@@ -1,5 +1,5 @@
 /* modrdn.c - bdb backend modrdn routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modrdn.c,v 1.63.2.16 2003/03/13 03:35:26 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modrdn.c,v 1.63.2.17 2003/03/26 17:56:38 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -859,6 +859,7 @@ retry:	/* transaction retry */
 				}
 
 			} else {
+				bdb_cache_entry_commit( e );
 				if(( rc=TXN_COMMIT( ltid, 0 )) != 0 ) {
 					text = "txn_commit failed";
 				} else {
@@ -882,10 +883,6 @@ retry:	/* transaction retry */
 			op->o_noop ? " (no-op)" : "", e->e_id, e->e_dn );
 #endif
 		text = NULL;
-		if ( !noop ) {
-			bdb_cache_entry_commit( e );
-		}
-
 	} else {
 #ifdef NEW_LOGGING
 		LDAP_LOG ( OPERATION, RESULTS, "bdb_modrdn: %s : %s (%d)\n", 

@@ -1,5 +1,5 @@
 .TH SLAPADD 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man8/slapadd.8,v 1.11.2.3 2003/03/03 17:10:03 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man8/slapadd.8,v 1.11.2.4 2003/03/24 03:37:43 kurt Exp $
 .\" Copyright 1998-2003 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
@@ -8,6 +8,7 @@ slapadd \- Add entries to a SLAPD database
 .B SBINDIR/slapadd
 .B [\-v]
 .B [\-c]
+.B [\-u]
 .B [\-d level]
 .B [\-b suffix]
 .B [\-n dbnum]
@@ -42,6 +43,9 @@ enable verbose mode.
 .TP
 .B \-c
 enable continue (ignore errors) mode.
+.TP
+.B \-u
+enable dry-run (don't write to backend) mode.
 .TP
 .BI \-d " level"
 enable debugging messages as defined by the specified

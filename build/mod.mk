@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/build/mod.mk,v 1.17.2.1 2003/03/03 17:10:01 kurt Exp $
+# $OpenLDAP: pkg/ldap/build/mod.mk,v 1.17.2.2 2003/03/29 15:45:42 kurt Exp $
 ## Copyright 1998-2003 The OpenLDAP Foundation
 ## COPYING RESTRICTIONS APPLY.  See COPYRIGHT File in top level directory
 ## of this package for details.
@@ -22,9 +22,11 @@ all-no lint-no 5lint-no depend-no install-no: FORCE
 
 all-common: all-$(BUILD_MOD)
 
-version.c: $(OBJS)
+version.c: Makefile
 	$(RM) $@
 	$(MKVERSION) $(LIBBASE) > $@
+
+version.lo: version.c $(OBJS)
 
 $(LIBRARY): version.lo
 	$(LTLINK_MOD) -module -o $@ $(OBJS) version.lo $(LINK_LIBS)
