@@ -235,5 +235,7 @@ X509 *SSL_get_peer_certificate( SSL *ssl );
 int SSL_get_verify_result( SSL *ssl );
 void SSL_set_bio( SSL *ssl, BIO *rbio, BIO *wbio );
 
+void ldap_gnutls_need_rsa_params(gnutls_certificate_credentials creds);
+void ldap_gnutls_need_dh_params(gnutls_certificate_credentials creds);
 #endif
 #endif

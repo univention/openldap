@@ -350,8 +350,8 @@ read_datum(int fd, gnutls_datum *d)
 	return 1;
 }
 
-static gnutls_rsa_params
-ldap_gnutls_need_rsa_params(void)
+void
+ldap_gnutls_need_rsa_params(gnutls_certificate_credentials creds)
 {
 	static const char cache_name[] = "/var/run/slapd/params_cache_rsa";
 	static gnutls_rsa_params rsa_params = NULL;
@@ -445,11 +445,11 @@ ldap_gnutls_need_rsa_params(void)
 
 	}
 	
-	return rsa_params;
+	gnutls_certificate_set_rsa_export_params(creds, rsa_params);
 }
 
-static gnutls_dh_params
-ldap_gnutls_need_dh_params(void)
+void
+ldap_gnutls_need_dh_params(gnutls_certificate_credentials creds)
 {
 	static const char cache_name[] = "/var/run/slapd/params_cache_dh";
 	static gnutls_dh_params dh_params = NULL;
@@ -522,7 +522,7 @@ ldap_gnutls_need_dh_params(void)
 	
 	}
 	
-	return dh_params;
+	gnutls_certificate_set_dh_params(creds, dh_params);
 }
 
 void
@@ -577,8 +577,6 @@ SSL_do_handshake( SSL *ssl, gnutls_connection_end end )
 	int cert_list_length;
 	int ret;
 	const gnutls_datum *cert_list;
-	gnutls_rsa_params rsa_params = NULL;
-	gnutls_dh_params dh_params = NULL;
 	X509_STORE_CTX *x509_store;
 
 	/* Initialize the session here, not in SSL_new(), because this
@@ -623,15 +621,13 @@ SSL_do_handshake( SSL *ssl, gnutls_connection_end end )
 		gnutls_credentials_set(ssl->session, GNUTLS_CRD_CERTIFICATE, 
 		                       ssl->creds);
 
+		/* FIXME: I moved this to tls.c:~430; this can probably be
+		   removed
 		if (end == GNUTLS_SERVER && ssl->creds) {
-		
-			rsa_params = ldap_gnutls_need_rsa_params();
-			dh_params = ldap_gnutls_need_dh_params();
-
-			/* Change the credentials to include the new params */
-			gnutls_certificate_set_rsa_export_params(ssl->creds, rsa_params);
-			gnutls_certificate_set_dh_params(ssl->creds, dh_params);
+			ldap_gnutls_need_rsa_params(ssl->creds);
+			ldap_gnutls_need_dh_params(ssl->creds);
 		}
+		*/
 	}
 
 	gnutls_error = gnutls_handshake(ssl->session);
