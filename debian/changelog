@@ -50,7 +50,7 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
       - build-depend on libdb4.1-dev instead of libdb4.0-dev
       - conflict, replace, and provide libldap2-tls (libldap2)
       - removed ldap-gateways binary package
-      - drop suggestions to obsolete openldap-guide. Closes: #171894.
+      - drop suggestion to obsolete openldap-guide. Closes: #171894.
     - debian/rules:
       - build with BDB backend
       - run dh_installdeb
@@ -68,6 +68,7 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
       - remove /var/lib/ldap when slapd/purge_database is true
       - remove /etc/ldap/schema if empty
     - debian/templates: added slapd/purge_database template
+    - build/top.mk: link against libcrypt before other SECURITY_LIBS
 
   * Stephen Frost <sfrost@debian.org>
     - debian/control: added libltdl2-dev and libslp-dev to the build-depends
