@@ -2,7 +2,7 @@ Notes about Debian's slapd package
 ----------------------------------
 
 OpenLDAP 2.1 includes the new BDB database backend which is also the
-recommanded backend to use. In comparision to the formerly recommanded
+recommended backend to use. In comparision to the formerly recommended
 LDBM backend (which still exists for compatibility reasons), it is
 supposed to be both faster and safer to use, i.e. hot backups are now
 possible with the BDB database backend.
