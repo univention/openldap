@@ -59,7 +59,7 @@
 #   --enable-proctitle	  enable proctitle support [yes]
 --enable-proctitle
 #   --enable-cache	  enable caching (experimental) [no]
---enable-cache
+#--enable-cache
 #   --enable-referrals	  enable LDAPv2+ Referrals (experimental) [no]
 ## Better support this standard ldap feature
 --enable-referrals
