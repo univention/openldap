@@ -4,6 +4,9 @@ openldap2 (2.1.23-2) unstable; urgency=low
     + debian/control: Have ldap-utils depend on the same version of
       libldap2, and libldap2 conflict with ldap-utils (<= 2.1.23-1).
       Closes: #216661.
+    + debian/slapd.{templates,config}: Check if there are slave
+      databases in slapd.conf lacking an updateref option, and warn
+      about it. Closes: #216797.
 
  -- Roland Bauerschmidt <rb@debian.org>  Sat, 18 Oct 2003 19:59:56 +0200
 

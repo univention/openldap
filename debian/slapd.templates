@@ -130,3 +130,15 @@ _Description: slapadd failed during upgrade
  too) or due to a problem in the ldif.  If the problem was with the
  ldif then you may be able to fix it and attempt the slapadd again.
 
+Template: slapd/slave_databases_require_updateref
+Type: note
+_Description: slave databases require updateref option
+ In your slapd configuration file at least one database is
+ configured as slave, and the updateref option is not set.
+ The updateref option specifies the referral(s) to pass back
+ when slapd is asked to modify a replicated local database.
+ See slapd.conf(5) for more details.
+ .
+ Starting with version 2.1.23, slapd requires the updateref
+ option to be set on slaves. You should make sure to fix
+ your slapd.conf configuration file.
