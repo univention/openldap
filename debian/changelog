@@ -1,11 +1,11 @@
 openldap2 (2.1.30-5) unstable; urgency=low
 
-  * debian/slapd.config: Remove cleartext passwords from debconf database 
-    after computing the hash (closes: #260204).
-  * debian/slapd.postinst: Remove hash from debconf database after 
-    configuration.
+  * BEWARE: Don't upload this before openldap2.2 is there!!
+  * debian/rules: Only build libldap2 and libldap2-dev for client
+    packages. The openldap2 source package will be superseded with
+    openldap2.2 which provides the server support.
 
- --
+ -- Torsten Landschoff <torsten@debian.org>  Wed, 23 Feb 2005 00:08:40 +0100
 
 openldap2 (2.1.30-4) unstable; urgency=low
 

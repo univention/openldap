@@ -86,7 +86,10 @@ binary-arch: install-stamp
 	dh_shlibdeps -a
 	dh_gencontrol -a
 	dh_md5sums -a
-	dh_builddeb -a
+	# Build only the library packages this time. The server is provided
+	# by the newer openldap2.2 source package.
+	#dh_builddeb -a
+	dh_builddep libldap2 libldap2-dev 
 
 clean:
 	dh_testdir

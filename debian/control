@@ -7,34 +7,6 @@ Build-Depends: libdb4.2-dev, libwrap0-dev, libiodbc2-dev, libsasl2-dev (>= 2.1.3
 Build-Conflicts: libbind-dev, bind-dev
 Standards-Version: 3.6.1
 
-Package: slapd
-Section: net
-Priority: optional
-Architecture: any
-Depends: ${shlibs:Depends}, debconf (>= 0.5), coreutils (>= 4.5.1-1) | fileutils (>= 4.0i-1), psmisc, libldap2 (= ${Source-Version}), perl (>> 5.8.0) | libmime-base64-perl
-Recommends: db4.2-util, libsasl2-modules
-Suggests: ldap-utils
-Conflicts: umich-ldapd, ldap-server, libbind-dev, bind-dev, libltdl3 (= 1.5.4-1)
-Provides: ldap-server
-Description: OpenLDAP server (slapd)
- This is the OpenLDAP (Lightweight Directory Access Protocol) standalone
- server (slapd). The server can be used to provide a standalone directory
- service and also includes the slurpd replication server.
-
-Package: ldap-utils
-Section: net
-Priority: optional
-Architecture: any
-Depends: ${shlibs:Depends}, libldap2 (= ${Source-Version})
-Recommends: libsasl2-modules
-Conflicts: umich-ldap-utils, openldap-utils, ldap-client
-Replaces: openldap-utils, slapd (<< 2.1.25), openldapd
-Provides: ldap-client, openldap-utils
-Description: OpenLDAP utilities
- Utilities from the OpenLDAP (Lightweight Directory Access Protocol)
- package. These utilities can access a local or remote LDAP server
- and contain all the client programs required to access LDAP servers.
-
 Package: libldap2
 Section: libs
 Priority: important
