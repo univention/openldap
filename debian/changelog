@@ -1,4 +1,4 @@
-openldap2 (2.1.30-4) unstable; urgency=low
+openldap2 (2.1.30-4) testing-proposed-updates unstable; urgency=low
 
   * Roland Bauerschmidt <rb@debian.org>
     + Applied patch by Modestas Vainius <geromanas@mailas.com> to fix a
@@ -6,7 +6,7 @@ openldap2 (2.1.30-4) unstable; urgency=low
     + Applied patch by Modestas Vainius <geromanas@mailas.com> to
       install executables without stripping them by using the "-s"
       option. They will be stripped by dh_script later, which is aware
-      of DEB_BUILD_OPTIONS.
+      of DEB_BUILD_OPTIONS. Closes: #264448.
 
  -- 
 
