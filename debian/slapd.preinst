@@ -36,8 +36,12 @@ stop_slapd() {
 
 
 create_sed_script() {
-  if [ ! -e /tmp/$$.sedscript ]; then
-    cat <<EOF > /tmp/$$.sedscript
+  SEDSCRIPT=`mktemp`
+  if [ ! -f "$SEDSCRIPT" ]; then
+    echo "Could not create temp file."
+    exit 1
+  fi
+  cat <<EOF > $SEDSCRIPT
 {
   s/^[#[:space:]][#[:space:]]*/&/
   t other
@@ -53,13 +57,12 @@ create_sed_script() {
   :end
 }
 EOF
-  fi
 }
 
 # Get the list of configured databases from slapd.conf
 get_database_list() {
   create_sed_script
-  sed -f /tmp/$$.sedscript < $SLAPD_CONF | \
+  sed -f $SEDSCRIPT < $SLAPD_CONF | \
   grep -E '^(database|directory|suffix)' | \
   (
     while read type val

@@ -29,6 +29,8 @@ openldap2 (2.1.21-2) unstable; urgency=low
       to used [:space:] instead of [space tab].
     + debian/slapd.postinst: Removed debugging statements from ldap_v2
       support handling code.
+    + debian/slapd.preinst: Changed to use mktemp for sed script.
+    + debian/slapd.postinst: Changed to use mktemp for sed script.
 
   * Torsten Landschoff <torsten@debian.org>:
     + doc/man/man8/slapd.8: Refer to slapd.conf(5) for a description of 

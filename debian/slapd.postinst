@@ -28,7 +28,7 @@ stop_slapd() {
         create_sed_script
         # Find out the name of slapd's pid file
         if [ -z "$SLAPD_PIDFILE" -a -f "$SLAPD_CONF" ]; then
-                SLAPD_PIDFILE=`sed -f /tmp/$$.sedscript < $SLAPD_CONF | \
+                SLAPD_PIDFILE=`sed -f $SEDSCRIPT < $SLAPD_CONF | \
                                sed -ne 's/^pidfile[[:space:]]\+\(.\+\)/\1/p'`
         fi
 
@@ -40,12 +40,16 @@ stop_slapd() {
                 start-stop-daemon --stop --quiet --oknodo --retry 10 --pidfile \"$SLAPD_PIDFILE\" \
                         --exec /usr/sbin/slapd 2>&1
         fi
-        if [ -e /tmp/$$.sedscript ]; then rm /tmp/$$.sedscript; fi
+        if [ -e $SEDSCRIPT ]; then rm $SEDSCRIPT ; fi
 }
 
 create_sed_script() {
-  if [ ! -e /tmp/$$.sedscript ]; then
-    cat <<EOF > /tmp/$$.sedscript
+  SEDSCRIPT=`mktemp`
+  if [ ! -f "$SEDSCRIPT" ]; then
+    echo "Could not create temp file."
+    exit 1
+  fi
+  cat <<EOF > $SEDSCRIPT
 {
   s/^[#[:space:]][#[:space:]]*/&/
   t other
@@ -61,13 +65,12 @@ create_sed_script() {
   :end
 }
 EOF
-  fi
 }
 
 # Get the list of configured databases from slapd.conf
 get_database_list() {
   create_sed_script
-  sed -f /tmp/$$.sedscript < $SLAPD_CONF | 
+  sed -f $SEDSCRIPT < $SLAPD_CONF | 
   grep -E '^(database|directory|suffix)' | \
   (
     while read type val
@@ -103,7 +106,7 @@ get_database_list() {
     fi
     echo $backend \"$suffix\" \"$directory\"
   )   
-  if [ -e /tmp/$$.sedscript ]; then rm /tmp/$$.sedscript; fi
+  if [ -e $SEDSCRIPT ]; then rm $SEDSCRIPT; fi
 }
 
 # Source the init script configuration
@@ -138,7 +141,7 @@ if [ "$1" = configure -a -z "$2" ] || [ "$1" = reconfigure ] \
   else
     echo -n "Updating slapd configuration... "
     create_sed_script
-    OLDSUFFIX=`sed -f /tmp/$$.sedscript < $SLAPD_CONF | \
+    OLDSUFFIX=`sed -f $SEDSCRIPT < $SLAPD_CONF | \
                sed -n 's/^suffix[[:space:]]\+"\(.*\)"/\1/p' \
                | head -1`
     if [ "$OLDSUFFIX" != "$basedn" ]; then
@@ -152,7 +155,7 @@ if [ "$1" = configure -a -z "$2" ] || [ "$1" = reconfigure ] \
       if [ "$RET" = "true" ]; then
 
         chmod --reference=$SLAPD_CONF $TMPFILE
-        sed -f /tmp/$$.sedscript < $SLAPD_CONF | \
+        sed -f $SEDSCRIPT < $SLAPD_CONF | \
             sed -e"/^suffix[[:space:]]\+$OLDSUFFIX/ s/$OLDSUFFIX/$basedn/" \
                 -e"s/cn=admin,$OLDSUFFIX/cn=admin,$basedn/g" \
                 > $TMPFILE
@@ -170,7 +173,7 @@ if [ "$1" = configure -a -z "$2" ] || [ "$1" = reconfigure ] \
         rm $TMPFILE
       fi
     fi
-    if [ -e /tmp/$$.sedscript ]; then rm /tmp/$$.sedscript; fi
+    if [ -e $SEDSCRIPT ]; then rm $SEDSCRIPT ; fi
   fi
   [ -f $TMPFILE ] && mv $TMPFILE $SLAPD_CONF
   echo "done"
@@ -207,7 +210,7 @@ if [ "$RET" = "true" ]; then
   create_sed_script
 
   # Check if it is there already
-  TEST=`sed -f /tmp/$$.sedscript < $SLAPD_CONF | grep -E "^allow[[:space:]][^#]*bind_v2"`
+  TEST=`sed -f $SEDSCRIPT < $SLAPD_CONF | grep -E "^allow[[:space:]][^#]*bind_v2"`
   if [ -z "$TEST" ]; then
     echo -n "Adding 'allow bind_v2' to slapd config..."
     
@@ -215,7 +218,7 @@ if [ "$RET" = "true" ]; then
     chmod --reference=$SLAPD_CONF $TMPFILE
     
     # Check if there is an allow line there already
-    ALLOWC=`sed -f /tmp/$$.sedscript < $SLAPD_CONF | grep -E "^[#[:space:]]*allow"`
+    ALLOWC=`sed -f $SEDSCRIPT < $SLAPD_CONF | grep -E "^[#[:space:]]*allow"`
     if [ -z "$ALLOWC" ]; then
       # No allow line there, add one
       echo "# Allow LDAPv2 binds" > $TMPFILE
@@ -229,11 +232,11 @@ if [ "$RET" = "true" ]; then
         # It's real, hack it up...
         COMMENT=`echo $ALLOWC | cut -f2- -d'#'`
         OPTIONS=`echo $ALLOWC | sed -e 's:^allow[[:space:]]*::' -e 's:\#.*::'`
-        sed -f /tmp/$$.sedscript < $SLAPD_CONF | sed -e "s:$ALLOWC:allow bind_v2 $OPTIONS # $COMMENT:" > $TMPFILE
+        sed -f $SEDSCRIPT < $SLAPD_CONF | sed -e "s:$ALLOWC:allow bind_v2 $OPTIONS # $COMMENT:" > $TMPFILE
       else
         # Must be commented out, uncomment and add our option
         OPTIONS=`echo $ALLOWC | sed -e 's:^[#[:space:]]*allow[[:space:]]*::'`
-        sed -f /tmp/$$.sedscript < $SLAPD_CONF | sed -e "s:$ALLOWC:allow bind_v2 # $OPTIONS:" > $TMPFILE
+        sed -f $SEDSCRIPT < $SLAPD_CONF | sed -e "s:$ALLOWC:allow bind_v2 # $OPTIONS:" > $TMPFILE
       fi
     fi
     if [ -s "$TMPFILE" ]; then
@@ -246,7 +249,7 @@ if [ "$RET" = "true" ]; then
       read
     fi
   fi
-  if [ -e /tmp/$$.sedscript ]; then rm /tmp/$$.sedscript; fi
+  if [ -e $SEDSCRIPT ]; then rm $SEDSCRIPT ; fi
 fi
 
 # On upgrades from pre-2.1 we might have to update the configuration 
@@ -265,14 +268,14 @@ then
 
 modulepath      /usr/lib/ldap
 EOF
-    sed -f /tmp/$$.sedscript < $SLAPD_CONF | \
+    sed -f $SEDSCRIPT < $SLAPD_CONF | \
         sed -n 's/^database[[:space:]]\+\([a-z]\+\)/moduleload      back_\1/p' \
               >>$TMPFILE
     echo >>$TMPFILE
     cat $SLAPD_CONF >>$TMPFILE
     mv $TMPFILE $SLAPD_CONF
     echo done
-    if [ -e /tmp/$$.sedscript ]; then rm /tmp/$$.sedscript; fi
+    if [ -e $SEDSCRIPT ]; then rm $SEDSCRIPT ; fi
   fi
 fi
 
