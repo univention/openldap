@@ -1,4 +1,4 @@
-openldap2 (2.1.30-4) testing-proposed-updates unstable; urgency=low
+openldap2 (2.1.30-4) unstable; urgency=low
 
   * Roland Bauerschmidt <rb@debian.org>
     + Applied patch by Modestas Vainius <geromanas@mailas.com> to fix a
@@ -19,6 +19,9 @@ openldap2 (2.1.30-4) testing-proposed-updates unstable; urgency=low
     + Fix the check if an existing database should be moved (closes: #276380).
     + debian/fix_ldif: Apply patch from Andreas Schuldei for better
       schema checks et cetera.
+    + Apply patch for NTLM support from
+      http://patches.ximian.com/download.cgi?object=openldap-ntlm.patch-4
+      (closes: #283606).
 
  -- Torsten Landschoff <torsten@debian.org>  Sun, 12 Sep 2004 10:02:39 +0200
 
