@@ -14,7 +14,7 @@ Architecture: any
 Depends: ${shlibs:Depends}, debconf (>= 0.5), coreutils (>= 4.5.1-1) | fileutils (>= 4.0i-1), psmisc, libldap2 (= ${Source-Version}), perl (>> 5.8.0) | libmime-base64-perl
 Recommends: db4.2-util, libsasl2-modules
 Suggests: ldap-utils
-Conflicts: umich-ldapd, ldap-server, libbind-dev, bind-dev
+Conflicts: umich-ldapd, ldap-server, libbind-dev, bind-dev, libltdl3 (= 1.5.4-1)
 Provides: ldap-server
 Description: OpenLDAP server (slapd)
  This is the OpenLDAP (Lightweight Directory Access Protocol) standalone

@@ -1,3 +1,12 @@
+openldap2 (2.1.29-3) unstable; urgency=low
+
+  * Torsten Landschoff <torsten@debian.org>:
+    + debian/control: Have slapd conflict with libltdl3 version 1.5.4-1
+      as with that version loading of .so files is broken which breaks
+      slapd (closes: #249152).
+
+ --
+
 openldap2 (2.1.29-2) unstable; urgency=low
 
   * Roland Bauerschmidt <rb@debian.org>
