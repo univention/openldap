@@ -98,14 +98,14 @@ int module_load(const char* file_name, int argc, char *argv[])
 	 * to calling Debug. This is because Debug is a macro that expands
 	 * into multiple function calls.
 	 */
-	if ((module->lib = lt_dlopen(file_name)) == NULL) {
+	if ((module->lib = lt_dlopenext(file_name)) == NULL) {
 		error = lt_dlerror();
 #ifdef NEW_LOGGING
 		LDAP_LOG( SLAPD, CRIT, 
-			"module_load: lt_dlopen failed: (%s) %s.\n", 
+			"module_load: lt_dlopenext failed: (%s) %s.\n", 
 			file_name, error, 0 );
 #else
-		Debug(LDAP_DEBUG_ANY, "lt_dlopen failed: (%s) %s\n", file_name,
+		Debug(LDAP_DEBUG_ANY, "lt_dlopenext failed: (%s) %s\n", file_name,
 			error, 0);
 #endif
 

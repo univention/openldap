@@ -7,7 +7,7 @@ the path of the modules and the modules to load in your slapd.conf file
 for now. This can be done by lines such as the following:
 
 modulepath      /usr/lib/ldap
-moduleload      back_bdb.la
+moduleload      back_bdb
 
 for the BDB database backend module.
 

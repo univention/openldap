@@ -26,6 +26,18 @@ openldap2.1 (2.1.16-1) unstable; urgency=low
       now compiled as shared objects
     + debian/slapd.conf: added allow bind_v2 line for compatibility
 
+  * Stephen Frost <sfrost@debian.org>
+    + debian/slapd.conf: Drop the '.la' file extension
+    + debian/move_files: Drop and rm the .la files, they aren't necessary.
+    + debian/slapd.README.Debian: Dropped the .la from the module_load line.
+    + servers/slapd/daemon.c: check slapd_srvurls is not NULL before
+      deref; included in upstream CVS.
+    + servers/slapd/back-*/init.c: Change the munged symbol names to 
+      init_module, they do not need to be munged, and cause problems when
+      they are and not using .la files (which cause other problems)
+    + servers/slapd/module.c: Change to use lt_dlopenext() so we don't
+      need the .la files
+
  -- Torsten Landschoff <torsten@debian.org>  Wed, 26 Mar 2003 20:34:35 +0100
 
 openldap2.1 (2.1.12-1) experimental; urgency=low
