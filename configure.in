@@ -2287,7 +2287,7 @@ if test $ol_enable_proctitle != no ; then
 			[have_setproctitle=yes
 			LUTIL_LIBS="$LUTIL_LIBS -lutil"],
 			[have_setproctitle=no
-			LIBOBJS="$LIBOBJS setproctitle.o"
+			AC_LIBOBJ([setproctitle])
 			LIBSRCS="$LIBSRCS setproctitle.c"])])
 
 	if test $have_setproctitle = yes ; then

@@ -1,6 +1,7 @@
 openldap2 (2.1.30-6) experimental; urgency=low
 
-  * 
+  * Update configure stuff using libtoolize, aclocal-1.4 and autoconf2.50
+    to update libtool for kfreebsd-gnu and friends (closes: #266688).
 
  --
 
