@@ -90,7 +90,9 @@ if [ "$1" = configure -a -z "$2" ] || [ "$1" = reconfigure ] \
              < /etc/ldap/slapd.conf > $TMPFILE
 
         # Back up the old database before trying to run slapadd.
-        mkdir -p /var/backups/slapd-$OLDSUFFIX
+        if [ ! -e /var/backups/slapd-$OLDSUFFIX ]; then
+          mkdir -p /var/backups/slapd-$OLDSUFFIX
+        fi
         if [ ! -f /var/lib/slapd/suffix_change ]; then
           mv /var/lib/ldap/* /var/backups/slapd-$OLDSUFFIX
         fi
@@ -236,7 +238,9 @@ then
   fi
 
   echo -n "Moving old database files to /var/backups/slapd-$oldver... "
-  mkdir -p /var/backups/slapd-$oldver
+  if [ ! -e /var/backups/slapd-$oldver ]; then
+    mkdir -p /var/backups/slapd-$oldver
+  fi
   mv /var/lib/ldap/* /var/backups/slapd-$oldver
   touch /var/lib/slapd/upgrade_2.0
   echo done

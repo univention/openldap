@@ -28,6 +28,8 @@ openldap2 (2.1.17-4) unstable; urgency=low
     + debian/slapd.postinst: Make sure slapd is stopped before doing
       slapadd/slapcat's and the like. (Note: The woody version does not
       stop slapd).  Closes: #189777.
+    + debian/slapd.postinst: Check if directories exist before attempting
+      to mkdir them.  Closes: #189947
 
  --
 
