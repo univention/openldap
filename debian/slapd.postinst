@@ -24,6 +24,9 @@ create_new_configuration() {
   basedn="dc=`echo $RET|sed 's/\./,dc=/g'`"
   dc="`echo $RET|sed 's/\..*$//'`"
 
+  db_get slapd/backend
+  backend="`echo $RET|tr A-Z a-z`"
+
   # Make sure the daemon is shut down when doing
   # a reconfigure.  No daemon should be running
   # during an initial install.
@@ -31,13 +34,14 @@ create_new_configuration() {
     invoke-rc.d slapd stop
   fi
 
-  create_new_slapd_conf "$basedn"
+  create_new_slapd_conf "$basedn" "$backend"
   create_new_directory "$basedn" "$dc"
 }
 
 # Creates a new slapd.conf for the suffix given
 create_new_slapd_conf() {
   basedn=$1
+  backend=$2
   if [ -e "$SLAPD_CONF" ]; then
     return
   fi
@@ -45,7 +49,7 @@ create_new_slapd_conf() {
   TMPFILE=`mktemp -q ${SLAPD_CONF}.XXXXXX`
   echo -n "Creating initial slapd configuration... "
   sed -e "s/@SUFFIX@/$basedn/g" -e "s/@ADMIN@/cn=admin,$basedn/g" \
-      </usr/share/slapd/slapd.conf >$TMPFILE
+      -e "s/@BACKEND@/$backend/g" </usr/share/slapd/slapd.conf >$TMPFILE
   mv $TMPFILE $SLAPD_CONF
   echo "done"
 }

@@ -132,7 +132,7 @@ _Description: slapadd failed during upgrade
 
 Template: slapd/slave_databases_require_updateref
 Type: note
-_Description: slave databases require updateref option
+_Description: Slave databases require updateref option
  In your slapd configuration file at least one database is
  configured as slave, and the updateref option is not set.
  The updateref option specifies the referral(s) to pass back
@@ -142,3 +142,30 @@ _Description: slave databases require updateref option
  Starting with version 2.1.23, slapd requires the updateref
  option to be set on slaves. You should make sure to fix
  your slapd.conf configuration file.
+
+Template: slapd/backend
+Type: select
+Choices: BDB, LDBM
+Default: BDB
+_Description: Which database backend would you like to use?
+ The BDB backend (back-bdb) and LDBM backend (back-ldbm) are comparable in
+ purpose and back-bdb evolved from experience gained from back-ldbm, but the
+ two are quite distinct today. They both store entries based on a 32-bit entry
+ ID key, and they use a dn2id table to map from DNs to entry IDs. They both
+ perform attribute indexing using the same code, and store index data as lists
+ of entry IDs. As such, the LDAP-specific features they offer are nearly
+ identical. The differences are in the APIs used to implement the databases.
+ back-ldbm uses a generic database API that can plug into several different
+ database packages. In Debian, it's built against BerkeleyDB (BDB). While
+ BerkeleyDB supports this generic interface, it also offers a much richer API
+ that has a lot more power and a lot more complexity. back-bdb is written
+ specifically for the full BDB API, and uses some of BDB's more advanced
+ features to offer transaction processing, fine grained locking, and other
+ features that offer improved concurrency and reliability. For more
+ information, see http://www.openldap.org/faq/data/cache/756.html.
+ .
+ While the BDB backend is the recommended choice of the OpenLDAP developers,
+ the LDBM backend has proven to be more reliable for some Debian users,
+ especially when the BDB database wasn't properly configured. When using the
+ BDB backend, make sure to do so. For information on how to tune BDB, see
+ http://www.openldap.org/faq/data/cache/893.html.
