@@ -5,6 +5,10 @@ openldap2.1 (2.1.16-1) unstable; urgency=low
       now respects the --enable-shared flag used at configuration time.
     + debian/slapd.postinst: Automagically add the module load directives
       after upgrade as needed.
+    + debian/slapd.config: 
+      - Only ask questions to create a new directory on fresh install.
+      - Ask wether the right modules should automatically be loaded in 
+        slapd.conf.
 
   * Roland Bauerschmidt <rb@debian.org>
     + debian/slapd.README.Debian: mention that backend database modules are
