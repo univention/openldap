@@ -20,6 +20,20 @@ openldap2 (2.1.21-2) unstable; urgency=low
     + debian/move_files: Kill of the static archives of our backend 
       modules as they are of absolutely no use.
 
+  * Steve Langasek <vorlon@debian.org>:
+    + debian/slapd.postinst: Add a new function, get_database_list, that
+      prints out the list of configured databases from slapd.conf
+      one row at a time. Move all of the upgrade handling into a
+      loop, and iterate through the configured databases.  Since the
+      while loop is in fact a subshell, be sure to handle errors
+      correctly.  We also have to look at the configured directory
+      for each database, instead of assuming /var/lib/ldap.
+      Closes: #190155, #190156.
+    + debian/slapd.preinst: Simplify the handling of error status: if
+      the slapcat fails, just remove the ldif file.  Also, add the
+      suffix to the name of the output file, and add the
+      get_database_list function here as well.
+
  --
 
 openldap2 (2.1.21-1) unstable; urgency=low

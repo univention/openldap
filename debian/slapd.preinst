@@ -8,6 +8,13 @@ oldver="$2"
 # Packages until at least 2.0.27-4 did not stop the daemon on upgrade so
 # we do that before installation
 
+# Ask for the filename of the dump file
+# XXX: Currently just uses /var/backups/ldap/$oldver/slapd-${suffix}-slapcat.ldif
+ldif_dump_location() {
+  local suffix=$1
+  echo "/var/backups/ldap/$oldver/slapd-${suffix}-slapcat.ldif"
+}
+
 # Make sure slapd is shut down before mucking with the db files
 # and whatnot...  Use this function
 stop_slapd() {
@@ -37,33 +44,51 @@ stop_slapd() {
         fi
 }
 
+# Get the list of configured databases from slapd.conf
+get_database_list() {
+  grep -E '^(database|directory|suffix)' /etc/ldap/slapd.conf | \
+  (
+    while read type val
+    do
+      if [ "$type" = "database" ]
+      then
+        if [ -n "$backend" -a -n "$suffix" ]; then
+          echo $backend \"$suffix\" \"$directory\"
+        fi
+
+        backend=$val
+        suffix=""
+        directory=""
+      elif [ "$type" = "suffix" ]; then
+        suffix=`echo $val | sed -e's/[[:space:]]\+//g; s/^"//; s/"$//;'`
+      elif [ "$type" = "directory" ]; then
+        directory=`echo $val | sed -e's/^"//; s/"$//;'`
+      fi
+    done
+    echo $backend \"$suffix\" \"$directory\"
+  )   
+}
+
 # If we are upgrading from an old version then
 # stop slapd and attempt to slapcat out the data
 # so we can use it in postinst to do the upgrade
 
-if dpkg --compare-versions "$2" lt-nl 2.1; then
-  if [ -x "/usr/sbin/slapcat" ]; then
-    # Stop slapd
-    stop_slapd
+if dpkg --compare-versions "$2" lt-nl 2.1 && [ -x "/usr/sbin/slapcat" ]
+then
+  # Stop slapd
+  stop_slapd
 
-    # Make our backup directory if it does not
-    # exist already
-    if [ ! -d "/var/backups/ldap/$oldver/" ]; then
-      mkdir -p /var/backups/ldap/$oldver/
-    fi
+  # Make our backup directory if it does not exist already
+  mkdir -p /var/backups/ldap/$oldver/
 
-    # Attempt to slapcat using old version
-    SLAPCAT_FAIL=0
-    slapcat > /var/backups/ldap/$oldver/slapd-${oldver}-slapcat.ldif || SLAPCAT_FAIL=1
+  get_database_list | while read backend suffix directory
+  do
+    # parse out the quotes; we no longer need them for grouping
+    suffix=`eval echo $suffix`
 
-    # Make note if the slapcat worked or not which will be
-    # checked in postinst
-    if [ "$SLAPCAT_FAIL" = "1" ]; then
-      touch /var/backups/ldap/$oldver/slapd-${oldver}-slapcat.failed
-    else
-      touch /var/backups/ldap/$oldver/slapd-${oldver}-slapcat.success
-    fi
-  fi
+    location=`ldif_dump_location "$suffix"`
+    slapcat -b "$suffix" > "$location" || rm -f "$location"
+  done || exit $?
 fi
 
 #DEBHELPER#

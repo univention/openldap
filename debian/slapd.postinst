@@ -16,9 +16,10 @@ ldif_dump_wanted() {
 }
 
 # Ask for the filename of the dump file
-# XXX: Currently just uses /var/backups/ldap/$oldver/slapd-new-slapcat.ldif
+# XXX: Currently just uses /var/backups/ldap/$oldver/slapd-${suffix}-slapcat.ldif
 ldif_dump_location() {
-  echo "/var/backups/ldap/$oldver/slapd-new-slapcat.ldif"
+  local suffix=$1
+  echo "/var/backups/ldap/$oldver/slapd-${suffix}-slapcat.ldif"
 }
 
 # Make sure slapd is shut down before mucking with the db files
@@ -49,6 +50,46 @@ stop_slapd() {
                         --exec /usr/sbin/slapd 2>&1
         fi
 }
+
+# Get the list of configured databases from slapd.conf
+get_database_list() {
+  grep -E '^(database|directory|suffix)' /etc/ldap/slapd.conf | \
+  (
+    while read type val
+    do
+      if [ "$type" = "database" ]
+      then
+        if [ -n "$backend" -a -n "$suffix" ]; then
+          if [ "$backend" = "ldbm" -o "$backend" = "bdb" ] \
+             && [ -z "$directory" ]
+          then
+            directory=/usr/share/ldap/openldap-data
+          fi
+          echo $backend \"$suffix\" \"$directory\"
+        fi
+
+        backend=$val
+        suffix=""
+        directory=""
+      elif [ "$type" = "suffix" ]; then
+        # Directory names are whitespace-sensitive, but suffixes
+        # are not.  Discard whitespace, so we can create cleaner
+        # backup directory names.
+        suffix=`echo $val | sed -e's/[[:space:]]\+//g; s/^"//; s/"$//;'`
+      elif [ "$type" = "directory" ]; then
+        directory=`echo $val | sed -e's/^"//; s/"$//;'`
+      fi
+    done
+
+    # Fall out of the loop, print the info for the last backend.
+    if [ "$backend" = "ldbm" -o "$backend" = "bdb" ] && [ -z "$directory" ]
+    then
+      directory=/usr/share/ldap/openldap-data
+    fi
+    echo $backend \"$suffix\" \"$directory\"
+  )   
+}
+
 
 # Only create a new directory on a fresh install or on reconfigure
 if [ "$1" = configure -a -z "$2" ] || [ "$1" = reconfigure ] \
@@ -207,82 +248,94 @@ fi
 
 # Move the old database files out of the way
 # XXX: User interaction - target directory
-if dpkg --compare-versions "$2" lt-nl 2.1 \
-   && [ ! -f /var/lib/slapd/upgrade_2.0 ]
-then
-  if ldif_dump_wanted; then
-    stop_slapd
+if dpkg --compare-versions "$oldver" lt-nl 2.1 && ldif_dump_wanted; then
+  stop_slapd
 
-    location=`ldif_dump_location`
-    # XXX: to be truly idempotent, we should make sure we don't try to
-    # overwrite this ldif file on a second pass after already having
-    # moved some of the files aside below.
+  db_get shared/organization
+  organization="$RET"
 
-    db_get shared/organization
-    organization="$RET"
+  mkdir -p /var/backups/ldap/$oldver/
+fi
 
-    # Fix the directory when upgrading from before 2.1 and the root dn
-    # has no structural objectclass
-    # XXX: can we use slapcat to determine if we need to prompt for this?
-    # If not, the prompting should move to the config script.
+if dpkg --compare-versions "$oldver" lt-nl 2.1; then
+  get_database_list | while read backend suffix directory
+  do
+    # parse out the quotes; we no longer need them for grouping
+    suffix=`eval echo $suffix`
+    directory=`eval echo $directory`
 
-    # Check if the preinst slapcat worked or not, if not, go ahead and
-    # attempt to slapcat here with the new version of slapcat
-    SLAPCAT_FAIL=0
-    if [ ! -e "/var/backups/ldap/$oldver/slapd-${oldver}-slapcat.ldif" -o \
-         ! -e "/var/backups/ldap/$oldver/slapd-${oldver}-slapcat.success" ]; then
-      echo -n "Dumping directory to $location with new slapcat... "
-      slapcat > $location || SLAPCAT_FAIL=1
-      if [ "$SLAPCAT_FAIL" = "1" ]; then
+    location=`ldif_dump_location $suffix`
+
+    if [ ! -f "/var/lib/slapd/upgrade_2.0-$suffix" ]
+    then
+      if ldif_dump_wanted; then
+
+        # XXX: to be truly idempotent, we should make sure we don't try to
+        # overwrite this ldif file on a second pass after already having
+        # moved some of the files aside below.
+
+        # Check if the preinst slapcat worked or not, if not, go ahead and
+        # attempt to slapcat here with the new version of slapcat
+        SLAPCAT_FAIL=0
+        if [ ! -e "$location" ]; then
+          echo -n "Dumping directory to $location with new slapcat... "
+          slapcat -b "$suffix" > "$location" || SLAPCAT_FAIL=1
+          if [ "$SLAPCAT_FAIL" = "1" ]; then
+            echo "failed"
+	    rm -f "$location"
+            # XXX: now that we handle multiple dbs, this note should
+            # mention the suffix of the failed database.
+            db_input slapd/upgrade_slapcat_failure
+          else
+            echo "done"
+          fi
+        fi
+
+        # Fix the directory when upgrading from before 2.1 and the root
+        # dn has no structural objectclass
+
+        # We should now have a valid ldif file, created either in the
+        # preinst or above.  If we don't, then the user has been
+        # notified and just give up.
+        if [ -e "$location" ]; then
+          /usr/share/slapd/fix_ldif -w -o "$organization" < "$location" > "${location}.fixed"
+        fi
+      fi
+
+      # We may not have a directory at all for some backends -- if so,
+      # skip this part; it won't work.
+      if [ -n "$directory" ]; then
+        echo -n "Moving old database files to /var/backups/ldap/$oldver/... "
+        mkdir -p "/var/backups/ldap/$oldver/$suffix"
+        mv "$directory"/* "/var/backups/ldap/$oldver/$suffix/"
+      fi
+      touch "/var/lib/slapd/upgrade_2.0-$suffix"
+      echo done
+    fi
+
+    # If a dump file from the old version exists we want to recreate the
+    # directory from it
+    if [ -e "${location}.fixed" ]; then
+      echo -n "Recreating directory from ${location}.fixed... "
+      SLAPADD_FAIL=0
+      slapadd -b "$suffix" -u -l "${location}.fixed" || SLAPADD_FAIL=1
+      if [ "$SLAPADD_FAIL" = "1" ]; then
         echo "failed"
-        db_input slapd/upgrade_slapcat_failure
+        db_input slapd/upgrade_slapadd_failure
+        exit 1
       else
+        slapadd -b "$suffix" -l "${location}.fixed"
         echo "done"
       fi
     fi
-
-    # If the original slapcat worked then use the output of that as
-    # input to the upgrade script.  Otherwise check if the new slapcat
-    # worked and if it did then use *that*.
-    # If neither worked then the user has been notified and just give up.
-    if [ -e "/var/backups/ldap/$oldver/slapd-${oldver}-slapcat.ldif" -a \
-         -e "/var/backups/ldap/$oldver/slapd-${oldver}-slapcat.success" ]; then
-      /usr/share/slapd/fix_ldif -w -o "$organization" < /var/backups/ldap/$oldver/slapd-${oldver}-slapcat.ldif > ${location}.fixed
-    else
-      if [ "$SLAPCAT_FAIL" = "0" -a -e "$location" ]; then
-        /usr/share/slapd/fix_ldif -w -o "$organization" < /var/backups/ldap/$oldver/slapd-${oldver}-slapcat.ldif > ${location}.fixed
-      fi
-    fi
-  fi
-
-  echo -n "Moving old database files to /var/backups/ldap/$oldver/slapd-db... "
-  if [ ! -d /var/backups/ldap/$oldver/slapd-db ]; then
-    mkdir -p /var/backups/ldap/$oldver/slapd-db
-  fi
-  mv /var/lib/ldap/* /var/backups/ldap/$oldver/slapd-db
-  touch /var/lib/slapd/upgrade_2.0
-  echo done
-fi
-
-
-# If a dump file from the old version exists we want to recreate the
-# directory from it
-if dpkg --compare-versions "$2" lt-nl 2.1 \
-	&& [ -e `ldif_dump_location`.fixed ]; then
-  echo -n "Recreating directory from `ldif_dump_location`.fixed"
-  SLAPADD_FAIL=0
-  slapadd -u -l `ldif_dump_location`.fixed || SLAPADD_FAIL=1
-  if [ "$SLAPADD_FAIL" = "1" ]; then
-    echo "failed"
-    db_input slapd/upgrade_slapadd_failure
-  else
-    slapadd -l `ldif_dump_location`.fixed
-    echo "done"
-  fi
+  # Since this is actually a subshell, we need to explicitly
+  # call exit: otherwise, the errors won't be caught, and the rm command
+  # below gets run!
+  done || exit $?
 fi
 
 db_stop
 
 #DEBHELPER#
 
-rm -f /var/lib/slapd/upgrade_2.0 /var/lib/slapd/suffix_change
+rm -f /var/lib/slapd/upgrade_2.0-* /var/lib/slapd/suffix_change
