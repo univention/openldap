@@ -24,7 +24,6 @@ openldap2.1 (2.1.16-1) unstable; urgency=low
   * Roland Bauerschmidt <rb@debian.org>
     + debian/slapd.README.Debian: mention that backend database modules are
       now compiled as shared objects
-    + debian/slapd.conf: added allow bind_v2 line for compatibility
 
   * Stephen Frost <sfrost@debian.org>
     + debian/slapd.conf: Drop the '.la' file extension
