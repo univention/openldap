@@ -4,6 +4,9 @@ openldap2 (2.1.30-1) unstable; urgency=low
     + debian/control: Have slapd conflict with libltdl3 version 1.5.4-1
       as with that version loading of .so files is broken which breaks
       slapd (closes: #249152).
+    + Applied patch to fix Perl backend (closes: #245347). Kudos
+      to Peter Marschall.
+    + debian/configure.options: Enable building of Perl backend.
 
   * Roland Bauerschmidt <rb@debian.org>
     + debian/slapd.templates: replace 'domain' with 'DNS domain name'

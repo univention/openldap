@@ -21,6 +21,7 @@
 
 #include <EXTERN.h>
 #include <perl.h>
+#include <XSUB.h>
 
 #include "perl_back.h"
 

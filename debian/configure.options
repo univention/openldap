@@ -144,9 +144,9 @@
 #     --with-passwd-module  module type static|dynamic [static]
 --with-passwd-module=dynamic
 #     --enable-perl	  enable perl backend [no]
-## This does not currently build with Perl 5.8 - disable it
---disable-perl
+--enable-perl
 #     --with-perl-module	  module type static|dynamic [static]
+--with-perl-module=dynamic
 #     --enable-shell	  enable shell backend [no]
 --enable-shell
 #     --with-shell-module	  module type static|dynamic [static]
