@@ -52,7 +52,7 @@ Architecture: any
 Conflicts: libldap-dev, libopenldap-dev
 Replaces: libopenldap-dev
 Provides: libldap-dev
-Depends: libldap2 (= ${Source-Version}), libssl-dev, libsasl2-dev
+Depends: libldap2 (= ${Source-Version})
 Description: OpenLDAP development libraries
  This package allows development of LDAP applications using the OpenLDAP
  libraries. It includes headers, libraries and links to allow static and

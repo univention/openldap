@@ -15,6 +15,8 @@ openldap2 (2.1.21-2) unstable; urgency=low
       for migration script.
     + debian/slapd.{pre,post}inst: Allow for whitespace in postinst 
       before database definitions
+    + debian/control: Drop the libldap2-dev Depends that aren't actually
+      necessary.
 
   * Torsten Landschoff <torsten@debian.org>:
     + doc/man/man8/slapd.8: Refer to slapd.conf(5) for a description of 
