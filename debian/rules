@@ -2,20 +2,7 @@
 
 export DH_COMPAT = 4
 
-CONFIG	      = --enable-debug --enable-syslog --enable-proctitle \
-		--enable-cache --enable-referrals --enable-ipv6 \
-		--enable-local --with-cyrus-sasl --with-readline \
-		--with-threads --enable-slapd --enable-cleartext \
-		--enable-crypt --enable-passwd --enable-spasswd \
-		--enable-multimaster --enable-phonetic --enable-rlookups \
-		--enable-wrappers --enable-dynamic --enable-dnssrv \
-		--enable-ldap --enable-ldbm --enable-shell --enable-sql \
-		--enable-bdb --enable-slurpd --enable-shared \
-		--enable-crypt-first --prefix=/usr --localstatedir=/var/lib \
-		--sysconfdir=/etc --libexecdir='$${prefix}'/sbin \
-		--mandir='$${prefix}'/share/man --with-subdir=ldap \
-		--with-tls
-
+CONFIG	      = $(shell grep -v "^\#" debian/configure.options)
 
 rootdir		:= $(shell pwd)
 tmpdir		:= $(rootdir)/debian/tmp
