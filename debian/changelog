@@ -17,6 +17,14 @@ openldap2 (2.1.22-2) unstable; urgency=low
     + debian/slapd.postrm: Small cleanup, only remove the directory, not
       the backups, on purge. 
 
+  * Roland Bauerschmidt <rb@debian.org>:
+    + debian/configure.options: change --localstatedir=/var/lib to
+      --localstatedir=/var/run. Since localstatedir isn't used anywhere
+      in the code, except for the ldapi socket (and examples in the
+      manpages which are correct at the moment anyway), all this change
+      does should be changing the default location of the ldapi socket
+      from /var/lib/ldapi to /var/run/ldapi. Closes: #160965.
+
  -- Stephen Frost <sfrost@debian.org>  Fri, 18 Jul 2003 14:13:04 -0400
 
 openldap2 (2.1.22-1) unstable; urgency=low

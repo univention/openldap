@@ -25,7 +25,7 @@
 #   --sharedstatedir=DIR    modifiable architecture-independent data in DIR
 #                           [PREFIX/com]
 #   --localstatedir=DIR     modifiable single-machine data in DIR [PREFIX/var]
---localstatedir=/var/lib
+--localstatedir=/var/run
 #   --libdir=DIR            object code libraries in DIR [EPREFIX/lib]
 #   --includedir=DIR        C header files in DIR [PREFIX/include]
 #   --oldincludedir=DIR     C header files for non-gcc in DIR [/usr/include]
