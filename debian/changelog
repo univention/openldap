@@ -91,6 +91,11 @@ openldap2 (2.1.21-2) unstable; urgency=low
       the db.  Be sure to db_go after db_input's.
     + debian/slapd.templates: Fix allow_bind_v2 short description to
       make more sense since the default is off.
+    + debian/slapd.preinst: Use perl instead of sed for handling conf.
+    + debian/slapd.postinst: Use perl instead of sed for handling conf,
+      use old sed method to insert \n's, user invoke-rc.d when slapd
+      needs to be stopped.  Assume preinst shuts slapd down for upgrade.
+    + debian/slapd.postinst: Only stop slapd on reconfigure.
 
   * Torsten Landschoff <torsten@debian.org>:
     + doc/man/man8/slapd.8: Refer to slapd.conf(5) for a description of 
@@ -121,7 +126,7 @@ openldap2 (2.1.21-2) unstable; urgency=low
     + debian/slapd.config: Add no configuration option.  Closes: #87986
     + debian/slapd.config: Complain to the user on invalid domain/org.
 
- --
+ -- Stephen Frost <sfrost@debian.org>  Tue, 15 Jul 2003 12:37:05 -0400
 
 openldap2 (2.1.21-1) unstable; urgency=low
 

@@ -8,6 +8,18 @@ oldver="$2"
 # Packages until at least 2.0.27-4 did not stop the daemon on upgrade so
 # we do that before installation
 
+PERLSCRIPT='
+while (<>) {
+  chomp;
+  if (m/^\s+(.*)$/) {
+    $l .= ($l eq "" ? "$1" : " $1");
+  } else {
+    print "$l\n" if $l ne "";
+    $l = "$_";
+  }
+}
+print "$l\n" if $l ne "";'
+
 # Ask for the filename of the dump file
 # XXX: Currently just uses /var/backups/ldap/$oldver/slapd-${suffix}-slapcat.ldif
 ldif_dump_location() {
@@ -20,8 +32,7 @@ ldif_dump_location() {
 stop_slapd() {
         # Find out the name of slapd's pid file
         if [ -z "$SLAPD_PIDFILE" -a -f "$SLAPD_CONF" ]; then
-                SLAPD_PIDFILE=`sed -ne 's/^pidfile[[:space:]]\+\(.\+\)/\1/p' \
-                        "$SLAPD_CONF"`
+                SLAPD_PIDFILE=`perl -e"$PERLSCRIPT" < $SLAPD_CONF | sed -ne 's/^pidfile[[:space:]]\+\(.\+\)/\1/p'`
         fi
 
         # Use the pidfile if it is there, if not then just do without
@@ -32,35 +43,9 @@ stop_slapd() {
         fi
 }
 
-
-create_sed_script() {
-  SEDSCRIPT=`mktemp`
-  if [ ! -f "$SEDSCRIPT" ]; then
-    echo "Could not create temp file."
-    exit 1
-  fi
-  cat <<EOF > $SEDSCRIPT
-{
-  s/^[#[:space:]][#[:space:]]*/&/
-  t other
-  b start
-  :start
-    N
-    s/\n[[:space:]][[:space:]]*/ /
-    t start
-    b end
-    p
-  :other
-    b end
-  :end
-}
-EOF
-}
-
 # Get the list of configured databases from slapd.conf
 get_database_list() {
-  create_sed_script
-  sed -f $SEDSCRIPT < $SLAPD_CONF | \
+  perl -e"$PERLSCRIPT" < $SLAPD_CONF | \
   grep -E '^(database|directory|suffix)' | \
   (
     while read type val
