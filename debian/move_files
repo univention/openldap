@@ -55,7 +55,7 @@ install_stuff usr/lib/*.so.*
 target=libldap2-dev
 echo -n " $target"
 install_stuff usr/include
-install_stuff usr/lib/*.{so,la,a}
+install_stuff usr/lib/*.so usr/lib/*.la usr/lib/*.a
 install_stuff usr/share/man/man3
 echo "."
 
