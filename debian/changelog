@@ -46,9 +46,6 @@ openldap2 (2.1.22-2) unstable; urgency=high
       to 0700 if it already exists. Closes: #209019.
     + Added Japanese translation of Debconf templates by Kenshi Muto
       <kmuto@debian.org>. Closes: #210731.
-    + servers/slapd/sasl.c, include/ldap_defaults.h: set path for SASL
-      to /etc/ldap/sasl:/usr/lib/sasl2? so that we don't need to have
-      configuration files in /usr/lib.
 
  -- Stephen Frost <sfrost@debian.org>  Fri, 18 Jul 2003 14:13:04 -0400
 

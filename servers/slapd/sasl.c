@@ -946,38 +946,12 @@ slap_sasl_err2ldap( int saslerr )
 }
 #endif
 
-static int
-slap_sasl_getpath( void * context, char ** path )
-{
-	char * sasl_default_configpath;
-	size_t len;
-	
-#if SASL_VERSION_MAJOR >= 2
-	sasl_default_configpath = "/usr/lib/sasl2";
-#else
-	sasl_default_configpath = "/usr/lib/sasl";
-#endif
-	
-	len = strlen(SASL_CONFIGPATH) + 1 /* colon */ +
-		strlen(sasl_default_configpath) + 1 /* \0 */;
-	*path = malloc( len );
-	if ( *path == NULL )
-		return SASL_FAIL;
-	
-	if (snprintf( *path, len, "%s:%s", SASL_CONFIGPATH,
-			sasl_default_configpath ) != len-1 )
-		return SASL_FAIL;
-	
-	return SASL_OK;
-}
-
 int slap_sasl_init( void )
 {
 #ifdef HAVE_CYRUS_SASL
 	int rc;
 	static sasl_callback_t server_callbacks[] = {
 		{ SASL_CB_LOG, &slap_sasl_log, NULL },
-		{ SASL_CB_GETPATH, &slap_sasl_getpath, NULL },
 		{ SASL_CB_LIST_END, NULL, NULL }
 	};
 
