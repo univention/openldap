@@ -8,7 +8,7 @@ openldap2 (2.1.23-1) unstable; urgency=low
       Closes: #215373.
     + Bumped Standards-Version (no changes needed).
 
- -- Roland Bauerschmidt <rb@debian.org>  Sat,  4 Oct 2003 14:39:43 +0200
+ -- Roland Bauerschmidt <rb@debian.org>  Sat, 18 Oct 2003 19:56:54 +0200
 
 openldap2 (2.1.22-3) unstable; urgency=low
 
