@@ -55,6 +55,7 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
     - added debian/slapd.default and use it from debian/slapd.init.
       Closes: #160964.
     - added debian/slapd.README.Debian
+    - versioned dependency on coreutils to shut up lintian. sigh.
 
   * Stephen Frost <sfrost@debian.org>
     - debian/control: added libltdl2-dev and libslp-dev to the build-depends
