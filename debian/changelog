@@ -32,6 +32,27 @@ openldap2 (2.1.21-2) unstable; urgency=low
     + debian/slapd.preinst: Changed to use mktemp for sed script.
     + debian/slapd.postinst: Changed to use mktemp for sed script.
     + debian/slapd.config: If no hostname set just use debian.org.
+    + contrib/ldapc++/config.{sub,guess}: Resync back to upstream, no 
+      reason not to, we don't even build this stuff...
+    + debian/control: Change build-depends to libgnutls7-dev instead of
+      libssl-dev.
+    + debian/rules: Now run autoconf && autoheader to pick up on the
+      configure.in changes needed for GNU TLS.
+    + debian/copyright: Added Steve Langasek (SL) copyright statement.
+    + Patch from Steve Langasek for GNU TLS support, Closes: #198553
+    | include/ldap_pvt_gnutls.h: Added for GNU TLS
+    | configure.in: Now uses GNU TLS where available.
+    | servers/slapd/schema_init.c: Modified for GNU TLS- some functions
+      removed because GNU TLS layer does not support them yet.
+    | build/install-sh: Added for new autoconf.
+    | libraries/libldap/Makefile.in: Changed to compile GNU TLS portions.
+    | libraries/libldap/getdn.c: Stub function added, GNU TLS layer does 
+      not support TLS certificates for authentication yet.
+    | libraries/libldap/tls.c: Now calls GNU TLS functions instead of
+      OpenSSL.
+    | libraries/libldap/gnutls.c: Added to support GNU TLS in place of
+      OpenSSL for TLS connections.
+    | libraries/libldap_r/Makefile.in: Changed to compile GNU TLS portions.
 
   * Torsten Landschoff <torsten@debian.org>:
     + doc/man/man8/slapd.8: Refer to slapd.conf(5) for a description of 

@@ -3626,14 +3626,20 @@ integerBitOrMatch(
 }
 
 #ifdef HAVE_TLS
+#ifdef HAVE_GNUTLS_GNUTLS_H
+#include <gnutls/gnutls.h>
+#include "ldap_pvt_gnutls.h"
+#else
 #include <openssl/x509.h>
 #include <openssl/err.h>
+#endif
 
 /*
  * Next function returns a string representation of a ASN1_INTEGER.
  * It works for unlimited lengths.
  */
 
+#ifndef HAVE_GNUTLS_GNUTLS_H
 static struct berval *
 asn1_integer2str(ASN1_INTEGER *a, struct berval *bv)
 {
@@ -3694,6 +3700,8 @@ asn1_integer2str(ASN1_INTEGER *a, struct berval *bv)
 
 	return ber_str2bv( p, 0, 1, bv );
 }
+#endif
+
 
 /*
  * Given a certificate in DER format, extract the corresponding
@@ -3709,6 +3717,9 @@ certificateExactConvert(
 	struct berval serial;
 	struct berval issuer_dn;
 
+#ifdef HAVE_GNUTLS_GNUTLS_H
+	return LDAP_INVALID_SYNTAX;
+#else
 	xcert = d2i_X509(NULL, &p, in->bv_len);
 	if ( !xcert ) {
 #ifdef NEW_LOGGING
@@ -3761,6 +3772,7 @@ certificateExactConvert(
 	ber_memfree(issuer_dn.bv_val);
 
 	return LDAP_SUCCESS;
+#endif /* HAVE_GNUTLS_GNUTLS_H */
 }
 
 static int
@@ -3828,6 +3840,9 @@ certificateExactMatch(
 	struct berval asserted_issuer_dn;
 	int ret;
 
+#ifdef HAVE_GNUTLS_GNUTLS_H
+	return LDAP_INVALID_SYNTAX;
+#else
 	xcert = d2i_X509(NULL, &p, value->bv_len);
 	if ( !xcert ) {
 #ifdef NEW_LOGGING
@@ -3892,6 +3907,7 @@ certificateExactMatch(
 	ber_memfree(asserted_issuer_dn.bv_val);
 
 	return ret;
+#endif /* HAVE_GNUTLS_GNUTLS_H */
 }
 
 /* 
@@ -3921,6 +3937,9 @@ static int certificateExactIndexer(
 		/* empty -- just count them */
 	}
 
+#ifdef HAVE_GNUTLS_GNUTLS_H
+	return LDAP_INVALID_SYNTAX;
+#else
 	keys = ch_malloc( sizeof( struct berval ) * (i+1) );
 
 	for( i=0; values[i].bv_val != NULL; i++ ) {
@@ -3960,6 +3979,7 @@ static int certificateExactIndexer(
 	keys[i].bv_val = NULL;
 	*keysp = keys;
 	return LDAP_SUCCESS;
+#endif /* HAVE_GNUTLS_GNUTLS_H */
 }
 
 /* Index generation function */

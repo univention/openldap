@@ -10,7 +10,7 @@ builddir	:= $(rootdir)/debian/build
 
 $(builddir)/Makefile:
 	mkdir -p $(builddir)
-	cd $(builddir) && CFLAGS=-D_FILE_OFFSET_BITS=64 $(rootdir)/configure \
+	autoconf && autoheader && cd $(builddir) && CFLAGS=-D_FILE_OFFSET_BITS=64 $(rootdir)/configure \
 		$(CONFIG) 
 	perl debian/check_config
 	$(MAKE) -C $(builddir) depend

@@ -3341,6 +3341,23 @@ return_results:;
 }
 
 #ifdef HAVE_TLS
+#ifdef HAVE_GNUTLS_GNUTLS_H
+
+/* Stub function: disable this for now, there's a lot of conversion
+ * code that needs to be written to make this work with GNUTLS (OIDs, etc).
+ */
+int
+ldap_X509dn2bv( void *x509_name, struct berval *bv, LDAPDN_rewrite_func *func,
+	unsigned flags )
+{
+	assert( bv );
+	bv->bv_len = 0;
+	bv->bv_val = NULL;
+
+	return LDAP_SUCCESS;
+}
+
+#else
 #include <openssl/x509.h>
 #include <openssl/err.h>
 
@@ -3537,5 +3554,7 @@ nomem:
 		LDAP_FREE( newDN );
 	return rc;
 }
+#endif /* HAVE_GNUTLS_GNUTLS_H */
+
 #endif /* HAVE_TLS */
 
