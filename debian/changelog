@@ -15,6 +15,7 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
       - Make libldap2 conflict with libldap2-tls which is obsolete now.
     - debian/rules: Move the long list of configure options to a new 
       file debian/configure.options and read $(CONFIG) from that file.
+    - configure with --enable-aci. Closes: #101602.
     - debian/slapd.init: Rewrite and add comments.
       - Add support for running as non-root (closes: #111765, #157037).
     - servers/slapd/main.c (main): Remove pid file on exit (closes: #162284).
