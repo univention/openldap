@@ -1,121 +1,66 @@
 #!/bin/sh
 
-pkg=slapd
-
+# Bail out on any error
 set -e
 
-if [ -f /etc/ldap/slapd.conf -a \( "$1" != "configure" -o -n "$2" \) ] ; then
-	pf=$(sed -ne 's/^pidfile[[:space:]]\+\(.\+\)/\1/p' /etc/ldap/slapd.conf)
-	if [ -z "$pf" ] ; then
-		pf="/var/run/slapd.pid"
-	fi
-	start-stop-daemon --stop --quiet --oknodo --pidfile "$pf"
-else
-	# Load debconf
-	. /usr/share/debconf/confmodule
+# We need debconf
+. /usr/share/debconf/confmodule
 
-	if [ -f /etc/ldap/slapd.conf ] ; then
-		if [ -z "$2" ] ; then
-			db_input slapd_conf_exists || true
-			db_go
-		fi
-		exit 0
-	fi
+# Only create a new directory on a fresh install or on reconfigure
+if [ "$1" = configure -a -z "$2" ] || [ "$1" = reconfigure ] \
+	|| [ "$DEBCONF_RECONFIGURE" ]; then
+  db_get slapd/domain
+  basedn="dc=`echo $RET|sed 's/\./,dc=/g'`"
+  dc="`echo $RET|sed 's/\..*$//'`"
+  db_get shared/organization
+  organization="$RET"
+  db_get slapd/password1
+  adminpass="$RET"
+  db_stop
 
-	db_get slapd/internal/dn ; dn="$RET"
-	db_get slapd/internal/admin ; admin="$RET"
-	db_get slapd/fill_method ; method="$RET"
+  echo -n "Creating initial slapd configuration... "
+  # XXX: This should not be installed as an example (@SUFFIX@ should
+  # not be in an example config)
+  # XXX: This way slapd.conf could be partially written, we should write
+  # it into a temporary file first and move that file in place instead.
+  sed -e "s/@SUFFIX@/$basedn/g" -e "s/@ADMIN@/cn=admin,$basedn/g" \
+  	</usr/share/doc/slapd/examples/slapd.conf >/etc/ldap/slapd.conf
+  echo "done"
+  echo -n "Creating initial LDAP directory... "
 
-	top=$(echo $dn | sed 's/,.*//')
-	key=$(echo $top | sed 's/=.*//')
-	value=$(echo $top | sed "s/$key=//")
+  cat <<EOF|slapadd
+dn: $basedn
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+o: $organization
+dc: $dc
 
-	if [ "$key" = "dc" ] ; then
-		class="dcObject"
-	elif [ "$key" = "ou" ] ; then
-		class="organizationalUnit"
-	elif [ "$key" = "c" ] ; then
-		class="country"
-	elif [ "$key" = "o" ] ; then
-		class="organization"
-	elif [ "$key" = "cn" ] ; then
-		class="organizationalRole"
-	else
-		db_input slapd/unknown_class || true
-		db_go
-		exit 1
-	fi
+dn: cn=admin,$basedn
+objectClass: simpleSecurityObject
+objectClass: organizationalRole
+cn: admin
+description: LDAP administrator
+userPassword: $adminpass
 
-	sed -e "s/@SUFFIX@/$dn/g" -e "s/@ADMIN@/$admin/" \
-		/usr/share/doc/slapd/examples/slapd.conf > /etc/ldap/slapd.conf
-	chmod 644 /etc/ldap/slapd.conf
+EOF
 
-	tmp=$(tempfile)
-	trap "rm -f $tmp" EXIT INT QUIT TERM
-
-	if [ "$method" = "ldif" ] ; then
-		db_get slapd/ldif_file ; ldif="$RET"
-	else
-		db_get slapd/internal/adminpw ; password="$RET"
-		ldif="$tmp"
-		cat <<-EOF > "$ldif"
-		dn: $dn
-		objectClass: $class
-		$key: $value
-
-		dn: cn=admin,$dn
-		objectClass: organizationalRole
-		objectClass: simpleSecurityObject
-		cn: admin
-		description: LDAP administrator
-		userPassword: $password
-
-		dn: ou=People,$dn
-		objectClass: organizationalUnit
-		ou: People
-
-		dn: ou=Roaming,$dn
-		objectClass: organizationalUnit
-		ou: Roaming
-		EOF
-	fi
-
-	slapadd -l $ldif 1>&2
-
-
-	db_get slapd/replicate
-	if [ "$RET" = "true" ] ; then
-		db_get slapd/slurpd/host ; host="$RET"
-		db_get slapd/slurpd/port ; port="$RET"
-		db_get slapd/slurpd/binddn ; binddn="$RET"
-		db_get slapd/slurpd/credentials ; cred="$RET"
-		db_set slapd/slurpd/credentials ""
-
-		cat <<-EOF > "$tmp"
-
-		# Set up replication for entire database to $host. Please note that this
-		# does not use a secure connection!
-		replica host=$host:$port bindmethod=simple binddn=$binddn credentials=$cred
-
-	EOF
-
-		tmp2=$(tempfile)
-		trap "rm -f $tmp $tmp2" EXIT INT QUIT TERM
-		sed -e "/^loglevel/r$tmp" /etc/ldap/slapd.conf > "$tmp2"
-		cat "$tmp2" >/etc/ldap/slapd.conf
-		rm -f "$tmp2"
-		trap "rm -f $tmp" EXIT INT QUIT TERM
-	fi
-
-	db_set slapd/internal/adminpw ""
-	db_stop
-
-	rm -f "$tmp"
-	trap "" EXIT INT QUIT TERM
+  echo "done"
 fi
 
-update-rc.d slapd defaults 19 80 > /dev/null
-/etc/init.d/slapd start
-
-exit 0
+# Automatically added by dh_installinit
+if [ -x "/etc/init.d/slapd" ]; then
+	update-rc.d slapd defaults 19 80 >/dev/null
+	if [ -x /usr/sbin/invoke-rc.d ]; then
+		invoke-rc.d slapd start
+	else
+		/etc/init.d/slapd start
+	fi
+fi
+# End automatically added section
+# Automatically added by dh_makeshlibs
+if [ "$1" = "configure" ]; then
+	ldconfig
+fi
+# End automatically added section
 

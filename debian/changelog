@@ -41,6 +41,8 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
     - debian/rules: Pass the start and stop priority of slapd to
       dh_installinit in preparation for a postinst supported by debhelper.
     - debian/rules: Call dh_installdirs again.
+    - Rewrite slapd.config, slapd.postinst, slapd.templates - a first try 
+      in getting slapd to configure itself. Way to go.
 
   * Roland Bauerschmidt <rb@debian.org>
     - debian/control:
@@ -76,7 +78,7 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
     - Modified backend types to be built as modules for dynamic loading
     - Fixed pt_BR translation
 
- -- Torsten Landschoff <torsten@debian.org>  Mon, 10 Feb 2003 22:32:06 +0100
+ -- Torsten Landschoff <torsten@debian.org>  Sat,  8 Mar 2003 19:10:02 +0100
 
 openldap2 (2.0.27-3) unstable; urgency=high
 
