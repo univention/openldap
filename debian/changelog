@@ -17,24 +17,24 @@ openldap2 (2.1.22-2) unstable; urgency=high
     + Fix invocation of "head" in maintainer scripts and replace usage of
       [ foo -a bar ] by [ foo ] && [ bar ] (closes: #203292).
     + debian/slapd.postrm: Small cleanup, only remove the directory, not
-      the backups, on purge. 
-    + debian/rules: Don't run the upstream install target if we did not 
+      the backups, on purge.
+    + debian/rules: Don't run the upstream install target if we did not
       rebuild the whole tree. Makes debugging maintainer script much more
       tolerable.
     + debian/slapd.config: Cleaned up and restructured for readability.
-    + debian/slapd.templates: Replaced the invalid_suffix template with 
+    + debian/slapd.templates: Replaced the invalid_suffix template with
       invalid_config which is more general and can be used for any
       inconsistency in the initial configuration.
-    + debian/slapd.postinst: Rewritten to eliminate all that spaghetti. 
+    + debian/slapd.postinst: Rewritten to eliminate all that spaghetti.
       Did not yet implement all old features again...
-      - Now the #DEBHELPER# part is always reached so that the daemon 
+      - Now the #DEBHELPER# part is always reached so that the daemon
         will be restarted even if no automatic configuration is wanted
         (closes: #204008).
     + Fixed the undefined symbols in libldap_r.so.2 (closes: #195990).
     | configure.in: Try -lpthread before -pthread to link the thread
       library. libtool does not pass -pthread through, -lpthread seems
       to work though.
-    | libraries/libldap_r/Makefile.in: Add $(LTHREAD_LIBS) to 
+    | libraries/libldap_r/Makefile.in: Add $(LTHREAD_LIBS) to
       UNIX_LINK_LIBS so that pthread is linked when creating a shared library
       as well.
 
@@ -64,7 +64,7 @@ openldap2 (2.1.22-2) unstable; urgency=high
       - readded pre-2.1 (woody) upgrade path (that is, dumping, fixing
         and reimporting the database)
 
- -- Stephen Frost <sfrost@debian.org>  Fri, 18 Jul 2003 14:13:04 -0400
+ -- Roland Bauerschmidt <rb@debian.org>  Fri,  3 Oct 2003 15:35:29 +0200
 
 openldap2 (2.1.22-1) unstable; urgency=low
 
