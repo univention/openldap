@@ -35,7 +35,7 @@ binary-arch: build
 	dh_installchangelogs -a
 	dh_installdocs -a
 	dh_installexamples -a
-	dh_installinit -a
+	dh_installinit -a -- "defaults 19 80"
 	dh_installdebconf -a
 	dh_strip -a
 	dh_compress -a

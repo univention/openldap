@@ -38,6 +38,8 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
     - debian/rules: Call dh_installdeb later in the binary target so that
       the conffiles are already there for listing. Without this nothing in 
       /etc gets tagged as conffile... (lintian).
+    - debian/rules: Pass the start and stop priority of slapd to
+      dh_installinit in preparation for a postinst supported by debhelper.
 
   * Roland Bauerschmidt <rb@debian.org>
     - debian/control:
