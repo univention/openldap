@@ -82,6 +82,8 @@ create_new_directory() {
   organization="$RET"
   db_get slapd/internal/adminpw
   adminpass="$RET"
+  # Wipe the hash after reading it - just to be sure...
+  db_set slapd/internal/adminpw ""
  
   echo -n "Creating initial LDAP directory... "
   touch /var/lib/slapd/suffix_change
