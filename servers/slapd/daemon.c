@@ -843,7 +843,7 @@ static int slap_open_listener(
 
 		if (bind(l.sl_sd, *sal, addrlen)) {
 			err = sock_errno();
-			if(getnameinfo(*sal,addrlen,address,50,port_asc,15,NI_NUMERICHOST|NI_NUMERICSERV)) {
+			if(getnameinfo(*sal,addrlen,address,sizeof(address),port_asc,sizeof(port_asc),NI_NUMERICHOST|NI_NUMERICSERV)) {
 				strcpy(address,"Unknown");
 				strcpy(port_asc,"Unknown");
 			}
