@@ -62,6 +62,19 @@ merge_logical_lines() {
   perl -pe 'BEGIN { undef $/ }; s/\n(?!\n)\s+/ /g;' 
 }
 
+# read slapd.conf file and evaluate include statements
+# FIXME: circular loops will cause this to block forever
+read_slapd_conf() {
+  merge_logical_lines | while read command data; do
+    if [ "$command" = "include" ]; then
+      file=`eval echo $data`
+      read_slapd_conf < $file
+    else
+      echo $command $data
+    fi
+  done
+}
+
 # Directory names are whitespace-sensitive, but suffixes are not.  Discard
 # whitespace, so we can create cleaner backup directory names.
 canonical_suffix() {
@@ -96,7 +109,7 @@ write_database_info() {
 
 # Get the list of configured databases from the slapd configuration file
 get_database_list() {
-  (merge_logical_lines < $SLAPD_CONF && echo database) | \
+  (read_slapd_conf < $SLAPD_CONF && echo database) | \
     while read command data; do
       case $command in
       database)

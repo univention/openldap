@@ -126,7 +126,7 @@ autoconfigure_modules() {
 
 modulepath      /usr/lib/ldap
 EOF
-  merge_logical_lines < $SLAPD_CONF | \
+  read_slapd_conf < $SLAPD_CONF | \
     sed -n 's/^database[[:space:]]\+\([a-z]\+\)/moduleload      back_\1/p' \
     >>$TMPFILE
   echo >>$TMPFILE
@@ -147,7 +147,7 @@ configure_v2_protocol_support() {
   echo -n "Enabling LDAPv2 support... "
 
   # Check if already enabled
-  if merge_logical_lines < $SLAPD_CONF | \
+  if read_slapd_conf < $SLAPD_CONF | \
   	grep -q -E '^allow[[:space:]][^#]*bind_v2'; then
     echo "already enabled"
     return 0

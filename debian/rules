@@ -42,6 +42,10 @@ install-stamp: build-stamp
 	$(MAKE) -C $(builddir) DESTDIR=$(installdir) install
 	# Upstream installs schema files in mode 0444 - policy wants 0644
 	find $(installdir)/etc -type f|xargs chmod 0644
+	# ldapadd is installed as a hardlink to ldapmodify; use a symlink
+	# instead
+	rm -f $(installdir)/usr/bin/ldapadd
+	ln -s ldapmodify $(installdir)/usr/sbin/ldapadd
 	touch $@
 
 

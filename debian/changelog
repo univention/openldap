@@ -7,6 +7,13 @@ openldap2 (2.1.29-1) unstable; urgency=low
 
   * Roland Bauerschmidt <rb@debian.org>
     + Merged new upstream release.
+    + debian/slapd.prerm: add #DEBHELPER# token.
+    + debian/control: have slapd depend on debconf (>= 0.5) to ensure
+      it supports the seen flag.
+    + debian/rules: ldapadd is installed as a hardlink to ldapmodify;
+      use a symlink instead.
+    + debian/slapd.{scripts-common,postinst,preinst,config}: Add new
+      function read_slapd_conf that evaluates include statements.
 
  --  <sfrost@debian.org>  Fri,  5 Mar 2004 20:54:39 -0500
 

@@ -43,3 +43,5 @@ elif [ -x "/etc/init.d/slapd" ]; then
 		/etc/init.d/slapd stop
 	fi
 fi
+
+#DEBHELPER#
