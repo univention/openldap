@@ -27,7 +27,7 @@ openldap2 (2.1.17-4) unstable; urgency=low
       do a real slapadd which should work.
     + debian/slapd.postinst: Make sure slapd is stopped before doing
       slapadd/slapcat's and the like. (Note: The woody version does not
-      stop slapd).
+      stop slapd).  Closes: #189777.
 
  --
 
