@@ -16,6 +16,8 @@ openldap2 (2.1.17-4) unstable; urgency=low
       and telling the user of slapcat/slapadd failures during upgrade. 
     + debian/slapd.postinst: Added support for adding LDAPv2 support
     + debian/slapd.postinst: Modified to handle slapcat/slapadd failure.
+      In the event of an upgrade failure the database will be left untouched
+      and the user notified.  Closes: #192431
     + debian/slapd.postinst: Use ldif_dump_location in more places...
     + debian/slapd.prerm: Check if upgrade failed and assume bad old init.d
       script was used and attempt to shut down slapd with --oknodo in case
