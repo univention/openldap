@@ -14,7 +14,7 @@ if [ "$1" = configure -a -z "$2" ] || [ "$1" = reconfigure ] \
   dc="`echo $RET|sed 's/\..*$//'`"
   db_get shared/organization
   organization="$RET"
-  db_get slapd/password1
+  db_get slapd/internal/adminpw
   adminpass="$RET"
   db_stop
 
