@@ -31,11 +31,11 @@ if [ -z "$SLAPD_PIDFILE" ]; then
 fi
 
 # Pass the user and group to run under to slapd
-if [ -z "$SLAPD_USER" ]; then
+if [  "$SLAPD_USER" ]; then
 	SLAPD_OPTIONS="-u $SLAPD_USER $SLAPD_OPTIONS"
 fi
 
-if [ -z "$SLAPD_GROUP" ]; then
+if [ "$SLAPD_GROUP" ]; then
 	SLAPD_OPTIONS="-g $SLAPD_GROUP $SLAPD_OPTIONS"
 fi
 
