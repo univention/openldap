@@ -1,5 +1,5 @@
 /* io.c - ber general i/o routines */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/io.c,v 1.70.2.11 2003/05/22 22:22:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/io.c,v 1.70.2.12 2004/04/15 22:07:18 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -649,6 +649,7 @@ ber_get_next(
 				AC_MEMCPY(ber->ber_buf + sblen, ber->ber_ptr, l);
 				sblen += l;
 			}
+			*ber->ber_end = '\0';
 			ber->ber_ptr = ber->ber_buf;
 			ber->ber_usertag = 0;
 			if ((ber_len_t)sblen == ber->ber_len) {

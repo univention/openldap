@@ -1,5 +1,5 @@
 /* idl.c - ldap id list handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/idl.c,v 1.66.2.9 2003/03/13 03:35:27 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/idl.c,v 1.66.2.10 2004/04/07 12:28:50 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -943,13 +943,16 @@ idl_delete_key (
 	   */
 	cont_alloc( &data, &key );
 #ifndef USE_INDIRECT_NIDS
-	for ( nids = 0; !ID_BLOCK_NOID(idl, nids); nids++ )
-		;	/* NULL */
+	for ( nids = 0; !ID_BLOCK_NOID(idl, nids); nids++ ) {
+		;	/* Empty */
+	}
 
 	for ( j = 0; j<nids; j++ ) 
 #else
 	nids = ID_BLOCK_NIDS(idl);
-	for ( j = idl_find(idl, id); j >= 0; j = -1)	/* execute once */
+	j = idl_find(idl, id);
+	if ( ID_BLOCK_ID(idl, j) > id ) j--;
+	for (; j >= 0; j = -1)	/* execute once */
 #endif
 	{
 		ID_BLOCK *tmp;
