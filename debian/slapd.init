@@ -87,11 +87,11 @@ EOF
 start_slapd() {
 	echo -n " slapd"
 	if [ -z "$SLAPD_SERVICES" ]; then
-		reason="`start-stop-daemon --start --quiet \
+		reason="`start-stop-daemon --start --quiet --oknodo \
 			--pidfile "$SLAPD_PIDFILE" \
 			--exec /usr/sbin/slapd -- $SLAPD_OPTIONS 2>&1`"
 	else
-		reason="`start-stop-daemon --start --quiet \
+		reason="`start-stop-daemon --start --quiet --oknodo \
 			--pidfile "$SLAPD_PIDFILE" \
 			--exec /usr/sbin/slapd -- -h "$SLAPD_SERVICES" $SLAPD_OPTIONS 2>&1`"
 	fi
@@ -104,7 +104,7 @@ start_slurpd() {
 		return 0
 	fi
 	echo -n " slurpd"
-	reason="`start-stop-daemon --start --quiet \
+	reason="`start-stop-daemon --start --quiet --oknodo \
 		--exec /usr/sbin/slurpd -- $SLURPD_OPTIONS 2>&1`"
 }
 

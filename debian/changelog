@@ -13,6 +13,8 @@ openldap2 (2.1.30-6) experimental; urgency=low
     versions.
   * debian/rules: Remove automatic invocation of autoheader and autoconf
     as they failed here.
+  * debian/slapd.init: Add --oknodo to start-stop-daemon invocations to
+    make the script idempotent (bug #298741), patch by Bill Allombert.
 
  --
 
