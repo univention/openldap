@@ -318,7 +318,7 @@ install-slapd: FORCE
 	-$(MKDIR) $(DESTDIR)$(sbindir)
 	-$(MKDIR) $(DESTDIR)$(libexecdir)
 	-$(MKDIR) $(DESTDIR)$(localstatedir)
-	$(LTINSTALL) $(INSTALLFLAGS) -s -m 755 \
+	$(LTINSTALL) $(INSTALLFLAGS) -m 755 \
 		slapd$(EXEEXT) $(DESTDIR)$(sbindir)
 	@for i in back-* shell-backends tools; do \
 	    if test -d $$i -a -f $$i/Makefile ; then \

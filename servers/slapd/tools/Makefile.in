@@ -77,7 +77,7 @@ depend-local: FORCE
 install-local: FORCE
 	-$(MKDIR) $(DESTDIR)$(sbindir)
 	@for bin in $(PROGRAMS); do \
-		$(LTINSTALL) $(INSTALLFLAGS) -s -m 755 \
+		$(LTINSTALL) $(INSTALLFLAGS) -m 755 \
 			$$bin$(EXEEXT) $(DESTDIR)$(sbindir); \
 	done
 
