@@ -6,6 +6,14 @@ set -e
 # We need debconf
 . /usr/share/debconf/confmodule
 
+# Omit configuration of slapd if no_configuration is set
+db_get slapd/no_configuration
+no_configuration="$RET"
+if [ "$no_configuration" = "true" ]; then
+  echo "Not configuring slapd. Make sure to take care of it yourself."
+  exit 0
+fi
+
 # Make the old version globally available
 oldver="$2"
 

@@ -1,3 +1,18 @@
+Template: slapd/no_configuration
+Type: boolean
+Default: false
+_Description: Do you want to omit the configuration of slapd?
+ If you choose yes here, no default configuration or database will be
+ created.
+
+Template: slapd/invalid_suffix
+Type: boolean
+Default: false
+_Description: Do you want to omit the configuration of slapd?
+ You did not enter valid values for either the domain or organization.
+ If you choose yes here, no default configuration or database will be
+ created.
+
 Template: slapd/domain
 Type: string
 _Description: Enter the domain name

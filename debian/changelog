@@ -31,6 +31,7 @@ openldap2 (2.1.21-2) unstable; urgency=low
       support handling code.
     + debian/slapd.preinst: Changed to use mktemp for sed script.
     + debian/slapd.postinst: Changed to use mktemp for sed script.
+    + debian/slapd.config: If no hostname set just use debian.org.
 
   * Torsten Landschoff <torsten@debian.org>:
     + doc/man/man8/slapd.8: Refer to slapd.conf(5) for a description of 
@@ -55,6 +56,11 @@ openldap2 (2.1.21-2) unstable; urgency=low
   * Roland Bauerschmidt <rb@debian.org>:
     + debian/rules: call dh_makeshlibs with -plibldap2 rather than just
       with libldap2
+    + debian/slapd.postinst: Add question about no configuration.
+    + debian/slapd.templates: Add template for no config question.
+    + debian/slapd.templates: Add template for invalid suffix.
+    + debian/slapd.config: Add no configuration option.
+    + debian/slapd.config: Complain to the user on invalid domain/org.
 
  --
 
