@@ -20,6 +20,8 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
     - servers/slapd/main.c (main): Remove pid file on exit (closes: #162284).
     - servers/slurpd/slurp.h: Change the default spool directory to 
       /var/spool/slurpd (avoids passing it via -t in init.d).
+    - servers/{slapd,slurpd}/Makefile.in: Install binaries into sbindir
+      instead of libexecdir.
 
   * Roland Bauerschmidt <rb@debian.org>
     - debian/control:
