@@ -49,7 +49,10 @@ _Description: Change configuration to load backend modules
  instead dynamically loaded at startup. This means that the slapd
  configuration has to be changed to load the modules for the backends you
  are using. If you select this option I'll try to fix the configuration for
- you. For more information read /usr/share/doc/slapd/README.Debian.
+ you.  If you don't select this then you *must* fix your configuration file
+ yourself or slapd (and slapcat if you are upgrading from an older version)
+ will fail and the package will not be installed.  For more information 
+ read /usr/share/doc/slapd/README.Debian.
 
 Template: slapd/fix_directory
 Type: boolean

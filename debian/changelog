@@ -8,6 +8,7 @@ openldap2 (2.1.17-4) unstable; urgency=low
       to those.
     + Add clarification to copyright file.
     + Add clarification of JC license to copyright file.
+    + More clearly inform users of important config change.  Closes: #194192.
 
  --
 
