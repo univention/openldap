@@ -53,6 +53,7 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
     - debian/rules:
       - build with BDB backend
       - run dh_installdeb
+      - only run dh_makeshlibs for libldap2
     - debian/slapd.dirs: added to create /var/lib/ldap and /var/spool/slurpd
     - debian/slapd.postinst:
       - properly remove temporary files on errors. Closes: #160412.
