@@ -26,7 +26,7 @@ openldap2 (2.1.30-3) unstable; urgency=high
     + debian/slapd.README.Debian: add note that we use GNUTLS rather
       than OpenSSL.
 
- -- 
+ -- Roland Bauerschmidt <rb@debian.org>  Mon, 26 Jul 2004 18:41:23 +0200
 
 openldap2 (2.1.30-2) unstable; urgency=low
 
