@@ -1,11 +1,14 @@
-openldap2 (2.1.30-3) unstable; urgency=low
+openldap2 (2.1.30-3) unstable; urgency=high
 
+  * Urgeny high since previous releases were hardly usable (at least
+    with TLS).
   * Roland Bauerschmidt <rb@debian.org>
     + libraries/libldap/gnutls.c: Allocate dh_params and rsa_params
       just once and always reference to the same structure. Previously,
       it was allocated for each connection and freed right after the
       first gnutls_handshake, though still referenced by GNUTLS.
-      Finally. Closes: #244827.
+      Finally. Many thanks to Matthias Urlichs who helped debugging a
+      lot. Closes: #244827.
 
  -- 
 
