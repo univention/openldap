@@ -4,6 +4,9 @@ openldap2 (2.1.26-1) unstable; urgency=low
     + Merged new upstream release.
     + debian/slapd.templates (slapd/purge_database): Set default value to 
       false.
+    + debian/slapd.config (manual_configuration_wanted): Don't exit
+      from the script directly if the user wants to configure 
+      slapd manually (exit 0 -> return 0).
     
  --
 
