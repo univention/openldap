@@ -41,12 +41,11 @@ stop_slapd() {
         fi
 
         # Use the pidfile if it is there, if not then just do without
+        # In postinst we can not depend on --exec...
         if [ -z "$SLAPD_PIDFILE" ]; then
-                start-stop-daemon --stop --quiet --oknodo --retry 10 \
-                        --exec /usr/sbin/slapd 2>&1
+                start-stop-daemon --stop --quiet --oknodo --retry 10 --name slapd >/dev/null 2>&1
         else
-                start-stop-daemon --stop --quiet --oknodo --retry 10 --pidfile \"$SLAPD_PIDFILE\" \
-                        --exec /usr/sbin/slapd 2>&1
+                start-stop-daemon --stop --quiet --oknodo --retry 10 --pidfile "$SLAPD_PIDFILE" >/dev/null 2>&1
         fi
         if [ -e $SEDSCRIPT ]; then rm $SEDSCRIPT ; fi
 }
@@ -231,7 +230,7 @@ if [ "$RET" = "true" ]; then
   create_sed_script
 
   # Check if it is there already
-  TEST=`sed -f $SEDSCRIPT < $SLAPD_CONF | grep -E "^allow[[:space:]][^#]*bind_v2"`
+  TEST=`sed -f $SEDSCRIPT < $SLAPD_CONF | grep -E "^allow[[:space:]][^#]*bind_v2" || true`
   if [ -z "$TEST" ]; then
     echo -n "Adding 'allow bind_v2' to slapd config..."
     
@@ -239,7 +238,7 @@ if [ "$RET" = "true" ]; then
     chmod --reference=$SLAPD_CONF $TMPFILE
     
     # Check if there is an allow line there already
-    ALLOWC=`sed -f $SEDSCRIPT < $SLAPD_CONF | grep -E "^[#[:space:]]*allow"`
+    ALLOWC=`sed -f $SEDSCRIPT < $SLAPD_CONF | grep -E "^[#[:space:]]*allow" || true`
     if [ -z "$ALLOWC" ]; then
       # No allow line there, add one
       echo "# Allow LDAPv2 binds" > $TMPFILE
@@ -248,7 +247,7 @@ if [ "$RET" = "true" ]; then
     else
       # Allow line exists already
       # Check if it is real or commented out
-      ALLOW=`grep -E "^allow[[:space:]]" $SLAPD_CONF `
+      ALLOW=`grep -E "^allow[[:space:]]" $SLAPD_CONF  || true`
       if [ ! -z "$ALLOW" ]; then
         # It's real, hack it up...
         COMMENT=`echo $ALLOWC | cut -f2- -d'#'`
@@ -312,6 +311,7 @@ if dpkg --compare-versions "$oldver" lt-nl 2.1 && ldif_dump_wanted; then
 fi
 
 if dpkg --compare-versions "$oldver" lt-nl 2.1; then
+  stop_slapd
   get_database_list | while read backend suffix directory
   do
     # parse out the quotes; we no longer need them for grouping
@@ -352,6 +352,9 @@ if dpkg --compare-versions "$oldver" lt-nl 2.1; then
         # preinst or above.  If we don't, then the user has been
         # notified and just give up.
         if [ -e "$location" ]; then
+          db_get shared/organization
+          organization="$RET"
+          if [ -z "$organization" ]; then organization=Unknown ; fi
           /usr/share/slapd/fix_ldif -w -o "$organization" < "$location" > "${location}.fixed"
         fi
       fi

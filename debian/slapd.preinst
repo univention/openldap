@@ -26,11 +26,9 @@ stop_slapd() {
 
         # Use the pidfile if it is there, if not then just do without
         if [ -z "$SLAPD_PIDFILE" ]; then
-                start-stop-daemon --stop --quiet --oknodo --retry 10 \
-                        --exec /usr/sbin/slapd 2>&1
+                start-stop-daemon --stop --retry 10 --quiet --oknodo --exec /usr/sbin/slapd >/dev/null 2>&1
         else
-                start-stop-daemon --stop --quiet --oknodo --retry 10 --pidfile \"$SLAPD_PIDFILE\" \
-                        --exec /usr/sbin/slapd 2>&1
+                start-stop-daemon --stop --retry 10 --quiet --oknodo --pidfile "$SLAPD_PIDFILE" >/dev/null 2>&1
         fi
 }
 
@@ -100,7 +98,7 @@ fi
 # stop slapd and attempt to slapcat out the data
 # so we can use it in postinst to do the upgrade
 
-if dpkg --compare-versions "$2" lt-nl 2.1 && [ -x "/usr/sbin/slapcat" ]
+if dpkg --compare-versions "$oldver" lt-nl 2.1 && [ -x "/usr/sbin/slapcat" ]
 then
   # Stop slapd
   stop_slapd

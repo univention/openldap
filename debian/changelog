@@ -73,6 +73,22 @@ openldap2 (2.1.21-2) unstable; urgency=low
       should be high priority and need to || true them.
     + debian/slapd.postinst: Do not error exit once we've told the
       user about the problem, if there was one, with slapcat/slapadd.
+    + debian/slapd.postinst: Make sure we get the organization before
+      we attempt to fix_ldif on old slapcat output.  Default to unknown
+      if the organization is not set.
+    + debian/slapd.postinst: Be sure that slapd has been stopped before
+      attempting to fix and slapadd old slapcat.
+    + debian/slapd.postinst: Do not use --exec with s-s-d in postinst.
+    + debian/slapd.postinst: grep calls need to be || true'd when no
+      matching lines found is possible (this case is handled).
+    + debian/slapd.postinst: Be very sure slapd has stopped before
+      attempting to upgrade database.
+    + debian/slapd.preinst: Use either the pidfile or exec if pidfile
+      is not available when stopping.  Do not put \"\" around pidfile.
+      Use $oldver instead of $2.
+    + debian/slapd.config: Reask questions on a reconfigure.  Use the
+      same logic as slapd.postinst for when to ask questions regarding
+      the db.  Be sure to db_go after db_input's.
 
   * Torsten Landschoff <torsten@debian.org>:
     + doc/man/man8/slapd.8: Refer to slapd.conf(5) for a description of 
