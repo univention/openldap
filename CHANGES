@@ -1,0 +1,216 @@
+OpenLDAP 2.1 Change Log
+
+OpenLDAP 2.1.12 Release
+	Build Environment
+		Update version number
+
+OpenLDAP 2.1.11 Release
+	Fixed slapd ocflags bug (ITS#2186)
+	Fixed slapd objectIdentifierFirstComponentMatch bug
+	Fixed slapd octetStringOrderingMatch bug
+	Fixed slapd bitString normalization bug
+	Removed lint
+
+OpenLDAP 2.1.10 Release
+	Fixed slapd acl/group value_find_ex() bug (ITS#2227)
+	Fixed slapd empty values return filter control bug (ITS#2219)
+	Fixed slapd NameAndOptionalUID bug
+	Fixed slapd reentant gethostbyname bug
+	Fixed slapd SASL/EXTERNAL handling (ITS#2234)
+	Fixed ldbm/bdb modrdn replog bug (ITS#2235)
+	Fixed ldapsearch empty baseObject bug
+	Fixed libldap_r thread stack size
+	Fixed libldap SASL/EXTERNAL handling
+	Fixed liblber ber_get_next assert bug (ITS#2246)
+	Updated ldapdelete/ldapmodrdn continue error handling
+	Added back-bdb IDL slab cache  (ITS#2183)
+	Removed lint, etc.
+	Build Environment
+		Update to libtool 1.4.3 & shtool 1.6.2
+
+OpenLDAP 2.1.9 Release
+	Fixed back-bdb moddn newSuperior bug
+	Fixed back-ldap/meta modify bug (ITS#2158)
+	Fixed back-glue segv bug (ITS#2214)
+	Fixed back-monitor subordinate database bug
+	Fixed libldap try_read1msg drain bug (ITS#2153)
+	Fixed libldap SASL bugs (ITS#2184)
+	Fixed libldap referral bug (ITS#2187)
+	Fixed libldap getaddrinfo threading bug (ITS#2221)
+	Fixed libldif empty value bugs (ITS#2218)
+	Added slapd allow update_anon feature (ITS#2155)
+	Added slapd authz stats logging feature (ITS#2165)
+	Fixed slapd unix socket unlink bug (ITS#2157)
+	Fixed slapd referral/alias normalization bug
+	Fixed slapd logging bugs (ITS#2170)
+	Fixed slapd rootdse entry_free bug (ITS#2172)
+	Fixed slapd multimaster passwd bug (ITS#2176)
+	Fixed slapd bad acl DN bug (ITS#2196)
+	Fixed slapd SASL bugs (ITS#2200) (ITS#2202)
+	Fixed slapd language range option bug
+	Fixed slapd new logging bugs
+	Removed lint
+	Build Environment
+		Add subordinate referral test
+		Updated other misc other tests
+		Updated back-sql checks (ITS#2163)
+		Fixed liblber snprintf issues (ITS#2128) (ITS#2129) (ITS#2203)
+		Fixed configure shtool no bold handling
+
+OpenLDAP 2.1.8 Release
+	Build Environment
+		Update configure script
+
+OpenLDAP 2.1.7 Release
+	Fixed liblber bvarray_add bug (ITS#2142)
+	Added libldap additional schema routines
+	Updated ldapmodify -c error handling (ITS#2133)
+	Build Environment
+		Update {thr,sched,pthread}_yield detection
+	Documentation
+		Misc updates
+
+OpenLDAP 2.1.6 Release
+	Fixed slapd unsupported non-critical control handling
+	Fixed slapd value_find() uninitialized variable bug (ITS#2097)
+	Fixed back-dnssrv default referral handling (ITS#2116)
+	Fixed liblunicode memory leak (ITS#2126)
+	Fixed slapd listener crash (ITS#2132)
+	Fixed slapd modify mod_add_values crash (ITS#2136)
+	Updated slapd adlist support
+	Updated slapd disallow bind_simple_unprotected
+	Updated back-bdb/ldbm add/delete/rename ACLs
+	Updated libldap_r Pth support (ITS#724) (ITS#1033)
+	Added libldap get referral option (ITS#2121)
+	Added libldap DIT content rule routines
+	Added back-shell "entry" ACLs
+	Added slapd obsolete schema checks
+	Disable suffixAlias feature (ITS#2117)
+	Removed back-shell surrogate parent code
+	Misc minor fixes and cleanup
+	Build Environment
+		Fixed back-bdb module linking problem
+		Fixed misc. portability bugs
+		Updated DB_THREAD detection (ITS#2127)
+		Updated pthreads detection 
+		Updated shtool to latest
+		Updated test suite
+	Documentation
+		Misc. updates (ITS#2093) (ITS#2105) (ITS#2106)
+
+OpenLDAP 2.1.5 Release
+	Fixed back-ldbm indirect IDL bug (ITS#2039)
+	Fixed back-bdb locker_id bugs (ITS#2040)
+	Fixed back-bdb duplicate results (ITS#2044)
+	Fixed back-bdb group member check
+	Fixed back-bdb idl_intersection bug (ITS#2082)
+	Fixed slapd objectClass subclassing matching (ITS#2053)
+	Fixed slapd base==target referral bug (ITS#1991)
+	Fixed slapd ACL attribute auth bug (ITS#2067)
+	Fixed slapd one-level search with subordinates
+	Fixed libldap DNS SRV buffer size bug
+	Fixed liblber write bugs (ITS#1983)
+	Fixed liblutil b64 length bugs (ITS#2055)
+	Added slapadd lastmod attribute support
+	Added ldap tools passfile (-y) support (ITS#2031)
+	Added ldapmodify LDIFv1 control: support (ITS#2060)
+	Added slapd appropriate matching rule checks
+	Fixed libldap TLS session id bug
+	Updated slapd hasSubordinates
+	Updated slapd extensible matching
+	Updated matched values and noop controls
+	Updated back-passwd gecos buffer size bug (ITS#2046)
+	Updated back-ldap, back-meta, and back-sql
+	Build Environment
+		Added SASL version checks
+		Added IPv6 sockaddr_storage check
+		Added Berkeley DB 4.1 support
+		Fixed module build issues (ITS#2047 ITS#2048 ITS#2065)
+		Updated test suite (ITS#2054)
+		Updated NT and zOS ports
+	Documentation
+		Added ldapwhoami(1) man page
+		Misc man page updates
+
+OpenLDAP 2.1.4 Release
+	Fixed slapd DN normalization (requires DB reload)
+	Fixed slapd bootParameter validation bug (ITS#1957)
+	Fixed slapd saslRegex bug (ITS#1978)
+	Fixed slapd abstract objectclass check
+	Fixed back-monitor time stats (ITS#1984)
+	Fixed slapd saslRegexp normalization (ITS#1951)
+	Fixed back-meta undef DN attr bug (ITS#1953)
+	Fixed back-meta search operation error (ITS#2014)
+	Fixed ldapmodify LDIF CRLF handling
+	Fixed back-bdb IDL bugs (ITS#1969, ITS#1977, ITS#2015)
+	Fixed back-bdb entry return (ITS#1994)
+	Fixed back-bdb lock_id error detection (ITS#2030)
+	Fixed slapd inappropriate return of operationsError (ITS#1995)
+	Fixed slapd group ACL bug (ITS#1978)
+	Fixed slapd " " handling (ITS#1998)
+	Fixed IPv6 underallocation bug (ITS#2018)
+	Fixed libldap gethostbyname init bug (ITS#2019)
+	Added LDAP SASL auxprop plugin to contrib
+	Added buffer overrun checks (ITS#1936, ITS#1965, ITS#2009-2011)
+	Added slapd subschema DN configuration (ITS#1893)
+	Updated slapd anon update error code (ITS#1987)
+	Updated slapd/libldap error messages (ITS#1989)
+	Updated slapd/libldap IPv4 only handling
+	Updated slapd bind logging (ITS#1809) (ITS#2017)
+	Updated slapd/libldap IPv6 handling (ITS#2018)
+	Updated libldap LDAP_OPT_RESTART handling
+	Updated new logging
+	Updated OpenLDAPaci syntax/semantics (ITS#2005, ITS#2006)
+	Updated back-sql
+	Build Environment
+		Added zOS port
+		Updated WinNT port
+		Added DN testing to tests suite
+		Fixed krbName schema (ITS#1948)
+		Fixed pkiUser schema (ITS#1959)
+		Fixed back-shell builds (ITS#1985)
+		Resolve liblutil/passwd <des.h> conflict (ITS#2016)
+		Resolved IRIX sc_mask conflict (ITS#2022)
+		Removed ud(1) and filter template API (ITS#2011)
+		Removed lint (ITS#2021)
+	Documentation
+		Replaced namedref with RFC 3296
+		Misc manual page updates
+
+OpenLDAP 2.1.3 Release
+	Fixed slapd access to dn="" bug (ITS#1921)
+	Fixed slapd structuralObjectClass lastmod bug (ITS#1904)
+	Fixed slapd krbName bug (ITS#1913)
+	Fixed slapd schema error alignment bug
+	Fixed slapd excessive DN logging (ITS#1901)
+	Fixed slapd matched values malloc bug (ITS#1931)
+	Fixed slapd TLS data ready bug
+	Updated slapd SASL proxy policy code
+	Updated slapd require "strong" check
+	Added slapd disallow bind_simple_unprotected directive
+	Added slapd SASL setpass support (ITS#1943)
+	Added slapd IPv4/v6 only options
+	Updated back-bdb entry locking
+	Fixed liblutil passwd cleartext bug
+	Fixed back-ldap/meta mapping bug (ITS#1787)
+	Added back-monitor added monitorContext support
+	Fixed back-perl ad_cname bug (ITS#1882)
+	Fixed libldap ldap_controls_dup() malloc bug (ITS#1898)
+	Fixed libldap openssl compat bug (ITS#1924)
+	Fixed ucgendat EOF bug (ITS#1917)
+	Removed lint
+	Build Environment
+		Added cc missing check
+		Added monitor backend test
+		Updated <ac/socket.h> SHUT_RDWR 
+		Fixed SASL-less build issues
+		Fixed back-perl build issues (ITS#1827)
+		Fixed libldap_r references.c issue (ITS#1922)
+		Added -ldb-4 detection (ITS#1888)
+		Disabled back-sql (ITS#1920)
+	Documentation
+		Numerous manual page updates
+
+OpenLDAP 2.1.2 Release
+	Initial release for "general" use.
+
