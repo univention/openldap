@@ -36,6 +36,10 @@ openldap2 (2.1.17-4) unstable; urgency=low
       to use, if they find it useful.  Closes: #94963.
     + debian/slapd.README.Debian: Added note about ldiftopasswd.
 
+  * Roland Bauerschmidt <rb@debian.org>:
+    + debian/slapd.postinst: fixed typos and check for the existence of
+      slapd.conf before reading it.
+
  --
 
 openldap2 (2.1.17-3) unstable; urgency=low

@@ -23,7 +23,7 @@ if [ "$1" = "failed-upgrade" ]; then
 	fi
 
 	# Find out the name of slapd's pid file
-	if [ -z "$SLAPD_PIDFILE" ]; then
+	if [ -z "$SLAPD_PIDFILE" -a -f "$SLAPD_CONF" ]; then
 		SLAPD_PIDFILE=`sed -ne 's/^pidfile[[:space:]]\+\(.\+\)/\1/p' \
 			"$SLAPD_CONF"`
 	fi
