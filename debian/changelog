@@ -12,6 +12,7 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
     - debian/control: 
       - Build-depend on debhelper 4.0 as debian/rules uses DH_COMPAT=4.
       - Depend on coreutils | fileutils. Closes: #175704.
+      - Make libldap2 conflict with libldap2-tls which is obsolete now.
       
   * Roland Bauerschmidt <rb@debian.org>
     - debian/control:
