@@ -89,6 +89,8 @@ openldap2 (2.1.21-2) unstable; urgency=low
     + debian/slapd.config: Reask questions on a reconfigure.  Use the
       same logic as slapd.postinst for when to ask questions regarding
       the db.  Be sure to db_go after db_input's.
+    + debian/slapd.templates: Fix allow_bind_v2 short description to
+      make more sense since the default is off.
 
   * Torsten Landschoff <torsten@debian.org>:
     + doc/man/man8/slapd.8: Refer to slapd.conf(5) for a description of 

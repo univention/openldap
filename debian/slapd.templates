@@ -72,7 +72,7 @@ _Description: Change configuration to load backend modules
 Template: slapd/allow_ldap_v2
 Type: boolean
 Default: false
-_Description: LDAPv2 protocol off by default
+_Description: Allow LDAPv2 protocol by default
  slapd now defaults to having the old LDAPv2 protocol not allowed.
  Programs and users are generally expected to be upgraded to LDAPv3.
  If you have old programs which have not been moved to use LDAPv3
