@@ -24,6 +24,10 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
       instead of libexecdir.
     - debian/control: Add Stephen Frost to the Uploaders field. Thanks
       for your help, Stephen!
+    - contrib/ldapc++/config.{guess,sub}: Replaced with current files from
+      autotools-dev (lintian). Not actually neccessary since this part of 
+      the package is not currently built but I think this is the best way 
+      to shut up lintian :)
 
   * Roland Bauerschmidt <rb@debian.org>
     - debian/control:
