@@ -176,12 +176,8 @@ const char *
 X509_verify_cert_error_string( int errnum )
 {
 	switch (errnum) {
-	case GNUTLS_CERT_NOT_TRUSTED:
-		return "No trusted path to certificate";
 	case GNUTLS_CERT_INVALID:
 		return "Certificate is invalid";
-	case GNUTLS_CERT_CORRUPTED:
-		return "Certificate is corrupted";
 	case GNUTLS_CERT_REVOKED:
 		return "Certificate has been revoked";
 	case 0:
@@ -455,10 +451,7 @@ SSL_do_handshake( SSL *ssl, gnutls_connection_end end )
 
 	if (!ssl->verify_result && ssl->verify_mode != SSL_VERIFY_NONE)
 	{
-		if (ret == GNUTLS_CERT_CORRUPTED)
-			gnutls_error = GNUTLS_E_NO_CERTIFICATE_FOUND;
-		else
-			gnutls_error = GNUTLS_E_CERTIFICATE_ERROR;
+		gnutls_error = GNUTLS_E_CERTIFICATE_ERROR;
 		return 0;
 	}
 

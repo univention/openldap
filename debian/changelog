@@ -7,8 +7,17 @@ openldap2 (2.1.26-1) unstable; urgency=low
     + debian/slapd.config (manual_configuration_wanted): Don't exit
       from the script directly if the user wants to configure 
       slapd manually (exit 0 -> return 0).
+    + Build-depend on libgnutls10-dev instead of libgnutls7-dev and 
+      rebuild (closes: #233833).
+    + Move previous content of /var/lib/ldap away during creation of 
+      an initial directory (closes: #228886, #233512).
+    + debian/slapd.postrm: Remove flag files in /var/lib/slapd on purge.
+    + Removed functionality (verbose error messages) from gnutls.c until
+      it compiled with libgnutls10-dev :-((
+    + debian/slapd.postinst: Overwrite existing /etc/ldap/slapd.conf (only
+      reached during initial installation/dpkg-reconfigure).
     
- --
+ -- Torsten Landschoff <torsten@debian.org>  Mon, 23 Feb 2004 09:36:32 +0100
 
 openldap2 (2.1.25-1) unstable; urgency=low
 

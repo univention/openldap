@@ -155,3 +155,13 @@ create_ldif_dump_location() {
   fi
   mkdir -p -m 700 /var/backups/ldap/$OLD_VERSION/
 }
+
+# Check if a path refers to an empty directory
+is_empty_dir() {
+  output=`find "$1" -type d -maxdepth 0 -empty`
+  if [ -n "$output" ]; then
+    return 0
+  else
+    return 1
+  fi
+}

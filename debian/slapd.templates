@@ -5,6 +5,15 @@ _Description: Do you want to omit the configuration of slapd?
  If you choose yes here, no default configuration or database will be
  created.
 
+Template: slapd/move_old_database
+Type: boolean
+Default: true
+_Description: Move old database
+ There are still files in /var/lib/ldap which will probably break
+ the configuration process. With this option enabled the maintainer
+ scripts will move the old database files out of the way before
+ creating a new database.
+
 Template: slapd/invalid_config
 Type: boolean
 Default: true

@@ -6,6 +6,26 @@ set -e
 # various helper functions and $OLD_VERSION and $SLAPD_CONF
 #SCRIPTSCOMMON#
 
+# Move the old database away if it is still there
+move_old_database_away() {
+  if ! is_empty_dir /var/lib/ldap; then
+    db_get slapd/move_old_database
+    if [ "$RET" = true ]; then
+      target=/var/backups/var_lib_ldap-`date +%Y%m%d`
+      echo -n "  Moving /var/lib/ldap/* to $target... "
+      mkdir -p $target
+      mv /var/lib/ldap/* $target
+      echo done
+    else
+      cat <<EOF
+There are leftover files in /var/lib/ldap. This will probably break 
+creating the initial directory. If that's the case please move away
+stuff in there and retry the configuration.
+EOF
+    fi
+  fi
+}
+
 # Check if the user wants to configure everything himself
 manual_configuration_wanted() {
   db_get slapd/no_configuration
@@ -34,6 +54,7 @@ create_new_configuration() {
     invoke-rc.d slapd stop
   fi
 
+  move_old_database_away
   create_new_slapd_conf "$basedn" "$backend"
   create_new_directory "$basedn" "$dc"
 }
@@ -42,9 +63,6 @@ create_new_configuration() {
 create_new_slapd_conf() {
   basedn=$1
   backend=$2
-  if [ -e "$SLAPD_CONF" ]; then
-    return
-  fi
 
   TMPFILE=`mktemp -q ${SLAPD_CONF}.XXXXXX`
   echo -n "Creating initial slapd configuration... "

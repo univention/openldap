@@ -3,7 +3,7 @@ Section: net
 Priority: optional
 Maintainer: Torsten Landschoff <torsten@debian.org>
 Uploaders: Roland Bauerschmidt <rb@debian.org>, Stephen Frost <sfrost@debian.org>
-Build-Depends: libdb4.2-dev, libwrap0-dev, libiodbc2-dev, libsasl2-dev (>= 2.1.3-1), dpkg-dev (>= 1.7.1), libncurses5-dev, autoconf2.13, debconf-utils, libgnutls7-dev, debhelper (>= 4.1.16), libltdl3-dev (>= 1.4.3), libslp-dev, po-debconf
+Build-Depends: libdb4.2-dev, libwrap0-dev, libiodbc2-dev, libsasl2-dev (>= 2.1.3-1), dpkg-dev (>= 1.7.1), libncurses5-dev, autoconf2.13, debconf-utils, libgnutls10-dev, debhelper (>= 4.1.16), libltdl3-dev (>= 1.4.3), libslp-dev, po-debconf
 Build-Conflicts: libbind-dev, bind-dev
 Standards-Version: 3.6.1
 
