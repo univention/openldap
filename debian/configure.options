@@ -85,7 +85,7 @@
 #   --enable-slapd	  enable building slapd [yes]
 --enable-slapd
 #     --enable-aci	  enable per-object ACIs (experimental) [no]
---enable-aci
+#--enable-aci
 #     --enable-cleartext	  enable cleartext passwords [yes]
 --enable-cleartext
 #     --enable-crypt	  enable crypt(3) passwords [no]
