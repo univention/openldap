@@ -1,7 +1,10 @@
 openldap2 (2.1.17-2) unstable; urgency=low
 
-  * debian/configure.options: Disable ACIs because they are still 
-    experimental.
+  * Torsten Landschoff <torsten@debian.org>:
+    + debian/configure.options: Disable ACIs because they are still 
+      experimental.
+    + debian/control: Change section and priority of libldap2-dev to
+      libdevel and extra respectively (dinstall message).
 
  -- Torsten Landschoff <torsten@debian.org>  Sat, 19 Apr 2003 02:28:32 +0200
 

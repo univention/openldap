@@ -46,8 +46,8 @@ Description: OpenLDAP libraries
  Access Protocol) servers and clients.
 
 Package: libldap2-dev
-Section: devel
-Priority: optional
+Section: libdevel
+Priority: extra
 Architecture: any
 Conflicts: libldap-dev, libopenldap-dev
 Replaces: libopenldap-dev
