@@ -16,7 +16,6 @@ if [ "$1" = configure -a -z "$2" ] || [ "$1" = reconfigure ] \
   organization="$RET"
   db_get slapd/internal/adminpw
   adminpass="$RET"
-  db_stop
 
   echo -n "Creating initial slapd configuration... "
   # XXX: This should not be installed as an example (@SUFFIX@ should
@@ -46,8 +45,31 @@ userPassword: $adminpass
 EOF
 
   echo "done"
-else
-  db_stop
 fi
+
+
+# On upgrades from pre-2.1 we might have to update the configuration 
+# file for loading the backend modules.
+if dpkg --compare-versions "$2" lt-nl 2.1; then
+  db_get slapd/autoconf_modules
+  if [ "$RET" = "true" ]; then
+    echo -n "Updating config for dynamic backends... "
+    TMPFILE=`mktemp -q /etc/ldap/slapd.conf.XXXXXX`
+    chmod --reference=/etc/ldap/slapd.conf $TMPFILE
+    cat <<EOF >$TMPFILE
+# Loading of backend modules - automatically generated
+
+modulepath      /usr/lib/ldap
+EOF
+    sed -n 's/^database[\t ]*\([a-z]*\)/moduleload      back_\1.la/p' \
+    	/etc/ldap/slapd.conf >>$TMPFILE
+    echo >>$TMPFILE
+    cat /etc/ldap/slapd.conf >>$TMPFILE
+    mv $TMPFILE /etc/ldap/slapd.conf
+    echo done
+  fi
+fi
+
+db_stop
 
 #DEBHELPER#
