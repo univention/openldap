@@ -339,7 +339,7 @@ if dpkg --compare-versions "$oldver" lt-nl 2.1; then
             rm -f "$location"
             # XXX: now that we handle multiple dbs, this note should
             # mention the suffix of the failed database.
-            db_input slapd/upgrade_slapcat_failure
+            db_input high slapd/upgrade_slapcat_failure || true
           else
             echo "done"
           fi
@@ -375,8 +375,7 @@ if dpkg --compare-versions "$oldver" lt-nl 2.1; then
       slapadd -b "$suffix" -u -l "${location}.fixed" || SLAPADD_FAIL=1
       if [ "$SLAPADD_FAIL" = "1" ]; then
         echo "failed"
-        db_input slapd/upgrade_slapadd_failure
-        exit 1
+        db_input high slapd/upgrade_slapadd_failure || true
       else
         slapadd -b "$suffix" -l "${location}.fixed"
         echo "done"
