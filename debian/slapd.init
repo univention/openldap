@@ -1,17 +1,20 @@
 #!/bin/sh
+set -e
 
 test -e /usr/sbin/slapd || exit 0
 test -f /etc/ldap/slapd.conf || exit 0
 
-set -e
+if [ -f "/etc/default/slapd" ]; then
+	. /etc/default/slapd
+fi
 
 start() {
 	echo -n "Starting OpenLDAP: slapd"
 	trap 'echo " - failed."' 0
-	start-stop-daemon --start --quiet --pidfile "$pf" --exec /usr/sbin/slapd
+	start-stop-daemon --start --quiet --pidfile "$pf" --exec /usr/sbin/slapd -- $SLAPD_OPTIONS
 	if [ "$doslurp" ] ; then
 		echo -n " slurpd"
-		start-stop-daemon --start --quiet --exec /usr/sbin/slurpd -- -t /var/spool/slurpd
+		start-stop-daemon --start --quiet --exec /usr/sbin/slurpd -- $SLURPD_OPTIONS
 	fi
 	trap "-" 0
 	echo .

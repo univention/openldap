@@ -47,7 +47,7 @@ else
 	fi
 
 	sed -e "s/@SUFFIX@/$dn/g" -e "s/@ADMIN@/$admin/" \
-		/usr/share/doc/slapd/slapd.conf > /etc/ldap/slapd.conf
+		/usr/share/doc/slapd/examples/slapd.conf > /etc/ldap/slapd.conf
 	chmod 644 /etc/ldap/slapd.conf
 
 	tmp=$(tempfile)

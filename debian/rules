@@ -43,11 +43,14 @@ binary-arch: build
 	$(MAKE) -C $(builddir) DESTDIR=$(tmpdir) install
 	sh debian/move_files
 
+	dh_installdeb -a
 	dh_installchangelogs -a
 	dh_installdocs -a
+	dh_installexamples -a
+	dh_installinit -a
+	dh_installdebconf -a
 	dh_strip -a
 	dh_compress -a
-	dh_installdeb -a
 	dh_makeshlibs -a
 	dh_shlibdeps -a
 	dh_gencontrol -a

@@ -26,6 +26,8 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
     - debian/slapd.postinst:
       - properly remove temporary files on errors. Closes: #160412.
       - install init.d link if slapd.conf already exists. Closes: #159542.
+    - added debian/slapd.default and use it from debian/slapd.init.
+      Closes: #160964.
 
   * unassigned (FIXME)
     - FIXME: Offer to run slapd not as root. Closes: #157037, #111765.

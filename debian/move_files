@@ -37,7 +37,8 @@ target=slapd
 install_stuff usr/sbin
 install_stuff usr/share/man/man5/slapd*
 install_stuff usr/share/man/man8
-install_stuff etc/ldap/schema etc/ldap/slapd*
+install_stuff etc/ldap/schema
+rm -f debian/tmp/etc/ldap/slapd.conf
 
 target=ldap-utils
 echo -n " $target"
