@@ -32,6 +32,9 @@ openldap2 (2.1.17-4) unstable; urgency=low
       to mkdir them.  Closes: #189947
     + debian/slapd.README.debian: Add note about runlevel issue. 
       Closes: #175736
+    + debian/move_files: Copy ldiftopasswd into /usr/share/slapd for users
+      to use, if they find it useful.  Closes: #94963.
+    + debian/slapd.README.Debian: Added note about ldiftopasswd.
 
  --
 

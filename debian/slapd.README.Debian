@@ -28,4 +28,12 @@ In the event that you are running slapd with a different back-end module
 that depends on other programs (Such as an SQL database) you may need to
 adjust the runlevels of slapd to start after the SQL database.
 
+If you have need to create passwd/shadow/etc files from an LDAP
+directory there is now a script included with these Debian packages
+which may help you.  The script is in /usr/share/slapd/ and is named
+'ldiftopasswd'.  In general you should be able to do:
+ldapsearch | ldiftopasswd
+and it will generate the files for you.  You will need appropriate
+privleges, of course.
+
  -- Stephen Frost <sfrost@debian.org> Thu, 12 Jun 2003 12:42:52 -0400
