@@ -53,7 +53,7 @@ all-yes: $(LIBSTAT) all-local-lib FORCE
 
 install-mod: $(LIBRARY)
 	@-$(MKDIR) $(DESTDIR)$(moduledir)
-	$(LTINSTALL) $(INSTALLFLAGS) -m 755 $(LIBRARY) $(DESTDIR)$(moduledir)
+	$(LTINSTALL) $(INSTALLFLAGS) -m 644 $(LIBRARY) $(DESTDIR)$(moduledir)
 
 install-local-lib:
 install-yes: install-local-lib FORCE
