@@ -76,7 +76,7 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
     - added debian/slapd.postrm
       - remove slapd.conf when package is purged
       - remove /var/lib/ldap when slapd/purge_database is true
-      - remove /etc/ldap/schema if empty
+      - remove /etc/ldap/schema if empty. Closes: #185173.
     - debian/templates: added slapd/purge_database template
     - build/top.mk: link against libcrypt before other SECURITY_LIBS
 
