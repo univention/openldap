@@ -40,6 +40,7 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
       /etc gets tagged as conffile... (lintian).
     - debian/rules: Pass the start and stop priority of slapd to
       dh_installinit in preparation for a postinst supported by debhelper.
+    - debian/rules: Call dh_installdirs again.
 
   * Roland Bauerschmidt <rb@debian.org>
     - debian/control:

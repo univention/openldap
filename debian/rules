@@ -27,6 +27,7 @@ binary-arch: build
 	dh_testroot
 	dh_clean
 
+	dh_installdirs -a
 	$(MAKE) -C $(builddir) DESTDIR=$(tmpdir) install
 	# Upstream installs schema files in mode 0444 - policy wants 0644
 	find $(tmpdir)/etc -type f|xargs chmod 0644
