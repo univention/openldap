@@ -3,7 +3,7 @@ Section: net
 Priority: extra
 Maintainer: Torsten Landschoff <torsten@debian.org>
 Uploaders: Roland Bauerschmidt <rb@debian.org>
-Build-Depends: libdb4.1-dev, libwrap0-dev, libiodbc2-dev, patch, libsasl2-dev, dpkg-dev (>= 1.7.1), libncurses5-dev, autoconf, debconf-utils, libssl-dev, debhelper (>= 3.0)
+Build-Depends: libdb4.1-dev, libwrap0-dev, libiodbc2-dev, patch, libsasl2-dev, dpkg-dev (>= 1.7.1), libncurses5-dev, autoconf, debconf-utils, libssl-dev, debhelper (>= 4.0)
 Build-Conflicts: libbind-dev
 Standards-Version: 3.5.7.0
 
