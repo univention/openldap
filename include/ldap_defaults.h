@@ -90,4 +90,6 @@
 	/* dn of the default "monitor" subentry */
 #define SLAPD_MONITOR_DN		"cn=Monitor"
 
+#define SASL_CONFIGPATH			LDAP_SYSCONFDIR LDAP_DIRSEP "sasl"
+
 #endif /* _LDAP_CONFIG_H */
