@@ -109,7 +109,7 @@ fi
 
 # Move the old database files out of the way
 # XXX: User interaction - target directory
-if dpkg --compare-versions "$2" lt-nl 2.1
+if dpkg --compare-versions "$2" lt-nl 2.1 \
    && [ ! -f /var/lib/slapd/upgrade_2.0]
 then
   echo -n "Moving old database files to /var/backups/slapd-$oldver... "
