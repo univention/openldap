@@ -2,6 +2,9 @@
 # Copyright (c) Dave Horsfall.
 # All rights reserved.
 # 
+# extended and rewritten by Andreas Schuldei
+# for debian(-edu)
+# 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
@@ -113,8 +116,21 @@
 use Data::Dumper;
 use Getopt::Long;
 use MIME::Base64;
+use strict;
+use diagnostics;
 
 my $origDN = '.origDN';	# Attribute stores original DN
+
+# the command line options
+
+my ($opt_dump, $opt_fix, $opt_inheritance, $opt_suffix, $opt_write,
+    $opt_no_auth, $opt_org);
+
+# some big hashes
+my (%entries, %schema, @single);
+
+my $suffix;
+
 
 &parse_options;
 $opt_write = 1 if $opt_fix;
@@ -128,6 +144,7 @@ while (@_ = &GetEntry)	# Loop per entry (exit on EOF)
     my $dn = shift @_;
     # Check if base64 encoded
     next if ! $dn =~ /^dn::? /i;
+    my $encoded;
     if($dn =~ /^dn:: /i) {
       $dn =~ s/dn:: (.*)/$1/;
       $dn = decode_base64($dn);
@@ -155,16 +172,15 @@ while (@_ = &GetEntry)	# Loop per entry (exit on EOF)
     # Extract the first component (the RDN)
     # for later tests.
     #
-    ($rdn, undef) = split(/,/, $cdn);
-    ($rdnattr, $rdnval) = split(/=/, $rdn);
+    my ( $rdn, undef ) = split ( /,/, $cdn );
+    my ( $rdnattr, $rdnval ) = split ( /=/, $rdn );
 
     #
     # Get the attributes/values.
     # Attributes are low-cased.
     #
-    for (@_)
-    {
-	($attr, $val) = split(/\s/, $_, 2);	# In case of "::"
+    for (@_) {
+        my ( $attr, $val ) = split ( /\s/, $_, 2 );    # In case of "::"
 	$attr =~ s/://;
 	if ($attr =~ /:/)			# Must be binary (base-64)
 	{
@@ -248,46 +264,150 @@ while (@_ = &GetEntry)	# Loop per entry (exit on EOF)
     }
 
     #
-    # Check the objectclass inheritance.
+    # Check the objectclass inheritance and hirarcy.
     #
     if ($opt_inheritance)	# Will soon be mandatory
     {
-	foreach my $i (@{$entries{$cdn}{"objectclass"}})
-	{
+	my $obj_ref = objlist2hash( $entries{$cdn}{'objectclass'} );
+	$obj_ref->{top} = 1 # it might be that top is not there yet. 
+	    unless $obj_ref->{alias};
+
+	# remove unknown object classes
+	foreach my $i ( keys %$obj_ref ) {
 	    next if $i eq "top";	# top is topless :-)
-	    if (!defined $sup{$i})
-	    {
+            unless ( $schema{objectclass}{$i} ) {
+		# check if objectclass is known in the first place
 		print STDERR "dn: $dn\nUnknown objectclass: \"$i\"";
 		if ($opt_fix)
 		{
 		    print STDERR "; ignored";
-		    &remove($i, \@{$entries{$cdn}{"objectclass"}});
+                    delete $obj_ref->{$i};
 		}
 		print STDERR "\n\n";
 	    }
-	    if (defined $sup{$i} &&
-		!&present($sup{$i}, \@{$entries{$cdn}{"objectclass"}}))
-	    {
-		print STDERR "dn: $dn\nNo sup for \"$i\": \"$sup{$i}\"";
-		if ($opt_fix)
-		{
+	}
+	
+	#
+        # check if we have one and only one structural 
+	# object class and remove superfluous object classes.
+	#
+	my %structural_objectclasses;
+	foreach my $i ( keys %$obj_ref ) {	
+	    next if $i eq "top";    # top is topless :-)
+	    
+	    if ( $schema{objectclass}{$i}{structural} ) {
+		$structural_objectclasses{$i}=1;
+	    }
+	}
+	if  (1 < scalar keys %structural_objectclasses ) {
+	    print STDERR "dn: $dn\nMore then one structural objectclass:";
+	    for my $structural_objectclass ( keys %structural_objectclasses ) {
+		print STDERR " \"$structural_objectclass\"";
+	    }
+	    print STDERR ".";
+	    my $removable_objectclasses_ref = 
+		resolve_structural_clash ( \%structural_objectclasses, $entries{$cdn} );
+	    if ($opt_fix) {
+		print STDERR " Removing ";
+		for my $obj_class ( @$removable_objectclasses_ref ) {
+		    print STDERR " \"$obj_class\"";
+		    delete $obj_ref->{$obj_class};
+		}
+		print STDERR ".\n\n";
+	    }
+	}
+	#
+	# Now we find and add missing superior objectclasses
+	#
+	foreach my $i ( keys %$obj_ref ) {	
+	    next if $i eq "top";    # top is topless :-)
+	    for my $sup ( @{ $schema{objectclass}{$i}{sup} } ) {
+		unless ( $obj_ref->{$sup} ) {
+		    print STDERR "dn: $dn\nNo sup for \"$i\"";
+		    if ($opt_fix) {
 		    print STDERR "; inserted";
-		    push @{$entries{$cdn}{"objectclass"}}, $sup{$i};
+			$obj_ref->{$sup} = 1;
 		}
 		print STDERR "\n\n";
 	    }
-	} # each objectclass
-    } # inheritance
+	    }    
+	} 
 
     #
-    # Check required attributes.
-    # Can't do in above loop, because the keys
-    # may have changed from inserting new classes.
+	# see if all mandatory attributes are there
     #
-    foreach my $i (@{$entries{$cdn}{"objectclass"}})
-    {
-	&checkattrs($cdn, $i);
+	my %must;
+	for my $i ( keys %$obj_ref ) {	
+	    next if $i eq "top";    # top is topless :-)
+	    
+	    for my $attrib_must ( @{ $schema{objectclass}{$i}{must} } ) {
+		$must{ $attrib_must } = 1;
+	    }
+	}
+	my %must_missing;
+      MUST:
+	for my $i ( keys %must ) {
+	    next if ($i eq "cn"            or # there is no schema entry for cn!
+		     $i eq "objectclass");    # or for objectclass
+	    for my $name ( @{ $schema{attributetype}{$i}{names} } ) {
+		next MUST if $entries{$cdn}{$name};
+	    }
+	    $must_missing{$i} = 1;
+	}
+	for my $i ( keys %must_missing ) {
+	    print STDERR "dn: $dn\nAttribut \"$i\": mandatory but missing";
+	    if ($opt_fix) {
+		print STDERR "; inserted";
+		$entries{$cdn}{$i} = [ "" ]; # FIXME: figure out proper syntax
+	    }
+	    print STDERR "\n\n";
+	}
+
+	# see if any attributes are orphans
+	# everything is allowed with extensibleobject. skip this case
+	unless ( $obj_ref->{extensibleobject} ) { 
+
+	    my %attrib_all = %must;
+	    foreach my $i ( keys %$obj_ref ) {
+		
+		next if $i eq "top";    # top is topless :-)
+		
+		for my $attrib_may ( @{ $schema{objectclass}{$i}{may} } ) {
+		    $attrib_all{ $attrib_may } = 1;
+		}
+	    }
+	    my %attrib_orphan;
+	    for my $attrib ( keys %{ $entries{$cdn} } ) {
+		next if ".origDN"     eq $attrib or
+		    "encoded"         eq $attrib or
+		    "objectclass"     eq $attrib or
+		    "creatorsname"    eq $attrib or
+		    "createtimestamp" eq $attrib or
+		    "modifiersname"   eq $attrib or
+		    "modifytimestamp" eq $attrib or
+		    "cdn"             eq $attrib or
+		    "dn"              eq $attrib;
+		unless ( $attrib_all{ $attrib } ) {
+		    $attrib_orphan{ $attrib } = 1;
+		}
+	    }
+	    for my $i ( keys %attrib_orphan ) {
+		print STDERR "dn: $dn\nAttribut \"$i\": is not part of objectclasses";
+		for my $objclss ( keys %$obj_ref) {
+		    print STDERR  " \"$objclss\""; 
+		}
+		if ($opt_fix) {
+		    print STDERR "; removed";
+		    delete $entries{$cdn}{$i}; 
     }
+		print STDERR "\n\n";
+	    }
+	} # extensibleobject.
+	# at this point we should have an entry with all needed sups, nicely cleand up 
+	objhash2list( $entries{$cdn}{objectclass} , $obj_ref ); # back to the old format
+    } # inheritance
+
+    
 } # main loop
 
 #
@@ -312,11 +432,16 @@ foreach my $thisdn (keys %entries)
 
     # Fix up the suffix dn if it's our mess, adding a structural objectclass.
     if ($thisdn eq &canon($suffix)) {
-	if (@{$entries{$thisdn}{'objectclass'}} == 1
-	    && lc $entries{$thisdn}{'objectclass'}[0] eq 'dcobject')
-	{
-		if (defined($opt_org))
+	my $obj_ref = objlist2hash( $entries{$thisdn}{'objectclass'} );
+	if ( ( 1 == keys %$obj_ref  
+	       and $obj_ref->{dcobject} )
+	     or 
+	     ( 2 == keys %$obj_ref  
+	       and $obj_ref->{dcobject} 
+	       and $obj_ref->{top} )
+	     )
 		{
+            if ( defined($opt_org) ) {
 			push(@{$entries{$thisdn}{'objectclass'}}, 'organization');
 			push(@{$entries{$thisdn}{'o'}}, $opt_org);
 		} else {
@@ -361,34 +486,6 @@ sub canon
 }
 
 #
-# Check required attributes.
-#
-sub checkattrs
-{
-    (my $dn, $class) = @_;
-    foreach my $attr (@{$reqd{lc $class}})
-    {
-	if (!defined @{$entries{$dn}{lc $attr}})
-	{
-	    my $odn = $entries{$dn}{$origDN};
-	    print STDERR "dn: $odn\nMissing reqd \"$class\" attr \"$attr\"";
-	    if ($opt_fix)
-	    {
-		# Quick hack for CI
-		my $fix = "UNKNOWN";
-		if ($attr eq "cn" && $fix ne "")
-		{
-		    $fix = $entries{$dn}{"givenname"}[0];
-		}
-		push @{$entries{$dn}{$attr}}, $fix;
-		print STDERR "; inserted \"$fix\"";
-	    }
-	    print STDERR "\n\n";
-	}
-    }
-}
-
-#
 # Write an entry to standard output.
 #
 # Ought to wrap at 78 cols as well.
@@ -398,110 +495,35 @@ sub write_out
     my ($dn) = @_;
     my $odn = $entries{$dn}{$origDN};
     if ($entries{$dn}{"encoded"} == 1) {
-      $encoded = encode_base64($odn,"");
+      my $encoded = encode_base64( $odn, "" );
       print "dn:: $encoded\n";
     } else {
       print "dn: $odn\n";
     }
-    foreach my $attr (keys %{$entries{$dn}})
-    {
-	next if $attr eq $origDN;
-	foreach my $value (@{$entries{$dn}{$attr}})
-	{
+    foreach my $attr ( keys %{ $entries{$dn} } ) {
+        next if $attr eq $origDN or $attr eq "encoded" ;
+        foreach my $value ( @{ $entries{$dn}{$attr} } ) {
 	    print "$attr:";
-	    if ($attr =~ /userpassword/i
-		|| $value =~ /(^[ :]|[\x00-\x1f\x7f-\xff])/)
+
+            if ( defined $value and ( $attr =~ /userpassword/i
+                || $value =~ /(^[ :]|[\x00-\x1f\x7f-\xff])/ )  )
 	    {
 		print ": ", &enmime($value, "");
 	    }
-	    else
-	    {
+            elsif ( defined $value and "" ne $value) { 
 		print " $value";
 	    }
 	    print "\n";
-	}
+
+        }
     }
     print "\n";
 }
 
-#
-# Test for presence of element in list.
-#
-sub present
-{
-    my ($element, $list) = @_;
-    my $found = 0;
+sub INIT {
 
-    foreach my $i (@$list)
-    {
-        if ($i eq $element)
-        {
-            $found = 1;
-            last;
-        }
-    }
-    return $found;
-}
-
-#
-# Remove specified element from list.
-# It's a unique element, but multiple
-# occurances will be removed.  It will
-# change the order of the list.
-#
-sub remove
-{
-    my ($element, $list) = @_;
-
-    for (my $i = 0; $i < @$list; $i++)
-    {
-        if ($element eq @$list[$i])
-        {
-	    @$list[$i] = @$list[$#$list];
-            pop @$list;
-        }
-    }
-}
-
-#
-# Initialise some stuff (automatically called).
-#
-sub INIT
-{
-    #
-    # Initialise the superior objectclasses.
-    # Ought to get this from the schema.
-    #
-    $sup{"dcObject"} = "top";
-    $sup{"inetOrgPerson"} = "organizationalPerson";
-    $sup{"organizationalPerson"} = "person";
-    $sup{"organizationalRole"} = "top";
-    $sup{"organizationalUnit"} = "top";
-    $sup{"person"} = "top";
-    $sup{"posixAccount"} = "top";
-    $sup{"room"} = "top";
-    $sup{"simpleSecurityObject"} = "top";
-
-    #
-    # These are incomplete/wrong/WIP.
-    #
-    $sup{"ciAdministrator"} = "top";
-    $sup{"ciApplication"} = "top";
-    $sup{"ciEmployee"} = "inetOrgPerson";
-    $sup{"ciLdapConfig"} = "top";
-    $sup{"ciPrinter"} = "top";
-    $sup{"ciServer"} = "top";
-
-    #
-    # Required attributes.
-    #
-    $reqd{"person"} = [ "sn", "cn" ];	# Special - can be autofixed
-    $reqd{"ciadministrator"} = [ "uid", "userPassword" ];
-    $reqd{"ciapplication"} = [ "ciApp", "ciAppType", "ciHost", "ciStatus", "ciPortNum" ];
-    $reqd{"ciemployee"} = [ "employeeNumber", "sn" ];
-    $reqd{"cildapconfig"} = [ "ciHost" ];
-    $reqd{"ciprinter"} = [ "ciPrinterName" ];
-    $reqd{"ciserver"} = [ "name" ];
+    my $schema_ref = parse_schemas();
+    %schema = %$schema_ref;
 
     #
     # Single-value attributes.
@@ -623,4 +645,300 @@ sub enmime
 	$res =~ s/(.{1,76})/$1$eol/g;
     }
     return $res;
+}
+
+sub read_config {
+    my ($file) = @_;
+    
+    open CONFIG,   "<  $file"  or die "can't open $file: $!";
+
+    my %config;
+    while ( <CONFIG> ) {
+	chomp;
+	s/\#.*//;
+	s/^\s+//;
+	s/\s+$//;
+	next unless length;
+	my ($var, $value) = split(/\s*=\s*/, $_, 2);
+	$config{$var} = $value;
+    }
+    
+    close CONFIG;
+    
+    return \%config;
+}
+
+sub read_slapd_config {
+    my ($file) = @_;
+    
+    open CONFIG,   "<  $file"  or die "can't open $file: $!";
+
+    my $seperator = $/; # save the seperator since it is non-standard
+    undef $/;
+    my $whole_file =  <CONFIG>; # sluuuurp
+    $whole_file =~ s/\n(?!\n)\s+/ /g; # merge logical line as the ldap config parser does
+    $/= $seperator; # restore the original line seperator;
+
+    my @whole_file = split (/\n/, $whole_file);
+
+
+    my %config;
+    while ( @whole_file ) {
+	$_ = pop @whole_file;
+	chomp;
+	s/\#.*//;
+	s/^\s+//;
+	s/\s+$//;
+	next unless length;
+	my ($var, $value) = split(/\s+/, $_, 2);
+	push @{ $config{$var} }, $value; 
+
+	# this does not keep the order of the configuration easily
+	# accessable, which is bad for things like databases and
+	# suffixes but does not matter for the include lines of the
+	# schemas. With some efford one could pirce together the order
+	# by getting it from the order in the anonymous arrays.
+
+    }
+    
+    close CONFIG;
+    
+    return \%config;
+}
+
+sub extract_system_schemas {
+    my ($core_schema, $schema_raw_ref) = @_;
+
+    while ( $core_schema ) {
+	$core_schema =~ s/^.*?\n\# system schema\n\#(.*?\))(\n\n.*)$/$2/s;
+	last unless $1;
+	my $core_def = $1;
+	$core_def =~ s/\n(?!\n)\#\s+/ /g;
+	chomp $core_def;
+	$core_def =~s/^\s+//;
+	$core_def =~s/\s+$//;
+	next unless length $core_def;
+	push @$schema_raw_ref, "$core_def\n"; 
+    }
+}
+
+sub read_schema {
+    my ($file) = @_;
+    
+    open SCHEMA,   "<  $file"  or die "can't open $file: $!";
+
+    my $seperator = $/; # save the seperator since it is non-standard
+    undef $/;
+    my $whole_file =  <SCHEMA>; # sluuuurp
+
+    my @schema_raw;    
+    if ($file eq "/etc/ldap/schema/core.schema") {
+	# There are some system schema entries which are hard coded
+	# into openLdap.  They are marked "system schema" in the
+	# core.schema. we try to detect them and remove the comments
+	# in front of those.
+	extract_system_schemas( $whole_file, \@schema_raw);
+	
+    }
+
+    $whole_file =~ s/\n(?!\n)\s+/ /g; 
+    # this is dubious, since we should watch not lines starting with 
+    # whitespaces but balance the parantecies. but this works well.
+    $/= $seperator; # restore the original line seperator;
+
+    
+    my @whole_file = split (/\n/, $whole_file);
+
+    
+    while ( @whole_file ) {
+	$_ = pop @whole_file;
+	chomp;
+	s/\#.*//;
+	s/^\s+//;
+	s/\s+$//;
+	next unless length;
+	push @schema_raw, "$_\n"; 
+    }
+    
+    close SCHEMA;
+    return \@schema_raw;
+}
+
+
+sub find_slapd_config {
+
+    my $defaults = "/etc/default/slapd";
+    my $slapd_defaults_ref;
+    
+    if ( -f $defaults ) {
+	$slapd_defaults_ref = read_config( $defaults );	
+    }
+
+    unless ( $slapd_defaults_ref->{SLAPD_CONF} and 
+	 -f $slapd_defaults_ref->{SLAPD_CONF} ) 
+    {
+	$slapd_defaults_ref->{SLAPD_CONF} = "/etc/ldap/slapd.conf";
+    }
+	
+    return $slapd_defaults_ref->{SLAPD_CONF};
+
+}
+
+sub parse_slapd_config {
+    
+    my ($slapd_config_file) = @_;
+    
+    my $slapd_config_href = read_slapd_config( $slapd_config_file );
+    
+    return $slapd_config_href;
+}
+
+sub find_active_schemas {
+    my ($slapd_config_href) = @_;
+
+    return \@{ $slapd_config_href->{include} }; 
+}
+sub preprocess_schemas {
+    my ( $schemas_list_ref ) = @_;
+    
+    my @schemas_raw;
+    
+    for my $file ( @{$schemas_list_ref} ) {
+	push @schemas_raw, @{ read_schema( $file ) }; 
+    }
+    return \@schemas_raw;
+}
+
+sub get_used_schemas {
+
+    my $slapd_config_path = find_slapd_config();
+    my $slapd_config_href = parse_slapd_config( $slapd_config_path );
+    my $schemas_list_aref = find_active_schemas( $slapd_config_href );
+    my $schemas_raw_aref = preprocess_schemas( $schemas_list_aref );
+    return $schemas_raw_aref;
+}
+
+sub parse_schemas {
+
+    my $schemas_raw_aref = get_used_schemas();
+    
+    my %schema;
+    while ( @$schemas_raw_aref ) {
+	$_= pop @$schemas_raw_aref;
+	chomp;
+
+	#poor man`s parser
+
+	my ( $type ) =
+	    /^(\w+)\s/;
+	
+	my ( $structural ) = 
+	    /^.*\s(STRUCTURAL)\s.*$/;
+	
+	my ( $auxiliary ) = 	
+	    /^.*\s(AUXILIARY)\s.*$/;
+	
+	my ( $description ) = 
+	    /^.*\s+DESC\s+\'([^\']+)\'.*$/;
+
+	my ( $syntax ) = 	
+	    /^.*\s+SYNTAX\s+([\d\.\{\}]+).*$/;
+
+
+	my @names;
+ 	if ( /^.*\s+NAME\s+\(\s*\'([\w\s\']+)\'\s*\).*$/  ) {
+	     @names = split(/\'\s+\'/, lc $1);
+	}
+	elsif ( /^.*\s+NAME\s+\'(\w+)\'\s.*$/ ) {
+	    push @names, lc $1;
+	}
+	
+	my @sup;
+	if ( /^.*\s+SUP\s+\(\s*([^\)]+?)\s*\).*$/ ) {
+	    @sup = split(/\s*\$\s*/, lc $1);
+	}
+	elsif ( /^.*\s+SUP\s+(\w+)\s.*$/ ) {
+	    push @sup, lc $1;
+	}
+	
+	my @must;
+	if ( /^.*\s+MUST\s+\(\s*([^\)]+?)\s*\).*$/ ) {
+	    @must = split(/\s*\$\s*/, lc $1);
+	}
+	elsif ( /^.*\s+MUST\s+(\w+)\s.*$/ ) {
+	    push @must, lc $1 ;
+	}
+	
+	my @may;
+	if ( /^.*\s+MAY\s+\(\s*([^\)]+?)\s*\).*$/ ) {
+	    @may = split(/\s*\$\s*/, lc $1);
+	}
+	elsif ( /^.*\s+MAY\s+(\w+)\s.*$/ ) {
+	    push @may, lc $1 ;
+	}
+
+	unless ($type eq "attributetype" or 
+		$type eq "objectclass"   or 
+		@names ) 
+	{
+	    print STDERR "$_\n"; 
+	}
+	else {
+	    for my $name ( @names ) {
+		$name = lc $name;
+
+		$schema{$type}{$name}{names}       = \@names;
+		$schema{$type}{$name}{description}= $description 
+		    if $description;
+		$schema{$type}{$name}{syntax}     = $syntax
+		    if $syntax;
+		$schema{$type}{$name}{structural} = 1
+		    if $structural;
+		$schema{$type}{$name}{auxiliary}  = 1
+		    if $auxiliary;
+		$schema{$type}{$name}{must}       = \@must 
+		    if @must;
+		$schema{$type}{$name}{may}        = \@may
+		    if @may;
+		$schema{$type}{$name}{sup}        = \@sup 
+		    if @sup;
+	    }
+	}
+    }
+    return \%schema;
+}
+
+sub objlist2hash {
+    my ($list_ref) = @_;
+    
+    my %objectclass;
+    for my $objclass ( @$list_ref ) {
+	$objclass = lc $objclass;
+	$objectclass{$objclass } = 1;
+    }
+    
+    return \%objectclass;
+}
+
+sub objhash2list {
+    my ($array_ref , $obj_hash_ref ) = @_;
+    
+    @$array_ref = keys %$obj_hash_ref;
+}
+
+sub resolve_structural_clash {
+    my ( $structural_objectclasses_ref, $entry_ref ) = @_;
+
+    my @removable_objectclasses;
+
+    # remove automountmap
+    # i dont know good heuristics to decide which one i 
+    # should remove, so this is hard coded.
+    # what other common cases are there?
+    if ($structural_objectclasses_ref->{automountmap}       and
+	$structural_objectclasses_ref->{organizationalunit} and 
+	2 == keys %$structural_objectclasses_ref ) {
+	push @removable_objectclasses, "automountmap";
+    }
+    return \@removable_objectclasses;
 }

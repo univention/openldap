@@ -17,6 +17,8 @@ openldap2 (2.1.30-4) testing-proposed-updates unstable; urgency=low
     + Refine the patch for the TLS_CACERTDIR problem to log an error 
       message if the directory can't be opened.
     + Fix the check if an existing database should be moved (closes: #276380).
+    + debian/fix_ldif: Apply patch from Andreas Schuldei for better
+      schema checks et cetera.
 
  -- Torsten Landschoff <torsten@debian.org>  Sun, 12 Sep 2004 10:02:39 +0200
 
