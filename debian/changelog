@@ -8,6 +8,9 @@ openldap2 (2.1.21-2) unstable; urgency=low
       those results in preference.  Also moved to using /var/backups/ldap.
     + servers/slapd/daemon.c: Provide more information on socket/bind 
       failures. Patch submitted upstream. Closes: #94967.
+    + ./configure, ./configure.in: Fix check for back_ldap in back_meta.
+      back_ldap now included as module.  back_ldap and back_meta appear
+      to load fine, though order may matter.  Closes: #196995.
 
  --
 

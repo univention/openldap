@@ -23078,13 +23078,15 @@ if test "$ol_enable_meta" != no ; then
 	if test "$ol_enable_rewrite" = no ; then
 		{ echo "configure: error: need --enable-rewrite to use --enable-meta" 1>&2; exit 1; }
 	fi
+        if test "$ol_enable_ldap" = no ; then
+                { echo "configure: error: need --enable-ldap to use --enable-meta" 1>&2; exit 1; }
+	fi
 	cat >> confdefs.h <<\EOF
 #define SLAPD_META 1
 EOF
 
 	BUILD_SLAPD=yes
 	BUILD_META=yes
-	BUILD_LDAP=yes
 	BUILD_REWRITE=yes
 	if test "$ol_with_meta_module" != static ; then
 		cat >> confdefs.h <<\EOF
