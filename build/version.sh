@@ -1,16 +1,11 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/build/version.sh,v 1.5.2.37 2003/03/14 16:45:06 kurt Exp $
+# $OpenLDAP: pkg/ldap/build/version.sh,v 1.5.2.39 2003/03/29 15:45:42 kurt Exp $
 ## Copyright 2000-2003 The OpenLDAP Foundation
 ## COPYING RESTRICTIONS APPLY.  See COPYRIGHT File in top level directory
 ## of this package for details.
 #
-ol_package=OpenLDAP
-ol_major=2
-ol_minor=1
-ol_patch=16
-ol_api_inc=20116
-ol_api_lib=2:116:0
-ol_release_date="03-15-2003"
+DIR=`dirname $0`
+. $DIR/version.var
 
 if test $ol_patch != X ; then
 	ol_version=${ol_major}.${ol_minor}.${ol_patch}

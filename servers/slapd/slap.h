@@ -1,5 +1,5 @@
 /* slap.h - stand alone ldap server include file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.323.2.27 2003/03/12 20:58:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.323.2.28 2003/03/27 03:04:06 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -78,6 +78,9 @@ LDAP_BEGIN_DECL
 
 #define SLAP_SB_MAX_INCOMING_DEFAULT ((1<<18) - 1)
 #define SLAP_SB_MAX_INCOMING_AUTH ((1<<24) - 1)
+
+#define SLAP_CONN_MAX_PENDING_DEFAULT	100
+#define SLAP_CONN_MAX_PENDING_AUTH	1000
 
 #define SLAP_TEXT_BUFLEN (256)
 

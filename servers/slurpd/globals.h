@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/globals.h,v 1.11.2.2 2003/03/03 17:10:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/globals.h,v 1.11.2.3 2003/03/26 15:45:13 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -29,6 +29,8 @@ LDAP_BEGIN_DECL
 typedef struct globals {
     /* Thread ID for file manager thread */
     ldap_pvt_thread_t fm_tid;
+    /* pipe/socket used to wake manager from signal handler */
+    int wake_sds[2];
     /* The name of the slapd config file (which is also our config file) */
     char *slapd_configfile;
     /* How long the master slurpd sleeps when there's no work to do */

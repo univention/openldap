@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapsearch.c,v 1.111.2.20 2003/02/10 19:16:05 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapsearch.c,v 1.111.2.21 2003/03/29 15:45:43 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file

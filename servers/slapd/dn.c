@@ -1,5 +1,5 @@
 /* dn.c - routines for dealing with distinguished names */
-/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.124.2.10 2003/03/03 17:10:07 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.124.2.11 2003/03/24 03:54:12 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -266,6 +266,11 @@ LDAPDN_rewrite( LDAPDN *dn, unsigned flags )
 			ava->la_attr = ad->ad_cname;
 
 			if( ava->la_flags & LDAP_AVA_BINARY ) {
+				if( ava->la_value.bv_len == 0 ) {
+					/* BER encoding is empty */
+					return LDAP_INVALID_SYNTAX;
+				}
+
 				/* AVA is binary encoded, don't muck with it */
 				validf = NULL;
 				transf = NULL;

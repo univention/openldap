@@ -2,7 +2,7 @@
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapcompare.c,v 1.2.2.7 2003/02/08 23:28:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapcompare.c,v 1.2.2.8 2003/03/29 15:45:43 kurt Exp $ */
 
 #include "portable.h"
 
@@ -28,7 +28,6 @@
 
 #include <ldap.h>
 
-#include "ldif.h"
 #include "lutil.h"
 #include "lutil_ldap.h"
 #include "ldap_defaults.h"
@@ -158,9 +157,6 @@ main( int argc, char **argv )
 			exit(-1);
 		}
 	}
-
-	if ( debug )
-		ldif_debug = debug;
 
 	ld = tool_conn_setup( 0, 0 );
 

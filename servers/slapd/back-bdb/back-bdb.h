@@ -1,5 +1,5 @@
 /* back-bdb.h - bdb back-end header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/back-bdb.h,v 1.54.2.13 2003/03/14 01:16:49 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/back-bdb.h,v 1.54.2.15 2003/03/29 15:45:43 kurt Exp $ */
 /*
  * Copyright 2000-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -110,7 +110,6 @@ struct bdb_info {
 
 	int			bi_ndatabases;
 	struct bdb_db_info **bi_databases;
-	ldap_pvt_thread_mutex_t	bi_database_mutex;
 	int		bi_db_opflags;	/* db-specific flags */
 
 	slap_mask_t	bi_defaultmask;
@@ -160,7 +159,7 @@ struct bdb_op_info {
 	int		boi_acl_cache;
 };
 
-#define	DB_OPEN(db, file, name, type, flags, mode) \
+#define	DB_OPEN(db, txn, file, name, type, flags, mode) \
 	(db)->open(db, file, name, type, flags, mode)
 
 #if DB_VERSION_MAJOR < 4
@@ -191,8 +190,8 @@ struct bdb_op_info {
 /* BDB 4.1.17 adds txn arg to db->open */
 #if DB_VERSION_MINOR > 1 || DB_VERSION_PATCH >= 17
 #undef DB_OPEN
-#define	DB_OPEN(db, file, name, type, flags, mode) \
-	(db)->open(db, NULL, file, name, type, (flags)|DB_AUTO_COMMIT, mode)
+#define	DB_OPEN(db, txn, file, name, type, flags, mode) \
+	(db)->open(db, txn, file, name, type, flags, mode)
 #endif
 
 #define BDB_REUSE_LOCKERS

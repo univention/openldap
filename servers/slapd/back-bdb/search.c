@@ -1,5 +1,5 @@
 /* search.c - search operation */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.54.2.20 2003/03/05 23:36:24 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.54.2.21 2003/03/24 03:54:12 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -343,12 +343,12 @@ dn2entry_retry:
 			scope, deref, candidates );
 	}
 
-	/* need normalized dn below */
-	ber_dupbv( &realbase, &e->e_nname );
-
 	/* start cursor at beginning of candidates.
 	 */
 	cursor = 0;
+
+	/* need normalized dn below */
+	ber_dupbv( &realbase, &e->e_nname );
 
 	if ( e != &slap_entry_root ) {
 		bdb_cache_return_entry_r(bdb->bi_dbenv, &bdb->bi_cache, e, &lock);

@@ -1,5 +1,5 @@
 /* entry.c - routines for dealing with entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.90.2.8 2003/02/26 15:17:49 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.90.2.9 2003/03/24 03:54:12 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -524,7 +524,7 @@ int entry_encode(Entry *e, struct berval *bv)
 		    entry_putlen(&ptr, i);
 		    for (i=0; a->a_vals[i].bv_val; i++) {
 			entry_putlen(&ptr, a->a_vals[i].bv_len);
-			memcpy(ptr, a->a_vals[i].bv_val,
+			AC_MEMCPY(ptr, a->a_vals[i].bv_val,
 				a->a_vals[i].bv_len);
 			ptr += a->a_vals[i].bv_len;
 			*ptr++ = '\0';
@@ -537,7 +537,7 @@ int entry_encode(Entry *e, struct berval *bv)
 
 /* Retrieve an Entry that was stored using entry_encode above.
  * We malloc a single block with the size stored above for the Entry
- * and all if its Attributes. We also must lookup the stored
+ * and all of its Attributes. We also must lookup the stored
  * attribute names to get AttributeDescriptions. To detect if the
  * attributes of an Entry are later modified, we note that e->e_attr
  * is always a constant offset from (e).

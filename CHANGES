@@ -1,5 +1,27 @@
 OpenLDAP 2.1 Change Log
 
+OpenLDAP 2.1.17 Release
+	Fixed libldap_r thread pool context bug (ITS#2404)
+	Fixed libldap T.61 convert bug (ITS#2388)
+	Fixed libldap h_errno bug
+	Fixed slapd cn=# bug (ITS#2387)
+	Fixed slapd naming violation error checks
+	Fixed slapd modify password uninit free bug (ITS#2390)
+	Fixed slapd request flooding bug (ITS#2389)
+	Fixed slurpd one shot mode (ITS#2385)
+	Fixed slurpd core dump on exit (ITS#2363)
+	Fixed slapadd oidm destroy bug (ITS#2409)
+	Fixed clients critical argument handling
+	Updated clients password file support
+	Added slappasswd password file support
+	Removed lint (ITS#2382)
+	Build Environment
+		Updated versioning system
+		Added LDAP cache shell-only routines
+	Documentation
+		Updated slurpd(8) -u usage
+		Misc man page updates
+
 OpenLDAP 2.1.16 Release
 	Fixed slapd sasl internal search "auth" issue
 	Fixed liblber BER decoding bug (ITS#2365)
