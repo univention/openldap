@@ -1333,11 +1333,14 @@ slapd_daemon_task(
 		if ( !at )
 			at = ldap_pvt_thread_pool_backload(&connection_pool);
 
+		if ( at
 #if defined( HAVE_YIELDING_SELECT ) || defined( NO_THREADS )
-		tvp = NULL;
-#else
-		tvp = at ? &tv : NULL;
+			&& ( tv.tv_sec || tv.tv_usec )
 #endif
+		   )
+		  tvp = &tv;
+		else
+		  tvp = NULL;
 
 		for ( l = 0; slap_listeners[l] != NULL; l++ ) {
 			if ( slap_listeners[l]->sl_sd == AC_SOCKET_INVALID ||

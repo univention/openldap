@@ -2,6 +2,22 @@
 
 export DH_COMPAT = 4
 
+CFLAGS = -Wall -g -D_FILE_OFFSET_BITS=64
+INSTALL = install
+INSTALL_FILE    = $(INSTALL) -p    -o root -g root  -m  644
+INSTALL_PROGRAM = $(INSTALL) -p    -o root -g root  -m  755
+INSTALL_SCRIPT  = $(INSTALL) -p    -o root -g root  -m  755
+INSTALL_DIR     = $(INSTALL) -p -d -o root -g root  -m  755
+
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+CFLAGS += -O0
+else
+CFLAGS += -O2
+endif
+ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
+INSTALL_PROGRAM += -s
+endif
+
 CONFIG	      = $(shell grep -v "^\#" debian/configure.options)
 
 rootdir		:= $(shell pwd)
@@ -10,7 +26,7 @@ builddir	:= $(rootdir)/debian/build
 
 $(builddir)/Makefile:
 	mkdir -p $(builddir)
-	autoconf && autoheader && cd $(builddir) && CFLAGS=-D_FILE_OFFSET_BITS=64 $(rootdir)/configure \
+	autoconf && autoheader && cd $(builddir) && CFLAGS=$(CFLAGS) $(rootdir)/configure \
 		$(CONFIG) 
 	perl debian/check_config
 	$(MAKE) -C $(builddir) depend

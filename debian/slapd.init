@@ -115,7 +115,7 @@ stop_slurpd() {
 		return 0
 	fi
 	echo -n " slurpd"
-	reason="`start-stop-daemon --stop --quiet --retry 10 \
+	reason="`start-stop-daemon --stop --quiet --oknodo --retry 10 \
 		--exec /usr/sbin/slurpd 2>&1`"
 }
 
