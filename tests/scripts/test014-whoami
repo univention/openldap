@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test014-whoami,v 1.1.2.4 2002/11/01 17:18:14 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test014-whoami,v 1.1.2.5 2003/02/10 18:43:11 kurt Exp $
 
 SRCDIR="."
 if test $# -ge 1 ; then
@@ -58,6 +58,39 @@ fi
 
 echo "Testing ldapwhoami as ${MANAGERDN}..."
 $LDAPWHOAMI -h $LOCALHOST -p $PORT -D "$MANAGERDN" -w $PASSWD
+
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapwhoami failed ($RC)!"
+	kill -HUP $PID
+	exit $RC
+fi
+
+echo "Testing ldapwhoami as ${MANAGERDN} for anonymous..."
+$LDAPWHOAMI -h $LOCALHOST -p $PORT -D "$MANAGERDN" -w $PASSWD \
+	-e \!authzid=""
+
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapwhoami failed ($RC)!"
+	kill -HUP $PID
+	exit $RC
+fi
+
+echo "Testing ldapwhoami as ${MANAGERDN} for dn:$BABSDN..."
+$LDAPWHOAMI -h $LOCALHOST -p $PORT -D "$MANAGERDN" -w $PASSWD \
+	-e \!authzid="dn:$BABSDN"
+
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapwhoami failed ($RC)!"
+	kill -HUP $PID
+	exit $RC
+fi
+
+echo "Testing ldapwhoami as ${MANAGERDN} for u:ursula..."
+$LDAPWHOAMI -h $LOCALHOST -p $PORT -D "$MANAGERDN" -w $PASSWD \
+	-e \!authzid="u:ursula"
 
 RC=$?
 if test $RC != 0 ; then

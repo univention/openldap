@@ -1,6 +1,6 @@
 /* null.c - the null backend */
 /*
- * Copyright 2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2002-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -31,7 +31,7 @@ null_back_bind(
 	struct null_info *ni = (struct null_info *) be->be_private;
 
 	if( ni->bind_allowed )
-		/* front end with send result on success (0) */
+		/* front end will send result on success (0) */
 		return 0;
 	send_ldap_result( conn, op, LDAP_INVALID_CREDENTIALS,
 	                  NULL, NULL, NULL, NULL );

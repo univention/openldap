@@ -1,7 +1,7 @@
 /* lock.c - routines to open and apply an advisory lock to a file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/lock.c,v 1.20.2.3 2002/09/25 14:11:00 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/lock.c,v 1.20.2.5 2003/03/12 19:19:21 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -18,8 +18,8 @@
 #include <sys/file.h>
 #endif
 
-#include <lutil.h>
 #include "slap.h"
+#include <lutil.h>
 
 FILE *
 lock_fopen( const char *fname, const char *type, FILE **lfp )

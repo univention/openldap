@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/extended.c,v 1.27.2.5 2002/09/06 01:36:44 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/extended.c,v 1.27.2.9 2003/03/05 23:37:52 kurt Exp $ */
 /* 
- * Copyright 1999-2002 The OpenLDAP Foundation.
+ * Copyright 1999-2003 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted only
@@ -28,11 +28,18 @@
 #include "portable.h"
 
 #include <stdio.h>
+
 #include <ac/socket.h>
 #include <ac/string.h>
 
 #include "slap.h"
 #include "lber_pvt.h"
+
+#ifdef LDAP_SLAPI
+#include "slapi.h"
+#endif
+
+#define UNSUPPORTED_EXTENDEDOP "unsupported extended operation"
 
 static struct extop_list {
 	struct extop_list *next;
@@ -55,11 +62,14 @@ static struct {
 	struct berval oid;
 	SLAP_EXTOP_MAIN_FN *ext_main;
 } builtin_extops[] = {
+#ifdef LDAP_EXOP_X_CANCEL
+	{ BVC(LDAP_EXOP_X_CANCEL), cancel_extop },
+#endif
+	{ BVC(LDAP_EXOP_X_WHO_AM_I), whoami_extop },
+	{ BVC(LDAP_EXOP_MODIFY_PASSWD), passwd_extop },
 #ifdef HAVE_TLS
 	{ BVC(LDAP_EXOP_START_TLS), starttls_extop },
 #endif
-	{ BVC(LDAP_EXOP_MODIFY_PASSWD), passwd_extop },
-	{ BVC(LDAP_EXOP_X_WHO_AM_I), whoami_extop },
 	{ {0,NULL}, NULL }
 };
 
@@ -95,12 +105,20 @@ do_extended(
 	struct berval reqdata = {0, NULL};
 	ber_tag_t tag;
 	ber_len_t len;
-	struct extop_list *ext;
+	struct extop_list *ext = NULL;
 	const char *text;
 	BerVarray refs;
 	char *rspoid;
 	struct berval *rspdata;
 	LDAPControl **rspctrls;
+
+#if defined(LDAP_SLAPI) 
+ 	Slapi_PBlock    *pb = op->o_pb;
+ 	SLAPI_FUNC      funcAddr = NULL;
+ 	int             extop_rc;
+ 	int             msg_sent = FALSE;
+ 	char            *result_msg = "";
+#endif /* defined(LDAP_SLAPI) */
 
 #ifdef NEW_LOGGING
 	LDAP_LOG( OPERATION, ENTRY, "do_extended: conn %d\n", conn->c_connid, 0, 0 );
@@ -136,7 +154,16 @@ do_extended(
 		goto done;
 	}
 
-	if( !(ext = find_extop(supp_ext_list, &reqoid)) ) {
+	if( !(ext = find_extop(supp_ext_list, &reqoid))
+#ifdef LDAP_SLAPI
+		&& !(funcAddr)
+#endif
+	) {
+#ifdef LDAP_SLAPI
+		/* Netscape extended operation */
+		getPluginFunc( &reqoid, &funcAddr );
+#endif
+
 #ifdef NEW_LOGGING
 		LDAP_LOG( OPERATION, ERR, 
 			"do_extended: conn %d  unsupported operation \"%s\"\n",
@@ -149,6 +176,8 @@ do_extended(
 			NULL, "unsupported extended operation", NULL, NULL );
 		goto done;
 	}
+
+	op->o_extendedop = reqoid.bv_val;
 
 	tag = ber_peek_tag( op->o_ber, &len );
 	
@@ -200,29 +229,106 @@ do_extended(
 	text = NULL;
 	refs = NULL;
 
-	rc = (ext->ext_main)( conn, op,
-		reqoid.bv_val, reqdata.bv_val ? &reqdata : NULL,
-		&rspoid, &rspdata, &rspctrls, &text, &refs );
+#if defined(LDAP_SLAPI)
+	if (ext != NULL) { /* OpenLDAP extended operation */
+#endif /* defined(LDAP_SLAPI) */
 
-	if( rc != SLAPD_ABANDON ) {
-		if ( rc == LDAP_REFERRAL && refs == NULL ) {
-			refs = referral_rewrite( default_referral,
-				NULL, NULL, LDAP_SCOPE_DEFAULT );
+		rc = (ext->ext_main)( conn, op,
+			  reqoid.bv_val, reqdata.bv_val ? &reqdata : NULL,
+			  &rspoid, &rspdata, &rspctrls, &text, &refs );
+
+		if( rc != SLAPD_ABANDON ) {
+			if ( rc == LDAP_REFERRAL && refs == NULL ) {
+				refs = referral_rewrite( default_referral,
+					NULL, NULL, LDAP_SCOPE_DEFAULT );
+			}
+
+			send_ldap_extended( conn, op, rc, NULL, text, refs,
+				rspoid, rspdata, rspctrls );
+
+			ber_bvarray_free( refs );
 		}
 
-		send_ldap_extended( conn, op, rc, NULL, text, refs,
-			rspoid, rspdata, rspctrls );
+		if ( rspoid != NULL ) {
+			free( rspoid );
+		}
 
-		ber_bvarray_free( refs );
-	}
+		if ( rspdata != NULL ) {
+			ber_bvfree( rspdata );
+		}
 
-	if ( rspoid != NULL ) {
-		free( rspoid );
-	}
+#if defined( LDAP_SLAPI )
+		goto done;  /* end of OpenLDAP extended operation */
 
-	if ( rspdata != NULL ) {
-		ber_bvfree( rspdata );
-	}
+	} else { /* start of Netscape extended operation */
+		rc = slapi_pblock_set( pb, SLAPI_EXT_OP_REQ_OID,
+				(void *)reqoid.bv_val);
+		if ( rc != LDAP_SUCCESS ) {
+			rc = LDAP_OTHER;
+			goto done;
+		}
+
+		rc = slapi_pblock_set( pb, SLAPI_EXT_OP_REQ_VALUE,
+				(void *)&reqdata);
+		if ( rc != LDAP_SUCCESS ) {
+			rc = LDAP_OTHER;
+			goto done;
+		}
+
+		rc = slapi_x_connection_set_pb( pb, conn );
+		if ( rc != LDAP_SUCCESS ) {
+			rc = LDAP_OTHER;
+			goto done;
+		}
+
+		rc = slapi_x_operation_set_pb( pb, op );
+		if ( rc != LDAP_SUCCESS ) {
+			rc = LDAP_OTHER;
+			goto done;
+		}
+
+		extop_rc = (*funcAddr)( pb );
+		if ( extop_rc == SLAPI_PLUGIN_EXTENDED_SENT_RESULT ) {
+			msg_sent = TRUE;
+
+		} else if ( extop_rc == SLAPI_PLUGIN_EXTENDED_NOT_HANDLED ) {
+			rc = LDAP_PROTOCOL_ERROR;
+			result_msg = UNSUPPORTED_EXTENDEDOP;
+
+		} else {
+			rc = slapi_pblock_get( pb, SLAPI_EXT_OP_RET_OID,
+					&rspoid);
+			if ( rc != LDAP_SUCCESS ) {
+				goto done2;
+			}
+
+			rc = slapi_pblock_get( pb, SLAPI_EXT_OP_RET_VALUE,
+					&rspdata);
+			if ( rc != LDAP_SUCCESS ) {
+				goto done2;
+			}
+
+			send_ldap_extended( conn, op, extop_rc, NULL, text,
+					refs, rspoid, rspdata, rspctrls );
+			msg_sent = TRUE;
+		}
+
+done2:;
+		if ( rc != LDAP_SUCCESS && msg_sent == FALSE ) {
+			send_ldap_result( conn, op, rc, NULL, result_msg,
+					NULL, NULL );
+		}
+
+		if ( rspoid != NULL ) {
+			free( rspoid );
+		}
+
+		if ( rspdata != NULL ) {
+			ber_bvfree( rspdata );
+		}
+
+	} /* end of Netscape extended operation */
+#endif /* defined( LDAP_SLAPI ) */
 
 done:
 	return rc;

@@ -1,6 +1,6 @@
 /* database.c - deals with database subsystem */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*
@@ -37,6 +37,11 @@
 
 #include "slap.h"
 #include "back-monitor.h"
+
+#if defined(LDAP_SLAPI)
+#include "slapi.h"
+static int monitor_back_add_plugin( Backend *be, Entry *e );
+#endif /* defined(LDAP_SLAPI) */
 
 int
 monitor_subsys_database_init(
@@ -76,6 +81,17 @@ monitor_subsys_database_init(
 	}
 
 	if ( slap_str2ad( "seeAlso", &ad_seeAlso, &text ) != LDAP_SUCCESS ) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( OPERATION, CRIT,
+			"monitor_subsys_database_init: "
+			"unable to find 'seeAlso' attribute description\n",
+			0, 0, 0 );
+#else
+		Debug( LDAP_DEBUG_ANY,
+			"monitor_subsys_database_init: "
+			"unable to find 'seeAlso' attribute description\n",
+			0, 0, 0 );
+#endif
 		return( -1 );
 	}
 
@@ -87,7 +103,7 @@ monitor_subsys_database_init(
 		be = &backendDB[i];
 
 		/* Subordinates are not exposed as their own naming context */
-		if ( be->be_flags & SLAP_BFLAG_GLUE_SUBORDINATE ) {
+		if ( SLAP_GLUE_SUBORDINATE( be ) ) {
 			continue;
 		}
 
@@ -168,6 +184,10 @@ monitor_subsys_database_init(
 			return( -1 );
 		}
 
+#if defined(LDAP_SLAPI)
+		monitor_back_add_plugin( be, e );
+#endif /* defined(LDAP_SLAPI) */
+
 		e_tmp = e;
 	}
 	
@@ -179,3 +199,54 @@ monitor_subsys_database_init(
 	return( 0 );
 }
 
+#if defined(LDAP_SLAPI)
+static int
+monitor_back_add_plugin( Backend *be, Entry *e_database )
+{
+	Slapi_PBlock		*pCurrentPB; 
+	int			i, rc = LDAP_SUCCESS;
+
+	if ( slapi_x_pblock_get_first( be, &pCurrentPB ) != LDAP_SUCCESS ) {
+		/*
+		 * LDAP_OTHER is returned if no plugins are installed
+		 */
+		rc = LDAP_OTHER;
+		goto done;
+	}
+
+	i = 0;
+	do {
+		Slapi_PluginDesc	*srchdesc;
+		char			buf[1024];
+		struct berval		bv;
+
+		rc = slapi_pblock_get( pCurrentPB, SLAPI_PLUGIN_DESCRIPTION,
+				&srchdesc );
+		if ( rc != LDAP_SUCCESS ) {
+			goto done;
+		}
+
+		snprintf( buf, sizeof(buf),
+				"plugin %d name: %s; "
+				"vendor: %s; "
+				"version: %s; "
+				"description: %s", 
+				i,
+				srchdesc->spd_id,
+				srchdesc->spd_vendor,
+				srchdesc->spd_version,
+				srchdesc->spd_description );
+
+		bv.bv_val = buf;
+		bv.bv_len = strlen( buf );
+		attr_merge_one( e_database, monitor_ad_desc, &bv );
+
+		i++;
+
+	} while ( ( slapi_x_pblock_get_next( &pCurrentPB ) == LDAP_SUCCESS )
+			&& ( pCurrentPB != NULL ) );
+
+done:
+	return rc;
+}
+#endif /* defined(LDAP_SLAPI) */

@@ -1,3 +1,11 @@
+openldap2.1 (2.1.16-1) unstable; urgency=low
+
+  * New upstream release.
+    + build/top.mk: Remove patch to omit "-static" at linking time. Upstream
+      now respects the --enable-shared flag used at configuration time.
+
+ -- Torsten Landschoff <torsten@debian.org>  Sun, 16 Mar 2003 11:25:46 +0100
+
 openldap2.1 (2.1.12-1) experimental; urgency=low
 
   * Initial release of OpenLDAP 2.1 packages. Closes: #167566, #178014.

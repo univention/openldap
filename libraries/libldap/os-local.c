@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.13.2.2 2002/07/28 19:10:46 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.13.2.5 2003/03/05 23:48:32 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*  Portions
@@ -25,8 +25,12 @@
 #include <ac/time.h>
 #include <ac/unistd.h>
 
-/* XXX non-portable */
+#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif
+#ifdef HAVE_SYS_UIO_H
+#include <sys/uio.h>
+#endif
 
 #ifdef HAVE_IO_H
 #include <io.h>
@@ -131,6 +135,14 @@ ldap_pvt_is_socket_ready(LDAP *ld, int s)
 }
 #undef TRACE
 
+#if !defined(HAVE_GETPEEREID) && \
+	!defined(SO_PEERCRED) && !defined(LOCAL_PEERCRED) && \
+	defined(HAVE_SENDMSG) && defined(HAVE_MSGHDR_MSG_ACCRIGHTS)
+#define DO_SENDMSG
+static const char abandonPDU[] = {LDAP_TAG_MESSAGE, 6,
+	LDAP_TAG_MSGID, 1, 0, LDAP_REQ_ABANDON, 1, 0};
+#endif
+
 static int
 ldap_pvt_connect(LDAP *ld, ber_socket_t s, struct sockaddr_un *sa, int async)
 {
@@ -155,6 +167,27 @@ ldap_pvt_connect(LDAP *ld, ber_socket_t s, struct sockaddr_un *sa, int async)
 		if ( ldap_pvt_ndelay_off(ld, s) == -1 ) {
 			return ( -1 );
 		}
+#ifdef DO_SENDMSG
+	/* Send a dummy message with access rights. Remote side will
+	 * obtain our uid/gid by fstat'ing this descriptor.
+	 */
+sendcred:
+		{
+			int fds[2];
+			if (pipe(fds) == 0) {
+				/* Abandon, noop, has no reply */
+				struct iovec iov = {abandonPDU, sizeof(abandonPDU)};
+				struct msghdr msg = {0};
+				msg.msg_iov = &iov;
+				msg.msg_iovlen = 1;
+				msg.msg_accrights = (char *)fds;
+				msg.msg_accrightslen = sizeof(int);
+				sendmsg( s, &msg, 0 );
+				close(fds[0]);
+				close(fds[1]);
+			}
+		}
+#endif
 		return ( 0 );
 	}
 
@@ -181,7 +214,11 @@ ldap_pvt_connect(LDAP *ld, ber_socket_t s, struct sockaddr_un *sa, int async)
 			return ( -1 );
 		if ( ldap_pvt_ndelay_off(ld, s) == -1 )
 			return ( -1 );
+#ifdef DO_SENDMSG
+		goto sendcred;
+#else
 		return ( 0 );
+#endif
 	}
 	oslocal_debug(ld, "ldap_connect_timeout: timed out\n",0,0,0);
 	ldap_pvt_set_errno( ETIMEDOUT );

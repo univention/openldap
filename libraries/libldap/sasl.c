@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/sasl.c,v 1.41.2.4 2002/11/28 22:18:37 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/sasl.c,v 1.41.2.6 2003/02/09 17:02:18 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -105,7 +105,7 @@ ldap_sasl_bind(
 			ld->ld_version, dn, LDAP_AUTH_SIMPLE,
 			cred );
 		
-	} else if ( cred == NULL ) {
+	} else if ( cred == NULL || cred->bv_val == NULL ) {
 		/* SASL bind w/o creditials */
 		rc = ber_printf( ber, "{it{ist{sN}N}" /*}*/,
 			++ld->ld_msgid, LDAP_REQ_BIND,
@@ -138,11 +138,6 @@ ldap_sasl_bind(
 		return ld->ld_errno;
 	}
 
-#ifndef LDAP_NOCACHE
-	if ( ld->ld_cache != NULL ) {
-		ldap_flush_cache( ld );
-	}
-#endif /* !LDAP_NOCACHE */
 
 	/* send the message */
 	*msgidp = ldap_send_initial_request( ld, LDAP_REQ_BIND, dn, ber );

@@ -1,7 +1,7 @@
 /* schemaparse.c - routines to parse config file objectclass definitions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schemaparse.c,v 1.53.2.6 2002/10/10 01:45:56 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schemaparse.c,v 1.53.2.7 2003/03/03 17:10:07 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

@@ -1,7 +1,7 @@
 /* entry.c - routines for dealing with entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.90.2.6 2002/12/03 21:52:30 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.90.2.8 2003/02/26 15:17:49 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -87,6 +87,7 @@ str2entry( char *s )
 	e->e_id = NOID;
 
 	/* dn + attributes */
+	vals[0].bv_len = 0;
 	vals[1].bv_val = NULL;
 
 	next = s;
@@ -388,17 +389,19 @@ entry_cmp( Entry *e1, Entry *e2 )
 }
 
 int
-entry_dn_cmp( Entry *e1, Entry *e2 )
+entry_dn_cmp( const void *v_e1, const void *v_e2 )
 {
 	/* compare their normalized UPPERCASED dn's */
+	const Entry *e1 = v_e1, *e2 = v_e2;
 	int rc = e1->e_nname.bv_len - e2->e_nname.bv_len;
 	if (rc) return rc;
 	return( strcmp( e1->e_ndn, e2->e_ndn ) );
 }
 
 int
-entry_id_cmp( Entry *e1, Entry *e2 )
+entry_id_cmp( const void *v_e1, const void *v_e2 )
 {
+	const Entry *e1 = v_e1, *e2 = v_e2;
 	return( e1->e_id < e2->e_id ? -1 : (e1->e_id > e2->e_id ? 1 : 0) );
 }
 

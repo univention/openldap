@@ -1,7 +1,7 @@
 /* group.c - ldap backend acl group routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/group.c,v 1.14.2.3 2002/12/11 01:23:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/group.c,v 1.14.2.4 2003/02/09 16:31:38 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -154,11 +154,13 @@ ldap_back_group(
 	}
 #endif /* !ENABLE_REWRITE */
 
-	ldap_back_map(&li->oc_map, &group_oc_name, &group_oc_name, 0);
-	if (group_oc_name.bv_val == NULL)
+	ldap_back_map(&li->oc_map, &group_oc_name, &group_oc_name,
+			BACKLDAP_MAP);
+	if (group_oc_name.bv_val == NULL || group_oc_name.bv_val[0] == '\0')
 		goto cleanup;
-	ldap_back_map(&li->at_map, &group_at_name, &group_at_name, 0);
-	if (group_at_name.bv_val == NULL)
+	ldap_back_map(&li->at_map, &group_at_name, &group_at_name,
+			BACKLDAP_MAP);
+	if (group_at_name.bv_val == NULL || group_at_name.bv_val[0] == '\0')
 		goto cleanup;
 
 	filter = ch_malloc(sizeof("(&(objectclass=)(=))")

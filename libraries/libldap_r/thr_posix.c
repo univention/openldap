@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_posix.c,v 1.25.2.7 2002/10/17 15:07:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_posix.c,v 1.25.2.9 2003/03/03 17:10:05 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted only
@@ -309,6 +309,11 @@ ldap_pvt_thread_mutex_unlock( ldap_pvt_thread_mutex_t *mutex )
 #else
 	return pthread_mutex_unlock( mutex );
 #endif
+}
+
+ldap_pvt_thread_t ldap_pvt_thread_self( void )
+{
+	return pthread_self();
 }
 
 #ifdef LDAP_THREAD_HAVE_RDWR

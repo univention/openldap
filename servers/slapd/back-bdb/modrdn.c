@@ -1,7 +1,7 @@
 /* modrdn.c - bdb backend modrdn routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modrdn.c,v 1.63.2.12 2002/12/30 03:49:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modrdn.c,v 1.63.2.16 2003/03/13 03:35:26 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -57,12 +57,12 @@ bdb_modrdn(
 
 	int		manageDSAit = get_manageDSAit( op );
 
-	u_int32_t	locker;
+	u_int32_t	locker = 0;
 	DB_LOCK		lock;
 
 	int		noop = 0;
 
-#ifdef LDAP_CLIENT_UPDATE
+#if defined(LDAP_CLIENT_UPDATE) || defined(LDAP_SYNC)
         Operation* ps_list;
         struct psid_entry* pm_list;
         struct psid_entry* pm_prev;
@@ -82,12 +82,15 @@ retry:	/* transaction retry */
 		if (e != NULL) {
 			bdb_cache_delete_entry(&bdb->bi_cache, e);
 			bdb_unlocked_cache_return_entry_w(&bdb->bi_cache, e);
+			e = NULL;
 		}
 		if (p != NULL) {
 			bdb_unlocked_cache_return_entry_r(&bdb->bi_cache, p);
+			p = NULL;
 		}
 		if (np != NULL) {
 			bdb_unlocked_cache_return_entry_r(&bdb->bi_cache, np);
+			np = NULL;
 		}
 #ifdef NEW_LOGGING
 		LDAP_LOG ( OPERATION, DETAIL1, "==>bdb_modrdn: retrying...\n", 0, 0, 0);
@@ -95,7 +98,7 @@ retry:	/* transaction retry */
 		Debug( LDAP_DEBUG_TRACE, "==>bdb_modrdn: retrying...\n", 0, 0, 0 );
 #endif
 
-#ifdef LDAP_CLIENT_UPDATE
+#if defined(LDAP_CLIENT_UPDATE) || defined(LDAP_SYNC)
                 pm_list = LDAP_LIST_FIRST(&op->premodify_list);
                 while ( pm_list != NULL ) {
                         LDAP_LIST_REMOVE ( pm_list, link );
@@ -108,6 +111,7 @@ retry:	/* transaction retry */
 		rc = TXN_ABORT( ltid );
 		ltid = NULL;
 		op->o_private = NULL;
+		op->o_do_not_cache = opinfo.boi_acl_cache;
 		if( rc != 0 ) {
 			rc = LDAP_OTHER;
 			text = "internal error";
@@ -139,7 +143,9 @@ retry:	/* transaction retry */
 
 	opinfo.boi_bdb = be;
 	opinfo.boi_txn = ltid;
+	opinfo.boi_locker = locker;
 	opinfo.boi_err = 0;
+	opinfo.boi_acl_cache = op->o_do_not_cache;
 	op->o_private = &opinfo;
 
 	/* get entry */
@@ -190,13 +196,13 @@ retry:	/* transaction retry */
 	/* check write on old entry */
 	rc = access_allowed( be, conn, op, e, entry, NULL, ACL_WRITE, NULL );
 
-	switch( opinfo.boi_err ) {
-	case DB_LOCK_DEADLOCK:
-	case DB_LOCK_NOTGRANTED:
-		goto retry;
-	}
-
 	if ( ! rc ) {
+		switch( opinfo.boi_err ) {
+		case DB_LOCK_DEADLOCK:
+		case DB_LOCK_NOTGRANTED:
+			goto retry;
+		}
+
 #ifdef NEW_LOGGING
 		LDAP_LOG ( OPERATION, ERR, 
 			"==>bdb_modrdn: no access to entry\n", 0, 0, 0 );
@@ -209,6 +215,41 @@ retry:	/* transaction retry */
 		goto return_results;
 	}
 
+#ifndef BDB_HIER
+	rc = bdb_dn2id_children( be, ltid, &e->e_nname, 0 );
+	if ( rc != DB_NOTFOUND ) {
+		switch( rc ) {
+		case DB_LOCK_DEADLOCK:
+		case DB_LOCK_NOTGRANTED:
+			goto retry;
+		case 0:
+#ifdef NEW_LOGGING
+			LDAP_LOG ( OPERATION, DETAIL1, 
+				"<=- bdb_modrdn: non-leaf %s\n", dn->bv_val, 0, 0 );
+#else
+			Debug(LDAP_DEBUG_ARGS,
+				"<=- bdb_modrdn: non-leaf %s\n",
+				dn->bv_val, 0, 0);
+#endif
+			rc = LDAP_NOT_ALLOWED_ON_NONLEAF;
+			text = "subtree rename not supported";
+			break;
+		default:
+#ifdef NEW_LOGGING
+			LDAP_LOG ( OPERATION, ERR, 
+				"<=- bdb_modrdn: has_children failed %s (%d)\n",
+				db_strerror(rc), rc, 0 );
+#else
+			Debug(LDAP_DEBUG_ARGS,
+				"<=- bdb_modrdn: has_children failed: %s (%d)\n",
+				db_strerror(rc), rc, 0 );
+#endif
+			rc = LDAP_OTHER;
+			text = "internal error";
+		}
+		goto return_results;
+	}
+#endif
 	if (!manageDSAit && is_entry_referral( e ) ) {
 		/* parent is a referral, don't allow add */
 		/* parent is an alias, don't allow add */
@@ -276,6 +317,12 @@ retry:	/* transaction retry */
 			children, NULL, ACL_WRITE, NULL );
 
 		if ( ! rc ) {
+			switch( opinfo.boi_err ) {
+			case DB_LOCK_DEADLOCK:
+			case DB_LOCK_NOTGRANTED:
+				goto retry;
+			}
+
 			rc = LDAP_INSUFFICIENT_ACCESS;
 #ifdef NEW_LOGGING
 			LDAP_LOG ( OPERATION, ERR, 
@@ -328,6 +375,12 @@ retry:	/* transaction retry */
 				p = NULL;
 
 				if ( ! rc ) {
+					switch( opinfo.boi_err ) {
+					case DB_LOCK_DEADLOCK:
+					case DB_LOCK_NOTGRANTED:
+						goto retry;
+					}
+
 					rc = LDAP_INSUFFICIENT_ACCESS;
 #ifdef NEW_LOGGING
 					LDAP_LOG ( OPERATION, ERR, 
@@ -397,7 +450,7 @@ retry:	/* transaction retry */
 		/*  newSuperior == oldParent? */
 		if( dn_match( &p_ndn, nnewSuperior ) ) {
 #ifdef NEW_LOGGING
-			LDAP_LOG( BACK_LDBM, INFO, "bdb_back_modrdn: "
+			LDAP_LOG( BACK_BDB, INFO, "bdb_back_modrdn: "
 				"new parent \"%s\" same as the old parent \"%s\"\n",
 				newSuperior->bv_val, p_dn.bv_val, 0 );
 #else
@@ -467,6 +520,12 @@ retry:	/* transaction retry */
 				NULL, ACL_WRITE, NULL );
 
 			if( ! rc ) {
+				switch( opinfo.boi_err ) {
+				case DB_LOCK_DEADLOCK:
+				case DB_LOCK_NOTGRANTED:
+					goto retry;
+				}
+
 #ifdef NEW_LOGGING
 				LDAP_LOG ( OPERATION, DETAIL1, 
 					"==>bdb_modrdn: no wr to newSup children\n", 0, 0, 0 );
@@ -530,6 +589,12 @@ retry:	/* transaction retry */
 					np = NULL;
 
 					if ( ! rc ) {
+						switch( opinfo.boi_err ) {
+						case DB_LOCK_DEADLOCK:
+						case DB_LOCK_NOTGRANTED:
+							goto retry;
+						}
+
 						rc = LDAP_INSUFFICIENT_ACCESS;
 #ifdef NEW_LOGGING
 						LDAP_LOG ( OPERATION, ERR, 
@@ -592,9 +657,9 @@ retry:	/* transaction retry */
 	}
 
 	/* Build target dn and make sure target entry doesn't exist already. */
-	build_new_dn( &new_dn, new_parent_dn, newrdn ); 
+	if (!new_dn.bv_val) build_new_dn( &new_dn, new_parent_dn, newrdn ); 
 
-	dnNormalize2( NULL, &new_dn, &new_ndn );
+	if (!new_ndn.bv_val) dnNormalize2( NULL, &new_dn, &new_ndn );
 
 #ifdef NEW_LOGGING
 	LDAP_LOG ( OPERATION, RESULTS, 
@@ -620,19 +685,10 @@ retry:	/* transaction retry */
 		goto return_results;
 	}
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ERR, 
-		"bdb_modrdn: new ndn=%s does not exist\n", new_ndn.bv_val, 0, 0 );
-#else
-	Debug( LDAP_DEBUG_TRACE,
-		"bdb_modrdn: new ndn=%s does not exist\n",
-		new_ndn.bv_val, 0, 0 );
-#endif
-
 	/* Get attribute type and attribute value of our new rdn, we will
 	 * need to add that to our new entry
 	 */
-	if ( ldap_bv2rdn( newrdn, &new_rdn, (char **)&text,
+	if ( !new_rdn && ldap_bv2rdn( newrdn, &new_rdn, (char **)&text,
 		LDAP_DN_FORMAT_LDAP ) )
 	{
 #ifdef NEW_LOGGING
@@ -666,7 +722,7 @@ retry:	/* transaction retry */
 #endif
 
 	if ( deleteoldrdn ) {
-		if ( ldap_bv2rdn( dn, &old_rdn, (char **)&text,
+		if ( !old_rdn && ldap_bv2rdn( dn, &old_rdn, (char **)&text,
 			LDAP_DN_FORMAT_LDAP ) )
 		{
 #ifdef NEW_LOGGING
@@ -687,10 +743,12 @@ retry:	/* transaction retry */
 	}
 
 	/* prepare modlist of modifications from old/new rdn */
-	rc = slap_modrdn2mods( be, conn, op, e, old_rdn, new_rdn, 
+	if (!mod) {
+		rc = slap_modrdn2mods( be, conn, op, e, old_rdn, new_rdn, 
 			deleteoldrdn, &mod );
-	if ( rc != LDAP_SUCCESS ) {
-		goto return_results;
+		if ( rc != LDAP_SUCCESS ) {
+			goto return_results;
+		}
 	}
 	
 	/* delete old one */
@@ -709,9 +767,16 @@ retry:	/* transaction retry */
 	(void) bdb_cache_delete_entry(&bdb->bi_cache, e);
 
 	/* Binary format uses a single contiguous block, cannot
-	 * free individual fields. Leave new_dn/new_ndn set so
-	 * they can be individually freed later.
+	 * free individual fields. But if a previous modrdn has
+	 * already happened, must free the names.
 	 */
+	if( e->e_nname.bv_val < e->e_bv.bv_val || e->e_nname.bv_val >
+		e->e_bv.bv_val + e->e_bv.bv_len ) {
+		ch_free(e->e_name.bv_val);
+		ch_free(e->e_nname.bv_val);
+		e->e_name.bv_val = NULL;
+		e->e_nname.bv_val = NULL;
+	}
 	e->e_name = new_dn;
 	e->e_nname = new_ndn;
 
@@ -731,19 +796,22 @@ retry:	/* transaction retry */
 		goto return_results;
 	}
 
-#ifdef LDAP_CLIENT_UPDATE
+#if defined(LDAP_CLIENT_UPDATE) || defined(LDAP_SYNC)
 	if ( rc == LDAP_SUCCESS && !op->o_noop ) {
 		LDAP_LIST_FOREACH ( ps_list, &bdb->psearch_list, link ) {
-			bdb_psearch(be, conn, op, ps_list, e, LCUP_PSEARCH_BY_PREMODIFY );
+			bdb_psearch(be, conn, op, ps_list, e, LDAP_PSEARCH_BY_PREMODIFY );
 		}
 	}
-#endif /* LDAP_CLIENT_UPDATE */
+#endif
 
 	/* modify entry */
 	rc = bdb_modify_internal( be, conn, op, ltid, &mod[0], e,
 		&text, textbuf, textlen );
 
 	if( rc != LDAP_SUCCESS ) {
+		if ( ( rc == LDAP_INSUFFICIENT_ACCESS ) && opinfo.boi_err ) {
+			rc = opinfo.boi_err;
+		}
 		switch( rc ) {
 		case DB_LOCK_DEADLOCK:
 		case DB_LOCK_NOTGRANTED:
@@ -833,23 +901,23 @@ return_results:
 	send_ldap_result( conn, op, rc,
 		NULL, text, NULL, NULL );
 
-#ifdef LDAP_CLIENT_UPDATE
+#if defined(LDAP_CLIENT_UPDATE) || defined(LDAP_SYNC)
 	if ( rc == LDAP_SUCCESS && !op->o_noop ) {
 		/* Loop through in-scope entries for each psearch spec */
 		LDAP_LIST_FOREACH ( ps_list, &bdb->psearch_list, link ) {
-			bdb_psearch( be, conn, op, ps_list, e, LCUP_PSEARCH_BY_MODIFY );
+			bdb_psearch( be, conn, op, ps_list, e, LDAP_PSEARCH_BY_MODIFY );
 		}
 		pm_list = LDAP_LIST_FIRST(&op->premodify_list);
 		while ( pm_list != NULL ) {
 			bdb_psearch(be, conn, op, pm_list->ps->op,
-						e, LCUP_PSEARCH_BY_SCOPEOUT);
+						e, LDAP_PSEARCH_BY_SCOPEOUT);
 			LDAP_LIST_REMOVE ( pm_list, link );
 			pm_prev = pm_list;
 			pm_list = LDAP_LIST_NEXT ( pm_list, link );
                         free (pm_prev);
 		}
 	}
-#endif /* LDAP_CLIENT_UPDATE */
+#endif
 
 	if( rc == LDAP_SUCCESS && bdb->bi_txn_cp ) {
 		ldap_pvt_thread_yield();
@@ -893,7 +961,7 @@ done:
 	}
 
 	if( ltid != NULL ) {
-#ifdef LDAP_CLIENT_UPDATE
+#if defined(LDAP_CLIENT_UPDATE) || defined(LDAP_SYNC)
                 pm_list = LDAP_LIST_FIRST(&op->premodify_list);
                 while ( pm_list != NULL ) {
                         LDAP_LIST_REMOVE ( pm_list, link );

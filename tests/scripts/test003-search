@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test003-search,v 1.34.2.8 2002/09/24 00:05:01 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test003-search,v 1.34.2.9 2003/03/03 16:58:02 kurt Exp $
 
 SRCDIR="."
 if test $# -ge 1 ; then
@@ -73,7 +73,7 @@ cat /dev/null > $SEARCHOUT
 
 echo "Testing exact searching..."
 $LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT \
-	'(sn=jensen)' >> $SEARCHOUT 2>&1
+	'(sn=jENSEN)' >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
 	echo "ldapsearch failed ($RC)!"

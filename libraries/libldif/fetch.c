@@ -1,7 +1,7 @@
 /* line64.c - routines for dealing with the slapd line format */
-/* $OpenLDAP: pkg/ldap/libraries/libldif/fetch.c,v 1.12.2.1 2002/12/03 21:58:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldif/fetch.c,v 1.12.2.2 2003/03/03 17:10:06 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

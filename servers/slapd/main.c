@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.132.2.8 2002/11/11 02:42:37 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.132.2.12 2003/03/03 16:57:06 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 #include "portable.h"
@@ -20,6 +20,10 @@
 #include "lutil.h"
 #include "ldif.h"
 
+#ifdef LDAP_SLAPI
+#include "slapi.h"
+#endif
+
 #ifdef LDAP_SIGCHLD
 static RETSIGTYPE wait4child( int sig );
 #endif
@@ -28,26 +32,16 @@ static RETSIGTYPE wait4child( int sig );
 #define MAIN_RETURN(x) return
 static struct sockaddr_in	bind_addr;
 
-void CommenceStartupProcessing( LPCTSTR serverName,
-							   void(*stopper)(int));
-void ReportSlapdShutdownComplete( void );
-void *getRegParam( char *svc, char *value );
-
 #define SERVICE_EXIT( e, n )	do { \
 	if ( is_NT_Service ) { \
-		SLAPDServiceStatus.dwWin32ExitCode				= (e); \
-		SLAPDServiceStatus.dwServiceSpecificExitCode	= (n); \
+		lutil_ServiceStatus.dwWin32ExitCode				= (e); \
+		lutil_ServiceStatus.dwServiceSpecificExitCode	= (n); \
 	} \
 } while ( 0 )
 
 #else
 #define SERVICE_EXIT( e, n )
 #define MAIN_RETURN(x) return(x)
-#endif
-
-#ifdef HAVE_NT_EVENT_LOG
-void LogSlapdStartedEvent( char *svc, int slap_debug, char *configfile, char *urls );
-void LogSlapdStoppedEvent( char *svc );
 #endif
 
 /*
@@ -81,7 +75,7 @@ static STRDISP	syslog_types[] = {
 	{ "LOCAL5", sizeof("LOCAL5"), LOG_LOCAL5 },
 	{ "LOCAL6", sizeof("LOCAL6"), LOG_LOCAL6 },
 	{ "LOCAL7", sizeof("LOCAL7"), LOG_LOCAL7 },
-	{ NULL }
+	{ NULL, 0, 0 }
 };
 
 static int   cnvt_str2int( char *, STRDISP_P, int );
@@ -157,7 +151,6 @@ int main( int argc, char **argv )
 	}
 #endif
 
-
 #ifdef HAVE_NT_SERVICE_MANAGER
 	{
 		int *i;
@@ -167,12 +160,12 @@ int main( int argc, char **argv )
 
 		if ( is_NT_Service ) {
 			serverName = argv[0];
-			CommenceStartupProcessing( serverName, slap_sig_shutdown );
+			lutil_CommenceStartupProcessing( serverName, slap_sig_shutdown );
 			if ( strcmp(serverName, SERVICE_NAME) )
 			    regService = serverName;
 		}
 
-		i = (int*)getRegParam( regService, "DebugLevel" );
+		i = (int*)lutil_getRegParam( regService, "DebugLevel" );
 		if ( i != NULL ) 
 		{
 			slap_debug = *i;
@@ -186,7 +179,7 @@ int main( int argc, char **argv )
 #endif
 		}
 
-		newUrls = (char *) getRegParam(regService, "Urls");
+		newUrls = (char *) lutil_getRegParam(regService, "Urls");
 		if (newUrls)
 		{
 		    if (urls)
@@ -203,7 +196,7 @@ int main( int argc, char **argv )
 
 		}
 
-		newConfigFile = (char*)getRegParam( regService, "ConfigFile" );
+		newConfigFile = (char*)lutil_getRegParam( regService, "ConfigFile" );
 		if ( newConfigFile != NULL ) 
 		{
 			configfile = newConfigFile;
@@ -325,7 +318,6 @@ int main( int argc, char **argv )
 	Debug( LDAP_DEBUG_TRACE, "%s", Versionstr, 0, 0 );
 #endif
 
-
 	if( serverName == NULL ) {
 		if ( (serverName = strrchr( argv[0], *LDAP_DIRSEP )) == NULL ) {
 			serverName = argv[0];
@@ -404,6 +396,20 @@ int main( int argc, char **argv )
 	rc = 0;
 	(void) ldap_pvt_tls_set_option( NULL, LDAP_OPT_X_TLS_REQUIRE_CERT, &rc );
 #endif
+
+#ifdef LDAP_SLAPI
+	if ( slapi_init() != 0 ) {
+#ifdef NEW_LOGGING
+		LDAP_LOG( OPERATION, CRIT, "main: slapi initialization error\n", 0, 0, 0 );
+#else
+		Debug( LDAP_DEBUG_ANY,
+		    "slapi initialization error\n",
+		    0, 0, 0 );
+#endif
+
+		goto destroy;
+	}
+#endif /* LDAP_SLAPI */
 
 	if ( read_config( configfile, 0 ) != 0 ) {
 		rc = 1;
@@ -508,37 +514,44 @@ int main( int argc, char **argv )
 		goto shutdown;
 	}
 
-	{
-		FILE *fp;
-
 #ifdef NEW_LOGGING
-		LDAP_LOG( SLAPD, INFO, "main: slapd starting.\n", 0, 0, 0 );
+	LDAP_LOG( SLAPD, INFO, "main: slapd starting.\n", 0, 0, 0 );
 #else
-		Debug( LDAP_DEBUG_ANY, "slapd starting\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_ANY, "slapd starting\n", 0, 0, 0 );
 #endif
 
 
-		if (( slapd_pid_file != NULL ) &&
-			(( fp = fopen( slapd_pid_file, "w" )) != NULL ))
-		{
+	if ( slapd_pid_file != NULL ) {
+		FILE *fp = fopen( slapd_pid_file, "w" );
+
+		if( fp != NULL ) {
 			fprintf( fp, "%d\n", (int) getpid() );
 			fclose( fp );
-		}
 
-		if (( slapd_args_file != NULL ) &&
-			(( fp = fopen( slapd_args_file, "w" )) != NULL ))
-		{
+		} else {
+			free(slapd_pid_file);
+			slapd_pid_file = NULL;
+		}
+	}
+
+	if ( slapd_args_file != NULL ) {
+		FILE *fp = fopen( slapd_args_file, "w" );
+
+		if( fp != NULL ) {
 			for ( i = 0; i < g_argc; i++ ) {
 				fprintf( fp, "%s ", g_argv[i] );
 			}
 			fprintf( fp, "\n" );
 			fclose( fp );
+		} else {
+			free(slapd_args_file);
+			slapd_args_file = NULL;
 		}
 	}
 
 #ifdef HAVE_NT_EVENT_LOG
 	if (is_NT_Service)
-	LogSlapdStartedEvent( serverName, slap_debug, configfile, urls );
+	lutil_LogStartedEvent( serverName, slap_debug, configfile, urls );
 #endif
 
 	rc = slapd_daemon();
@@ -566,7 +579,7 @@ destroy:
 stop:
 #ifdef HAVE_NT_EVENT_LOG
 	if (is_NT_Service)
-	LogSlapdStoppedEvent( serverName );
+	lutil_LogStoppedEvent( serverName );
 #endif
 
 #ifdef NEW_LOGGING
@@ -577,7 +590,7 @@ stop:
 
 
 #ifdef HAVE_NT_SERVICE_MANAGER
-	ReportSlapdShutdownComplete();
+	lutil_ReportShutdownComplete();
 #endif
 
 #ifdef LOG_DEBUG
@@ -591,10 +604,13 @@ stop:
 	ldap_pvt_tls_destroy();
 #endif
 
-	if ( slapd_pid_file != NULL ) 
-	{
-		remove( slapd_pid_file );
+	if ( slapd_pid_file != NULL ) {
+		unlink( slapd_pid_file );
 	}
+	if ( slapd_args_file != NULL ) {
+		unlink( slapd_args_file );
+	}
+
 	config_destroy();
 
 #ifdef CSRIMALLOC

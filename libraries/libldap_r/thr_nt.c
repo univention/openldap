@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_nt.c,v 1.20.2.1 2002/06/08 18:14:25 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_nt.c,v 1.20.2.3 2003/03/03 17:10:05 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, Redwood City, California, USA
+ * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted only
@@ -41,7 +41,7 @@ ldap_pvt_thread_create( ldap_pvt_thread_t * thread,
 	unsigned tid;
 	HANDLE thd;
 
-	thd = (HANDLE) _beginthreadex(NULL, 0, (thrfunc_t *) start_routine,
+	thd = (HANDLE) _beginthreadex(NULL, LDAP_PVT_THREAD_STACK_SIZE, (thrfunc_t *) start_routine,
 				      arg, 0, &tid);
 
 	*thread = (ldap_pvt_thread_t) thd;
@@ -150,6 +150,12 @@ ldap_pvt_thread_mutex_trylock( ldap_pvt_thread_mutex_t *mp )
 	status = WaitForSingleObject( *mp, 0 );
 	return status == WAIT_FAILED || status == WAIT_TIMEOUT
 		? -1 : 0;
+}
+
+ldap_pvt_thread_t
+ldap_pvt_thread_self( void )
+{
+	return GetCurrentThread();
 }
 
 #endif

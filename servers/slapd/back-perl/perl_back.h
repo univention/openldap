@@ -1,32 +1,29 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/perl_back.h,v 1.4.2.1 2002/04/18 15:20:02 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/perl_back.h,v 1.4.2.2 2003/03/13 01:09:09 kurt Exp $ */
 #ifndef PERL_BACK_H
 #define PERL_BACK_H 1
 
 LDAP_BEGIN_DECL
 
 /*
- * From Apache mod_perl: test for Perl version.[ja
+ * From Apache mod_perl: test for Perl version.
  */
-#ifdef pTHX_
+
+#if defined(pTHX_) || (PERL_REVISION > 5 || (PERL_REVISION == 5 && PERL_VERSION >= 6))
 #define PERL_IS_5_6
 #endif
 
 #define EVAL_BUF_SIZE 500
 
-#ifdef pTHX_
-#define PERL_IS_5_6
-#endif
-
 extern ldap_pvt_thread_mutex_t  perl_interpreter_mutex;
 
-#ifdef HAVE_WIN32_ASPERL
+#ifdef PERL_IS_5_6
 /* We should be using the PL_errgv, I think */
 /* All the old style variables are prefixed with PL_ now */
 # define errgv	PL_errgv
 # define na	PL_na
 #endif
 
-#ifdef HAVE_WIN32_ASPERL 
+#ifdef HAVE_WIN32_ASPERL
 /* pTHX is needed often now */
 # define PERL_INTERPRETER			my_perl
 # define PERL_BACK_XS_INIT_PARAMS		pTHX

@@ -1,7 +1,7 @@
 /* modify.c - ldap backend modify function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modify.c,v 1.18.2.4 2002/11/11 02:42:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modify.c,v 1.18.2.6 2003/03/12 22:27:57 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /* This is an altered version */
@@ -118,8 +118,9 @@ ldap_back_modify(
 			continue;
 		}
 
-		ldap_back_map(&li->at_map, &ml->sml_desc->ad_cname, &mapped, 0);
-		if (mapped.bv_val == NULL) {
+		ldap_back_map(&li->at_map, &ml->sml_desc->ad_cname, &mapped,
+				BACKLDAP_MAP);
+		if (mapped.bv_val == NULL || mapped.bv_val[0] == '\0') {
 			continue;
 		}
 
@@ -158,15 +159,12 @@ ldap_back_modify(
 	ldap_modify_s( lc->ld, mdn.bv_val, modv );
 
 cleanup:;
-#ifdef ENABLE_REWRITE
 	if ( mdn.bv_val != dn->bv_val ) {
-#endif /* ENABLE_REWRITE */
 		free( mdn.bv_val );
-#ifdef ENABLE_REWRITE
 	}
-#endif /* ENABLE_REWRITE */
-	for (i=0; modv[i]; i++)
+	for (i=0; modv[i]; i++) {
 		ch_free(modv[i]->mod_bvalues);
+	}
 	ch_free(mods);
 	ch_free(modv);
 	return( ldap_back_op_result( lc, op ));

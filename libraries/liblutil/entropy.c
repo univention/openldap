@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/entropy.c,v 1.21.2.2 2002/06/05 20:08:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/entropy.c,v 1.21.2.3 2003/03/03 17:10:06 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

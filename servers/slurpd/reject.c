@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/reject.c,v 1.7.2.4 2002/08/05 19:06:05 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/reject.c,v 1.7.2.6 2003/03/03 17:10:11 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*
@@ -36,6 +36,12 @@
 #include "slurp.h"
 #include "globals.h"
 
+#ifdef _WIN32
+#define	PORTSEP	","
+#else
+#define	PORTSEP	":"
+#endif
+
 /*
  * Write a replication record to a reject file.  The reject file has the
  * same name as the replica's private copy of the file but with ".rej"
@@ -57,7 +63,7 @@ write_reject(
     int		rc;
 
     ldap_pvt_thread_mutex_lock( &sglob->rej_mutex );
-    snprintf( rejfile, sizeof rejfile, "%s" LDAP_DIRSEP "%s:%d.rej",
+    snprintf( rejfile, sizeof rejfile, "%s" LDAP_DIRSEP "%s" PORTSEP "%d.rej",
 		sglob->slurpd_rdir, ri->ri_hostname, ri->ri_port );
 
     if ( access( rejfile, F_OK ) < 0 ) {

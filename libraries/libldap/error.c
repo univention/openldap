@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/error.c,v 1.37.2.4 2002/10/10 01:24:51 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/error.c,v 1.37.2.6 2003/02/08 23:53:24 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -53,6 +53,7 @@ static struct ldaperror ldap_builtin_errlist[] = {
 	{LDAP_IS_LEAF, 					"Entry is a leaf" },
 	{LDAP_ALIAS_DEREF_PROBLEM,	 	"Alias dereferencing problem" },
 
+	{LDAP_PROXY_AUTHZ_FAILURE,		"Proxy Authorization Failure" },
 	{LDAP_INAPPROPRIATE_AUTH, 		"Inappropriate authentication" },
 	{LDAP_INVALID_CREDENTIALS, 		"Invalid credentials" },
 	{LDAP_INSUFFICIENT_ACCESS, 		"Insufficient access" },
@@ -91,6 +92,22 @@ static struct ldaperror ldap_builtin_errlist[] = {
 	{LDAP_MORE_RESULTS_TO_RETURN,	"More results to return" },
 	{LDAP_CLIENT_LOOP,				"Client Loop" },
 	{LDAP_REFERRAL_LIMIT_EXCEEDED,	"Referral Limit Exceeded" },
+
+#ifdef LDAP_CLIENT_UPDATE
+	{LDAP_CUP_RESOURCES_EXHAUSTED,	"Client Update Resource Exhausted" },
+	{LDAP_CUP_SECURITY_VIOLATION,	"Client Update Security Violation" },
+	{LDAP_CUP_INVALID_COOKIE,		"Client Update Invalid Cookie" },
+	{LDAP_CUP_UNSUPPORTED_SCHEME,	"Client Update Unsupported Scheme" },
+	{LDAP_CUP_CLIENT_DISCONNECT,	"Client Update Client Disconnect" },
+	{LDAP_CUP_RELOAD_REQUIRED,		"Client Update Reload Required" },
+#endif
+
+#ifdef LDAP_EXOP_X_CANCEL
+	{LDAP_CANCELLED,				"Cancelled" },
+	{LDAP_NO_SUCH_OPERATION,		"No Operation to Cancel" },
+	{LDAP_TOO_LATE,					"Too Late to Cancel" },
+	{LDAP_CANNOT_CANCEL,			"Cannot Cancel" },
+#endif
 
 	{-1, NULL}
 };

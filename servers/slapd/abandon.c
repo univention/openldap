@@ -1,7 +1,7 @@
 /* abandon.c - decode and handle an ldap abandon operation */
-/* $OpenLDAP: pkg/ldap/servers/slapd/abandon.c,v 1.26.2.3 2002/10/29 01:26:19 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/abandon.c,v 1.26.2.6 2003/02/17 16:57:41 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -33,9 +33,7 @@ do_abandon(
 	ber_int_t	id;
 	Operation	*o;
 	int		rc;
-#ifdef LDAP_CLIENT_UPDATE
 	int		i;
-#endif
 
 #ifdef NEW_LOGGING
 	LDAP_LOG( OPERATION, ENTRY, "conn: %d do_abandon\n", conn->c_connid, 0, 0);
@@ -109,14 +107,11 @@ do_abandon(
 
 done:
 
-#if LDAP_CLIENT_UPDATE
 	for ( i = 0; i < nbackends; i++ ) {
-		if ( strncmp( backends[i].be_type, "bdb", 3 ) ) continue;
-		if ( bdb_abandon( &backends[i], conn, id ) == LDAP_SUCCESS ) {
-			break;
-		}
+		Backend *be = &backends[i];
+
+		if( be->be_abandon ) be->be_abandon( be, conn, op, id );
 	}
-#endif
 
 	ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
 

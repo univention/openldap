@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/starttls.c,v 1.22.2.1 2002/11/11 18:35:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/starttls.c,v 1.22.2.2 2003/03/03 17:10:07 kurt Exp $ */
 /* 
- * Copyright 1999-2002 The OpenLDAP Foundation.
+ * Copyright 1999-2003 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted only

@@ -1,7 +1,7 @@
 /* ldbmcache.c - maintain a cache of open ldbm files */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/dbcache.c,v 1.47.2.3 2002/11/11 17:58:47 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/dbcache.c,v 1.47.2.4 2003/02/09 16:31:38 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -325,6 +325,7 @@ ldbm_cache_sync( Backend *be )
 	ldap_pvt_thread_mutex_unlock( &li->li_dbcache_mutex );
 }
 
+#if 0 /* macro in proto-back-ldbm.h */
 Datum
 ldbm_cache_fetch(
     DBCache	*db,
@@ -333,6 +334,7 @@ ldbm_cache_fetch(
 {
 	return ldbm_fetch( db->dbc_db, key );
 }
+#endif /* 0 */
 
 int
 ldbm_cache_store(

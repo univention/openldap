@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/slurp.h,v 1.27.2.1 2002/05/22 14:25:59 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/slurp.h,v 1.27.2.3 2003/03/03 17:10:11 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*
@@ -48,6 +48,9 @@
 #define S_IRGRP 0
 #define S_IWGRP 0
 #endif
+
+#undef SERVICE_NAME
+#define SERVICE_NAME	OPENLDAP_PACKAGE "-slurpd"
 
 /* Default directory for slurpd's private copy of replication logs */
 /* #define	DEFAULT_SLURPD_REPLICA_DIR	LDAP_RUNDIR LDAP_DIRSEP "openldap-slurp" */

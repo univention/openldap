@@ -1,7 +1,7 @@
 /* config.c - bdb backend configuration file routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/config.c,v 1.18.2.3 2002/12/12 21:50:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/config.c,v 1.18.2.5 2003/03/05 23:48:33 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -154,7 +154,8 @@ bdb_db_config(
                              fname, lineno );
                          return( 1 );
                  }
-                 bdb->bi_idl_cache_max_size = atoi( argv[1] );
+		 if ( !( slapMode & SLAP_TOOL_MODE ) )
+	                 bdb->bi_idl_cache_max_size = atoi( argv[1] );
 #endif
 
 	/* anything else */

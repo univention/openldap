@@ -1,6 +1,6 @@
 .TH LBER_DECODE 3 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man3/lber-decode.3,v 1.13.2.3 2002/06/21 19:27:21 kurt Exp $
-.\" Copyright 1998-2002 The OpenLDAP Foundation All Rights Reserved.
+.\" $OpenLDAP: pkg/ldap/doc/man/man3/lber-decode.3,v 1.13.2.5 2003/03/03 17:10:02 kurt Exp $
+.\" Copyright 1998-2003 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ber_get_next, ber_skip_tag, ber_peek_tag, ber_scanf, ber_get_int,
@@ -336,7 +336,7 @@ as follows.
 .fi
 .SH ERRORS
 If an error occurs during decoding, generally these routines return
-LBER_ERROR (\-1).
+LBER_ERROR ((ber_tag_t)\-1).
 .LP
 .SH NOTES
 .LP

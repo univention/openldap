@@ -1,7 +1,7 @@
 /* result.c - shell backend result reading function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/result.c,v 1.14.2.1 2002/05/22 14:25:56 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/result.c,v 1.14.2.2 2003/03/03 17:10:11 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

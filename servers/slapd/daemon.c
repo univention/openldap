@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.211.2.15 2002/12/19 22:02:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.211.2.20 2003/03/12 20:58:48 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -107,7 +107,7 @@ void slapd_slp_init( const char* urls ) {
 		if( strcmp( slapd_srvurls[i], "ldap:///" ) == 0) {
 			char *host = ldap_pvt_get_fqdn( NULL );
 			if ( host != NULL ) {
-				slapd_srvurls[i] = (char *) realloc( slapd_srvurls[i],
+				slapd_srvurls[i] = (char *) ch_realloc( slapd_srvurls[i],
 					strlen( host ) +
 					sizeof( LDAP_SRVTYPE_PREFIX ) );
 				strcpy( lutil_strcopy(slapd_srvurls[i],
@@ -119,7 +119,7 @@ void slapd_slp_init( const char* urls ) {
 		} else if ( strcmp( slapd_srvurls[i], "ldaps:///" ) == 0) {
 			char *host = ldap_pvt_get_fqdn( NULL );
 			if ( host != NULL ) {
-				slapd_srvurls[i] = (char *) realloc( slapd_srvurls[i],
+				slapd_srvurls[i] = (char *) ch_realloc( slapd_srvurls[i],
 					strlen( host ) +
 					sizeof( LDAPS_SRVTYPE_PREFIX ) );
 				strcpy( lutil_strcopy(slapd_srvurls[i],
@@ -663,9 +663,6 @@ static int slap_open_listener(
 		return -1;
 #endif
 	} else {
-#ifdef LDAP_CONNECTIONLESS
-		l.sl_is_udp = ( tmp == LDAP_PROTO_UDP );
-#endif
 		if( lud->lud_host == NULL || lud->lud_host[0] == '\0'
 			|| strcmp(lud->lud_host, "*") == 0 )
 		{
@@ -674,6 +671,9 @@ static int slap_open_listener(
 			err = slap_get_listener_addresses(lud->lud_host, port, &sal);
 		}
 	}
+#ifdef LDAP_CONNECTIONLESS
+	l.sl_is_udp = ( tmp == LDAP_PROTO_UDP );
+#endif
 
 #if defined(LDAP_PF_LOCAL) || defined(SLAP_X_LISTENER_MOD)
 	if ( lud->lud_exts ) {
@@ -1203,9 +1203,6 @@ slapd_daemon_task(
 		fd_set			writefds;
 		Sockaddr		from;
 
-#if defined(SLAPD_RLOOKUPS)
-		struct hostent		*hp;
-#endif
 		struct timeval		zero;
 		struct timeval		*tvp;
 
@@ -1384,7 +1381,7 @@ slapd_daemon_task(
 			slap_ssf_t ssf = 0;
 			char *authid = NULL;
 #ifdef SLAPD_RLOOKUPS
-			char *hebuf = NULL;
+			char hbuf[NI_MAXHOST];
 #endif
 
 			char	*dnsname = NULL;
@@ -1558,6 +1555,19 @@ slapd_daemon_task(
 			case AF_LOCAL:
 				sprintf( peername, "PATH=%s", from.sa_un_addr.sun_path );
 				ssf = LDAP_PVT_SASL_LOCAL_SSF;
+				{
+					uid_t uid;
+					gid_t gid;
+
+					if( getpeereid( s, &uid, &gid ) == 0 ) {
+						authid = ch_malloc(
+							sizeof("uidnumber=4294967295+gidnumber=4294967295,"
+								"cn=peercred,cn=external,cn=auth"));
+						sprintf(authid, "uidnumber=%d+gidnumber=%d,"
+							"cn=peercred,cn=external,cn=auth",
+							(int) uid, (int) gid);
+					}
+				}
 				dnsname = "local";
 				break;
 #endif /* LDAP_PF_LOCAL */
@@ -1602,23 +1612,12 @@ slapd_daemon_task(
 			) {
 #ifdef SLAPD_RLOOKUPS
 				if ( use_reverse_lookup ) {
-					struct hostent he;
-					int herr;
-					struct hostent *hp = NULL;
-#  ifdef LDAP_PF_INET6
-					if ( from.sa_addr.sa_family == AF_INET6 )
-						ldap_pvt_gethostbyaddr_a(
-							(char *)&(from.sa_in6_addr.sin6_addr),
-							sizeof(from.sa_in6_addr.sin6_addr),
-							AF_INET6, &he, &hebuf,
-							&hp, &herr );
-					else
-#  endif /* LDAP_PF_INET6 */
-					ldap_pvt_gethostbyaddr_a(
-						(char *) &(from.sa_in_addr.sin_addr),
-						sizeof(from.sa_in_addr.sin_addr),
-						AF_INET, &he, &hebuf, &hp, &herr );
-					dnsname = hp ? ldap_pvt_str2lower( hp->h_name ) : NULL;
+					char *herr;
+					if (ldap_pvt_get_hname( (const struct sockaddr *)&from, len, hbuf,
+						sizeof(hbuf), &herr ) == 0) {
+						ldap_pvt_str2lower( hbuf );
+						dnsname = hbuf;
+					}
 				}
 #else
 				dnsname = NULL;
@@ -1656,9 +1655,6 @@ slapd_daemon_task(
 				authid );
 
 			if( authid ) ch_free(authid);
-#ifdef SLAPD_RLOOKUPS
-			if( hebuf ) ldap_memfree(hebuf);
-#endif
 
 			if( id < 0 ) {
 #ifdef NEW_LOGGING
@@ -1681,8 +1677,7 @@ slapd_daemon_task(
 			}
 
 			Statslog( LDAP_DEBUG_STATS,
-				"conn=%ld fd=%ld ACCEPT from %s "
-				"(%s)\n",
+				"conn=%ld fd=%ld ACCEPT from %s (%s)\n",
 				id, (long) s,
 				peername,
 				slap_listeners[l]->sl_name.bv_val,
@@ -1907,10 +1902,16 @@ slapd_daemon_task(
 #endif
 	}
 
-	if( slapd_gentle_shutdown != 2 )
+	if( slapd_gentle_shutdown != 2 ) {
 		close_listeners ( 0 );
+	}
+
 	free ( slap_listeners );
 	slap_listeners = NULL;
+
+	if( !slapd_gentle_shutdown ) {
+		connections_shutdown();
+	}
 
 #ifdef NEW_LOGGING
 	LDAP_LOG( CONNECTION, CRIT, 

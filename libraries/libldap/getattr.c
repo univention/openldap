@@ -1,6 +1,6 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/getattr.c,v 1.24.2.5 2002/09/06 07:52:52 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/getattr.c,v 1.24.2.6 2003/03/03 17:10:04 kurt Exp $ */
 /*
- * Copyright 1998-2002 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 /*  Portions
