@@ -1,9 +1,12 @@
-openldap2 (2.1.26-2) unstable; urgency=low
+openldap2 (2.1.29-1) unstable; urgency=low
 
   * Stephen Frost <sfrost@debian.org>
     + libraries/gnutls.c: Generate and store RSA/DH parameters,
       based off a patch by Petr Vandrovec (though changed alot).
       Closes: #234639, #234593
+
+  * Roland Bauerschmidt <rb@debian.org>
+    + Merged new upstream release.
 
  --  <sfrost@debian.org>  Fri,  5 Mar 2004 20:54:39 -0500
 

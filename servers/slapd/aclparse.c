@@ -1,5 +1,5 @@
 /* aclparse.c - routines to parse and check acl's */
-/* $OpenLDAP: pkg/ldap/servers/slapd/aclparse.c,v 1.94.2.8 2003/10/19 17:16:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/aclparse.c,v 1.94.2.9 2004/03/08 10:14:26 ando Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -1552,6 +1552,10 @@ print_access( Access *b )
 
 	if ( b->a_sockurl_pat.bv_len != 0 ) {
 		fprintf( stderr, " sockurl=%s", b->a_sockurl_pat.bv_val );
+	}
+
+	if ( b->a_set_pat.bv_len != 0 ) {
+		fprintf( stderr, " set=\"%s\"", b->a_set_pat.bv_val );
 	}
 
 #ifdef SLAPD_ACI_ENABLED

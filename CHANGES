@@ -1,5 +1,29 @@
 OpenLDAP 2.1 Change Log
 
+OpenLDAP 2.1.29 Release
+	Fixed slapd SASL invalid authcID crash (ITS#2961)
+	Fixed slapd sasl-regexp debug crash (ITS#3033)
+	Fixed back-bdb empty suffix bug (ITS#2970)
+	Fixed back-bdb IDL avl_delete failure bug (ITS#3004)
+	Fixed libldap assert failure (ITS#2982)
+
+OpenLDAP 2.1.28 Release
+	Fixed back-bdb slapadd crash (ITS#2974)
+	Fixed typo in ACL STYLE slap_style_e enum (ITS#3001)
+	Added ACL set logging (ITS#2949)
+	Fixed '=' escape in DN (ITS#3009)
+	Documentation
+		Fixed ldapmodify(1) manpage (ITS#3002)
+		Fixed ldapmodrdn(1) manpage (ITS#3003)
+
+OpenLDAP 2.1.27 Release
+	Fixed slapd replog ordering bug (ITS#2512)
+	Fixed slapd uninitialized variable bug
+	Fixed libldap SASL client callbacks (ITS#2926)
+	Build Environment
+		Fixed gai_strerr portability problem (ITS#2643)
+		Fixed DNS res_query portability problem
+
 OpenLDAP 2.1.26 Release
 	Fixed slapd bdb error recovery bug (ITS#2865)
 	Fixed slapd bdb IDL cache cleanup bug (ITS#2917)

@@ -1,5 +1,5 @@
 /* tools.c - tools for slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/tools.c,v 1.31.2.8 2003/05/10 02:09:23 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/tools.c,v 1.31.2.9 2004/03/02 22:14:25 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -148,6 +148,7 @@ int bdb_tool_next_id(
 			dnParent( &dn, &pdn );
 			e->e_nname = pdn;
 			rc = bdb_tool_next_id( be, tid, e, text, 1 );
+			e->e_nname = dn;
 			if ( rc ) {
 				return rc;
 			}
@@ -166,7 +167,6 @@ int bdb_tool_next_id(
 #endif
 			return rc;
 		}
-		e->e_nname = dn;
 		rc = bdb_dn2id_add( be, tid, &pdn, e );
 		if ( rc ) {
 			snprintf( text->bv_val, text->bv_len, 
@@ -182,10 +182,10 @@ int bdb_tool_next_id(
 		} else if ( hole ) {
 			if ( nholes == nhmax - 1 ) {
 				if ( holes == hbuf ) {
-					holes = ch_malloc( nhmax * sizeof(ID) * 2 );
+					holes = ch_malloc( nhmax * sizeof(dn_id) * 2 );
 					AC_MEMCPY( holes, hbuf, sizeof(hbuf) );
 				} else {
-					holes = ch_realloc( holes, nhmax * sizeof(ID) * 2 );
+					holes = ch_realloc( holes, nhmax * sizeof(dn_id) * 2 );
 				}
 				nhmax *= 2;
 			}

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/add.c,v 1.109.2.11 2003/04/17 22:49:05 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/add.c,v 1.109.2.12 2004/01/24 01:21:41 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -258,6 +258,8 @@ do_add( Connection *conn, Operation *op )
 			int update = be->be_update_ndn.bv_len;
 			char textbuf[SLAP_TEXT_BUFLEN];
 			size_t textlen = sizeof textbuf;
+			slap_replog_ctx ctx;
+			slap_callback cb = {0};
 
 			rc = slap_mods_check( modlist, update, &text,
 				textbuf, textlen );
@@ -305,13 +307,21 @@ do_add( Connection *conn, Operation *op )
 			}
 #endif /* LDAP_SLAPI */
 
-			if ( (*be->be_add)( be, conn, op, e ) == 0 ) {
 #ifdef SLAPD_MULTIMASTER
-				if ( !repl_user )
+			if ( !repl_user )
 #endif
-				{
-					replog( be, op, &e->e_name, &e->e_nname, e );
-				}
+			{
+				ctx.prev = op->o_callback;
+				ctx.be = be;
+				ctx.dn = &e->e_name;
+				ctx.ndn = &e->e_nname;
+				ctx.change = e;
+				cb.sc_private = &ctx;
+				cb.sc_response = slap_replog_cb;
+				op->o_callback = &cb;
+			}
+
+			if ( (*be->be_add)( be, conn, op, e ) == 0 ) {
 				be_entry_release_w( be, conn, op, e );
 				e = NULL;
 			}
