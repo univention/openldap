@@ -77,7 +77,7 @@ objectClass: simpleSecurityObject
 objectClass: organizationalRole
 cn: admin
 description: LDAP administrator
-userPassword: $adminpass
+userPassword: {crypt}$adminpass
 
 EOF
 
