@@ -1,7 +1,7 @@
 openldap2 (2.1.17-3) unstable; urgency=low
 
   * Stephen Frost <sfrost@debian.org>:
-    + debian/slapd.init: Add --oknodo for stopping slapd. Closes: #192423.
+    + debian/slapd.init: Add --oknodo for stopping slapd. Closes: #192423, #193854.
     + debian/slapd.init: Change START_SLURPD to SLURPD_START. Closes: #190724.
     + debian/libldap2.shlibs: Bump to 2.1.17- 2.1.12 never hit the archive.
       These should only be bumped when new symbols are added so we should
@@ -31,7 +31,7 @@ openldap2 (2.1.17-3) unstable; urgency=low
     + Add space before ']' on line 113 of postinst. Closes: #194192, #194943
     + Add libbind-dev and bind-dev to the conflicts for slapd, the libs
       in them can end up being used even when not compiled against causing
-      getaddrinfo() to fail.
+      getaddrinfo() to fail. Closes: #166777
 
   * Torsten Landschoff <torsten@debian.org>:
     + debian/control: Enforce libldap2 to be the same version as slapd
@@ -44,7 +44,7 @@ openldap2 (2.1.17-3) unstable; urgency=low
     + debian/slapd.preinst: don't use debconf or ldapsearch in the
       preinst, as this is a policy violation (even if a previous
       version was installed, it could've been removed-but-not-purged).
-      Closes: #189811, #195029, #193854, #166777.
+      Closes: #189811, #195029.
     + debian/slapd.{pre,post}inst: dump & fix up the directory in the
       postinst, not in the preinst -- using slapcat/slapadd, not
       ldapmodify.  This ensures that the dump will succeed whenever the
