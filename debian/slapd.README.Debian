@@ -29,9 +29,10 @@ Notes about Debian's slapd package
 
    Different to the official version, Debian's OpenLDAP packages are compiled
    with the GNUTLS library rather than with OpenSSL. This was necessary for
-   other third-party packages licensed under the GPL (such as Samba) to link
-   with OpenLDAP. As of this version, Debian's GNUTLS extension is not
-   included in the official version of OpenLDAP.
+   other third-party packages licensed under the GPL (such as Samba) to be
+   able to link with OpenLDAP. As of this version, Debian's GNUTLS extension
+   has not been included in the official version of OpenLDAP; however, we
+   are seeking for it to be included in the future.
 
 ++ If slapd depends on other service (such as SQL)
 
