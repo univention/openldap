@@ -591,6 +591,10 @@ stop:
 	ldap_pvt_tls_destroy();
 #endif
 
+	if ( slapd_pid_file != NULL ) 
+	{
+		remove( slapd_pid_file );
+	}
 	config_destroy();
 
 #ifdef CSRIMALLOC

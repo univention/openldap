@@ -1,64 +1,115 @@
-#!/bin/sh
+#! /bin/sh
+
+# FIXME: Breaks if no pidfile is specified in default/slapd or slapd.conf
+
+# Kill me on all errors
 set -e
 
-test -e /usr/sbin/slapd || exit 0
-test -f /etc/ldap/slapd.conf || exit 0
+# Stop processing if slapd or its configuration is not there
+[ -x /usr/sbin/slapd ] || exit 0
+[ -r /etc/ldap/slapd.conf ] || exit 0
 
+# Source the init script configuration
 if [ -f "/etc/default/slapd" ]; then
 	. /etc/default/slapd
 fi
 
+# Figure out some default settings
+# Check wether slurpd should get started
+if [ "$SLURPD_START" != "yes" -a "$SLURPD_START" != "no" ]; then
+	if grep -q '^replica' /etc/ldap/slapd.conf > /dev/null 2>&1 ; then
+		SLURPD_START=yes
+	else
+		SLURPD_START=no
+	fi
+fi
+	
+# Find out the name of slapd's pid file
+if [ -z "$SLAPD_PIDFILE" ]; then
+	SLAPD_PIDFILE=`sed -ne 's/^pidfile[[:space:]]\+\(.\+\)/\1/p' \
+		/etc/ldap/slapd.conf`
+fi
+
+# Pass the user and group to run under to slapd
+if [ -z "$SLAPD_USER" ]; then
+	SLAPD_OPTIONS="-u $SLAPD_USER $SLAPD_OPTIONS"
+fi
+
+if [ -z "$SLAPD_GROUP" ]; then
+	SLAPD_OPTIONS="-g $SLAPD_GROUP $SLAPD_OPTIONS"
+fi
+
+# Start the slapd daemon and capture the error message if any to 
+# $reason.
+start_slapd() {
+	echo -n " slapd"
+	reason="`start-stop-daemon --start --quiet \
+		--pidfile \"$SLAPD_PIDFILE\" \
+		--exec /usr/sbin/slapd -- $SLAPD_OPTIONS 2>&1`"
+}
+
+# Start the slurpd daemon and capture the error message if any to
+# $reason.
+start_slurpd() {
+	if [ "$START_SLURPD" != yes ]; then
+		return 0
+	fi
+	echo -n " slurpd"
+	reason="`start-stop-daemon --start --quiet \
+		--exec /usr/sbin/slurpd -- $SLURPD_OPTIONS 2>&1`"
+}
+
+# Stop the slapd daemon and capture the error message (if any) to
+# $reason.
+stop_slapd() {
+	echo -n " slapd"
+	reason="`start-stop-daemon --stop --quiet --retry 10 \
+		--pidfile \"$SLAPD_PIDFILE\" \
+		--exec /usr/sbin/slapd 2>&1`"
+}
+
+# Stop the slurpd daemon and capture the error message (if any) to
+# $reason.
+stop_slurpd() {
+	if [ "$START_SLURPD" != yes ]; then
+		return 0
+	fi
+	echo -n " slurpd"
+	reason="`start-stop-daemon --stop --quiet --retry 10 \
+		--exec /usr/sbin/slurpd 2>&1`"
+}
+
+# Start the OpenLDAP daemons
 start() {
-	echo -n "Starting OpenLDAP: slapd"
-	trap 'echo " - failed."' 0
-	start-stop-daemon --start --quiet --pidfile "$pf" --exec /usr/sbin/slapd -- $SLAPD_OPTIONS
-	if [ "$doslurp" ] ; then
-		echo -n " slurpd"
-		start-stop-daemon --start --quiet --exec /usr/sbin/slurpd -- $SLURPD_OPTIONS
-	fi
+	echo -n "Starting OpenLDAP:"
+	trap 'echo " - failed:"; echo $reason' 0
+	start_slapd
+	start_slurpd
 	trap "-" 0
 	echo .
 }
 
+# Stop the OpenLDAP daemons
 stop() {
-	echo -n "Stopping OpenLDAP: slapd"
-	trap 'echo " - failed."' 0
-	start-stop-daemon --stop --quiet --retry 10 --pidfile "$pf" --exec /usr/sbin/slapd
-	if [ "$doslurp" ] ; then
-		echo -n " slurpd"
-		start-stop-daemon --stop --quiet --retry 10 --exec /usr/sbin/slurpd
-	fi
+	echo -n "Stopping OpenLDAP:"
+	trap 'echo " - failed:"; echo $reason' 0
+	stop_slurpd
+	stop_slapd
 	trap "-" 0
 	echo .
 }
 
-pf=$(sed -ne 's/^pidfile[[:space:]]\+\(.\+\)/\1/p' /etc/ldap/slapd.conf)
-if [ -z "$pf" ] ; then
-	pf="/var/run/slapd.pid"
-fi
-
-if grep -q '^replica' /etc/ldap/slapd.conf > /dev/null 2>&1 ; then
-	doslurp="yes"
-else
-	doslurp=""
-fi
-
-if [ "$1" = "start" ] ; then
+case "$1" in
+  start)
+  	start ;;
+  stop)
+  	stop ;;
+  restart|force-reload)
+  	stop
 	start
-elif [ "$1" = "stop" ] ; then
-	stop
-elif [ "$1" = "restart" -o "$1" = "force-reload" ] ; then
-	stop
-	start
-else
-	cat <<EOF >&2
-
-Usage:
-	$0 (start|stop|restart|force-reload)
-
-EOF
+	;;
+  *)
+  	echo "Usage: $0 {start|stop|restart|force-reload}"
 	exit 1
-fi
-
-exit 0
-
+	;;
+esac
