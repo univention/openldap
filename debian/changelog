@@ -13,6 +13,7 @@ openldap2 (2.1.21-2) unstable; urgency=low
       to load fine, though order may matter.  Closes: #196995.
     + debian/control: Add versioned Depends on perl, need recent version
       for migration script.
+    + Allow for whitespace in postinst before database definitions
 
   * Torsten Landschoff <torsten@debian.org>:
     + doc/man/man8/slapd.8: Refer to slapd.conf(5) for a description of 
