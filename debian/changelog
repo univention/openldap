@@ -56,6 +56,11 @@ openldap2 (2.1.21-2) unstable; urgency=low
     + debian/slapd.postinst: remove temp file if upgrading or doing a
       reconfigure but the OLDSUFFIX and basedn match so that we do not
       move an empty file overtop of slapd.conf.  Closes: #190797.
+    + debian/slapd.init: Inform user when not starting slapd due to
+      no configuration file found.  Deals with users who select to not
+      configure slapd during installation.
+    + debian/slapd.init: Removed cat <<-EOF and got rid of associated
+      tabs; best to not depend on tab vs. space distinction.
 
   * Torsten Landschoff <torsten@debian.org>:
     + doc/man/man8/slapd.8: Refer to slapd.conf(5) for a description of 

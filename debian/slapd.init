@@ -17,7 +17,17 @@ if [ -z "$SLAPD_CONF" ]; then
 fi
 
 # Stop processing if the config file is not there
-[ -r "$SLAPD_CONF" ] || exit 0
+if [ ! -r "$SLAPD_CONF" ]; then
+  cat <<EOF >&2
+No configuration file was found for slapd at $SLAPD_CONF.
+If you have moved the slapd configuration file please modify
+/etc/default/slapd to reflect this.  If you chose to not
+configure slapd during installation then you need to do so
+prior to attempting to start slapd.
+An example slapd.conf is in /usr/share/slapd
+EOF
+  exit 0 # Should this be 1?
+fi
 
 # Figure out some default settings
 # Check wether slurpd should get started
@@ -35,10 +45,10 @@ if [ -z "$SLAPD_PIDFILE" ]; then
 		"$SLAPD_CONF"`
 fi
 if [ -z "$SLAPD_PIDFILE" ]; then
-	cat <<-EOF >&2
-	The pidfile for slapd is neither specified in "$SLAPD_CONF" nor
-	in /etc/default/slapd. Consequently, slapd will not be started.
-	EOF
+	cat <<EOF >&2
+The pidfile for slapd is neither specified in "$SLAPD_CONF" nor
+in /etc/default/slapd. Consequently, slapd will not be started.
+EOF
 	exit 1
 fi
 
