@@ -61,6 +61,9 @@ openldap2 (2.1.21-2) unstable; urgency=low
       configure slapd during installation.
     + debian/slapd.init: Removed cat <<-EOF and got rid of associated
       tabs; best to not depend on tab vs. space distinction.
+    + debian/slapd.config: Change debconf question names to be fully
+      qualified in the $var from the for loop- organization is under
+      shared/ and domain is under slapd/, not both under slapd/.
 
   * Torsten Landschoff <torsten@debian.org>:
     + doc/man/man8/slapd.8: Refer to slapd.conf(5) for a description of 
