@@ -111,38 +111,38 @@
 #     --enable-bdb	  enable Berkeley DB backend [yes]
 --enable-bdb
 #     --with-bdb-module     module type static|dynamic [static]
---with-bdb-module=dynamic
+--with-bdb-module=static
 #     --enable-dnssrv	  enable dnssrv backend [no]
 --enable-dnssrv
 #     --with-dnssrv-module  module type static|dynamic [static]
---with-dnssrv-module=dynamic
+--with-dnssrv-module=static
 #     --enable-ldap	  enable ldap backend [no]
 --enable-ldap
 #     --with-ldap-module	  module type static|dynamic [static]
---with-ldap-module=dynamic
+--with-ldap-module=static
 #     --enable-ldbm	  enable ldbm backend [no]
 --enable-ldbm
 #     --with-ldbm-api       with LDBM API auto|berkeley|bcompat|mdbm|gdbm [auto]
 --with-ldbm-api=berkeley
 #     --with-ldbm-module	  module type static|dynamic [static]
---with-ldbm-module=dynamic
+--with-ldbm-module=static
 #     --with-ldbm-type	  use LDBM type auto|btree|hash [auto]
 #     --enable-meta	  enable metadirectory backend [no]
 --enable-meta
 #     --with-meta-module	  module type static|dynamic [static]
---with-meta-module=dynamic
+--with-meta-module=static
 #     --enable-monitor	  enable monitor backend [no]
 --enable-monitor
 #     --with-monitor-module module type static|dynamic [static]
---with-monitor-module=dynamic
+--with-monitor-module=static
 #     --enable-null	  enable null backend [no]
 --enable-null
 #     --with-null-module	  module type static|dynamic [static]
---with-null-module=dynamic
+--with-null-module=static
 #     --enable-passwd	  enable passwd backend [no]
 --enable-passwd
 #     --with-passwd-module  module type static|dynamic [static]
---with-passwd-module=dynamic
+--with-passwd-module=static
 #     --enable-perl	  enable perl backend [no]
 ## This does not currently build with Perl 5.8 - disable it
 --disable-perl
@@ -150,11 +150,11 @@
 #     --enable-shell	  enable shell backend [no]
 --enable-shell
 #     --with-shell-module	  module type static|dynamic [static]
---with-shell-module=dynamic
+--with-shell-module=static
 #     --enable-sql	  enable sql backend [no]
 --enable-sql
 #     --with-sql-module	  module type static|dynamic [static]
---with-sql-module=dynamic
+--with-sql-module=static
 # 
 # SLURPD (Replication Daemon) Options:
 #   --enable-slurpd	  enable building slurpd [auto]
