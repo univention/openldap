@@ -15,4 +15,4 @@ if [ "$1" = "purge" ]; then
 	rmdir --ignore-fail-on-non-empty /etc/ldap/schema
 fi
 
-#DEBCONF#
+#DEBHELPER#
