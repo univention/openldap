@@ -6,7 +6,7 @@ openldap2 (2.1.30-6) experimental; urgency=low
     ouch. Forgot to svn add it...
   * debian/move_files: Move the ucdata files into the slapd package (which
     is no longer build) as libldap2 (where they used to be) does not use
-    them.
+    them (closes: #298270).
 
  --
 
