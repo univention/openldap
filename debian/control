@@ -26,7 +26,7 @@ Priority: optional
 Architecture: any
 Depends: ${shlibs:Depends}
 Conflicts: umich-ldap-utils, openldap-utils, ldap-client
-Replaces: openldap-utils
+Replaces: openldap-utils, slapd (<< 2.1)
 Provides: ldap-client, openldap-utils
 Description: OpenLDAP utilities
  Utilities from the OpenLDAP (Lightweight Directory Access Protocol)
