@@ -35,7 +35,22 @@ openldap2 (2.1.17-3) unstable; urgency=low
       as slapd (legitimately) uses internal functions of that library
       (closes: #190164).
 
- -- Torsten Landschoff <torsten@debian.org>  Mon, 19 May 2003 10:39:56 -0400
+  * Steve Langasek <vorlon@debian.org>:
+    + debian/slapd.preinst: don't use debconf or ldapsearch in the
+      preinst, as this is a policy violation (even if a previous
+      version was installed, it could've been removed-but-not-purged).
+      Closes: #189811.
+    + debian/slapd.{pre,post}inst: dump & fix up the directory in the
+      postinst, not in the preinst -- using slapcat/slapadd, not
+      ldapmodify.  This ensures that the dump will succeed whenever the
+      database is present, rather than depending on access to an admin
+      dn.  Closes: #190085.
+    + debian/fix_ldif, debian/move_files, debian/copyright: add Dave
+      Horsfall's dn-fixing script, to handle objectClass upgrading
+    + debian/slapd.postinst: Skip the duplicate prompting for the
+      organization name; we're guaranteed to always have one.
+
+ -- Torsten Landschoff <torsten@debian.org>  Fri,  6 Jun 2003 16:56:16 +0200
 
 openldap2 (2.1.17-2) unstable; urgency=low
 

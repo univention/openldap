@@ -9,6 +9,19 @@ set -e
 # Make the old version globally available
 oldver="$2"
 
+# Check, if the user wants an LDIF dump of the directory
+# XXX: Currently dumps unconditionally
+ldif_dump_wanted() { 
+  return 0
+}
+
+# Ask for the filename of the dump file
+# XXX: Currently just uses /var/backups/slapd-$oldver.ldif
+ldif_dump_location() {
+  echo "/var/backups/slapd-$oldver.ldif"
+}
+
+
 # Only create a new directory on a fresh install or on reconfigure
 if [ "$1" = configure -a -z "$2" ] || [ "$1" = reconfigure ] \
 	|| [ "$DEBCONF_RECONFIGURE" ]; then
@@ -112,6 +125,24 @@ fi
 if dpkg --compare-versions "$2" lt-nl 2.1 \
    && [ ! -f /var/lib/slapd/upgrade_2.0 ]
 then
+  if ldif_dump_wanted; then
+    location=`ldif_dump_location`
+    echo -n "Dumping directory to $location... "
+    # XXX: to be truly idempotent, we should make sure we don't try to
+    # overwrite this ldif file on a second pass after already having
+    # moved some of the files aside below.
+
+    db_get shared/organization
+    organization="$RET"
+
+    # Fix the directory when upgrading from before 2.1 and the root dn
+    # has no structural objectclass
+    # XXX: can we use slapcat to determine if we need to prompt for this?
+    # If not, the prompting should move to the config script.
+    slapcat | /usr/share/slapd/fix_ldif -w -o "$organization" > $location
+    echo "done"
+  fi
+
   echo -n "Moving old database files to /var/backups/slapd-$oldver... "
   mkdir -p /var/backups/slapd-$oldver
   mv /var/lib/ldap/* /var/backups/slapd-$oldver
