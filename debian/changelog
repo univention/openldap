@@ -1,8 +1,8 @@
 openldap2 (2.1.22-3) unstable; urgency=low
 
-  * 
+  * Call perl -w to run debian/dh_installscripts-common. Closes: #214054.
 
- -- Roland Bauerschmidt <rb@debian.org>  Fri,  3 Oct 2003 15:48:56 +0200
+ -- Roland Bauerschmidt <rb@debian.org>  Sat,  4 Oct 2003 14:22:11 +0200
 
 openldap2 (2.1.22-2) unstable; urgency=high
 

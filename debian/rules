@@ -81,7 +81,7 @@ binary-arch: install-stamp
 	dh_compress -a
 	dh_makeshlibs -plibldap2
 	dh_installdeb -a
-	debian/dh_installscripts-common -p slapd
+	perl -w debian/dh_installscripts-common -p slapd
 	dh_shlibdeps -a
 	dh_gencontrol -a
 	dh_md5sums -a
