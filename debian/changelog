@@ -10,6 +10,8 @@ openldap2 (2.1.22-2) unstable; urgency=high
     + debian/slapd.init: Remove \'s before quotes around pidfile.
     + debian/slapd.init: Add support for -h slapd flag. Closes: #201991
     + debian/slapd.default: Add variable $SLAPD_SERVICES for slapd -h.
+    + libraries/libldap/tls.c: Apply patch from asuffield in #202741 to
+      fix subjectAltName usage.  Closes: #202741
 
   * Torsten Landschoff <torsten@debian.org>:
     + Fix invocation of "head" in maintainer scripts and replace usage of

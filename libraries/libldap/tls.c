@@ -1083,9 +1083,10 @@ ldap_pvt_tls_get_peer_hostname( void *s )
 int
 ldap_pvt_tls_check_hostname( LDAP *ld, void *s, const char *name_in )
 {
-	int i, ret = LDAP_LOCAL_ERROR;
+	int i = 0, ret = LDAP_LOCAL_ERROR;
+        size_t name_len = 0, domain_len = 0;
 	X509 *x;
-	const char *name;
+	const char *name = NULL, *domain = NULL;
 	char *ptr;
 	int ntype = IS_DNS;
 #ifdef HAVE_GNUTLS_GNUTLS_H
@@ -1137,63 +1138,79 @@ ldap_pvt_tls_check_hostname( LDAP *ld, void *s, const char *name_in )
 	}
 
 #ifdef HAVE_GNUTLS_GNUTLS_H
+        name_len = strlen(name);
+
 	/* XXX: we /could/ use gnutls_x509_check_certificates_hostname()
 	   here, but it only checks hostnames -- not IPs. */
 	if (ntype == IS_DNS)
-		alttype = GNUTLS_SAN_DNSNAME;
+          {
+            alttype = GNUTLS_SAN_DNSNAME;
+            domain = strchr(name, '.');
+            if (domain)
+              domain_len = name_len - (domain-name);
+          }
 	else
-		alttype = GNUTLS_SAN_IPADDRESS;
+          alttype = GNUTLS_SAN_IPADDRESS;
 
 	/* FIXME: do we care about GNUTLS_E_SHORT_MEMORY_BUFFER errors? */
 	do {
-		char buffer[512];
-		int sl;
-		int len1 = 0, len2 = 0;
-		char *domain = NULL;
+          char buffer[512];
+          int sl = sizeof(buffer);
+          tlsret = gnutls_x509_extract_certificate_subject_alt_name(x, i++, buffer, &sl);
 
-		sl = sizeof(buffer);
-		tlsret = gnutls_x509_extract_certificate_subject_alt_name(
-					x, i++, buffer, &sl
-		         );
+          if (tlsret != alttype || sl <= 0)
+            continue;
 
-		if (tlsret != alttype || sl <= 0)
-			continue;
+          if (ntype == IS_IP4)
+            {
+              if (sl != sizeof(struct in_addr))
+                continue;
+              if (memcmp(buffer, &addr, sl) == 0)
+                {
+                  ret = LDAP_SUCCESS;
+                  break;
+                }
+            }
 
-		/* Is this an exact match? */
-		if ((len1 == sl)
-		    && !strncasecmp(name, buffer, len1))
-		{
-			ret = LDAP_SUCCESS;
-			break;
-		}
+#ifdef LDAP_PF_INET6
+          if (ntype == IS_IP6)
+            {
+              if (sl != sizeof(struct in6_addr))
+                continue;
+              if (!memcmp(buffer, &addr, sl))
+                {
+                  ret = LDAP_SUCCESS;
+                  break;
+                }
+            }
+#endif
 
-		if (ntype == IS_DNS) {
-			/* XXX: doesn't belong inside the loop. */
-			len1 = strlen(name);
-			domain = strchr(name, '.');
-			if (domain) {
-				len2 = len1 - (domain-name);
-			}
-			/* XXX: doesn't belong inside the loop. */
+          if (ntype == IS_DNS) {
+            /* Is this an exact match? */
+            if ((name_len == sl) && !strncasecmp(name, buffer, name_len))
+              {
+                ret = LDAP_SUCCESS;
+                break;
+              }
 
-			/* Is this a wildcard match? */
-			if ((*buffer == '*') && domain && (len2 == sl-1) &&
-				!strncasecmp(domain, buffer+1, len2))
-			{
-				ret = LDAP_SUCCESS;
-				break;
-			}
+            /* Is this a wildcard match? */
+            if ((*buffer == '*') && domain && (domain_len == sl-1) &&
+                !strncasecmp(domain, buffer+1, domain_len))
+              {
+                ret = LDAP_SUCCESS;
+                break;
+              }
 
 #if 0
-			/* Is this a RFC 2459 style wildcard match? */
-			if ((*sn == '.') && domain && (len2 == sl) &&
-				!strncasecmp(domain, buffer, len2))
-			{
-				ret = LDAP_SUCCESS;
-				break;
-			}
+            /* Is this a RFC 2459 style wildcard match? */
+            if ((*sn == '.') && domain && (domain_len == sl) &&
+                !strncasecmp(domain, buffer, domain_len))
+              {
+                ret = LDAP_SUCCESS;
+                break;
+              }
 #endif
-		}
+          }
 	} while (tlsret >= 0);
 
 #else
