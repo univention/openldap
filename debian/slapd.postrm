@@ -11,6 +11,8 @@ if [ "$1" = "purge" ]; then
 	if [ "$RET" = "true" ]; then
 		rm -rf /var/lib/ldap 2>/dev/null || true
 	fi
+
+	rmdir --ignore-fail-on-non-empty /etc/ldap/schema
 fi
 
 #DEBCONF#
