@@ -50,7 +50,8 @@
 #endif
 
 /* Default directory for slurpd's private copy of replication logs */
-#define	DEFAULT_SLURPD_REPLICA_DIR	LDAP_RUNDIR LDAP_DIRSEP "openldap-slurp"
+/* #define	DEFAULT_SLURPD_REPLICA_DIR	LDAP_RUNDIR LDAP_DIRSEP "openldap-slurp" */
+#define DEFAULT_SLURPD_REPLICA_DIR	"/var/spool/slurpd"
 
 /* Default name for slurpd's private copy of the replication log */
 #define	DEFAULT_SLURPD_REPLOGFILE	"slurpd.replog"
