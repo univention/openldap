@@ -1,4 +1,4 @@
-openldap2 (2.1.23-2) unstable; urgency=low
+openldap2 (2.1.25-1) unstable; urgency=low
 
   * Roland Bauerschmidt <rb@debian.org>:
     + New upstream version.
@@ -15,6 +15,10 @@ openldap2 (2.1.23-2) unstable; urgency=low
   * Torsten Landschoff <torsten@debian.org>:
     + debian/move_files: Install slappasswd into ldap-utils instead 
       of slapd as it's useful without slapd as well (closes: #228705).
+    + debian/control: Make ldap-utils Replaces: slapd < 2.1.25 because
+      of that change.
+    + debian/control: Use libdb4.2-dev instead of libdb4.1-dev as a
+      number of problems seem to be related to DB 4.1.
 
  -- Roland Bauerschmidt <rb@debian.org>  Sat, 18 Oct 2003 19:59:56 +0200
 

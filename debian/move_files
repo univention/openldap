@@ -55,7 +55,7 @@ install -m755 debian/ldiftopasswd debian/slapd/usr/share/slapd/ldiftopasswd
 target=ldap-utils
 echo -n " $target"
 # slappasswd is useful even without the server
-install -m755 debian/$target/usr/sbin
+install -m755 -d debian/$target/usr/sbin
 mv debian/slapd/usr/sbin/slappasswd debian/$target/usr/sbin/
 install_stuff usr/bin
 install_stuff usr/share/man/man1
