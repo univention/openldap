@@ -1,0 +1,2 @@
+var/lib/ldap
+var/spool/slurpd
