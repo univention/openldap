@@ -67,6 +67,8 @@ openldap2 (2.1.21-2) unstable; urgency=low
     + debian/slapd.postrm: Can not depend on debconf being around in
       postrm so check before attempting to source it.  Also protect
       against failure from db_get.
+    + debian/slapd.postinst: Check for old directory and move it out
+      of the way if it exists on new configure or reconfigure.
 
   * Torsten Landschoff <torsten@debian.org>:
     + doc/man/man8/slapd.8: Refer to slapd.conf(5) for a description of 

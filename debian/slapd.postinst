@@ -190,6 +190,15 @@ if [ "$1" = configure -a -z "$2" ] || [ "$1" = reconfigure ] \
   [ -f $TMPFILE ] && mv $TMPFILE $SLAPD_CONF
   echo "done"
 
+  DATESTAMP=`date +%F.%T`
+  mv /var/lib/ldap /var/backups/slapd-$DATESTAMP
+  mkdir /var/lib/ldap
+  chown --reference /var/backups/slapd-$DATESTAMP /var/lib/ldap
+  rmdir /var/backups/slapd-$DATESTAMP >/dev/null 2>&1 || MOVED_OLD=1
+
+  if [ "$MOVED_OLD" = "1" ]; then
+    echo "Old directory found and moved to /var/backups/slapd-$DATESTAMP."
+  fi
   echo -n "Creating initial LDAP directory... "
   touch /var/lib/slapd/suffix_change
 
