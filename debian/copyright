@@ -231,11 +231,25 @@ JC
  * without restriction or fee of any kind as long as this notice
  * is preserved.
 
----
-We are attempting to follow up with Juan C. Gomez on this license and
-if it should be interpreted similar to the Mark Adamson license where
-'without restriction' includes the right to modify/distribute derived
-works.
+The following is additional information from Juan C. Gomez on how 
+this license is to be interpreted:
+-----
+Local-Date: Fri, 06 Jun 2003 13:18:52 -0400
+Date: Fri, 6 Jun 2003 10:18:52 -0700
+From: Juan Gomez <juang@us.ibm.com>
+To: Stephen Frost <sfrost@debian.org>
+X-Mailer: Lotus Notes Release 5.0.2a (Intl) 23 November 1999
+Subject: Re: Juan C. Gomez license in OpenLDAP Source
+
+Stephen,
+
+"There is no restriction on modifications and derived works" on the work I
+did for the openldap server as long as this is consistent with the openldap
+license. Please forward this email to Kurt so he does the appropriate
+changes to the files to reflect this.
+
+
+Regards, Juan                                                                                       
 -----------------------------------
 
 

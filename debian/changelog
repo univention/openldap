@@ -35,6 +35,7 @@ openldap2 (2.1.17-3) unstable; urgency=low
     + Flush out the copyright file to include all found copyrights and updates
       to those.
     + Add clarification to copyright file.
+    + Add clarification of JC license to copyright file.
 
   * Torsten Landschoff <torsten@debian.org>:
     + debian/control: Enforce libldap2 to be the same version as slapd
