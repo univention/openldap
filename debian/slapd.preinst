@@ -2,8 +2,10 @@
 
 set -e
 
-# We need debconf
-. /usr/share/debconf/confmodule
+if dpkg --compare-versions "$2" lt-nl 2.1; then
+  # Debconf is available when upgrading from older versions
+  . /usr/share/debconf/confmodule
+fi
 
 # Parsing of slapd.conf
 parse_slapd_conf() {
