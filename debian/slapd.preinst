@@ -52,9 +52,11 @@ directory_needs_fixing() {
   echo -n "Checking if LDAP directory needs fixing... "
   suffix=`get_suffix` || : ${error:="failed to get suffix"}
   admindn=`get_admindn` || : ${error:="failed to get admin dn"}
-  classes=`ldapsearch -h localhost -x -b "$suffix" -s base -LLL | \
+  if [ -z "$error" ]; then
+    classes=`ldapsearch -h localhost -x -b "$suffix" -s base -LLL | \
   	sed -n 's/^objectClass: //p'` \
 	|| : ${error:="failed to get objectclasses of suffix"}
+  fi
 
   if [ "$error" ]; then
     echo $error

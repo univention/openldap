@@ -5,6 +5,8 @@ openldap2 (2.1.17-2) unstable; urgency=low
       experimental.
     + debian/control: Change section and priority of libldap2-dev to
       libdevel and extra respectively (dinstall message).
+    + debian/slapd.preinst: Only query the object classes of the root
+      dn if there was no error parsing the config.
 
  -- Torsten Landschoff <torsten@debian.org>  Sat, 19 Apr 2003 02:28:32 +0200
 
