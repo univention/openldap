@@ -83,9 +83,15 @@ EOF
 # $reason.
 start_slapd() {
 	echo -n " slapd"
-	reason="`start-stop-daemon --start --quiet \
-		--pidfile \"$SLAPD_PIDFILE\" \
-		--exec /usr/sbin/slapd -- $SLAPD_OPTIONS 2>&1`"
+	if [ -z "$SLAPD_SERVICES" ]; then
+		reason="`start-stop-daemon --start --quiet \
+			--pidfile "$SLAPD_PIDFILE" \
+			--exec /usr/sbin/slapd -- $SLAPD_OPTIONS 2>&1`"
+	else
+		reason="`start-stop-daemon --start --quiet \
+			--pidfile "$SLAPD_PIDFILE" \
+			--exec /usr/sbin/slapd -- -h "$SLAPD_SERVICES" $SLAPD_OPTIONS 2>&1`"
+	fi
 }
 
 # Start the slurpd daemon and capture the error message if any to
@@ -104,7 +110,7 @@ start_slurpd() {
 stop_slapd() {
 	echo -n " slapd"
 	reason="`start-stop-daemon --stop --quiet --oknodo --retry 10 \
-		--pidfile \"$SLAPD_PIDFILE\" \
+		--pidfile "$SLAPD_PIDFILE" \
 		--exec /usr/sbin/slapd 2>&1`"
 }
 

@@ -3,10 +3,13 @@ openldap2 (2.1.22-2) unstable; urgency=low
   * Stephen Frost <sfrost@debian.org>
     + servers/slapd/daemon.c: Apply patch from head for select handling.
     + debian/rules: Fix build options to optimize correctly and to use
-      DEB_BUILD_OPTIONS (Policy, 10.1).
+      DEB_BUILD_OPTIONS (Policy, 10.1). Closes: #202306
     + debian/slapd.conf: Add in ACL for root DSE explicitly.
     + debian/slapd.init: Add --oknodo in stop_slurpd. Closes: #202592
     + debian/rules: Need quotes around $(CFLAGS) on configure line.
+    + debian/slapd.init: Remove \'s before quotes around pidfile.
+    + debian/slapd.init: Add support for -h slapd flag. Closes: #201991
+    + debian/slapd.default: Add variable $SLAPD_SERVICES for slapd -h.
 
  -- Stephen Frost <sfrost@debian.org>  Fri, 18 Jul 2003 14:13:04 -0400
 
