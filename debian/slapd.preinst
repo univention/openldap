@@ -1,0 +1,112 @@
+#! /bin/sh
+
+set -e
+
+# We need debconf
+. /usr/share/debconf/confmodule
+
+# Parsing of slapd.conf
+parse_slapd_conf() {
+  (cat <<'EOF' && echo '^'$1'\s*$')|perl - /etc/ldap/slapd.conf
+    local $/;
+    @lines = split /\n(?!\s)/, <>;
+    chop($pattern = <DATA>);
+    $hits = 0;
+    foreach $line (@lines) {
+	  $line =~ s/\s+/ /g;
+	  if ($line =~ /$pattern/) {
+	  	print $1;
+		$hits++;
+	  }
+    }
+    exit 1 if $hits != 1;
+    __DATA__
+EOF
+}
+
+# Retrieve the suffix from slapd.conf
+get_suffix() {
+  parse_slapd_conf 'suffix "(.*)"'
+}
+
+# Retrieve the admin dn from slapd.conf
+get_admindn() {
+  parse_slapd_conf 'access to \* by dn="(.*)" write by \* read'
+}
+
+
+# Check if the root dn has only dcObject as its objectclass (like when
+# it was created via the postinst script)
+directory_needs_fixing() {
+  local error
+  echo -n "Checking if LDAP directory needs fixing... "
+  suffix=`get_suffix` || error="failed to get suffix" 
+  admindn=`get_admindn` || error="failed to get admin dn"
+  classes=`ldapsearch -h localhost -x -b "$suffix" -s base -LLL | \
+  	sed -n 's/^objectClass: //p'` \
+	|| error="failed to get objectclasses of suffix"
+
+  if [ "$error" ]; then
+    echo $error
+    exit 1
+  fi
+
+  if [ "$classes" = "dcObject" ]; then
+    echo "yes"
+  else
+    echo no
+    return 1
+  fi
+}
+
+fix_directory() {
+  # Make sure the password is really queried if needed
+  db_get slapd/password1
+  if [ -z "$RET" ]; then
+    db_fset slapd/password1 seen false
+  fi
+
+  db_input medium shared/organization || true
+  db_input critical slapd/password1 || true
+  db_go || true
+  
+  db_get shared/organization
+  organization="$RET"
+  db_get slapd/password1
+  echo -n "Fixing the LDAP directory... "
+  ldapmodify -x -v -d 16383 -D $admindn -h localhost -w "$RET" <<EOF
+dn: $suffix
+changetype: modify
+add: objectClass
+objectClass: organization
+-
+add: o
+o: $organization
+EOF
+  echo "done"
+}
+
+# Fix the directory
+if dpkg --compare-versions "$2" lt-nl 2.1; then
+  db_input medium slapd/fix_directory || true
+  db_go || true
+  db_get slapd/fix_directory
+  if [ "$RET" = "true" ] && directory_needs_fixing; then
+    fix_directory
+  fi
+fi
+
+# Packages until at least 2.0.27-4 did not stop the daemon on upgrade so
+# we do that before installation
+
+if dpkg --compare-versions "$2" lt-nl 2.1; then
+  if [ -x "/etc/init.d/slapd" ]; then
+    if [ -x /usr/sbin/invoke-rc.d ] ; then
+      invoke-rc.d slapd stop || true
+    else
+      /etc/init.d/slapd stop || true
+    fi
+  fi
+fi
+
+#DEBHELPER#

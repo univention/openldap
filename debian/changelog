@@ -11,6 +11,10 @@ openldap2.1 (2.1.16-1) unstable; urgency=low
         slapd.conf.
     + debian/slapd.templates: Add the templates for autoloading modules
       and fixing the directory.
+    + debian/slapd.preinst: New script to support upgrading from 2.0. 
+      The old prerm did not stop the daemon so we have to do it here. 
+      Also a first attempt to fix broken LDAP directories not acceptable
+      to 2.1.
 
   * Roland Bauerschmidt <rb@debian.org>
     + debian/slapd.README.Debian: mention that backend database modules are
