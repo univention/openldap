@@ -64,6 +64,9 @@ openldap2 (2.1.21-2) unstable; urgency=low
     + debian/slapd.config: Change debconf question names to be fully
       qualified in the $var from the for loop- organization is under
       shared/ and domain is under slapd/, not both under slapd/.
+    + debian/slapd.postrm: Can not depend on debconf being around in
+      postrm so check before attempting to source it.  Also protect
+      against failure from db_get.
 
   * Torsten Landschoff <torsten@debian.org>:
     + doc/man/man8/slapd.8: Refer to slapd.conf(5) for a description of 

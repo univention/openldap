@@ -2,16 +2,18 @@
 
 set -e
 
-. /usr/share/debconf/confmodule
-
 if [ "$1" = "purge" ]; then
 	rm -f /etc/ldap/slapd.conf 2>/dev/null || true
 	rm -rf /var/lib/slapd 2>/dev/null || true
 
-	db_get slapd/purge_database
-	if [ "$RET" = "true" ]; then
-		rm -rf /var/lib/ldap 2>/dev/null || true
-		rm -rf /var/backups/slapd-* 2>/dev/null || true
+	if [ -e "/usr/share/debconf/confmodule" ]; then
+		. /usr/share/debconf/confmodule
+
+		db_get slapd/purge_database || RET=false
+		if [ "$RET" = "true" ]; then
+			rm -rf /var/lib/ldap 2>/dev/null || true
+			rm -rf /var/backups/slapd-* 2>/dev/null || true
+		fi
 	fi
 
 	rmdir --ignore-fail-on-non-empty /etc/ldap/schema
