@@ -428,11 +428,8 @@ ldap_pvt_tls_init_def_ctx( void )
 
 		/* Set RSA/DH params callback */
 #ifdef HAVE_GNUTLS_GNUTLS_H
-#if 0
-		/* we need GNUTLS 1.0.9 for this; unfortunately, the version in Debian
-		 *    is only 1.0.4 */
 		gnutls_certificate_set_params_function( tls_def_ctx->creds, tls_gnutls_params_cb );
-#else
+#if 0 /* use this for GNUTLS < 1.0.9 */
 		tls_gnutls_set_params( tls_def_ctx->creds );
 #endif
 #else

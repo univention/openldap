@@ -4,26 +4,25 @@ openldap2 (2.1.30-3) unstable; urgency=high
     with TLS).
   * Roland Bauerschmidt <rb@debian.org>
     + libraries/libldap/gnutls.c, libraries/libldap/tls.c,
-      include/ldap_pvt_gnutls.h: Add code to use callback with
+      include/ldap_pvt_gnutls.h: Use callback with
       gnutls_certificate_set_params_function to generate dh_params and
-      rsa_params (this is also the way, it's done with OpenSSL).
-      Unfortunately, the param callback is only available in GNUTLS
-      1.0.9 (or better), whereas Debian still has 1.0.4. For now, we'll
-      just initialize the credentials when initializing the TLS context
-      as a workaround. This has the disadvantage that they're shared by
-      all sessions and we can hardly exchange them. On the other hand
-      though, allocating them for each session doesn't work as
-      previously assumed since the credentials structure is also shared
-      by all sessions. That is also the reason for the previous
-      segmentation faults as the *global* param structure was recreated
-      and freed for every session. Many thanks to Matthias Urlichs who
-      helped debugging a lot and is also considering to fix up the new
-      GNUTLS version... Closes: #244827.
+      rsa_params (this is also the way, it's done with OpenSSL). We need
+      GNUTLS 1.0.9 for this. With the new version of libgcrypt, we also
+      need to initialize threading explicitly. The previous
+      segmentation faults resulted from the *global* param structure
+      being recreated and freed for every session. Many thanks to
+      Matthias Urlichs who helped debugging a lot and also packaged
+      GNUTLS 1.0.16 very quickly... Closes: #244827.
+    + debian/control: Add build dependency to libgcrypt11-dev (we're
+      initializing it directly now) and change libgnutls10-dev to
+      libgnutls11-dev.
     + libraries/libldap/gnutls.c: in tls_gnutls_need_{dh,rsa}_params
       (formerly ldap_gnutls_need_...), create temp files more securely,
       doing unlink before opening and opening them with O_EXCL. This is
       necessary because under Linux 2.6 all threads have the same PID.
       Thanks to Andrew Suffield for pointing this out.
+    + debian/slapd.cron.daily: cron job to remove GNUTLS rsa_export and
+      dh param cache files every day.
 
  -- 
 

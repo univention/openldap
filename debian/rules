@@ -77,6 +77,7 @@ binary-arch: install-stamp
 	dh_installexamples -a
 	dh_installinit -Xslapd.prerm -a -- "defaults 19 80"
 	dh_installdebconf -a
+	dh_installcron -a
 	dh_strip -a
 	dh_compress -a
 	dh_makeshlibs -plibldap2

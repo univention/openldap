@@ -26,6 +26,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <errno.h> /* for GCRY_THREAD_OPTION_PTHREAD_IMPL */
+#include <pthread.h> /* for GCRY_THREAD_OPTION_PTHREAD_IMPL */
 
 #include <ac/stdlib.h>
 #include <ac/string.h>
@@ -37,7 +39,11 @@
 #ifdef HAVE_GNUTLS_GNUTLS_H
 
 #include <gnutls/gnutls.h>
+#include <gcrypt.h>
 #include "ldap_pvt_gnutls.h"
+
+/* needs GNUTLS 1.0.9 */
+GCRY_THREAD_OPTION_PTHREAD_IMPL;
 
 /* XXX: who designed this lousy API? */
 static int gnutls_error = 0;
@@ -219,6 +225,11 @@ X509_STORE_CTX_get_error_depth( X509_STORE_CTX *ctx )
 int
 SSLeay_add_ssl_algorithms(void)
 {
+	/* XXX: is add_ssl_algorithms really a good place for this? */
+	
+	/* needs GNUTLS 1.0.9 */
+	gcry_control (GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
+
 	if ((gnutls_error = gnutls_global_init()) < 0) {
 		return 0;
 	}
@@ -519,18 +530,15 @@ tls_gnutls_need_dh_params(void)
 	return dh_params;
 }
 
-#if 0
-/* we need GNUTLS 1.0.9 for this; unfortunately, the version in Debian
-   is only 1.0.4 */
 int
 tls_gnutls_params_cb( gnutls_session session, gnutls_params_type type, 
 		gnutls_params_st *st )
 {
 	if (type == GNUTLS_PARAMS_RSA_EXPORT) {
 		st->params.rsa_export = tls_gnutls_need_rsa_params();
-		if (st->params.rsa_export == NULL) return -1
+		if (st->params.rsa_export == NULL) return -1;
 	} else if (type == GNUTLS_PARAMS_DH) {
-		st->params.dh = tls_gnutls_need_dh_params();;
+		st->params.dh = tls_gnutls_need_dh_params();
 		if (st->params.dh == NULL) return -1;
 	} else return -1;
 
@@ -539,7 +547,7 @@ tls_gnutls_params_cb( gnutls_session session, gnutls_params_type type,
 
 	return 0;
 }
-#else
+#if 0 /* use this for GNUTLS < 1.0.9 */
 void
 tls_gnutls_set_params( gnutls_certificate_credentials cred )
 {
