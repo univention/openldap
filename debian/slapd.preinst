@@ -5,12 +5,17 @@ set -e
 # Make the version we are upgrading from globally available
 oldver="$2"
 
-if dpkg --compare-versions "$2" lt-nl 2.1; then
+if [ -n "$oldver" ]; then
   # Debconf is available when upgrading from older versions
   . /usr/share/debconf/confmodule
 fi
 
 # Parsing of slapd.conf
+# Yes, I know, this is quite a hack but I don't know a better way 
+# to pack this into a preinst script. We use perl to concat physical
+# lines into logical lines and match them against a given regular expression
+# to extract the interesting data, like in 
+#	parse_slapd_conf 'suffix "(.*)"'
 parse_slapd_conf() {
   (cat <<'EOF' && echo '^'$1'\s*$')|perl - /etc/ldap/slapd.conf
     local $/;
@@ -45,11 +50,11 @@ get_admindn() {
 directory_needs_fixing() {
   local error
   echo -n "Checking if LDAP directory needs fixing... "
-  suffix=`get_suffix` || error="failed to get suffix" 
-  admindn=`get_admindn` || error="failed to get admin dn"
+  suffix=`get_suffix` || : ${error:="failed to get suffix"}
+  admindn=`get_admindn` || : ${error:="failed to get admin dn"}
   classes=`ldapsearch -h localhost -x -b "$suffix" -s base -LLL | \
   	sed -n 's/^objectClass: //p'` \
-	|| error="failed to get objectclasses of suffix"
+	|| : ${error:="failed to get objectclasses of suffix"}
 
   if [ "$error" ]; then
     echo $error
@@ -64,6 +69,8 @@ directory_needs_fixing() {
   fi
 }
 
+# Fix the old directory by adding the structural objectClass "organization"
+# to the root of the directory.
 fix_directory() {
   # Make sure the password is really queried if needed
   db_get slapd/password1
