@@ -1,5 +1,5 @@
 /* slap.h - stand alone ldap server include file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.323.2.32 2003/12/03 01:32:40 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.323.2.34 2004/03/06 16:05:52 ando Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -981,7 +981,7 @@ typedef enum slap_style_e {
 	ACL_STYLE_ONE,
 	ACL_STYLE_SUBTREE,
 	ACL_STYLE_CHILDREN,
-	ACL_STYLE_ATTROF,
+	ACL_STYLE_ATTROF
 } slap_style_t;
 
 typedef struct slap_authz_info {
@@ -1611,6 +1611,15 @@ typedef struct slap_callback {
 	slap_sendreference *sc_sendreference;
 	void *sc_private;
 } slap_callback;
+
+/* callback context for invoking replog */
+typedef struct slap_replog_ctx {
+	slap_callback *prev;
+	BackendDB *be;
+	struct berval *dn;
+	struct berval *ndn;
+	void *change;
+} slap_replog_ctx;
 
 /*
  * Paged Results state

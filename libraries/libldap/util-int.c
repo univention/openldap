@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/util-int.c,v 1.33.2.5 2003/03/24 03:08:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/util-int.c,v 1.33.2.6 2004/01/26 19:59:26 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -540,7 +540,8 @@ char * ldap_pvt_get_fqdn( char *name )
 	return fqdn;
 }
 
-#if defined( HAVE_GETADDRINFO ) && !defined( HAVE_GAI_STRERROR )
+#if ( defined( HAVE_GETADDRINFO ) || defined( HAVE_GETNAMEINFO ) ) \
+	&& !defined( HAVE_GAI_STRERROR )
 char *ldap_pvt_gai_strerror (int code) {
 	static struct {
 		int code;

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/getdn.c,v 1.94.2.9 2003/03/03 17:10:04 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/getdn.c,v 1.94.2.10 2004/03/16 17:08:02 ando Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -465,7 +465,8 @@ ldap_dn_normalize( LDAP_CONST char *dnin,
 	( LDAP_DN_RDN_SEP(c) || LDAP_DN_AVA_SEP(c) )
 #define LDAP_DN_NE(c) \
 	( LDAP_DN_RDN_SEP_V2(c) || LDAP_DN_AVA_SEP(c) \
-	  || LDAP_DN_QUOTES(c) || (c) == '<' || (c) == '>' )
+	  || LDAP_DN_AVA_EQUALS(c) || LDAP_DN_QUOTES(c) \
+	  || (c) == '<' || (c) == '>' )
 #define LDAP_DN_MAYESCAPE(c) \
 	( LDAP_DN_ESCAPE(c) || LDAP_DN_NE(c) \
 	  || LDAP_DN_ASCII_SPACE(c) || LDAP_DN_OCTOTHORPE(c) )

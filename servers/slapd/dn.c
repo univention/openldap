@@ -1,5 +1,5 @@
 /* dn.c - routines for dealing with distinguished names */
-/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.124.2.11 2003/03/24 03:54:12 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.124.2.12 2004/03/22 20:23:47 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -851,7 +851,7 @@ build_new_dn( struct berval * new_dn,
 {
 	char *ptr;
 
-	if ( parent_dn == NULL ) {
+	if ( parent_dn == NULL || parent_dn->bv_len == 0 ) {
 		ber_dupbv( new_dn, newrdn );
 		return;
 	}

@@ -1,5 +1,5 @@
 /* result.c - routines to send ldap results, errors, and referrals */
-/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.130.2.23 2003/12/02 03:30:24 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.130.2.24 2004/01/30 04:59:08 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -452,7 +452,7 @@ slap_send_ldap_result(
 	ber_int_t msgid;
 	char *tmp = NULL;
 
-	assert( !LDAP_API_ERROR( err ) );
+	assert( !LDAP_API_ERROR( err ) && ( err >= 0 ));
 
 #ifdef NEW_LOGGING
 	LDAP_LOG( OPERATION, ENTRY, 

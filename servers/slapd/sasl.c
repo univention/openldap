@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.81.2.30 2004/01/21 07:56:34 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.81.2.31 2004/03/22 20:33:55 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -748,6 +748,12 @@ slap_sasl_authorize(
 	/* Skip PROP_CONN */
 	prop_getnames( props, slap_propnames+1, auxvals );
 	
+	/* Should not happen */
+	if (!auxvals[0].values ) {
+		sasl_seterror( sconn, 0, "invalid authcid" );
+		return SASL_NOAUTHZ;
+	}
+
 	AC_MEMCPY( &authcDN, auxvals[0].values[0], sizeof(authcDN) );
 
 	/* Nothing to do if no authzID was given */

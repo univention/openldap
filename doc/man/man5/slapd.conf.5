@@ -1,7 +1,7 @@
 .TH SLAPD.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" Copyright 1998-2003 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.87.2.27 2003/12/18 05:11:13 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.87.2.28 2004/02/25 21:42:00 kurt Exp $
 .SH NAME
 slapd.conf \- configuration file for slapd, the stand-alone LDAP daemon
 .SH SYNOPSIS
@@ -1076,7 +1076,11 @@ This option is only applicable in a slave
 It specifies the DN allowed to make changes to the replica (typically,
 this is the DN
 .BR slurpd (8)
-binds as when making changes to the replica).
+binds as when making changes to the replica).  Generally, this DN
+.I should not
+be the same as the
+.B rootdn
+of the master database.
 .TP
 .B updateref <url>
 Specify the referral to pass back when
