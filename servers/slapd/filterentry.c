@@ -1,5 +1,5 @@
 /* filterentry.c - apply a filter to an entry */
-/* $OpenLDAP: pkg/ldap/servers/slapd/filterentry.c,v 1.47.2.6 2003/02/09 16:31:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/filterentry.c,v 1.47.2.8 2004/05/19 05:34:32 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -276,25 +276,32 @@ static int test_mra_filter(
 			/* check search access */
 			if ( !access_allowed( be, conn, op, e,
 				a->a_desc, &value, ACL_SEARCH, NULL ) ) {
+				ch_free( value.bv_val );
 				continue;
 			}
+
+			rc = LDAP_SUCCESS;
 
 			/* check match */
 			for ( bv = a->a_vals; bv->bv_val != NULL; bv++ ) {
 				int ret;
-				int rc;
 	
 				rc = value_match( &ret, a->a_desc, mra->ma_rule,
 					SLAP_MR_ASSERTION_SYNTAX_MATCH,
 					bv, &value, &text );
 	
 				if( rc != LDAP_SUCCESS ) {
-					return rc;
+					break;
 				}
 	
 				if ( ret == 0 ) {
-					return LDAP_COMPARE_TRUE;
+					rc = LDAP_COMPARE_TRUE;
+					break;
 				}
+			}
+			ch_free( value.bv_val );
+			if ( rc != LDAP_SUCCESS ) {
+				return rc;
 			}
 		}
 	}
@@ -320,7 +327,6 @@ static int test_mra_filter(
 				struct berval	*bv = &ava->la_value, value;
 				AttributeDescription *ad = (AttributeDescription *)ava->la_private;
 				int ret;
-				int rc;
 				const char *text;
 
 				assert( ad );
@@ -350,6 +356,7 @@ static int test_mra_filter(
 					/* check search access */
 					if ( !access_allowed( be, conn, op, e,
 						ad, &value, ACL_SEARCH, NULL ) ) {
+						ch_free( value.bv_val );
 						continue;
 					}
 				}
@@ -359,17 +366,21 @@ static int test_mra_filter(
 					SLAP_MR_ASSERTION_SYNTAX_MATCH,
 					bv, &value, &text );
 
+				if ( value.bv_val != mra->ma_value.bv_val ) {
+					ch_free( value.bv_val );
+				}
+
+				if ( rc == LDAP_SUCCESS && ret == 0 ) {
+					rc = LDAP_COMPARE_TRUE;
+				}
+
 				if( rc != LDAP_SUCCESS ) {
 					ldap_dnfree( dn );
 					return rc;
 				}
-
-				if ( ret == 0 ) {
-					ldap_dnfree( dn );
-					return LDAP_COMPARE_TRUE;
-				}
 			}
 		}
+		ldap_dnfree( dn );
 	}
 
 	return LDAP_COMPARE_FALSE;

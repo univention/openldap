@@ -4,10 +4,12 @@ openldap2 (2.1.30-2) unstable; urgency=low
     + debian/slapd.scripts-common: add missing space before !
       Closes: #251036.
   * Torsten Landschoff <torsten@debian.org>
-    + Apply patch by Ralf Hack to support non-standard config file
+    + Applied patch by Ralf Hack to support non-standard config file
       location in /etc/default/slapd (closes: #229195).
-    + Apply patch for fix handling of abandoned commands 
+    + Applied patch to fix handling of abandoned commands 
       (closes: #254183). Thanks to Peter Marschall for submitting it.
+    + Applied patch to fix memory leak after search (closes: #254184).
+      Thanks again, Peter :)
 
  -- 
 
