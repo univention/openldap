@@ -1,3 +1,6 @@
+# Default location of the slapd.conf file
+SLAPD_CONF=
+
 # System account to run the slapd server under. If empty the server
 # will run as root.
 SLAPD_USER=
@@ -7,7 +10,7 @@ SLAPD_USER=
 SLAPD_GROUP=
 
 # Path to the pid file of the slapd server. If not set the init.d script
-# will try to figure it out from /etc/ldap/slapd.conf
+# will try to figure it out from $SLAPD_CONF (/etc/ldap/slapd.conf)
 SLAPD_PIDFILE=
 
 # Configure if the slurpd daemon should be started. Possible values: 
