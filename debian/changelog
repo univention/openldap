@@ -29,6 +29,9 @@ openldap2 (2.1.17-3) unstable; urgency=low
     + Maintainer upload, acknowledge NMU. Closes: #98039.
     + Add debian/po/fr.po from 194740.  Closes: #194740
     + Add space before ']' on line 113 of postinst. Closes: #194192, #194943
+    + Add libbind-dev and bind-dev to the conflicts for slapd, the libs
+      in them can end up being used even when not compiled against causing
+      getaddrinfo() to fail.
 
   * Torsten Landschoff <torsten@debian.org>:
     + debian/control: Enforce libldap2 to be the same version as slapd
@@ -41,7 +44,7 @@ openldap2 (2.1.17-3) unstable; urgency=low
     + debian/slapd.preinst: don't use debconf or ldapsearch in the
       preinst, as this is a policy violation (even if a previous
       version was installed, it could've been removed-but-not-purged).
-      Closes: #189811.
+      Closes: #189811, #195029, #193854, #166777.
     + debian/slapd.{pre,post}inst: dump & fix up the directory in the
       postinst, not in the preinst -- using slapcat/slapadd, not
       ldapmodify.  This ensures that the dump will succeed whenever the

@@ -13,7 +13,7 @@ Priority: optional
 Architecture: any
 Depends: ${shlibs:Depends}, debconf (>= 0.2.50), coreutils (>= 4.5.1-1) | fileutils (>= 4.0i-1), psmisc, libldap2 (= ${Source-Version})
 Suggests: ldap-utils
-Conflicts: umich-ldapd, ldap-server
+Conflicts: umich-ldapd, ldap-server, libbind-dev, bind-dev
 Provides: ldap-server
 Description: OpenLDAP server (slapd)
  This is the OpenLDAP (Lightweight Directory Access Protocol) standalone
