@@ -33,6 +33,11 @@ openldap2.1 (2.1.12-1) experimental; urgency=low
       (lintian).
     - debian/libldap2.conffiles: Remove, since we are using version 4
       of debhelper which tags everything in /etc as conffile by default.
+    - debian/rules: Change the mode of everything upstream installed into
+      /etc to 0644 as required by policy (lintian).
+    - debian/rules: Call dh_installdeb later in the binary target so that
+      the conffiles are already there for listing. Without this nothing in 
+      /etc gets tagged as conffile... (lintian).
 
   * Roland Bauerschmidt <rb@debian.org>
     - debian/control:

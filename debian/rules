@@ -28,9 +28,10 @@ binary-arch: build
 	dh_clean
 
 	$(MAKE) -C $(builddir) DESTDIR=$(tmpdir) install
+	# Upstream installs schema files in mode 0444 - policy wants 0644
+	find $(tmpdir)/etc -type f|xargs chmod 0644
 	sh debian/move_files
 
-	dh_installdeb -a
 	dh_installchangelogs -a
 	dh_installdocs -a
 	dh_installexamples -a
@@ -39,6 +40,7 @@ binary-arch: build
 	dh_strip -a
 	dh_compress -a
 	dh_makeshlibs -a
+	dh_installdeb -a
 	dh_shlibdeps -a
 	dh_gencontrol -a
 	dh_md5sums -a
