@@ -86,7 +86,7 @@ start_slurpd() {
 # $reason.
 stop_slapd() {
 	echo -n " slapd"
-	reason="`start-stop-daemon --stop --quiet --retry 10 \
+	reason="`start-stop-daemon --stop --quiet --oknodo --retry 10 \
 		--pidfile \"$SLAPD_PIDFILE\" \
 		--exec /usr/sbin/slapd 2>&1`"
 }
