@@ -48,6 +48,7 @@ install_stuff usr/share/man/man5/slapd*
 install_stuff usr/share/man/man8
 install_stuff etc/ldap/schema
 rm -f debian/tmp/etc/ldap/slapd.conf
+mkdir -p debian/slapd/usr/share/slapd
 install -m644 debian/slapd.conf debian/slapd/usr/share/slapd/slapd.conf
 install -m755 debian/fix_ldif debian/slapd/usr/share/slapd/fix_ldif
 install -m755 debian/ldiftopasswd debian/slapd/usr/share/slapd/ldiftopasswd
