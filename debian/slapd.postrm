@@ -12,7 +12,11 @@ fi
 # Check if the user wants the database removed on purging slapd
 remove_database_on_purge() {
   db_get slapd/purge_database || RET=false
-  return [ "$RET" = "true" ]
+  if [ "$RET" = "true" ]; then
+    return 0
+  else
+    return 1
+  fi
 }
 
 if [ "$1" = "purge" ]; then
