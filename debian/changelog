@@ -16,6 +16,9 @@ openldap2 (2.1.22-2) unstable; urgency=low
       [ foo -a bar ] by [ foo ] && [ bar ] (closes: #203292).
     + debian/slapd.postrm: Small cleanup, only remove the directory, not
       the backups, on purge. 
+    + debian/rules: Don't run the upstream install target if we did not 
+      rebuild the whole tree. Makes debugging maintainer script much more
+      tolerable.
 
   * Roland Bauerschmidt <rb@debian.org>:
     + debian/configure.options: change --localstatedir=/var/lib to
