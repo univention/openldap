@@ -1,5 +1,5 @@
 /* cache.c - routines to maintain an in-core cache of entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.1.2.11 2003/03/29 15:45:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.1.2.12 2003/05/10 21:58:11 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -952,6 +952,9 @@ try_again:
 			goto try_again;
 		}
 
+		/* Mark entry in-use */
+		BEI(ep)->bei_refcnt++;
+
 		/* free cache read lock */
 		ldap_pvt_thread_rdwr_runlock( &cache->c_rwlock );
 		/* set lru mutex */
@@ -959,8 +962,6 @@ try_again:
 		/* lru */
 		LRU_DELETE( cache, ep );
 		LRU_ADD( cache, ep );
-		
-		BEI(ep)->bei_refcnt++;
 
 		/* free lru mutex */
 		ldap_pvt_thread_mutex_unlock( &cache->lru_mutex );

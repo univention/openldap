@@ -1,5 +1,5 @@
 /* backglue.c - backend glue routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.38.2.8 2003/03/05 23:48:33 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.38.2.9 2003/04/20 07:21:20 hyc Exp $ */
 /*
  * Copyright 2001-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -680,7 +680,7 @@ glue_sub_init( )
 			gi->n[gi->nodes].be = &gi->bd;
 			dnParent( &b1->be_nsuffix[0], &gi->n[gi->nodes].pdn );
 			gi->nodes++;
-			b1->bd_info = bi;
+			b1->bd_info = (BackendInfo *)gi;
 		}
 	}
 	/* If there are any unresolved subordinates left, something is wrong */

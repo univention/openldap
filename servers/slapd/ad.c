@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.41.2.9 2003/02/26 15:17:49 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.41.2.10 2003/05/22 22:22:42 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -222,10 +222,10 @@ int slap_bv2ad(
 				} else if ( rc > 0 ||
 					( rc == 0 && (unsigned)optlen > tags[i].bv_len ))
 				{
-					AC_MEMCPY( &tags[i+1], &tags[i],
-						(ntags-i)*sizeof(struct berval) );
-					tags[i].bv_val = opt;
-					tags[i].bv_len = optlen;
+					AC_MEMCPY( &tags[i+2], &tags[i+1],
+						(ntags-i-1)*sizeof(struct berval) );
+					tags[i+1].bv_val = opt;
+					tags[i+1].bv_len = optlen;
 					goto done;
 				}
 			}

@@ -1,5 +1,5 @@
 /* value.c - routines for dealing with values */
-/* $OpenLDAP: pkg/ldap/servers/slapd/value.c,v 1.47.2.9 2003/03/03 17:10:07 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/value.c,v 1.47.2.10 2003/04/25 15:54:16 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -176,7 +176,8 @@ value_normalize(
 		mr = ad->ad_type->sat_ordering;
 		break;
 	case SLAP_MR_SUBSTR:
-		mr = ad->ad_type->sat_substr;
+		/* normalize substrings per the the equality rule */
+		mr = ad->ad_type->sat_equality;
 		break;
 	case SLAP_MR_EXT:
 	default:
@@ -244,7 +245,8 @@ value_validate_normalize(
 		mr = ad->ad_type->sat_ordering;
 		break;
 	case SLAP_MR_SUBSTR:
-		mr = ad->ad_type->sat_substr;
+		/* normalize substrings per the the equality rule */
+		mr = ad->ad_type->sat_equality;
 		break;
 	case SLAP_MR_EXT:
 	default:

@@ -1,5 +1,5 @@
 /* schema_init.c - init builtin schema */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.53.2.18 2003/02/27 17:05:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.53.2.19 2003/04/12 16:01:45 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -318,7 +318,7 @@ static struct slap_schema_oc_map {
 		"DESC 'OpenLDAP system monitoring' "
 		"STRUCTURAL "
 		"MUST cn )",
-		0, SLAP_OC_OPERATIONAL,
+		0, SLAP_OC_OPERATIONAL|SLAP_OC_HIDE,
 		offsetof(struct slap_internal_schema, si_oc_monitor) },
 #ifdef LDAP_DEVEL
 	{ "collectiveAttributeSubentry", "( 2.5.17.2 "

@@ -1,5 +1,8 @@
-openldap2 (2.1.17-4) unstable; urgency=low
+openldap2 (2.1.21-1) unstable; urgency=low
 
+  * Torsten Landschoff <torsten@debian.org>:
+    + Merged new upstream release.
+  
   * Stephen Frost <sfrost@debian.org>:
     + debian/control: Add libbind-dev and bind-dev to the conflicts for 
       slapd, the libs in them can end up being used even when not 

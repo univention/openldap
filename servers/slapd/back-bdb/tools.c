@@ -1,5 +1,5 @@
 /* tools.c - tools for slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/tools.c,v 1.31.2.7 2003/03/13 03:35:26 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/tools.c,v 1.31.2.8 2003/05/10 02:09:23 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -439,6 +439,7 @@ done:
 #endif
 		e->e_id = NOID;
 	}
+	bdb_entry_return( e );
 
 	return rc;
 }

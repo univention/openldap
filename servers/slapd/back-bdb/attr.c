@@ -1,5 +1,5 @@
 /* attr.c - backend routines for dealing with attributes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/attr.c,v 1.8.2.4 2003/02/09 16:31:37 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/attr.c,v 1.8.2.5 2003/05/07 22:29:11 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -29,7 +29,7 @@ ainfo_type_cmp(
 {
 	const AttributeDescription *desc = v_desc;
 	const AttrInfo	*a = v_a;
-	return desc - a->ai_desc;
+	return SLAP_PTRCMP(desc, a->ai_desc);
 }
 
 static int
@@ -39,7 +39,7 @@ ainfo_cmp(
 )
 {
 	const AttrInfo *a = v_a, *b = v_b;
-	return a->ai_desc - b->ai_desc;
+	return SLAP_PTRCMP(a->ai_desc, b->ai_desc);
 }
 
 void

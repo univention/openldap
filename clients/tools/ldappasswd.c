@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/clients/tools/ldappasswd.c,v 1.94.2.9 2003/03/31 16:48:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldappasswd.c,v 1.94.2.10 2003/04/14 15:37:27 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -211,8 +211,13 @@ main( int argc, char *argv[] )
 
 	if( want_bindpw && passwd.bv_val == NULL ) {
 		/* handle bind password */
-		passwd.bv_val = strdup( getpassphrase("Enter bind password: "));
-		passwd.bv_len = passwd.bv_val ? strlen( passwd.bv_val ) : 0;
+		if ( pw_file ) {
+			rc = lutil_get_filed_password( pw_file, &passwd );
+			if( rc ) return EXIT_FAILURE;
+		} else {
+			passwd.bv_val = getpassphrase( "Enter LDAP Password: " );
+			passwd.bv_len = passwd.bv_val ? strlen( passwd.bv_val ) : 0;
+		}
 	}
 
 	ld = tool_conn_setup( 0, 0 );

@@ -1,5 +1,5 @@
 /* filter.c - routines for parsing and dealing with filters */
-/* $OpenLDAP: pkg/ldap/servers/slapd/filter.c,v 1.72.2.10 2003/03/12 20:58:48 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/filter.c,v 1.72.2.11 2003/05/05 16:37:15 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -207,6 +207,10 @@ get_filter(
 		if ( err != LDAP_SUCCESS ) {
 			break;
 		}
+		if ( f->f_and == NULL ) {
+			f->f_choice = SLAPD_FILTER_COMPUTED;
+			f->f_result = LDAP_COMPARE_TRUE;
+		}
 		break;
 
 	case LDAP_FILTER_OR:
@@ -219,6 +223,10 @@ get_filter(
 		err = get_filter_list( conn, ber, &f->f_or, text );
 		if ( err != LDAP_SUCCESS ) {
 			break;
+		}
+		if ( f->f_or == NULL ) {
+			f->f_choice = SLAPD_FILTER_COMPUTED;
+			f->f_result = LDAP_COMPARE_FALSE;
 		}
 		break;
 

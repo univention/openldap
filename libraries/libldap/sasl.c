@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/sasl.c,v 1.41.2.6 2003/02/09 17:02:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/sasl.c,v 1.41.2.7 2003/05/22 22:22:41 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -76,7 +76,7 @@ ldap_sasl_bind(
 	if( rc != LDAP_SUCCESS ) return rc;
 
 	if( mechanism == LDAP_SASL_SIMPLE ) {
-		if( dn == NULL && cred != NULL ) {
+		if( dn == NULL && cred != NULL && cred->bv_len ) {
 			/* use default binddn */
 			dn = ld->ld_defbinddn;
 		}

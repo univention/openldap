@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/delete.c,v 1.69.2.8 2003/02/10 19:22:47 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/delete.c,v 1.69.2.9 2003/04/17 22:49:05 ando Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -137,10 +137,17 @@ do_delete(
 		BerVarray ref = referral_rewrite( default_referral,
 			NULL, &pdn, LDAP_SCOPE_DEFAULT );
 
-		send_ldap_result( conn, op, rc = LDAP_REFERRAL,
-			NULL, NULL, ref ? ref : default_referral, NULL );
+		if ( ref == NULL ) ref = default_referral;
+		if ( ref != NULL ) {
+			send_ldap_result( conn, op, rc = LDAP_REFERRAL,
+			NULL, NULL, ref, NULL );
 
-		ber_bvarray_free( ref );
+			if ( ref != default_referral ) ber_bvarray_free( ref );
+		} else {
+			send_ldap_result( conn, op,
+					rc = LDAP_UNWILLING_TO_PERFORM,
+					NULL, "referral missing", NULL, NULL );
+		}
 		goto cleanup;
 	}
 
@@ -209,19 +216,28 @@ do_delete(
 		} else {
 			BerVarray defref = be->be_update_refs
 				? be->be_update_refs : default_referral;
-			BerVarray ref = referral_rewrite( default_referral,
-				NULL, &pdn, LDAP_SCOPE_DEFAULT );
+			if ( defref != NULL ) {
+				BerVarray ref = referral_rewrite( defref,
+					NULL, &pdn, LDAP_SCOPE_DEFAULT );
 
-			send_ldap_result( conn, op, rc = LDAP_REFERRAL, NULL, NULL,
-				ref ? ref : defref, NULL );
+				send_ldap_result( conn, op, rc = LDAP_REFERRAL,
+						NULL, NULL,
+						ref ? ref : defref, NULL );
 
-			ber_bvarray_free( ref );
+				ber_bvarray_free( ref );
+			} else {
+				send_ldap_result( conn, op,
+						rc = LDAP_UNWILLING_TO_PERFORM,
+						NULL, "referral missing",
+						NULL, NULL );
+			}
 #endif
 		}
 
 	} else {
 		send_ldap_result( conn, op, rc = LDAP_UNWILLING_TO_PERFORM,
-			NULL, "operation not supported within namingContext", NULL, NULL );
+			NULL, "operation not supported within namingContext",
+			NULL, NULL );
 	}
 
 #if defined( LDAP_SLAPI )

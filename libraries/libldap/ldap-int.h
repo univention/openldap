@@ -1,5 +1,5 @@
 /*  ldap-int.h - defines & prototypes internal to the LDAP library */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.129.2.11 2003/03/03 17:10:04 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.129.2.12 2003/04/28 23:41:55 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -413,8 +413,7 @@ LDAP_F (int) ldap_int_open_connection( LDAP *ld,
 LDAP_V (int) ldap_int_tblsize;
 LDAP_F (int) ldap_int_timeval_dup( struct timeval **dest, const struct timeval *tm );
 LDAP_F (int) ldap_connect_to_host( LDAP *ld, Sockbuf *sb,
-	int proto, const char *host, unsigned long address, int port,
-	int async );
+	int proto, const char *host, int port, int async );
 
 #if defined(LDAP_API_FEATURE_X_OPENLDAP_V2_KBIND) || \
 	defined(HAVE_TLS) || defined(HAVE_CYRUS_SASL)

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/add.c,v 1.109.2.10 2003/03/26 17:56:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/add.c,v 1.109.2.11 2003/04/17 22:49:05 ando Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -210,11 +210,17 @@ do_add( Connection *conn, Operation *op )
 	if ( be == NULL ) {
 		BerVarray ref = referral_rewrite( default_referral,
 			NULL, &e->e_name, LDAP_SCOPE_DEFAULT );
+		if ( ref == NULL ) ref = default_referral;
+		if ( ref != NULL ) {
+			send_ldap_result( conn, op, rc = LDAP_REFERRAL,
+				NULL, NULL, ref, NULL );
 
-		send_ldap_result( conn, op, rc = LDAP_REFERRAL,
-			NULL, NULL, ref ? ref : default_referral, NULL );
-
-		if ( ref ) ber_bvarray_free( ref );
+			if ( ref != default_referral ) ber_bvarray_free( ref );
+		} else {
+			send_ldap_result( conn, op,
+					rc = LDAP_UNWILLING_TO_PERFORM,
+					NULL, "referral missing", NULL, NULL );
+		}
 		goto done;
 	}
 
@@ -328,13 +334,22 @@ do_add( Connection *conn, Operation *op )
 
 			defref = be->be_update_refs
 				? be->be_update_refs : default_referral;
-			ref = referral_rewrite( defref,
-				NULL, &e->e_name, LDAP_SCOPE_DEFAULT );
 
-			send_ldap_result( conn, op, rc = LDAP_REFERRAL, NULL, NULL,
-				ref ? ref : defref, NULL );
+			if ( defref ) {
+				ref = referral_rewrite( defref,
+					NULL, &e->e_name, LDAP_SCOPE_DEFAULT );
 
-			if ( ref ) ber_bvarray_free( ref );
+				send_ldap_result( conn, op, rc = LDAP_REFERRAL,
+						NULL, NULL,
+						ref ? ref : defref, NULL );
+
+				if ( ref ) ber_bvarray_free( ref );
+			} else {
+				send_ldap_result( conn, op,
+						rc = LDAP_UNWILLING_TO_PERFORM,
+						NULL, "referral missing",
+						NULL, NULL );
+			}
 #endif /* SLAPD_MULTIMASTER */
 		}
 	} else {

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.163.2.18 2003/04/04 20:41:37 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.163.2.19 2003/05/18 19:58:56 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -663,8 +663,8 @@ connection_destroy( Connection *c )
 		slapd_remove( sd, 0 );
 
 		Statslog( LDAP_DEBUG_STATS,
-		    "conn=%lu fd=%d closed\n",
-			connid, sd, 0, 0, 0 );
+		    "conn=%lu fd=%ld closed\n",
+			connid, (long) sd, 0, 0, 0 );
 	}
 
 	ber_sockbuf_free( c->c_sb );

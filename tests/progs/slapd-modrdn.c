@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/tests/progs/slapd-modrdn.c,v 1.1.2.2 2003/03/05 23:48:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/tests/progs/slapd-modrdn.c,v 1.1.2.3 2003/04/30 03:13:57 kurt Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -98,10 +98,11 @@ do_modrdn( char *uri, char *host, int port, char *manager,
 {
 	LDAP	*ld = NULL;
 	int  	i;
-	pid_t	pid = getpid();
+	pid_t	pid;
 	char *DNs[2];
 	char *rdns[2];
 
+	pid = getpid();
 	DNs[0] = entry;
 	DNs[1] = strdup( entry );
 
@@ -164,7 +165,6 @@ do_modrdn( char *uri, char *host, int port, char *manager,
 			if ( rc != LDAP_NO_SUCH_OBJECT ) break;
 			continue;
 		}
-
 	}
 
 	fprintf( stderr, " PID=%ld - Modrdn done.\n", (long) pid );

@@ -1,5 +1,5 @@
 /* slap.h - stand alone ldap server include file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.323.2.28 2003/03/27 03:04:06 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.323.2.29 2003/05/16 00:38:09 hyc Exp $ */
 /*
  * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -1995,6 +1995,7 @@ struct slap_listener {
 #ifdef LDAP_CONNECTIONLESS
 	int	sl_is_udp;		/* UDP listener is also data port */
 #endif
+	int	sl_is_mute;	/* Listening is temporarily disabled */
 	ber_socket_t sl_sd;
 	Sockaddr sl_sa;
 #define sl_addr	sl_sa.sa_in_addr
