@@ -42,12 +42,12 @@ version.c: $(OBJS) $(SLURPD_L)
 	$(MKVERSION) slurpd > $@
 
 install-local-srv: FORCE
-	-$(MKDIR) $(DESTDIR)$(libexecdir)
+	-$(MKDIR) $(DESTDIR)$(sbindir)
 	@-$(INSTALL) -m 700 -d $(DESTDIR)$(localstatedir)/openldap-slurp
 	@(								\
 	    for prg in $(PROGRAMS); do					\
 		$(LTINSTALL) $(INSTALLFLAGS) -s -m 755 $$prg$(EXEEXT)	\
-		    $(DESTDIR)$(libexecdir);				\
+		    $(DESTDIR)$(sbindir);				\
 	    done							\
 	)
 
