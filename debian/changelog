@@ -16,8 +16,9 @@ openldap2 (2.1.30-4) testing-proposed-updates unstable; urgency=low
       (closes: #266688).
     + Refine the patch for the TLS_CACERTDIR problem to log an error 
       message if the directory can't be opened.
+    + Fix the check if an existing database should be moved (closes: #276380).
 
- -- 
+ -- Torsten Landschoff <torsten@debian.org>  Sun, 12 Sep 2004 10:02:39 +0200
 
 openldap2 (2.1.30-3) unstable; urgency=high
 

@@ -8,7 +8,7 @@ set -e
 
 # Move the old database away if it is still there
 move_old_database_away() {
-  if ! is_empty_dir /var/lib/ldap; then
+  if [ -e /var/lib/ldap ] && ! is_empty_dir /var/lib/ldap; then
     db_get slapd/move_old_database
     if [ "$RET" = true ]; then
       target=/var/backups/var_lib_ldap-`date +%Y%m%d`
