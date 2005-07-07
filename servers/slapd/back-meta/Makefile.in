@@ -1,8 +1,8 @@
 # Makefile.in for back-meta
-# $OpenLDAP: pkg/ldap/servers/slapd/back-meta/Makefile.in,v 1.6.2.4 2004/04/12 18:20:14 kurt Exp $
+# $OpenLDAP: pkg/ldap/servers/slapd/back-meta/Makefile.in,v 1.12.2.3 2005/06/03 19:54:16 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2004 The OpenLDAP Foundation.
+## Copyright 1998-2005 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -14,10 +14,10 @@
 ## <http://www.OpenLDAP.org/license.html>.
 
 SRCS	= init.c config.c search.c bind.c unbind.c add.c compare.c \
-		delete.c modify.c modrdn.c \
+		delete.c modify.c modrdn.c suffixmassage.c map.c \
 		conn.c candidates.c dncache.c
 OBJS	= init.lo config.lo search.lo bind.lo unbind.lo add.lo compare.lo \
-		delete.lo modify.lo modrdn.lo \
+		delete.lo modify.lo modrdn.lo suffixmassage.lo map.lo \
 		conn.lo candidates.lo dncache.lo
 
 LDAP_INCDIR= ../../../include       
@@ -29,7 +29,8 @@ BUILD_MOD = @BUILD_META@
 mod_DEFS = -DSLAPD_IMPORT
 MOD_DEFS = $(@BUILD_META@_DEFS)
 
-shared_LDAP_LIBS = $(LDAP_LIBLDAP_R_LA) $(LDAP_LIBLBER_LA)
+shared_LDAP_LIBS = $(LDAP_LIBLDAP_R_LA) $(LDAP_LIBLBER_LA) \
+	$(LDAP_LIBLREWRITE_LA)
 NT_LINK_LIBS = -L.. -lslapd $(@BUILD_LIBS_DYNAMIC@_LDAP_LIBS)
 UNIX_LINK_LIBS = $(@BUILD_LIBS_DYNAMIC@_LDAP_LIBS)
 

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.27.2.5 2004/03/17 20:59:58 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.35.2.7 2005/05/06 16:42:52 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2004 The OpenLDAP Foundation.
+ * Copyright 1999-2005 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -28,52 +28,45 @@
 #include <ac/socket.h>
 
 #include "slap.h"
+#include "lutil.h"
 #include "../back-ldap/back-ldap.h"
 #undef ldap_debug       /* silence a warning in ldap-int.h */
 #include "../../../libraries/libldap/ldap-int.h"
 #include "back-meta.h"
 
-static struct metatarget *
-new_target( void )
+static int
+new_target( 
+	metatarget_t	*mt )
 {
-	struct metatarget *lt;
-        struct ldapmapping *mapping;
+        struct ldapmapping	*mapping;
+	char			*rargv[ 3 ];
 
-	lt = ch_calloc( sizeof( struct metatarget ), 1 );
-	if ( lt == NULL ) {
-		return NULL;
+	memset( mt, 0, sizeof( metatarget_t ) );
+
+	mt->mt_rwmap.rwm_rw = rewrite_info_init( REWRITE_MODE_USE_DEFAULT );
+	if ( mt->mt_rwmap.rwm_rw == NULL ) {
+                return -1;
 	}
 
-	lt->rwmap.rwm_rw = rewrite_info_init( REWRITE_MODE_USE_DEFAULT );
-	if ( lt->rwmap.rwm_rw == NULL ) {
-		free( lt );
-                return NULL;
-	}
 
-	{
-		char	*rargv[3];
+	/*
+	 * the filter rewrite as a string must be disabled
+	 * by default; it can be re-enabled by adding rules;
+	 * this creates an empty rewriteContext
+	 */
+	rargv[ 0 ] = "rewriteContext";
+	rargv[ 1 ] = "searchFilter";
+	rargv[ 2 ] = NULL;
+	rewrite_parse( mt->mt_rwmap.rwm_rw, "<suffix massage>", 1, 2, rargv );
 
-		/*
-		 * the filter rewrite as a string must be disabled
-		 * by default; it can be re-enabled by adding rules;
-		 * this creates an empty rewriteContext
-		 */
-		rargv[ 0 ] = "rewriteContext";
-		rargv[ 1 ] = "searchFilter";
-		rargv[ 2 ] = NULL;
-		rewrite_parse( lt->rwmap.rwm_rw, "<suffix massage>", 
-				1, 2, rargv );
+	rargv[ 0 ] = "rewriteContext";
+	rargv[ 1 ] = "default";
+	rargv[ 2 ] = NULL;
+	rewrite_parse( mt->mt_rwmap.rwm_rw, "<suffix massage>", 1, 2, rargv );
 
-		rargv[ 0 ] = "rewriteContext";
-		rargv[ 1 ] = "default";
-		rargv[ 2 ] = NULL;
-		rewrite_parse( lt->rwmap.rwm_rw, "<suffix massage>", 
-				1, 2, rargv );
-	}
+	ldap_back_map_init( &mt->mt_rwmap.rwm_at, &mapping );
 
-	ldap_back_map_init( &lt->rwmap.rwm_at, &mapping );
-
-	return lt;
+	return 0;
 }
 
 int
@@ -85,9 +78,9 @@ meta_back_db_config(
 		char		**argv
 )
 {
-	struct metainfo *li = ( struct metainfo * )be->be_private;
+	metainfo_t	*mi = ( metainfo_t * )be->be_private;
 
-	if ( li == NULL ) {
+	if ( mi == NULL ) {
 		fprintf( stderr, 
 	"%s: line %d: meta backend info is null!\n",
 		    fname, lineno );
@@ -96,7 +89,7 @@ meta_back_db_config(
 
 	/* URI of server to query */
 	if ( strcasecmp( argv[ 0 ], "uri" ) == 0 ) {
-		int 		i = li->ntargets;
+		int 		i = mi->mi_ntargets;
 #if 0
 		int 		j;
 #endif /* uncomment if uri MUST be a branch of suffix */
@@ -112,11 +105,11 @@ meta_back_db_config(
 			return 1;
 		}
 		
-		++li->ntargets;
+		++mi->mi_ntargets;
 
-		li->targets = ch_realloc( li->targets, 
-			sizeof( struct metatarget *)*li->ntargets );
-		if ( li->targets == NULL ) {
+		mi->mi_targets = ( metatarget_t * )ch_realloc( mi->mi_targets, 
+			sizeof( metatarget_t ) * mi->mi_ntargets );
+		if ( mi->mi_targets == NULL ) {
 			fprintf( stderr,
 	"%s: line %d: out of memory while storing server name"
 	" in \"uri <protocol>://<server>[:port]/<naming context>\" line\n",
@@ -124,13 +117,17 @@ meta_back_db_config(
 			return 1;
 		}
 
-		if ( ( li->targets[ i ] = new_target() ) == NULL ) {
+		if ( new_target( &mi->mi_targets[ i ] ) != 0 ) {
 			fprintf( stderr,
 	"%s: line %d: unable to init server"
 	" in \"uri <protocol>://<server>[:port]/<naming context>\" line\n",
 				fname, lineno );
 			return 1;
 		}
+
+		mi->mi_targets[ i ].mt_nretries = mi->mi_nretries;
+		mi->mi_targets[ i ].mt_flags = mi->flags;
+		mi->mi_targets[ i ].mt_version = mi->mi_version;
 
 		/*
 		 * uri MUST be legal!
@@ -160,8 +157,8 @@ meta_back_db_config(
 		dn.bv_val = ludp->lud_dn;
 		dn.bv_len = strlen( ludp->lud_dn );
 
-		rc = dnPrettyNormal( NULL, &dn, &li->targets[ i ]->psuffix,
-			&li->targets[ i ]->suffix, NULL );
+		rc = dnPrettyNormal( NULL, &dn, &mi->mi_targets[ i ].mt_psuffix,
+			&mi->mi_targets[ i ].mt_nsuffix, NULL );
 		if( rc != LDAP_SUCCESS ) {
 			fprintf( stderr, "%s: line %d: "
 					"target '%s' DN is invalid\n",
@@ -171,7 +168,8 @@ meta_back_db_config(
 
 		ludp->lud_dn[ 0 ] = '\0';
 
-		for ( tmpludp = ludp->lud_next; tmpludp; tmpludp = tmpludp->lud_next ) {
+		/* check all, to apply the scope check on the first one */
+		for ( tmpludp = ludp; tmpludp; tmpludp = tmpludp->lud_next ) {
 			if ( tmpludp->lud_dn != NULL && tmpludp->lud_dn[ 0 ] != '\0' ) {
 				fprintf( stderr, "%s: line %d: "
 						"multiple URIs must have "
@@ -180,11 +178,15 @@ meta_back_db_config(
 				return( 1 );
 
 			}
+
+			if ( tmpludp->lud_scope == LDAP_SCOPE_BASE ) {
+				tmpludp->lud_scope = LDAP_SCOPE_DEFAULT;
+			}
 		}
 
-		li->targets[ i ]->uri = ldap_url_list2urls( ludp );
+		mi->mi_targets[ i ].mt_uri = ldap_url_list2urls( ludp );
 		ldap_free_urllist( ludp );
-		if ( li->targets[ i ]->uri == NULL) {
+		if ( mi->mi_targets[ i ].mt_uri == NULL) {
 			fprintf( stderr, "%s: line %d: no memory?\n",
 					fname, lineno );
 			return( 1 );
@@ -194,7 +196,7 @@ meta_back_db_config(
 		 * uri MUST be a branch of suffix!
 		 */
 #if 0 /* too strict a constraint */
-		if ( select_backend( &li->targets[ i ]->suffix, 0, 0 ) != be ) {
+		if ( select_backend( &mi->mi_targets[ i ].suffix, 0, 0 ) != be ) {
 			fprintf( stderr,
 	"%s: line %d: <naming context> of URI does not refer to current backend"
 	" in \"uri <protocol>://<server>[:port]/<naming context>\" line\n",
@@ -205,7 +207,7 @@ meta_back_db_config(
 		/*
 		 * uri MUST be a branch of a suffix!
 		 */
-		if ( select_backend( &li->targets[ i ]->suffix, 0, 0 ) == NULL ) {
+		if ( select_backend( &mi->mi_targets[ i ].mt_nsuffix, 0, 0 ) == NULL ) {
 			fprintf( stderr,
 	"%s: line %d: <naming context> of URI does not resolve to a backend"
 	" in \"uri <protocol>://<server>[:port]/<naming context>\" line\n",
@@ -214,34 +216,9 @@ meta_back_db_config(
 		}
 #endif
 
-#if 0
-		/*
-		 * uri MUST not be used by other URIs!
-		 *
-		 * FIXME: this limitation may be removed,
-		 * or worked out, at least, in some manner
-		 */
-		for ( j = 0; j < i-1; j++ ) {
-			if ( dn_match( &li->targets[ i ]->suffix,
-					&li->targets[ j ]->suffix ) ) {
-				fprintf( stderr,
-	"%s: line %d: naming context \"%s\" already used"
-	" in \"uri <protocol>://<server>[:port]/<naming context>\" line\n",
-					fname, lineno, last+1 );
-				return 1;
-			}
-		}
-#endif
-
-#if 0
-		fprintf(stderr, "%s: line %d: URI \"%s\", suffix \"%s\"\n",
-			fname, lineno, li->targets[ i ]->uri, 
-			li->targets[ i ]->psuffix.bv_val );
-#endif
-		
 	/* default target directive */
 	} else if ( strcasecmp( argv[ 0 ], "default-target" ) == 0 ) {
-		int 		i = li->ntargets-1;
+		int 		i = mi->mi_ntargets - 1;
 		
 		if ( argc == 1 ) {
  			if ( i < 0 ) {
@@ -251,7 +228,7 @@ meta_back_db_config(
 					fname, lineno );
 				return 1;
 			}
-			li->defaulttarget = i;
+			mi->mi_defaulttarget = i;
 		} else {
 			if ( strcasecmp( argv[ 1 ], "none" ) == 0 ) {
 				if ( i >= 0 ) {
@@ -260,16 +237,18 @@ meta_back_db_config(
        	" should go before uri definitions\n",
 						fname, lineno );
 				}
-				li->defaulttarget = META_DEFAULT_TARGET_NONE;
+				mi->mi_defaulttarget = META_DEFAULT_TARGET_NONE;
+
 			} else {
-				int n = atoi( argv[ 1 ] );
-				if ( n < 1 || n >= i ) {
+				char	*next;
+				int	n = strtol( argv[ 1 ], &next, 10 );
+				if ( n < 0 || n >= i - 1 ) {
 					fprintf( stderr,
 	"%s: line %d: illegal target number %d\n",
 						fname, lineno, n );
 					return 1;
 				}
-				li->defaulttarget = n-1;
+				mi->mi_defaulttarget = n;
 			}
 		}
 		
@@ -283,11 +262,11 @@ meta_back_db_config(
 		}
 		
 		if ( strcasecmp( argv[ 1 ], "forever" ) == 0 ) {
-			li->cache.ttl = META_DNCACHE_FOREVER;
+			mi->mi_cache.ttl = META_DNCACHE_FOREVER;
 		} else if ( strcasecmp( argv[ 1 ], "disabled" ) == 0 ) {
-			li->cache.ttl = META_DNCACHE_DISABLED;
+			mi->mi_cache.ttl = META_DNCACHE_DISABLED;
 		} else {
-			li->cache.ttl = atol( argv[ 1 ] );
+			mi->mi_cache.ttl = atol( argv[ 1 ] );
 		}
 
 	/* network timeout when connecting to ldap servers */
@@ -298,11 +277,13 @@ meta_back_db_config(
 				fname, lineno );
 			return 1;
 		}
-		li->network_timeout = atol(argv[ 1 ]);
+		mi->mi_network_timeout = atol(argv[ 1 ]);
 
 	/* name to use for meta_back_group */
-	} else if ( strcasecmp( argv[ 0 ], "binddn" ) == 0 ) {
-		int 		i = li->ntargets-1;
+	} else if ( strcasecmp( argv[ 0 ], "acl-authcDN" ) == 0
+			|| strcasecmp( argv[ 0 ], "binddn" ) == 0 )
+	{
+		int 		i = mi->mi_ntargets - 1;
 		struct berval	dn;
 
 		if ( i < 0 ) {
@@ -319,9 +300,17 @@ meta_back_db_config(
 			return 1;
 		}
 
+		if ( strcasecmp( argv[ 0 ], "binddn" ) == 0 ) {
+			fprintf( stderr, "%s: line %d: "
+				"\"binddn\" statement is deprecated; "
+				"use \"acl-authcDN\" instead\n",
+				fname, lineno );
+			/* FIXME: some day we'll need to throw an error */
+		}
+
 		dn.bv_val = argv[ 1 ];
 		dn.bv_len = strlen( argv[ 1 ] );
-		if ( dnNormalize( 0, NULL, NULL, &dn, &li->targets[ i ]->binddn,
+		if ( dnNormalize( 0, NULL, NULL, &dn, &mi->mi_targets[ i ].mt_binddn,
 			NULL ) != LDAP_SUCCESS )
 		{
 			fprintf( stderr, "%s: line %d: "
@@ -331,8 +320,10 @@ meta_back_db_config(
 		}
 
 	/* password to use for meta_back_group */
-	} else if ( strcasecmp( argv[ 0 ], "bindpw" ) == 0 ) {
-		int 		i = li->ntargets-1;
+	} else if ( strcasecmp( argv[ 0 ], "acl-passwd" ) == 0
+			|| strcasecmp( argv[ 0 ], "bindpw" ) == 0 )
+	{
+		int 		i = mi->mi_ntargets - 1;
 
 		if ( i < 0 ) {
 			fprintf( stderr,
@@ -347,21 +338,122 @@ meta_back_db_config(
 			    fname, lineno );
 			return 1;
 		}
-		ber_str2bv( argv[ 1 ], 0L, 1, &li->targets[ i ]->bindpw );
+
+		if ( strcasecmp( argv[ 0 ], "bindpw" ) == 0 ) {
+			fprintf( stderr, "%s: line %d: "
+				"\"bindpw\" statement is deprecated; "
+				"use \"acl-passwd\" instead\n",
+				fname, lineno );
+			/* FIXME: some day we'll need to throw an error */
+		}
+
+		ber_str2bv( argv[ 1 ], 0L, 1, &mi->mi_targets[ i ].mt_bindpw );
 		
 	/* save bind creds for referral rebinds? */
-	} else if ( strcasecmp( argv[0], "rebind-as-user" ) == 0 ) {
+	} else if ( strcasecmp( argv[ 0 ], "rebind-as-user" ) == 0 ) {
 		if (argc != 1) {
 			fprintf( stderr,
 	"%s: line %d: rebind-as-user takes no arguments\n",
 			    fname, lineno );
 			return( 1 );
 		}
-		li->savecred = 1;
+
+		mi->flags |= LDAP_BACK_F_SAVECRED;
+
+	} else if ( strcasecmp( argv[ 0 ], "chase-referrals" ) == 0 ) {
+		unsigned	*flagsp = mi->mi_ntargets ?
+				&mi->mi_targets[ mi->mi_ntargets - 1 ].mt_flags
+				: &mi->flags;
+
+		if ( argc != 2 ) {
+			fprintf( stderr,
+	"%s: line %d: \"chase-referrals\" needs 1 argument.\n",
+					fname, lineno );
+			return( 1 );
+		}
+
+		/* this is the default; we add it because the default might change... */
+		if ( strcasecmp( argv[ 1 ], "yes" ) == 0 ) {
+			*flagsp |= LDAP_BACK_F_CHASE_REFERRALS;
+
+		} else if ( strcasecmp( argv[ 1 ], "no" ) == 0 ) {
+			*flagsp &= ~LDAP_BACK_F_CHASE_REFERRALS;
+
+		} else {
+			fprintf( stderr,
+		"%s: line %d: \"chase-referrals {yes|no}\": unknown argument \"%s\".\n",
+					fname, lineno, argv[ 1 ] );
+			return( 1 );
+		}
 	
+	} else if ( strcasecmp( argv[ 0 ], "tls" ) == 0 ) {
+		unsigned	*flagsp = mi->mi_ntargets ?
+				&mi->mi_targets[ mi->mi_ntargets - 1 ].mt_flags
+				: &mi->flags;
+
+		if ( argc != 2 ) {
+			fprintf( stderr,
+		"%s: line %d: \"tls <what>\" needs 1 argument.\n",
+					fname, lineno );
+			return( 1 );
+		}
+
+		/* start */
+		if ( strcasecmp( argv[ 1 ], "start" ) == 0 ) {
+			*flagsp |= ( LDAP_BACK_F_USE_TLS | LDAP_BACK_F_TLS_CRITICAL );
+	
+		/* try start tls */
+		} else if ( strcasecmp( argv[ 1 ], "try-start" ) == 0 ) {
+			*flagsp &= ~LDAP_BACK_F_TLS_CRITICAL;
+			*flagsp |= LDAP_BACK_F_USE_TLS;
+	
+		/* propagate start tls */
+		} else if ( strcasecmp( argv[ 1 ], "propagate" ) == 0 ) {
+			*flagsp |= ( LDAP_BACK_F_PROPAGATE_TLS | LDAP_BACK_F_TLS_CRITICAL );
+		
+		/* try start tls */
+		} else if ( strcasecmp( argv[ 1 ], "try-propagate" ) == 0 ) {
+			*flagsp &= ~LDAP_BACK_F_TLS_CRITICAL;
+			*flagsp |= LDAP_BACK_F_PROPAGATE_TLS;
+
+		} else {
+			fprintf( stderr,
+		"%s: line %d: \"tls <what>\": unknown argument \"%s\".\n",
+					fname, lineno, argv[ 1 ] );
+			return( 1 );
+		}
+
+	} else if ( strcasecmp( argv[ 0 ], "t-f-support" ) == 0 ) {
+		unsigned	*flagsp = mi->mi_ntargets ?
+				&mi->mi_targets[ mi->mi_ntargets - 1 ].mt_flags
+				: &mi->flags;
+
+		if ( argc != 2 ) {
+			fprintf( stderr,
+		"%s: line %d: \"t-f-support {no|yes|discover}\" needs 1 argument.\n",
+					fname, lineno );
+			return( 1 );
+		}
+
+		if ( strcasecmp( argv[ 1 ], "no" ) == 0 ) {
+			*flagsp &= ~(LDAP_BACK_F_SUPPORT_T_F|LDAP_BACK_F_SUPPORT_T_F_DISCOVER);
+
+		} else if ( strcasecmp( argv[ 1 ], "yes" ) == 0 ) {
+			*flagsp |= LDAP_BACK_F_SUPPORT_T_F;
+
+		} else if ( strcasecmp( argv[ 1 ], "discover" ) == 0 ) {
+			*flagsp |= LDAP_BACK_F_SUPPORT_T_F_DISCOVER;
+
+		} else {
+			fprintf( stderr,
+	"%s: line %d: unknown value \"%s\" for \"t-f-support {no|yes|discover}\".\n",
+				fname, lineno, argv[ 1 ] );
+			return 1;
+		}
+
 	/* name to use as pseudo-root dn */
 	} else if ( strcasecmp( argv[ 0 ], "pseudorootdn" ) == 0 ) {
-		int 		i = li->ntargets-1;
+		int 		i = mi->mi_ntargets - 1;
 		struct berval	dn;
 
 		if ( i < 0 ) {
@@ -381,7 +473,7 @@ meta_back_db_config(
 		dn.bv_val = argv[ 1 ];
 		dn.bv_len = strlen( argv[ 1 ] );
 		if ( dnNormalize( 0, NULL, NULL, &dn,
-			&li->targets[ i ]->pseudorootdn, NULL ) != LDAP_SUCCESS )
+			&mi->mi_targets[ i ].mt_pseudorootdn, NULL ) != LDAP_SUCCESS )
 		{
 			fprintf( stderr, "%s: line %d: "
 					"pseudoroot DN '%s' is invalid\n",
@@ -391,7 +483,7 @@ meta_back_db_config(
 
 	/* password to use as pseudo-root */
 	} else if ( strcasecmp( argv[ 0 ], "pseudorootpw" ) == 0 ) {
-		int 		i = li->ntargets-1;
+		int 		i = mi->mi_ntargets - 1;
 
 		if ( i < 0 ) {
 			fprintf( stderr,
@@ -406,12 +498,12 @@ meta_back_db_config(
 			    fname, lineno );
 			return 1;
 		}
-		ber_str2bv( argv[ 1 ], 0L, 1, &li->targets[ i ]->pseudorootpw );
+		ber_str2bv( argv[ 1 ], 0L, 1, &mi->mi_targets[ i ].mt_pseudorootpw );
 	
 	/* dn massaging */
 	} else if ( strcasecmp( argv[ 0 ], "suffixmassage" ) == 0 ) {
 		BackendDB 	*tmp_be;
-		int 		i = li->ntargets-1;
+		int 		i = mi->mi_ntargets - 1;
 		struct berval	dn, nvnc, pvnc, nrnc, prnc;
 
 		if ( i < 0 ) {
@@ -491,27 +583,26 @@ meta_back_db_config(
 		 * FIXME: no extra rewrite capabilities should be added
 		 * to the database
 		 */
-	 	return suffix_massage_config( li->targets[ i ]->rwmap.rwm_rw,
+	 	return suffix_massage_config( mi->mi_targets[ i ].mt_rwmap.rwm_rw,
 				&pvnc, &nvnc, &prnc, &nrnc );
 		
 	/* rewrite stuff ... */
  	} else if ( strncasecmp( argv[ 0 ], "rewrite", 7 ) == 0 ) {
-		int 		i = li->ntargets-1;
+		int 		i = mi->mi_ntargets - 1;
 
 		if ( i < 0 ) {
- 			if ( strcasecmp( argv[0], "rewriteEngine" ) == 0 ) {
-				li->rwinfo = rewrite_info_init( REWRITE_MODE_USE_DEFAULT );
-			}
-			return rewrite_parse(li->rwinfo, fname, lineno,
-					argc, argv); 
+			fprintf( stderr, "%s: line %d: \"rewrite\" "
+				"statement outside target definition.\n",
+				fname, lineno );
+			return 1;
 		}
 		
- 		return rewrite_parse( li->targets[ i ]->rwmap.rwm_rw, fname, lineno,
-				argc, argv );
+ 		return rewrite_parse( mi->mi_targets[ i ].mt_rwmap.rwm_rw,
+				fname, lineno, argc, argv );
 
 	/* objectclass/attribute mapping */
 	} else if ( strcasecmp( argv[ 0 ], "map" ) == 0 ) {
-		int 		i = li->ntargets-1;
+		int 		i = mi->mi_ntargets - 1;
 
 		if ( i < 0 ) {
 			fprintf( stderr,
@@ -520,13 +611,344 @@ meta_back_db_config(
 			return 1;
 		}
 
-		return ldap_back_map_config( &li->targets[ i ]->rwmap.rwm_oc, 
-				&li->targets[ i ]->rwmap.rwm_at,
+		return ldap_back_map_config( &mi->mi_targets[ i ].mt_rwmap.rwm_oc, 
+				&mi->mi_targets[ i ].mt_rwmap.rwm_at,
 				fname, lineno, argc, argv );
+
+	} else if ( strcasecmp( argv[ 0 ], "nretries" ) == 0 ) {
+		int 		i = mi->mi_ntargets - 1;
+		int		nretries = META_RETRY_UNDEFINED;
+
+		if ( argc != 2 ) {
+			fprintf( stderr,
+	"%s: line %d: need value in \"nretries <value>\"\n",
+				fname, lineno );
+			return 1;
+		}
+
+		if ( strcasecmp( argv[ 1 ], "forever" ) == 0 ) {
+			nretries = META_RETRY_FOREVER;
+
+		} else if ( strcasecmp( argv[ 1 ], "never" ) == 0 ) {
+			nretries = META_RETRY_NEVER;
+
+		} else {
+			char	*next;
+
+			nretries = strtol( argv[ 1 ], &next, 10 );
+			if ( next == argv[ 1 ] || next[ 0 ] != '\0' ) {
+				fprintf( stderr,
+	"%s: line %d: unable to parse value \"%s\" in \"nretries <value>\"\n",
+					fname, lineno, argv[ 1 ] );
+				return 1;
+			}
+		}
+
+		if ( i < 0 ) {
+			mi->mi_nretries = nretries;
+
+		} else {
+			mi->mi_targets[ i ].mt_nretries = nretries;
+		}
+
 	/* anything else */
 	} else {
 		return SLAP_CONF_UNKNOWN;
 	}
 	return 0;
 }
+
+int
+ldap_back_map_config(
+		struct ldapmap	*oc_map,
+		struct ldapmap	*at_map,
+		const char	*fname,
+		int		lineno,
+		int		argc,
+		char		**argv )
+{
+	struct ldapmap		*map;
+	struct ldapmapping	*mapping;
+	char			*src, *dst;
+	int			is_oc = 0;
+
+	if ( argc < 3 || argc > 4 ) {
+		fprintf( stderr,
+	"%s: line %d: syntax is \"map {objectclass | attribute} [<local> | *] {<foreign> | *}\"\n",
+			fname, lineno );
+		return 1;
+	}
+
+	if ( strcasecmp( argv[ 1 ], "objectclass" ) == 0 ) {
+		map = oc_map;
+		is_oc = 1;
+
+	} else if ( strcasecmp( argv[ 1 ], "attribute" ) == 0 ) {
+		map = at_map;
+
+	} else {
+		fprintf( stderr, "%s: line %d: syntax is "
+			"\"map {objectclass | attribute} [<local> | *] "
+			"{<foreign> | *}\"\n",
+			fname, lineno );
+		return 1;
+	}
+
+	if ( strcmp( argv[ 2 ], "*" ) == 0 ) {
+		if ( argc < 4 || strcmp( argv[ 3 ], "*" ) == 0 ) {
+			map->drop_missing = ( argc < 4 );
+			return 0;
+		}
+		src = dst = argv[ 3 ];
+
+	} else if ( argc < 4 ) {
+		src = "";
+		dst = argv[ 2 ];
+
+	} else {
+		src = argv[ 2 ];
+		dst = ( strcmp( argv[ 3 ], "*" ) == 0 ? src : argv[ 3 ] );
+	}
+
+	if ( ( map == at_map )
+			&& ( strcasecmp( src, "objectclass" ) == 0
+			|| strcasecmp( dst, "objectclass" ) == 0 ) )
+	{
+		fprintf( stderr,
+			"%s: line %d: objectclass attribute cannot be mapped\n",
+			fname, lineno );
+	}
+
+	mapping = (struct ldapmapping *)ch_calloc( 2,
+		sizeof(struct ldapmapping) );
+	if ( mapping == NULL ) {
+		fprintf( stderr,
+			"%s: line %d: out of memory\n",
+			fname, lineno );
+		return 1;
+	}
+	ber_str2bv( src, 0, 1, &mapping->src );
+	ber_str2bv( dst, 0, 1, &mapping->dst );
+	mapping[ 1 ].src = mapping->dst;
+	mapping[ 1 ].dst = mapping->src;
+
+	/*
+	 * schema check
+	 */
+	if ( is_oc ) {
+		if ( src[ 0 ] != '\0' ) {
+			if ( oc_bvfind( &mapping->src ) == NULL ) {
+				fprintf( stderr,
+	"%s: line %d: warning, source objectClass '%s' "
+	"should be defined in schema\n",
+					fname, lineno, src );
+
+				/*
+				 * FIXME: this should become an err
+				 */
+				goto error_return;
+			}
+		}
+
+		if ( oc_bvfind( &mapping->dst ) == NULL ) {
+			fprintf( stderr,
+	"%s: line %d: warning, destination objectClass '%s' "
+	"is not defined in schema\n",
+				fname, lineno, dst );
+		}
+	} else {
+		int			rc;
+		const char		*text = NULL;
+		AttributeDescription	*ad = NULL;
+
+		if ( src[ 0 ] != '\0' ) {
+			rc = slap_bv2ad( &mapping->src, &ad, &text );
+			if ( rc != LDAP_SUCCESS ) {
+				fprintf( stderr,
+	"%s: line %d: warning, source attributeType '%s' "
+	"should be defined in schema\n",
+					fname, lineno, src );
+
+				/*
+				 * FIXME: this should become an err
+				 */
+				goto error_return;
+			}
+
+			ad = NULL;
+		}
+
+		rc = slap_bv2ad( &mapping->dst, &ad, &text );
+		if ( rc != LDAP_SUCCESS ) {
+			fprintf( stderr,
+	"%s: line %d: warning, destination attributeType '%s' "
+	"is not defined in schema\n",
+				fname, lineno, dst );
+		}
+	}
+
+	if ( (src[ 0 ] != '\0' && avl_find( map->map, (caddr_t)mapping, mapping_cmp ) != NULL)
+			|| avl_find( map->remap, (caddr_t)&mapping[ 1 ], mapping_cmp ) != NULL)
+	{
+		fprintf( stderr,
+			"%s: line %d: duplicate mapping found" SLAPD_CONF_UNKNOWN_IGNORED ".\n",
+			fname, lineno );
+		goto error_return;
+	}
+
+	if ( src[ 0 ] != '\0' ) {
+		avl_insert( &map->map, (caddr_t)mapping,
+					mapping_cmp, mapping_dup );
+	}
+	avl_insert( &map->remap, (caddr_t)&mapping[ 1 ],
+				mapping_cmp, mapping_dup );
+
+	return 0;
+
+error_return:;
+	if ( mapping ) {
+		ch_free( mapping->src.bv_val );
+		ch_free( mapping->dst.bv_val );
+		ch_free( mapping );
+	}
+
+	return 1;
+}
+
+
+#ifdef ENABLE_REWRITE
+static char *
+suffix_massage_regexize( const char *s )
+{
+	char *res, *ptr;
+	const char *p, *r;
+	int i;
+
+	for ( i = 0, p = s; 
+			( r = strchr( p, ',' ) ) != NULL; 
+			p = r + 1, i++ )
+		;
+
+	res = ch_calloc( sizeof( char ),
+			strlen( s )
+			+ STRLENOF( "(.+,)?" )
+			+ STRLENOF( "[ ]?" ) * i + 1 );
+
+	ptr = lutil_strcopy( res, "(.+,)?" );
+	for ( i = 0, p = s;
+			( r = strchr( p, ',' ) ) != NULL;
+			p = r + 1 , i++ ) {
+		ptr = lutil_strncopy( ptr, p, r - p + 1 );
+		ptr = lutil_strcopy( ptr, "[ ]?" );
+
+		if ( r[ 1 ] == ' ' ) {
+			r++;
+		}
+	}
+	lutil_strcopy( ptr, p );
+
+	return res;
+}
+
+static char *
+suffix_massage_patternize( const char *s )
+{
+	ber_len_t	len;
+	char		*res;
+
+	len = strlen( s );
+
+	res = ch_calloc( sizeof( char ), len + STRLENOF( "%1" ) + 1 );
+	if ( res == NULL ) {
+		return NULL;
+	}
+
+	strcpy( res, "%1" );
+	strcpy( &res[ STRLENOF( "%1" ) ], s );
+
+	return res;
+}
+
+int
+suffix_massage_config( 
+		struct rewrite_info *info,
+		struct berval *pvnc,
+		struct berval *nvnc,
+		struct berval *prnc,
+		struct berval *nrnc
+)
+{
+	char *rargv[ 5 ];
+	int line = 0;
+
+	rargv[ 0 ] = "rewriteEngine";
+	rargv[ 1 ] = "on";
+	rargv[ 2 ] = NULL;
+	rewrite_parse( info, "<suffix massage>", ++line, 2, rargv );
+
+	rargv[ 0 ] = "rewriteContext";
+	rargv[ 1 ] = "default";
+	rargv[ 2 ] = NULL;
+	rewrite_parse( info, "<suffix massage>", ++line, 2, rargv );
+
+	rargv[ 0 ] = "rewriteRule";
+	rargv[ 1 ] = suffix_massage_regexize( pvnc->bv_val );
+	rargv[ 2 ] = suffix_massage_patternize( prnc->bv_val );
+	rargv[ 3 ] = ":";
+	rargv[ 4 ] = NULL;
+	rewrite_parse( info, "<suffix massage>", ++line, 4, rargv );
+	ch_free( rargv[ 1 ] );
+	ch_free( rargv[ 2 ] );
+	
+	rargv[ 0 ] = "rewriteContext";
+	rargv[ 1 ] = "searchEntryDN";
+	rargv[ 2 ] = NULL;
+	rewrite_parse( info, "<suffix massage>", ++line, 2, rargv );
+
+	rargv[ 0 ] = "rewriteRule";
+	rargv[ 1 ] = suffix_massage_regexize( prnc->bv_val );
+	rargv[ 2 ] = suffix_massage_patternize( pvnc->bv_val );
+	rargv[ 3 ] = ":";
+	rargv[ 4 ] = NULL;
+	rewrite_parse( info, "<suffix massage>", ++line, 4, rargv );
+	ch_free( rargv[ 1 ] );
+	ch_free( rargv[ 2 ] );
+
+	/* backward compatibility */
+	rargv[ 0 ] = "rewriteContext";
+	rargv[ 1 ] = "searchResult";
+	rargv[ 2 ] = "alias";
+	rargv[ 3 ] = "searchEntryDN";
+	rargv[ 4 ] = NULL;
+	rewrite_parse( info, "<suffix massage>", ++line, 4, rargv );
+	
+	rargv[ 0 ] = "rewriteContext";
+	rargv[ 1 ] = "matchedDN";
+	rargv[ 2 ] = "alias";
+	rargv[ 3 ] = "searchEntryDN";
+	rargv[ 4 ] = NULL;
+	rewrite_parse( info, "<suffix massage>", ++line, 4, rargv );
+
+	rargv[ 0 ] = "rewriteContext";
+	rargv[ 1 ] = "searchAttrDN";
+	rargv[ 2 ] = "alias";
+	rargv[ 3 ] = "searchEntryDN";
+	rargv[ 4 ] = NULL;
+	rewrite_parse( info, "<suffix massage>", ++line, 4, rargv );
+
+	/* NOTE: this corresponds to #undef'ining RWM_REFERRAL_REWRITE;
+	 * see servers/slapd/overlays/rwm.h for details */
+        rargv[ 0 ] = "rewriteContext";
+	rargv[ 1 ] = "referralAttrDN";
+	rargv[ 2 ] = NULL;
+	rewrite_parse( info, "<suffix massage>", ++line, 2, rargv );
+
+	rargv[ 0 ] = "rewriteContext";
+	rargv[ 1 ] = "referralDN";
+	rargv[ 2 ] = NULL;
+	rewrite_parse( info, "<suffix massage>", ++line, 2, rargv );
+	
+	return 0;
+}
+#endif /* ENABLE_REWRITE */
 

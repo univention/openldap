@@ -1,6 +1,6 @@
 .TH SLAPINDEX 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man8/slapindex.8,v 1.8.2.2 2004/01/01 18:16:27 kurt Exp $
-.\" Copyright 1998-2004 The OpenLDAP Foundation All Rights Reserved.
+.\" $OpenLDAP: pkg/ldap/doc/man/man8/slapindex.8,v 1.10.2.2 2005/03/14 22:24:56 kurt Exp $
+.\" Copyright 1998-2005 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 slapindex \- SLAPD index to LDIF utility
@@ -8,6 +8,7 @@ slapindex \- SLAPD index to LDIF utility
 .B SBINDIR/slapindex
 .B [\-v]
 .B [\-c]
+.B [\-q]
 .B [\-d level]
 .B [\-b suffix]
 .B [\-n dbnum]
@@ -30,6 +31,11 @@ enable verbose mode.
 .TP
 .B \-c
 enable continue (ignore errors) mode.
+.TP
+.B \-q
+enable quick (fewer integrity checks) mode. Performs no consistency checks
+when writing the database. Improves indexing time, but if any errors or
+interruptions occur the database will most likely be unusable.
 .TP
 .BI \-d " level"
 enable debugging messages as defined by the specified

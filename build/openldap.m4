@@ -1,8 +1,8 @@
 dnl OpenLDAP Autoconf Macros
-dnl $OpenLDAP: pkg/ldap/build/openldap.m4,v 1.124.2.8 2004/04/21 19:16:40 kurt Exp $
+dnl $OpenLDAP: pkg/ldap/build/openldap.m4,v 1.140.2.4 2005/04/29 21:28:58 kurt Exp $
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
-dnl Copyright 1998-2004 The OpenLDAP Foundation.
+dnl Copyright 1998-2005 The OpenLDAP Foundation.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -247,6 +247,75 @@ fi
 ])
 dnl
 dnl ====================================================================
+dnl DNS resolver macros
+AC_DEFUN([OL_RESOLVER_TRY],
+[if test $ol_cv_lib_resolver = no ; then
+	AC_CACHE_CHECK([for resolver link (]ifelse($2,,default,$2)[)],[$1],
+[
+	ol_RESOLVER_LIB=ifelse($2,,,$2)
+	ol_LIBS=$LIBS
+	LIBS="$ol_RESOLVER_LIB $LIBS"
+
+	AC_TRY_LINK([
+#ifdef HAVE_SYS_TYPES_H
+#	include <sys/types.h>
+#endif
+#include <netinet/in.h>
+#ifdef HAVE_ARPA_NAMESER_H
+#	include <arpa/nameser.h>
+#endif
+#ifdef HAVE_RESOLV_H
+#	include <resolv.h>
+#endif
+],[{
+	int len, status;
+	char *request = NULL;
+	unsigned char reply[64*1024];
+	unsigned char host[64*1024];
+	unsigned char *p;
+
+#ifdef NS_HFIXEDSZ
+	/* Bind 8/9 interface */
+	len = res_query(request, ns_c_in, ns_t_srv, reply, sizeof(reply));
+#else
+	/* Bind 4 interface */
+# ifndef T_SRV
+#  define T_SRV 33
+# endif
+	len = res_query(request, C_IN, T_SRV, reply, sizeof(reply));
+#endif
+	p = reply;
+#ifdef NS_HFIXEDSZ
+	/* Bind 8/9 interface */
+	p += NS_HFIXEDSZ;
+#elif defined(HFIXEDSZ)
+	/* Bind 4 interface w/ HFIXEDSZ */
+	p += HFIXEDSZ;
+#else
+	/* Bind 4 interface w/o HFIXEDSZ */
+	p += sizeof(HEADER);
+#endif
+	status = dn_expand( reply, reply+len, p, host, sizeof(host));
+}],[$1=yes],[$1=no])
+
+	LIBS="$ol_LIBS"
+])
+
+	if test $$1 = yes ; then
+		ol_cv_lib_resolver=ifelse($2,,yes,$2)
+	fi
+fi
+])
+dnl --------------------------------------------------------------------
+dnl Try to locate appropriate library
+AC_DEFUN([OL_RESOLVER_LINK],
+[ol_cv_lib_resolver=no
+OL_RESOLVER_TRY(ol_cv_resolver_none)
+OL_RESOLVER_TRY(ol_cv_resolver_resolv,[-lresolv])
+OL_RESOLVER_TRY(ol_cv_resolver_bind,[-lbind])
+])
+dnl
+dnl ====================================================================
 dnl Berkeley DB macros
 dnl
 dnl --------------------------------------------------------------------
@@ -285,7 +354,7 @@ AC_DEFUN([OL_BERKELEY_DB_TRY],
 			minor < DB_VERSION_MINOR )
 		{
 			printf("Berkeley DB version mismatch\n"
-				"\texpected: %s\n\tgot: %s\n",
+				"\theader: %s\n\tlibrary: %s\n",
 				DB_VERSION_STRING, version);
 			return 1;
 		}
@@ -315,6 +384,10 @@ dnl Try to locate appropriate library
 AC_DEFUN([OL_BERKELEY_DB_LINK],
 [ol_cv_lib_db=no
 OL_BERKELEY_DB_TRY(ol_cv_db_none)
+OL_BERKELEY_DB_TRY(ol_cv_db_db43,[-ldb43])
+OL_BERKELEY_DB_TRY(ol_cv_db_db_43,[-ldb-43])
+OL_BERKELEY_DB_TRY(ol_cv_db_db_4_dot_3,[-ldb-4.3])
+OL_BERKELEY_DB_TRY(ol_cv_db_db_4_3,[-ldb-4-3])
 OL_BERKELEY_DB_TRY(ol_cv_db_db42,[-ldb42])
 OL_BERKELEY_DB_TRY(ol_cv_db_db_42,[-ldb-42])
 OL_BERKELEY_DB_TRY(ol_cv_db_db_4_dot_2,[-ldb-4.2])
@@ -364,9 +437,12 @@ main()
 
 	version = db_version( &major, &minor, &patch );
 
-	if( major != DB_VERSION_MAJOR || minor < DB_VERSION_MINOR ) {
+	if( major != DB_VERSION_MAJOR ||
+		minor != DB_VERSION_MINOR ||
+		patch != DB_VERSION_PATCH )
+	{
 		printf("Berkeley DB version mismatch\n"
-			"\texpected: %s\n\tgot: %s\n",
+			"\theader: %s\n\tlibrary: %s\n",
 			DB_VERSION_STRING, version);
 		return 1;
 	}
@@ -971,6 +1047,8 @@ fi
 ])
 dnl
 dnl ====================================================================
+dnl Error string checks
+dnl
 dnl Check for declaration of sys_errlist in one of stdio.h and errno.h.
 dnl Declaration of sys_errlist on BSD4.4 interferes with our declaration.
 dnl Reported by Keith Bostic.
@@ -1004,7 +1082,45 @@ if test $ol_cv_have_sys_errlist = yes ; then
 		[define if you actually have sys_errlist in your libs])
 fi
 ])dnl
+AC_DEFUN([OL_NONPOSIX_STRERROR_R],
+[AC_CACHE_CHECK([non-posix strerror_r],ol_cv_nonposix_strerror_r,[
+	AC_EGREP_CPP(strerror_r,[#include <string.h>],
+		ol_decl_strerror_r=yes, ol_decl_strerror_r=no)dnl
+
+	if test $ol_decl_strerror_r = yes ; then
+		AC_TRY_COMPILE([#include <string.h>],
+			[   /* from autoconf 2.59 */
+				char buf[100];
+				char x = *strerror_r (0, buf, sizeof buf);
+				char *p = strerror_r (0, buf, sizeof buf);
+			], ol_cv_nonposix_strerror_r=yes, ol_cv_nonposix_strerror_r=no)
+	else
+		AC_TRY_RUN([
+			main() {
+				char buf[100];
+				buf[0] = 0;
+				strerror_r( 1, buf, sizeof buf );
+				exit( buf[0] == 0 );
+			}
+			], ol_cv_nonposix_strerror_r=yes, ol_cv_nonposix_strerror=no, ol_cv_nonposix_strerror=no)
+	fi
+	])
+if test $ol_cv_nonposix_strerror_r = yes ; then
+	AC_DEFINE(HAVE_NONPOSIX_STRERROR_R,1,
+		[define if strerror_r returns char* instead of int])
+fi
+])dnl
 dnl
+AC_DEFUN([OL_STRERROR],
+[OL_SYS_ERRLIST dnl TEMPORARY
+AC_CHECK_FUNCS(strerror strerror_r)
+ol_cv_func_strerror_r=no
+if test "${ac_cv_func_strerror_r}" = yes ; then
+	OL_NONPOSIX_STRERROR_R
+elif test "${ac_cv_func_strerror}" = no ; then
+	OL_SYS_ERRLIST
+fi
+])dnl
 dnl ====================================================================
 dnl Early MIPS compilers (used in Ultrix 4.2) don't like
 dnl "int x; int *volatile a = &x; *a = 0;"
@@ -1287,3 +1403,31 @@ AC_DEFUN(OL_MSGHDR_MSG_ACCRIGHTS,
 		[define if struct msghdr has msg_accrights])
   fi
 ])dnl
+dnl ====================================================================
+dnl check for cmsghdr
+AC_DEFUN(OL_MSGHDR_MSG_CONTROL,
+ [AC_CACHE_CHECK(for msg_control in msghdr, ol_cv_msghdr_msg_control,
+   [AC_TRY_COMPILE([#include <sys/socket.h>],
+		[struct msghdr m; m.msg_control=(struct cmsghdr *)0],
+		ol_cv_msghdr_msg_control=yes, ol_cv_msghdr_msg_control=no)
+	])
+  if test $ol_cv_msghdr_msg_control = "yes" ; then
+	AC_DEFINE(HAVE_MSGHDR_MSG_CONTROL,1,
+		[define if struct msghdr has msg_control])
+  fi
+])dnl
+AC_DEFUN([OL_SSL_COMPAT],
+[AC_CACHE_CHECK([OpenSSL library version (CRL checking capability)], [ol_cv_ssl_crl_compat],[
+	AC_EGREP_CPP(__ssl_compat,[
+#ifdef HAVE_OPENSSL_SSL_H
+#include <openssl/ssl.h>
+#else
+#include <ssl.h>
+#endif
+
+/* Require 0.9.7d+ */
+#if OPENSSL_VERSION_NUMBER >= 0x0090704fL
+	char *__ssl_compat = "0.9.7d";
+#endif
+	],	[ol_cv_ssl_crl_compat=yes], [ol_cv_ssl_crl_compat=no])])
+])

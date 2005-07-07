@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/getdn.c,v 1.112.2.7 2004/07/16 19:51:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/getdn.c,v 1.124.2.1 2005/01/20 18:03:50 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,6 @@
 /* extension to UFN that turns trailing "dc=value" rdns in DNS style,
  * e.g. "ou=People,dc=openldap,dc=org" => "People, openldap.org" */
 #define DC_IN_UFN
-#define PRETTY_ESCAPE
 
 /* parsing/printing routines */
 static int str2strval( const char *str, ber_len_t stoplen, struct berval *val, 
@@ -90,11 +89,7 @@ ldap_get_dn( LDAP *ld, LDAPMessage *entry )
 	char		*dn;
 	BerElement	tmp;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "ldap_get_dn\n", 0, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_get_dn\n", 0, 0, 0 );
-#endif
 
 	assert( ld != NULL );
 	assert( LDAP_VALID(ld) );
@@ -117,11 +112,7 @@ ldap_get_dn_ber( LDAP *ld, LDAPMessage *entry, BerElement **berout,
 	ber_len_t	len = 0;
 	int rc = LDAP_SUCCESS;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "ldap_get_dn_ber\n", 0, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_get_dn_ber\n", 0, 0, 0 );
-#endif
 
 	assert( ld != NULL );
 	assert( LDAP_VALID(ld) );
@@ -168,11 +159,7 @@ ldap_dn2ufn( LDAP_CONST char *dn )
 {
 	char	*out = NULL;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "ldap_dn2ufn\n", 0, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_dn2ufn\n", 0, 0, 0 );
-#endif
 
 	( void )ldap_dn_normalize( dn, LDAP_DN_FORMAT_LDAP, 
 		&out, LDAP_DN_FORMAT_UFN );
@@ -191,11 +178,7 @@ ldap_explode_dn( LDAP_CONST char *dn, int notypes )
 	int	iRDN;
 	unsigned flag = notypes ? LDAP_DN_FORMAT_UFN : LDAP_DN_FORMAT_LDAPV3;
 	
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "ldap_explode_dn\n", 0, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_explode_dn\n", 0, 0, 0 );
-#endif
 
 	if ( ldap_str2dn( dn, &tmpDN, LDAP_DN_FORMAT_LDAP ) 
 			!= LDAP_SUCCESS ) {
@@ -235,11 +218,7 @@ ldap_explode_rdn( LDAP_CONST char *rdn, int notypes )
 	const char 	*p;
 	int		iAVA;
 	
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "ldap_explode_rdn\n", 0, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_explode_rdn\n", 0, 0, 0 );
-#endif
 
 	/*
 	 * we only parse the first rdn
@@ -320,11 +299,7 @@ ldap_dn2dcedn( LDAP_CONST char *dn )
 {
 	char	*out = NULL;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "ldap_dn2dcedn\n", 0, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_dn2dcedn\n", 0, 0, 0 );
-#endif
 
 	( void )ldap_dn_normalize( dn, LDAP_DN_FORMAT_LDAP, 
 				   &out, LDAP_DN_FORMAT_DCE );
@@ -337,11 +312,7 @@ ldap_dcedn2dn( LDAP_CONST char *dce )
 {
 	char	*out = NULL;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "ldap_dcedn2dn\n", 0, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_dcedn2dn\n", 0, 0, 0 );
-#endif
 
 	( void )ldap_dn_normalize( dce, LDAP_DN_FORMAT_DCE, &out, LDAP_DN_FORMAT_LDAPV3 );
 
@@ -353,11 +324,7 @@ ldap_dn2ad_canonical( LDAP_CONST char *dn )
 {
 	char	*out = NULL;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "ldap_dn2ad_canonical\n", 0, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_dn2ad_canonical\n", 0, 0, 0 );
-#endif
 
 	( void )ldap_dn_normalize( dn, LDAP_DN_FORMAT_LDAP, 
 		       &out, LDAP_DN_FORMAT_AD_CANONICAL );
@@ -389,11 +356,7 @@ ldap_dn_normalize( LDAP_CONST char *dnin,
 	int	rc;
 	LDAPDN	tmpDN = NULL;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "ldap_dn_normalize\n", 0, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_dn_normalize\n", 0, 0, 0 );
-#endif
 
 	assert( dnout );
 
@@ -475,10 +438,9 @@ ldap_dn_normalize( LDAP_CONST char *dnin,
  * as "\=", but it is treated as a regular char, i.e. it can also 
  * appear as '='.
  *
- * As such, we currently choose to allow reading unescaped '=',
- * but we always produce escaped '\3D'; this may change in the
- * future, if compatibility issues do not arise */
-#ifdef LDAP_DEVEL
+ * As such, in 2.2 we used to allow reading unescaped '=',
+ * but we always produced escaped '\3D'; this changes 
+ * since 2.3, if compatibility issues do not arise */
 #define LDAP_DN_NE(c) \
 	( LDAP_DN_RDN_SEP_V2(c) || LDAP_DN_AVA_SEP(c) \
 	  || LDAP_DN_QUOTES(c) \
@@ -488,17 +450,7 @@ ldap_dn_normalize( LDAP_CONST char *dnin,
 	  || LDAP_DN_AVA_EQUALS(c) \
 	  || LDAP_DN_ASCII_SPACE(c) || LDAP_DN_OCTOTHORPE(c) )
 #define LDAP_DN_SHOULDESCAPE(c)		( LDAP_DN_AVA_EQUALS(c) )
-#else /* ! LDAP_DEVEL */
-#define LDAP_DN_NE(c) \
-	( LDAP_DN_RDN_SEP_V2(c) || LDAP_DN_AVA_SEP(c) \
-	  || LDAP_DN_AVA_EQUALS(c) || LDAP_DN_QUOTES(c) \
-	  || (c) == '<' || (c) == '>' )
-#define LDAP_DN_MAYESCAPE(c) \
-	( LDAP_DN_ESCAPE(c) || LDAP_DN_NE(c) \
-	  || LDAP_DN_ASCII_SPACE(c) || LDAP_DN_OCTOTHORPE(c) )
-#define LDAP_DN_SHOULDESCAPE(c)		( 0 )
-#endif /* ! LDAP_DEVEL */
-	
+
 #define LDAP_DN_NEEDESCAPE(c) \
 	( LDAP_DN_ESCAPE(c) || LDAP_DN_NE(c) )
 #define LDAP_DN_NEEDESCAPE_LEAD(c) 	LDAP_DN_MAYESCAPE(c)
@@ -736,7 +688,7 @@ ldap_bv2dn( struct berval *bv, LDAPDN *dn, unsigned flags )
 }
 
 int
-ldap_bv2dn_x( struct berval *bv, LDAPDN *dn, unsigned flags, void *ctx )
+ldap_bv2dn_x( struct berval *bvin, LDAPDN *dn, unsigned flags, void *ctx )
 {
 	const char 	*p;
 	int		rc = LDAP_DECODING_ERROR;
@@ -745,26 +697,39 @@ ldap_bv2dn_x( struct berval *bv, LDAPDN *dn, unsigned flags, void *ctx )
 	LDAPDN		newDN = NULL;
 	LDAPRDN		newRDN = NULL, tmpDN_[TMP_RDN_SLOTS], *tmpDN = tmpDN_;
 	int		num_slots = TMP_RDN_SLOTS;
-	char		*str = bv->bv_val;
-	char		*end = str + bv->bv_len;
+	char		*str, *end;
+	struct berval	bvtmp, *bv = &bvtmp;
 	
-	assert( bv );
-	assert( bv->bv_val );
+	assert( bvin );
+	assert( bvin->bv_val );
 	assert( dn );
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ARGS, "ldap_bv2dn(%s,%u)\n", str, flags, 0 );
-#else
+	*bv = *bvin;
+	str = bv->bv_val;
+	end = str + bv->bv_len;
+
 	Debug( LDAP_DEBUG_TRACE, "=> ldap_bv2dn(%s,%u)\n", str, flags, 0 );
-#endif
 
 	*dn = NULL;
 
 	switch ( LDAP_DN_FORMAT( flags ) ) {
 	case LDAP_DN_FORMAT_LDAP:
 	case LDAP_DN_FORMAT_LDAPV3:
-	case LDAP_DN_FORMAT_LDAPV2:
 	case LDAP_DN_FORMAT_DCE:
+		break;
+
+		/* allow DN enclosed in brackets */
+	case LDAP_DN_FORMAT_LDAPV2:
+		if ( str[0] == '<' ) {
+			if ( bv->bv_len < 2 || end[ -1 ] != '>' ) {
+				rc = LDAP_DECODING_ERROR;
+				goto parsing_error;
+			}
+			bv->bv_val++;
+			bv->bv_len -= 2;
+			str++;
+			end--;
+		}
 		break;
 
 	/* unsupported in str2dn */
@@ -925,13 +890,8 @@ return_result:;
 		LDAP_FREEX( tmpDN, ctx );
 	}
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, RESULTS, "<= ldap_bv2dn(%s)=%d %s\n", 
-		str, rc, ldap_err2string( rc ) );
-#else
 	Debug( LDAP_DEBUG_TRACE, "<= ldap_bv2dn(%s)=%d %s\n", str, rc,
 			ldap_err2string( rc ) );
-#endif
 	*dn = newDN;
 	
 	return( rc );
@@ -3041,11 +3001,7 @@ int ldap_dn2bv_x( LDAPDN dn, struct berval *bv, unsigned flags, void *ctx )
 	bv->bv_len = 0;
 	bv->bv_val = NULL;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ARGS, "=> ldap_dn2bv(%u)\n", flags, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "=> ldap_dn2bv(%u)\n", flags, 0, 0 );
-#endif
 
 	/* 
 	 * a null dn means an empty dn string 
@@ -3354,13 +3310,8 @@ int ldap_dn2bv_x( LDAPDN dn, struct berval *bv, unsigned flags, void *ctx )
 		return LDAP_PARAM_ERROR;
 	}
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, RESULTS, "<= ldap_dn2bv(%s)=%d %s\n", 
-		bv->bv_val, rc, ldap_err2string( rc ) );
-#else
 	Debug( LDAP_DEBUG_TRACE, "<= ldap_dn2bv(%s)=%d %s\n",
 		bv->bv_val, rc, ldap_err2string( rc ) );
-#endif
 
 return_results:;
 	return( rc );

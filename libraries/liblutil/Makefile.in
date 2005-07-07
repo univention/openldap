@@ -1,8 +1,8 @@
 # Makefile for -llutil
-# $OpenLDAP: pkg/ldap/libraries/liblutil/Makefile.in,v 1.29.2.2 2004/01/01 18:16:31 kurt Exp $
+# $OpenLDAP: pkg/ldap/libraries/liblutil/Makefile.in,v 1.33.2.2 2005/05/18 16:29:21 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ## 
-## Copyright 1998-2004 The OpenLDAP Foundation.
+## Copyright 1998-2005 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -44,6 +44,9 @@ testavl: $(XLIBS) testavl.o
 # These rules are for a Mingw32 build, specifically.
 # It's ok for them to be here because the clean rule is harmless, and
 # slapdmsg.res won't get built unless it's declared in OBJS.
+
+slapdmsg.bin: FORCE
+	@if [ ! -f $@ ]; then cp $(srcdir)/$@ .; fi
 
 slapdmsg.res: slapdmsg.rc slapdmsg.bin
 	windres $< -O coff -o $@

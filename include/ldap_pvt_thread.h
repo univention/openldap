@@ -1,8 +1,8 @@
 /* ldap_pvt_thread.h - ldap threads header file */
-/* $OpenLDAP: pkg/ldap/include/ldap_pvt_thread.h,v 1.39.2.2 2004/01/01 18:16:28 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap_pvt_thread.h,v 1.41.2.3 2005/04/29 21:29:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,9 +44,13 @@ ldap_pvt_thread_set_concurrency LDAP_P(( int ));
 #define LDAP_PVT_THREAD_CREATE_JOINABLE 0
 #define LDAP_PVT_THREAD_CREATE_DETACHED 1
 
+#define	LDAP_PVT_THREAD_SET_STACK_SIZE
 #ifndef LDAP_PVT_THREAD_STACK_SIZE
-	/* LARGE stack */
-#define LDAP_PVT_THREAD_STACK_SIZE	(4*1024*1024)
+	/* LARGE stack. Will be twice as large on 64 bit machine. */
+#define LDAP_PVT_THREAD_STACK_SIZE	( 1 * 1024 * 1024 * sizeof(void *) )
+/* May be explicitly defined to zero to disable it */
+#elif LDAP_PVT_THREAD_STACK_SIZE == 0
+#undef LDAP_PVT_THREAD_SET_STACK_SIZE
 #endif
 
 LDAP_F( int )
@@ -172,6 +176,14 @@ ldap_pvt_thread_pool_backload LDAP_P((
 	ldap_pvt_thread_pool_t *pool ));
 
 LDAP_F( int )
+ldap_pvt_thread_pool_pause LDAP_P((
+	ldap_pvt_thread_pool_t *pool ));
+
+LDAP_F( int )
+ldap_pvt_thread_pool_resume LDAP_P((
+	ldap_pvt_thread_pool_t *pool ));
+
+LDAP_F( int )
 ldap_pvt_thread_pool_destroy LDAP_P((
 	ldap_pvt_thread_pool_t *pool,
 	int run_pending ));
@@ -189,6 +201,9 @@ ldap_pvt_thread_pool_setkey LDAP_P((
 	void *key,
 	void *data,
 	ldap_pvt_thread_pool_keyfree_t *kfree ));
+
+LDAP_F( void )
+ldap_pvt_thread_pool_purgekey LDAP_P(( void *key ));
 
 LDAP_F( void *)
 ldap_pvt_thread_pool_context LDAP_P(( void ));

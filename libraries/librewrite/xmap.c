@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/xmap.c,v 1.2.2.4 2004/03/17 20:14:49 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/xmap.c,v 1.6.2.2 2005/01/24 21:28:51 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2004 The OpenLDAP Foundation.
+ * Copyright 2000-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -259,7 +259,7 @@ rewrite_xmap_apply(
 			ldap_pvt_thread_mutex_unlock( &xpasswd_mutex );
 #endif /* USE_REWRITE_LDAP_PVT_THREADS */
 
-			rc = REWRITE_NO_SUCH_OBJECT;
+			rc = LDAP_NO_SUCH_OBJECT;
 			break;
 		}
 

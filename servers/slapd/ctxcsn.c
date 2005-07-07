@@ -1,8 +1,8 @@
 /* ctxcsn.c -- Context CSN Management Routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ctxcsn.c,v 1.9.2.10 2004/08/30 17:47:12 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ctxcsn.c,v 1.31.2.3 2005/06/08 21:50:16 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2004 The OpenLDAP Foundation.
+ * Copyright 2003-2005 The OpenLDAP Foundation.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
  *
@@ -22,7 +22,6 @@
 #include <ac/string.h>
 #include <ac/socket.h>
 
-#include "ldap_pvt.h"
 #include "lutil.h"
 #include "slap.h"
 #include "lutil_ldap.h"
@@ -31,18 +30,24 @@ const struct berval slap_ldapsync_bv = BER_BVC("ldapsync");
 const struct berval slap_ldapsync_cn_bv = BER_BVC("cn=ldapsync");
 
 void
-slap_get_commit_csn( Operation *op, struct berval *csn )
+slap_get_commit_csn(
+	Operation *op,
+	struct berval *maxcsn,
+	struct berval *curcsn
+)
 {
 	struct slap_csn_entry *csne, *committed_csne = NULL;
 	int i = 0;
 
-	csn->bv_val = NULL;
-	csn->bv_len = 0;
+	if ( maxcsn ) {
+		BER_BVZERO( maxcsn );
+	}
 
 	ldap_pvt_thread_mutex_lock( op->o_bd->be_pcl_mutexp );
 
 	LDAP_TAILQ_FOREACH( csne, op->o_bd->be_pending_csn_list, ce_csn_link ) {
 		if ( csne->ce_opid == op->o_opid && csne->ce_connid == op->o_connid ) {
+			if ( curcsn ) *curcsn = csne->ce_csn;
 			csne->ce_state = SLAP_CSN_COMMIT;
 			break;
 		}
@@ -53,7 +58,7 @@ slap_get_commit_csn( Operation *op, struct berval *csn )
 		if ( csne->ce_state == SLAP_CSN_PENDING ) break;
 	}
 
-	if ( committed_csne ) ber_dupbv_x( csn, committed_csne->ce_csn, op->o_tmpmemctx );
+	if ( committed_csne && maxcsn ) *maxcsn = committed_csne->ce_csn;
 	ldap_pvt_thread_mutex_unlock( op->o_bd->be_pcl_mutexp );
 }
 
@@ -82,14 +87,21 @@ slap_graduate_commit_csn( Operation *op )
 	if ( op == NULL ) return;
 	if ( op->o_bd == NULL ) return;
 
+#if 0
+	/* it is NULL when we get here from the frontendDB;
+	 * alternate fix: initialize frontendDB like all other backends */
+	assert( op->o_bd->be_pcl_mutexp != NULL );
+#endif
+	
+	if ( op->o_bd->be_pcl_mutexp == NULL ) return;
+
 	ldap_pvt_thread_mutex_lock( op->o_bd->be_pcl_mutexp );
 
 	LDAP_TAILQ_FOREACH( csne, op->o_bd->be_pending_csn_list, ce_csn_link ) {
 		if ( csne->ce_opid == op->o_opid && csne->ce_connid == op->o_connid ) {
 			LDAP_TAILQ_REMOVE( op->o_bd->be_pending_csn_list,
 				csne, ce_csn_link );
-			ch_free( csne->ce_csn->bv_val );
-			ch_free( csne->ce_csn );
+			ch_free( csne->ce_csn.bv_val );
 			ch_free( csne );
 			break;
 		}
@@ -104,7 +116,7 @@ static struct berval ocbva[] = {
 	BER_BVC("top"),
 	BER_BVC("subentry"),
 	BER_BVC("syncProviderSubentry"),
-	{0,NULL}
+	BER_BVNULL
 };
 
 Entry *
@@ -131,8 +143,7 @@ slap_create_context_csn_entry(
 			context_csn, NULL );
 	}
 
-	bv.bv_val = "{}";
-	bv.bv_len = sizeof("{}")-1;
+	BER_BVSTR( &bv, "{}" );
 	attr_merge_one( e, slap_schema.si_ad_subtreeSpecification, &bv, NULL );
 
 	build_new_dn( &e->e_name, &be->be_nsuffix[0],
@@ -140,6 +151,26 @@ slap_create_context_csn_entry(
 	ber_dupbv( &e->e_nname, &e->e_name );
 
 	return e;
+}
+
+void
+slap_queue_csn(
+	Operation *op,
+	struct berval *csn )
+{
+	struct slap_csn_entry *pending;
+
+	pending = (struct slap_csn_entry *) ch_calloc( 1,
+			sizeof( struct slap_csn_entry ));
+	ldap_pvt_thread_mutex_lock( op->o_bd->be_pcl_mutexp );
+
+	ber_dupbv( &pending->ce_csn, csn );
+	pending->ce_connid = op->o_connid;
+	pending->ce_opid = op->o_opid;
+	pending->ce_state = SLAP_CSN_PENDING;
+	LDAP_TAILQ_INSERT_TAIL( op->o_bd->be_pending_csn_list,
+		pending, ce_csn_link );
+	ldap_pvt_thread_mutex_unlock( op->o_bd->be_pcl_mutexp );
 }
 
 int
@@ -150,26 +181,19 @@ slap_get_csn(
 	struct berval *csn,
 	int manage_ctxcsn )
 {
-	struct slap_csn_entry *pending;
-
 	if ( csn == NULL ) return LDAP_OTHER;
 
+#ifndef HAVE_GMTIME_R
+	ldap_pvt_thread_mutex_lock( &gmtime_mutex );
+#endif
 	csn->bv_len = lutil_csnstr( csnbuf, len, 0, 0 );
+#ifndef HAVE_GMTIME_R
+	ldap_pvt_thread_mutex_unlock( &gmtime_mutex );
+#endif
 	csn->bv_val = csnbuf;
 
-	if ( manage_ctxcsn ) {
-		pending = (struct slap_csn_entry *) ch_calloc( 1,
-			sizeof( struct slap_csn_entry ));
-		ldap_pvt_thread_mutex_lock( op->o_bd->be_pcl_mutexp );
-		ber_dupbv( &op->o_sync_csn, csn );
-		pending->ce_csn = ber_dupbv( NULL, csn );
-		pending->ce_connid = op->o_connid;
-		pending->ce_opid = op->o_opid;
-		pending->ce_state = SLAP_CSN_PENDING;
-		LDAP_TAILQ_INSERT_TAIL( op->o_bd->be_pending_csn_list,
-			pending, ce_csn_link );
-		ldap_pvt_thread_mutex_unlock( op->o_bd->be_pcl_mutexp );
-	}
+	if ( manage_ctxcsn )
+		slap_queue_csn( op, csn );
 
 	return LDAP_SUCCESS;
 }

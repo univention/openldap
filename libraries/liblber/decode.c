@@ -1,8 +1,8 @@
 /* decode.c - ber input decoding routines */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/decode.c,v 1.96.2.3 2004/01/01 18:16:29 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/decode.c,v 1.101.2.1 2005/01/20 18:03:49 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -669,17 +669,9 @@ ber_scanf ( BerElement *ber,
 
 	fmt_reset = fmt;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( BER, ENTRY, "ber_scanf fmt (%s) ber:\n", fmt, 0, 0 );
-
-	if ( LDAP_LOGS_TEST(BER, DETAIL2 )) {
-			BER_DUMP(( "liblber", LDAP_LEVEL_DETAIL2, ber, 1 ));
-	}
-#else
 	ber_log_printf( LDAP_DEBUG_TRACE, ber->ber_debug,
 		"ber_scanf fmt (%s) ber:\n", fmt );
 	ber_log_dump( LDAP_DEBUG_BER, ber->ber_debug, ber, 1 );
-#endif
 
 	for ( rc = 0; *fmt && rc != LBER_DEFAULT; fmt++ ) {
 		/* When this is modified, remember to update
@@ -824,13 +816,8 @@ ber_scanf ( BerElement *ber,
 
 		default:
 			if( ber->ber_debug ) {
-#ifdef NEW_LOGGING
-				LDAP_LOG( BER, ERR, 
-					"ber_scanf: unknown fmt %c\n", *fmt, 0, 0 );
-#else
 				ber_log_printf( LDAP_DEBUG_ANY, ber->ber_debug,
 					"ber_scanf: unknown fmt %c\n", *fmt );
-#endif
 			}
 			rc = LBER_DEFAULT;
 			break;

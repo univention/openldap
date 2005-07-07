@@ -47,6 +47,8 @@ rfc3829.txt LDAP Authorization Identity Controls (I)
 rfc3866.txt Language Tag and Ranges in LDAP (PS)
 rfc3876.txt Returning Matched Values with LDAP (PS)
 rfc3909.txt LDAP Cancel Operation (PS)
+rfc3928.txt LDAP Client Update Protocol (PS)
+rfc4013.txt SASLprep (PS)
 
 Legend:
 STD	Standard
@@ -59,4 +61,4 @@ BCP	Best Common Practice
 
 Please see http://www.rfc-editor.org/ for up-to-date status information.
 
-$OpenLDAP: pkg/ldap/doc/rfc/INDEX,v 1.26.2.9 2004/10/09 01:02:29 kurt Exp $
+$OpenLDAP: pkg/ldap/doc/rfc/INDEX,v 1.38.2.2 2005/04/29 21:29:02 kurt Exp $

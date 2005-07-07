@@ -1,8 +1,8 @@
 /* back-ldap.h - ldap backend header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.42.2.9 2004/07/09 16:32:00 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.63.2.7 2005/06/03 19:54:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2004 The OpenLDAP Foundation.
+ * Copyright 1999-2005 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -24,177 +24,112 @@
 #ifndef SLAPD_LDAP_H
 #define SLAPD_LDAP_H
 
-#include "external.h"
-
-/* String rewrite library */
-#ifdef ENABLE_REWRITE
-#include "rewrite.h"
-#endif /* ENABLE_REWRITE */
-
 LDAP_BEGIN_DECL
 
 struct slap_conn;
 struct slap_op;
+struct slap_backend_db;
 
 struct ldapconn {
-	struct slap_conn	*conn;
-	LDAP		*ld;
-	struct berval	cred;
-	struct berval 	bound_dn;
-	struct berval	local_dn;
-	int		bound;
-	ldap_pvt_thread_mutex_t		lc_mutex;
+	struct slap_conn	*lc_conn;
+	LDAP			*lc_ld;
+	struct berval		lc_cred;
+	struct berval 		lc_bound_ndn;
+	struct berval		lc_local_ndn;
+	int			lc_bound;
+	int			lc_ispriv;
+	ldap_pvt_thread_mutex_t	lc_mutex;
 };
 
-struct ldapmap {
-	int drop_missing;
-
-	Avlnode *map;
-	Avlnode *remap;
-};
-
-struct ldapmapping {
-	struct berval src;
-	struct berval dst;
-};
-
-struct ldaprwmap {
-	/*
-	 * DN rewriting
-	 */
-#ifdef ENABLE_REWRITE
-	struct rewrite_info *rwm_rw;
-#else /* !ENABLE_REWRITE */
-	/* some time the suffix massaging without librewrite
-	 * will be disabled */
-	BerVarray rwm_suffix_massage;
-#endif /* !ENABLE_REWRITE */
-
-	/*
-	 * Attribute/objectClass mapping
-	 */
-	struct ldapmap rwm_oc;
-	struct ldapmap rwm_at;
+/*
+ * identity assertion modes
+ */
+enum {
+	LDAP_BACK_IDASSERT_LEGACY = 1,
+	LDAP_BACK_IDASSERT_NOASSERT,
+	LDAP_BACK_IDASSERT_ANONYMOUS,
+	LDAP_BACK_IDASSERT_SELF,
+	LDAP_BACK_IDASSERT_OTHERDN,
+	LDAP_BACK_IDASSERT_OTHERID
 };
 
 struct ldapinfo {
 	char		*url;
 	LDAPURLDesc	*lud;
-	struct berval binddn;
-	struct berval bindpw;
-#ifdef LDAP_BACK_PROXY_AUTHZ
-	struct berval proxyauthzdn;
-	struct berval proxyauthzpw;
-#endif /* LDAP_BACK_PROXY_AUTHZ */
+
+	slap_bindconf	acl_sb;
+#define	acl_authcID	acl_sb.sb_authcId
+#define	acl_authcDN	acl_sb.sb_binddn
+#define	acl_passwd	acl_sb.sb_cred
+#define	acl_authzID	acl_sb.sb_authzId
+#define	acl_authmethod	acl_sb.sb_method
+#define	acl_sasl_mech	acl_sb.sb_saslmech
+#define	acl_sasl_realm	acl_sb.sb_realm
+#define	acl_secprops	acl_sb.sb_secprops
+
+	/* ID assert stuff */
+	int		idassert_mode;
+
+	slap_bindconf	idassert_sb;
+#define	idassert_authcID	idassert_sb.sb_authcId
+#define	idassert_authcDN	idassert_sb.sb_binddn
+#define	idassert_passwd		idassert_sb.sb_cred
+#define	idassert_authzID	idassert_sb.sb_authzId
+#define	idassert_authmethod	idassert_sb.sb_method
+#define	idassert_sasl_mech	idassert_sb.sb_saslmech
+#define	idassert_sasl_realm	idassert_sb.sb_realm
+#define	idassert_secprops	idassert_sb.sb_secprops
+
+	unsigned 	idassert_flags;
+#define LDAP_BACK_AUTH_NONE		0x00U
+#define	LDAP_BACK_AUTH_NATIVE_AUTHZ	0x01U
+#define	LDAP_BACK_AUTH_OVERRIDE		0x02U
+
+	BerVarray	idassert_authz;
+	/* end of ID assert stuff */
+
 	ldap_pvt_thread_mutex_t		conn_mutex;
-	int savecred;
-	Avlnode *conntree;
+	unsigned	flags;
+#define LDAP_BACK_F_NONE		0x00U
+#define LDAP_BACK_F_SAVECRED		0x01U
+#define LDAP_BACK_F_USE_TLS		0x02U
+#define LDAP_BACK_F_PROPAGATE_TLS	0x04U
+#define LDAP_BACK_F_TLS_CRITICAL	0x08U
+#define LDAP_BACK_F_TLS_USE_MASK	(LDAP_BACK_F_USE_TLS|LDAP_BACK_F_TLS_CRITICAL)
+#define LDAP_BACK_F_TLS_PROPAGATE_MASK	(LDAP_BACK_F_PROPAGATE_TLS|LDAP_BACK_F_TLS_CRITICAL)
+#define LDAP_BACK_F_TLS_MASK		(LDAP_BACK_F_TLS_USE_MASK|LDAP_BACK_F_TLS_PROPAGATE_MASK)
+#define LDAP_BACK_F_CHASE_REFERRALS	0x10U
+#define LDAP_BACK_F_PROXY_WHOAMI	0x20U
 
-#if 0
-#ifdef ENABLE_REWRITE
-	struct rewrite_info *rwinfo;
-#else /* !ENABLE_REWRITE */
-	BerVarray suffix_massage;
-#endif /* !ENABLE_REWRITE */
+#define	LDAP_BACK_F_SUPPORT_T_F			0x80U
+#define	LDAP_BACK_F_SUPPORT_T_F_DISCOVER	0x40U
+#define	LDAP_BACK_F_SUPPORT_T_F_MASK		(LDAP_BACK_F_SUPPORT_T_F|LDAP_BACK_F_SUPPORT_T_F_DISCOVER)
 
-	struct ldapmap oc_map;
-	struct ldapmap at_map;
-#endif
+#define LDAP_BACK_SAVECRED(li)		( (li)->flags & LDAP_BACK_F_SAVECRED )
+#define LDAP_BACK_USE_TLS(li)		( (li)->flags & LDAP_BACK_F_USE_TLS )
+#define LDAP_BACK_PROPAGATE_TLS(li)	( (li)->flags & LDAP_BACK_F_PROPAGATE_TLS )
+#define LDAP_BACK_TLS_CRITICAL(li)	( (li)->flags & LDAP_BACK_F_TLS_CRITICAL )
+#define LDAP_BACK_CHASE_REFERRALS(li)	( (li)->flags & LDAP_BACK_F_CHASE_REFERRALS )
 
-	struct ldaprwmap rwmap;
+	int		version;
+
+	Avlnode		*conntree;
+
+	int		rwm_started;
 };
 
-/* Whatever context ldap_back_dn_massage needs... */
-typedef struct dncookie {
-	struct ldaprwmap *rwmap;
+typedef enum ldap_back_send_t {
+	LDAP_BACK_DONTSEND		= 0x00,
+	LDAP_BACK_SENDOK		= 0x01,
+	LDAP_BACK_SENDERR		= 0x02,
+	LDAP_BACK_SENDRESULT		= (LDAP_BACK_SENDOK|LDAP_BACK_SENDERR)
+} ldap_back_send_t;
 
-#ifdef ENABLE_REWRITE
-	Connection *conn;
-	char *ctx;
-	SlapReply *rs;
-#else
-	int normalized;
-	int tofrom;
-#endif
-} dncookie;
-
-int ldap_back_freeconn( Operation *op, struct ldapconn *lc );
-struct ldapconn *ldap_back_getconn(struct slap_op *op, struct slap_rep *rs);
-int ldap_back_dobind(struct ldapconn *lc, Operation *op, SlapReply *rs);
-int ldap_back_map_result(SlapReply *rs);
-int ldap_back_op_result(struct ldapconn *lc, Operation *op, SlapReply *rs,
-	ber_int_t msgid, int sendok);
-int	back_ldap_LTX_init_module(int argc, char *argv[]);
-
-int ldap_back_dn_massage(dncookie *dc, struct berval *dn,
-	struct berval *res);
-
-extern int ldap_back_conn_cmp( const void *c1, const void *c2);
-extern int ldap_back_conn_dup( void *c1, void *c2 );
-extern void ldap_back_conn_free( void *c );
-
-/* attributeType/objectClass mapping */
-int mapping_cmp (const void *, const void *);
-int mapping_dup (void *, void *);
-
-void ldap_back_map_init ( struct ldapmap *lm, struct ldapmapping ** );
-void ldap_back_map ( struct ldapmap *map, struct berval *s, struct berval *m,
-	int remap );
-#define BACKLDAP_MAP	0
-#define BACKLDAP_REMAP	1
-char *
-ldap_back_map_filter(
-		struct ldapmap *at_map,
-		struct ldapmap *oc_map,
-		struct berval *f,
-		int remap
-);
-
-int
-ldap_back_map_attrs(
-		struct ldapmap *at_map,
-		AttributeName *a,
-		int remap,
-		char ***mapped_attrs
-);
-
-extern void mapping_free ( void *mapping );
-
-extern int ldap_back_map_config(
-		struct ldapmap	*oc_map,
-		struct ldapmap	*at_map,
-		const char	*fname,
-		int		lineno,
-		int		argc,
-		char		**argv );
-
-extern int
-ldap_back_filter_map_rewrite(
-		dncookie		*dc,
-		Filter			*f,
-		struct berval		*fstr,
-		int			remap );
-
-/* suffix massaging by means of librewrite */
-#ifdef ENABLE_REWRITE
-extern int suffix_massage_config( struct rewrite_info *info,
-		struct berval *pvnc, struct berval *nvnc,
-		struct berval *prnc, struct berval *nrnc);
-#endif /* ENABLE_REWRITE */
-extern int ldap_dnattr_rewrite( dncookie *dc, BerVarray a_vals );
-extern int ldap_dnattr_result_rewrite( dncookie *dc, BerVarray a_vals );
-
-extern int ldap_chain_setup();
-
-#ifdef LDAP_BACK_PROXY_AUTHZ
-extern int
-ldap_back_proxy_authz_ctrl(
-		struct ldapconn	*lc,
-		Operation	*op,
-		SlapReply	*rs,
-		LDAPControl	***pctrls );
-#endif /* LDAP_BACK_PROXY_AUTHZ */
+/* define to use asynchronous StartTLS */
+#define SLAP_STARTTLS_ASYNCHRONOUS
 
 LDAP_END_DECL
+
+#include "proto-ldap.h"
 
 #endif /* SLAPD_LDAP_H */

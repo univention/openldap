@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/options.c,v 1.63.2.3 2004/07/16 19:51:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/options.c,v 1.67.2.3 2005/06/03 19:12:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,9 @@
 
 #define LDAP_OPT_REBIND_PROC 0x4e814d
 #define LDAP_OPT_REBIND_PARAMS 0x4e814e
+
+#define LDAP_OPT_NEXTREF_PROC 0x4e815d
+#define LDAP_OPT_NEXTREF_PARAMS 0x4e815e
 
 static const LDAPAPIFeatureInfo features[] = {
 #ifdef LDAP_API_FEATURE_X_OPENLDAP
@@ -132,7 +135,6 @@ ldap_get_option(
 			}
 
 			info->ldapai_api_version = LDAP_API_VERSION;
-			info->ldapai_api_version = LDAP_API_VERSION;
 			info->ldapai_protocol_version = LDAP_VERSION_MAX;
 
 			if(features[0].ldapaif_name == NULL) {
@@ -163,6 +165,11 @@ ldap_get_option(
 		} 
 
 		ber_sockbuf_ctrl( ld->ld_sb, LBER_SB_OPT_GET_FD, outvalue );
+		return LDAP_OPT_SUCCESS;
+
+	case LDAP_OPT_SOCKBUF:
+		if( ld == NULL ) break;
+		*(Sockbuf **)outvalue = ld->ld_sb;
 		return LDAP_OPT_SUCCESS;
 
 	case LDAP_OPT_TIMEOUT:
@@ -450,6 +457,14 @@ ldap_set_option(
 	case LDAP_OPT_REBIND_PARAMS: {
 			lo->ldo_rebind_params = (void *)invalue;		
 		} return LDAP_OPT_SUCCESS;
+
+	/* Only accessed from inside this function by ldap_set_nextref_proc() */
+	case LDAP_OPT_NEXTREF_PROC: {
+			lo->ldo_nextref_proc = (LDAP_NEXTREF_PROC *)invalue;		
+		} return LDAP_OPT_SUCCESS;
+	case LDAP_OPT_NEXTREF_PARAMS: {
+			lo->ldo_nextref_params = (void *)invalue;		
+		} return LDAP_OPT_SUCCESS;
 	}
 
 	if(invalue == NULL) {
@@ -664,5 +679,16 @@ ldap_set_rebind_proc( LDAP *ld, LDAP_REBIND_PROC *proc, void *params )
 	if( rc != LDAP_OPT_SUCCESS ) return rc;
 
 	rc = ldap_set_option( ld, LDAP_OPT_REBIND_PARAMS, (void *)params );
+	return rc;
+}
+
+int
+ldap_set_nextref_proc( LDAP *ld, LDAP_NEXTREF_PROC *proc, void *params )
+{
+	int rc;
+	rc = ldap_set_option( ld, LDAP_OPT_NEXTREF_PROC, (void *)proc );
+	if( rc != LDAP_OPT_SUCCESS ) return rc;
+
+	rc = ldap_set_option( ld, LDAP_OPT_NEXTREF_PARAMS, (void *)params );
 	return rc;
 }

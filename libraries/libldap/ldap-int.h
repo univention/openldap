@@ -1,8 +1,8 @@
 /*  ldap-int.h - defines & prototypes internal to the LDAP library */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.148.2.6 2004/01/01 18:16:29 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.160.2.2 2005/06/03 19:12:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,9 @@
 #define SASL_MAX_BUFF_SIZE	65536
 #define SASL_MIN_BUFF_SIZE	4096
 #endif
+
+#undef TV2MILLISEC
+#define TV2MILLISEC(tv) (((tv)->tv_sec * 1000) + ((tv)->tv_usec/1000))
 
 /* 
  * Support needed if the library is running in the kernel
@@ -134,6 +137,7 @@ struct ldapmsg {
 	ber_tag_t		lm_msgtype;	/* the message type */
 	BerElement	*lm_ber;	/* the ber encoded message contents */
 	struct ldapmsg	*lm_chain;	/* for search - next msg in the resp */
+	struct ldapmsg	*lm_chain_tail;
 	struct ldapmsg	*lm_next;	/* next response */
 	time_t	lm_time;	/* used to maintain cache */
 };
@@ -166,6 +170,8 @@ struct ldapoptions {
 
 #ifdef HAVE_TLS
    	int			ldo_tls_mode;
+	LDAP_TLS_CONNECT_CB	*ldo_tls_connect_cb;
+	void*			ldo_tls_connect_arg;
 #endif
 
 	LDAPURLDesc *ldo_defludp;
@@ -192,6 +198,8 @@ struct ldapoptions {
 	/* LDAP rebind callback function */
 	LDAP_REBIND_PROC *ldo_rebind_proc;
 	void *ldo_rebind_params;
+	LDAP_NEXTREF_PROC *ldo_nextref_proc;
+	void *ldo_nextref_params;
 
 	LDAP_BOOLEANS ldo_booleans;	/* boolean options */
 };
@@ -305,8 +313,10 @@ struct ldap {
 
 #define ld_sctrls		ld_options.ldo_sctrls
 #define ld_cctrls		ld_options.ldo_cctrls
-#define ld_rebind_proc	ld_options.ldo_rebind_proc
+#define ld_rebind_proc		ld_options.ldo_rebind_proc
 #define ld_rebind_params	ld_options.ldo_rebind_params
+#define ld_nextref_proc		ld_options.ldo_nextref_proc
+#define ld_nextref_params	ld_options.ldo_nextref_params
 
 #define ld_version		ld_options.ldo_version
 
@@ -448,7 +458,11 @@ LDAP_F (int) ldap_int_open_connection( LDAP *ld,
 /*
  * in os-ip.c
  */
+#ifndef HAVE_POLL
 LDAP_V (int) ldap_int_tblsize;
+LDAP_F (void) ldap_int_ip_init( void );
+#endif
+
 LDAP_F (int) ldap_int_timeval_dup( struct timeval **dest,
 	const struct timeval *tm );
 LDAP_F (int) ldap_connect_to_host( LDAP *ld, Sockbuf *sb,
@@ -461,7 +475,6 @@ LDAP_F (char *) ldap_host_connected_to( Sockbuf *sb,
 	const char *host );
 #endif
 
-LDAP_F (void) ldap_int_ip_init( void );
 LDAP_F (int) ldap_int_select( LDAP *ld, struct timeval *timeout );
 LDAP_F (void *) ldap_new_select_info( void );
 LDAP_F (void) ldap_free_select_info( void *sip );

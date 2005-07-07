@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblber/lber-int.h,v 1.62.2.2 2004/01/01 18:16:29 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/lber-int.h,v 1.65.2.1 2005/01/20 18:03:49 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,23 +44,6 @@ struct lber_options {
 	int			lbo_debug;
 	long		lbo_meminuse;
 };
-
-#ifdef NEW_LOGGING
-/*
-#    ifdef LDAP_DEBUG
-#        ifdef LDAP_LOG
-#            undef LDAP_LOG
-#        endif
-#        define LDAP_LOG(a) ber_pvt_log_output a
- */
-#        define BER_DUMP(a) ber_output_dump a
-/*
-#    else
-#        define LDAP_LOG(a)
-#        define BER_DUMP(a)
-#    endif
- */
-#endif
 
 LBER_F( int ) ber_pvt_log_output(
 	const char *subsystem,
@@ -141,15 +124,6 @@ LBER_F (void) ber_rewind LDAP_P(( BerElement * ));
  * bprint.c
  */
 #define ber_log_printf ber_pvt_log_printf
-
-#ifdef NEW_LOGGING
-LBER_F( int )
-ber_output_dump LDAP_P((
-	const char *subsys,
-	int level,
-	BerElement *ber,
-	int inout ));
-#endif
 
 LBER_F( int )
 ber_log_bprint LDAP_P((

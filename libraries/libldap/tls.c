@@ -1,8 +1,8 @@
 /* tls.c - Handle tls/ssl using SSLeay or OpenSSL. */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/tls.c,v 1.106.2.6 2004/09/07 22:34:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/tls.c,v 1.118.2.2 2005/03/14 22:24:57 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,6 +53,9 @@ static char *tls_opt_keyfile = NULL;
 static char *tls_opt_cacertfile = NULL;
 static char *tls_opt_cacertdir = NULL;
 static int  tls_opt_require_cert = LDAP_OPT_X_TLS_DEMAND;
+#ifdef HAVE_OPENSSL_CRL
+static int  tls_opt_crlcheck = LDAP_OPT_X_TLS_CRL_NONE;
+#endif
 static char *tls_opt_ciphersuite = NULL;
 static char *tls_opt_randfile = NULL;
 
@@ -227,15 +230,9 @@ ldap_pvt_tls_init_def_ctx( void )
 		int i;
 		tls_def_ctx = SSL_CTX_new( SSLv23_method() );
 		if ( tls_def_ctx == NULL ) {
-#ifdef NEW_LOGGING
-			LDAP_LOG ( TRANSPORT, ERR, "ldap_pvt_tls_init_def_ctx: "
-				"TLS could not allocate default ctx (%d).\n",
-				ERR_peek_error(), 0, 0 );
-#else
 			Debug( LDAP_DEBUG_ANY,
 			   "TLS: could not allocate default ctx (%lu).\n",
 				ERR_peek_error(),0,0);
-#endif
 			rc = -1;
 			goto error_exit;
 		}
@@ -246,15 +243,9 @@ ldap_pvt_tls_init_def_ctx( void )
 		if ( tls_opt_ciphersuite &&
 			!SSL_CTX_set_cipher_list( tls_def_ctx, ciphersuite ) )
 		{
-#ifdef NEW_LOGGING
-			LDAP_LOG ( TRANSPORT, ERR, "ldap_pvt_tls_init_def_ctx: "
-				"TLS could not set cipher list %s.\n",
-				tls_opt_ciphersuite, 0, 0 );
-#else
 			Debug( LDAP_DEBUG_ANY,
 				   "TLS: could not set cipher list %s.\n",
 				   tls_opt_ciphersuite, 0, 0 );
-#endif
 			tls_report_error();
 			rc = -1;
 			goto error_exit;
@@ -265,20 +256,11 @@ ldap_pvt_tls_init_def_ctx( void )
 					cacertfile, cacertdir ) ||
 				!SSL_CTX_set_default_verify_paths( tls_def_ctx ) )
 			{
-#ifdef NEW_LOGGING
-				LDAP_LOG ( TRANSPORT, ERR, 
-					"ldap_pvt_tls_init_def_ctx: "
-					"TLS could not load verify locations "
-					"(file:`%s',dir:`%s').\n",
-					tls_opt_cacertfile ? tls_opt_cacertfile : "",
-					tls_opt_cacertdir ? tls_opt_cacertdir : "", 0 );
-#else
 				Debug( LDAP_DEBUG_ANY, "TLS: "
 					"could not load verify locations (file:`%s',dir:`%s').\n",
 					tls_opt_cacertfile ? tls_opt_cacertfile : "",
 					tls_opt_cacertdir ? tls_opt_cacertdir : "",
 					0 );
-#endif
 				tls_report_error();
 				rc = -1;
 				goto error_exit;
@@ -286,18 +268,11 @@ ldap_pvt_tls_init_def_ctx( void )
 
 			calist = get_ca_list( cacertfile, cacertdir );
 			if ( !calist ) {
-#ifdef NEW_LOGGING
-				LDAP_LOG ( TRANSPORT, ERR, "ldap_pvt_tls_init_def_ctx: "
-					"TLS could not load client CA list (file: `%s',dir:`%s')\n",
-					tls_opt_cacertfile ? tls_opt_cacertfile : "",
-					tls_opt_cacertdir ? tls_opt_cacertdir : "", 0 );
-#else
 				Debug( LDAP_DEBUG_ANY, "TLS: "
 					"could not load client CA list (file:`%s',dir:`%s').\n",
 					tls_opt_cacertfile ? tls_opt_cacertfile : "",
 					tls_opt_cacertdir ? tls_opt_cacertdir : "",
 					0 );
-#endif
 				tls_report_error();
 				rc = -1;
 				goto error_exit;
@@ -310,14 +285,9 @@ ldap_pvt_tls_init_def_ctx( void )
 			!SSL_CTX_use_PrivateKey_file( tls_def_ctx,
 				keyfile, SSL_FILETYPE_PEM ) )
 		{
-#ifdef NEW_LOGGING
-			LDAP_LOG ( TRANSPORT, ERR, "ldap_pvt_tls_init_def_ctx: "
-				"TLS could not use key file `%s'.\n", tls_opt_keyfile, 0, 0 );
-#else
 			Debug( LDAP_DEBUG_ANY,
 				"TLS: could not use key file `%s'.\n",
 				tls_opt_keyfile,0,0);
-#endif
 			tls_report_error();
 			rc = -1;
 			goto error_exit;
@@ -327,15 +297,9 @@ ldap_pvt_tls_init_def_ctx( void )
 			!SSL_CTX_use_certificate_file( tls_def_ctx,
 				certfile, SSL_FILETYPE_PEM ) )
 		{
-#ifdef NEW_LOGGING
-			LDAP_LOG ( TRANSPORT, ERR, "ldap_pvt_tls_init_def_ctx: "
-				"TLS could not use certificate `%s'.\n", 
-				tls_opt_certfile, 0, 0 );
-#else
 			Debug( LDAP_DEBUG_ANY,
 				"TLS: could not use certificate `%s'.\n",
 				tls_opt_certfile,0,0);
-#endif
 			tls_report_error();
 			rc = -1;
 			goto error_exit;
@@ -344,15 +308,9 @@ ldap_pvt_tls_init_def_ctx( void )
 		if ( ( tls_opt_certfile || tls_opt_keyfile ) &&
 			!SSL_CTX_check_private_key( tls_def_ctx ) )
 		{
-#ifdef NEW_LOGGING
-			LDAP_LOG ( TRANSPORT, ERR, 
-				"ldap_pvt_tls_init_def_ctx: TLS private key mismatch.\n", 
-				0, 0, 0 );
-#else
 			Debug( LDAP_DEBUG_ANY,
 				"TLS: private key mismatch.\n",
 				0,0,0);
-#endif
 			tls_report_error();
 			rc = -1;
 			goto error_exit;
@@ -376,6 +334,17 @@ ldap_pvt_tls_init_def_ctx( void )
 			tls_verify_ok : tls_verify_cb );
 		SSL_CTX_set_tmp_rsa_callback( tls_def_ctx, tls_tmp_rsa_cb );
 		/* SSL_CTX_set_tmp_dh_callback( tls_def_ctx, tls_tmp_dh_cb ); */
+#ifdef HAVE_OPENSSL_CRL
+		if ( tls_opt_crlcheck ) {
+			X509_STORE *x509_s = SSL_CTX_get_cert_store( tls_def_ctx );
+			if ( tls_opt_crlcheck == LDAP_OPT_X_TLS_CRL_PEER ) {
+				X509_STORE_set_flags( x509_s, X509_V_FLAG_CRL_CHECK );
+			} else if ( tls_opt_crlcheck == LDAP_OPT_X_TLS_CRL_ALL ) {
+				X509_STORE_set_flags( x509_s, 
+						X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL  );
+			}
+		}
+#endif
 	}
 error_exit:
 	if ( rc == -1 && tls_def_ctx != NULL ) {
@@ -436,12 +405,7 @@ alloc_handle( void *ctx_arg )
 
 	ssl = SSL_new( ctx );
 	if ( ssl == NULL ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TRANSPORT, ERR, 
-			"alloc_handle: TLS can't create ssl handle.\n", 0, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,"TLS: can't create ssl handle.\n",0,0,0);
-#endif
 		return NULL;
 	}
 	return ssl;
@@ -749,6 +713,7 @@ ldap_int_tls_connect( LDAP *ld, LDAPConn *conn )
 		ber_sockbuf_ctrl( sb, LBER_SB_OPT_GET_SSL, (void *)&ssl );
 
 	} else {
+		struct ldapoptions *lo;
 		void *ctx = ld->ld_defconn
 			? ld->ld_defconn->lconn_tls_ctx : NULL;
 
@@ -764,8 +729,15 @@ ldap_int_tls_connect( LDAP *ld, LDAPConn *conn )
 			LBER_SBIOD_LEVEL_TRANSPORT, (void *)ssl );
 
 		if( ctx == NULL ) {
+			ctx = tls_def_ctx;
 			conn->lconn_tls_ctx = tls_def_ctx;
 		}
+		lo = &ld->ld_options;
+		if ( lo->ldo_tls_connect_cb )
+			lo->ldo_tls_connect_cb( ld, ssl, ctx, lo->ldo_tls_connect_arg );
+		lo = LDAP_INT_GLOBAL_OPT();   
+		if ( lo && lo->ldo_tls_connect_cb )
+			lo->ldo_tls_connect_cb( ld, ssl, ctx, lo->ldo_tls_connect_arg );
 	}
 
 	err = SSL_connect( ssl );
@@ -787,12 +759,7 @@ ldap_int_tls_connect( LDAP *ld, LDAPConn *conn )
 #endif
 		}
 
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TRANSPORT, ERR, 
-			"ldap_int_tls_connect: TLS can't connect.\n", 0, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,"TLS: can't connect.\n",0,0,0);
-#endif
 
 		ber_sockbuf_remove_io( sb, &sb_tls_sbio,
 			LBER_SBIOD_LEVEL_TRANSPORT );
@@ -839,12 +806,7 @@ ldap_pvt_tls_accept( Sockbuf *sb, void *ctx_arg )
 	if ( err <= 0 ) {
 		if ( update_flags( sb, ssl, err )) return 1;
 
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TRANSPORT, ERR, 
-			"ldap_pvt_tls_accept: TLS can't accept.\n", 0, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,"TLS: can't accept.\n",0,0,0 );
-#endif
 
 		tls_report_error();
 		ber_sockbuf_remove_io( sb, &sb_tls_sbio,
@@ -950,15 +912,9 @@ ldap_pvt_tls_check_hostname( LDAP *ld, void *s, const char *name_in )
 
 	x = tls_get_cert((SSL *)s);
 	if (!x) {
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TRANSPORT, ERR, 
-			"ldap_pvt_tls_check_hostname: "
-			"TLS unable to get peer certificate.\n" , 0, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
 			"TLS: unable to get peer certificate.\n",
 			0, 0, 0 );
-#endif
 		/* If this was a fatal condition, things would have
 		 * aborted long before now.
 		 */
@@ -1059,15 +1015,9 @@ ldap_pvt_tls_check_hostname( LDAP *ld, void *s, const char *name_in )
 		if( X509_NAME_get_text_by_NID( xn, NID_commonName,
 			buf, sizeof(buf)) == -1)
 		{
-#ifdef NEW_LOGGING
-			LDAP_LOG ( TRANSPORT, ERR, "ldap_pvt_tls_check_hostname: "
-				"TLS unable to get common name from peer certificate.\n", 
-				0, 0, 0 );
-#else
 			Debug( LDAP_DEBUG_ANY,
 				"TLS: unable to get common name from peer certificate.\n",
 				0, 0, 0 );
-#endif
        		ret = LDAP_CONNECT_ERROR;
 			ld->ld_error = LDAP_STRDUP(
 				_("TLS: unable to get CN from peer certificate"));
@@ -1093,15 +1043,9 @@ ldap_pvt_tls_check_hostname( LDAP *ld, void *s, const char *name_in )
 		}
 
 		if( ret == LDAP_LOCAL_ERROR ) {
-#ifdef NEW_LOGGING
-       		 LDAP_LOG ( TRANSPORT, ERR, "ldap_pvt_tls_check_hostname: "
-      			 "TLS hostname (%s) does not match "
-       			 "common name in certificate (%s).\n", name, buf, 0 );
-#else
        		 Debug( LDAP_DEBUG_ANY, "TLS: hostname (%s) does not match "
        			 "common name in certificate (%s).\n", 
        			 name, buf, 0 );
-#endif
        		 ret = LDAP_CONNECT_ERROR;
        		 ld->ld_error = LDAP_STRDUP(
        		  	 _("TLS: hostname does not match CN in peer certificate"));
@@ -1173,8 +1117,22 @@ ldap_int_tls_config( LDAP *ld, int option, const char *arg )
 			return ldap_pvt_tls_set_option( ld, option, &i );
 		}
 		return -1;
+#ifdef HAVE_OPENSSL_CRL
+	case LDAP_OPT_X_TLS_CRLCHECK:
+		i = -1;
+		if ( strcasecmp( arg, "none" ) == 0 ) {
+			i = LDAP_OPT_X_TLS_CRL_NONE ;
+		} else if ( strcasecmp( arg, "peer" ) == 0 ) {
+			i = LDAP_OPT_X_TLS_CRL_PEER ;
+		} else if ( strcasecmp( arg, "all" ) == 0 ) {
+			i = LDAP_OPT_X_TLS_CRL_ALL ;
+		}
+		if (i >= 0) {
+			return ldap_pvt_tls_set_option( ld, option, &i );
+		}
+		return -1;
+#endif
 	}
-
 	return -1;
 }
 
@@ -1230,6 +1188,11 @@ ldap_pvt_tls_get_option( LDAP *ld, int option, void *arg )
 	case LDAP_OPT_X_TLS_REQUIRE_CERT:
 		*(int *)arg = tls_opt_require_cert;
 		break;
+#ifdef HAVE_OPENSSL_CRL
+	case LDAP_OPT_X_TLS_CRLCHECK:
+		*(int *)arg = tls_opt_crlcheck;
+		break;
+#endif
 	case LDAP_OPT_X_TLS_RANDOM_FILE:
 		*(char **)arg = tls_opt_randfile ?
 			LDAP_STRDUP( tls_opt_randfile ) : NULL;
@@ -1246,6 +1209,12 @@ ldap_pvt_tls_get_option( LDAP *ld, int option, void *arg )
 		*(void **)arg = retval;
 		break;
 	}
+	case LDAP_OPT_X_TLS_CONNECT_CB:
+		*(LDAP_TLS_CONNECT_CB **)arg = lo->ldo_tls_connect_cb;
+		break;
+	case LDAP_OPT_X_TLS_CONNECT_ARG:
+		*(void **)arg = lo->ldo_tls_connect_arg;
+		break;
 	default:
 		return -1;
 	}
@@ -1298,6 +1267,12 @@ ldap_pvt_tls_set_option( LDAP *ld, int option, void *arg )
 			ld->ld_defconn->lconn_tls_ctx = arg;
 		}
 		return 0;
+	case LDAP_OPT_X_TLS_CONNECT_CB:
+		lo->ldo_tls_connect_cb = (LDAP_TLS_CONNECT_CB *)arg;
+		return 0;
+	case LDAP_OPT_X_TLS_CONNECT_ARG:
+		lo->ldo_tls_connect_arg = arg;
+		return 0;
 	}
 
 	if ( ld != NULL ) {
@@ -1332,6 +1307,17 @@ ldap_pvt_tls_set_option( LDAP *ld, int option, void *arg )
 			return 0;
 		}
 		return -1;
+#ifdef HAVE_OPENSSL_CRL
+	case LDAP_OPT_X_TLS_CRLCHECK:
+		switch( *(int *) arg ) {
+		case LDAP_OPT_X_TLS_CRL_NONE:
+		case LDAP_OPT_X_TLS_CRL_PEER:
+		case LDAP_OPT_X_TLS_CRL_ALL:
+			tls_opt_crlcheck = * (int *) arg;
+			return 0;
+		}
+		return -1;
+#endif
 	case LDAP_OPT_X_TLS_CIPHER_SUITE:
 		if ( tls_opt_ciphersuite ) LDAP_FREE( tls_opt_ciphersuite );
 		tls_opt_ciphersuite = arg ? LDAP_STRDUP( (char *) arg ) : NULL;
@@ -1414,14 +1400,9 @@ tls_info_cb( const SSL *ssl, int where, int ret )
 	}
 #endif
 	if ( where & SSL_CB_LOOP ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TRANSPORT, DETAIL1, "tls_info_cb: "
-			"TLS trace: %s:%s\n", op, state, 0 );
-#else
 		Debug( LDAP_DEBUG_TRACE,
 			   "TLS trace: %s:%s\n",
 			   op, state, 0 );
-#endif
 
 	} else if ( where & SSL_CB_ALERT ) {
 		char *atype = (char *) SSL_alert_type_string_long( ret );
@@ -1437,40 +1418,22 @@ tls_info_cb( const SSL *ssl, int where, int ret )
 			__etoa( adesc );
 		}
 #endif
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TRANSPORT, DETAIL1, 
-			"tls_info_cb: TLS trace: SSL3 alert %s:%s:%s\n", 
-			op, atype, adesc );
-#else
 		Debug( LDAP_DEBUG_TRACE,
 			   "TLS trace: SSL3 alert %s:%s:%s\n",
 			   op, atype, adesc );
-#endif
 #ifdef HAVE_EBCDIC
 		if ( atype ) LDAP_FREE( atype );
 		if ( adesc ) LDAP_FREE( adesc );
 #endif
 	} else if ( where & SSL_CB_EXIT ) {
 		if ( ret == 0 ) {
-#ifdef NEW_LOGGING
-			LDAP_LOG ( TRANSPORT, ERR, 
-				"tls_info_cb: TLS trace: %s:failed in %s\n", 
-				op, state, 0 );
-#else
 			Debug( LDAP_DEBUG_TRACE,
 				   "TLS trace: %s:failed in %s\n",
 				   op, state, 0 );
-#endif
 		} else if ( ret < 0 ) {
-#ifdef NEW_LOGGING
-			LDAP_LOG ( TRANSPORT, ERR, 
-				"tls_info_cb: TLS trace: %s:error in %s\n", 
-				op, state, 0 );
-#else
 			Debug( LDAP_DEBUG_TRACE,
 				   "TLS trace: %s:error in %s\n",
 				   op, state, 0 );
-#endif
 		}
 	}
 #ifdef HAVE_EBCDIC
@@ -1512,18 +1475,6 @@ tls_verify_cb( int ok, X509_STORE_CTX *ctx )
 		__etoa( certerr );
 	}
 #endif
-#ifdef NEW_LOGGING
-	LDAP_LOG( TRANSPORT, ERR,
-		   "TLS certificate verification: depth: %d, err: %d, subject: %s,",
-		   errdepth, errnum,
-		   sname ? sname : "-unknown-" );
-	LDAP_LOG( TRANSPORT, ERR, " issuer: %s\n", iname ? iname : "-unknown-", 0, 0 );
-	if ( !ok ) {
-		LDAP_LOG ( TRANSPORT, ERR, 
-			"TLS certificate verification: Error, %s\n",
-			certerr, 0, 0 );
-	}
-#else
 	Debug( LDAP_DEBUG_TRACE,
 		   "TLS certificate verification: depth: %d, err: %d, subject: %s,",
 		   errdepth, errnum,
@@ -1534,7 +1485,6 @@ tls_verify_cb( int ok, X509_STORE_CTX *ctx )
 			"TLS certificate verification: Error, %s\n",
 			certerr, 0, 0 );
 	}
-#endif
 	if ( sname )
 		CRYPTO_free ( sname );
 	if ( iname )
@@ -1570,14 +1520,8 @@ tls_report_error( void )
 		}
 		__etoa( buf );
 #endif
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TRANSPORT, ERR, 
-			"tls_report_error: TLS %s %s:%d\n", 
-			buf, file, line );
-#else
 		Debug( LDAP_DEBUG_ANY, "TLS: %s %s:%d\n",
 			buf, file, line );
-#endif
 #ifdef HAVE_EBCDIC
 		if ( file ) LDAP_FREE( (void *)file );
 #endif
@@ -1594,15 +1538,9 @@ tls_tmp_rsa_cb( SSL *ssl, int is_export, int key_length )
 	tmp_rsa = RSA_generate_key( key_length, RSA_F4, NULL, NULL );
 
 	if ( !tmp_rsa ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TRANSPORT, ERR, 
-			"tls_tmp_rsa_cb: TLS Failed to generate temporary %d-bit %s "
-			"RSA key\n", key_length, is_export ? "export" : "domestic", 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
 			"TLS: Failed to generate temporary %d-bit %s RSA key\n",
 			key_length, is_export ? "export" : "domestic", 0 );
-#endif
 		return NULL;
 	}
 	return tmp_rsa;
@@ -1630,30 +1568,18 @@ tls_seed_PRNG( const char *randfile )
 	}
 
 	if (randfile == NULL) {
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TRANSPORT, DETAIL1, 
-			"tls_seed_PRNG: TLS Use configuration file or "
-			"$RANDFILE to define seed PRNG\n", 0, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
 			"TLS: Use configuration file or $RANDFILE to define seed PRNG\n",
 			0, 0, 0);
-#endif
 		return -1;
 	}
 
 	total = RAND_load_file(randfile, -1);
 
 	if (RAND_status() == 0) {
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TRANSPORT, DETAIL1, 
-			"tls_seed_PRNG: TLS PRNG not been seeded with enough data\n", 
-			0, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
 			"TLS: PRNG not been seeded with enough data\n",
 			0, 0, 0);
-#endif
 		return -1;
 	}
 
@@ -1726,13 +1652,38 @@ ldap_pvt_tls_get_my_dn( void *s, struct berval *dn, LDAPDN_rewrite_dummy *func, 
 }
 
 int
+ldap_start_tls( LDAP *ld,
+	LDAPControl **serverctrls,
+	LDAPControl **clientctrls,
+	int *msgidp )
+{
+	return ldap_extended_operation( ld, LDAP_EXOP_START_TLS,
+		NULL, serverctrls, clientctrls, msgidp );
+}
+
+int
+ldap_install_tls( LDAP *ld )
+{
+#ifndef HAVE_TLS
+	return LDAP_NOT_SUPPORTED;
+#else
+	if ( ld->ld_sb != NULL && ldap_pvt_tls_inplace( ld->ld_sb ) != 0 ) {
+		return LDAP_LOCAL_ERROR;
+	}
+
+	return ldap_int_tls_start( ld, ld->ld_defconn, NULL );
+#endif
+}
+
+int
 ldap_start_tls_s ( LDAP *ld,
 	LDAPControl **serverctrls,
 	LDAPControl **clientctrls )
 {
+#ifndef HAVE_TLS
+	return LDAP_NOT_SUPPORTED;
+#else
 	int rc;
-
-#ifdef HAVE_TLS
 	char *rspoid = NULL;
 	struct berval *rspdata = NULL;
 
@@ -1757,9 +1708,7 @@ ldap_start_tls_s ( LDAP *ld,
 		rc = ldap_int_tls_start( ld, ld->ld_defconn, NULL );
 	}
 
-#else
-	rc = LDAP_NOT_SUPPORTED;
-#endif
 	return rc;
+#endif
 }
 

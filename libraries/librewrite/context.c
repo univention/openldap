@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/context.c,v 1.5.2.5 2004/07/25 20:49:24 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/context.c,v 1.11.2.1 2005/01/20 18:03:53 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2004 The OpenLDAP Foundation.
+ * Copyright 2000-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -296,7 +296,7 @@ rewrite_context_apply(
 
 				if ( do_continue ) {
 					if ( rule->lr_next == NULL ) {
-						res = ( s == string ? strdup( s ) : s );
+						res = s;
 					}
 					goto rc_continue;
 				}
@@ -321,7 +321,7 @@ rewrite_context_apply(
 			if ( res != NULL ) {
 				struct rewrite_action *action;
 				
-				if (s != string ) {
+				if ( s != string && s != res ) {
 					free( s );
 				}
 				s = res;
@@ -381,7 +381,7 @@ rewrite_context_apply(
 			 * result back to the string
 			 */
 			} else if ( rule->lr_next == NULL ) {
-				res = ( s == string ? strdup( s ) : s );
+				res = s;
 			}
 			
 			break;

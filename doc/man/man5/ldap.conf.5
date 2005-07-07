@@ -1,6 +1,6 @@
 .TH LDAP.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/ldap.conf.5,v 1.23.2.3 2004/09/07 22:37:11 kurt Exp $
-.\" Copyright 1998-2004 The OpenLDAP Foundation All Rights Reserved.
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/ldap.conf.5,v 1.28.2.1 2005/01/20 18:03:47 kurt Exp $
+.\" Copyright 1998-2005 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .UC 6
 .SH NAME
@@ -47,6 +47,8 @@ in the
 (or file specified by
 .BR LDAPCONF ).
 .SH OPTIONS
+The configuration options are case-insensitive;
+their value, on a case by case basis, may be case-sensitive.
 The different configuration options are:
 .TP
 .B URI <ldap[s]://[name[:port]] ...>
@@ -254,6 +256,26 @@ the session is immediately terminated.
 These keywords are equivalent. The server certificate is requested. If no
 certificate is provided, or a bad certificate is provided, the session
 is immediately terminated. This is the default setting.
+.RE
+.TP
+.B TLS_CRLCHECK <level>
+Specifies if the Certificate Revocation List (CRL) of the CA should be 
+used to verify if the server certicates have not been revoked. This
+requires
+.B TLS_CACERTDIR
+parameter to be set.
+.B <level>
+can be specified as one of the following keywords:
+.RS
+.TP
+.B none
+No CRL checks are performed
+.TP
+.B peer
+Check the CRL of the peer certificate
+.TP
+.B all
+Check the CRL for a whole certificate chain
 .RE
 .SH "ENVIRONMENT VARIABLES"
 .TP

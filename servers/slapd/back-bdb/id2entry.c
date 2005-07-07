@@ -1,8 +1,8 @@
 /* id2entry.c - routines to deal with the id2entry database */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/id2entry.c,v 1.47.2.6 2004/08/30 02:40:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/id2entry.c,v 1.62.2.4 2005/04/29 21:29:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2004 The OpenLDAP Foundation.
+ * Copyright 2000-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,7 +20,6 @@
 #include <ac/string.h>
 
 #include "back-bdb.h"
-#include "external.h"
 
 static int bdb_id2entry_put(
 	BackendDB *be,
@@ -33,6 +32,7 @@ static int bdb_id2entry_put(
 	DBT key, data;
 	struct berval bv;
 	int rc;
+	ID nid;
 #ifdef BDB_HIER
 	struct berval odn, ondn;
 
@@ -44,8 +44,11 @@ static int bdb_id2entry_put(
 	e->e_nname = slap_empty_bv;
 #endif
 	DBTzero( &key );
-	key.data = (char *) &e->e_id;
+
+	/* Store ID in BigEndian format */
+	key.data = &nid;
 	key.size = sizeof(ID);
+	BDB_ID2DISK( e->e_id, &nid );
 
 	rc = entry_encode( e, &bv );
 #ifdef BDB_HIER
@@ -96,13 +99,15 @@ int bdb_id2entry(
 	DB *db = bdb->bi_id2entry->bdi_db;
 	DBT key, data;
 	struct berval bv;
-	int rc = 0, ret = 0;
+	int rc = 0;
+	ID nid;
 
 	*e = NULL;
 
 	DBTzero( &key );
-	key.data = (char *) &id;
+	key.data = &nid;
 	key.size = sizeof(ID);
+	BDB_ID2DISK( id, &nid );
 
 	DBTzero( &data );
 	data.flags = DB_DBT_MALLOC;
@@ -116,7 +121,11 @@ int bdb_id2entry(
 
 	DBT2bv( &data, &bv );
 
-	rc = entry_decode( &bv, e );
+#ifdef SLAP_ZONE_ALLOC
+	rc = entry_decode(&bv, e, bdb->bi_cache.c_zctx);
+#else
+	rc = entry_decode(&bv, e);
+#endif
 
 	if( rc == 0 ) {
 		(*e)->e_id = id;
@@ -124,8 +133,13 @@ int bdb_id2entry(
 		/* only free on error. On success, the entry was
 		 * decoded in place.
 		 */
-		ch_free( data.data );
+#ifndef SLAP_ZONE_ALLOC
+		ch_free(data.data);
+#endif
 	}
+#ifdef SLAP_ZONE_ALLOC
+	ch_free(data.data);
+#endif
 
 	return rc;
 }
@@ -139,10 +153,12 @@ int bdb_id2entry_delete(
 	DB *db = bdb->bi_id2entry->bdi_db;
 	DBT key;
 	int rc;
+	ID nid;
 
 	DBTzero( &key );
-	key.data = (char *) &e->e_id;
+	key.data = &nid;
 	key.size = sizeof(ID);
+	BDB_ID2DISK( e->e_id, &nid );
 
 	/* delete from database */
 	rc = db->del( db, tid, &key, 0 );
@@ -150,9 +166,23 @@ int bdb_id2entry_delete(
 	return rc;
 }
 
+#ifdef SLAP_ZONE_ALLOC
 int bdb_entry_return(
-	Entry *e )
+	struct bdb_info *bdb,
+	Entry *e,
+	int zseq
+)
+#else
+int bdb_entry_return(
+	Entry *e
+)
+#endif
 {
+#ifdef SLAP_ZONE_ALLOC
+	if (!slap_zn_validate(bdb->bi_cache.c_zctx, e, zseq)) {
+		return 0;
+	}
+#endif
 	/* Our entries are allocated in two blocks; the data comes from
 	 * the db itself and the Entry structure and associated pointers
 	 * are allocated in entry_decode. The db data pointer is saved
@@ -161,7 +191,11 @@ int bdb_entry_return(
 	 * is when an entry has been modified, in which case we also need
 	 * to free e_attrs.
 	 */
-	if( !e->e_bv.bv_val ) {	/* A regular entry, from do_add */
+
+#ifdef LDAP_COMP_MATCH
+	comp_tree_free( e->e_attrs );
+#endif
+	if( !e->e_bv.bv_val ) {	/* Entry added by do_add */
 		entry_free( e );
 		return 0;
 	}
@@ -177,6 +211,7 @@ int bdb_entry_return(
 		e->e_name.bv_val = NULL;
 		e->e_nname.bv_val = NULL;
 	}
+#ifndef SLAP_ZONE_ALLOC
 #ifndef BDB_HIER
 	/* In tool mode the e_bv buffer is realloc'd, leave it alone */
 	if( !(slapMode & SLAP_TOOL_MODE) ) {
@@ -184,18 +219,24 @@ int bdb_entry_return(
 	}
 #else
 	free( e->e_bv.bv_val );
-#endif
+#endif /* BDB_HIER */
+#endif /* !SLAP_ZONE_ALLOC */
+
+#ifdef SLAP_ZONE_ALLOC
+	slap_zn_free( e, bdb->bi_cache.c_zctx );
+#else
 	free( e );
+#endif
 
 	return 0;
 }
 
 int bdb_entry_release(
-	Operation *o,
+	Operation *op,
 	Entry *e,
 	int rw )
 {
-	struct bdb_info *bdb = (struct bdb_info *) o->o_bd->be_private;
+	struct bdb_info *bdb = (struct bdb_info *) op->o_bd->be_private;
 	struct bdb_op_info *boi = NULL;
  
 	/* slapMode : SLAP_SERVER_MODE, SLAP_TOOL_MODE,
@@ -204,25 +245,53 @@ int bdb_entry_release(
 	if ( slapMode == SLAP_SERVER_MODE ) {
 		/* If not in our cache, just free it */
 		if ( !e->e_private ) {
+#ifdef SLAP_ZONE_ALLOC
+			return bdb_entry_return( bdb, e, -1 );
+#else
 			return bdb_entry_return( e );
+#endif
 		}
 		/* free entry and reader or writer lock */
-		if ( o ) {
-			boi = (struct bdb_op_info *)o->o_private;
+		if ( op ) {
+			boi = (struct bdb_op_info *)op->o_private;
 		}
 		/* lock is freed with txn */
 		if ( !boi || boi->boi_txn ) {
 			bdb_unlocked_cache_return_entry_rw( &bdb->bi_cache, e, rw );
 		} else {
-			bdb_cache_return_entry_rw( bdb->bi_dbenv, &bdb->bi_cache, e, rw, &boi->boi_lock );
-			o->o_tmpfree( boi, o->o_tmpmemctx );
-			o->o_private = NULL;
+			struct bdb_lock_info *bli, *prev;
+			for ( prev=(struct bdb_lock_info *)&boi->boi_locks,
+				bli = boi->boi_locks; bli; prev=bli, bli=bli->bli_next ) {
+				if ( bli->bli_id == e->e_id ) {
+					bdb_cache_return_entry_rw( bdb->bi_dbenv, &bdb->bi_cache,
+						e, rw, &bli->bli_lock );
+					prev->bli_next = bli->bli_next;
+					op->o_tmpfree( bli, op->o_tmpmemctx );
+					break;
+				}
+			}
+			if ( !boi->boi_locks ) {
+				op->o_tmpfree( boi, op->o_tmpmemctx );
+				op->o_private = NULL;
+			}
 		}
 	} else {
+#ifdef SLAP_ZONE_ALLOC
+		int zseq = -1;
+		if (e->e_private != NULL) {
+			BEI(e)->bei_e = NULL;
+			zseq = BEI(e)->bei_zseq;
+		}
+#else
 		if (e->e_private != NULL)
 			BEI(e)->bei_e = NULL;
+#endif
 		e->e_private = NULL;
+#ifdef SLAP_ZONE_ALLOC
+		bdb_entry_return ( bdb, e, zseq );
+#else
 		bdb_entry_return ( e );
+#endif
 	}
  
 	return 0;
@@ -250,19 +319,11 @@ int bdb_entry_get(
 	DB_LOCK		lock;
 	int		free_lock_id = 0;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( BACK_BDB, ARGS, 
-		"bdb_entry_get: ndn: \"%s\"\n", ndn->bv_val, 0, 0 );
-	LDAP_LOG( BACK_BDB, ARGS, 
-		"bdb_entry_get: oc: \"%s\", at: \"%s\"\n",
-		oc ? oc->soc_cname.bv_val : "(null)", at_name, 0);
-#else
 	Debug( LDAP_DEBUG_ARGS,
 		"=> bdb_entry_get: ndn: \"%s\"\n", ndn->bv_val, 0, 0 ); 
 	Debug( LDAP_DEBUG_ARGS,
 		"=> bdb_entry_get: oc: \"%s\", at: \"%s\"\n",
 		oc ? oc->soc_cname.bv_val : "(null)", at_name, 0);
-#endif
 
 	if( op ) boi = (struct bdb_op_info *) op->o_private;
 	if( boi != NULL && op->o_bd->be_private == boi->boi_bdb->be_private ) {
@@ -308,66 +369,38 @@ dn2entry_retry:
 	}
 	if (ei) e = ei->bei_e;
 	if (e == NULL) {
-#ifdef NEW_LOGGING
-		LDAP_LOG( BACK_BDB, INFO, 
-			"bdb_entry_get: cannot find entry (%s)\n", 
-			ndn->bv_val, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ACL,
 			"=> bdb_entry_get: cannot find entry: \"%s\"\n",
 				ndn->bv_val, 0, 0 ); 
-#endif
 		if ( free_lock_id ) {
 			LOCK_ID_FREE( bdb->bi_dbenv, locker );
 		}
 		return LDAP_NO_SUCH_OBJECT; 
 	}
 	
-#ifdef NEW_LOGGING
-	LDAP_LOG( BACK_BDB, DETAIL1, "bdb_entry_get: found entry (%s)\n",
-		ndn->bv_val, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_ACL,
 		"=> bdb_entry_get: found entry: \"%s\"\n",
 		ndn->bv_val, 0, 0 ); 
-#endif
 
-#ifdef BDB_ALIASES
 	/* find attribute values */
 	if( is_entry_alias( e ) ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG( BACK_BDB, INFO, 
-			"bdb_entry_get: entry (%s) is an alias\n", e->e_name.bv_val, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ACL,
 			"<= bdb_entry_get: entry is an alias\n", 0, 0, 0 );
-#endif
 		rc = LDAP_ALIAS_PROBLEM;
 		goto return_results;
 	}
-#endif
 
 	if( is_entry_referral( e ) ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG( BACK_BDB, INFO, 
-			"bdb_entry_get: entry (%s) is a referral.\n", e->e_name.bv_val, 0, 0);
-#else
 		Debug( LDAP_DEBUG_ACL,
 			"<= bdb_entry_get: entry is a referral\n", 0, 0, 0 );
-#endif
 		rc = LDAP_REFERRAL;
 		goto return_results;
 	}
 
 	if ( oc && !is_entry_objectclass( e, oc, 0 )) {
-#ifdef NEW_LOGGING
-		LDAP_LOG( BACK_BDB, INFO, 
-			"bdb_entry_get: failed to find objectClass.\n", 0, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ACL,
-			"<= bdb_entry_get: failed to find objectClass\n",
-			0, 0, 0 ); 
-#endif
+			"<= bdb_entry_get: failed to find objectClass %s\n",
+			oc->soc_cname, 0, 0 ); 
 		rc = LDAP_NO_SUCH_ATTRIBUTE;
 		goto return_results;
 	}
@@ -381,15 +414,25 @@ return_results:
 		if ( slapMode == SLAP_SERVER_MODE ) {
 			*ent = e;
 			/* big drag. we need a place to store a read lock so we can
-			 * release it later??
+			 * release it later?? If we're in a txn, nothing is needed
+			 * here because the locks will go away with the txn.
 			 */
-			if ( op && !boi ) {
-				boi = op->o_tmpcalloc(1,sizeof(struct bdb_op_info),op->o_tmpmemctx);
-				boi->boi_lock = lock;
-				boi->boi_bdb = op->o_bd;
-				op->o_private = boi;
+			if ( op ) {
+				if ( !boi ) {
+					boi = op->o_tmpcalloc(1,sizeof(struct bdb_op_info),op->o_tmpmemctx);
+					boi->boi_bdb = op->o_bd;
+					op->o_private = boi;
+				}
+				if ( !boi->boi_txn ) {
+					struct bdb_lock_info *bli;
+					bli = op->o_tmpalloc( sizeof(struct bdb_lock_info),
+						op->o_tmpmemctx );
+					bli->bli_next = boi->boi_locks;
+					bli->bli_id = e->e_id;
+					bli->bli_lock = lock;
+					boi->boi_locks = bli;
+				}
 			}
-
 		} else {
 			*ent = entry_dup( e );
 			bdb_cache_return_entry_rw(bdb->bi_dbenv, &bdb->bi_cache, e, rw, &lock);
@@ -400,12 +443,8 @@ return_results:
 		LOCK_ID_FREE( bdb->bi_dbenv, locker );
 	}
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( BACK_BDB, ENTRY, "bdb_entry_get: rc=%d\n", rc, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE,
 		"bdb_entry_get: rc=%d\n",
 		rc, 0, 0 ); 
-#endif
 	return(rc);
 }

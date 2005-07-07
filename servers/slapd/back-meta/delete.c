@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/delete.c,v 1.14.2.5 2004/04/12 16:08:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/delete.c,v 1.19.2.5 2005/05/06 16:42:52 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2004 The OpenLDAP Foundation.
+ * Copyright 1999-2005 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -34,30 +34,24 @@
 int
 meta_back_delete( Operation *op, SlapReply *rs )
 {
-	struct metainfo *li = ( struct metainfo * )op->o_bd->be_private;
-	struct metaconn *lc;
-	int candidate = -1;
-	struct berval mdn = BER_BVNULL;
-	dncookie dc;
+	metainfo_t	*mi = ( metainfo_t * )op->o_bd->be_private;
+	metaconn_t	*mc;
+	int		candidate = -1;
+	struct berval	mdn = BER_BVNULL;
+	dncookie	dc;
+	int		do_retry = 1;
 
-	lc = meta_back_getconn( op, rs, META_OP_REQUIRE_SINGLE,
-			&op->o_req_ndn, &candidate );
-	if ( !lc ) {
- 		send_ldap_result( op, rs );
-		return -1;
+	mc = meta_back_getconn( op, rs, &candidate, LDAP_BACK_SENDERR );
+	if ( !mc || !meta_back_dobind( op, rs, mc, LDAP_BACK_SENDERR ) ) {
+		return rs->sr_err;
 	}
-	
-	if ( !meta_back_dobind( lc, op )
-			|| !meta_back_is_valid( lc, candidate ) ) {
-		rs->sr_err = LDAP_OTHER;
- 		send_ldap_result( op, rs );
-		return -1;
-	}
+
+	assert( mc->mc_conns[ candidate ].msc_ld != NULL );
 
 	/*
 	 * Rewrite the compare dn, if needed
 	 */
-	dc.rwmap = &li->targets[ candidate ]->rwmap;
+	dc.target = &mi->mi_targets[ candidate ];
 	dc.conn = op->o_conn;
 	dc.rs = rs;
 	dc.ctx = "deleteDN";
@@ -67,12 +61,21 @@ meta_back_delete( Operation *op, SlapReply *rs )
 		return -1;
 	}
 
-	ldap_delete_s( lc->conns[ candidate ].ld, mdn.bv_val );
+retry:;
+	rs->sr_err = ldap_delete_ext_s( mc->mc_conns[ candidate ].msc_ld,
+			mdn.bv_val, op->o_ctrls, NULL );
+	if ( rs->sr_err == LDAP_UNAVAILABLE && do_retry ) {
+		do_retry = 0;
+		if ( meta_back_retry( op, rs, mc, candidate, LDAP_BACK_SENDERR ) ) {
+			goto retry;
+		}
+	}
 
 	if ( mdn.bv_val != op->o_req_dn.bv_val ) {
 		free( mdn.bv_val );
+		BER_BVZERO( &mdn );
 	}
 	
-	return meta_back_op_result( lc, op, rs );
+	return meta_back_op_result( mc, op, rs, candidate );
 }
 

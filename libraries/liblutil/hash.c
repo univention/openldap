@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/hash.c,v 1.3.2.2 2004/01/01 18:16:31 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/hash.c,v 1.6.2.1 2005/01/20 18:03:52 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2004 The OpenLDAP Foundation.
+ * Copyright 2000-2005 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -44,8 +44,7 @@ void
 lutil_HASHUpdate(
     struct lutil_HASHContext	*ctx,
     const unsigned char		*buf,
-    ber_len_t		len
-)
+    ber_len_t		len )
 {
 	const unsigned char *p, *e;
 	ber_uint_t h;

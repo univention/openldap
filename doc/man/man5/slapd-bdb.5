@@ -1,9 +1,9 @@
 .TH SLAPD-BDB 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2004 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2005 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-bdb.5,v 1.7.2.5 2004/01/01 18:16:27 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-bdb.5,v 1.20.2.4 2005/04/29 21:29:01 kurt Exp $
 .SH NAME
-slapd-bdb \- BDB backend to slapd
+slapd-bdb, slapd-hdb \- Berkeley DB backends to slapd
 .SH SYNOPSIS
 ETCDIR/slapd.conf
 .SH DESCRIPTION
@@ -15,27 +15,31 @@ it properly.
 It uses the Sleepycat Berkeley DB (BDB) package to store data.
 It makes extensive use of indexing and caching to speed data access.
 .LP
+"hdb" is a variant of the BDB backend that uses a hierarchical database
+layout which supports subtree renames. It is otherwise identical to
+the "bdb" behavior, and all the same configuration options apply.
+.LP
 It is noted that these options are intended to complement
 Berkeley DB configuration options set in the environment's
 .B DB_CONFIG
-file.  See Berkeley DB documentation for
-details on
+file.  See Berkeley DB documentation for details on
 .B DB_CONFIG
-configuration options.  Where there is overlap, settings in
+configuration options.
+Where there is overlap, settings in
 .B DB_CONFIG
 take precedence.
 .SH CONFIGURATION
 These
 .B slapd.conf
 options apply to the BDB backend database.
-That is, they must follow a "database bdb" line and come before any
-subsequent "backend" or "database" lines.
+That is, they must follow a "database bdb" or "database hdb" line and
+come before any subsequent "backend" or "database" lines.
 Other database options are described in the
 .BR slapd.conf (5)
 manual page.
 .TP
 .B cachesize <integer>
-Specify the size in entries of the in-memory cache maintained 
+Specify the size in entries of the in-memory entry cache maintained 
 by the BDB backend database instance.
 The default is 1000 entries.
 .TP
@@ -45,14 +49,38 @@ A checkpoint operation flushes the database buffers to disk and writes
 a checkpoint record in the log.
 The checkpoint will occur if either <kbyte> data has been written or
 <min> minutes have passed since the last checkpoint.
-Both arguments default to zero, in which case they are ignored.
+Both arguments default to zero, in which case they are ignored. When
+the <min> argument is non-zero, an internal task will run every <min>
+minutes to perform the checkpoint.
 See the Berkeley DB reference guide for more details.
+.TP
+.B dbconfig <Berkeley DB setting>
+Specify a configuration directive to be placed in the
+.B DB_CONFIG
+file of the database directory. The
+.B dbconfig
+directive is just a convenience
+to allow all necessary configuration to be set in the
+.B slapd.conf
+file.
+The options set using this directive will only be written to the DB_CONFIG
+file if no such file existed at server startup time. This allows one
+to set initial values without overwriting/destroying a DB_CONFIG file
+that was already customized through other means. This directive may
+be specified multiple times, as needed. For example
+.RS
+.nf
+	dbconfig set_cachesize 0 1048576 0
+	dbconfig set_lg_bsize 2097152
+.fi
+.RE
 .TP
 .B dbnosync
 Specify that on-disk database contents should not be immediately
 synchronized with in memory changes.
 Enabling this option may improve performance at the expense of data
 security.
+See the Berkeley DB reference guide for more details.
 .TP
 .B directory <directory>
 Specify the directory where the BDB files containing this database and
@@ -73,7 +101,9 @@ will return a different result.
 .B idlcachesize <integer>
 Specify the size of the in-memory index cache, in index slots. The
 default is zero. A larger value will speed up frequent searches of
-indexed entries.
+indexed entries. An hdb database needs a large idlcachesize
+for good search performance, typically three times the entry cache size
+or larger.
 .TP
 .B
 index {<attrlist>|default} [pres,eq,approx,sub,<special>]
@@ -83,7 +113,11 @@ Some attributes only support a subset of indexes.
 If only an <attr> is given, the indices specified for \fBdefault\fR
 are maintained.
 Note that setting a default does not imply that all attributes will be
-indexed.
+indexed. Also, for best performance, an
+.B eq
+index should always be configured for the
+.B objectClass
+attribute.
 
 A number of special index parameters may be specified.
 The index type
@@ -101,6 +135,17 @@ The special type
 may be specified to disallow use of this index by named subtypes.
 Note: changing index settings requires rebuilding indices, see
 .BR slapindex (8).
+.TP
+.B linearindex
+Tell slapindex to index one attribute at a time. By default, all indexed
+attributes in an entry are processed at the same time. With this option,
+each indexed attribute is processed individually, using multiple passes
+through the entire database. This option improves slapindex performance
+when the database size exceeds the dbcache size. When the dbcache is
+large enough, this option is not needed and will decrease performance.
+Also by default, slapadd performs full indexing and so a separate slapindex
+run is not needed. With this option, slapadd does no indexing and slapindex
+must be used.
 .TP
 .B lockdetect {oldest|youngest|fewest|random|default}
 Specify which transaction to abort when a deadlock is detected.
@@ -130,26 +175,13 @@ Specify a key for a shared memory BDB environment. By default the
 BDB environment uses memory mapped files. If a non-zero value is
 specified, it will be used as the key to identify a shared memory
 region that will house the environment.
-.TP
-.B sessionlog <sid> <limit>
-Specify a session log store for the syncrepl replication provider
-server. The session log store contains information on the entries that
-have been scoped out of the provider replication content identified by
-.B <sid>.
-The number of entries in the session log store is limited by
-.B <limit>.
-Excessive entries are removed from the store in the FIFO order.
-Both
-.B <sid>
+.SH ACCESS CONTROL
+The 
+.B bdb
 and
-.B <limit>
-are non-negative integers.
-.B <sid>
-has no more than three decimal digits.
-Refer to the "OpenLDAP Administrator's Guide" for detailed information
-on setting up a replicated slapd directory service using the syncrepl
-replication engine and the session log store.
-.B
+.B hdb
+backends honor access control semantics as indicated in
+.BR slapd.access (5).
 .SH FILES
 .TP
 ETCDIR/slapd.conf

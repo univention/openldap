@@ -1,6 +1,6 @@
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004 The OpenLDAP Foundation.
+ * Copyright 2004-2005 The OpenLDAP Foundation.
  * Portions Copyright 2004 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -40,9 +40,6 @@ slaptest( int argc, char **argv )
 	int			rc = EXIT_SUCCESS;
 	const char		*progname = "slaptest";
 
-#ifdef NEW_LOGGING
-	lutil_log_initialize( argc, argv );
-#endif
 	slap_tool_init( progname, SLAPTEST, argc, argv );
 
 	fprintf( stderr, "config file testing succeeded\n");

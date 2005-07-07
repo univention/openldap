@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/ntservice.c,v 1.26.2.3 2004/07/18 10:41:06 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/ntservice.c,v 1.29.2.1 2005/01/20 18:03:52 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

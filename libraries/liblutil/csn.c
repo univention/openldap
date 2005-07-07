@@ -1,8 +1,8 @@
 /* csn.c - Change Sequence Number routines */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/csn.c,v 1.7.2.4 2004/01/01 18:16:31 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/csn.c,v 1.11.2.1 2005/01/20 18:03:52 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2004 The OpenLDAP Foundation.
+ * Copyright 2000-2005 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *

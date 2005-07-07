@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/util-int.c,v 1.45.2.3 2004/05/21 17:29:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/util-int.c,v 1.51.2.1 2005/01/20 18:03:51 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * Portions Copyright 1998 A. Hartgers.
  * All rights reserved.
  *
@@ -41,6 +41,12 @@
  * harmless to declare it again (unless defined by a macro).
  */
 extern int h_errno;
+#endif
+
+#ifdef HAVE_HSTRERROR
+# define HSTRERROR(e)	hstrerror(e)
+#else
+# define HSTRERROR(e)	hp_strerror(e)
 #endif
 
 #ifndef LDAP_R_COMPILE
@@ -189,7 +195,7 @@ int ldap_pvt_gethostbyname_a(
 #endif	
 }
 
-#ifndef GETNAMEINFO
+#if !defined( GETNAMEINFO ) && !defined( HAVE_HERROR )
 static const char *
 hp_strerror( int err )
 {
@@ -249,7 +255,7 @@ int ldap_pvt_get_hname(
 		alen = sizeof(sin->sin_addr);
 	} else {
 		rc = NO_RECOVERY;
-		*err = (char *)hp_strerror( rc );
+		*err = (char *)HSTRERROR( rc );
 		return rc;
 	}
 #if defined( HAVE_GETHOSTBYADDR_R )
@@ -281,7 +287,7 @@ int ldap_pvt_get_hname(
 	if (hp) {
 		strncpy( name, hp->h_name, namelen );
 	} else {
-		*err = (char *)hp_strerror( h_errno );
+		*err = (char *)HSTRERROR( h_errno );
 	}
 	LDAP_FREE(buf);
 #else /* HAVE_GETHOSTBYADDR_R */

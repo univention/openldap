@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/include/lber_pvt.h,v 1.22.2.5 2004/04/11 16:57:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/lber_pvt.h,v 1.30.2.2 2005/04/29 21:29:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -135,6 +135,10 @@ LBER_F( char * )
 ber_strdup_x LDAP_P((
 	LDAP_CONST char *, void *ctx ));
 
+LBER_F( struct berval * )
+ber_bvreplace_x LDAP_P((
+	struct berval *dst, LDAP_CONST struct berval *src, void *ctx ));
+
 LBER_F( void )
 ber_bvarray_free_x LDAP_P(( BerVarray p, void *ctx ));
 
@@ -165,7 +169,7 @@ ber_bvarray_add_x LDAP_P(( BerVarray *p, BerValue *bv, void *ctx ));
 #define ber_bvchr(bv,c) \
 	memchr( (bv)->bv_val, (c), (bv)->bv_len )
 
-#define BER_BVC(s)		{ sizeof(s) - 1, (s) }
+#define BER_BVC(s)		{ STRLENOF(s), (s) }
 #define BER_BVNULL		{ 0L, NULL }
 #define BER_BVZERO(bv) \
 	do { \
@@ -174,7 +178,7 @@ ber_bvarray_add_x LDAP_P(( BerVarray *p, BerValue *bv, void *ctx ));
 	} while (0)
 #define BER_BVSTR(bv,s)	\
 	do { \
-		(bv)->bv_len = sizeof(s)-1; \
+		(bv)->bv_len = STRLENOF(s); \
 		(bv)->bv_val = (s); \
 	} while (0)
 #define BER_BVISNULL(bv)	((bv)->bv_val == NULL)

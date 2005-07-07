@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/rewrite.c,v 1.6.2.5 2004/06/28 18:19:47 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/rewrite.c,v 1.12.2.1 2005/01/20 18:03:53 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2004 The OpenLDAP Foundation.
+ * Copyright 2000-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@ int ldap_debug;
 int ldap_syslog;
 int ldap_syslog_level;
 
-char *
+static void
 apply( 
 		FILE *fin, 
 		const char *rewriteContext,
@@ -58,11 +58,12 @@ apply(
 
 	rewrite_session_init( info, cookie );
 
-	string = strdup( arg );
+	string = (char *)arg;
 	for ( sep = strchr( rewriteContext, ',' );
 			rewriteContext != NULL;
 			rewriteContext = sep,
-			sep ? sep = strchr( rewriteContext, ',' ) : NULL ) {
+			sep ? sep = strchr( rewriteContext, ',' ) : NULL )
+	{
 		char	*errmsg = "";
 
 		if ( sep != NULL ) {
@@ -105,17 +106,19 @@ apply(
 		if ( result == NULL ) {
 			break;
 		}
-		free( string );
+		if ( string != arg && string != result ) {
+			free( string );
+		}
 		string = result;
 	}
 
-	free( string );
+	if ( result && result != arg ) {
+		free( result );
+	}
 
 	rewrite_session_delete( info, cookie );
 
 	rewrite_info_delete( &info );
-
-	return result;
 }
 
 int

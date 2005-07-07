@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.88.2.19 2004/09/01 20:53:54 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.144.2.4 2005/04/29 21:29:05 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * Portions Copyright 2000 Mark Adamson, Carnegie Mellon.
  * All rights reserved.
  *
@@ -17,15 +17,17 @@
 #include "portable.h"
 
 #include <stdio.h>
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
 
 #include <ac/stdlib.h>
 #include <ac/string.h>
+#include <ac/ctype.h>
 
 #include "slap.h"
 
-#include <limits.h>
-
-#include <ldap_pvt.h>
+#include "lutil.h"
 
 #define SASLREGEX_REPLACE 10
 
@@ -34,6 +36,8 @@
 #define LDAP_X_SCOPE_CHILDREN	((ber_int_t) 0x0030)
 #define LDAP_X_SCOPE_SUBTREE	((ber_int_t) 0x0040)
 #define LDAP_X_SCOPE_ONELEVEL	((ber_int_t) 0x0050)
+#define LDAP_X_SCOPE_GROUP	((ber_int_t) 0x0060)
+#define LDAP_X_SCOPE_USERS	((ber_int_t) 0x0070)
 
 /*
  * IDs in DNauthzid form can now have a type specifier, that
@@ -44,7 +48,7 @@
  * dn.exact:	the value must pass normalization and is used 
  *		in exact DN match.
  * dn.regex:	the value is treated as a regular expression 
- *		in matching DN values in saslAuthz{To|From}
+ *		in matching DN values in authz{To|From}
  *		attributes.
  * dn:		for backwards compatibility reasons, the value 
  *		is treated as a regular expression, and thus 
@@ -72,13 +76,27 @@ typedef struct sasl_regexp {
 static int nSaslRegexp = 0;
 static SaslRegexp_t *SaslRegexp = NULL;
 
+#ifdef SLAP_AUTH_REWRITE
+#include "rewrite.h"
+struct rewrite_info	*sasl_rwinfo = NULL;
+#define AUTHID_CONTEXT	"authid"
+#endif /* SLAP_AUTH_REWRITE */
+
 /* What SASL proxy authorization policies are allowed? */
 #define	SASL_AUTHZ_NONE	0x00
 #define	SASL_AUTHZ_FROM	0x01
 #define	SASL_AUTHZ_TO	0x02
 #define SASL_AUTHZ_AND	0x10
 
+static const char *policy_txt[] = {
+	"none", "from", "to", "any"
+};
+
 static int authz_policy = SASL_AUTHZ_NONE;
+
+static
+int slap_sasl_match( Operation *opx, struct berval *rule,
+	struct berval *assertDN, struct berval *authc );
 
 int slap_sasl_setpolicy( const char *arg )
 {
@@ -100,13 +118,21 @@ int slap_sasl_setpolicy( const char *arg )
 	return rc;
 }
 
+const char * slap_sasl_getpolicy()
+{
+	if ( authz_policy == (SASL_AUTHZ_FROM | SASL_AUTHZ_TO | SASL_AUTHZ_AND) )
+		return "all";
+	else
+		return policy_txt[authz_policy];
+}
+
 int slap_parse_user( struct berval *id, struct berval *user,
 		struct berval *realm, struct berval *mech )
 {
 	char	u;
 	
 	assert( id );
-	assert( id->bv_val );
+	assert( !BER_BVISNULL( id ) );
 	assert( user );
 	assert( realm );
 	assert( mech );
@@ -123,7 +149,7 @@ int slap_parse_user( struct berval *id, struct berval *user,
 	 */
 	
 	user->bv_val = strchr( id->bv_val, ':' );
-	if ( user->bv_val == NULL ) {
+	if ( BER_BVISNULL( user ) ) {
 		return LDAP_PROTOCOL_ERROR;
 	}
 	user->bv_val[ 0 ] = '\0';
@@ -131,13 +157,13 @@ int slap_parse_user( struct berval *id, struct berval *user,
 	user->bv_len = id->bv_len - ( user->bv_val - id->bv_val );
 
 	mech->bv_val = strchr( id->bv_val, '.' );
-	if ( mech->bv_val != NULL ) {
+	if ( !BER_BVISNULL( mech ) ) {
 		mech->bv_val[ 0 ] = '\0';
 		mech->bv_val++;
 
 		realm->bv_val = strchr( mech->bv_val, '/' );
 
-		if ( realm->bv_val ) {
+		if ( !BER_BVISNULL( realm ) ) {
 			realm->bv_val[ 0 ] = '\0';
 			realm->bv_val++;
 			mech->bv_len = realm->bv_val - mech->bv_val - 1;
@@ -147,21 +173,21 @@ int slap_parse_user( struct berval *id, struct berval *user,
 		}
 
 	} else {
-		realm->bv_val = NULL;
+		BER_BVZERO( realm );
 	}
 
 	if ( id->bv_val[ 1 ] != '\0' ) {
 		return LDAP_PROTOCOL_ERROR;
 	}
 
-	if ( mech->bv_val != NULL ) {
+	if ( !BER_BVISNULL( mech ) ) {
 		assert( mech->bv_val == id->bv_val + 2 );
 
 		AC_MEMCPY( mech->bv_val - 2, mech->bv_val, mech->bv_len + 1 );
 		mech->bv_val -= 2;
 	}
 
-	if ( realm->bv_val ) {
+	if ( !BER_BVISNULL( realm ) ) {
 		assert( realm->bv_val >= id->bv_val + 2 );
 
 		AC_MEMCPY( realm->bv_val - 2, realm->bv_val, realm->bv_len + 1 );
@@ -185,54 +211,54 @@ static int slap_parseURI( Operation *op, struct berval *uri,
 	int rc;
 	LDAPURLDesc *ludp;
 
-	assert( uri != NULL && uri->bv_val != NULL );
-	base->bv_val = NULL;
-	base->bv_len = 0;
-	nbase->bv_val = NULL;
-	nbase->bv_len = 0;
-	fstr->bv_val = NULL;
-	fstr->bv_len = 0;
+	assert( uri != NULL && !BER_BVISNULL( uri ) );
+	BER_BVZERO( base );
+	BER_BVZERO( nbase );
+	BER_BVZERO( fstr );
 	*scope = -1;
 	*filter = NULL;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( TRANSPORT, ENTRY, 
-		"slap_parseURI: parsing %s\n", uri->bv_val, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE,
 		"slap_parseURI: parsing %s\n", uri->bv_val, 0, 0 );
-#endif
 
 	rc = LDAP_PROTOCOL_ERROR;
-	if ( !strncasecmp( uri->bv_val, "dn", sizeof( "dn" ) - 1 ) ) {
-		bv.bv_val = uri->bv_val + sizeof( "dn" ) - 1;
+	/*
+	 * dn[.<dnstyle>]:<dnpattern>
+	 * <dnstyle> ::= {exact|regex|children|subtree|onelevel}
+	 *
+	 * <dnstyle> defaults to "exact"
+	 * if <dnstyle> is not "regex", <dnpattern> must pass DN normalization
+	 */
+	if ( !strncasecmp( uri->bv_val, "dn", STRLENOF( "dn" ) ) ) {
+		bv.bv_val = uri->bv_val + STRLENOF( "dn" );
 
 		if ( bv.bv_val[ 0 ] == '.' ) {
 			bv.bv_val++;
 
-			if ( !strncasecmp( bv.bv_val, "exact:", sizeof( "exact:" ) - 1 ) ) {
-				bv.bv_val += sizeof( "exact:" ) - 1;
+			if ( !strncasecmp( bv.bv_val, "exact:", STRLENOF( "exact:" ) ) ) {
+				bv.bv_val += STRLENOF( "exact:" );
 				*scope = LDAP_X_SCOPE_EXACT;
 
-			} else if ( !strncasecmp( bv.bv_val, "regex:", sizeof( "regex:" ) - 1 ) ) {
-				bv.bv_val += sizeof( "regex:" ) - 1;
+			} else if ( !strncasecmp( bv.bv_val, "regex:", STRLENOF( "regex:" ) ) ) {
+				bv.bv_val += STRLENOF( "regex:" );
 				*scope = LDAP_X_SCOPE_REGEX;
 
-			} else if ( !strncasecmp( bv.bv_val, "children:", sizeof( "chldren:" ) - 1 ) ) {
-				bv.bv_val += sizeof( "children:" ) - 1;
+			} else if ( !strncasecmp( bv.bv_val, "children:", STRLENOF( "children:" ) ) ) {
+				bv.bv_val += STRLENOF( "children:" );
 				*scope = LDAP_X_SCOPE_CHILDREN;
 
-			} else if ( !strncasecmp( bv.bv_val, "subtree:", sizeof( "subtree:" ) - 1 ) ) {
-				bv.bv_val += sizeof( "subtree:" ) - 1;
+			} else if ( !strncasecmp( bv.bv_val, "subtree:", STRLENOF( "subtree:" ) ) ) {
+				bv.bv_val += STRLENOF( "subtree:" );
 				*scope = LDAP_X_SCOPE_SUBTREE;
 
-			} else if ( !strncasecmp( bv.bv_val, "onelevel:", sizeof( "onelevel:" ) - 1 ) ) {
-				bv.bv_val += sizeof( "onelevel:" ) - 1;
+			} else if ( !strncasecmp( bv.bv_val, "onelevel:", STRLENOF( "onelevel:" ) ) ) {
+				bv.bv_val += STRLENOF( "onelevel:" );
 				*scope = LDAP_X_SCOPE_ONELEVEL;
 
 			} else {
 				return LDAP_PROTOCOL_ERROR;
 			}
+
 		} else {
 			if ( bv.bv_val[ 0 ] != ':' ) {
 				return LDAP_PROTOCOL_ERROR;
@@ -243,8 +269,13 @@ static int slap_parseURI( Operation *op, struct berval *uri,
 
 		bv.bv_val += strspn( bv.bv_val, " " );
 		/* jump here in case no type specification was present
-		 * and uir was not an URI... HEADS-UP: assuming EXACT */
+		 * and uri was not an URI... HEADS-UP: assuming EXACT */
 is_dn:		bv.bv_len = uri->bv_len - (bv.bv_val - uri->bv_val);
+
+		/* a single '*' means any DN without using regexes */
+		if ( ber_bvccmp( &bv, '*' ) ) {
+			*scope = LDAP_X_SCOPE_USERS;
+		}
 
 		switch ( *scope ) {
 		case LDAP_X_SCOPE_EXACT:
@@ -259,6 +290,8 @@ is_dn:		bv.bv_len = uri->bv_len - (bv.bv_val - uri->bv_val);
 
 		case LDAP_X_SCOPE_REGEX:
 			ber_dupbv_x( nbase, &bv, op->o_tmpmemctx );
+
+		case LDAP_X_SCOPE_USERS:
 			rc = LDAP_SUCCESS;
 			break;
 
@@ -269,6 +302,9 @@ is_dn:		bv.bv_len = uri->bv_len - (bv.bv_val - uri->bv_val);
 
 		return rc;
 
+	/*
+	 * u:<uid>
+	 */
 	} else if ( ( uri->bv_val[ 0 ] == 'u' || uri->bv_val[ 0 ] == 'U' )
 			&& ( uri->bv_val[ 1 ] == ':' 
 				|| uri->bv_val[ 1 ] == '/' 
@@ -294,14 +330,13 @@ is_dn:		bv.bv_len = uri->bv_len - (bv.bv_val - uri->bv_val);
 			return rc;
 		}
 
-		if ( mech.bv_val ) {
+		if ( !BER_BVISNULL( &mech ) ) {
 			c.c_sasl_bind_mech = mech;
 		} else {
-			c.c_sasl_bind_mech.bv_val = "AUTHZ";
-			c.c_sasl_bind_mech.bv_len = sizeof( "AUTHZ" ) - 1;
+			BER_BVSTR( &c.c_sasl_bind_mech, "AUTHZ" );
 		}
 		
-		rc = slap_sasl_getdn( &c, op, user.bv_val, user.bv_len,
+		rc = slap_sasl_getdn( &c, op, &user,
 				realm.bv_val, nbase, SLAP_GETDN_AUTHZID );
 
 		if ( rc == LDAP_SUCCESS ) {
@@ -309,21 +344,116 @@ is_dn:		bv.bv_len = uri->bv_len - (bv.bv_val - uri->bv_val);
 		}
 
 		return rc;
-	}
+
+	/*
+	 * group[/<groupoc>[/<groupat>]]:<groupdn>
+	 *
+	 * groupoc defaults to "groupOfNames"
+	 * groupat defaults to "member"
+	 * 
+	 * <groupdn> must pass DN normalization
+	 */
+	} else if ( strncasecmp( uri->bv_val, "group", STRLENOF( "group" ) ) == 0 )
+	{
+		struct berval	group_dn = BER_BVNULL,
+				group_oc = BER_BVNULL,
+				member_at = BER_BVNULL;
+		char		*tmp;
+
+		bv.bv_val = uri->bv_val + STRLENOF( "group" );
+		group_dn.bv_val = strchr( bv.bv_val, ':' );
+		if ( group_dn.bv_val == NULL ) {
+			/* last chance: assume it's a(n exact) DN ... */
+			bv.bv_val = uri->bv_val;
+			*scope = LDAP_X_SCOPE_EXACT;
+			goto is_dn;
+		}
 		
+		if ( bv.bv_val[ 0 ] == '/' ) {
+			group_oc.bv_val = &bv.bv_val[ 1 ];
+
+			member_at.bv_val = strchr( group_oc.bv_val, '/' );
+			if ( member_at.bv_val ) {
+				group_oc.bv_len = member_at.bv_val - group_oc.bv_val;
+				member_at.bv_val++;
+				member_at.bv_len = group_dn.bv_val - member_at.bv_val;
+
+			} else {
+				group_oc.bv_len = group_dn.bv_val - group_oc.bv_val;
+				BER_BVSTR( &member_at, "member" );
+			}
+
+		} else {
+			BER_BVSTR( &group_oc, "groupOfNames" );
+		}
+		group_dn.bv_val++;
+		group_dn.bv_len = uri->bv_len - ( group_dn.bv_val - uri->bv_val );
+
+		rc = dnNormalize( 0, NULL, NULL, &group_dn, nbase, op->o_tmpmemctx );
+		if ( rc != LDAP_SUCCESS ) {
+			*scope = -1;
+			return rc;
+		}
+		*scope = LDAP_X_SCOPE_GROUP;
+
+		/* FIXME: caller needs to add value of member attribute
+		 * and close brackets twice */
+		fstr->bv_len = STRLENOF( "(&(objectClass=)(=" /* )) */ )
+			+ group_oc.bv_len + member_at.bv_len;
+		fstr->bv_val = ch_malloc( fstr->bv_len + 1 );
+
+		tmp = lutil_strncopy( fstr->bv_val, "(&(objectClass=" /* )) */ ,
+				STRLENOF( "(&(objectClass=" /* )) */ ) );
+		tmp = lutil_strncopy( tmp, group_oc.bv_val, group_oc.bv_len );
+		tmp = lutil_strncopy( tmp, /* ( */ ")(" /* ) */ ,
+				STRLENOF( /* ( */ ")(" /* ) */ ) );
+		tmp = lutil_strncopy( tmp, member_at.bv_val, member_at.bv_len );
+		tmp = lutil_strncopy( tmp, "=", STRLENOF( "=" ) );
+
+		return rc;
+	}
+
+	/*
+	 * ldap:///<base>??<scope>?<filter>
+	 * <scope> ::= {base|one|subtree}
+	 *
+	 * <scope> defaults to "base"
+	 * <base> must pass DN normalization
+	 * <filter> must pass str2filter()
+	 */
 	rc = ldap_url_parse( uri->bv_val, &ludp );
-	if ( rc == LDAP_URL_ERR_BADSCHEME ) {
-		/* last chance: assume it's a(n exact) DN ... */
+	switch ( rc ) {
+	case LDAP_URL_SUCCESS:
+		/* FIXME: the check is pedantic, but I think it's necessary,
+		 * because people tend to use things like ldaps:// which
+		 * gives the idea SSL is being used.  Maybe we could
+		 * accept ldapi:// as well, but the point is that we use
+		 * an URL as an easy means to define bits of a search with
+		 * little parsing.
+		 */
+		if ( strcasecmp( ludp->lud_scheme, "ldap" ) != 0 ) {
+			/*
+			 * must be ldap:///
+			 */
+			return LDAP_PROTOCOL_ERROR;
+		}
+		break;
+
+	case LDAP_URL_ERR_BADSCHEME:
+		/*
+		 * last chance: assume it's a(n exact) DN ...
+		 *
+		 * NOTE: must pass DN normalization
+		 */
 		bv.bv_val = uri->bv_val;
 		*scope = LDAP_X_SCOPE_EXACT;
 		goto is_dn;
-	}
 
-	if ( rc != LDAP_URL_SUCCESS ) {
+	default:
 		return LDAP_PROTOCOL_ERROR;
 	}
 
-	if (( ludp->lud_host && *ludp->lud_host )
+	if ( ( ludp->lud_host && *ludp->lud_host )
 		|| ludp->lud_attrs || ludp->lud_exts )
 	{
 		/* host part must be empty */
@@ -352,10 +482,8 @@ is_dn:		bv.bv_len = uri->bv_len - (bv.bv_val - uri->bv_val);
 done:
 	if( rc != LDAP_SUCCESS ) {
 		if( *filter ) filter_free_x( op, *filter );
-		base->bv_val = NULL;
-		base->bv_len = 0;
-		fstr->bv_val = NULL;
-		fstr->bv_len = 0;
+		BER_BVZERO( base );
+		BER_BVZERO( fstr );
 	} else {
 		/* Don't free these, return them to caller */
 		ludp->lud_filter = NULL;
@@ -381,16 +509,10 @@ static int slap_sasl_rx_off(char *rep, int *off)
 		}
 		if ( *c == '$' ) {
 			if ( n == SASLREGEX_REPLACE ) {
-#ifdef NEW_LOGGING
-				LDAP_LOG( TRANSPORT, ERR, 
-					"slap_sasl_rx_off: \"%s\" has too many $n "
-					"placeholders (max %d)\n", rep, SASLREGEX_REPLACE, 0  );
-#else
 				Debug( LDAP_DEBUG_ANY,
 					"SASL replace pattern %s has too many $n "
 						"placeholders (max %d)\n",
 					rep, SASLREGEX_REPLACE, 0 );
-#endif
 
 				return( LDAP_OTHER );
 			}
@@ -406,6 +528,81 @@ static int slap_sasl_rx_off(char *rep, int *off)
 	return( LDAP_SUCCESS );
 }
 
+#ifdef SLAP_AUTH_REWRITE
+int slap_sasl_rewrite_config( 
+		const char	*fname,
+		int		lineno,
+		int		argc,
+		char		**argv
+)
+{
+	int	rc;
+	char	*savearg0;
+
+	/* init at first call */
+	if ( sasl_rwinfo == NULL ) {
+ 		sasl_rwinfo = rewrite_info_init( REWRITE_MODE_USE_DEFAULT );
+	}
+
+	/* strip "authid-" prefix for parsing */
+	savearg0 = argv[0];
+	argv[0] += STRLENOF( "authid-" );
+ 	rc = rewrite_parse( sasl_rwinfo, fname, lineno, argc, argv );
+	argv[0] = savearg0;
+
+	return rc;
+}
+
+int slap_sasl_rewrite_destroy( void )
+{
+	if ( sasl_rwinfo ) {
+		rewrite_info_delete( &sasl_rwinfo );
+		sasl_rwinfo = NULL;
+	}
+
+	return 0;
+}
+
+int slap_sasl_regexp_rewrite_config(
+		const char	*fname,
+		int		lineno,
+		const char	*match,
+		const char	*replace,
+		const char	*context )
+{
+	int	rc;
+	char	*argvRule[] = { "rewriteRule", NULL, NULL, ":@", NULL };
+
+	/* init at first call */
+	if ( sasl_rwinfo == NULL ) {
+		char *argvEngine[] = { "rewriteEngine", "on", NULL };
+		char *argvContext[] = { "rewriteContext", NULL, NULL };
+
+		/* initialize rewrite engine */
+ 		sasl_rwinfo = rewrite_info_init( REWRITE_MODE_USE_DEFAULT );
+
+		/* switch on rewrite engine */
+ 		rc = rewrite_parse( sasl_rwinfo, fname, lineno, 2, argvEngine );
+ 		if (rc != LDAP_SUCCESS) {
+			return rc;
+		}
+
+		/* create generic authid context */
+		argvContext[1] = AUTHID_CONTEXT;
+ 		rc = rewrite_parse( sasl_rwinfo, fname, lineno, 2, argvContext );
+ 		if (rc != LDAP_SUCCESS) {
+			return rc;
+		}
+	}
+
+	argvRule[1] = (char *)match;
+	argvRule[2] = (char *)replace;
+ 	rc = rewrite_parse( sasl_rwinfo, fname, lineno, 4, argvRule );
+
+	return rc;
+}
+#endif /* SLAP_AUTH_REWRITE */
+
 int slap_sasl_regexp_config( const char *match, const char *replace )
 {
 	int rc;
@@ -419,18 +616,19 @@ int slap_sasl_regexp_config( const char *match, const char *replace )
 	reg->sr_match = ch_strdup( match );
 	reg->sr_replace = ch_strdup( replace );
 
+#ifdef SLAP_AUTH_REWRITE
+	rc = slap_sasl_regexp_rewrite_config( "sasl-regexp", 0,
+			match, replace, AUTHID_CONTEXT );
+	if ( rc == LDAP_SUCCESS ) nSaslRegexp++;
+	return rc;
+#else /* ! SLAP_AUTH_REWRITE */
+
 	/* Precompile matching pattern */
 	rc = regcomp( &reg->sr_workspace, reg->sr_match, REG_EXTENDED|REG_ICASE );
 	if ( rc ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG( TRANSPORT, ERR, 
-			"slap_sasl_regexp_config: \"%s\" could not be compiled.\n",
-			reg->sr_match, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
 		"SASL match pattern %s could not be compiled by regexp engine\n",
 		reg->sr_match, 0, 0 );
-#endif
 
 		return( LDAP_OTHER );
 	}
@@ -440,8 +638,37 @@ int slap_sasl_regexp_config( const char *match, const char *replace )
 
 	nSaslRegexp++;
 	return( LDAP_SUCCESS );
+#endif /* ! SLAP_AUTH_REWRITE */
 }
 
+void slap_sasl_regexp_unparse( BerVarray *out )
+{
+	int i;
+	struct berval bv;
+	BerVarray bva = NULL;
+	char ibuf[32], *ptr;
+	struct berval idx;
+
+	if ( !nSaslRegexp ) return;
+
+	idx.bv_val = ibuf;
+	bva = ch_malloc( (nSaslRegexp+1) * sizeof(struct berval) );
+	BER_BVZERO(bva+nSaslRegexp);
+	for ( i=0; i<nSaslRegexp; i++ ) {
+		idx.bv_len = sprintf( idx.bv_val, "{%d}", i);
+		bva[i].bv_len = idx.bv_len + strlen( SaslRegexp[i].sr_match ) +
+			strlen( SaslRegexp[i].sr_replace ) + 5;
+		bva[i].bv_val = ch_malloc( bva[i].bv_len+1 );
+		ptr = lutil_strcopy( bva[i].bv_val, ibuf );
+		*ptr++ = '"';
+		ptr = lutil_strcopy( ptr, SaslRegexp[i].sr_match );
+		ptr = lutil_strcopy( ptr, "\" \"" );
+		ptr = lutil_strcopy( ptr, SaslRegexp[i].sr_replace );
+		*ptr++ = '"';
+		*ptr = '\0';
+	}
+	*out = bva;
+}
 
 /* Perform replacement on regexp matches */
 static void slap_sasl_rx_exp(
@@ -469,7 +696,7 @@ static void slap_sasl_rx_exp(
 		len += str[i].rm_eo - str[i].rm_so;
 		n++;
 	}
-	out->bv_val = sl_malloc( len + 1, ctx );
+	out->bv_val = slap_sl_malloc( len + 1, ctx );
 	out->bv_len = len;
 
 	/* Fill in URI with replace string, replacing $i as we go */
@@ -499,9 +726,43 @@ static void slap_sasl_rx_exp(
    LDAP URI to find the matching LDAP entry, using the pattern matching
    strings given in the saslregexp config file directive(s) */
 
-static int slap_sasl_regexp( struct berval *in, struct berval *out,
+static int slap_authz_regexp( struct berval *in, struct berval *out,
 		int flags, void *ctx )
 {
+#ifdef SLAP_AUTH_REWRITE
+	const char	*context = AUTHID_CONTEXT;
+
+	if ( sasl_rwinfo == NULL || BER_BVISNULL( in ) ) {
+		return 0;
+	}
+
+	/* FIXME: if aware of authc/authz mapping, 
+	 * we could use different contexts ... */
+	switch ( rewrite_session( sasl_rwinfo, context, in->bv_val, NULL, 
+				&out->bv_val ) )
+	{
+	case REWRITE_REGEXEC_OK:
+		if ( !BER_BVISNULL( out ) ) {
+			char *val = out->bv_val;
+			ber_str2bv_x( val, 0, 1, out, ctx );
+			if ( val != in->bv_val ) {
+				free( val );
+			}
+		} else {
+			ber_dupbv_x( out, in, ctx );
+		}
+		Debug( LDAP_DEBUG_ARGS,
+			"[rw] %s: \"%s\" -> \"%s\"\n",
+			context, in->bv_val, out->bv_val );		
+		return 1;
+ 		
+ 	case REWRITE_REGEXEC_UNWILLING:
+	case REWRITE_REGEXEC_ERR:
+	default:
+		return 0;
+	}
+
+#else /* ! SLAP_AUTH_REWRITE */
 	char *saslname = in->bv_val;
 	SaslRegexp_t *reg;
   	regmatch_t sr_strings[SASLREGEX_REPLACE];	/* strings matching $1,$2 ... */
@@ -509,13 +770,8 @@ static int slap_sasl_regexp( struct berval *in, struct berval *out,
 
 	memset( out, 0, sizeof( *out ) );
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( TRANSPORT, ENTRY, 
-		"slap_sasl_regexp: converting SASL name %s\n", saslname, 0, 0 );
-#else
-	Debug( LDAP_DEBUG_TRACE, "slap_sasl_regexp: converting SASL name %s\n",
+	Debug( LDAP_DEBUG_TRACE, "slap_authz_regexp: converting SASL name %s\n",
 	   saslname, 0, 0 );
-#endif
 
 	if (( saslname == NULL ) || ( nSaslRegexp == 0 )) {
 		return( 0 );
@@ -538,17 +794,12 @@ static int slap_sasl_regexp( struct berval *in, struct berval *out,
 	slap_sasl_rx_exp( reg->sr_replace, reg->sr_offset,
 		sr_strings, saslname, out, ctx );
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( TRANSPORT, ENTRY, 
-		"slap_sasl_regexp: converted SASL name to %s\n",
-		out->bv_len ? out->bv_val : "", 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE,
-		"slap_sasl_regexp: converted SASL name to %s\n",
-		out->bv_len ? out->bv_val : "", 0, 0 );
-#endif
+		"slap_authz_regexp: converted SASL name to %s\n",
+		BER_BVISEMPTY( out ) ? "" : out->bv_val, 0, 0 );
 
 	return( 1 );
+#endif /* ! SLAP_AUTH_REWRITE */
 }
 
 /* This callback actually does some work...*/
@@ -559,18 +810,12 @@ static int sasl_sc_sasl2dn( Operation *o, SlapReply *rs )
 	if (rs->sr_type != REP_SEARCH) return 0;
 
 	/* We only want to be called once */
-	if( ndn->bv_val ) {
+	if ( !BER_BVISNULL( ndn ) ) {
 		o->o_tmpfree(ndn->bv_val, o->o_tmpmemctx);
-		ndn->bv_val = NULL;
-		ndn->bv_len = 0;
+		BER_BVZERO( ndn );
 
-#ifdef NEW_LOGGING
-		LDAP_LOG( TRANSPORT, DETAIL1,
-			"slap_sc_sasl2dn: search DN returned more than 1 entry\n", 0, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_TRACE,
 			"slap_sc_sasl2dn: search DN returned more than 1 entry\n", 0, 0, 0 );
-#endif
 		return -1;
 	}
 
@@ -588,14 +833,44 @@ static int sasl_sc_smatch( Operation *o, SlapReply *rs )
 {
 	smatch_info *sm = o->o_callback->sc_private;
 
-	if (rs->sr_type != REP_SEARCH) return 0;
+	if ( rs->sr_type != REP_SEARCH ) {
+		if ( rs->sr_err != LDAP_SUCCESS ) {
+			sm->match = -1;
+		}
+		return 0;
+	}
+
+	if ( sm->match == 1 ) {
+		sm->match = -1;
+		return 0;
+	}
 
 	if (dn_match(sm->dn, &rs->sr_entry->e_nname)) {
 		sm->match = 1;
-		return -1;	/* short-circuit the search */
+
+	} else {
+		sm->match = -1;
 	}
 
-	return 1;
+	return 0;
+}
+
+int
+slap_sasl_matches( Operation *op, BerVarray rules,
+		struct berval *assertDN, struct berval *authc )
+{
+	int	rc = LDAP_INAPPROPRIATE_AUTH;
+
+	if ( rules != NULL ) {
+		int	i;
+
+		for( i = 0; !BER_BVISNULL( &rules[i] ); i++ ) {
+			rc = slap_sasl_match( op, &rules[i], assertDN, authc );
+			if ( rc == LDAP_SUCCESS ) break;
+		}
+	}
+	
+	return rc;
 }
 
 /*
@@ -617,23 +892,22 @@ int slap_sasl_match( Operation *opx, struct berval *rule,
 	slap_callback cb = { NULL, sasl_sc_smatch, NULL, NULL };
 	Operation op = {0};
 	SlapReply rs = {REP_RESULT};
+	struct berval base = BER_BVNULL;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( TRANSPORT, ENTRY, 
-		"slap_sasl_match: comparing DN %s to rule %s\n", 
-		assertDN->bv_val, rule->bv_val,0 );
-#else
+	sm.dn = assertDN;
+	sm.match = 0;
+	cb.sc_private = &sm;
+
 	Debug( LDAP_DEBUG_TRACE,
 	   "===>slap_sasl_match: comparing DN %s to rule %s\n",
 		assertDN->bv_val, rule->bv_val, 0 );
-#endif
 
-	rc = slap_parseURI( opx, rule, &op.o_req_dn,
-		&op.o_req_ndn, &op.oq_search.rs_scope, &op.oq_search.rs_filter,
+	rc = slap_parseURI( opx, rule, &base,
+		&op.o_req_ndn, &op.ors_scope, &op.ors_filter,
 		&op.ors_filterstr );
 	if( rc != LDAP_SUCCESS ) goto CONCLUDED;
 
-	switch ( op.oq_search.rs_scope ) {
+	switch ( op.ors_scope ) {
 	case LDAP_X_SCOPE_EXACT:
 exact_match:
 		if ( dn_match( &op.o_req_ndn, assertDN ) ) {
@@ -651,17 +925,23 @@ exact_match:
 
 		rc = LDAP_INAPPROPRIATE_AUTH;
 
-		if ( d == 0 && op.oq_search.rs_scope == LDAP_X_SCOPE_SUBTREE ) {
+		if ( d == 0 && op.ors_scope == LDAP_X_SCOPE_SUBTREE ) {
 			goto exact_match;
 
 		} else if ( d > 0 ) {
 			struct berval bv;
 
+			/* leave room for at least one char of attributeType,
+			 * one for '=' and one for ',' */
+			if ( d < STRLENOF( "x=,") ) {
+				goto CONCLUDED;
+			}
+
 			bv.bv_len = op.o_req_ndn.bv_len;
 			bv.bv_val = assertDN->bv_val + d;
 
 			if ( bv.bv_val[ -1 ] == ',' && dn_match( &op.o_req_ndn, &bv ) ) {
-				switch ( op.oq_search.rs_scope ) {
+				switch ( op.ors_scope ) {
 				case LDAP_X_SCOPE_SUBTREE:
 				case LDAP_X_SCOPE_CHILDREN:
 					rc = LDAP_SUCCESS;
@@ -704,25 +984,61 @@ exact_match:
 		}
 		goto CONCLUDED;
 
+	case LDAP_X_SCOPE_GROUP: {
+		char	*tmp;
+
+		/* Now filterstr looks like "(&(objectClass=<group_oc>)(<member_at>="
+		 * we need to append the <assertDN> so that the <group_dn> is searched
+		 * with scope "base", and the filter ensures that <assertDN> is
+		 * member of the group */
+		tmp = ch_realloc( op.ors_filterstr.bv_val, op.ors_filterstr.bv_len +
+			assertDN->bv_len + STRLENOF( /*"(("*/ "))" ) + 1 );
+		if ( tmp == NULL ) {
+			rc = LDAP_NO_MEMORY;
+			goto CONCLUDED;
+		}
+		op.ors_filterstr.bv_val = tmp;
+		
+		tmp = lutil_strcopy( &tmp[op.ors_filterstr.bv_len], assertDN->bv_val );
+		tmp = lutil_strcopy( tmp, /*"(("*/ "))" );
+
+		/* pass opx because str2filter_x may (and does) use o_tmpmfuncs */
+		op.ors_filter = str2filter_x( opx, op.ors_filterstr.bv_val );
+		if ( op.ors_filter == NULL ) {
+			rc = LDAP_PROTOCOL_ERROR;
+			goto CONCLUDED;
+		}
+		op.ors_scope = LDAP_SCOPE_BASE;
+
+		/* hijack match DN: use that of the group instead of the assertDN;
+		 * assertDN is now in the filter */
+		sm.dn = &op.o_req_ndn;
+
+		/* do the search */
+		break;
+		}
+
+	case LDAP_X_SCOPE_USERS:
+		if ( !BER_BVISEMPTY( assertDN ) ) {
+			rc = LDAP_SUCCESS;
+		} else {
+			rc = LDAP_INAPPROPRIATE_AUTH;
+		}
+		goto CONCLUDED;
+
 	default:
 		break;
 	}
 
 	/* Must run an internal search. */
-	if ( op.oq_search.rs_filter == NULL ) {
+	if ( op.ors_filter == NULL ) {
 		rc = LDAP_FILTER_ERROR;
 		goto CONCLUDED;
 	}
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( TRANSPORT, DETAIL1, 
-		"slap_sasl_match: performing internal search (base=%s, scope=%d)\n",
-		op.o_req_ndn.bv_val, op.oq_search.rs_scope, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE,
 	   "slap_sasl_match: performing internal search (base=%s, scope=%d)\n",
-	   op.o_req_ndn.bv_val, op.oq_search.rs_scope, 0 );
-#endif
+	   op.o_req_ndn.bv_val, op.ors_scope, 0 );
 
 	op.o_bd = select_backend( &op.o_req_ndn, 0, 1 );
 	if(( op.o_bd == NULL ) || ( op.o_bd->be_search == NULL)) {
@@ -730,53 +1046,42 @@ exact_match:
 		goto CONCLUDED;
 	}
 
-	sm.dn = assertDN;
-	sm.match = 0;
-	cb.sc_private = &sm;
-
+	op.o_hdr = opx->o_hdr;
 	op.o_tag = LDAP_REQ_SEARCH;
-	op.o_protocol = LDAP_VERSION3;
 	op.o_ndn = *authc;
 	op.o_callback = &cb;
 	op.o_time = slap_get_time();
 	op.o_do_not_cache = 1;
 	op.o_is_auth_check = 1;
-	op.o_threadctx = opx->o_threadctx;
-	op.o_tmpmemctx = opx->o_tmpmemctx;
-	op.o_tmpmfuncs = opx->o_tmpmfuncs;
-#ifdef LDAP_SLAPI
-	op.o_pb = opx->o_pb;
-#endif
-	op.o_conn = opx->o_conn;
-	op.o_connid = opx->o_connid;
 	/* use req_ndn as req_dn instead of non-pretty base of uri */
-	if( !BER_BVISNULL( &op.o_req_dn ) ) ch_free( op.o_req_dn.bv_val );
+	if( !BER_BVISNULL( &base ) ) {
+		ch_free( base.bv_val );
+		/* just in case... */
+		BER_BVZERO( &base );
+	}
 	ber_dupbv_x( &op.o_req_dn, &op.o_req_ndn, op.o_tmpmemctx );
-	op.oq_search.rs_slimit = 1;
-	op.oq_search.rs_tlimit = SLAP_NO_LIMIT;
-	op.o_sync_slog_size = -1;
+	op.ors_deref = LDAP_DEREF_NEVER;
+	op.ors_slimit = 1;
+	op.ors_tlimit = SLAP_NO_LIMIT;
+	op.ors_attrs = slap_anlist_no_attrs;
+	op.ors_attrsonly = 1;
 
 	op.o_bd->be_search( &op, &rs );
 
-	if (sm.match) {
+	if (sm.match == 1) {
 		rc = LDAP_SUCCESS;
 	} else {
 		rc = LDAP_INAPPROPRIATE_AUTH;
 	}
 
 CONCLUDED:
-	if( !BER_BVISNULL( &op.o_req_dn ) ) sl_free( op.o_req_dn.bv_val, opx->o_tmpmemctx );
-	if( !BER_BVISNULL( &op.o_req_ndn ) ) sl_free( op.o_req_ndn.bv_val, opx->o_tmpmemctx );
-	if( op.oq_search.rs_filter ) filter_free_x( opx, op.oq_search.rs_filter );
-	if( op.ors_filterstr.bv_val ) ch_free( op.ors_filterstr.bv_val );
+	if( !BER_BVISNULL( &op.o_req_dn ) ) slap_sl_free( op.o_req_dn.bv_val, opx->o_tmpmemctx );
+	if( !BER_BVISNULL( &op.o_req_ndn ) ) slap_sl_free( op.o_req_ndn.bv_val, opx->o_tmpmemctx );
+	if( op.ors_filter ) filter_free_x( opx, op.ors_filter );
+	if( !BER_BVISNULL( &op.ors_filterstr ) ) ch_free( op.ors_filterstr.bv_val );
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( TRANSPORT, ENTRY, 
-		"slap_sasl_match: comparison returned %d\n", rc, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE,
 	   "<===slap_sasl_match: comparison returned %d\n", rc, 0, 0);
-#endif
 
 	return( rc );
 }
@@ -798,42 +1103,24 @@ slap_sasl_check_authz( Operation *op,
 	struct berval *authc )
 {
 	int i, rc;
-	BerVarray vals=NULL;
+	BerVarray vals = NULL;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( TRANSPORT, ENTRY, 
-		"slap_sasl_check_authz: does %s match %s rule in %s?\n",
-	    assertDN->bv_val, ad->ad_cname.bv_val, searchDN->bv_val);
-#else
 	Debug( LDAP_DEBUG_TRACE,
 	   "==>slap_sasl_check_authz: does %s match %s rule in %s?\n",
 	   assertDN->bv_val, ad->ad_cname.bv_val, searchDN->bv_val);
-#endif
 
 	rc = backend_attribute( op, NULL, searchDN, ad, &vals, ACL_AUTH );
 	if( rc != LDAP_SUCCESS ) goto COMPLETE;
 
-	/* Check if the *assertDN matches any **vals */
-	if( vals != NULL ) {
-		for( i=0; vals[i].bv_val != NULL; i++ ) {
-			rc = slap_sasl_match( op, &vals[i], assertDN, authc );
-			if ( rc == LDAP_SUCCESS ) goto COMPLETE;
-		}
-	}
-	rc = LDAP_INAPPROPRIATE_AUTH;
+	/* Check if the *assertDN matches any *vals */
+	rc = slap_sasl_matches( op, vals, assertDN, authc );
 
 COMPLETE:
 	if( vals ) ber_bvarray_free_x( vals, op->o_tmpmemctx );
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( TRANSPORT, RESULTS, 
-		"slap_sasl_check_authz: %s check returning %s\n", 
-		ad->ad_cname.bv_val, rc, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE,
 	   "<==slap_sasl_check_authz: %s check returning %d\n",
 		ad->ad_cname.bv_val, rc, 0);
-#endif
 
 	return( rc );
 }
@@ -854,48 +1141,43 @@ void slap_sasl2dn( Operation *opx,
 	Operation op = {0};
 	SlapReply rs = {REP_RESULT};
 	struct berval regout = BER_BVNULL;
+	struct berval base = BER_BVNULL;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( TRANSPORT, ENTRY, 
-		"slap_sasl2dn: converting SASL name %s to DN.\n",
-		saslname->bv_val, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "==>slap_sasl2dn: "
 		"converting SASL name %s to a DN\n",
 		saslname->bv_val, 0,0 );
-#endif
 
-	sasldn->bv_val = NULL;
-	sasldn->bv_len = 0;
+	BER_BVZERO( sasldn );
 	cb.sc_private = sasldn;
 
 	/* Convert the SASL name into a minimal URI */
-	if( !slap_sasl_regexp( saslname, &regout, flags, opx->o_tmpmemctx ) ) {
+	if( !slap_authz_regexp( saslname, &regout, flags, opx->o_tmpmemctx ) ) {
 		goto FINISHED;
 	}
 
-	rc = slap_parseURI( opx, &regout, &op.o_req_dn,
-		&op.o_req_ndn, &op.oq_search.rs_scope, &op.oq_search.rs_filter,
+	rc = slap_parseURI( opx, &regout, &base,
+		&op.o_req_ndn, &op.ors_scope, &op.ors_filter,
 		&op.ors_filterstr );
-	if( regout.bv_val ) sl_free( regout.bv_val, opx->o_tmpmemctx );
-	if( rc != LDAP_SUCCESS ) {
+	if ( !BER_BVISNULL( &regout ) ) slap_sl_free( regout.bv_val, opx->o_tmpmemctx );
+	if ( rc != LDAP_SUCCESS ) {
 		goto FINISHED;
 	}
 
 	/* Must do an internal search */
 	op.o_bd = select_backend( &op.o_req_ndn, 0, 1 );
 
-	switch ( op.oq_search.rs_scope ) {
+	switch ( op.ors_scope ) {
 	case LDAP_X_SCOPE_EXACT:
 		*sasldn = op.o_req_ndn;
-		op.o_req_ndn.bv_len = 0;
-		op.o_req_ndn.bv_val = NULL;
+		BER_BVZERO( &op.o_req_ndn );
 		/* intentionally continue to next case */
 
 	case LDAP_X_SCOPE_REGEX:
 	case LDAP_X_SCOPE_SUBTREE:
 	case LDAP_X_SCOPE_CHILDREN:
 	case LDAP_X_SCOPE_ONELEVEL:
+	case LDAP_X_SCOPE_GROUP:
+	case LDAP_X_SCOPE_USERS:
 		/* correctly parsed, but illegal */
 		goto FINISHED;
 
@@ -913,62 +1195,61 @@ void slap_sasl2dn( Operation *opx,
 		assert( 0 );
 	}
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( TRANSPORT, DETAIL1, 
-		"slap_sasl2dn: performing internal search (base=%s, scope=%d)\n",
-		op.o_req_ndn.bv_val, op.oq_search.rs_scope, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE,
 		"slap_sasl2dn: performing internal search (base=%s, scope=%d)\n",
-		op.o_req_ndn.bv_val, op.oq_search.rs_scope, 0 );
-#endif
+		op.o_req_ndn.bv_val, op.ors_scope, 0 );
 
-	if(( op.o_bd == NULL ) || ( op.o_bd->be_search == NULL)) {
+	if ( ( op.o_bd == NULL ) || ( op.o_bd->be_search == NULL) ) {
 		goto FINISHED;
 	}
 
-	op.o_conn = opx->o_conn;
-	op.o_connid = opx->o_connid;
+	/* Must run an internal search. */
+	if ( op.ors_filter == NULL ) {
+		rc = LDAP_FILTER_ERROR;
+		goto FINISHED;
+	}
+
+	op.o_hdr = opx->o_hdr;
 	op.o_tag = LDAP_REQ_SEARCH;
-	op.o_protocol = LDAP_VERSION3;
 	op.o_ndn = opx->o_conn->c_ndn;
 	op.o_callback = &cb;
 	op.o_time = slap_get_time();
 	op.o_do_not_cache = 1;
 	op.o_is_auth_check = 1;
-	op.o_threadctx = opx->o_threadctx;
-	op.o_tmpmemctx = opx->o_tmpmemctx;
-	op.o_tmpmfuncs = opx->o_tmpmfuncs;
-#ifdef LDAP_SLAPI
-	op.o_pb = opx->o_pb;
-#endif
-	op.oq_search.rs_deref = LDAP_DEREF_NEVER;
-	op.oq_search.rs_slimit = 1;
-	op.oq_search.rs_tlimit = SLAP_NO_LIMIT;
-	op.oq_search.rs_attrsonly = 1;
+	op.ors_deref = LDAP_DEREF_NEVER;
+	op.ors_slimit = 1;
+	op.ors_tlimit = SLAP_NO_LIMIT;
+	op.ors_attrs = slap_anlist_no_attrs;
+	op.ors_attrsonly = 1;
 	/* use req_ndn as req_dn instead of non-pretty base of uri */
-	if( !BER_BVISNULL( &op.o_req_dn ) ) ch_free( op.o_req_dn.bv_val );
+	if( !BER_BVISNULL( &base ) ) {
+		ch_free( base.bv_val );
+		/* just in case... */
+		BER_BVZERO( &base );
+	}
 	ber_dupbv_x( &op.o_req_dn, &op.o_req_ndn, op.o_tmpmemctx );
 
 	op.o_bd->be_search( &op, &rs );
 	
 FINISHED:
-	if( sasldn->bv_len ) {
+	if( !BER_BVISEMPTY( sasldn ) ) {
 		opx->o_conn->c_authz_backend = op.o_bd;
 	}
-	if( !BER_BVISNULL( &op.o_req_dn ) ) sl_free( op.o_req_dn.bv_val, opx->o_tmpmemctx );
-	if( !BER_BVISNULL( &op.o_req_ndn ) ) sl_free( op.o_req_ndn.bv_val, opx->o_tmpmemctx );
-	if( op.oq_search.rs_filter ) filter_free_x( opx, op.oq_search.rs_filter );
-	if( op.ors_filterstr.bv_len ) ch_free( op.ors_filterstr.bv_val );
+	if( !BER_BVISNULL( &op.o_req_dn ) ) {
+		slap_sl_free( op.o_req_dn.bv_val, opx->o_tmpmemctx );
+	}
+	if( !BER_BVISNULL( &op.o_req_ndn ) ) {
+		slap_sl_free( op.o_req_ndn.bv_val, opx->o_tmpmemctx );
+	}
+	if( op.ors_filter ) {
+		filter_free_x( opx, op.ors_filter );
+	}
+	if( !BER_BVISNULL( &op.ors_filterstr ) ) {
+		ch_free( op.ors_filterstr.bv_val );
+	}
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( TRANSPORT, ENTRY, 
-		"slap_sasl2dn: Converted SASL name to %s\n",
-		sasldn->bv_len ? sasldn->bv_val : "<nothing>", 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "<==slap_sasl2dn: Converted SASL name to %s\n",
-		sasldn->bv_len ? sasldn->bv_val : "<nothing>", 0, 0 );
-#endif
+		!BER_BVISEMPTY( sasldn ) ? sasldn->bv_val : "<nothing>", 0, 0 );
 
 	return;
 }
@@ -989,15 +1270,9 @@ int slap_sasl_authorized( Operation *op,
 		goto DONE;
 	}
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( TRANSPORT, ENTRY, 
-		"slap_sasl_authorized: can %s become %s?\n", 
-		authcDN->bv_val, authzDN->bv_val, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE,
 	   "==>slap_sasl_authorized: can %s become %s?\n",
 		authcDN->bv_val, authzDN->bv_val, 0 );
-#endif
 
 	/* If person is authorizing to self, succeed */
 	if ( dn_match( authcDN, authzDN ) ) {
@@ -1035,12 +1310,8 @@ int slap_sasl_authorized( Operation *op,
 
 DONE:
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( TRANSPORT, RESULTS, "slap_sasl_authorized: return %d\n", rc,0,0 );
-#else
 	Debug( LDAP_DEBUG_TRACE,
 		"<== slap_sasl_authorized: return %d\n", rc, 0, 0 );
-#endif
 
 	return( rc );
 }

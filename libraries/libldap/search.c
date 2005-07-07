@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/search.c,v 1.57.2.5 2004/03/17 20:10:49 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/search.c,v 1.64.2.1 2005/01/20 18:03:50 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,8 +36,11 @@
  *
  *	ld		LDAP descriptor
  *	base		DN of the base object
- *	scope		the search scope - one of LDAP_SCOPE_BASE,
- *			    LDAP_SCOPE_ONELEVEL, LDAP_SCOPE_SUBTREE
+ *	scope		the search scope - one of
+ *				LDAP_SCOPE_BASE (baseObject),
+ *			    LDAP_SCOPE_ONELEVEL (oneLevel),
+ *				LDAP_SCOPE_SUBTREE (subtree), or
+ *				LDAP_SCOPE_SUBORDINATE (children) -- OpenLDAP extension
  *	filter		a string containing the search filter
  *			(e.g., "(|(cn=bob)(sn=bob))")
  *	attrs		list of attribute types to return for matches
@@ -68,11 +71,7 @@ ldap_search_ext(
 	int timelimit;
 	ber_int_t id;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "ldap_search_ext\n", 0, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_search_ext\n", 0, 0, 0 );
-#endif
 
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );
@@ -160,8 +159,11 @@ ldap_search_ext_s(
  *
  *	ld		LDAP descriptor
  *	base		DN of the base object
- *	scope		the search scope - one of LDAP_SCOPE_BASE,
- *			    LDAP_SCOPE_ONELEVEL, LDAP_SCOPE_SUBTREE
+ *	scope		the search scope - one of
+ *				LDAP_SCOPE_BASE (baseObject),
+ *			    LDAP_SCOPE_ONELEVEL (oneLevel),
+ *				LDAP_SCOPE_SUBTREE (subtree), or
+ *				LDAP_SCOPE_SUBORDINATE (children) -- OpenLDAP extension
  *	filter		a string containing the search filter
  *			(e.g., "(|(cn=bob)(sn=bob))")
  *	attrs		list of attribute types to return for matches
@@ -180,11 +182,7 @@ ldap_search(
 	BerElement	*ber;
 	ber_int_t	id;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "ldap_search\n", 0, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_search\n", 0, 0, 0 );
-#endif
 
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/rule.c,v 1.5.4.7 2004/01/20 23:46:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/rule.c,v 1.14.2.1 2005/01/20 18:03:53 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2004 The OpenLDAP Foundation.
+ * Copyright 2000-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -419,9 +419,8 @@ recurse:;
 	
 	op->lo_num_passes++;
 	if ( regexec( &rule->lr_regex, string, nmatch, match, 0 ) != 0 ) {
-		if ( *result == NULL && strcnt > 0 ) {
+		if ( *result == NULL && string != arg ) {
 			free( string );
-			string = NULL;
 		}
 
 		/*
@@ -435,7 +434,7 @@ recurse:;
 
 	*result = val.bv_val;
 	val.bv_val = NULL;
-	if ( strcnt > 0 ) {
+	if ( string != arg ) {
 		free( string );
 		string = NULL;
 	}

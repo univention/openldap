@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/main.c,v 1.35.2.5 2004/01/01 18:16:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/main.c,v 1.42.2.2 2005/01/20 18:04:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -110,26 +110,14 @@ int main( int argc, char **argv )
 		if ( i != NULL ) 
 		{
 			ldap_debug = *i;
-#ifdef NEW_LOGGING
-			lutil_log_initialize( argc, argv );
-			LDAP_LOG( SLURPD, INFO, 
-				"main: new debug level from registry is: %d\n", 
-				ldap_debug, 0, 0 );
-#else
 			Debug( LDAP_DEBUG_ANY, "new debug level from registry is: %d\n", ldap_debug, 0, 0 );
-#endif
 		}
 
 		newConfigFile = (char*)lutil_getRegParam( regService, "ConfigFile" );
 		if ( newConfigFile != NULL ) 
 		{
 			sglob->slapd_configfile = newConfigFile;
-#ifdef NEW_LOGGING
-			LDAP_LOG( SLURPD, INFO, 
-				"main: new config file from registry is: %s\n", sglob->slapd_configfile, 0, 0 );
-#else
 			Debug ( LDAP_DEBUG_ANY, "new config file from registry is: %s\n", sglob->slapd_configfile, 0, 0 );
-#endif
 
 		}
 	}
@@ -152,11 +140,7 @@ int main( int argc, char **argv )
 		}
     }
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( SLURPD, INFO, "%s\n", Versionstr, 0, 0 );
-#else
 	Debug ( LDAP_DEBUG_ANY, "%s\n", Versionstr, 0, 0 );
-#endif
     
     /*
      * Read slapd config file and initialize Re (per-replica) structs.
@@ -265,13 +249,8 @@ int main( int argc, char **argv )
     if ( ldap_pvt_thread_create( &(sglob->fm_tid),
 		0, fm, (void *) NULL ) != 0 )
 	{
-#ifdef NEW_LOGGING
-	LDAP_LOG ( SLURPD, ERR,
-		"main: file manager ldap_pvt_thread_create failed\n" , 0, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_ANY, "file manager ldap_pvt_thread_create failed\n",
 		0, 0, 0 );
-#endif
 	SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 21 );
 	rc = 1;
 	goto stop;
@@ -325,11 +304,7 @@ stop:
     ldap_pvt_tls_destroy();
 #endif
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( SLURPD, RESULTS, "main: slurpd terminated\n", 0, 0, 0 );
-#else
     Debug( LDAP_DEBUG_ANY, "slurpd: terminated.\n", 0, 0, 0 );
-#endif
 
     if ( slurpd_pid_file != NULL ) {
 	unlink( slurpd_pid_file );

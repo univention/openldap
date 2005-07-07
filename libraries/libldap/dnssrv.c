@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/dnssrv.c,v 1.26.2.7 2004/04/12 15:17:41 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/dnssrv.c,v 1.37.2.1 2005/01/20 18:03:49 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -69,7 +69,7 @@ int ldap_dn2domain(
 				(ava->la_flags & LDAP_AVA_STRING) &&
 				ava->la_value.bv_len &&
 				( ber_bvstrcasecmp( &ava->la_attr, &DC ) == 0
-				|| ber_bvstrcasecmp( &ava->la_attr, &DCOID ) == 0 ) )
+				|| ber_bvcmp( &ava->la_attr, &DCOID ) == 0 ) )
 			{
 				if( domain.bv_len == 0 ) {
 					ndomain = LDAP_REALLOC( domain.bv_val,

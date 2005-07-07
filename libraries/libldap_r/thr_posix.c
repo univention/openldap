@@ -1,8 +1,8 @@
 /* thr_posix.c - wrapper around posix and posixish thread implementations.  */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_posix.c,v 1.34.2.3 2004/01/01 18:16:30 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_posix.c,v 1.37.2.2 2005/04/29 21:29:03 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -110,7 +110,7 @@ ldap_pvt_thread_create( ldap_pvt_thread_t * thread,
 	pthread_attr_create(&attr);
 #endif
 
-#if defined(LDAP_PVT_THREAD_STACK_SIZE) && LDAP_PVT_THREAD_STACK_SIZE > 0
+#ifdef LDAP_PVT_THREAD_SET_STACK_SIZE
 	/* this should be tunable */
 	pthread_attr_setstacksize( &attr, LDAP_PVT_THREAD_STACK_SIZE );
 #endif

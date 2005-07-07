@@ -1,8 +1,8 @@
 /* Generic string.h */
-/* $OpenLDAP: pkg/ldap/include/ac/string.h,v 1.39.2.3 2004/04/11 16:57:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ac/string.h,v 1.44.2.2 2005/03/14 22:24:57 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -89,6 +89,24 @@ int (strncasecmp)();
 		else AC_MEMCPY( (d), (s), (n) ); \
 	} while(0)
 
+#ifdef NEED_MEMCMP_REPLACEMENT
+	int (lutil_memcmp)(const void *b1, const void *b2, size_t len);
+#define memcmp lutil_memcmp
+#endif
+
 #define STRLENOF(s)	(sizeof(s)-1)
+
+#if defined( HAVE_NONPOSIX_STRERROR_R )
+#	define AC_STRERROR_R(e,b,l)		(strerror_r((e), (b), (l)))
+#elif defined( HAVE_STRERROR_R )
+#	define AC_STRERROR_R(e,b,l)		(strerror_r((e), (b), (l)) ? (b) : NULL)
+#elif defined( HAVE_SYS_ERRLIST )
+#	define AC_STRERROR_R(e,b,l)		((e) > -1 && (e) < sys_nerr \
+										? sys_errlist[(e)] : NULL )
+#elif defined( HAVE_STRERROR )
+#	define AC_STRERROR_R(e,b,l)		(strerror(e))
+#else
+#	define AC_STRERROR_R(e,b,l)		(NULL)
+#endif
 
 #endif /* _AC_STRING_H */

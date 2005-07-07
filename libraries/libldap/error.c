@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/error.c,v 1.50.2.8 2004/01/01 18:16:29 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/error.c,v 1.64.2.2 2005/01/20 18:03:50 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -110,6 +110,12 @@ static struct ldaperror ldap_builtin_errlist[] = {
 	{LDAP_NO_OPERATION,				N_("No Operation")},
 	{LDAP_ASSERTION_FAILED,			N_("Assertion Failed")},
 
+	{LDAP_CUP_RESOURCES_EXHAUSTED,	N_("LCUP Resources Exhausted")},
+	{LDAP_CUP_SECURITY_VIOLATION,	N_("LCUP Security Violation")},
+	{LDAP_CUP_INVALID_DATA,			N_("LCUP Invalid Data")},
+	{LDAP_CUP_UNSUPPORTED_SCHEME,	N_("LCUP Unsupported Scheme")},
+	{LDAP_CUP_RELOAD_REQUIRED,		N_("LCUP Reload Required")},
+
 	{LDAP_CANCELLED,				N_("Cancelled")},
 	{LDAP_NO_SUCH_OPERATION,		N_("No Operation to Cancel")},
 	{LDAP_TOO_LATE,					N_("Too Late to Cancel")},
@@ -143,15 +149,24 @@ ldap_err2string( int err )
 {
 	const struct ldaperror *e;
 	
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "ldap_err2string\n", 0,0,0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_err2string\n", 0, 0, 0 );
-#endif
 
 	e = ldap_int_error( err );
 
-	return e ? _(e->e_reason) : _("Unknown error");
+	if (e) {
+		return e->e_reason;
+
+	} else if ( LDAP_API_ERROR(err) ) {
+		return _("Unknown API error");
+
+	} else if ( LDAP_E_ERROR(err) ) {
+		return _("Unknown (extension) error");
+
+	} else if ( LDAP_X_ERROR(err) ) {
+		return _("Unknown (private extension) error");
+	}
+
+	return _("Unknown error");
 }
 
 /* deprecated */
@@ -160,11 +175,7 @@ ldap_perror( LDAP *ld, LDAP_CONST char *str )
 {
     int i;
 	const struct ldaperror *e;
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "ldap_perror\n", 0,0,0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_perror\n", 0, 0, 0 );
-#endif
 
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );
@@ -174,7 +185,7 @@ ldap_perror( LDAP *ld, LDAP_CONST char *str )
 
 	fprintf( stderr, "%s: %s (%d)\n",
 		str ? str : "ldap_perror",
-		e ? _(e->e_reason) : _("unknown LDAP result code"),
+		e ? _(e->e_reason) : _("unknown result code"),
 		ld->ld_errno );
 
 	if ( ld->ld_matched != NULL && ld->ld_matched[0] != '\0' ) {
@@ -221,7 +232,7 @@ ldap_result2error( LDAP *ld, LDAPMessage *r, int freeit )
  *   BindResponse ::= [APPLICATION 1] SEQUENCE {
  *     COMPONENTS OF LDAPResult,
  *     serverSaslCreds  [7] OCTET STRING OPTIONAL }
- * 
+ *
  * and ExtendedOp results:
  *
  *   ExtendedResponse ::= [APPLICATION 24] SEQUENCE {
@@ -247,11 +258,7 @@ ldap_parse_result(
 	ber_tag_t tag;
 	BerElement	*ber;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "ldap_parse_result\n", 0,0,0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_parse_result\n", 0, 0, 0 );
-#endif
 
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );
@@ -267,13 +274,24 @@ ldap_parse_result(
 	ldap_pvt_thread_mutex_lock( &ld->ld_res_mutex );
 #endif
 	/* Find the next result... */
-	for ( lm = r; lm != NULL; lm = lm->lm_chain ) {
-		/* skip over entries and references */
-		if( lm->lm_msgtype != LDAP_RES_SEARCH_ENTRY &&
-			lm->lm_msgtype != LDAP_RES_SEARCH_REFERENCE &&
-			lm->lm_msgtype != LDAP_RES_INTERMEDIATE )
-		{
-			break;
+	if ( r->lm_chain == NULL ) {
+		if ((r->lm_msgtype == LDAP_RES_SEARCH_ENTRY) ||
+			(r->lm_msgtype == LDAP_RES_SEARCH_REFERENCE) ||
+			(r->lm_msgtype == LDAP_RES_INTERMEDIATE)) {
+			lm = NULL;	
+		} else {
+			lm = r;
+		}
+	} else {
+		if ((r->lm_chain_tail->lm_chain->lm_msgtype
+				== LDAP_RES_SEARCH_ENTRY) ||
+			(r->lm_chain_tail->lm_chain->lm_msgtype
+				== LDAP_RES_SEARCH_REFERENCE) ||
+			(r->lm_chain_tail->lm_chain->lm_msgtype
+				== LDAP_RES_INTERMEDIATE)) {
+			lm = NULL;
+		} else {
+			lm = r->lm_chain_tail->lm_chain;
 		}
 	}
 
@@ -380,15 +398,24 @@ ldap_parse_result(
 		}
 
 		/* Find the next result... */
-		for ( lm = lm->lm_chain; lm != NULL; lm = lm->lm_chain ) {
-			/* skip over entries and references */
-			if( lm->lm_msgtype != LDAP_RES_SEARCH_ENTRY &&
-				lm->lm_msgtype != LDAP_RES_SEARCH_REFERENCE &&
-				lm->lm_msgtype != LDAP_RES_INTERMEDIATE )
-			{
-				/* more results to return */
-				errcode = LDAP_MORE_RESULTS_TO_RETURN;
-				break;
+		lm = lm->lm_chain;
+		if ( lm ) {
+			if ( lm->lm_chain == NULL ) {
+				if ((lm->lm_msgtype != LDAP_RES_SEARCH_ENTRY) &&
+					(lm->lm_msgtype != LDAP_RES_SEARCH_REFERENCE) &&
+					(lm->lm_msgtype != LDAP_RES_INTERMEDIATE)) {
+					/* more results to return */
+					errcode = LDAP_MORE_RESULTS_TO_RETURN;
+				}
+			} else {
+				if ((lm->lm_chain_tail->lm_chain->lm_msgtype
+						!= LDAP_RES_SEARCH_ENTRY) &&
+					(lm->lm_chain_tail->lm_chain->lm_msgtype
+						!= LDAP_RES_SEARCH_REFERENCE) &&
+					(lm->lm_chain_tail->lm_chain->lm_msgtype
+						!= LDAP_RES_INTERMEDIATE)) {
+					errcode = LDAP_MORE_RESULTS_TO_RETURN;
+				}
 			}
 		}
 	}

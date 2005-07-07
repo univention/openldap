@@ -1,8 +1,8 @@
 /* search.c - monitor backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/search.c,v 1.24.2.4 2004/03/18 00:56:29 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/search.c,v 1.32.2.2 2005/04/29 21:29:09 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2004 The OpenLDAP Foundation.
+ * Copyright 2001-2005 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -38,18 +38,17 @@ monitor_send_children(
 	int		sub
 )
 {
-	struct monitorinfo	*mi =
-		(struct monitorinfo *) op->o_bd->be_private;
+	monitor_info_t	*mi = ( monitor_info_t * )op->o_bd->be_private;
 	Entry 			*e, *e_tmp, *e_ch;
-	struct monitorentrypriv *mp;
+	monitor_entry_t *mp;
 	int			rc;
 
-	mp = ( struct monitorentrypriv * )e_parent->e_private;
+	mp = ( monitor_entry_t * )e_parent->e_private;
 	e = mp->mp_children;
 
 	e_ch = NULL;
 	if ( MONITOR_HAS_VOLATILE_CH( mp ) ) {
-		monitor_entry_create( op, NULL, e_parent, &e_ch );
+		monitor_entry_create( op, rs, NULL, e_parent, &e_ch );
 	}
 	monitor_cache_release( mi, e_parent );
 
@@ -57,7 +56,7 @@ monitor_send_children(
 	if ( e_ch == NULL ) {
 		/* no persistent entries? return */
 		if ( e == NULL ) {
-			return( 0 );
+			return LDAP_SUCCESS;
 		}
 	
 	/* volatile entries */
@@ -71,7 +70,7 @@ monitor_send_children(
 		} else {
 			e_tmp = e_ch;
 			do {
-				mp = ( struct monitorentrypriv * )e_tmp->e_private;
+				mp = ( monitor_entry_t * )e_tmp->e_private;
 				e_tmp = mp->mp_next;
 	
 				if ( e_tmp == NULL ) {
@@ -85,9 +84,14 @@ monitor_send_children(
 
 	/* return entries */
 	for ( ; e != NULL; ) {
-		mp = ( struct monitorentrypriv * )e->e_private;
+		mp = ( monitor_entry_t * )e->e_private;
 
-		monitor_entry_update( op, e );
+		monitor_entry_update( op, rs, e );
+
+		if ( op->o_abandon ) {
+			monitor_cache_release( mi, e );
+			return SLAPD_ABANDON;
+		}
 		
 		rc = test_filter( op, e, op->oq_search.rs_filter );
 		if ( rc == LDAP_COMPARE_TRUE ) {
@@ -98,9 +102,11 @@ monitor_send_children(
 		}
 
 		if ( ( mp->mp_children || MONITOR_HAS_VOLATILE_CH( mp ) )
-				&& sub ) {
+				&& sub )
+		{
 			rc = monitor_send_children( op, rs, e, sub );
 			if ( rc ) {
+				monitor_cache_release( mi, e );
 				return( rc );
 			}
 		}
@@ -113,31 +119,36 @@ monitor_send_children(
 		e = e_tmp;
 	}
 	
-	return( 0 );
+	return LDAP_SUCCESS;
 }
 
 int
 monitor_back_search( Operation *op, SlapReply *rs )
 {
-	struct monitorinfo	*mi
-		= (struct monitorinfo *) op->o_bd->be_private;
+	monitor_info_t	*mi = ( monitor_info_t * )op->o_bd->be_private;
 	int		rc = LDAP_SUCCESS;
-	Entry		*e, *matched = NULL;
+	Entry		*e = NULL, *matched = NULL;
+	slap_mask_t	mask;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( BACK_MON, ENTRY,
-		   "monitor_back_search: enter\n", 0, 0, 0 );
-#else
-	Debug(LDAP_DEBUG_TRACE, "=> monitor_back_search\n%s%s%s", "", "", "");
-#endif
+	Debug( LDAP_DEBUG_TRACE, "=> monitor_back_search\n", 0, 0, 0 );
 
 
 	/* get entry with reader lock */
-	monitor_cache_dn2entry( op, &op->o_req_ndn, &e, &matched );
+	monitor_cache_dn2entry( op, rs, &op->o_req_ndn, &e, &matched );
 	if ( e == NULL ) {
 		rs->sr_err = LDAP_NO_SUCH_OBJECT;
 		if ( matched ) {
-			rs->sr_matched = matched->e_dn;
+#ifdef SLAP_ACL_HONOR_DISCLOSE
+			if ( !access_allowed_mask( op, matched,
+					slap_schema.si_ad_entry,
+					NULL, ACL_DISCLOSE, NULL, NULL ) )
+			{
+				/* do nothing */ ;
+			} else 
+#endif /* SLAP_ACL_HONOR_DISCLOSE */
+			{
+				rs->sr_matched = matched->e_dn;
+			}
 		}
 
 		send_ldap_result( op, rs );
@@ -146,13 +157,34 @@ monitor_back_search( Operation *op, SlapReply *rs )
 			rs->sr_matched = NULL;
 		}
 
-		return( 0 );
+		return rs->sr_err;
+	}
+
+	/* NOTE: __NEW__ "search" access is required
+	 * on searchBase object */
+	if ( !access_allowed_mask( op, e, slap_schema.si_ad_entry,
+				NULL, ACL_SEARCH, NULL, &mask ) )
+	{
+		monitor_cache_release( mi, e );
+
+#ifdef SLAP_ACL_HONOR_DISCLOSE
+		if ( !ACL_GRANT( mask, ACL_DISCLOSE ) ) {
+			rs->sr_err = LDAP_NO_SUCH_OBJECT;
+		} else 
+#endif /* SLAP_ACL_HONOR_DISCLOSE */
+		{
+			rs->sr_err = LDAP_INSUFFICIENT_ACCESS;
+		}
+
+		send_ldap_result( op, rs );
+
+		return rs->sr_err;
 	}
 
 	rs->sr_attrs = op->oq_search.rs_attrs;
 	switch ( op->oq_search.rs_scope ) {
 	case LDAP_SCOPE_BASE:
-		monitor_entry_update( op, e );
+		monitor_entry_update( op, rs, e );
 		rc = test_filter( op, e, op->oq_search.rs_filter );
  		if ( rc == LDAP_COMPARE_TRUE ) {
 			rs->sr_entry = e;
@@ -166,14 +198,10 @@ monitor_back_search( Operation *op, SlapReply *rs )
 
 	case LDAP_SCOPE_ONELEVEL:
 		rc = monitor_send_children( op, rs, e, 0 );
-		if ( rc ) {
-			rc = LDAP_OTHER;
-		}
-		
 		break;
 
 	case LDAP_SCOPE_SUBTREE:
-		monitor_entry_update( op, e );
+		monitor_entry_update( op, rs, e );
 		rc = test_filter( op, e, op->oq_search.rs_filter );
 		if ( rc == LDAP_COMPARE_TRUE ) {
 			rs->sr_entry = e;
@@ -183,17 +211,15 @@ monitor_back_search( Operation *op, SlapReply *rs )
 		}
 
 		rc = monitor_send_children( op, rs, e, 1 );
-		if ( rc ) {
-			rc = LDAP_OTHER;
-		}
-
 		break;
 	}
-	
+
 	rs->sr_attrs = NULL;
 	rs->sr_err = rc;
-	send_ldap_result( op, rs );
+	if ( rs->sr_err != SLAPD_ABANDON ) {
+		send_ldap_result( op, rs );
+	}
 
-	return( rc == LDAP_SUCCESS ? 0 : 1 );
+	return rs->sr_err;
 }
 

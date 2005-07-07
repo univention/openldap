@@ -1,8 +1,8 @@
 /* operation.c - routines to deal with pending ldap operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.42.2.6 2004/01/01 18:16:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.63.2.3 2005/06/10 15:11:26 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,8 @@
 
 static ldap_pvt_thread_mutex_t	slap_op_mutex;
 static LDAP_STAILQ_HEAD(s_o, slap_op)	slap_free_ops;
+static time_t last_time;
+static int last_incr;
 
 void slap_op_init(void)
 {
@@ -68,13 +70,13 @@ slap_op_free( Operation *op )
 	if ( op->o_ber != NULL ) {
 		ber_free( op->o_ber, 1 );
 	}
-	if ( op->o_dn.bv_val != NULL ) {
+	if ( !BER_BVISNULL( &op->o_dn ) ) {
 		free( op->o_dn.bv_val );
 	}
-	if ( op->o_ndn.bv_val != NULL ) {
+	if ( !BER_BVISNULL( &op->o_ndn ) ) {
 		free( op->o_ndn.bv_val );
 	}
-	if ( op->o_authmech.bv_val != NULL ) {
+	if ( !BER_BVISNULL( &op->o_authmech ) ) {
 		free( op->o_authmech.bv_val );
 	}
 	if ( op->o_ctrls != NULL ) {
@@ -87,13 +89,11 @@ slap_op_free( Operation *op )
 	}
 #endif
 
-	slap_sync_cookie_free( &op->o_sync_state, 0 );
-
 	{
 		GroupAssertion *g, *n;
-		for (g = op->o_groups; g; g=n) {
+		for ( g = op->o_groups; g; g = n ) {
 			n = g->ga_next;
-			sl_free(g, op->o_tmpmemctx);
+			slap_sl_free( g, op->o_tmpmemctx );
 		}
 		op->o_groups = NULL;
 	}
@@ -105,15 +105,11 @@ slap_op_free( Operation *op )
 	}
 #endif /* defined( LDAP_SLAPI ) */
 
-	if ( op->o_sync_csn.bv_val != NULL ) {
-		ch_free( op->o_sync_csn.bv_val );
-	}
 
-	memset( op, 0, sizeof(Operation) );
+	memset( op, 0, sizeof(Operation) + sizeof(Opheader) + SLAP_MAX_CIDS * sizeof(void *) );
+	op->o_hdr = (Opheader *)(op+1);
+	op->o_controls = (void **)(op->o_hdr+1);
 
-	op->o_sync_state.sid = -1;
-	op->o_sync_slog_size = -1;
-	op->o_sync_state.rid = -1;
 	ldap_pvt_thread_mutex_lock( &slap_op_mutex );
 	LDAP_STAILQ_INSERT_HEAD( &slap_free_ops, op, o_next );
 	ldap_pvt_thread_mutex_unlock( &slap_op_mutex );
@@ -137,7 +133,10 @@ slap_op_alloc(
 	ldap_pvt_thread_mutex_unlock( &slap_op_mutex );
 
 	if (!op) {
-		op = (Operation *) ch_calloc( 1, sizeof(Operation) );
+		op = (Operation *) ch_calloc( 1, sizeof(Operation)
+			+ sizeof(Opheader) + SLAP_MAX_CIDS * sizeof(void *) );
+		op->o_hdr = (Opheader *)(op + 1);
+		op->o_controls = (void **)(op->o_hdr+1);
 	}
 
 	op->o_ber = ber;
@@ -145,14 +144,14 @@ slap_op_alloc(
 	op->o_tag = tag;
 
 	op->o_time = slap_get_time();
+	if ( op->o_time == last_time ) {
+		op->o_tincr = ++last_incr;
+	} else {
+		last_time = op->o_time;
+		last_incr = 0;	/* o_tincr is alredy zero */
+	}
 	op->o_opid = id;
 	op->o_res_ber = NULL;
-
-	op->o_sync_state.sid = -1;
-	op->o_sync_slog_size = -1;
-	op->o_sync_state.rid = -1;
-	LDAP_STAILQ_FIRST( &op->o_sync_slog_list ) = NULL;
-	op->o_sync_slog_list.stqh_last = &LDAP_STAILQ_FIRST( &op->o_sync_slog_list );
 
 #if defined( LDAP_SLAPI )
 	if ( slapi_plugins_used ) {

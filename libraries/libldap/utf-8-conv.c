@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/utf-8-conv.c,v 1.8.2.2 2004/01/01 18:16:30 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/utf-8-conv.c,v 1.11.2.1 2005/01/20 18:03:51 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,9 @@
  */
 
 #include "portable.h"
+
+#if SIZEOF_WCHAR_T >= 4
+/* These routines assume ( sizeof(wchar_t) >= 4 ) */
 
 #include <stdio.h>
 #include <ac/stdlib.h>		/* For wctomb, wcstombs, mbtowc, mbstowcs */
@@ -472,3 +475,5 @@ ldap_x_mbs_to_utf8s ( char *utf8str, const char *mbstr, size_t count,
 
 	return n;	
 }
+
+#endif

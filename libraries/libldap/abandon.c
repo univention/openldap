@@ -1,8 +1,8 @@
 /* abandon.c */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/abandon.c,v 1.31.2.4 2004/02/23 22:08:05 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/abandon.c,v 1.36.2.1 2005/01/20 18:03:49 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,11 +67,7 @@ ldap_abandon_ext(
 	LDAPControl **cctrls )
 {
 	int rc;
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ARGS, "ldap_abandon_ext %d\n", msgid, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_abandon_ext %d\n", msgid, 0, 0 );
-#endif
 
 	/* check client controls */
 #ifdef LDAP_R_COMPILE
@@ -102,11 +98,7 @@ ldap_abandon_ext(
 int
 ldap_abandon( LDAP *ld, int msgid )
 {
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ARGS, "ldap_abandon %d\n", msgid, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_abandon %d\n", msgid, 0, 0 );
-#endif
 	return ldap_abandon_ext( ld, msgid, NULL, NULL ) == LDAP_SUCCESS
 		? 0 : -1;
 }
@@ -126,12 +118,8 @@ do_abandon(
 	Sockbuf		*sb;
 	LDAPRequest	*lr;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ARGS, "do_abandon %d, msgid %d\n", origid, msgid, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "do_abandon origid %d, msgid %d\n",
 		origid, msgid, 0 );
-#endif
 
 	sendabandon = 1;
 

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/rq.c,v 1.6.2.7 2004/06/29 21:55:44 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/rq.c,v 1.17.2.2 2005/04/29 21:29:03 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2004 The OpenLDAP Foundation.
+ * Copyright 2003-2005 The OpenLDAP Foundation.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
  *
@@ -33,24 +33,47 @@
 #include "ldap_queue.h"
 #include "ldap_rq.h"
 
-void
+struct re_s *
 ldap_pvt_runqueue_insert(
 	struct runqueue_s* rq,
 	time_t interval,
 	ldap_pvt_thread_start_t *routine,
-	void *arg
+	void *arg,
+	char *tname,
+	char *tspec
 )
 {
 	struct re_s* entry;
 
 	entry = (struct re_s *) LDAP_CALLOC( 1, sizeof( struct re_s ));
-	entry->interval.tv_sec = interval;
-	entry->interval.tv_usec = 0;
-	entry->next_sched.tv_sec = time( NULL );
-	entry->next_sched.tv_usec = 0;
-	entry->routine = routine;
-	entry->arg = arg;
-	LDAP_STAILQ_INSERT_TAIL( &rq->task_list, entry, tnext );
+	if ( entry ) {
+		entry->interval.tv_sec = interval;
+		entry->interval.tv_usec = 0;
+		entry->next_sched.tv_sec = time( NULL );
+		entry->next_sched.tv_usec = 0;
+		entry->routine = routine;
+		entry->arg = arg;
+		entry->tname = tname;
+		entry->tspec = tspec;
+		LDAP_STAILQ_INSERT_HEAD( &rq->task_list, entry, tnext );
+	}
+	return entry;
+}
+
+struct re_s *
+ldap_pvt_runqueue_find(
+	struct runqueue_s *rq,
+	ldap_pvt_thread_start_t *routine,
+	void *arg
+)
+{
+	struct re_s* e;
+
+	LDAP_STAILQ_FOREACH( e, &rq->task_list, tnext ) {
+		if ( e->routine == routine && e->arg == arg )
+			return e;
+	}
+	return NULL;
 }
 
 void

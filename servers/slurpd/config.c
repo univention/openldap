@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/config.c,v 1.30.2.8 2004/03/25 22:57:56 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/config.c,v 1.39.2.1 2005/01/20 18:04:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * Portions Copyright 2003 Mark Benson.
  * Portions Copyright 2002 John Morrissey.
  * All rights reserved.
@@ -87,14 +87,8 @@ slurpd_read_config(
 	cargv_size = ARGS_STEP + 1;
 	}
 
-#ifdef NEW_LOGGING
-    LDAP_LOG ( CONFIG, ARGS, 
-		"slurpd_read_config: Config: opening config file \"%s\"\n", 
-		fname, 0, 0 );
-#else
     Debug( LDAP_DEBUG_CONFIG, "Config: opening config file \"%s\"\n",
 	    fname, 0, 0 );
-#endif
 
     if ( (fp = fopen( fname, "r" )) == NULL ) {
 	perror( fname );
@@ -108,12 +102,7 @@ slurpd_read_config(
 	    continue;
 	}
 
-#ifdef NEW_LOGGING
-    LDAP_LOG ( CONFIG, DETAIL1, 
-		"slurpd_read_config: Config: (%s)\n", line, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_CONFIG, "Config: (%s)\n", line, 0, 0 );
-#endif
 
 	parse_line( line );
 
@@ -154,15 +143,9 @@ slurpd_read_config(
 	    int savelineno;
 
             if ( cargc < 2 ) {
-#ifdef NEW_LOGGING
-                LDAP_LOG( CONFIG, CRIT,
-                        "%s: line %d: missing filename in \"include "
-                        "<filename>\" line.\n", fname, lineno , 0 );
-#else
                 Debug( LDAP_DEBUG_ANY,
         "%s: line %d: missing filename in \"include <filename>\" line\n",
                         fname, lineno, 0 );
-#endif
 		
                 return( 1 );
             }
@@ -179,15 +162,9 @@ slurpd_read_config(
 
 	} else if ( strcasecmp( cargv[0], "replica-pidfile" ) == 0 ) {
 		if ( cargc < 2 ) {
-#ifdef NEW_LOGGING
-			LDAP_LOG( CONFIG, CRIT, 
-				"%s: line %d missing file name in \"replica-pidfile <file>\" "
-				"line.\n", fname, lineno, 0 );
-#else
 			Debug( LDAP_DEBUG_ANY,
 	    "%s: line %d: missing file name in \"replica-pidfile <file>\" line\n",
 				fname, lineno, 0 );
-#endif
 
 			return( 1 );
 		}
@@ -197,16 +174,9 @@ slurpd_read_config(
 
 	} else if ( strcasecmp( cargv[0], "replica-argsfile" ) == 0 ) {
 		if ( cargc < 2 ) {
-#ifdef NEW_LOGGING
-			LDAP_LOG( CONFIG, CRIT, 
-				   "%s: %d: missing file name in "
-				   "\"argsfile <file>\" line.\n",
-				   fname, lineno, 0 );
-#else
 			Debug( LDAP_DEBUG_ANY,
 	    "%s: line %d: missing file name in \"argsfile <file>\" line\n",
 			    fname, lineno, 0 );
-#endif
 
 			return( 1 );
 		}
@@ -217,29 +187,17 @@ slurpd_read_config(
 		} else if ( strcasecmp( cargv[0], "replicationinterval" ) == 0 ) {
 			int c;
 			if ( cargc < 2 ) {
-#ifdef NEW_LOGGING
-				LDAP_LOG( CONFIG, CRIT, "%s: %d: missing interval in "
-					"\"replicationinterval <seconds>\" line.\n",
-					fname, lineno, 0 );
-#else
 				Debug( LDAP_DEBUG_ANY, "%s: line %d: missing interval in "
 					"\"replicationinterval <seconds>\" line\n",
 					fname, lineno, 0 );
-#endif
 				return( 1 );
 			}
 
 			c = atoi( cargv[1] );
 			if( c < 1 ) {
-#ifdef NEW_LOGGING
-				LDAP_LOG( CONFIG, CRIT, "%s: line %d: invalid interval "
-					"(%d) in \"replicationinterval <seconds>\" line\n",
-					fname, lineno, c );
-#else
 				Debug( LDAP_DEBUG_ANY, "%s: line %d: invalid interval "
 					"(%d) in \"replicationinterval <seconds>\" line\n",
 					fname, lineno, c );
-#endif
 
 				return( 1 );
 			}
@@ -248,15 +206,9 @@ slurpd_read_config(
 		}
     }
     fclose( fp );
-#ifdef NEW_LOGGING
-    LDAP_LOG ( CONFIG, RESULTS, 
-		"slurpd_read_config: Config: "
-		"** configuration file successfully read and parsed\n", 0, 0, 0 );
-#else
     Debug( LDAP_DEBUG_CONFIG,
 	    "Config: ** configuration file successfully read and parsed\n",
 	    0, 0, 0 );
-#endif
     return 0;
 }
 
@@ -436,19 +388,11 @@ add_replica(
 	sglob->replicas[ nr - 1] = NULL;
 	sglob->num_replicas--;
     } else {
-#ifdef NEW_LOGGING
-    LDAP_LOG ( CONFIG, RESULTS, 
-		"add_replica: Config: ** successfully added replica \"%s%d\"\n", 
-		sglob->replicas[ nr - 1 ]->ri_hostname == NULL ?
-		"(null)" : sglob->replicas[ nr - 1 ]->ri_hostname,
-		sglob->replicas[ nr - 1 ]->ri_port, 0 );
-#else
 	Debug( LDAP_DEBUG_CONFIG,
 		"Config: ** successfully added replica \"%s:%d\"\n",
 		sglob->replicas[ nr - 1 ]->ri_hostname == NULL ?
 		"(null)" : sglob->replicas[ nr - 1 ]->ri_hostname,
 		sglob->replicas[ nr - 1 ]->ri_port, 0 );
-#endif
 	sglob->replicas[ nr - 1]->ri_stel =
 		sglob->st->st_add( sglob->st,
 		sglob->replicas[ nr - 1 ] );

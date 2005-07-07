@@ -1,8 +1,8 @@
 /* dyngroup.c - Demonstration of overlay code */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dyngroup.c,v 1.1.2.4 2004/01/01 18:16:40 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dyngroup.c,v 1.5.2.2 2005/05/06 16:42:52 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2004 The OpenLDAP Foundation.
+ * Copyright 2003-2005 The OpenLDAP Foundation.
  * Copyright 2003 by Howard Chu.
  * All rights reserved.
  *
@@ -64,10 +64,11 @@ dyngroup_response( Operation *op, SlapReply *rs )
 				int cache = op->o_do_not_cache;
 				
 				op->o_do_not_cache = 1;
-				if ( backend_group( op, NULL, &op->o_req_ndn,
-					&op->oq_compare.rs_ava->aa_value, NULL, ap->ap_uri ) == 0 )
-					rs->sr_err = LDAP_COMPARE_TRUE;
+				rs->sr_err = backend_group( op, NULL, &op->o_req_ndn,
+					&op->oq_compare.rs_ava->aa_value, NULL, ap->ap_uri );
 				op->o_do_not_cache = cache;
+				if ( rs->sr_err == LDAP_SUCCESS )
+					rs->sr_err = LDAP_COMPARE_TRUE;
 				break;
 			}
 		}

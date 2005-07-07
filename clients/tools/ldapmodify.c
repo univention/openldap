@@ -1,8 +1,8 @@
 /* ldapmodify.c - generic program to modify or add entries using LDAP */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodify.c,v 1.139.2.9 2004/07/25 21:08:56 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodify.c,v 1.158.2.4 2005/06/03 19:12:00 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -42,6 +42,7 @@
 #include <ac/ctype.h>
 #include <ac/string.h>
 #include <ac/unistd.h>
+#include <ac/time.h>
 
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -309,11 +310,11 @@ main( int argc, char **argv )
 	}
 #endif
 
-	if ( assertion || authzid || manageDSAit || noop || preread || postread
+	if ( assertion || authzid || manageDIT || manageDSAit || noop
 #ifdef LDAP_GROUP_TRANSACTION
 		|| txn
 #endif
-		)
+		|| preread || postread )
 	{
 		int err;
 		int i = 0;
@@ -405,13 +406,14 @@ main( int argc, char **argv )
 #endif
 
 	if ( !not ) {
-		ldap_unbind_ext( ld, NULL, NULL );
+		tool_unbind( ld );
 	}
 
 	if ( rejfp != NULL ) {
 		fclose( rejfp );
 	}
 
+	tool_destroy();
 	return( retval );
 }
 
@@ -1009,7 +1011,7 @@ domodify(
 	}
 
 	if ( !not ) {
-		int msgid;
+		int	msgid;
 		if ( newentry ) {
 			rc = ldap_add_ext( ld, dn, pmods, pctrls, NULL, &msgid );
 		} else {
@@ -1113,21 +1115,37 @@ static int process_response(
 	const char *opstr,
 	const char *dn )
 {
-	LDAPMessage *res;
-	int rc = LDAP_OTHER;
+	LDAPMessage	*res;
+	int		rc = LDAP_OTHER;
+	struct timeval	tv = { 0 };
 
-	if( ldap_result( ld, msgid,
+	for ( ; ; ) {
+		tv.tv_sec = 0;
+		tv.tv_usec = 100000;
+
+		rc = ldap_result( ld, msgid,
 #ifdef LDAP_GROUP_TRANSACTION
-		txn ? 0 : 1,
+			txn ? 0 : 1,
 #else
-		1,
+			1,
 #endif
-		NULL, &res ) == -1 ) {
-		ldap_get_option( ld, LDAP_OPT_ERROR_NUMBER, &rc );
-		return rc;
+			&tv, &res );
+		if ( tool_check_abandon( ld, msgid ) ) {
+			return LDAP_CANCELLED;
+		}
+
+		if ( rc == -1 ) {
+			ldap_get_option( ld, LDAP_OPT_ERROR_NUMBER, &rc );
+			return rc;
+		}
+
+		if ( rc != 0 ) {
+			break;
+		}
 	}
 
-	if( ldap_msgtype( res ) != LDAP_RES_INTERMEDIATE ) {
+done:;
+	if ( ldap_msgtype( res ) != LDAP_RES_INTERMEDIATE ) {
 		rc = ldap_result2error( ld, res, 1 );
 		if( rc != LDAP_SUCCESS ) ldap_perror( ld, opstr );
 		return rc;

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.88.2.18 2004/08/28 13:35:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.112.2.4 2005/05/18 16:29:20 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,9 +25,21 @@
 #include <ac/ctype.h>
 #include <ac/unistd.h>
 
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
+
 #include "ldap-int.h"
 
 #ifdef HAVE_CYRUS_SASL
+
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
+
+#ifndef INT_MAX
+#define	INT_MAX	2147483647	/* 32 bit signed max */
+#endif
 
 #ifdef LDAP_R_COMPILE
 ldap_pvt_thread_mutex_t ldap_int_sasl_mutex;
@@ -80,17 +92,10 @@ int ldap_int_sasl_init( void )
 		sprintf( version, "%u.%d.%d", (unsigned)rc >> 24, (rc >> 16) & 0xff,
 			rc & 0xffff );
 
-#ifdef NEW_LOGGING
-		LDAP_LOG( TRANSPORT, INFO,
-		"ldap_int_sasl_init: SASL library version mismatch:"
-		" expected " SASL_VERSION_STRING ","
-		" got %s\n", version, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
 		"ldap_int_sasl_init: SASL library version mismatch:"
 		" expected " SASL_VERSION_STRING ","
 		" got %s\n", version, 0, 0 );
-#endif
 		return -1;
 	}
 	}
@@ -416,12 +421,8 @@ Sockbuf_IO ldap_pvt_sockbuf_io_sasl = {
 
 int ldap_pvt_sasl_install( Sockbuf *sb, void *ctx_arg )
 {
-#ifdef NEW_LOGGING
-	LDAP_LOG ( TRANSPORT, ENTRY, "ldap_pvt_sasl_install\n", 0, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_pvt_sasl_install\n",
 		0, 0, 0 );
-#endif
 
 	/* don't install the stuff unless security has been negotiated */
 
@@ -526,13 +527,8 @@ ldap_int_sasl_open(
 		return ld->ld_errno;
 	}
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( TRANSPORT, DETAIL1, "ldap_int_sasl_open: host=%s\n", 
-		host, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_int_sasl_open: host=%s\n",
 		host, 0, 0 );
-#endif
 
 	lc->lconn_sasl_authctx = ctx;
 
@@ -580,13 +576,8 @@ ldap_int_sasl_bind(
 	ber_socket_t		sd;
 	void	*ssl;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( TRANSPORT, ARGS, "ldap_int_sasl_bind: %s\n", 
-		mechs ? mechs : "<null>", 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_int_sasl_bind: %s\n",
 		mechs ? mechs : "<null>", 0, 0 );
-#endif
 
 	/* do a quick !LDAPv3 check... ldap_sasl_bind will do the rest. */
 	if (ld->ld_version < LDAP_VERSION3) {
@@ -721,15 +712,9 @@ ldap_int_sasl_bind(
 		if ( rc != LDAP_SUCCESS && rc != LDAP_SASL_BIND_IN_PROGRESS ) {
 			if( scred && scred->bv_len ) {
 				/* and server provided us with data? */
-#ifdef NEW_LOGGING
-				LDAP_LOG ( TRANSPORT, DETAIL1, 
-					"ldap_int_sasl_bind: rc=%d sasl=%d len=%ld\n", 
-					rc, saslrc, scred->bv_len );
-#else
 				Debug( LDAP_DEBUG_TRACE,
 					"ldap_int_sasl_bind: rc=%d sasl=%d len=%ld\n",
 					rc, saslrc, scred->bv_len );
-#endif
 				ber_bvfree( scred );
 			}
 			rc = ld->ld_errno;
@@ -740,15 +725,9 @@ ldap_int_sasl_bind(
 			/* we're done, no need to step */
 			if( scred && scred->bv_len ) {
 				/* but server provided us with data! */
-#ifdef NEW_LOGGING
-				LDAP_LOG ( TRANSPORT, DETAIL1, 
-					"ldap_int_sasl_bind: rc=%d sasl=%d len=%ld\n", 
-					rc, saslrc, scred->bv_len );
-#else
 				Debug( LDAP_DEBUG_TRACE,
 					"ldap_int_sasl_bind: rc=%d sasl=%d len=%ld\n",
 					rc, saslrc, scred->bv_len );
-#endif
 				ber_bvfree( scred );
 				rc = ld->ld_errno = LDAP_LOCAL_ERROR;
 				goto done;
@@ -764,13 +743,8 @@ ldap_int_sasl_bind(
 				(SASL_CONST char **)&ccred.bv_val,
 				&credlen );
 
-#ifdef NEW_LOGGING
-				LDAP_LOG ( TRANSPORT, DETAIL1, 
-					"ldap_int_sasl_bind: sasl_client_step: %d\n", saslrc,0,0 );
-#else
 			Debug( LDAP_DEBUG_TRACE, "sasl_client_step: %d\n",
 				saslrc, 0, 0 );
-#endif
 
 			if( saslrc == SASL_INTERACT ) {
 				int res;
@@ -833,7 +807,7 @@ ldap_int_sasl_bind(
 				sasl_dispose( &oldctx );
 				ldap_pvt_sasl_remove( ld->ld_defconn->lconn_sb );
 			}
-			ldap_pvt_sasl_install( ld->ld_conns->lconn_sb, ctx );
+			ldap_pvt_sasl_install( ld->ld_defconn->lconn_sb, ctx );
 			ld->ld_defconn->lconn_sasl_sockctx = ctx;
 		}
 	}
@@ -883,11 +857,110 @@ ldap_int_sasl_external(
 }
 
 
+#define GOT_MINSSF	1
+#define	GOT_MAXSSF	2
+#define	GOT_MAXBUF	4
+
+static struct {
+	struct berval key;
+	int sflag;
+	int ival;
+	int idef;
+} sprops[] = {
+	{ BER_BVC("none"), 0, 0, 0 },
+	{ BER_BVC("nodict"), SASL_SEC_NODICTIONARY, 0, 0 },
+	{ BER_BVC("noplain"), SASL_SEC_NOPLAINTEXT, 0, 0 },
+	{ BER_BVC("noactive"), SASL_SEC_NOACTIVE, 0, 0 },
+	{ BER_BVC("passcred"), SASL_SEC_PASS_CREDENTIALS, 0, 0 },
+	{ BER_BVC("forwardsec"), SASL_SEC_FORWARD_SECRECY, 0, 0 },
+	{ BER_BVC("noanonymous"), SASL_SEC_NOANONYMOUS, 0, 0 },
+	{ BER_BVC("minssf="), 0, GOT_MINSSF, 0 },
+	{ BER_BVC("maxssf="), 0, GOT_MAXSSF, INT_MAX },
+	{ BER_BVC("maxbufsize="), 0, GOT_MAXBUF, 65536 },
+	{ BER_BVNULL, 0, 0 }
+};
+
+void ldap_pvt_sasl_secprops_unparse(
+	sasl_security_properties_t *secprops,
+	struct berval *out )
+{
+	int i, l = 0;
+	int comma;
+	char *ptr;
+
+	if ( secprops == NULL || out == NULL ) {
+		return;
+	}
+
+	comma = 0;
+	for ( i=0; !BER_BVISNULL( &sprops[i].key ); i++ ) {
+		if ( sprops[i].ival ) {
+			int v;
+
+			switch( sprops[i].ival ) {
+			case GOT_MINSSF: v = secprops->min_ssf; break;
+			case GOT_MAXSSF: v = secprops->max_ssf; break;
+			case GOT_MAXBUF: v = secprops->maxbufsize; break;
+			}
+			/* It is the default, ignore it */
+			if ( v == sprops[i].idef ) continue;
+
+			l += sprops[i].key.bv_len + 24;
+		} else if ( sprops[i].sflag ) {
+			if ( sprops[i].sflag & secprops->security_flags ) {
+				l += sprops[i].key.bv_len;
+			}
+		} else if ( secprops->security_flags == 0 ) {
+			l += sprops[i].key.bv_len;
+		}
+		if ( comma ) l++;
+		comma = 1;
+	}
+	l++;
+
+	out->bv_val = LDAP_MALLOC( l );
+	if ( out->bv_val == NULL ) {
+		out->bv_len = 0;
+		return;
+	}
+
+	ptr = out->bv_val;
+	comma = 0;
+	for ( i=0; !BER_BVISNULL( &sprops[i].key ); i++ ) {
+		if ( sprops[i].ival ) {
+			int v;
+
+			switch( sprops[i].ival ) {
+			case GOT_MINSSF: v = secprops->min_ssf; break;
+			case GOT_MAXSSF: v = secprops->max_ssf; break;
+			case GOT_MAXBUF: v = secprops->maxbufsize; break;
+			}
+			/* It is the default, ignore it */
+			if ( v == sprops[i].idef ) continue;
+
+			if ( comma ) *ptr++ = ',';
+			ptr += sprintf(ptr, "%s%d", sprops[i].key.bv_val, v );
+			comma = 1;
+		} else if ( sprops[i].sflag ) {
+			if ( sprops[i].sflag & secprops->security_flags ) {
+				if ( comma ) *ptr++ = ',';
+				ptr += sprintf(ptr, "%s", sprops[i].key.bv_val );
+				comma = 1;
+			}
+		} else if ( secprops->security_flags == 0 ) {
+			if ( comma ) *ptr++ = ',';
+			ptr += sprintf(ptr, "%s", sprops[i].key.bv_val );
+			comma = 1;
+		}
+	}
+	out->bv_len = ptr - out->bv_val;
+}
+
 int ldap_pvt_sasl_secprops(
 	const char *in,
 	sasl_security_properties_t *secprops )
 {
-	int i;
+	int i, j, l;
 	char **props = ldap_str2charray( in, "," );
 	unsigned sflags = 0;
 	int got_sflags = 0;
@@ -903,71 +976,35 @@ int ldap_pvt_sasl_secprops(
 	}
 
 	for( i=0; props[i]; i++ ) {
-		if( !strcasecmp(props[i], "none") ) {
-			got_sflags++;
-
-		} else if( !strcasecmp(props[i], "noplain") ) {
-			got_sflags++;
-			sflags |= SASL_SEC_NOPLAINTEXT;
-
-		} else if( !strcasecmp(props[i], "noactive") ) {
-			got_sflags++;
-			sflags |= SASL_SEC_NOACTIVE;
-
-		} else if( !strcasecmp(props[i], "nodict") ) {
-			got_sflags++;
-			sflags |= SASL_SEC_NODICTIONARY;
-
-		} else if( !strcasecmp(props[i], "forwardsec") ) {
-			got_sflags++;
-			sflags |= SASL_SEC_FORWARD_SECRECY;
-
-		} else if( !strcasecmp(props[i], "noanonymous")) {
-			got_sflags++;
-			sflags |= SASL_SEC_NOANONYMOUS;
-
-		} else if( !strcasecmp(props[i], "passcred") ) {
-			got_sflags++;
-			sflags |= SASL_SEC_PASS_CREDENTIALS;
-
-		} else if( !strncasecmp(props[i],
-			"minssf=", sizeof("minssf")) )
-		{
-			if( isdigit( (unsigned char) props[i][sizeof("minssf")] ) ) {
-				got_min_ssf++;
-				min_ssf = atoi( &props[i][sizeof("minssf")] );
+		l = strlen( props[i] );
+		for ( j=0; !BER_BVISNULL( &sprops[j].key ); j++ ) {
+			if ( l < sprops[j].key.bv_len ) continue;
+			if ( strncasecmp( props[i], sprops[j].key.bv_val,
+				sprops[j].key.bv_len )) continue;
+			if ( sprops[j].ival ) {
+				int v;
+				if ( props[i][sprops[j].key.bv_len] != '=' ) continue;
+				if ( !isdigit( props[i][sprops[j].key.bv_len+1] )) continue;
+				v = atoi( props[i]+sprops[j].key.bv_len+1 );
+				switch( sprops[j].ival ) {
+				case GOT_MINSSF:
+					min_ssf = v; got_min_ssf++; break;
+				case GOT_MAXSSF:
+					max_ssf = v; got_max_ssf++; break;
+				case GOT_MAXBUF:
+					maxbufsize = v; got_maxbufsize++; break;
+				}
 			} else {
-				return LDAP_NOT_SUPPORTED;
+				if ( props[i][sprops[j].key.bv_len] ) continue;
+				if ( sprops[j].sflag )
+					sflags |= sprops[j].sflag;
+				else
+					sflags = 0;
+				got_sflags++;
 			}
-
-		} else if( !strncasecmp(props[i],
-			"maxssf=", sizeof("maxssf")) )
-		{
-			if( isdigit( (unsigned char) props[i][sizeof("maxssf")] ) ) {
-				got_max_ssf++;
-				max_ssf = atoi( &props[i][sizeof("maxssf")] );
-			} else {
-				return LDAP_NOT_SUPPORTED;
-			}
-
-		} else if( !strncasecmp(props[i],
-			"maxbufsize=", sizeof("maxbufsize")) )
-		{
-			if( isdigit( (unsigned char) props[i][sizeof("maxbufsize")] ) ) {
-				got_maxbufsize++;
-				maxbufsize = atoi( &props[i][sizeof("maxbufsize")] );
-			} else {
-				return LDAP_NOT_SUPPORTED;
-			}
-
-			if( maxbufsize && (( maxbufsize < SASL_MIN_BUFF_SIZE )
-				|| (maxbufsize > SASL_MAX_BUFF_SIZE )))
-			{
-				/* bad maxbufsize */
-				return LDAP_PARAM_ERROR;
-			}
-
-		} else {
+			break;
+		}
+		if ( BER_BVISNULL( &sprops[j].key )) {
 			return LDAP_NOT_SUPPORTED;
 		}
 	}

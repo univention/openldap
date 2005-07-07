@@ -1,8 +1,8 @@
 /* thr_stub.c - stubs for the threads */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_stub.c,v 1.20.2.2 2004/01/01 18:16:30 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_stub.c,v 1.22.2.2 2005/06/08 21:50:16 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -191,6 +191,22 @@ int ldap_pvt_thread_pool_getkey (
 
 int ldap_pvt_thread_pool_setkey (
 	void *ctx, void *key, void *data, ldap_pvt_thread_pool_keyfree_t *kfree )
+{
+	return(0);
+}
+
+void ldap_pvt_thread_pool_purgekey( void *key )
+{
+}
+
+int ldap_pvt_thread_pool_pause ( 
+	ldap_pvt_thread_pool_t *tpool )
+{
+	return(0);
+}
+
+int ldap_pvt_thread_pool_resume ( 
+	ldap_pvt_thread_pool_t *tpool )
 {
 	return(0);
 }

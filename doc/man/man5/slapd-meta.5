@@ -1,8 +1,8 @@
 .TH SLAPD-META 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2004 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2005 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-meta.5,v 1.15.2.7 2004/04/12 18:21:07 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-meta.5,v 1.29.2.3 2005/04/29 21:29:02 kurt Exp $
 .\"
 .\" Portions of this document should probably be moved to slapd-ldap(5)
 .\" and maybe manual pages for librewrite.
@@ -93,16 +93,25 @@ This caches the target that holds a given DN to speed up target
 selection in case multiple targets would result from an uncached
 search; forever means cache never expires; disabled means no DN
 caching; otherwise a valid ( > 0 ) ttl in seconds is required.
+.TP
+.B nretries {forever|never|<nretries>}
+This directive defines how many times a bind should be retried
+in case of temporary failure in contacting a target.  If defined
+before any target specification, it applies to all targets (by default,
+.BR never );
+the global value can be overridden by redefinitions inside each target
+specification.
 .SH TARGET SPECIFICATION
 Target specification starts with a "uri" directive:
 .TP
 .B uri <protocol>://[<host>[:<port>]]/<naming context>
 The "server" directive that was allowed in the LDAP backend (although
-deprecated) has been discarded in the Meta backend.
+deprecated) has been completely discarded in the Meta backend.
 The <protocol> part can be anything
 .BR ldap_initialize (3)
 accepts ({ldap|ldaps|ldapi} and variants); <host> and <port> may be
-omitted, defaulting to whatever is set in /etc/ldap.conf.
+omitted, defaulting to whatever is set in
+.BR ldap.conf (5).
 The <naming context> part is mandatory.
 It must end with one of the naming contexts defined for the backend,
 e.g.:
@@ -112,14 +121,19 @@ e.g.:
 suffix "\fBdc=foo,dc=com\fP"
 uri    "ldap://x.foo.com/dc=x,\fBdc=foo,dc=com\fP"
 .fi
+
 .RE
-.LP
+.RS
 The <naming context> part doesn't need to be unique across the targets;
 it may also match one of the values of the "suffix" directive.
 Multiple URIs may be defined in a single argument.  The URIs must
-be separated by TABs (e.g. '\\t'), and the additional URIs must have
+be separated by TABs (e.g. '\\t'; commas or spaces, unlike back-ldap,
+will not work,
+because they are legal in the <naming context>, and we don't want to use
+URL-encoded <namimg context>s), and the additional URIs must have
 no <naming context> part.  This causes the underlying library
 to contact the first server of the list that responds.
+.RE
 .TP
 .B default-target [<target>]
 The "default-target" directive can also be used during target specification.
@@ -128,17 +142,20 @@ The optional number marks target <target> as the default one, starting
 from 1.
 Target <target> must be defined.
 .TP
-.B binddn "<administrative DN for access control purposes>"
-This directive, as in the LDAP backend, allows to define the DN that is
-used to query the target server for acl checking; it should have read
-access on the target server to attributes used on the proxy for acl
-checking.
+.B acl-authcDN "<administrative DN for access control purposes>"
+DN which is used to query the target server for acl checking,
+as in the LDAP backend; it is supposed to have read access 
+on the target server to attributes used on the proxy for acl checking.
 There is no risk of giving away such values; they are only used to
 check permissions.
+.B The acl-authcDN identity is by no means implicitly used by the proxy 
+.B when the client connects anonymously.
 .TP
-.B bindpw <password for access control purposes>
-This directive sets the password for acl checking in conjunction
-with the above mentioned "binddn" directive.
+.B acl-passwd <password>
+Password used with the
+.B 
+acl-authcDN
+above.
 .TP
 .B rebind-as-user
 If this option is given, the client's bind credentials are remembered
@@ -332,8 +349,8 @@ server will possibly enforce additional restrictions to "foo".
 .SH REWRITING
 A string is rewritten according to a set of rules, called a `rewrite
 context'.
-The rules are based on Regular Expressions (POSIX regex) with
-substring matching; basic variable substitution and map resolution 
+The rules are based on POSIX (''extended'') regular expressions (regex)
+with substring matching; basic variable substitution and map resolution 
 of substrings is allowed by specific mechanisms detailed in the following.
 The behavior of pattern matching/substitution can be altered by a set
 of flags.
@@ -359,7 +376,7 @@ alter the action that is taken after substitution.
 honors case in matching (default is case insensitive)
 .TP
 .B `R'
-use POSIX Basic Regular Expressions (default is Extended)
+use POSIX ''basic'' regular expressions (default is ''extended'')
 .TP
 .B `M{n}'
 allow no more than
@@ -416,15 +433,16 @@ errors, but jump two lines ahead only in case of match.
 More flags (mainly Action Flags) will be added as needed.
 .SH "Pattern matching:"
 See
-.BR regex (7).
+.BR regex (7)
+and/or
+.BR re_format (7).
 .SH "Substitution Pattern Syntax:"
 Everything starting with `%' requires substitution;
 .LP
 the only obvious exception is `%%', which is left as is;
 .LP
 the basic substitution is `%d', where `d' is a digit;
-0 means the whole string, while 1-9 is a submatch, as discussed in 
-.BR regex (7);
+0 means the whole string, while 1-9 is a submatch;
 .LP
 a `%' followed by a `{' invokes an advanced substitution.
 The pattern is:
@@ -490,10 +508,8 @@ directive.
 Substitution escaping has been delegated to the `%' symbol, 
 which is used instead of `\e' in string substitution patterns
 because `\e' is already escaped by slapd's low level parsing routines;
-as a consequence, 
-.BR regex (7)
-escaping requires two `\e' symbols, e.g. `\fB.*\e.foo\e.bar\fP' must
-be written as `\fB.*\e\e.foo\e\e.bar\fP'.
+as a consequence, regex escaping requires two `\e' symbols,
+e.g. `\fB.*\e.foo\e.bar\fP' must be written as `\fB.*\e\e.foo\e\e.bar\fP'.
 .\"
 .\" The symbol can be altered at will by redefining the related macro in
 .\" "rewrite-int.h".
@@ -732,84 +748,28 @@ been written:
 .fi
 .LP
 with the advantage of saving one rewrite pass ...)
+
+.SH ACCESS CONTROL
+The
+.B meta
+backend does not honor all ACL semantics as described in
+.BR slapd.access (5).
+In general, access checking is delegated to the remote server(s).
+Only
+.B read (=r)
+access to the
+.B entry
+pseudo-attribute and to the other attribute values of the entries
+returned by the
+.B search
+operation is honored, which is performed by the frontend.
+
 .SH PROXY CACHE OVERLAY
 The proxy cache overlay 
 allows caching of LDAP search requests (queries) in a local database.
-For an incoming query, the
-proxy cache determines its corresponding \fBtemplate\fP. If the template was
-specified as cacheable using the \fBproxytemplate\fP directive and the request is
-contained in a cached request, it is answered from the proxy cache. Otherwise,
-the search is performed as usual and cacheable search results are saved in the
-cache for use in future queries.
-.LP
-
-A template is defined by a filter string and an index identifying a set of
-attributes. The \fBtemplate string\fP for a query can be obtained by
-removing assertion values from the RFC 2254 representation of its search
-filter. A query belongs to a template if its template string and set of
-projected attributes correspond to a cacheable template. Examples of template strings are (mail=), (|(sn=)(cn=)), (&(sn=)(givenName=)).    
-
-.LP 
-The following cache specific directives can be used to configure the proxy
-cache: 
-.TP
-.B overlay proxycache
-This directive adds the proxycache overlay to the current backend. The
-proxycache overlay may be used with any backend but is intended for use
-with the
-.B ldap
-and
-.B meta
-backends.
-.TP
-.B proxycache <database> <max_entries> <numattrsets> <entry_limit> <cc_period> 
-The directive enables proxy caching in the current backend and sets general
-cache parameters. A <database> backend will be used internally to maintain
-the cached entries. The chosen database will need to be configured as well,
-as shown below. Cache replacement is invoked when the cache size grows to 
-<max_entries> entries and continues till the cache size drops below this size.
-<numattrsets> should be equal to the number of following \fBproxyattrset\fP
-directives. Queries are cached only if they correspond to a cacheable template
-(specified by the \fBproxytemplate\fP directive) and the number of entries
-returned is less than <entry_limit>. Consistency check is performed every
-<cc_period> duration (specified in secs). In each cycle queries with expired
-"time to live(\fBTTL\fP)" are removed. A sample cache configuration is: 
-.LP
-.RS
-proxycache \fBbdb 10000 1 50 100\fP
-.RE
-.TP
-.B proxyattrset <index> <attrs...>
-Used to associate a set of attributes <attrs..> with an <index>. Each attribute
-set is associated with an integer from 0 to <numattrsets>-1. These indices are
-used by the \fBproxytemplate\fP directive to define cacheable templates. 
-
-.TP
-.B proxytemplate <template_string> <attrset_index> <ttl> 
-Specifies a cacheable template and "time to live" (in sec) <ttl> of queries 
-belonging to the template. 
-
-.LP
-The following adds a template with filter string (&sn=)(givenName=)) and attributes mail, postaladdress, telephonenumber and a TTL of 1 hour. 
-.LP
-.RS
-.nf
-proxyattrset \fB0 mail postaladdress telephonenumber\fP
-proxytemplate \fB(&(sn=)(givenName=)) 0 3600\fP
-.fi
-.RE
-.LP
-Directives for configuring the underlying database must also be given, as
-shown here:
-.LP
-.RS
-.nf
-directory /var/tmp/cache
-cachesize 100
-.fi
-.RE
-.LP
-Any valid directives for the chosen database type may be used.
+See 
+.BR slapo-pcache (5)
+for details.
 .SH FILES
 .TP
 ETCDIR/slapd.conf
@@ -817,7 +777,9 @@ default slapd configuration file
 .SH SEE ALSO
 .BR slapd.conf (5),
 .BR slapd\-ldap (5),
+.BR slapo\-pcache (5),
 .BR slapd (8),
-.BR regex (7).
+.BR regex (7),
+.BR re_format (7).
 .SH AUTHOR
 Pierangelo Masarati, based on back-ldap by Howard Chu

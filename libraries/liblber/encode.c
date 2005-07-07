@@ -1,8 +1,8 @@
 /* encode.c - ber output encoding routines */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/encode.c,v 1.55.2.4 2004/07/25 21:56:40 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/encode.c,v 1.61.2.1 2005/01/20 18:03:49 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -818,13 +818,8 @@ ber_printf( BerElement *ber, LDAP_CONST char *fmt, ... )
 
 		default:
 			if( ber->ber_debug ) {
-#ifdef NEW_LOGGING
-				LDAP_LOG( BER, ERR, 
-					"ber_printf: unknown fmt %c\n", *fmt, 0, 0 );
-#else
 				ber_log_printf( LDAP_DEBUG_ANY, ber->ber_debug,
 					"ber_printf: unknown fmt %c\n", *fmt );
-#endif
 			}
 			rc = -1;
 			break;

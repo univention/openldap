@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/unbind.c,v 1.7.2.3 2004/01/01 18:16:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/unbind.c,v 1.11.2.3 2005/05/06 16:42:52 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2004 The OpenLDAP Foundation.
+ * Copyright 1999-2005 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -26,6 +26,7 @@
 
 #include <ac/socket.h>
 #include <ac/string.h>
+#include <ac/errno.h>
 
 #include "slap.h"
 #include "../back-ldap/back-ldap.h"
@@ -33,56 +34,43 @@
 
 int
 meta_back_conn_destroy(
-		Backend		*be,
-		Connection	*conn
-)
+	Backend		*be,
+	Connection	*conn )
 {
-	struct metainfo	*li = ( struct metainfo * )be->be_private;
-	struct metaconn *lc, lc_curr;
+	metainfo_t	*mi = ( metainfo_t * )be->be_private;
+	metaconn_t *mc,
+			mc_curr = { 0 };
 
-#ifdef NEW_LOGGING
-	LDAP_LOG( BACK_META, ENTRY,
-		"meta_back_conn_destroy: fetching conn %ld\n", conn->c_connid, 0, 0 );
-#else /* !NEW_LOGGING */
 	Debug( LDAP_DEBUG_TRACE,
-		"=>meta_back_conn_destroy: fetching conn %ld\n%s%s",
-		conn->c_connid, "", "" );
-#endif /* !NEW_LOGGING */
+		"=>meta_back_conn_destroy: fetching conn %ld\n",
+		conn->c_connid, 0, 0 );
 	
-	lc_curr.conn = conn;
+	mc_curr.mc_conn = conn;
 	
-	ldap_pvt_thread_mutex_lock( &li->conn_mutex );
-	lc = avl_delete( &li->conntree, ( caddr_t )&lc_curr,
+	ldap_pvt_thread_mutex_lock( &mi->mi_conn_mutex );
+	mc = avl_delete( &mi->mi_conntree, ( caddr_t )&mc_curr,
 			meta_back_conn_cmp );
-	ldap_pvt_thread_mutex_unlock( &li->conn_mutex );
+	ldap_pvt_thread_mutex_unlock( &mi->mi_conn_mutex );
 
-	if ( lc ) {
-		int i;
-		
-#ifdef NEW_LOGGING
-		LDAP_LOG( BACK_META, INFO,
-			"meta_back_conn_destroy: destroying conn %ld\n",
-			lc->conn->c_connid, 0, 0 );
-#else /* !NEW_LOGGING */
+	if ( mc ) {
+		int	i;
+
 		Debug( LDAP_DEBUG_TRACE,
-			"=>meta_back_conn_destroy: destroying conn %ld\n%s%s",
-			lc->conn->c_connid, "", "" );
-#endif /* !NEW_LOGGING */
+			"=>meta_back_conn_destroy: destroying conn %ld\n",
+			mc->mc_conn->c_connid, 0, 0 );
 		
 		/*
 		 * Cleanup rewrite session
 		 */
-		for ( i = 0; i < li->ntargets; ++i ) {
-			if ( lc->conns[ i ].ld == NULL ) {
+		for ( i = 0; i < mi->mi_ntargets; ++i ) {
+			if ( mc->mc_conns[ i ].msc_ld == NULL ) {
 				continue;
 			}
 
-			rewrite_session_delete( li->targets[ i ]->rwmap.rwm_rw, conn );
-			meta_clear_one_candidate( &lc->conns[ i ], 1 );
+			rewrite_session_delete( mi->mi_targets[ i ].mt_rwmap.rwm_rw, conn );
+			meta_clear_one_candidate( &mc->mc_conns[ i ] );
 		}
-
-		free( lc->conns );
-		free( lc );
+		meta_back_conn_free( mc );
 	}
 
 	/* no response to unbind */

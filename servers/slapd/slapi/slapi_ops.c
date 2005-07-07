@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_ops.c,v 1.37.2.13 2004/09/12 20:22:39 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_ops.c,v 1.70.2.5 2005/06/08 21:50:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2004 The OpenLDAP Foundation.
+ * Copyright 2002-2005 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002-2003 IBM Corporation.
  * All rights reserved.
  *
@@ -119,7 +119,7 @@ internal_search_reference(
 	return LDAP_SUCCESS;
 }
 
-static Connection *
+Connection *
 slapi_int_init_connection(
 	char *DN, 
 	int OpType ) 
@@ -234,7 +234,7 @@ slapi_int_init_connection(
 	return pConn;
 }
 
-static void slapi_int_connection_destroy( Connection **pConn )
+void slapi_int_connection_destroy( Connection **pConn )
 {
 	Connection *conn = *pConn;
 	Operation *op;
@@ -406,6 +406,7 @@ slapi_int_ldapmod_to_entry(
 				mod  = (Modifications *) ch_malloc( sizeof(Modifications) );
 
 				mod->sml_op = LDAP_MOD_ADD;
+				mod->sml_flags = 0;
 				mod->sml_next = NULL;
 				mod->sml_desc = NULL;
 				mod->sml_type = tmp.sml_type;
@@ -431,6 +432,7 @@ slapi_int_ldapmod_to_entry(
 					mod  = (Modifications *) ch_malloc( sizeof(Modifications) );
 
 					mod->sml_op = LDAP_MOD_ADD;
+					mod->sml_flags = 0;
 					mod->sml_next = NULL;
 					mod->sml_desc = NULL;
 					mod->sml_type = tmp.sml_type;
@@ -450,20 +452,27 @@ slapi_int_ldapmod_to_entry(
 	} else {
 		int repl_user = be_isupdate_dn( op->o_bd, &op->o_bd->be_rootdn );
         	if ( !op->o_bd->be_update_ndn.bv_len || repl_user ) {
-			int update = op->o_bd->be_update_ndn.bv_len;
-			char textbuf[SLAP_TEXT_BUFLEN];
-			size_t textlen = sizeof textbuf;
+			int	update = !BER_BVISNULL( &op->o_bd->be_update_ndn );
+			char	textbuf[ SLAP_TEXT_BUFLEN ];
+			size_t	textlen = sizeof( textbuf );
 
-			rc = slap_mods_check( modlist, update, &text, 
-					textbuf, textlen, NULL );
+			rc = slap_mods_check( modlist, &text, 
+				textbuf, textlen, NULL );
 			if ( rc != LDAP_SUCCESS) {
 				goto cleanup;
 			}
 
+			if ( !update ) {
+				rc = slap_mods_no_user_mod_check( op, modlist,
+					&text, textbuf, textlen );
+				if ( rc != LDAP_SUCCESS) {
+					goto cleanup;
+				}
+			}
+
 			if ( !repl_user ) {
-				rc = slap_mods_opattrs( op,
-						modlist, modtail, &text, 
-						textbuf, textlen, 1 );
+				rc = slap_mods_opattrs( op, modlist, modtail,
+					&text, textbuf, textlen, 1 );
 				if ( rc != LDAP_SUCCESS) {
 					goto cleanup;
 				}
@@ -480,8 +489,7 @@ slapi_int_ldapmod_to_entry(
 		}
 	}
 
-cleanup:
-
+cleanup:;
 	if ( dn.bv_val )
 		slapi_ch_free( (void **)&dn.bv_val );
 	if ( modlist != NULL )
@@ -519,7 +527,7 @@ slapi_delete_internal(
 	SlapReply		rs = { REP_RESULT };
 	struct berval		dn = BER_BVNULL;
 
-	int			manageDsaIt = 0;
+	int			manageDsaIt = SLAP_CONTROL_NONE;
 	int			isCritical;
 
 	if ( ldn == NULL ) {
@@ -545,10 +553,10 @@ slapi_delete_internal(
 
 	if ( slapi_control_present( controls, 
 			SLAPI_CONTROL_MANAGEDSAIT_OID, NULL, &isCritical) ) {
-		manageDsaIt = 1; 
+		manageDsaIt = isCritical ? SLAP_CONTROL_CRITICAL : SLAP_CONTROL_NONCRITICAL; 
 	}
 
-	op->o_bd = select_backend( &op->o_req_ndn, manageDsaIt, 0 );
+	op->o_bd = select_backend( &op->o_req_ndn, manageDsaIt, 1 );
 	if ( op->o_bd == NULL ) {
 		rs.sr_err = LDAP_PARTIAL_RESULTS;
 		goto cleanup;
@@ -599,7 +607,7 @@ slapi_int_add_entry_locked(
 	Operation		*op = NULL;
 	Slapi_PBlock		*pPB = NULL;
 
-	int			manageDsaIt = 0;
+	int			manageDsaIt = SLAP_CONTROL_NONE;
 	int			isCritical;
 	SlapReply		rs = { REP_RESULT };
 
@@ -610,14 +618,14 @@ slapi_int_add_entry_locked(
 
 	if ( slapi_control_present( controls, LDAP_CONTROL_MANAGEDSAIT,
 				NULL, &isCritical ) ) {
-		manageDsaIt = 1; 
+		manageDsaIt = isCritical ? SLAP_CONTROL_CRITICAL : SLAP_CONTROL_NONCRITICAL; 
 	}
 
 	op = (Operation *)pConn->c_pending_ops.stqh_first;
 	pPB = (Slapi_PBlock *)op->o_pb;
 	op->o_ctrls = controls;
 
-	op->o_bd = select_backend( &((*e)->e_nname), manageDsaIt, 0 );
+	op->o_bd = select_backend( &((*e)->e_nname), manageDsaIt, 1 );
 	if ( op->o_bd == NULL ) {
 		rs.sr_err = LDAP_PARTIAL_RESULTS;
 		goto cleanup;
@@ -768,7 +776,7 @@ slapi_modrdn_internal(
 	Connection		*pConn = NULL;
 	Operation		*op = NULL;
 	Slapi_PBlock		*pPB = NULL;
-	int			manageDsaIt = 0;
+	int			manageDsaIt = SLAP_CONTROL_NONE;
 	int			isCritical;
 	SlapReply		rs = { REP_RESULT };
 
@@ -784,10 +792,10 @@ slapi_modrdn_internal(
 
 	if ( slapi_control_present( controls, 
 			SLAPI_CONTROL_MANAGEDSAIT_OID, NULL, &isCritical ) ) {
-		manageDsaIt = 1;
+		manageDsaIt = isCritical ? SLAP_CONTROL_CRITICAL : SLAP_CONTROL_NONCRITICAL;
 	}
 
-	op->o_bd = select_backend( &op->o_req_ndn, manageDsaIt, 0 );
+	op->o_bd = select_backend( &op->o_req_ndn, manageDsaIt, 1 );
 	if ( op->o_bd == NULL ) {
 		rs.sr_err =  LDAP_PARTIAL_RESULTS;
 		goto cleanup;
@@ -817,7 +825,7 @@ slapi_modrdn_internal(
 		goto cleanup;
 	}
 
-	if ( rdnValidate( &op->oq_modrdn.rs_nnewrdn ) != LDAP_SUCCESS ) {
+	if ( rdn_validate( &op->oq_modrdn.rs_nnewrdn ) != LDAP_SUCCESS ) {
 		goto cleanup;
 	}
 
@@ -889,7 +897,7 @@ slapi_modify_internal(
 
 	struct berval dn = BER_BVNULL;
 
-	int			manageDsaIt = 0;
+	int			manageDsaIt = SLAP_CONTROL_NONE;
 	int			isCritical;
 	struct berval		*bv;
 	LDAPMod			*pMod;
@@ -924,10 +932,10 @@ slapi_modify_internal(
 
 	if ( slapi_control_present( controls, 
 			SLAPI_CONTROL_MANAGEDSAIT_OID, NULL, &isCritical ) ) {
-        	manageDsaIt = 1;
+        	manageDsaIt = isCritical ? SLAP_CONTROL_CRITICAL : SLAP_CONTROL_NONCRITICAL;
 	}
 
-	op->o_bd = select_backend( &op->o_req_ndn, manageDsaIt, 0 );
+	op->o_bd = select_backend( &op->o_req_ndn, manageDsaIt, 1 );
 	if ( op->o_bd == NULL ) {
 		rs.sr_err = LDAP_PARTIAL_RESULTS;
 		goto cleanup;
@@ -959,6 +967,7 @@ slapi_modify_internal(
 			mod  = (Modifications *)ch_malloc( sizeof(Modifications) );
 
 			mod->sml_op = pMod->mod_op & LDAP_MOD_OP;
+			mod->sml_flags = 0;
 			mod->sml_next = NULL;
 			mod->sml_desc = NULL;
 			mod->sml_type = tmp.sml_type;
@@ -976,6 +985,7 @@ slapi_modify_internal(
 			mod  = (Modifications *) ch_malloc( sizeof(Modifications) );
 
 			mod->sml_op = pMod->mod_op & LDAP_MOD_OP;
+			mod->sml_flags = 0;
 			mod->sml_next = NULL;
 			mod->sml_desc = NULL;
 			mod->sml_type = tmp.sml_type;
@@ -995,6 +1005,7 @@ slapi_modify_internal(
 		/* fall through */
 		case LDAP_MOD_DELETE:
 		case LDAP_MOD_REPLACE:
+		case LDAP_MOD_INCREMENT:
 		break;
 
 		default:
@@ -1014,16 +1025,24 @@ slapi_modify_internal(
 	if ( op->o_bd->be_modify ) {
 		int repl_user = be_isupdate( op );
 		if ( !op->o_bd->be_update_ndn.bv_len || repl_user ) {
-			int update = op->o_bd->be_update_ndn.bv_len;
-			const char *text = NULL;
-			char textbuf[SLAP_TEXT_BUFLEN];
-			size_t textlen = sizeof( textbuf );
-			slap_callback cb = { NULL, slap_replog_cb, NULL, NULL };
+			int		update = !BER_BVISEMPTY( &op->o_bd->be_update_ndn );
+			const char	*text = NULL;
+			char		textbuf[ SLAP_TEXT_BUFLEN ];
+			size_t		textlen = sizeof( textbuf );
+			slap_callback	cb = { NULL, slap_replog_cb, NULL, NULL };
 
-			rs.sr_err = slap_mods_check( modlist, update,
-					&text, textbuf, textlen, NULL );
+			rs.sr_err = slap_mods_check( modlist,
+				&text, textbuf, textlen, NULL );
 			if ( rs.sr_err != LDAP_SUCCESS ) {
 				goto cleanup;
+			}
+
+			if ( !update ) {
+				rs.sr_err = slap_mods_no_user_mod_check( op, modlist,
+					&text, textbuf, textlen );
+				if ( rs.sr_err != LDAP_SUCCESS ) {
+					goto cleanup;
+				}
 			}
 
 			if ( !repl_user ) {
@@ -1083,7 +1102,7 @@ slapi_search_internal(
 	AttributeName		*an = NULL;
 	const char		*text = NULL;
 
-	int			manageDsaIt = 0; 
+	int			manageDsaIt = SLAP_CONTROL_NONE; 
 	int			isCritical;
 	int			i;
 
@@ -1163,6 +1182,7 @@ slapi_search_internal(
 				rs.sr_type = REP_SEARCH;
 				rs.sr_err = LDAP_SUCCESS;
 				rs.sr_attrs = an;
+				rs.sr_operational_attrs = NULL;
 				rs.sr_flags = REP_ENTRY_MODIFIABLE;
 
 				send_search_entry( op, &rs );
@@ -1189,12 +1209,12 @@ slapi_search_internal(
 
 	if ( slapi_control_present( controls,
 			LDAP_CONTROL_MANAGEDSAIT, NULL, &isCritical ) ) {
-		manageDsaIt = 1;
+		manageDsaIt = isCritical ? SLAP_CONTROL_CRITICAL : SLAP_CONTROL_NONCRITICAL;
 	}
 
-	op->o_bd = select_backend( &op->o_req_ndn, manageDsaIt, 0 );
+	op->o_bd = select_backend( &op->o_req_ndn, manageDsaIt, 1 );
 	if ( op->o_bd == NULL ) {
-		if ( manageDsaIt == 1 ) {
+		if ( manageDsaIt > SLAP_CONTROL_NONE  ) {
 			rs.sr_err = LDAP_NO_SUCH_OBJECT;
 		} else {
 			rs.sr_err = LDAP_PARTIAL_RESULTS;

@@ -1,8 +1,8 @@
 /* operational.c - bdb backend operational attributes function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/operational.c,v 1.16.2.3 2004/07/16 19:51:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/operational.c,v 1.24.2.1 2005/01/20 18:03:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2004 The OpenLDAP Foundation.
+ * Copyright 2000-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,6 @@
 
 #include "slap.h"
 #include "back-bdb.h"
-#include "external.h"
 
 /*
  * sets *hasSubordinates to LDAP_COMPARE_TRUE/LDAP_COMPARE_FALSE
@@ -70,15 +69,10 @@ retry:
 		break;
 
 	default:
-#ifdef NEW_LOGGING
-		LDAP_LOG ( OPERATION, ERR, 
-			"=> bdb_hasSubordinates: has_children failed: %s (%d)\n",
-			db_strerror(rc), rc, 0 );
-#else
 		Debug(LDAP_DEBUG_ARGS, 
-			"<=- bdb_hasSubordinates: has_children failed: %s (%d)\n", 
+			"<=- " LDAP_XSTRING(bdb_hasSubordinates)
+			": has_children failed: %s (%d)\n", 
 			db_strerror(rc), rc, 0 );
-#endif
 		rc = LDAP_OTHER;
 	}
 
@@ -91,26 +85,29 @@ retry:
 int
 bdb_operational(
 	Operation	*op,
-	SlapReply	*rs,
-	int		opattrs,
-	Attribute	**a )
+	SlapReply	*rs )
 {
-	Attribute	**aa = a;
-	
+	Attribute	**ap;
+
 	assert( rs->sr_entry );
 
-	if ( opattrs || ad_inlist( slap_schema.si_ad_hasSubordinates, rs->sr_attrs ) ) {
-		int	hasSubordinates;
+	for ( ap = &rs->sr_operational_attrs; *ap; ap = &(*ap)->a_next )
+		/* just count */ ;
 
-		rs->sr_err = bdb_hasSubordinates( op, rs->sr_entry, &hasSubordinates );
-		if ( rs->sr_err == LDAP_SUCCESS ) {
-			*aa = slap_operational_hasSubordinate( hasSubordinates == LDAP_COMPARE_TRUE );
-			if ( *aa != NULL ) {
-				aa = &(*aa)->a_next;
-			}
+	if ( SLAP_OPATTRS( rs->sr_attr_flags ) ||
+			ad_inlist( slap_schema.si_ad_hasSubordinates, rs->sr_attrs ) )
+	{
+		int	hasSubordinates, rc;
+
+		rc = bdb_hasSubordinates( op, rs->sr_entry, &hasSubordinates );
+		if ( rc == LDAP_SUCCESS ) {
+			*ap = slap_operational_hasSubordinate( hasSubordinates == LDAP_COMPARE_TRUE );
+			assert( *ap );
+
+			ap = &(*ap)->a_next;
 		}
 	}
 
-	return rs->sr_err;
+	return LDAP_SUCCESS;
 }
 

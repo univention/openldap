@@ -1,8 +1,8 @@
 /* tools.c - tools for slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/tools.c,v 1.53.2.7 2004/06/16 18:19:57 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/tools.c,v 1.72.2.5 2005/04/29 21:29:07 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2004 The OpenLDAP Foundation.
+ * Copyright 2000-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,8 +19,8 @@
 #include <stdio.h>
 #include <ac/string.h>
 
+#define AVL_INTERNAL
 #include "back-bdb.h"
-#include "external.h"
 
 static DBC *cursor = NULL;
 static DBT key, data;
@@ -34,6 +34,8 @@ typedef struct dn_id {
 static dn_id hbuf[HOLE_SIZE], *holes = hbuf;
 static unsigned nhmax = HOLE_SIZE;
 static unsigned nholes;
+
+Avlnode *index_attrs, index_dummy;
 
 int bdb_tool_entry_open(
 	BackendDB *be, int mode )
@@ -79,6 +81,8 @@ int bdb_tool_entry_close(
 	return 0;
 }
 
+static int bdb_reindex_cmp(const void *a, const void *b) { return 0; }
+
 ID bdb_tool_entry_next(
 	BackendDB *be )
 {
@@ -90,6 +94,7 @@ ID bdb_tool_entry_next(
 	assert( slapMode & SLAP_TOOL_MODE );
 	assert( bdb != NULL );
 	
+	/* Initialization */
 	if (cursor == NULL) {
 		rc = bdb->bi_id2entry->bdi_db->cursor(
 			bdb->bi_id2entry->bdi_db, NULL, &cursor,
@@ -102,14 +107,29 @@ ID bdb_tool_entry_next(
 	rc = cursor->c_get( cursor, &key, &data, DB_NEXT );
 
 	if( rc != 0 ) {
-		return NOID;
+		/* If we're doing linear indexing and there are more attrs to
+		 * index, and we're at the end of the database, start over.
+		 */
+		if ( bdb->bi_attrs == &index_dummy ) {
+			if ( index_attrs && rc == DB_NOTFOUND ) {
+				/* optional - do a checkpoint here? */
+				index_dummy.avl_data = avl_delete(&index_attrs, NULL, bdb_reindex_cmp);
+				rc = cursor->c_get( cursor, &key, &data, DB_FIRST );
+			}
+			if ( rc ) {
+				bdb->bi_attrs = NULL;
+				return NOID;
+			}
+		} else {
+			return NOID;
+		}
 	}
 
 	if( data.data == NULL ) {
 		return NOID;
 	}
 
-	AC_MEMCPY( &id, key.data, key.size );
+	BDB_DISK2ID( key.data, &id );
 	return id;
 }
 
@@ -118,38 +138,23 @@ ID bdb_tool_dn2id_get(
 	struct berval *dn
 )
 {
-	struct bdb_info *bdb = (struct bdb_info *) be->be_private;
-	DB *db = bdb->bi_dn2id->bdi_db;
-	int rc;
-	DBT	key, data;
-	ID	id;
+	Operation op = {0};
+	Opheader ohdr = {0};
+	EntryInfo ei = {0};
 
-	DBTzero( &key );
-	key.size = dn->bv_len + 2;
-	key.data = ch_malloc( key.size );
-	((char*)key.data)[0] = DN_BASE_PREFIX;
-	AC_MEMCPY( &((char*)key.data)[1], dn->bv_val, key.size - 1 );
+	if ( BER_BVISEMPTY(dn) )
+		return 0;
 
-	DBTzero( &data );
-	data.data = &id;
-	data.ulen = sizeof(ID);
-	data.flags = DB_DBT_USERMEM;
+	op.o_hdr = &ohdr;
+	op.o_bd = be;
+	op.o_tmpmemctx = NULL;
+	op.o_tmpmfuncs = &ch_mfuncs;
 
-	rc = db->get( db, NULL, &key, &data, bdb->bi_db_opflags );
+	ei.bei_id = NOID;
 
-    if( rc != 0 ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG ( INDEX, ERR, "bdb_tool_dn2id_get: get failed %s (%d)\n",
-				db_strerror(rc), rc, 0 );
-#else
-		Debug( LDAP_DEBUG_TRACE, "bdb_tool_dn2id_get: get failed: %s (%d)\n",
-				db_strerror( rc ), rc, 0 );
-#endif
-		id = NOID;
-	}
-
-	ch_free( key.data );
-	return id;
+	bdb_dn2id( &op, NULL, dn, &ei );
+	
+	return ei.bei_id;
 }
 
 int bdb_tool_id2entry_get(
@@ -158,7 +163,20 @@ int bdb_tool_id2entry_get(
 	Entry **e
 )
 {
-	return bdb_id2entry( be, NULL, id, e );
+	int rc = bdb_id2entry( be, NULL, id, e );
+
+	if ( rc == DB_NOTFOUND && id == 0 ) {
+		Entry *dummy = ch_calloc( 1, sizeof(Entry) );
+		struct berval gluebv = BER_BVC("glue");
+		dummy->e_name.bv_val = ch_strdup( "" );
+		dummy->e_nname.bv_val = ch_strdup( "" );
+		attr_merge_one( dummy, slap_schema.si_ad_objectClass, &gluebv, NULL );
+		attr_merge_one( dummy, slap_schema.si_ad_structuralObjectClass,
+			&gluebv, NULL );
+		*e = dummy;
+		rc = LDAP_SUCCESS;
+	}
+	return rc;
 }
 
 Entry* bdb_tool_entry_get( BackendDB *be, ID id )
@@ -174,7 +192,12 @@ Entry* bdb_tool_entry_get( BackendDB *be, ID id )
 #ifndef BDB_HIER
 	DBT2bv( &data, &bv );
 
+#ifdef SLAP_ZONE_ALLOC
+	/* FIXME: will add ctx later */
+	rc = entry_decode( &bv, &e, NULL );
+#else
 	rc = entry_decode( &bv, &e );
+#endif
 
 	if( rc == LDAP_SUCCESS ) {
 		e->e_id = id;
@@ -183,7 +206,9 @@ Entry* bdb_tool_entry_get( BackendDB *be, ID id )
 	{
 		EntryInfo *ei = NULL;
 		Operation op = {0};
+		Opheader ohdr = {0};
 
+		op.o_hdr = &ohdr;
 		op.o_bd = be;
 		op.o_tmpmemctx = NULL;
 		op.o_tmpmfuncs = &ch_mfuncs;
@@ -203,19 +228,22 @@ static int bdb_tool_next_id(
 	struct berval *text,
 	int hole )
 {
-	struct bdb_info *bdb = (struct bdb_info *) op->o_bd->be_private;
 	struct berval dn = e->e_name;
 	struct berval ndn = e->e_nname;
 	struct berval pdn, npdn;
-	EntryInfo *ei = NULL;
+	EntryInfo *ei = NULL, eidummy;
 	int rc;
 
-	if (ndn.bv_len == 0) return 0;
+	if (ndn.bv_len == 0) {
+		e->e_id = 0;
+		return 0;
+	}
 
 	rc = bdb_cache_find_ndn( op, tid, &ndn, &ei );
 	if ( ei ) bdb_cache_entryinfo_unlock( ei );
 	if ( rc == DB_NOTFOUND ) {
 		if ( !be_issuffix( op->o_bd, &ndn ) ) {
+			ID eid = e->e_id;
 			dnParent( &dn, &pdn );
 			dnParent( &ndn, &npdn );
 			e->e_name = pdn;
@@ -226,19 +254,22 @@ static int bdb_tool_next_id(
 			if ( rc ) {
 				return rc;
 			}
+			/* If parent didn't exist, it was created just now
+			 * and its ID is now in e->e_id. Make sure the current
+			 * entry gets added under the new parent ID.
+			 */
+			if ( eid != e->e_id ) {
+				eidummy.bei_id = e->e_id;
+				ei = &eidummy;
+			}
 		}
 		rc = bdb_next_id( op->o_bd, tid, &e->e_id );
 		if ( rc ) {
 			snprintf( text->bv_val, text->bv_len,
 				"next_id failed: %s (%d)",
 				db_strerror(rc), rc );
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TOOLS, ERR, 
-			"=> bdb_tool_next_id: %s\n", text->bv_val, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
 			"=> bdb_tool_next_id: %s\n", text->bv_val, 0, 0 );
-#endif
 			return rc;
 		}
 		rc = bdb_dn2id_add( op, tid, ei, e );
@@ -246,13 +277,8 @@ static int bdb_tool_next_id(
 			snprintf( text->bv_val, text->bv_len, 
 				"dn2id_add failed: %s (%d)",
 				db_strerror(rc), rc );
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TOOLS, ERR, 
-			"=> bdb_tool_next_id: %s\n", text->bv_val, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
 			"=> bdb_tool_next_id: %s\n", text->bv_val, 0, 0 );
-#endif
 		} else if ( hole ) {
 			if ( nholes == nhmax - 1 ) {
 				if ( holes == hbuf ) {
@@ -296,6 +322,7 @@ ID bdb_tool_entry_put(
 	struct bdb_info *bdb = (struct bdb_info *) be->be_private;
 	DB_TXN *tid = NULL;
 	Operation op = {0};
+	Opheader ohdr = {0};
 
 	assert( be != NULL );
 	assert( slapMode & SLAP_TOOL_MODE );
@@ -304,30 +331,24 @@ ID bdb_tool_entry_put(
 	assert( text->bv_val );
 	assert( text->bv_val[0] == '\0' );	/* overconservative? */
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( TOOLS, ARGS, "=> bdb_tool_entry_put( %ld, \"%s\" )\n",
-		(long) e->e_id, e->e_dn, 0 );
-#else
-	Debug( LDAP_DEBUG_TRACE, "=> bdb_tool_entry_put( %ld, \"%s\" )\n",
-		(long) e->e_id, e->e_dn, 0 );
-#endif
+	Debug( LDAP_DEBUG_TRACE, "=> " LDAP_XSTRING(bdb_tool_entry_put)
+		"( %ld, \"%s\" )\n", (long) e->e_id, e->e_dn, 0 );
 
+	if (! (slapMode & SLAP_TOOL_QUICK)) {
 	rc = TXN_BEGIN( bdb->bi_dbenv, NULL, &tid, 
 		bdb->bi_db_opflags );
 	if( rc != 0 ) {
 		snprintf( text->bv_val, text->bv_len,
 			"txn_begin failed: %s (%d)",
 			db_strerror(rc), rc );
-#ifdef NEW_LOGGING
-	LDAP_LOG ( TOOLS, ERR, "=> bdb_tool_entry_put: %s\n", text->bv_val, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
-			"=> bdb_tool_entry_put: %s\n",
+			"=> " LDAP_XSTRING(bdb_tool_entry_put) ": %s\n",
 			 text->bv_val, 0, 0 );
-#endif
 		return NOID;
 	}
+	}
 
+	op.o_hdr = &ohdr;
 	op.o_bd = be;
 	op.o_tmpmemctx = NULL;
 	op.o_tmpmfuncs = &ch_mfuncs;
@@ -344,62 +365,49 @@ ID bdb_tool_entry_put(
 		snprintf( text->bv_val, text->bv_len,
 				"id2entry_add failed: %s (%d)",
 				db_strerror(rc), rc );
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TOOLS, ERR, 
-			"=> bdb_tool_entry_put: %s\n", text->bv_val, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
-			"=> bdb_tool_entry_put: %s\n", text->bv_val, 0, 0 );
-#endif
+			"=> " LDAP_XSTRING(bdb_tool_entry_put) ": %s\n",
+			text->bv_val, 0, 0 );
 		goto done;
 	}
 
-	rc = bdb_index_entry_add( &op, tid, e );
+	if ( !bdb->bi_linear_index )
+		rc = bdb_index_entry_add( &op, tid, e );
 	if( rc != 0 ) {
 		snprintf( text->bv_val, text->bv_len,
 				"index_entry_add failed: %s (%d)",
 				db_strerror(rc), rc );
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TOOLS, ERR, 
-			"=> bdb_tool_entry_put: %s\n", text->bv_val, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
-			"=> bdb_tool_entry_put: %s\n", text->bv_val, 0, 0 );
-#endif
+			"=> " LDAP_XSTRING(bdb_tool_entry_put) ": %s\n",
+			text->bv_val, 0, 0 );
 		goto done;
 	}
 
 done:
 	if( rc == 0 ) {
+		if ( !( slapMode & SLAP_TOOL_QUICK )) {
 		rc = TXN_COMMIT( tid, 0 );
 		if( rc != 0 ) {
 			snprintf( text->bv_val, text->bv_len,
 					"txn_commit failed: %s (%d)",
 					db_strerror(rc), rc );
-#ifdef NEW_LOGGING
-			LDAP_LOG ( TOOLS, ERR, 
-				"=> bdb_tool_entry_put: %s\n", text->bv_val, 0, 0 );
-#else
 			Debug( LDAP_DEBUG_ANY,
-				"=> bdb_tool_entry_put: %s\n",
+				"=> " LDAP_XSTRING(bdb_tool_entry_put) ": %s\n",
 				text->bv_val, 0, 0 );
-#endif
 			e->e_id = NOID;
+		}
 		}
 
 	} else {
+		if ( !( slapMode & SLAP_TOOL_QUICK )) {
 		TXN_ABORT( tid );
 		snprintf( text->bv_val, text->bv_len,
 			"txn_aborted! %s (%d)",
 			db_strerror(rc), rc );
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TOOLS, ERR, 
-			"=> bdb_tool_entry_put: %s\n", text->bv_val, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
-			"=> bdb_tool_entry_put: %s\n",
+			"=> " LDAP_XSTRING(bdb_tool_entry_put) ": %s\n",
 			text->bv_val, 0, 0 );
-#endif
+		}
 		e->e_id = NOID;
 	}
 
@@ -415,42 +423,45 @@ int bdb_tool_entry_reindex(
 	Entry *e;
 	DB_TXN *tid = NULL;
 	Operation op = {0};
+	Opheader ohdr = {0};
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( TOOLS, ARGS, 
-		"=> bdb_tool_entry_reindex( %ld )\n", (long) id, 0, 0 );
-#else
-	Debug( LDAP_DEBUG_ARGS, "=> bdb_tool_entry_reindex( %ld )\n",
+	Debug( LDAP_DEBUG_ARGS,
+		"=> " LDAP_XSTRING(bdb_tool_entry_reindex) "( %ld )\n",
 		(long) id, 0, 0 );
-#endif
+
+	/* No indexes configured, nothing to do. Could return an
+	 * error here to shortcut things.
+	 */
+	if (!bi->bi_attrs) {
+		return 0;
+	}
+
+	/* Get the first attribute to index */
+	if (bi->bi_linear_index && !index_attrs && bi->bi_attrs != &index_dummy) {
+		index_attrs = bi->bi_attrs;
+		bi->bi_attrs = &index_dummy;
+		index_dummy.avl_data = avl_delete(&index_attrs, NULL, bdb_reindex_cmp);
+	}
 
 	e = bdb_tool_entry_get( be, id );
 
 	if( e == NULL ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TOOLS, DETAIL1, 
-			"bdb_tool_entry_reindex:: could not locate id=%ld\n", 
-			(long) id, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
-			"bdb_tool_entry_reindex:: could not locate id=%ld\n",
+			LDAP_XSTRING(bdb_tool_entry_reindex)
+			": could not locate id=%ld\n",
 			(long) id, 0, 0 );
-#endif
 		return -1;
 	}
 
+	if (! (slapMode & SLAP_TOOL_QUICK)) {
 	rc = TXN_BEGIN( bi->bi_dbenv, NULL, &tid, bi->bi_db_opflags );
 	if( rc != 0 ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TOOLS, ERR, 
-			"=> bdb_tool_entry_reindex: txn_begin failed: %s (%d)\n", 
-			db_strerror(rc), rc, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
-			"=> bdb_tool_entry_reindex: txn_begin failed: %s (%d)\n",
+			"=> " LDAP_XSTRING(bdb_tool_entry_reindex) ": "
+			"txn_begin failed: %s (%d)\n",
 			db_strerror(rc), rc, 0 );
-#endif
 		goto done;
+	}
 	}
  	
 	/*
@@ -460,64 +471,38 @@ int bdb_tool_entry_reindex(
 	 *
 	 */
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( TOOLS, ERR, 
-		"=> bdb_tool_entry_reindex( %ld, \"%s\" )\n", (long) id, e->e_dn, 0 );
-#else
-	Debug( LDAP_DEBUG_TRACE, "=> bdb_tool_entry_reindex( %ld, \"%s\" )\n",
+	Debug( LDAP_DEBUG_TRACE,
+		"=> " LDAP_XSTRING(bdb_tool_entry_reindex) "( %ld, \"%s\" )\n",
 		(long) id, e->e_dn, 0 );
-#endif
 
+	op.o_hdr = &ohdr;
 	op.o_bd = be;
 	op.o_tmpmemctx = NULL;
 	op.o_tmpmfuncs = &ch_mfuncs;
-
-#ifndef BDB_HIER
-	/* add dn2id indices */
-	rc = bdb_dn2id_add( &op, tid, NULL, e );
-	if( rc != 0 && rc != DB_KEYEXIST ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TOOLS, ERR, 
-			"=> bdb_tool_entry_reindex: dn2id_add failed: %s (%d)\n", 
-			db_strerror(rc), rc, 0 );
-#else
-		Debug( LDAP_DEBUG_ANY,
-			"=> bdb_tool_entry_reindex: dn2id_add failed: %s (%d)\n",
-			db_strerror(rc), rc, 0 );
-#endif
-		goto done;
-	}
-#endif
 
 	rc = bdb_index_entry_add( &op, tid, e );
 
 done:
 	if( rc == 0 ) {
+		if (! (slapMode & SLAP_TOOL_QUICK)) {
 		rc = TXN_COMMIT( tid, 0 );
 		if( rc != 0 ) {
-#ifdef NEW_LOGGING
-			LDAP_LOG ( TOOLS, ERR, 
-				"=> bdb_tool_entry_reindex: txn_commit failed: %s (%d)\n", 
-				db_strerror(rc), rc, 0 );
-#else
 			Debug( LDAP_DEBUG_ANY,
-				"=> bdb_tool_entry_reindex: txn_commit failed: %s (%d)\n",
+				"=> " LDAP_XSTRING(bdb_tool_entry_reindex)
+				": txn_commit failed: %s (%d)\n",
 				db_strerror(rc), rc, 0 );
-#endif
 			e->e_id = NOID;
+		}
 		}
 
 	} else {
+		if (! (slapMode & SLAP_TOOL_QUICK)) {
 		TXN_ABORT( tid );
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TOOLS, DETAIL1, 
-			"=> bdb_tool_entry_reindex: txn_aborted! %s (%d)\n", 
-			db_strerror(rc), rc, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
-			"=> bdb_tool_entry_reindex: txn_aborted! %s (%d)\n",
+			"=> " LDAP_XSTRING(bdb_tool_entry_reindex)
+			": txn_aborted! %s (%d)\n",
 			db_strerror(rc), rc, 0 );
-#endif
+		}
 		e->e_id = NOID;
 	}
 	bdb_entry_release( &op, e, 0 );
@@ -534,6 +519,7 @@ ID bdb_tool_entry_modify(
 	struct bdb_info *bdb = (struct bdb_info *) be->be_private;
 	DB_TXN *tid = NULL;
 	Operation op = {0};
+	Opheader ohdr = {0};
 
 	assert( be != NULL );
 	assert( slapMode & SLAP_TOOL_MODE );
@@ -543,32 +529,26 @@ ID bdb_tool_entry_modify(
 	assert( text->bv_val[0] == '\0' );	/* overconservative? */
 
 	assert ( e->e_id != NOID );
-	assert ( e->e_id != 0 );
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( TOOLS, ARGS, "=> bdb_tool_entry_put( %ld, \"%s\" )\n",
+	Debug( LDAP_DEBUG_TRACE,
+		"=> " LDAP_XSTRING(bdb_tool_entry_modify) "( %ld, \"%s\" )\n",
 		(long) e->e_id, e->e_dn, 0 );
-#else
-	Debug( LDAP_DEBUG_TRACE, "=> bdb_tool_entry_put( %ld, \"%s\" )\n",
-		(long) e->e_id, e->e_dn, 0 );
-#endif
 
+	if (! (slapMode & SLAP_TOOL_QUICK)) {
 	rc = TXN_BEGIN( bdb->bi_dbenv, NULL, &tid, 
 		bdb->bi_db_opflags );
 	if( rc != 0 ) {
 		snprintf( text->bv_val, text->bv_len,
 			"txn_begin failed: %s (%d)",
 			db_strerror(rc), rc );
-#ifdef NEW_LOGGING
-	LDAP_LOG ( TOOLS, ERR, "=> bdb_tool_entry_put: %s\n", text->bv_val, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
-			"=> bdb_tool_entry_put: %s\n",
+			"=> " LDAP_XSTRING(bdb_tool_entry_modify) ": %s\n",
 			 text->bv_val, 0, 0 );
-#endif
 		return NOID;
 	}
+	}
 
+	op.o_hdr = &ohdr;
 	op.o_bd = be;
 	op.o_tmpmemctx = NULL;
 	op.o_tmpmfuncs = &ch_mfuncs;
@@ -579,77 +559,64 @@ ID bdb_tool_entry_modify(
 		snprintf( text->bv_val, text->bv_len,
 				"id2entry_add failed: %s (%d)",
 				db_strerror(rc), rc );
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TOOLS, ERR, 
-			"=> bdb_tool_entry_put: %s\n", text->bv_val, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
-			"=> bdb_tool_entry_put: %s\n", text->bv_val, 0, 0 );
-#endif
+			"=> " LDAP_XSTRING(bdb_tool_entry_modify) ": %s\n",
+			text->bv_val, 0, 0 );
 		goto done;
 	}
 
+#if 0
+	/* FIXME: this is bogus, we don't have the old values to delete
+	 * from the index because the given entry has already been modified.
+	 */
 	rc = bdb_index_entry_del( &op, tid, e );
 	if( rc != 0 ) {
 		snprintf( text->bv_val, text->bv_len,
 				"index_entry_del failed: %s (%d)",
 				db_strerror(rc), rc );
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TOOLS, ERR, 
-			"=> bdb_tool_entry_put: %s\n", text->bv_val, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
-			"=> bdb_tool_entry_put: %s\n", text->bv_val, 0, 0 );
-#endif
+			"=> " LDAP_XSTRING(bdb_tool_entry_modify) ": %s\n",
+			text->bv_val, 0, 0 );
 		goto done;
 	}
+#endif
 
 	rc = bdb_index_entry_add( &op, tid, e );
 	if( rc != 0 ) {
 		snprintf( text->bv_val, text->bv_len,
 				"index_entry_add failed: %s (%d)",
 				db_strerror(rc), rc );
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TOOLS, ERR, 
-			"=> bdb_tool_entry_put: %s\n", text->bv_val, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
-			"=> bdb_tool_entry_put: %s\n", text->bv_val, 0, 0 );
-#endif
+			"=> " LDAP_XSTRING(bdb_tool_entry_modify) ": %s\n",
+			text->bv_val, 0, 0 );
 		goto done;
 	}
 
 done:
 	if( rc == 0 ) {
+		if (! (slapMode & SLAP_TOOL_QUICK)) {
 		rc = TXN_COMMIT( tid, 0 );
 		if( rc != 0 ) {
 			snprintf( text->bv_val, text->bv_len,
 					"txn_commit failed: %s (%d)",
 					db_strerror(rc), rc );
-#ifdef NEW_LOGGING
-			LDAP_LOG ( TOOLS, ERR, 
-				"=> bdb_tool_entry_put: %s\n", text->bv_val, 0, 0 );
-#else
 			Debug( LDAP_DEBUG_ANY,
-				"=> bdb_tool_entry_put: %s\n",
-				text->bv_val, 0, 0 );
-#endif
+				"=> " LDAP_XSTRING(bdb_tool_entry_modify) ": "
+				"%s\n", text->bv_val, 0, 0 );
 			e->e_id = NOID;
+		}
 		}
 
 	} else {
+		if (! (slapMode & SLAP_TOOL_QUICK)) {
 		TXN_ABORT( tid );
 		snprintf( text->bv_val, text->bv_len,
 			"txn_aborted! %s (%d)",
 			db_strerror(rc), rc );
-#ifdef NEW_LOGGING
-		LDAP_LOG ( TOOLS, ERR, 
-			"=> bdb_tool_entry_put: %s\n", text->bv_val, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
-			"=> bdb_tool_entry_put: %s\n",
+			"=> " LDAP_XSTRING(bdb_tool_entry_modify) ": %s\n",
 			text->bv_val, 0, 0 );
-#endif
+		}
 		e->e_id = NOID;
 	}
 

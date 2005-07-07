@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/extended.c,v 1.23.2.6 2004/10/20 20:06:51 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/extended.c,v 1.32.2.2 2005/03/14 22:24:57 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,15 +57,11 @@ ldap_extended_operation(
 	int rc;
 	ber_int_t id;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "ldap_extended_operation\n", 0,0,0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_extended_operation\n", 0, 0, 0 );
-#endif
 
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );
-	assert( reqoid != NULL || *reqoid == '\0' );
+	assert( reqoid != NULL && *reqoid != '\0' );
 	assert( msgidp != NULL );
 
 	/* must be version 3 (or greater) */
@@ -131,16 +127,11 @@ ldap_extended_operation_s(
     int     msgid;
     LDAPMessage *res;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "ldap_extended_operation_s\n", 0,0,0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_extended_operation_s\n", 0, 0, 0 );
-#endif
 
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );
-	assert( reqoid != NULL || *reqoid == '\0' );
-	assert( retoidp != NULL || retdatap != NULL );
+	assert( reqoid != NULL && *reqoid != '\0' );
 
     rc = ldap_extended_operation( ld, reqoid, reqdata,
 		sctrls, cctrls, &msgid );
@@ -187,11 +178,7 @@ ldap_parse_extended_result (
 	assert( LDAP_VALID( ld ) );
 	assert( res != NULL );
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "ldap_parse_extended_result\n", 0,0,0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_parse_extended_result\n", 0, 0, 0 );
-#endif
 
 	if( ld->ld_version < LDAP_VERSION3 ) {
 		ld->ld_errno = LDAP_NOT_SUPPORTED;
@@ -314,11 +301,7 @@ ldap_parse_intermediate (
 	assert( LDAP_VALID( ld ) );
 	assert( res != NULL );
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "ldap_parse_intermediate\n", 0,0,0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_parse_intermediate\n", 0, 0, 0 );
-#endif
 
 	if( ld->ld_version < LDAP_VERSION3 ) {
 		ld->ld_errno = LDAP_NOT_SUPPORTED;

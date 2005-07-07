@@ -1,8 +1,8 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test010-passwd,v 1.13.2.4 2004/01/01 18:16:43 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test010-passwd,v 1.18.2.2 2005/03/14 22:25:04 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2004 The OpenLDAP Foundation.
+## Copyright 1998-2005 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -138,6 +138,15 @@ if test $RC != 0 ; then
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit $RC
 fi
+
+echo "Logging end state with ldapsearch..."
+echo "" >> $TESTOUT
+echo "++ Initial search" >> $TESTOUT
+$LDAPSEARCH -h $LOCALHOST -p $PORT1 \
+	-D "$MANAGERDN" -w $PASSWD \
+	-b "$BASEDN" \
+	'objectclass=*' >> $TESTOUT 2>&1
+
 
 test $KILLSERVERS != no && kill -HUP $KILLPIDS
 

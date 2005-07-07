@@ -1,8 +1,8 @@
 /* ldbm.c - ldap dbm compatibility routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/ldbm.c,v 1.1.2.3 2004/02/23 22:08:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/ldbm.c,v 1.4.2.1 2005/01/20 18:04:00 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * All rights reserved.
@@ -134,7 +134,11 @@ ldbm_malloc( size_t size )
 #endif
 
 static void
+#if DB_VERSION_X < 0x040300
 ldbm_db_errcall( const char *prefix, char *message )
+#else
+ldbm_db_errcall( const DB_ENV *env, const char *prefix, char *message )
+#endif
 {
 #ifdef LDAP_SYSLOG
 	syslog( LOG_INFO, "ldbm: %s %s", prefix, message );

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/group.c,v 1.20.2.4 2004/04/12 16:08:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/group.c,v 1.25.2.1 2005/01/20 18:04:00 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2004 The OpenLDAP Foundation.
+ * Copyright 1999-2005 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -112,7 +112,7 @@ meta_back_group(
 	} /* else: do the search */
 
 	candidate = meta_back_select_unique_candidate( li, gr_ndn );
-	if ( candidate == -1 ) {
+	if ( candidate == META_TARGET_NONE ) {
 		goto cleanup;
 	}
 
@@ -127,16 +127,10 @@ meta_back_group(
 		} else {
 			mop_ndn = *op_ndn;
 		}
-#ifdef NEW_LOGGING
-		LDAP_LOG( BACK_META, DETAIL1,
-			"[rw] bindDn (op ndn in group): \"%s\" -> \"%s\"\n",
-			op_ndn->bv_val, mop_ndn.bv_val, 0 );
-#else /* !NEW_LOGGING */
 		Debug( LDAP_DEBUG_ARGS,
 				"rw> bindDn (op ndn in group):"
 				" \"%s\" -> \"%s\"\n%s",
 				op_ndn->bv_val, mop_ndn.bv_val, "" );
-#endif /* !NEW_LOGGING */
 		break;
 		
 	case REWRITE_REGEXEC_UNWILLING:
@@ -158,16 +152,10 @@ meta_back_group(
 		} else {
 			mgr_ndn = *gr_ndn;
 		}
-#ifdef NEW_LOGGING
-		LDAP_LOG( BACK_META, DETAIL1,
-			"[rw] searchBase (gr ndn in group): \"%s\" -> \"%s\"\n",
-			gr_ndn->bv_val, mgr_ndn.bv_val, 0 );
-#else /* !NEW_LOGGING */
 		Debug( LDAP_DEBUG_ARGS,
 				"rw> searchBase (gr ndn in group):"
 				" \"%s\" -> \"%s\"\n%s",
 				gr_ndn->bv_val, mgr_ndn.bv_val, "" );
-#endif /* !NEW_LOGGING */
 		break;
 		
 	case REWRITE_REGEXEC_UNWILLING:

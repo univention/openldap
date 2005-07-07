@@ -1,8 +1,8 @@
 /* init.c - initialize ldbm backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/init.c,v 1.84.2.5 2004/04/12 18:20:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/init.c,v 1.96.2.4 2005/04/29 21:29:08 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,21 +23,7 @@
 
 #include "slap.h"
 #include "back-ldbm.h"
-
-#if SLAPD_LDBM == SLAPD_MOD_DYNAMIC
-
-int init_module(int argc, char *argv[]) {
-    BackendInfo bi;
-
-    memset( &bi, '\0', sizeof(bi) );
-    bi.bi_type = "ldbm";
-    bi.bi_init = ldbm_back_initialize;
-
-    backend_add(&bi);
-    return 0;
-}
-
-#endif /* SLAPD_LDBM */
+#include <ldap_rq.h>
 
 int
 ldbm_back_initialize(
@@ -46,7 +32,9 @@ ldbm_back_initialize(
 {
 	static char *controls[] = {
 		LDAP_CONTROL_MANAGEDSAIT,
-		LDAP_CONTROL_VALUESRETURNFILTER,
+#ifdef LDAP_CONTROL_X_PERMISSIVE_MODIFY
+		LDAP_CONTROL_X_PERMISSIVE_MODIFY,
+#endif
 		NULL
 	};
 
@@ -187,8 +175,8 @@ ldbm_back_db_init(
 	/* delay interval */
 	li->li_dbsyncwaitinterval = 5;
 
-	/* flag to notify ldbm_cache_sync_daemon to shut down */
-	li->li_dbshutdown = 0;
+	/* current wait counter */
+	li->li_dbsyncwaitcount = 0;
 
 	/* initialize various mutex locks & condition variables */
 	ldap_pvt_thread_rdwr_init( &li->li_giant_rwlock );
@@ -210,24 +198,16 @@ ldbm_back_db_open(
 	li->li_dbenv = ldbm_initialize_env( li->li_directory,
 		li->li_dbcachesize, &li->li_envdirok );
 
-	/* sync thread */
-	if ( li->li_dbsyncfreq > 0 )
+	/* If we're in server mode and a sync frequency was set,
+	 * submit a task to perform periodic db syncs.
+	 */
+	if (( slapMode & SLAP_SERVER_MODE ) && li->li_dbsyncfreq > 0 )
 	{
-		int rc;
-		rc = ldap_pvt_thread_create( &li->li_dbsynctid,
-			0, ldbm_cache_sync_daemon, (void*)be );
-
-		if ( rc != 0 )
-		{
-#ifdef NEW_LOGGING
-			LDAP_LOG ( BACK_LDBM, ERR, "ldbm_back_db_open: sync "
-				"ldap_pvt_thread_create failed (%d)\n", rc, 0, 0 );
-#else	
-			Debug(	LDAP_DEBUG_ANY,
-				"sync ldap_pvt_thread_create failed (%d)\n", rc, 0, 0 );
-#endif
-			return 1;
-		}
+		ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
+		ldap_pvt_runqueue_insert( &slapd_rq, li->li_dbsyncfreq,
+			ldbm_cache_sync_daemon, be,
+			"ldbm_cache_sync", be->be_suffix[0].bv_val );
+		ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
 	}
 
 	return 0;
@@ -257,3 +237,12 @@ ldbm_back_db_destroy(
 
 	return 0;
 }
+
+#if SLAPD_LDBM == SLAPD_MOD_DYNAMIC
+
+/* conditionally define the init_module() function */
+SLAP_BACKEND_INIT_MODULE( ldbm )
+
+#endif /* SLAPD_LDBM == SLAPD_MOD_DYNAMIC */
+
+

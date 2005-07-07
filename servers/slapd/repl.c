@@ -1,8 +1,8 @@
 /* repl.c - log modifications for replication purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/repl.c,v 1.49.2.6 2004/04/12 18:13:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/repl.c,v 1.65.2.3 2005/05/06 16:42:51 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,6 +42,7 @@
 int
 add_replica_info(
     Backend     *be,
+    const char  *uri, 
     const char  *host 
 )
 {
@@ -59,7 +60,8 @@ add_replica_info(
 
 	be->be_replica[ i ] 
 		= ch_calloc( sizeof( struct slap_replica_info ), 1 );
-	be->be_replica[ i ]->ri_host = ch_strdup( host );
+	be->be_replica[ i ]->ri_uri = uri;
+	be->be_replica[ i ]->ri_host = host;
 	be->be_replica[ i ]->ri_nsuffix = NULL;
 	be->be_replica[ i ]->ri_attrs = NULL;
 	be->be_replica[ i + 1 ] = NULL;
@@ -133,15 +135,17 @@ replog( Operation *op )
 	int     count = 0;
 #endif
 	int	subsets = 0;
-	long now = slap_get_time();
+	long	now = slap_get_time();
+	char	*replogfile;
 
-	if ( op->o_bd->be_replogfile == NULL && replogfile == NULL ) {
+	replogfile = op->o_bd->be_replogfile ? op->o_bd->be_replogfile :
+		frontendDB->be_replogfile;
+	if ( !replogfile ) {
 		return;
 	}
 
 	ldap_pvt_thread_mutex_lock( &replog_mutex );
-	if ( (fp = lock_fopen( op->o_bd->be_replogfile ? op->o_bd->be_replogfile :
-	    replogfile, "a", &lfp )) == NULL ) {
+	if ( (fp = lock_fopen( replogfile, "a", &lfp )) == NULL ) {
 		ldap_pvt_thread_mutex_unlock( &replog_mutex );
 		return;
 	}

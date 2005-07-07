@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/unbind.c,v 1.44.2.3 2004/01/01 18:16:30 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/unbind.c,v 1.48.2.1 2005/01/20 18:03:51 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,11 +67,7 @@ ldap_unbind_ext_s(
 int
 ldap_unbind( LDAP *ld )
 {
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "ldap_unbind\n", 0, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_unbind\n", 0, 0, 0 );
-#endif
 
 	return( ldap_unbind_ext( ld, NULL, NULL ) );
 }
@@ -204,11 +200,7 @@ ldap_send_unbind(
 	BerElement	*ber;
 	ber_int_t	id;
 
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "ldap_send_unbind\n", 0, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_send_unbind\n", 0, 0, 0 );
-#endif
 
 #ifdef LDAP_CONNECTIONLESS
 	if (LDAP_IS_UDP(ld))

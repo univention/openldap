@@ -1,7 +1,7 @@
-dnl $OpenLDAP: pkg/ldap/configure.in,v 1.478.2.21 2004/07/26 18:15:05 hyc Exp $
+dnl $OpenLDAP: pkg/ldap/configure.in,v 1.560.2.9 2005/06/10 15:11:24 kurt Exp $
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
-dnl Copyright 1998-2004 The OpenLDAP Foundation.
+dnl Copyright 1998-2005 The OpenLDAP Foundation.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -19,11 +19,11 @@ dnl at top of generated configure script.  Prints simple copyright.
 define([AC_INIT_BINSH],
 [[#! /bin/sh
 # $]OpenLDAP[$
-# from] translit([$OpenLDAP: pkg/ldap/configure.in,v 1.478.2.21 2004/07/26 18:15:05 hyc Exp $], $")] [
+# from] translit([$OpenLDAP: pkg/ldap/configure.in,v 1.560.2.9 2005/06/10 15:11:24 kurt Exp $], $")] [
 
 # This work is part of OpenLDAP Software <http://www.openldap.org/>.
 #
-# Copyright 1998-2004 The OpenLDAP Foundation.
+# Copyright 1998-2005 The OpenLDAP Foundation.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@ define([AC_INIT_BINSH],
 # top-level directory of the distribution or, alternatively, at
 # <http://www.OpenLDAP.org/license.html>.
 
-echo "Copyright 1998-2004 The OpenLDAP Foundation. All rights reserved."
+echo "Copyright 1998-2005 The OpenLDAP Foundation. All rights reserved."
 echo "	Restrictions apply, see COPYRIGHT and LICENSE files."
 ])dnl
 dnl ----------------------------------------------------------------
@@ -171,6 +171,10 @@ OL_ARG_WITH(tls,[  --with-tls		  with TLS/SSL support],
 	auto, [auto ssleay openssl yes no] )
 OL_ARG_WITH(yielding_select,[  --with-yielding-select  with implicitly yielding select],
 	auto, [auto yes no manual] )
+OL_ARG_WITH(multiple_precision,[  --with-multiple-precision
+                          multiple precision support for statistics
+			  auto|bignum|gmp],
+	auto, [auto bignum gmp yes no] )
 
 dnl ----------------------------------------------------------------
 dnl Server options
@@ -198,39 +202,81 @@ OL_ARG_ENABLE(wrappers,[    --enable-wrappers	  enable tcp wrapper support], no)
 dnl ----------------------------------------------------------------
 dnl SLAPD Backend Options
 Backends="bdb dnssrv hdb ldap ldbm meta monitor null \
-	passwd perl shell sql"
+	passwd perl relay shell sql"
 
-AC_ARG_WITH(xxslapoverlays,[
+AC_ARG_WITH(xxslapbackends,[
 SLAPD Backend Options:])
 
-OL_ARG_ENABLE(bdb,[    --enable-bdb	  enable Berkeley DB backend no|yes|mod], yes, [no yes mod])dnl
-OL_ARG_ENABLE(dnssrv,[    --enable-dnssrv	  enable dnssrv backend no|yes|mod], no, [no yes mod])dnl
-OL_ARG_ENABLE(hdb,[    --enable-hdb	  enable Hierarchical DB backend no|yes|mod], no, [no yes mod])dnl
-OL_ARG_ENABLE(ldap,[    --enable-ldap	  enable ldap backend no|yes|mod], no, [no yes mod])dnl
-OL_ARG_ENABLE(ldbm,[    --enable-ldbm	  enable ldbm backend no|yes|mod], no, [no yes mod])dnl
-OL_ARG_WITH(ldbm_api,[      --with-ldbm-api     with LDBM API auto|berkeley|bcompat|mdbm|gdbm], auto,
-	[auto berkeley bcompat mdbm gdbm])
-OL_ARG_WITH(ldbm_type,[      --with-ldbm-type	  use LDBM type auto|btree|hash], auto,
-	[auto btree hash])
-OL_ARG_ENABLE(meta,[    --enable-meta	  enable metadirectory backend no|yes|mod], no, [no yes mod])dnl
-OL_ARG_ENABLE(monitor,[    --enable-monitor	  enable monitor backend no|yes|mod], yes, [no yes mod])dnl
-OL_ARG_ENABLE(null,[    --enable-null	  enable null backend no|yes|mod], no, [no yes mod])dnl
-OL_ARG_ENABLE(passwd,[    --enable-passwd	  enable passwd backend no|yes|mod], no, [no yes mod])dnl
-OL_ARG_ENABLE(perl,[    --enable-perl	  enable perl backend no|yes|mod], no, [no yes mod])dnl
-OL_ARG_ENABLE(shell,[    --enable-shell	  enable shell backend no|yes|mod], no, [no yes mod])dnl
-OL_ARG_ENABLE(sql,[    --enable-sql	  enable sql backend no|yes|mod], no, [no yes mod])dnl
+OL_ARG_ENABLE(backends,[    --enable-backends	  enable all available backends no|yes|mod],
+	no, [no yes mod])dnl
+OL_ARG_ENABLE(bdb,[    --enable-bdb	  enable Berkeley DB backend no|yes|mod],
+	yes, [no yes mod])dnl
+OL_ARG_ENABLE(dnssrv,[    --enable-dnssrv	  enable dnssrv backend no|yes|mod],
+	no, [no yes mod])dnl
+OL_ARG_ENABLE(hdb,[    --enable-hdb	  enable Hierarchical DB backend no|yes|mod],
+	yes, [no yes mod])dnl
+OL_ARG_ENABLE(ldap,[    --enable-ldap	  enable ldap backend no|yes|mod],
+	no, [no yes mod])dnl
+OL_ARG_ENABLE(ldbm,[    --enable-ldbm	  enable ldbm backend no|yes|mod], no,
+	[no yes mod])dnl
+OL_ARG_WITH(ldbm_api,[      --with-ldbm-api     with LDBM API auto|berkeley|bcompat|mdbm|gdbm],
+	auto, [auto berkeley bcompat mdbm gdbm])
+OL_ARG_WITH(ldbm_type,[      --with-ldbm-type	  use LDBM type auto|btree|hash],
+	auto, [auto btree hash])
+OL_ARG_ENABLE(meta,[    --enable-meta	  enable metadirectory backend no|yes|mod],
+	no, [no yes mod])dnl
+OL_ARG_ENABLE(monitor,[    --enable-monitor	  enable monitor backend no|yes|mod],
+	yes, [no yes mod])dnl
+OL_ARG_ENABLE(null,[    --enable-null	  enable null backend no|yes|mod],
+	no, [no yes mod])dnl
+OL_ARG_ENABLE(passwd,[    --enable-passwd	  enable passwd backend no|yes|mod],
+	no, [no yes mod])dnl
+OL_ARG_ENABLE(perl,[    --enable-perl	  enable perl backend no|yes|mod],
+	no, [no yes mod])dnl
+OL_ARG_ENABLE(relay,[    --enable-relay  	  enable relay backend no|yes|mod],
+	yes, [no yes mod])dnl
+OL_ARG_ENABLE(shell,[    --enable-shell	  enable shell backend no|yes|mod],
+	no, [no yes mod])dnl
+OL_ARG_ENABLE(sql,[    --enable-sql	  enable sql backend no|yes|mod],
+	no, [no yes mod])dnl
 
 dnl ----------------------------------------------------------------
 dnl SLAPD Overlay Options
-Overlays="dyngroup proxycache"
+Overlays="accesslog denyop dyngroup dynlist glue lastmod ppolicy proxycache \
+	refint rwm syncprov translucent unique"
 
 AC_ARG_WITH(xxslapoverlays,[
 SLAPD Overlay Options:])
 
-OL_ARG_ENABLE(dyngroup,[    --enable-dyngroup	  Dynamic Group overlay no|yes|mod], no,
-	[no yes mod])
-OL_ARG_ENABLE(proxycache,[    --enable-proxycache	  Proxy Cache overlay no|yes|mod], no,
-	[no yes mod])
+OL_ARG_ENABLE(overlays,[    --enable-overlays	  enable all available overlays no|yes|mod],
+	no, [no yes mod])dnl
+OL_ARG_ENABLE(accesslog,[    --enable-accesslog  	  In-Directory Access Logging overlay no|yes|mod],
+	no, [no yes mod])
+OL_ARG_ENABLE(denyop,[    --enable-denyop  	  Deny Operation overlay no|yes|mod],
+	no, [no yes mod])
+OL_ARG_ENABLE(dyngroup,[    --enable-dyngroup	  Dynamic Group overlay no|yes|mod],
+	no, [no yes mod])
+OL_ARG_ENABLE(dynlist,[    --enable-dynlist	  Dynamic List overlay no|yes|mod],
+	no, [no yes mod])
+OL_ARG_ENABLE(glue,[    --enable-glue	  Backend Glue overlay no|yes|mod],
+	yes, [no yes mod])
+OL_ARG_ENABLE(lastmod,[    --enable-lastmod	  Last Modification overlay no|yes|mod],
+	no, [no yes mod])
+OL_ARG_ENABLE(ppolicy,[    --enable-ppolicy	  Password Policy overlay no|yes|mod],
+	no, [no yes mod])
+OL_ARG_ENABLE(proxycache,[    --enable-proxycache	  Proxy Cache overlay no|yes|mod],
+	no, [no yes mod])
+OL_ARG_ENABLE(refint,[    --enable-refint	  Referential Integrity overlay no|yes|mod],
+	no, [no yes mod])
+OL_ARG_ENABLE(rwm,[    --enable-rwm       	  Rewrite/Remap overlay no|yes|mod],
+	no, [no yes mod])
+OL_ARG_ENABLE(syncprov,[    --enable-syncprov	  Syncrepl Provider overlay no|yes|mod],
+	yes, [no yes mod])
+OL_ARG_ENABLE(translucent,[    --enable-translucent  Translucent Proxy overlay no|yes|mod],
+	no, [no yes mod])
+OL_ARG_ENABLE(unique,[    --enable-unique       Attribute Uniqueness overlay no|yes|mod],
+	no, [no yes mod])
+
 
 dnl ----------------------------------------------------------------
 dnl SLURPD OPTIONS
@@ -247,11 +293,34 @@ AC_ENABLE_SHARED
 dnl ----------------------------------------------------------------
 
 dnl General "enable" options
+# Activate any backends that were not explicitly enabled.
+# Note that back_bdb defaults to "yes" so this loop won't touch it.
+if test $ol_enable_backends != no ; then
+	for i in $Backends; do
+		eval "ol_tmp=\$ol_enable_$i"
+		if test $ol_tmp = no ; then
+			eval "ol_enable_$i=$ol_enable_backends"
+		fi
+	done
+fi
+# Activate the overlays
+if test $ol_enable_overlays != no ; then
+	for i in $Overlays; do
+		eval "ol_tmp=\$ol_enable_$i"
+		if test $ol_tmp = no ; then
+			eval "ol_enable_$i=$ol_enable_overlays"
+		fi
+	done
+fi
+
 # validate options
 if test $ol_enable_slapd = no ; then
 	dnl SLAPD was specificallly disabled
 	if test $ol_enable_slapi = yes ; then
 		AC_MSG_WARN([slapd disabled, ignoring --enable-slapi argument])
+	fi
+	if test $ol_enable_backends != no ; then
+		AC_MSG_WARN([slapd disabled, ignoring --enable-backends argument])
 	fi
 	for i in $Backends; do
 		eval "ol_tmp=\$ol_enable_$i"
@@ -288,6 +357,9 @@ if test $ol_enable_slapd = no ; then
 		AC_MSG_WARN([slapd disabled, ignoring --enable-rewrite argument])
 	fi
 	dnl overlays
+	if test $ol_enable_overlays != no ; then
+		AC_MSG_WARN([slapd disabled, ignoring --enable-overlays argument])
+	fi
 	for i in $Overlays; do
 		eval "ol_tmp=\$ol_enable_$i"
 		if test $ol_tmp != no ; then
@@ -299,6 +371,8 @@ if test $ol_enable_slapd = no ; then
 	# force settings to no
 	ol_enable_slapi=no
 
+	ol_enable_backends=no
+	ol_enable_overlays=no
 	ol_enable_modules=no
 	ol_enable_multimaster=no
 	ol_enable_rlookups=no
@@ -333,6 +407,7 @@ elif test $ol_enable_ldbm = no ; then
 		$ol_enable_null = no -a \
 		$ol_enable_passwd = no -a \
 		$ol_enable_perl = no -a \
+		$ol_enable_relay = no -a \
 		$ol_enable_shell = no -a \
 		$ol_enable_sql = no ; then
 
@@ -366,18 +441,11 @@ else
 		AC_MSG_ERROR([NDBM only supports LDBM type hash])
 	fi
 
-	if test $ol_enable_bdb = yes -o $ol_enable_hdb = yes ; then
+	if test $ol_enable_bdb != no -o $ol_enable_hdb != no ; then
 		if test $ol_with_ldbm_api = auto ; then
 			ol_with_ldbm_api=berkeley
 		elif test $ol_with_ldbm_api != berkeley ; then
 			AC_MSG_ERROR([LDBM API not compatible with BDB/HDB])
-		fi
-
-	elif test $ol_enable_bdb = auto ; then
-		if test $ol_with_ldbm_api != berkeley \
-			-o $ol_with_ldbm_api != auto ; then
-			AC_MSG_WARN([LDBM API not compatible with BDB, disabling BDB])
-			ol_enable_bdb=no
 		fi
 	fi
 fi
@@ -452,18 +520,31 @@ BUILD_MONITOR=no
 BUILD_NULL=no
 BUILD_PASSWD=no
 BUILD_PERL=no
+BUILD_RELAY=no
 BUILD_SHELL=no
 BUILD_SQL=no
 
+BUILD_ACCESSLOG=no
+BUILD_DENYOP=no
 BUILD_DYNGROUP=no
+BUILD_DYNLIST=no
+BUILD_GLUE=no
+BUILD_LASTMOD=no
+BUILD_PPOLICY=no
 BUILD_PROXYCACHE=no
+BUILD_REFINT=no
+BUILD_RWM=no
+BUILD_SYNCPROV=no
+BUILD_TRANSLUCENT=no
+BUILD_UNIQUE=no
 
+SLAPD_STATIC_OVERLAYS=
 SLAPD_DYNAMIC_OVERLAYS=
 
 SLAPD_MODULES_LDFLAGS=
 SLAPD_MODULES_CPPFLAGS=
 
-SLAPD_STATIC_BACKENDS=
+SLAPD_STATIC_BACKENDS=back-ldif
 SLAPD_DYNAMIC_BACKENDS=
 
 SLAPD_PERL_LDFLAGS=
@@ -485,11 +566,10 @@ LIBSLAPITOOLS=
 AUTH_LIBS=
 
 SLAPD_SLP_LIBS=
+SLAPD_GMP_LIBS=
 
 dnl ================================================================
 dnl Checks for programs
-
-AC_PROG_INSTALL
 
 AC_DEFINE(HAVE_MKVERSION, 1, [define this if you have mkversion])
 
@@ -558,9 +638,6 @@ fi
 AC_LIBTOOL_WIN32_DLL
 AC_LIBTOOL_DLOPEN
 AC_PROG_LIBTOOL
-
-OL_PROG_LN_H
-AC_PROG_LN_S
 
 dnl ----------------------------------------------------------------
 dnl Perl
@@ -642,6 +719,7 @@ esac
 dnl ----------------------------------------------------------------
 dnl Check for module support
 ol_link_modules=no
+WITH_MODULES_ENABLED=no
 if test $ol_enable_modules != no ; then
 	AC_CHECK_HEADERS(ltdl.h)
 
@@ -658,6 +736,7 @@ if test $ol_enable_modules != no ; then
 		AC_MSG_ERROR([could not locate libtool -lltdl])
 	fi
 	ol_link_modules=yes
+	WITH_MODULES_ENABLED=yes
 
 else
 	for i in $Backends; do
@@ -743,18 +822,23 @@ AC_CHECK_HEADERS(	\
 	winsock2.h		\
 )
 
-
 dnl ----------------------------------------------------------------
 dnl Checks for libraries
 
+AC_CHECK_FUNCS( sigaction sigset )
+
 dnl HP-UX requires -lV3
 dnl this is not needed on newer versions of HP-UX
-AC_CHECK_LIB(V3, sigset)
+if test $ac_cv_func_sigaction = no && test $ac_cv_func_sigaction = no ; then
+	AC_CHECK_LIB(V3, sigset)
+fi
 
 dnl The following is INTENTIONALLY scripted out because shell does not
 dnl support variable names with the '@' character, which is what
 dnl autoconf would try to generate if one merely used AC_SEARCH_LIBS
-if test "$ac_cv_header_winsock_h" = yes; then
+dnl
+dnl Skip Winsock tests on Cygwin
+if test "$ac_cv_cygwin" != yes && test "$ac_cv_header_winsock_h" = yes; then
 AC_CACHE_CHECK([for winsock], [ol_cv_winsock],
 save_LIBS="$LIBS"
 for curlib in ws2_32 wsock32; do
@@ -815,6 +899,28 @@ dnl check to see if system call automatically restart
 dnl AC_SYS_RESTARTABLE_SYSCALLS
 
 dnl ----------------------------------------------------------------
+AC_CHECK_FUNCS( poll )
+AC_CHECK_HEADERS( poll.h )
+
+dnl ----------------------------------------------------------------
+AC_CHECK_HEADERS( sys/epoll.h )
+if test "${ac_cv_header_sys_epoll_h}" = yes; then
+AC_MSG_CHECKING(for epoll system call)
+AC_TRY_RUN(
+int main(int argc, char *argv[])
+{
+	int epfd = epoll_create(256);
+	exit (epfd == -1 ? 1 : 0);
+}, [AC_MSG_RESULT(yes)
+AC_DEFINE(HAVE_EPOLL,1, [define if your system supports epoll])],
+AC_MSG_RESULT(no),AC_MSG_RESULT(no))
+fi
+
+dnl ----------------------------------------------------------------
+# strerror checks
+OL_STRERROR
+
+dnl ----------------------------------------------------------------
 dnl require POSIX regex
 AC_CHECK_HEADERS( regex.h )
 if test "$ac_cv_header_regex_h" != yes ; then
@@ -870,52 +976,31 @@ fi
 
 dnl ----------------------------------------------------------------
 dnl Check for resolver routines
-dnl	  need to check for both res_query and __res_query
-dnl   need to check -lc, -lbind, and -lresolv
+OL_RESOLVER_LINK
+
 ol_link_dnssrv=no
-AC_CHECK_FUNC(res_query,:)
-if test $ac_cv_func_res_query = no ; then 
-	AC_CHECK_FUNC(__res_query,:)
-	ac_cv_func_res_query=$ac_cv_func___res_query
-fi
-
-if test $ac_cv_func_res_query = no ; then 
-	AC_CHECK_LIB(bind, res_query)
-	ac_cv_func_res_query=$ac_cv_lib_bind_res_query
-fi
-
-if test $ac_cv_func_res_query = no ; then 
-	AC_CHECK_LIB(bind, __res_query)
-	ac_cv_func_res_query=$ac_cv_lib_bind___res_query
-fi
-
-if test $ac_cv_func_res_query = no ; then 
-	AC_CHECK_LIB(resolv, res_query)
-	ac_cv_func_res_query=$ac_cv_lib_resolv_res_query
-fi
-
-if test $ac_cv_func_res_query = no ; then 
-	AC_CHECK_LIB(resolv, __res_query)
-	ac_cv_func_res_query=$ac_cv_lib_resolv___res_query
-fi
-
-if test $ac_cv_func_res_query = no ; then 
-	AC_CHECK_LIB(resolv, _res_9_query)
-	ac_cv_func_res_query=$ac_cv_lib_resolv_res_9_query
-fi
-
-if test "$ac_cv_func_res_query" = yes ; then
+if test "$ol_cv_lib_resolver" != no ; then
 	AC_DEFINE(HAVE_RES_QUERY,1,
 		[define if you have res_query()])
 
-	if test $ol_enable_dnssrv != no ; then
+	if test "$ol_enable_dnssrv" != no ; then
 		ol_link_dnssrv=yes
+	fi
+
+	if test "$ol_cv_lib_resolver" != yes ; then
+		LIBS="$ol_cv_lib_resolver $LIBS"
 	fi
 fi
 
-if test "$ol_enable_dnssrv" != no -a "$ol_link_dnssrv" = no ; then
-	AC_MSG_ERROR([DNSSRV requires res_query()])
+if test "$ol_enable_dnssrv" = yes -o "$ol_enable_dnssrv" = mod ; then
+	if test "$ol_link_dnssrv" = no ; then
+		AC_MSG_ERROR([DNSSRV requires res_query()])
+	fi
+else
+	ol_enable_dnssrv=no
 fi
+
+AC_CHECK_FUNCS( hstrerror )
 
 dnl ----------------------------------------------------------------
 dnl PF_INET6 support requires getaddrinfo and INET6_ADDRSTRLEN
@@ -1137,10 +1222,11 @@ fi
 
 dnl ----------------------------------------------------------------
 dnl TLS/SSL
+	
 ol_link_tls=no
 if test $ol_with_tls != no ; then
 	AC_CHECK_HEADERS(openssl/ssl.h ssl.h)
-	
+
 	if test $ac_cv_header_openssl_ssl_h = yes \
 		-o $ac_cv_header_ssl_h = yes ; then
 		AC_CHECK_LIB(ssl, SSLeay_add_ssl_algorithms, 
@@ -1178,6 +1264,13 @@ if test $ol_with_tls != no ; then
 			else
 				TLS_LIBS="-lssl -lcrypto"
 			fi
+		fi
+		OL_SSL_COMPAT
+		if test $ol_cv_ssl_crl_compat = no ; then
+			ol_link_ssl=no
+                else 
+			AC_DEFINE(HAVE_OPENSSL_CRL, 1, 
+				[define if you have OpenSSL with CRL checking capability])
 		fi
 	fi
 
@@ -1839,21 +1932,16 @@ if test $ol_with_ldbm_api = auto \
 	fi
 fi
 
-if test $ol_enable_bdb = yes -a $ol_link_ldbm != berkeley ; then
-	AC_MSG_ERROR(BDB: BerkeleyDB not available)
-elif test $ol_enable_bdb != no -a $ol_link_ldbm = berkeley ; then
-	OL_BDB_COMPAT
-
-	if test $ol_cv_bdb_compat = yes ; then
-		ol_enable_bdb=yes
-	elif test $ol_enable_bdb = yes ; then
-		AC_MSG_ERROR([BDB: BerkeleyDB version incompatible])
+if test $ol_enable_bdb != no -o $ol_enable_hdb != no; then
+	if test $ol_link_ldbm != berkeley ; then
+		AC_MSG_ERROR(BDB/HDB: BerkeleyDB not available)
 	else
-		ol_enable_bdb=no
+		OL_BDB_COMPAT
+
+		if test $ol_cv_bdb_compat != yes ; then
+			AC_MSG_ERROR([BDB/HDB: BerkeleyDB version incompatible])
+		fi
 	fi
-fi
-if test $ol_enable_hdb = yes -a $ol_link_ldbm != berkeley ; then
-	AC_MSG_ERROR([HDB: BerkeleyDB not available])
 fi
 
 if test $ol_link_ldbm = no -a $ol_with_ldbm_type = btree ; then
@@ -1900,13 +1988,7 @@ if test $ol_with_ldbm_api = ndbm ; then
 fi
 
 if test $ol_link_ldbm = no -a $ol_enable_ldbm != no ; then
-	AC_MSG_WARN([could not find suitable LDBM backend])
-	if test $ol_enable_ldbm = yes ; then
-		AC_MSG_ERROR([select appropriate LDBM options or disable])
-	fi
-
-	AC_MSG_WARN(disabling LDBM)
-	ol_enable_ldbm=no
+	AC_MSG_ERROR([could not find suitable LDBM backend])
 fi
 
 if test $ol_enable_bdb = yes -o \
@@ -1997,6 +2079,9 @@ if test $ol_enable_sql != no ; then
 		AC_MSG_ERROR([could not locate SQL headers])
 	])
 
+	sql_LIBS="$LIBS"
+	LIBS="$LTHREAD_LIBS"
+
 	AC_CHECK_LIB(iodbc,SQLDriverConnect,[have_iodbc=yes],[have_iodbc=no])
 	if test $have_iodbc = yes ; then
 		ol_link_sql="-liodbc"
@@ -2006,6 +2091,8 @@ if test $ol_enable_sql != no ; then
 			ol_link_sql="-lodbc"
 		fi
 	fi
+
+	LIBS="$sql_LIBS"
 
 	if test $ol_link_sql != no ; then
 		SLAPD_SQL_LIBS="$ol_link_sql"
@@ -2019,6 +2106,7 @@ dnl ----------------------------------------------------------------
 dnl
 dnl Check for Cyrus SASL
 dnl
+WITH_SASL=no
 ol_link_sasl=no
 ol_link_spasswd=no
 if test $ol_with_cyrus_sasl != no ; then
@@ -2059,6 +2147,8 @@ if test $ol_with_cyrus_sasl != no ; then
 		AC_CHECK_FUNC(sasl_version, [AC_DEFINE(HAVE_SASL_VERSION,1,
 			[define if your SASL library has sasl_version()])])
 		LIBS="$ac_save_LIBS"
+
+		WITH_SASL=yes
 	fi
 
 else
@@ -2168,6 +2258,99 @@ if test $ol_enable_slp != no ; then
 fi
 
 dnl ----------------------------------------------------------------
+dnl Check for multiple precision support
+if test "$ol_with_multiple_precision" != "no" ; then
+	ol_have_bignum=no
+	ol_have_gmp=no
+
+	AC_CHECK_HEADERS(openssl/bn.h bn.h)
+	AC_CHECK_HEADERS(openssl/crypto.h crypto.h)
+	AC_CHECK_HEADERS( gmp.h )
+
+	if test "$ol_with_tls" = "found" ; then
+		ol_have_bn_h=no
+		ol_have_crypto_h=no
+
+		if test "$ac_cv_header_openssl_bn_h" = "yes" \
+				-o "$ac_cv_header_bn_h" = "yes" ; then
+			ol_have_bn_h=yes
+		fi
+
+		if test "$ac_cv_header_openssl_crypto_h" = "yes" \
+				-o "$ac_cv_header_crypto_h" = "yes" ; then
+			ol_have_crypto_h=yes
+		fi
+
+		if test "$ol_have_bn_h" = "yes" \
+				-a "$ol_have_crypto_h" = "yes" ; then
+			ol_have_bignum=yes
+		fi
+	fi
+
+	if test $ac_cv_header_gmp_h = yes ; then
+		AC_CHECK_LIB(gmp, __gmpz_add_ui, [have_gmp=yes], [have_gmp=no])
+		if test $have_gmp = yes ; then
+			ol_have_gmp=yes
+		fi
+	fi
+
+	AC_MSG_CHECKING([for multiple precision support])
+
+	ol_mp_support="none"
+	case "$ol_with_multiple_precision" in
+	auto)
+		dnl preferred sequence:
+		dnl - OpenSSL's BIGNUM (if libssl is already linked)
+		dnl - GNU's MP
+		dnl - unsigned long
+		if test "$ol_have_bignum" = "yes" ; then
+			ol_mp_support="bignum"
+		else
+			if test "$ol_have_gmp" = "yes" ; then
+				ol_mp_support="gmp"
+			fi
+		fi
+		;;
+	bignum)
+		if test "$ol_have_bignum" != "yes" ; then
+			AC_MSG_ERROR([OpenSSL's BIGNUM not available])
+		fi
+		ol_mp_support="bignum"
+		;;
+	gmp)
+		if test "$ol_have_gmp" != "yes" ; then
+			AC_MSG_ERROR([GMP not available])
+		fi
+		ol_mp_support="gmp"
+		;;
+	yes)
+		if test "$ol_have_bignum" = "yes" ; then
+			ol_mp_support="bignum"
+		elif test "$ol_have_gmp" = "yes" ; then
+			ol_mp_support="gmp"
+		else
+			AC_MSG_ERROR([not available])
+		fi
+		;;
+	esac
+
+	case "$ol_mp_support" in
+	bignum)
+		AC_DEFINE(HAVE_BIGNUM, 1,
+			[define if you have SSLeay or OpenSSL's BIGNUM])
+		;;
+	gmp)
+		AC_DEFINE(HAVE_GMP, 1, [define if you have -lgmp])
+		SLAPD_GMP_LIBS=-lgmp
+		;;
+	none)
+		;;
+	esac
+
+	AC_MSG_RESULT($ol_mp_support)
+fi
+
+dnl ----------------------------------------------------------------
 dnl Checks for typedefs, structures, and compiler characteristics.
 
 dnl Checks for long long
@@ -2232,6 +2415,12 @@ AC_DEFINE(LBER_TAG_T,long)
 dnl ----------------------------------------------------------------
 dnl Checks for library functions.
 AC_FUNC_MEMCMP
+
+if test $ac_cv_func_memcmp_clean = no ; then
+	AC_DEFINE(NEED_MEMCMP_REPLACEMENT,1,
+		[define if memcmp is not 8-bit clean or is otherwise broken])
+fi
+
 dnl AM_FUNC_MKTIME dnl checks for sys/time.h and unistd.h
 AC_FUNC_STRFTIME
 dnl AM_FUNC_STRTOD
@@ -2290,11 +2479,8 @@ AC_CHECK_FUNCS(		\
 	setsid			\
 	setuid			\
 	seteuid			\
-	sigaction		\
 	signal			\
-	sigset			\
 	strdup			\
-	strerror		\
 	strpbrk			\
 	strrchr			\
 	strsep			\
@@ -2323,6 +2509,9 @@ if test "$ac_cv_func_getopt" != yes; then
 fi
 if test "$ac_cv_func_getpeereid" != yes; then
 	OL_MSGHDR_MSG_ACCRIGHTS
+	if test "$ac_cv_func_getpeereid" != yes; then
+		OL_MSGHDR_MSG_CONTROL
+	fi
 	LIBSRCS="$LIBSRCS getpeereid.c"
 fi
 if test "$ac_cv_func_snprintf" != yes -o "$ac_cv_func_vsnprintf" != yes; then
@@ -2333,10 +2522,6 @@ if test "$ac_cv_func_snprintf" != yes -o "$ac_cv_func_vsnprintf" != yes; then
 		AC_DEFINE(vsnprintf, ber_pvt_vsnprintf, [define to snprintf routine])
 	fi
 fi
-
-dnl ----------------------------------------------------------------
-# Check Configuration
-OL_SYS_ERRLIST
 
 dnl ----------------------------------------------------------------
 dnl Sort out defines
@@ -2542,6 +2727,19 @@ if test "$ol_link_perl" != no ; then
 	AC_DEFINE_UNQUOTED(SLAPD_PERL,$MFLAG,[define to support PERL backend])
 fi
 
+if test "$ol_enable_relay" != no ; then
+	BUILD_SLAPD=yes
+	BUILD_RELAY=$ol_enable_relay
+	if test "$ol_enable_relay" = mod ; then
+		SLAPD_DYNAMIC_BACKENDS="$SLAPD_DYNAMIC_BACKENDS back-relay"
+		MFLAG=SLAPD_MOD_DYNAMIC
+	else
+		SLAPD_STATIC_BACKENDS="$SLAPD_STATIC_BACKENDS back-relay"
+		MFLAG=SLAPD_MOD_STATIC
+	fi
+	AC_DEFINE_UNQUOTED(SLAPD_RELAY,$MFLAG,[define to support relay backend])
+fi
+
 if test "$ol_enable_shell" != no ; then
 	if test "$ol_link_thread" != no ; then
 		AC_MSG_WARN([Use of --without-threads is recommended with back-shell])
@@ -2571,6 +2769,30 @@ if test "$ol_link_sql" != no ; then
 	AC_DEFINE_UNQUOTED(SLAPD_SQL,$MFLAG,[define to support SQL backend])
 fi
 
+if test "$ol_enable_accesslog" != no ; then
+	BUILD_ACCESSLOG=$ol_enable_accesslog
+	if test "$ol_enable_accesslog" = mod ; then
+		MFLAG=SLAPD_MOD_DYNAMIC
+		SLAPD_DYNAMIC_OVERLAYS="$SLAPD_DYNAMIC_OVERLAYS accesslog.la"
+	else
+		MFLAG=SLAPD_MOD_STATIC
+		SLAPD_STATIC_OVERLAYS="$SLAPD_STATIC_OVERLAYS accesslog.o"
+	fi
+	AC_DEFINE_UNQUOTED(SLAPD_OVER_ACCESSLOG,$MFLAG,[define for In-Directory Access Logging overlay])
+fi
+
+if test "$ol_enable_denyop" != no ; then
+	BUILD_DENYOP=$ol_enable_denyop
+	if test "$ol_enable_denyop" = mod ; then
+		MFLAG=SLAPD_MOD_DYNAMIC
+		SLAPD_DYNAMIC_OVERLAYS="$SLAPD_DYNAMIC_OVERLAYS denyop.la"
+	else
+		MFLAG=SLAPD_MOD_STATIC
+		SLAPD_STATIC_OVERLAYS="$SLAPD_STATIC_OVERLAYS denyop.o"
+	fi
+	AC_DEFINE_UNQUOTED(SLAPD_OVER_DENYOP,$MFLAG,[define for Dynamic Group overlay])
+fi
+
 if test "$ol_enable_dyngroup" != no ; then
 	BUILD_DYNGROUP=$ol_enable_dyngroup
 	if test "$ol_enable_dyngroup" = mod ; then
@@ -2578,8 +2800,57 @@ if test "$ol_enable_dyngroup" != no ; then
 		SLAPD_DYNAMIC_OVERLAYS="$SLAPD_DYNAMIC_OVERLAYS dyngroup.la"
 	else
 		MFLAG=SLAPD_MOD_STATIC
+		SLAPD_STATIC_OVERLAYS="$SLAPD_STATIC_OVERLAYS dyngroup.o"
 	fi
 	AC_DEFINE_UNQUOTED(SLAPD_OVER_DYNGROUP,$MFLAG,[define for Dynamic Group overlay])
+fi
+
+if test "$ol_enable_dynlist" != no ; then
+	BUILD_DYNLIST=$ol_enable_dynlist
+	if test "$ol_enable_dynlist" = mod ; then
+		MFLAG=SLAPD_MOD_DYNAMIC
+		SLAPD_DYNAMIC_OVERLAYS="$SLAPD_DYNAMIC_OVERLAYS dynlist.la"
+	else
+		MFLAG=SLAPD_MOD_STATIC
+		SLAPD_STATIC_OVERLAYS="$SLAPD_STATIC_OVERLAYS dynlist.o"
+	fi
+	AC_DEFINE_UNQUOTED(SLAPD_OVER_DYNLIST,$MFLAG,[define for Dynamic List overlay])
+fi
+
+if test "$ol_enable_glue" != no ; then
+	BUILD_GLUE=$ol_enable_glue
+	if test "$ol_enable_glue" = mod ; then
+		MFLAG=SLAPD_MOD_DYNAMIC
+		SLAPD_DYNAMIC_OVERLAYS="$SLAPD_DYNAMIC_OVERLAYS glue.la"
+	else
+		MFLAG=SLAPD_MOD_STATIC
+		SLAPD_STATIC_OVERLAYS="$SLAPD_STATIC_OVERLAYS glue.o"
+	fi
+	AC_DEFINE_UNQUOTED(SLAPD_OVER_GLUE,$MFLAG,[define for Backend Glue overlay])
+fi
+
+if test "$ol_enable_lastmod" != no ; then
+	BUILD_LASTMOD=$ol_enable_lastmod
+	if test "$ol_enable_lastmod" = mod ; then
+		MFLAG=SLAPD_MOD_DYNAMIC
+		SLAPD_DYNAMIC_OVERLAYS="$SLAPD_DYNAMIC_OVERLAYS lastmod.la"
+	else
+		MFLAG=SLAPD_MOD_STATIC
+		SLAPD_STATIC_OVERLAYS="$SLAPD_STATIC_OVERLAYS lastmod.o"
+	fi
+	AC_DEFINE_UNQUOTED(SLAPD_OVER_LASTMOD,$MFLAG,[define for Last Modification overlay])
+fi
+
+if test "$ol_enable_ppolicy" != no ; then
+	BUILD_PPOLICY=$ol_enable_ppolicy
+	if test "$ol_enable_ppolicy" = mod ; then
+		MFLAG=SLAPD_MOD_DYNAMIC
+		SLAPD_DYNAMIC_OVERLAYS="$SLAPD_DYNAMIC_OVERLAYS ppolicy.la"
+	else
+		MFLAG=SLAPD_MOD_STATIC
+		SLAPD_STATIC_OVERLAYS="$SLAPD_STATIC_OVERLAYS ppolicy.o"
+	fi
+	AC_DEFINE_UNQUOTED(SLAPD_OVER_PPOLICY,$MFLAG,[define for Password Policy overlay])
 fi
 
 if test "$ol_enable_proxycache" != no ; then
@@ -2589,8 +2860,70 @@ if test "$ol_enable_proxycache" != no ; then
 		SLAPD_DYNAMIC_OVERLAYS="$SLAPD_DYNAMIC_OVERLAYS pcache.la"
 	else
 		MFLAG=SLAPD_MOD_STATIC
+		SLAPD_STATIC_OVERLAYS="$SLAPD_STATIC_OVERLAYS pcache.o"
 	fi
 	AC_DEFINE_UNQUOTED(SLAPD_OVER_PROXYCACHE,$MFLAG,[define for Proxy Cache overlay])
+fi
+
+if test "$ol_enable_refint" != no ; then
+	BUILD_REFINT=$ol_enable_refint
+	if test "$ol_enable_refint" = mod ; then
+		MFLAG=SLAPD_MOD_DYNAMIC
+		SLAPD_DYNAMIC_OVERLAYS="$SLAPD_DYNAMIC_OVERLAYS refint.la"
+	else
+		MFLAG=SLAPD_MOD_STATIC
+		SLAPD_STATIC_OVERLAYS="$SLAPD_STATIC_OVERLAYS refint.o"
+	fi
+	AC_DEFINE_UNQUOTED(SLAPD_OVER_REFINT,$MFLAG,[define for Referential Integrity overlay])
+fi
+
+if test "$ol_enable_rwm" != no ; then
+	BUILD_REWRITE=yes
+	BUILD_RWM=$ol_enable_rwm
+	if test "$ol_enable_rwm" = mod ; then
+		MFLAG=SLAPD_MOD_DYNAMIC
+		SLAPD_DYNAMIC_OVERLAYS="$SLAPD_DYNAMIC_OVERLAYS rwm.la"
+	else
+		MFLAG=SLAPD_MOD_STATIC
+		SLAPD_STATIC_OVERLAYS="$SLAPD_STATIC_OVERLAYS rwm_x.o"
+	fi
+	AC_DEFINE_UNQUOTED(SLAPD_OVER_RWM,$MFLAG,[define for Rewrite/Remap overlay])
+fi
+
+if test "$ol_enable_syncprov" != no ; then
+	BUILD_SYNCPROV=$ol_enable_syncprov
+	if test "$ol_enable_syncprov" = mod ; then
+		MFLAG=SLAPD_MOD_DYNAMIC
+		SLAPD_DYNAMIC_OVERLAYS="$SLAPD_DYNAMIC_OVERLAYS syncprov.la"
+	else
+		MFLAG=SLAPD_MOD_STATIC
+		SLAPD_STATIC_OVERLAYS="$SLAPD_STATIC_OVERLAYS syncprov.o"
+	fi
+	AC_DEFINE_UNQUOTED(SLAPD_OVER_SYNCPROV,$MFLAG,[define for Syncrepl Provider overlay])
+fi
+
+if test "$ol_enable_translucent" != no ; then
+	BUILD_TRANSLUCENT=$ol_enable_translucent
+	if test "$ol_enable_translucent" = mod ; then
+		MFLAG=SLAPD_MOD_DYNAMIC
+		SLAPD_DYNAMIC_OVERLAYS="$SLAPD_DYNAMIC_OVERLAYS translucent.la"
+	else
+		MFLAG=SLAPD_MOD_STATIC
+		SLAPD_STATIC_OVERLAYS="$SLAPD_STATIC_OVERLAYS translucent.o"
+	fi
+	AC_DEFINE_UNQUOTED(SLAPD_OVER_TRANSLUCENT,$MFLAG,[define for Translucent Proxy overlay])
+fi
+
+if test "$ol_enable_unique" != no ; then
+	BUILD_UNIQUE=$ol_enable_unique
+	if test "$ol_enable_unique" = mod ; then
+		MFLAG=SLAPD_MOD_DYNAMIC
+		SLAPD_DYNAMIC_OVERLAYS="$SLAPD_DYNAMIC_OVERLAYS unique.la"
+	else
+		MFLAG=SLAPD_MOD_STATIC
+		SLAPD_STATIC_OVERLAYS="$SLAPD_STATIC_OVERLAYS unique.o"
+	fi
+	AC_DEFINE_UNQUOTED(SLAPD_OVER_UNIQUE,$MFLAG,[define for Attribute Uniqueness overlay])
 fi
 
 if test "$ol_enable_slurpd" != no -a "$ol_link_threads" != no -a \
@@ -2623,15 +2956,11 @@ else
 	PLAT=UNIX
 fi
 
-if test -z "$SLAPD_STATIC_BACKENDS"; then
-	SLAPD_NO_STATIC='#'
-else
-	SLAPD_NO_STATIC=
-fi
-
 AC_SUBST(LIBSRCS)
 AC_SUBST(PLAT)
+AC_SUBST(WITH_SASL)
 AC_SUBST(WITH_TLS)
+AC_SUBST(WITH_MODULES_ENABLED)
 AC_SUBST(BUILD_LIBS_DYNAMIC)
 
 AC_SUBST(BUILD_SLAPD)
@@ -2648,12 +2977,24 @@ dnl backends
   AC_SUBST(BUILD_MONITOR)
   AC_SUBST(BUILD_NULL)
   AC_SUBST(BUILD_PASSWD)
+  AC_SUBST(BUILD_RELAY)
   AC_SUBST(BUILD_PERL)
   AC_SUBST(BUILD_SHELL)
   AC_SUBST(BUILD_SQL)
 dnl overlays
+  AC_SUBST(BUILD_ACCESSLOG)
+  AC_SUBST(BUILD_DENYOP)
   AC_SUBST(BUILD_DYNGROUP)
+  AC_SUBST(BUILD_DYNLIST)
+  AC_SUBST(BUILD_GLUE)
+  AC_SUBST(BUILD_LASTMOD)
+  AC_SUBST(BUILD_PPOLICY)
   AC_SUBST(BUILD_PROXYCACHE)
+  AC_SUBST(BUILD_REFINT)
+  AC_SUBST(BUILD_RWM)
+  AC_SUBST(BUILD_SYNCPROV)
+  AC_SUBST(BUILD_TRANSLUCENT)
+  AC_SUBST(BUILD_UNIQUE)
 AC_SUBST(BUILD_SLURPD)
 
 AC_SUBST(LDAP_LIBS)
@@ -2670,6 +3011,7 @@ AC_SUBST(SLAPD_MODULES_LDFLAGS)
 AC_SUBST(SLAPD_NO_STATIC)
 AC_SUBST(SLAPD_STATIC_BACKENDS)
 AC_SUBST(SLAPD_DYNAMIC_BACKENDS)
+AC_SUBST(SLAPD_STATIC_OVERLAYS)
 AC_SUBST(SLAPD_DYNAMIC_OVERLAYS)
 
 AC_SUBST(PERL_CPPFLAGS)
@@ -2687,6 +3029,7 @@ AC_SUBST(LIBSLAPITOOLS)
 AC_SUBST(AUTH_LIBS)
 
 AC_SUBST(SLAPD_SLP_LIBS)
+AC_SUBST(SLAPD_GMP_LIBS)
 
 AC_SUBST(SLAPD_SQL_LDFLAGS)
 AC_SUBST(SLAPD_SQL_LIBS)
@@ -2718,7 +3061,7 @@ libraries/libldap/Makefile:build/top.mk:libraries/libldap/Makefile.in:build/lib.
 libraries/libldap_r/Makefile:build/top.mk:libraries/libldap_r/Makefile.in:build/lib.mk:build/lib-shared.mk	\
 libraries/liblunicode/Makefile:build/top.mk:libraries/liblunicode/Makefile.in:build/lib.mk:build/lib-static.mk	\
 libraries/liblutil/Makefile:build/top.mk:libraries/liblutil/Makefile.in:build/lib.mk:build/lib-static.mk	\
-libraries/librewrite/Makefile:build/top.mk:libraries/librewrite/Makefile.in:build/lib.mk:build/lib-static.mk \
+libraries/librewrite/Makefile:build/top.mk:libraries/librewrite/Makefile.in:build/lib.mk:build/lib-shared.mk \
 servers/Makefile:build/top.mk:servers/Makefile.in:build/dir.mk \
 servers/slapd/Makefile:build/top.mk:servers/slapd/Makefile.in:build/srv.mk \
 servers/slapd/back-bdb/Makefile:build/top.mk:servers/slapd/back-bdb/Makefile.in:build/mod.mk \
@@ -2726,11 +3069,13 @@ servers/slapd/back-dnssrv/Makefile:build/top.mk:servers/slapd/back-dnssrv/Makefi
 servers/slapd/back-hdb/Makefile:build/top.mk:servers/slapd/back-hdb/Makefile.in:build/mod.mk \
 servers/slapd/back-ldap/Makefile:build/top.mk:servers/slapd/back-ldap/Makefile.in:build/mod.mk \
 servers/slapd/back-ldbm/Makefile:build/top.mk:servers/slapd/back-ldbm/Makefile.in:build/mod.mk \
+servers/slapd/back-ldif/Makefile:build/top.mk:servers/slapd/back-ldif/Makefile.in:build/mod.mk \
 servers/slapd/back-meta/Makefile:build/top.mk:servers/slapd/back-meta/Makefile.in:build/mod.mk \
 servers/slapd/back-monitor/Makefile:build/top.mk:servers/slapd/back-monitor/Makefile.in:build/mod.mk \
 servers/slapd/back-null/Makefile:build/top.mk:servers/slapd/back-null/Makefile.in:build/mod.mk \
 servers/slapd/back-passwd/Makefile:build/top.mk:servers/slapd/back-passwd/Makefile.in:build/mod.mk \
 servers/slapd/back-perl/Makefile:build/top.mk:servers/slapd/back-perl/Makefile.in:build/mod.mk \
+servers/slapd/back-relay/Makefile:build/top.mk:servers/slapd/back-relay/Makefile.in:build/mod.mk \
 servers/slapd/back-shell/Makefile:build/top.mk:servers/slapd/back-shell/Makefile.in:build/mod.mk \
 servers/slapd/back-sql/Makefile:build/top.mk:servers/slapd/back-sql/Makefile.in:build/mod.mk \
 servers/slapd/shell-backends/Makefile:build/top.mk:servers/slapd/shell-backends/Makefile.in:build/srv.mk \
@@ -2743,5 +3088,57 @@ tests/progs/Makefile:build/top.mk:tests/progs/Makefile.in:build/rules.mk \
 ,[
 chmod +x tests/run
 date > stamp-h
+BACKENDSC="servers/slapd/backends.c"
+echo "Making $BACKENDSC"
+rm -f $BACKENDSC
+cat > $BACKENDSC << ENDX
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 1998-2005 The OpenLDAP Foundation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
+ */
+/* This file is automatically generated by configure; please do not edit. */
+
+#include "portable.h"
+#include "slap.h"
+
+ENDX
+if test "${STATIC_BACKENDS}"; then
+	for b in config ${STATIC_BACKENDS}; do
+		bb=`echo "${b}" | sed -e 's/back-//'`
+		cat >> $BACKENDSC << ENDX
+extern BI_init ${bb}_back_initialize;
+ENDX
+	done
+
+	cat >> $BACKENDSC << ENDX
+
+BackendInfo slap_binfo[[]] = {
+ENDX
+
+	for b in config ${STATIC_BACKENDS}; do
+		bb=`echo "${b}" | sed -e 's/back-//'`
+		echo "    Add ${bb} ..."
+		cat >> $BACKENDSC << ENDX
+	{ "${bb}", ${bb}_back_initialize },
+ENDX
+	done
+
+	cat >> $BACKENDSC << ENDX
+	{ NULL, NULL },
+};
+
+/* end of generated file */
+ENDX
+fi
+
 echo Please run \"make depend\" to build dependencies
-])
+],[STATIC_BACKENDS="$SLAPD_STATIC_BACKENDS"])

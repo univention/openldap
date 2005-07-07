@@ -1,8 +1,8 @@
 /* ad.c - routines for dealing with attribute descriptions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.59.2.5 2004/07/16 19:26:05 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.74.2.1 2005/01/20 18:03:54 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,9 +24,34 @@
 #include <ac/string.h>
 #include <ac/time.h>
 
-#include "ldap_pvt.h"
 #include "slap.h"
 #include "lutil.h"
+
+static AttributeName anlist_no_attrs[] = {
+	{ BER_BVC( LDAP_NO_ATTRS ), NULL, 0, NULL },
+	{ BER_BVNULL, NULL, 0, NULL }
+};
+
+static AttributeName anlist_all_user_attributes[] = {
+	{ BER_BVC( LDAP_ALL_USER_ATTRIBUTES ), NULL, 0, NULL },
+	{ BER_BVNULL, NULL, 0, NULL }
+};
+
+static AttributeName anlist_all_operational_attributes[] = {
+	{ BER_BVC( LDAP_ALL_OPERATIONAL_ATTRIBUTES ), NULL, 0, NULL },
+	{ BER_BVNULL, NULL, 0, NULL }
+};
+
+static AttributeName anlist_all_attributes[] = {
+	{ BER_BVC( LDAP_ALL_USER_ATTRIBUTES ), NULL, 0, NULL },
+	{ BER_BVC( LDAP_ALL_OPERATIONAL_ATTRIBUTES ), NULL, 0, NULL },
+	{ BER_BVNULL, NULL, 0, NULL }
+};
+
+AttributeName *slap_anlist_no_attrs = anlist_no_attrs;
+AttributeName *slap_anlist_all_user_attributes = anlist_all_user_attributes;
+AttributeName *slap_anlist_all_operational_attributes = anlist_all_operational_attributes;
+AttributeName *slap_anlist_all_attributes = anlist_all_attributes;
 
 typedef struct Attr_option {
 	struct berval name;	/* option name or prefix */
@@ -767,6 +792,7 @@ str2anlist( AttributeName *an, char *in, const char *brkstr )
 	}
 
 	an = ch_realloc( an, ( i + j + 1 ) * sizeof( AttributeName ) );
+	BER_BVZERO( &an[i + j].an_name );
 	anew = an + i;
 	for ( s = ldap_pvt_strtok( str, brkstr, &lasts );
 		s != NULL;
@@ -785,13 +811,7 @@ str2anlist( AttributeName *an, char *in, const char *brkstr )
 					adname.bv_val = &anew->an_name.bv_val[1];
 					slap_bv2ad(&adname, &anew->an_desc, &text);
 					if ( !anew->an_desc ) {
-						free( an );
-						/*
-						 * overwrites input string
-						 * on error!
-						 */
-						strcpy( in, s );
-						return NULL;
+						goto reterr;
 					}
 				} break;
 
@@ -803,13 +823,7 @@ str2anlist( AttributeName *an, char *in, const char *brkstr )
 					ocname.bv_val = &anew->an_name.bv_val[1];
 					anew->an_oc = oc_bvfind( &ocname );
 					if ( !anew->an_oc ) {
-						free( an );
-						/*
-						 * overwrites input string
-						 * on error!
-						 */
-						strcpy( in, s );
-						return NULL;
+						goto reterr;
 					}
 
 					if ( anew->an_name.bv_val[0] == '!' ) {
@@ -821,10 +835,7 @@ str2anlist( AttributeName *an, char *in, const char *brkstr )
 				/* old (deprecated) way */
 				anew->an_oc = oc_bvfind( &anew->an_name );
 				if ( !anew->an_oc ) {
-					free( an );
-					/* overwrites input string on error! */
-					strcpy( in, s );
-					return NULL;
+					goto reterr;
 				}
 			}
 		}
@@ -834,8 +845,187 @@ str2anlist( AttributeName *an, char *in, const char *brkstr )
 	anew->an_name.bv_val = NULL;
 	free( str );
 	return( an );
+
+reterr:
+	for ( i = 0; an[i].an_name.bv_val; i++ ) {
+		free( an[i].an_name.bv_val );
+	}
+	free( an );
+	/*
+	 * overwrites input string
+	 * on error!
+	 */
+	strcpy( in, s );
+	free( str );
+	return NULL;
 }
 
+char **anlist2charray_x( AttributeName *an, int dup, void *ctx )
+{
+    char **attrs;
+    int i;
+                                                                                
+    if ( an != NULL ) {
+        for ( i = 0; !BER_BVISNULL( &an[i].an_name ); i++ )
+            ;
+		attrs = (char **) slap_sl_malloc( (i + 1) * sizeof(char *), ctx );
+        for ( i = 0; !BER_BVISNULL( &an[i].an_name ); i++ ) {
+			if ( dup )
+	            attrs[i] = ch_strdup( an[i].an_name.bv_val );
+			else
+	            attrs[i] = an[i].an_name.bv_val;
+        }
+        attrs[i] = NULL;
+    } else {
+        attrs = NULL;
+    }
+                                                                                
+    return attrs;
+}
+
+char **anlist2charray( AttributeName *an, int dup )
+{
+	return anlist2charray_x( an, dup, NULL );
+}
+
+char**
+anlist2attrs( AttributeName * anlist )
+{
+	int i, j, k = 0;
+	int n;
+	char **attrs;
+	ObjectClass *oc;
+
+	attrs = anlist2charray( anlist, 1 );
+                                                                                
+	for ( i = 0; anlist[i].an_name.bv_val; i++ ) {
+		if ( ( oc = anlist[i].an_oc ) ) {
+			for ( j = 0; oc->soc_required && oc->soc_required[j]; j++ ) ;
+			k += j;
+			for ( j = 0; oc->soc_allowed && oc->soc_allowed[j]; j++ ) ;
+			k += j;
+		}
+	}
+
+	if ( i == 0 )
+		return NULL;
+                                                                                
+	n = i;
+                                                                                
+	if ( k )
+		attrs = (char **) ch_realloc( attrs, (i + k + 1) * sizeof( char * ));
+
+   	for ( i = 0; anlist[i].an_name.bv_val; i++ ) {
+		if ( ( oc = anlist[i].an_oc ) ) {
+			for ( j = 0; oc->soc_required && oc->soc_required[j]; j++ ) {
+				attrs[n++] = ch_strdup(
+								oc->soc_required[j]->sat_cname.bv_val );
+			}
+			for ( j = 0; oc->soc_allowed && oc->soc_allowed[j]; j++ ) {
+				attrs[n++] = ch_strdup(
+								oc->soc_allowed[j]->sat_cname.bv_val );
+			}
+		}
+	}
+	
+	if ( attrs )
+		attrs[n] = NULL;
+
+	i = 0;
+	while ( attrs && attrs[i] ) {
+		if ( *attrs[i] == '@' ) {
+			for ( j = i; attrs[j]; j++ ) {
+				if ( j == i )
+					ch_free( attrs[i] );
+				attrs[j] = attrs[j+1];
+			}
+		} else {
+			i++;
+		}
+	}
+
+	for ( i = 0; attrs && attrs[i]; i++ ) {
+		j = i + 1;
+		while ( attrs && attrs[j] ) {
+			if ( !strcmp( attrs[i], attrs[j] )) {
+				for ( k = j; attrs && attrs[k]; k++ ) {
+					if ( k == j )
+						ch_free( attrs[j] );
+					attrs[k] = attrs[k+1];
+				}
+			} else {
+				j++;
+			}
+		}
+	}
+
+	if ( i != n )
+		attrs = (char **) ch_realloc( attrs, (i+1) * sizeof( char * ));
+
+	return attrs;
+}
+
+#define LBUFSIZ	80
+AttributeName*
+file2anlist( AttributeName *an, const char *fname, const char *brkstr )
+{
+	FILE	*fp;
+	char	*line = NULL;
+	char	*lcur = NULL;
+	char	*c;
+	size_t	lmax = LBUFSIZ;
+
+	fp = fopen( fname, "r" );
+	if ( fp == NULL ) {
+		Debug( LDAP_DEBUG_ANY,
+			"get_attrs_from_file: failed to open attribute list file "
+			"\"%s\": %s\n", fname, strerror(errno), 0 );
+		return NULL;
+	}
+
+	lcur = line = (char *) ch_malloc( lmax );
+	if ( !line ) {
+		Debug( LDAP_DEBUG_ANY,
+			"get_attrs_from_file: could not allocate memory\n",
+			0, 0, 0 );
+		fclose(fp);
+		return NULL;
+	}
+
+	while ( fgets( lcur, LBUFSIZ, fp ) != NULL ) {
+		char *str, *s, *next;
+		const char *delimstr = brkstr;
+		if ( ( c = strchr( lcur, '\n' ) ) ) {
+			if ( c == line ) {
+				*c = '\0';
+			} else if ( *(c-1) == '\r' ) {
+				*(c-1) = '\0';
+			} else {
+				*c = '\0';
+			}
+		} else {
+			lmax += LBUFSIZ;
+			line = (char *) ch_realloc( line, lmax );
+			if ( !line ) {
+				Debug( LDAP_DEBUG_ANY,
+					"get_attrs_from_file: could not allocate memory\n",
+					0, 0, 0 );
+				fclose(fp);
+				return NULL;
+			}
+			lcur = line + strlen( line );
+			continue;
+		}
+		an = str2anlist( an, line, brkstr );
+		if ( an == NULL )
+			return NULL;
+		lcur = line;
+	}
+	ch_free( line );
+	fclose(fp);
+	return an;
+}
+#undef LBUFSIZ
 
 /* Define an attribute option. */
 int
@@ -854,15 +1044,9 @@ ad_define_option( const char *name, const char *fname, int lineno )
 	optlen = 0;
 	do {
 		if ( !DESC_CHAR( name[optlen] ) ) {
-#ifdef NEW_LOGGING
-			LDAP_LOG( CONFIG, CRIT,
-			          "%s: line %d: illegal option name \"%s\"\n",
-			          fname, lineno, name );
-#else
 			Debug( LDAP_DEBUG_ANY,
 			       "%s: line %d: illegal option name \"%s\"\n",
 				    fname, lineno, name );
-#endif
 			return 1;
 		}
 	} while ( name[++optlen] );
@@ -872,15 +1056,9 @@ ad_define_option( const char *name, const char *fname, int lineno )
 
 	if ( strcasecmp( name, "binary" ) == 0
 	     || ad_find_option_definition( name, optlen ) ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG( CONFIG, CRIT,
-		          "%s: line %d: option \"%s\" is already defined\n",
-		          fname, lineno, name );
-#else
 		Debug( LDAP_DEBUG_ANY,
 		       "%s: line %d: option \"%s\" is already defined\n",
 		       fname, lineno, name );
-#endif
 		return 1;
 	}
 
@@ -898,15 +1076,9 @@ ad_define_option( const char *name, const char *fname, int lineno )
 	     options[i].prefix &&
 	     optlen < options[i+1].name.bv_len &&
 	     strncasecmp( name, options[i+1].name.bv_val, optlen ) == 0 ) {
-#ifdef NEW_LOGGING
-			LDAP_LOG( CONFIG, CRIT,
-			          "%s: line %d: option \"%s\" overrides previous option\n",
-			          fname, lineno, name );
-#else
 			Debug( LDAP_DEBUG_ANY,
 			       "%s: line %d: option \"%s\" overrides previous option\n",
 				    fname, lineno, name );
-#endif
 			return 1;
 	}
 

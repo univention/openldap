@@ -1,8 +1,8 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test005-modrdn,v 1.35.2.4 2004/01/01 18:16:43 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test005-modrdn,v 1.41.2.3 2005/05/06 16:42:53 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2004 The OpenLDAP Foundation.
+## Copyright 1998-2005 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -60,7 +60,7 @@ fi
 
 echo "Testing modrdn(deleteoldrdn=0)..."
 $LDAPMODRDN -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
-	$TESTOUT 2>&1 'cn=James A Jones 1, ou=Alumni Association, ou=People, o=University of Michigan, c=US' 'cn=James A Jones III'
+	$TESTOUT 2>&1 'cn=James A Jones 1, ou=Alumni Association, ou=People, dc=example, dc=com' 'cn=James A Jones III'
 
 RC=$?
 if test $RC != 0 ; then
@@ -71,7 +71,7 @@ fi
 
 echo "Testing modrdn(deleteoldrdn=1)..."
 $LDAPMODRDN -D "$MANAGERDN" -r -h $LOCALHOST -p $PORT1 -w $PASSWD >> \
-	$TESTOUT 2>&1 'cn=James A Jones 2, ou=Information Technology Division, ou=People, o=University of Michigan, c=US' 'cn=James A Jones II'
+	$TESTOUT 2>&1 'cn=James A Jones 2, ou=Information Technology Division, ou=People, dc=example, dc=com' 'cn=James A Jones II'
 
 RC=$?
 if test $RC != 0 ; then
@@ -179,10 +179,12 @@ if test $? != 0 ; then
 	exit 1
 fi
 
+# Test that you can use modrdn with an attribute value which was previously
+# present
 
 echo "Testing modrdn(deleteoldrdn=1), modrdn with new rdn already an att val..."
 $LDAPMODRDN -D "$MANAGERDN" -r -h $LOCALHOST -p $PORT1 -w $PASSWD > \
-	/dev/null 2>&1 'cn=James A Jones III, ou=Alumni Association, ou=People, o=University of Michigan, c=US' 'cn=James A Jones 1'
+	/dev/null 2>&1 'cn=James A Jones III, ou=Alumni Association, ou=People, dc=example, dc=com' 'cn=James A Jones 1'
 
 RC=$?
 if test $RC != 0 ; then
@@ -191,15 +193,10 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-# Test that you can use modrdn with an attribute value which was previously
-# present
-
 echo "Using ldapsearch to retrieve entries using new rdn (cn=James A Jones 1)..."
 $LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
 	    'cn=James A Jones 1' > $SEARCHOUT 2>&1
 RC=$?
-
-test $KILLSERVERS != no && kill -HUP $KILLPIDS
 
 if test $RC != 0 ; then
 	echo "ldapsearch failed ($RC)!"
@@ -219,6 +216,20 @@ if test $? != 0 ; then
 	echo "comparison failed - modrdn operations did not complete correctly"
 	exit 1
 fi
+
+echo "Testing modrdn with newSuperior as child of target "
+$LDAPMODRDN -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
+	/dev/null 2>&1  -s 'cn=Sub1, ou=FooBar, cn=James A Jones 1, ou=Alumni Association, ou=People, dc=example, dc=com' 'cn=James A Jones 1' \
+	'cn=James A Jones 1, ou=Alumni Association, ou=People, dc=example, dc=com' 'cn=James A Jones 1'
+
+RC=$?
+if test $RC -eq 0 ; then
+	echo "ldapmodrdn succeeded, should have failed!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
+test $KILLSERVERS != no && kill -HUP $KILLPIDS
 
 echo ">>>>> Test succeeded"
 exit 0

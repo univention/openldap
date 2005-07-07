@@ -1,9 +1,8 @@
 /* fetch.c - routines for fetching data at URLs */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/fetch.c,v 1.1.2.2 2004/01/01 18:16:31 kurt Exp $ */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/fetch.c,v 1.1.2.2 2004/01/01 18:16:31 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/fetch.c,v 1.2.2.3 2005/05/18 16:29:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2004 The OpenLDAP Foundation.
+ * Copyright 1999-2005 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -39,6 +38,40 @@
 #include "ldap_config.h"
 #include "ldif.h"
 
+FILE *
+ldif_open_url(
+	LDAP_CONST char *urlstr
+)
+{
+	FILE *url;
+	char *p = NULL;
+#ifdef HAVE_FETCH
+	url = fetchGetURL( (char*) urlstr, "" );
+
+#else
+	if( strncasecmp( "file://", urlstr, sizeof("file://")-1 ) == 0 ) {
+		p = strchr( &urlstr[sizeof("file://")-1], '/' );
+		if( p == NULL ) {
+			return NULL;
+		}
+
+		/* we don't check for LDAP_DIRSEP since URLs should contain '/' */
+		/* skip over false root */
+		p++;
+
+		p = ber_strdup( p );
+		ldap_pvt_hex_unescape( p );
+
+		url = fopen( p, "rb" );
+
+		ber_memfree( p );
+	} else {
+		return NULL;
+	}
+#endif
+	return url;
+}
+
 int
 ldif_fetch_url(
     LDAP_CONST char	*urlstr,
@@ -55,31 +88,7 @@ ldif_fetch_url(
 	*valuep = NULL;
 	*vlenp = 0;
 
-#ifdef HAVE_FETCH
-	url = fetchGetURL( (char*) urlstr, "" );
-
-#else
-	if( strncasecmp( "file://", urlstr, sizeof("file://")-1 ) == 0 ) {
-		p = strchr( &urlstr[sizeof("file://")-1], '/' );
-		if( p == NULL ) {
-			return -1;
-		}
-
-		/* we don't check for LDAP_DIRSEP since URLs should contain '/' */
-		if( *p != '/' ) {
-			/* skip over false root */
-			p++;
-		}
-
-		p = ber_strdup( p );
-		ldap_pvt_hex_unescape( p );
-
-		url = fopen( p, "rb" );
-
-	} else {
-		return -1;
-	}
-#endif
+	url = ldif_open_url( urlstr );
 
 	if( url == NULL ) {
 		return -1;

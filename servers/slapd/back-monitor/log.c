@@ -1,8 +1,8 @@
 /* log.c - deal with log subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/log.c,v 1.33.2.6 2004/04/12 18:20:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/log.c,v 1.45.2.3 2005/06/03 19:54:16 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2004 The OpenLDAP Foundation.
+ * Copyright 2001-2005 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -70,42 +70,28 @@ static int replace_values( Entry *e, Modification *mod, int *newlevel );
  */
 int
 monitor_subsys_log_init(
-	BackendDB	*be
-)
+	BackendDB		*be,
+	monitor_subsys_t	*ms )
 {
-	struct monitorinfo	*mi;
-	Entry			*e;
-	int			i;
-	struct berval		desc[] = {
-		BER_BVC("This entry allows to set the log level runtime."),
-		BER_BVC("Set the attribute 'managedInfo' to the desired log levels."),
-		BER_BVNULL
-	};
+	monitor_info_t	*mi;
+	Entry		*e;
+	int		i;
 
 	ldap_pvt_thread_mutex_init( &monitor_log_mutex );
 
-	mi = ( struct monitorinfo * )be->be_private;
+	mi = ( monitor_info_t * )be->be_private;
 
-	if ( monitor_cache_get( mi, &monitor_subsys[SLAPD_MONITOR_LOG].mss_ndn, 
+	if ( monitor_cache_get( mi, &ms->mss_ndn, 
 				&e ) ) {
-#ifdef NEW_LOGGING
-		LDAP_LOG( OPERATION, CRIT,
-			"monitor_subsys_log_init: "
-			"unable to get entry '%s'\n",
-			monitor_subsys[SLAPD_MONITOR_LOG].mss_ndn.bv_val, 0, 0 );
-#else
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_subsys_log_init: "
-			"unable to get entry '%s'\n%s%s",
-			monitor_subsys[SLAPD_MONITOR_LOG].mss_ndn.bv_val, 
-			"", "" );
-#endif
+			"unable to get entry \"%s\"\n",
+			ms->mss_ndn.bv_val, 0, 0 );
 		return( -1 );
 	}
 
 	/* initialize the debug level(s) */
 	for ( i = 0; int_2_level[ i ].i != 0; i++ ) {
-
 		if ( mi->mi_ad_managedInfo->ad_type->sat_equality->smr_normalize ) {
 			int	rc;
 
@@ -127,8 +113,6 @@ monitor_subsys_log_init(
 		}
 	}
 
-	attr_merge( e, mi->mi_ad_description, desc, NULL );
-
 	monitor_cache_release( mi, e );
 
 	return( 0 );
@@ -137,10 +121,10 @@ monitor_subsys_log_init(
 int 
 monitor_subsys_log_modify( 
 	Operation		*op,
-	Entry 			*e
-)
+	SlapReply		*rs,
+	Entry 			*e )
 {
-	struct monitorinfo *mi = (struct monitorinfo *)op->o_bd->be_private;
+	monitor_info_t	*mi = ( monitor_info_t * )op->o_bd->be_private;
 	int		rc = LDAP_OTHER;
 	int		newlevel = ldap_syslog;
 	Attribute	*save_attrs;
@@ -156,22 +140,23 @@ monitor_subsys_log_modify(
 		Modification	*mod = &ml->sml_mod;
 
 		/*
-		 * accept all operational attributes
+		 * accept all operational attributes;
+		 * this includes modifersName and modifyTimestamp
+		 * if lastmod is "on"
 		 */
 		if ( is_at_operational( mod->sm_desc->ad_type ) ) {
 			( void ) attr_delete( &e->e_attrs, mod->sm_desc );
-			rc = attr_merge( e, mod->sm_desc, mod->sm_values, mod->sm_nvalues );
-			if ( rc != 0 ) {
-				rc = LDAP_OTHER;
+			rc = rs->sr_err = attr_merge( e, mod->sm_desc, mod->sm_values, mod->sm_nvalues );
+			if ( rc != LDAP_SUCCESS ) {
 				break;
 			}
 			continue;
 
 		/*
-		 * only the monitor description attribute can be modified
+		 * only the "managedInfo" attribute can be modified
 		 */
-		} else if ( mod->sm_desc != mi->mi_ad_managedInfo) {
-			rc = LDAP_UNWILLING_TO_PERFORM;
+		} else if ( mod->sm_desc != mi->mi_ad_managedInfo ) {
+			rc = rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
 			break;
 		}
 
@@ -194,6 +179,7 @@ monitor_subsys_log_modify(
 		}
 
 		if ( rc != LDAP_SUCCESS ) {
+			rs->sr_err = rc;
 			break;
 		}
 	}
@@ -205,15 +191,16 @@ monitor_subsys_log_modify(
 
 		/* check for abandon */
 		if ( op->o_abandon ) {
-			rc = SLAPD_ABANDON;
+			rc = rs->sr_err = SLAPD_ABANDON;
 
 			goto cleanup;
 		}
 
 		/* check that the entry still obeys the schema */
-		rc = entry_schema_check( be_monitor, e, save_attrs, 
-				&text, textbuf, sizeof( textbuf ) );
+		rc = entry_schema_check( be_monitor, e, save_attrs, 0,
+			&text, textbuf, sizeof( textbuf ) );
 		if ( rc != LDAP_SUCCESS ) {
+			rs->sr_err = rc;
 			goto cleanup;
 		}
 
@@ -242,7 +229,11 @@ cleanup:;
 	
 	ldap_pvt_thread_mutex_unlock( &monitor_log_mutex );
 
-	return( rc );
+	if ( rc == LDAP_SUCCESS ) {
+		rc = SLAP_CB_CONTINUE;
+	}
+
+	return rc;
 }
 
 static int
@@ -282,10 +273,10 @@ check_constraints( Modification *mod, int *newlevel )
 {
 	int		i;
 
-	for ( i = 0; mod->sm_values && mod->sm_values[i].bv_val != NULL; i++ ) {
+	for ( i = 0; mod->sm_values && !BER_BVISNULL( &mod->sm_values[ i ] ); i++ ) {
 		int		l;
 		
-		l = loglevel2int( &mod->sm_values[i] );
+		l = loglevel2int( &mod->sm_values[ i ] );
 		if ( !l ) {
 			return LDAP_CONSTRAINT_VIOLATION;
 		}
@@ -295,13 +286,13 @@ check_constraints( Modification *mod, int *newlevel )
 		}
 
 		assert( int_2_level[ l ].s.bv_len
-				== mod->sm_values[i].bv_len );
+				== mod->sm_values[ i ].bv_len );
 		
-		AC_MEMCPY( mod->sm_values[i].bv_val,
+		AC_MEMCPY( mod->sm_values[ i ].bv_val,
 				int_2_level[ l ].s.bv_val,
 				int_2_level[ l ].s.bv_len );
 
-		AC_MEMCPY( mod->sm_nvalues[i].bv_val,
+		AC_MEMCPY( mod->sm_nvalues[ i ].bv_val,
 				int_2_level[ l ].n.bv_val,
 				int_2_level[ l ].n.bv_len );
 
@@ -326,12 +317,12 @@ add_values( Entry *e, Modification *mod, int *newlevel )
 	a = attr_find( e->e_attrs, mod->sm_desc );
 
 	if ( a != NULL ) {
-		/* "description" SHOULD have appropriate rules ... */
+		/* "managedInfo" SHOULD have appropriate rules ... */
 		if ( mr == NULL || !mr->smr_match ) {
 			return LDAP_INAPPROPRIATE_MATCHING;
 		}
 
-		for ( i = 0; mod->sm_values[i].bv_val != NULL; i++ ) {
+		for ( i = 0; !BER_BVISNULL( &mod->sm_values[ i ] ); i++ ) {
 			int rc;
 			int j;
 			const char *text = NULL;
@@ -339,16 +330,16 @@ add_values( Entry *e, Modification *mod, int *newlevel )
 
 			rc = asserted_value_validate_normalize(
 				mod->sm_desc, mr, SLAP_MR_EQUALITY,
-				&mod->sm_values[i], &asserted, &text, NULL );
+				&mod->sm_values[ i ], &asserted, &text, NULL );
 
 			if ( rc != LDAP_SUCCESS ) {
 				return rc;
 			}
 
-			for ( j = 0; a->a_vals[j].bv_val != NULL; j++ ) {
+			for ( j = 0; !BER_BVISNULL( &a->a_vals[ j ] ); j++ ) {
 				int match;
 				int rc = value_match( &match, mod->sm_desc, mr,
-					0, &a->a_vals[j], &asserted, &text );
+					0, &a->a_vals[ j ], &asserted, &text );
 
 				if ( rc == LDAP_SUCCESS && match == 0 ) {
 					free( asserted.bv_val );
@@ -409,7 +400,7 @@ delete_values( Entry *e, Modification *mod, int *newlevel )
 	}
 
 	/* find each value to delete */
-	for ( i = 0; mod->sm_values[i].bv_val != NULL; i++ ) {
+	for ( i = 0; !BER_BVISNULL( &mod->sm_values[ i ] ); i++ ) {
 		int rc;
 		const char *text = NULL;
 
@@ -417,16 +408,16 @@ delete_values( Entry *e, Modification *mod, int *newlevel )
 
 		rc = asserted_value_validate_normalize(
 				mod->sm_desc, mr, SLAP_MR_EQUALITY,
-				&mod->sm_values[i], &asserted, &text, NULL );
+				&mod->sm_values[ i ], &asserted, &text, NULL );
 
 		if( rc != LDAP_SUCCESS ) return rc;
 
 		found = 0;
-		for ( j = 0; a->a_vals[j].bv_val != NULL; j++ ) {
+		for ( j = 0; !BER_BVISNULL( &a->a_vals[ j ] ); j++ ) {
 			int match;
 			int rc = value_match( &match, mod->sm_desc, mr,
 				0,
-				&a->a_vals[j], &asserted, &text );
+				&a->a_vals[ j ], &asserted, &text );
 
 			if( rc == LDAP_SUCCESS && match != 0 ) {
 				continue;
@@ -436,11 +427,11 @@ delete_values( Entry *e, Modification *mod, int *newlevel )
 			found = 1;
 
 			/* delete it */
-			free( a->a_vals[j].bv_val );
-			for ( k = j + 1; a->a_vals[k].bv_val != NULL; k++ ) {
-				a->a_vals[k - 1] = a->a_vals[k];
+			free( a->a_vals[ j ].bv_val );
+			for ( k = j + 1; !BER_BVISNULL( &a->a_vals[ k ] ); k++ ) {
+				a->a_vals[ k - 1 ] = a->a_vals[ k ];
 			}
-			a->a_vals[k - 1].bv_val = NULL;
+			BER_BVZERO( &a->a_vals[ k - 1 ] );
 
 			break;
 		}
@@ -454,7 +445,7 @@ delete_values( Entry *e, Modification *mod, int *newlevel )
 	}
 
 	/* if no values remain, delete the entire attribute */
-	if ( a->a_vals[0].bv_val == NULL ) {
+	if ( BER_BVISNULL( &a->a_vals[ 0 ] ) ) {
 		/* should already be zero */
 		*newlevel = 0;
 		

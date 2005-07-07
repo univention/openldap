@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/proto-slapi.h,v 1.8.2.8 2004/06/16 22:45:33 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/proto-slapi.h,v 1.26.2.3 2005/06/10 22:02:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2004 The OpenLDAP Foundation.
+ * Copyright 2002-2005 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002-2003 IBM Corporation.
  * All rights reserved.
  *
@@ -48,6 +48,8 @@ extern void slapi_entry_attr_set_uint( Slapi_Entry* e, const char *type, unsigne
 extern void slapi_entry_attr_set_long(Slapi_Entry* e, const char *type, long l);
 extern void slapi_entry_attr_set_ulong(Slapi_Entry* e, const char *type, unsigned long l);
 extern int slapi_is_rootdse( const char *dn );
+extern int slapi_entry_has_children(const Slapi_Entry *e);
+size_t slapi_entry_size(Slapi_Entry *e);
 extern int slapi_entry_attr_merge_sv( Slapi_Entry *e, const char *type, Slapi_Value **vals );
 extern int slapi_entry_add_values_sv( Slapi_Entry *e, const char *type, Slapi_Value **vals );
 extern int slapi_entry_add_valueset(Slapi_Entry *e, const char *type, Slapi_ValueSet *vs);
@@ -59,6 +61,12 @@ extern int slapi_entry_add_string(Slapi_Entry *e, const char *type, const char *
 extern int slapi_entry_delete_string(Slapi_Entry *e, const char *type, const char *value);
 extern int slapi_entry_first_attr( const Slapi_Entry *e, Slapi_Attr **attr );
 extern int slapi_entry_next_attr( const Slapi_Entry *e, Slapi_Attr *prevattr, Slapi_Attr **attr );
+extern const char *slapi_entry_get_uniqueid( const Slapi_Entry *e );
+extern void slapi_entry_set_uniqueid( Slapi_Entry *e, char *uniqueid );
+extern int slapi_entry_schema_check( Slapi_PBlock *pb, Slapi_Entry *e );
+extern int slapi_entry_rdn_values_present( const Slapi_Entry *e );
+extern int slapi_entry_add_rdn_values( Slapi_Entry *e );
+
 extern char *slapi_entry_get_dn( Slapi_Entry *e );
 extern int slapi_x_entry_get_id( Slapi_Entry *e );
 extern void slapi_entry_set_dn( Slapi_Entry *e, char *dn );
@@ -140,6 +148,9 @@ extern Slapi_CondVar *slapi_new_condvar( Slapi_Mutex *mutex );
 extern void slapi_destroy_condvar( Slapi_CondVar *cvar );
 extern int slapi_wait_condvar( Slapi_CondVar *cvar, struct timeval *timeout );
 extern int slapi_notify_condvar( Slapi_CondVar *cvar, int notify_all );
+
+extern LDAP *slapi_ldap_init( char *ldaphost, int ldapport, int secure, int shared );
+extern void slapi_ldap_unbind( LDAP *ld );
 
 extern char *slapi_ch_malloc( unsigned long size );
 extern void slapi_ch_free( void **ptr );
@@ -237,6 +248,8 @@ extern int slapi_x_compute_get_pblock(computed_attr_context *c, Slapi_PBlock **p
 
 extern int slapi_int_access_allowed(Operation *op, Entry *entry, AttributeDescription *desc, struct berval *val, slap_access_t access, AccessControlState *state);
 
+extern int slapi_x_backend_get_flags( const Slapi_Backend *be, unsigned long *flags );
+
 extern ldap_pvt_thread_mutex_t	slapi_hn_mutex;
 extern ldap_pvt_thread_mutex_t	slapi_time_mutex;
 extern ldap_pvt_thread_mutex_t	slapi_printmessage_mutex; 
@@ -274,6 +287,7 @@ extern int slapi_int_register_extop(Backend *pBE, ExtendedOp **opList, Slapi_PBl
 extern int slapi_int_get_extop_plugin(struct berval  *reqoid, SLAPI_FUNC *pFuncAddr );
 extern int slapi_int_read_config(Backend *be, const char *fname, int lineno,
 		int argc, char **argv );
+extern void slapi_int_plugin_unparse(Backend *be, BerVarray *out );
 extern int slapi_int_initialize(void);
 
 
@@ -297,6 +311,8 @@ extern Slapi_PBlock *slapi_modrdn_internal( char * olddn, char * newrdn,
 		int deloldrdn, LDAPControl **controls, int log_change);
 extern char **slapi_get_supported_extended_ops(void);
 extern struct berval *slapi_int_get_supported_extop( int );
+extern Connection *slapi_int_init_connection(char *DN, int OpType);
+extern void slapi_int_connection_destroy( Connection **pConn );
 
 /*
  * Was: slapi_cl.h

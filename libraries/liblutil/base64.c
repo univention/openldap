@@ -1,8 +1,8 @@
 /* base64.c -- routines to encode/decode base64 data */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/base64.c,v 1.11.2.2 2004/01/01 18:16:31 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/base64.c,v 1.13.2.1 2005/01/20 18:03:52 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1995 IBM Corporation.
  * All rights reserved.

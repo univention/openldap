@@ -1,8 +1,8 @@
 /* bind.c */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/bind.c,v 1.18.2.3 2004/01/01 18:16:29 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/bind.c,v 1.22.2.1 2005/01/20 18:03:49 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -70,11 +70,7 @@
 int
 ldap_bind( LDAP *ld, LDAP_CONST char *dn, LDAP_CONST char *passwd, int authmethod )
 {
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "ldap_bind\n", 0, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_bind\n", 0, 0, 0 );
-#endif
 
 	switch ( authmethod ) {
 	case LDAP_AUTH_SIMPLE:
@@ -119,11 +115,7 @@ ldap_bind_s(
 	LDAP_CONST char *passwd,
 	int authmethod )
 {
-#ifdef NEW_LOGGING
-	LDAP_LOG ( OPERATION, ENTRY, "ldap_bind_s\n", 0, 0, 0 );
-#else
 	Debug( LDAP_DEBUG_TRACE, "ldap_bind_s\n", 0, 0, 0 );
-#endif
 
 	switch ( authmethod ) {
 	case LDAP_AUTH_SIMPLE:

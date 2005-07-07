@@ -1,8 +1,8 @@
 /* avl.c - routines to implement an avl tree */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/avl.c,v 1.1.2.2 2004/01/01 18:16:31 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/avl.c,v 1.3.2.2 2005/03/14 22:29:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -643,6 +643,20 @@ avl_free( Avlnode *root, AVL_FREE dfree )
  * and the current node data as its second.  it should return 0 if they match,
  * < 0 if arg1 is less than arg2 and > 0 if arg1 is greater than arg2.
  */
+
+Avlnode *
+avl_find2( Avlnode *root, const void *data, AVL_CMP fcmp )
+{
+	int	cmp;
+
+	while ( root != 0 && (cmp = (*fcmp)( data, root->avl_data )) != 0 ) {
+		if ( cmp < 0 )
+			root = root->avl_left;
+		else
+			root = root->avl_right;
+	}
+	return root;
+}
 
 void*
 avl_find( Avlnode *root, const void* data, AVL_CMP fcmp )

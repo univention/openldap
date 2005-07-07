@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_ext.c,v 1.2.2.6 2004/03/18 01:01:04 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_ext.c,v 1.10.2.1 2005/01/20 18:04:05 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2004 The OpenLDAP Foundation.
+ * Copyright 2003-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,6 @@
 #include <ac/stdarg.h>
 #include <ac/ctype.h>
 #include <ac/unistd.h>
-#include <ldap_pvt.h>
 
 #include <slap.h>
 #include <slapi.h>

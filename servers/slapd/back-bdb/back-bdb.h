@@ -1,8 +1,8 @@
 /* back-bdb.h - bdb back-end header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/back-bdb.h,v 1.92.2.9 2004/07/16 19:51:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/back-bdb.h,v 1.117.2.4 2005/04/29 21:29:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2004 The OpenLDAP Foundation.
+ * Copyright 2000-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,8 +20,11 @@
 #include <portable.h>
 #include "slap.h"
 #include <db.h>
+#include "alock.h"
 
 LDAP_BEGIN_DECL
+
+#define DB_VERSION_FULL ((DB_VERSION_MAJOR << 24) | (DB_VERSION_MINOR << 16) | DB_VERSION_PATCH)
 
 #define BDB_SUBENTRIES 1
 
@@ -38,14 +41,6 @@ LDAP_BEGIN_DECL
 #define BDB_TXN_RETRIES		16
 
 #define BDB_MAX_ADD_LOOP	30
-
-#define	BDB_ALIASES	1
-
-#ifdef BDB_SUBDIRS
-#define BDB_TMP_SUBDIR	"tmp"
-#define BDB_LG_SUBDIR	"log"
-#define BDB_DATA_SUBDIR	"data"
-#endif
 
 #define BDB_SUFFIX		".bdb"
 #define BDB_ID2ENTRY	0
@@ -112,6 +107,10 @@ typedef struct bdb_entry_info {
 #endif
 	Entry	*bei_e;
 	Avlnode	*bei_kids;
+#ifdef SLAP_ZONE_ALLOC
+	struct bdb_info *bei_bdb;
+	int bei_zseq;	
+#endif
 	ldap_pvt_thread_mutex_t	bei_kids_mutex;
 	
 	struct bdb_entry_info	*bei_lrunext;	/* for cache lru list */
@@ -124,6 +123,7 @@ typedef struct bdb_entry_info {
 typedef struct bdb_cache {
 	int             c_maxsize;
 	int             c_cursize;
+	int		c_eiused;	/* EntryInfo's in use */
 	EntryInfo	c_dntree;
 	EntryInfo	*c_eifree;	/* free list */
 	Avlnode         *c_idtree;
@@ -132,6 +132,9 @@ typedef struct bdb_cache {
 	ldap_pvt_thread_rdwr_t c_rwlock;
 	ldap_pvt_thread_mutex_t lru_mutex;
 	u_int32_t	c_locker;	/* used by lru cleaner */
+#ifdef SLAP_ZONE_ALLOC
+	void *c_zctx;
+#endif
 } Cache;
  
 #define CACHE_READ_LOCK                0
@@ -163,19 +166,19 @@ struct bdb_info {
 	Avlnode		*bi_attrs;
 	void		*bi_search_stack;
 	int		bi_search_stack_depth;
+	int		bi_linear_index;
 
 	int			bi_txn_cp;
 	u_int32_t	bi_txn_cp_min;
 	u_int32_t	bi_txn_cp_kbyte;
+	void		*bi_txn_cp_task;
+	void		*bi_index_task;
 
 	int			bi_lock_detect;
 	long		bi_shm_key;
 
 	ID			bi_lastid;
 	ldap_pvt_thread_mutex_t	bi_lastid_mutex;
-	LDAP_LIST_HEAD(pl, slap_op) bi_psearch_list;
-	ldap_pvt_thread_rdwr_t bi_pslist_rwlock;
-	LDAP_LIST_HEAD(se, slap_session_entry) bi_session_list;
 	int		bi_idl_cache_max_size;
 	int		bi_idl_cache_size;
 	Avlnode		*bi_idl_tree;
@@ -183,18 +186,33 @@ struct bdb_info {
 	bdb_idl_cache_entry_t	*bi_idl_lru_tail;
 	ldap_pvt_thread_rdwr_t bi_idl_tree_rwlock;
 	ldap_pvt_thread_mutex_t bi_idl_tree_lrulock;
+	alock_info_t	bi_alock_info;
+	char		*bi_db_config_path;
+	BerVarray	bi_db_config;
+	int		bi_flags;
+#define	BDB_IS_OPEN		0x01
+#define	BDB_HAS_CONFIG	0x02
+#define	BDB_UPD_CONFIG	0x04
+#define	BDB_DEL_INDEX	0x08
+#define	BDB_RE_OPEN		0x10
 };
 
 #define bi_id2entry	bi_databases[BDB_ID2ENTRY]
 #define bi_dn2id	bi_databases[BDB_DN2ID]
 
+struct bdb_lock_info {
+	struct bdb_lock_info *bli_next;
+	ID		bli_id;
+	DB_LOCK	bli_lock;
+};
+
 struct bdb_op_info {
 	BackendDB*	boi_bdb;
 	DB_TXN*		boi_txn;
-	DB_LOCK		boi_lock;	/* used when no txn */
 	u_int32_t	boi_err;
 	u_int32_t	boi_locker;
 	int		boi_acl_cache;
+	struct bdb_lock_info *boi_locks;	/* used when no txn */
 };
 
 #define	DB_OPEN(db, file, name, type, flags, mode) \
@@ -226,10 +244,10 @@ struct bdb_op_info {
 #define XLOCK_ID_FREE(env, locker)	(env)->lock_id_free(env, locker)
 
 /* BDB 4.1.17 adds txn arg to db->open */
-#if DB_VERSION_MINOR > 1 || DB_VERSION_PATCH >= 17
+#if DB_VERSION_FULL >= 0x04010011
 #undef DB_OPEN
 #define	DB_OPEN(db, file, name, type, flags, mode) \
-	(db)->open(db, NULL, file, name, type, (flags)|DB_AUTO_COMMIT, mode)
+	(db)->open(db, NULL, file, name, type, flags, mode)
 #endif
 
 #endif
@@ -240,7 +258,39 @@ struct bdb_op_info {
 #define BDB_CSN_ABORT	1
 #define BDB_CSN_RETRY	2
 
+/* Copy an ID "src" to pointer "dst" in big-endian byte order */
+#define BDB_ID2DISK( src, dst )	\
+	do { int i0; ID tmp; unsigned char *_p;	\
+		tmp = (src); _p = (char *)(dst);	\
+		for ( i0=sizeof(ID)-1; i0>=0; i0-- ) {	\
+			_p[i0] = tmp & 0xff; tmp >>= 8;	\
+		} \
+	} while(0);
+
+/* Copy a pointer "src" to a pointer "dst" from big-endian to native order */
+#define BDB_DISK2ID( src, dst ) \
+	do { int i0; ID tmp = 0; unsigned char *_p;	\
+		_p = (unsigned char *)(src);	\
+		for ( i0=0; i0<sizeof(ID); i0++ ) {	\
+			tmp <<= 8; tmp |= *_p++;	\
+		} *(dst) = tmp; \
+	} while (0);
+
 LDAP_END_DECL
+
+/* for the cache of attribute information (which are indexed, etc.) */
+typedef struct bdb_attrinfo {
+	AttributeDescription *ai_desc; /* attribute description cn;lang-en */
+	slap_mask_t ai_indexmask;	/* how the attr is indexed	*/
+	slap_mask_t ai_newmask;	/* new settings to replace old mask */
+#ifdef LDAP_COMP_MATCH
+	ComponentReference* ai_cr; /*component indexing*/
+#endif
+} AttrInfo;
+
+/* These flags must not clash with SLAP_INDEX flags or ops in slap.h! */
+#define	BDB_INDEX_DELETING	0x8000U	/* index is being modified */
+#define	BDB_INDEX_UPDATE_OP	0x03	/* performing an index update */
 
 #include "proto-bdb.h"
 

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_utils.c,v 1.86.2.14 2004/09/03 23:17:54 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_utils.c,v 1.136.2.5 2005/06/08 21:50:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2004 The OpenLDAP Foundation.
+ * Copyright 2002-2005 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002-2003 IBM Corporation.
  * All rights reserved.
  *
@@ -26,7 +26,6 @@
 #include <ac/stdarg.h>
 #include <ac/ctype.h>
 #include <ac/unistd.h>
-#include <ldap_pvt.h>
 
 #include <slap.h>
 #include <slapi.h>
@@ -109,7 +108,7 @@ bvptr2obj(
 Slapi_Entry *
 slapi_str2entry(
 	char		*s, 
-	int		check_dup )
+	int		flags )
 {
 #ifdef LDAP_SLAPI
 	Slapi_Entry	*e = NULL;
@@ -529,6 +528,64 @@ slapi_is_rootdse( const char *dn )
 #endif
 }
 
+int
+slapi_entry_has_children(const Slapi_Entry *e)
+{
+#ifdef LDAP_SLAPI
+	Connection *pConn;
+	Operation *op;
+	int hasSubordinates = 0;
+
+	pConn = slapi_int_init_connection( NULL, LDAP_REQ_SEARCH );
+	if ( pConn == NULL ) {
+		return 0;
+	}
+
+	op = (Operation *)pConn->c_pending_ops.stqh_first;
+	op->o_bd = select_backend( (struct berval *)&e->e_nname, 0, 0 );
+	if ( op->o_bd == NULL ) {
+		return 0;
+	}
+
+	op->o_bd->be_has_subordinates( op, (Entry *)e, &hasSubordinates );
+
+	slapi_int_connection_destroy( &pConn );
+
+	return ( hasSubordinates == LDAP_COMPARE_TRUE );
+#else
+	return 0;
+#endif
+}
+
+/*
+ * Return approximate size of the entry rounded to the nearest
+ * 1K. Only the size of the attribute values are counted in the
+ * Sun implementation.
+ *
+ * http://docs.sun.com/source/816-6701-10/funcref.html#1017388
+ */
+size_t slapi_entry_size(Slapi_Entry *e)
+{
+#ifdef LDAP_SLAPI
+	size_t size;
+	Attribute *a;
+	int i;
+
+	for ( size = 0, a = e->e_attrs; a != NULL; a = a->a_next ) {
+		for ( i = 0; a->a_vals[i].bv_val != NULL; i++ ) {
+			size += a->a_vals[i].bv_len + 1;
+		}
+	}
+
+	size += 1023;
+	size -= (size % 1024);
+
+	return size;
+#else
+	return 0;
+#endif /* LDAP_SLAPI */
+}
+
 /*
  * Add values to entry.
  *
@@ -547,6 +604,7 @@ slapi_entry_add_values( Slapi_Entry *e, const char *type, struct berval **vals )
 	char			textbuf[SLAP_TEXT_BUFLEN];
 
 	mod.sm_op = LDAP_MOD_ADD;
+	mod.sm_flags = 0;
 	mod.sm_desc = NULL;
 	mod.sm_type.bv_val = (char *)type;
 	mod.sm_type.bv_len = strlen( type );
@@ -619,6 +677,7 @@ slapi_entry_delete_values( Slapi_Entry *e, const char *type, struct berval **val
 	char			textbuf[SLAP_TEXT_BUFLEN];
 
 	mod.sm_op = LDAP_MOD_DELETE;
+	mod.sm_flags = 0;
 	mod.sm_desc = NULL;
 	mod.sm_type.bv_val = (char *)type;
 	mod.sm_type.bv_len = strlen( type );
@@ -1340,7 +1399,7 @@ slapiControlOp2SlapControlMask(unsigned long slapi_mask,
 	if ( slapi_mask & SLAPI_OPERATION_ABANDON )
 		*slap_mask |= SLAP_CTRL_ABANDON;
 
-	*slap_mask |= SLAP_CTRL_FRONTEND;
+	*slap_mask |= SLAP_CTRL_GLOBAL;
 }
 
 static int
@@ -1365,7 +1424,7 @@ slapi_register_supported_control(
 
 	slapiControlOp2SlapControlMask( controlops, &controlmask );
 
-	register_supported_control( controloid, controlmask, NULL, slapi_int_parse_control );
+	register_supported_control( controloid, controlmask, NULL, slapi_int_parse_control, NULL );
 #endif /* LDAP_SLAPI */
 }
 
@@ -1571,6 +1630,7 @@ slapi_send_ldap_search_entry(
 	rs.sr_ref = NULL;
 	rs.sr_ctrls = ectrls;
 	rs.sr_attrs = an;
+	rs.sr_operational_attrs = NULL;
 	rs.sr_entry = e;
 	rs.sr_v2ref = NULL;
 	rs.sr_flags = 0;
@@ -1610,6 +1670,7 @@ slapi_send_ldap_search_reference(
 
 	rs.sr_ctrls = ectrls;
 	rs.sr_attrs = NULL;
+	rs.sr_operational_attrs = NULL;
 	rs.sr_entry = e;
 
 	if ( v2refs != NULL ) {
@@ -3305,6 +3366,7 @@ int slapi_access_allowed( Slapi_PBlock *pb, Slapi_Entry *e, char *attr,
 	case SLAPI_ACL_DELETE:
 	case SLAPI_ACL_ADD:
 	case SLAPI_ACL_SELF:
+		/* FIXME: handle ACL_WADD/ACL_WDEL */
 		slap_access = ACL_WRITE;
 		break;
 	default:
@@ -3464,6 +3526,7 @@ Modifications *slapi_int_ldapmods2modifications (LDAPMod **mods)
 
 		mod = (Modifications *) ch_malloc( sizeof(Modifications) );
 		mod->sml_op = (*modp)->mod_op & (~LDAP_MOD_BVALUES);
+		mod->sml_flags = 0;
 		mod->sml_type.bv_val = (*modp)->mod_type;
 		mod->sml_type.bv_len = strlen( mod->sml_type.bv_val );
 		mod->sml_desc = NULL;
@@ -3941,6 +4004,7 @@ int slapi_int_access_allowed( Operation *op,
 
 	switch ( access ) {
 	case ACL_WRITE:
+		/* FIXME: handle ACL_WADD/ACL_WDEL */
 		slap_access |= SLAPI_ACL_ADD | SLAPI_ACL_DELETE | SLAPI_ACL_WRITE;
 		break;
 	case ACL_READ:
@@ -3983,6 +4047,243 @@ int slapi_int_access_allowed( Operation *op,
 	return rc;
 #else
 	return 1;
+#endif /* LDAP_SLAPI */
+}
+
+/*
+ * There is no documentation for this.
+ */
+int slapi_rdn2typeval( char *rdn, char **type, struct berval *bv )
+{
+#ifdef LDAP_SLAPI
+	LDAPRDN lrdn;
+	LDAPAVA *ava;
+	int rc;
+	char *p;
+
+	*type = NULL;
+
+	bv->bv_len = 0;
+	bv->bv_val = NULL;
+
+	rc = ldap_str2rdn( rdn, &lrdn, &p, LDAP_DN_FORMAT_LDAPV3 );
+	if ( rc != LDAP_SUCCESS ) {
+		return -1;
+	}
+
+	if ( lrdn[1] != NULL ) {
+		return -1; /* not single valued */
+	}
+
+	ava = lrdn[0];
+
+	*type = slapi_ch_strdup( ava->la_attr.bv_val );
+	ber_dupbv( bv, &ava->la_value );
+
+	ldap_rdnfree(lrdn);
+
+	return 0;
+#else
+	return -1;
+#endif /* LDAP_SLAPI */
+}
+
+char *slapi_dn_plus_rdn( const char *dn, const char *rdn )
+{
+#ifdef LDAP_SLAPI
+	struct berval new_dn, parent_dn, newrdn;
+
+	new_dn.bv_val = NULL;
+
+	parent_dn.bv_val = (char *)dn;
+	parent_dn.bv_len = strlen( dn );
+
+	newrdn.bv_val = (char *)rdn;
+	newrdn.bv_len = strlen( rdn );
+
+	build_new_dn( &new_dn, &parent_dn, &newrdn, NULL );
+
+	return new_dn.bv_val;
+#else
+	return NULL;
+#endif /* LDAP_SLAPI */
+}
+
+int slapi_entry_schema_check( Slapi_PBlock *pb, Slapi_Entry *e )
+{
+#ifdef LDAP_SLAPI
+	Backend *be;
+	const char *text;
+	char textbuf[SLAP_TEXT_BUFLEN] = { '\0' };
+	size_t textlen = sizeof textbuf;
+	int rc;
+
+	if ( slapi_pblock_get( pb, SLAPI_BACKEND, (void **)&be ) != 0 )
+		return -1;
+
+	rc = entry_schema_check( be, e, NULL, 0,
+		&text, textbuf, textlen );
+
+	return ( rc == LDAP_SUCCESS ) ? 0 : 1;
+#else
+	return -1;
+#endif /* LDAP_SLAPI */
+}
+
+int slapi_entry_rdn_values_present( const Slapi_Entry *e )
+{
+#ifdef LDAP_SLAPI
+	LDAPDN dn;
+	int rc;
+	int i = 0, match = 0;
+
+	rc = ldap_bv2dn( &((Entry *)e)->e_name, &dn, LDAP_DN_FORMAT_LDAPV3 );
+	if ( rc != LDAP_SUCCESS ) {
+		return 0;
+	}
+
+	if ( dn[0] != NULL ) {
+		LDAPRDN rdn = dn[0];
+
+		for ( i = 0; rdn[i] != NULL; i++ ) {
+			LDAPAVA *ava = &rdn[0][i];
+			Slapi_Attr *a = NULL;
+
+			if ( slapi_entry_attr_find( (Slapi_Entry *)e, ava->la_attr.bv_val, &a ) == 0 &&
+			     slapi_attr_value_find( a, &ava->la_value ) == 0 )
+				match++;
+		}
+	}
+
+	ldap_dnfree( dn );
+
+	return ( i == match );
+#else
+	return 0;
+#endif /* LDAP_SLAPI */
+}
+
+int slapi_entry_add_rdn_values( Slapi_Entry *e )
+{
+#ifdef LDAP_SLAPI
+	LDAPDN dn;
+	int i, rc;
+
+	rc = ldap_bv2dn( &e->e_name, &dn, LDAP_DN_FORMAT_LDAPV3 );
+	if ( rc != LDAP_SUCCESS ) {
+		return rc;
+	}
+
+	if ( dn[0] != NULL ) {
+		LDAPRDN rdn = dn[0];
+		struct berval *vals[2];
+
+		for ( i = 0; rdn[i] != NULL; i++ ) {
+			LDAPAVA *ava = &rdn[0][i];
+			Slapi_Attr *a = NULL;
+
+			if ( slapi_entry_attr_find( e, ava->la_attr.bv_val, &a ) == 0 &&
+			     slapi_attr_value_find( a, &ava->la_value ) == 0 )
+				continue;
+
+			vals[0] = &ava->la_value;
+			vals[1] = NULL;
+
+			slapi_entry_attr_merge( e, ava->la_attr.bv_val, vals );
+		}
+	}
+
+	ldap_dnfree( dn );
+
+	return LDAP_SUCCESS;
+#else
+	return LDAP_OTHER;
+#endif /* LDAP_SLAPI */
+}
+
+const char *slapi_entry_get_uniqueid( const Slapi_Entry *e )
+{
+#ifdef LDAP_SLAPI
+	Attribute *attr;
+	const char *uniqueid;
+
+	attr = attr_find( e->e_attrs, slap_schema.si_ad_entryUUID );
+	if ( attr == NULL ) {
+		return NULL;
+	}
+
+	if ( attr->a_vals != NULL && attr->a_vals[0].bv_len != 0 ) {
+		return slapi_value_get_string( &attr->a_vals[0] );
+	}
+#endif /* LDAP_SLAPI */
+
+	return NULL;
+}
+
+void slapi_entry_set_uniqueid( Slapi_Entry *e, char *uniqueid )
+{
+#ifdef LDAP_SLAPI
+	struct berval bv;
+
+	attr_delete ( &e->e_attrs, slap_schema.si_ad_entryUUID );
+
+	bv.bv_val = uniqueid;
+	bv.bv_len = strlen( uniqueid );
+	attr_merge_normalize_one( e, slap_schema.si_ad_entryUUID, &bv, NULL );
+#endif /* LDAP_SLAPI */
+}
+
+LDAP *slapi_ldap_init( char *ldaphost, int ldapport, int secure, int shared )
+{
+#ifdef LDAP_SLAPI
+	LDAP *ld;
+	char *url;
+	size_t size;
+	int rc;
+
+	size = sizeof("ldap:///");
+	if ( secure )
+		size++;
+	size += strlen( ldaphost );
+	if ( ldapport != 0 )
+		size += 32;
+
+	url = slapi_ch_malloc( size );
+
+	if ( ldapport != 0 ) {
+		sprintf( url, "ldap%s://%s:%d/", ( secure ? "s" : "" ), ldaphost, ldapport );
+	} else {
+		sprintf( url, "ldap%s://%s/", ( secure ? "s" : "" ), ldaphost );
+	}
+
+	rc = ldap_initialize( &ld, url );
+
+	slapi_ch_free_string( &url );
+
+	return ( rc == LDAP_SUCCESS ) ? ld : NULL;
+#else
+	return NULL;
+#endif /* LDAP_SLAPI */
+}
+
+void slapi_ldap_unbind( LDAP *ld )
+{
+#ifdef LDAP_SLAPI
+	ldap_unbind( ld );
+#endif /* LDAP_SLAPI */
+}
+
+int slapi_x_backend_get_flags( const Slapi_Backend *be, unsigned long *flags )
+{
+#ifdef LDAP_SLAPI
+	if ( be == NULL )
+		return LDAP_PARAM_ERROR;
+
+	*flags = SLAP_DBFLAGS(be);
+
+	return LDAP_SUCCESS;
+#else
+	return -1;
 #endif /* LDAP_SLAPI */
 }
 

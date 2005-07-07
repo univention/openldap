@@ -1,8 +1,8 @@
 /* avl.h - avl tree definitions */
-/* $OpenLDAP: pkg/ldap/include/avl.h,v 1.21.2.2 2004/01/01 18:16:27 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/avl.h,v 1.24.2.1 2005/01/20 18:03:48 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,13 +38,14 @@ LDAP_BEGIN_DECL
 
 typedef struct avlnode Avlnode;
 
-#ifdef AVL_INTERNAL
 struct avlnode {
 	void*		avl_data;
 	signed int		avl_bf;
 	struct avlnode	*avl_left;
 	struct avlnode	*avl_right;
 };
+
+#ifdef AVL_INTERNAL
 
 #define NULLAVL	((Avlnode *) NULL)
 
@@ -75,6 +76,9 @@ avl_delete LDAP_P((Avlnode **, void*, AVL_CMP));
 
 LDAP_AVL_F( void* )
 avl_find LDAP_P((Avlnode *, const void*, AVL_CMP));
+
+LDAP_AVL_F( Avlnode* )
+avl_find2 LDAP_P((Avlnode *, const void*, AVL_CMP));
 
 LDAP_AVL_F( void* )
 avl_find_lin LDAP_P((Avlnode *, const void*, AVL_CMP));

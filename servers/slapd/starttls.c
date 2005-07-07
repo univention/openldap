@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/starttls.c,v 1.28.2.3 2004/06/04 03:39:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/starttls.c,v 1.36.2.1 2005/01/20 18:03:56 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,8 +17,6 @@
 
 #include <stdio.h>
 #include <ac/socket.h>
-
-#include <ldap_pvt.h>
 
 #include "slap.h"
 
@@ -61,8 +59,8 @@ starttls_extop ( Operation *op, SlapReply *rs )
 		( op->o_conn->c_dn.bv_len != 0 ) )
 	{
 		Statslog( LDAP_DEBUG_STATS,
-			"conn=%lu op=%lu AUTHZ anonymous mech=starttls ssf=0\n",
-			op->o_connid, op->o_opid, 0, 0, 0 );
+			"%s AUTHZ anonymous mech=starttls ssf=0\n",
+			op->o_log_prefix, 0, 0, 0, 0 );
 
 		/* force to anonymous */
 		connection2anonymous( op->o_conn );
@@ -98,8 +96,7 @@ done:
 	/* give up connection lock */
 	ldap_pvt_thread_mutex_unlock( &op->o_conn->c_mutex );
 
-	/*
-	 * RACE CONDITION: we give up lock before sending result
+	/* FIXME: RACE CONDITION! we give up lock before sending result
 	 * Should be resolved by reworking connection state, not
 	 * by moving send here (so as to ensure proper TLS sequencing)
 	 */

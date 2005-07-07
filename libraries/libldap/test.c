@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/test.c,v 1.44.2.3 2004/01/01 18:16:30 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/test.c,v 1.50.2.1 2005/01/20 18:03:50 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -587,7 +587,7 @@ main( int argc, char **argv )
 			get_line( dn, sizeof(dn), stdin, "searchbase? " );
 			strcat( dn, dnsuffix );
 			get_line( line, sizeof(line), stdin,
-			    "scope (0=Base, 1=One Level, 2=Subtree)? " );
+			    "scope (0=baseObject, 1=oneLevel, 2=subtree, 3=children)? " );
 			scope = atoi( line );
 			get_line( filter, sizeof(filter), stdin,
 			    "search filter (e.g. sn=jones)? " );
@@ -636,9 +636,14 @@ main( int argc, char **argv )
 				    printf( " <%s>", ludp->lud_attrs[ i ] );
 				}
 			    }
-			    printf( "\n\t scope: %s\n", ludp->lud_scope == LDAP_SCOPE_ONELEVEL ?
-				"ONE" : ludp->lud_scope == LDAP_SCOPE_BASE ? "BASE" :
-				ludp->lud_scope == LDAP_SCOPE_SUBTREE ? "SUB" : "**invalid**" );
+			    printf( "\n\t scope: %s\n",
+					ludp->lud_scope == LDAP_SCOPE_BASE ? "baseObject"
+					: ludp->lud_scope == LDAP_SCOPE_ONELEVEL ? "oneLevel"
+					: ludp->lud_scope == LDAP_SCOPE_SUBTREE ? "subtree"
+#ifdef LDAP_SCOPE_SUBORDINATE
+					: ludp->lud_scope == LDAP_SCOPE_SUBORDINATE ? "children"
+#endif
+					: "**invalid**" );
 			    printf( "\tfilter: <%s>\n", ludp->lud_filter );
 			    ldap_free_urldesc( ludp );
 			}

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblber/memory.c,v 1.53.2.4 2004/04/28 23:27:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/memory.c,v 1.57.2.2 2005/04/29 21:29:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2004 The OpenLDAP Foundation.
+ * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -711,6 +711,32 @@ char *
 ber_strndup( LDAP_CONST char *s, ber_len_t l )
 {
 	return ber_strndup_x( s, l, NULL );
+}
+
+/*
+ * dst is resized as required by src and the value of src is copied into dst
+ * dst->bv_val must be NULL (and dst->bv_len must be 0), or it must be
+ * alloc'ed with the context ctx
+ */
+struct berval *
+ber_bvreplace_x( struct berval *dst, LDAP_CONST struct berval *src, void *ctx )
+{
+	assert( dst != NULL );
+
+	if ( dst->bv_len < src->bv_len ) {
+		dst->bv_val = ber_memrealloc_x( dst->bv_val, src->bv_len + 1, ctx );
+	}
+
+	AC_MEMCPY( dst->bv_val, src->bv_val, src->bv_len + 1 );
+	dst->bv_len = src->bv_len;
+
+	return dst;
+}
+
+struct berval *
+ber_bvreplace( struct berval *dst, LDAP_CONST struct berval *src )
+{
+	return ber_bvreplace_x( dst, src, NULL );
 }
 
 void
