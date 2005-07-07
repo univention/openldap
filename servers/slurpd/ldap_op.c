@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/ldap_op.c,v 1.33.2.11 2003/12/18 03:25:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/ldap_op.c,v 1.43.2.5 2004/01/01 18:16:42 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2003 The OpenLDAP Foundation.
+ * Copyright 1998-2004 The OpenLDAP Foundation.
  * Portions Copyright 2003 Mark Benson.
  * All rights reserved.
  *
@@ -353,7 +353,6 @@ op_ldap_modify(
 	    nvals = 0;
 	    nops++;
 	    break;
-#ifdef LDAP_MOD_INCREMENT
 	case T_MODOPINCREMENT:
 	    state = T_MODOPINCREMENT;
 	    ldmarr = ( LDAPMod ** )
@@ -364,7 +363,6 @@ op_ldap_modify(
 	    nvals = 0;
 	    nops++;
 	    break;
-#endif
 	default:
 	    if ( state == AWAITING_OP ) {
 #ifdef NEW_LOGGING

@@ -1,16 +1,18 @@
-/* $OpenLDAP: pkg/ldap/include/lber.h,v 1.78.2.3 2003/12/02 03:21:34 kurt Exp $ */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, Redwood City, California, USA
+/* $OpenLDAP: pkg/ldap/include/lber.h,v 1.83.2.9 2004/03/17 20:15:31 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 1998-2004 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted only as authorized by the OpenLDAP
- * Public License.  A copy of this license is available at
- * http://www.OpenLDAP.org/license.html or in file LICENSE in the
- * top-level directory of the distribution.
+ * Public License.
+ *
+ * A copy of this license is available in file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
-/* Portions
- * Copyright (c) 1990 Regents of the University of Michigan.
+/* Portions Copyright (c) 1990 Regents of the University of Michigan.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted
@@ -25,6 +27,7 @@
 #define _LBER_H
 
 #include <lber_types.h>
+#include <string.h>
 
 LDAP_BEGIN_DECL
 
@@ -90,6 +93,7 @@ LDAP_BEGIN_DECL
 #define LBER_OPT_BER_REMAINING_BYTES	0x03
 #define LBER_OPT_BER_TOTAL_BYTES		0x04
 #define LBER_OPT_BER_BYTES_TO_WRITE		0x05
+#define LBER_OPT_BER_MEMCTX				0x06
 
 #define LBER_OPT_DEBUG_LEVEL	LBER_OPT_BER_DEBUG
 #define LBER_OPT_REMAINING_BYTES	LBER_OPT_BER_REMAINING_BYTES
@@ -109,16 +113,16 @@ typedef int* (*BER_ERRNO_FN) LDAP_P(( void ));
 
 typedef void (*BER_LOG_PRINT_FN) LDAP_P(( LDAP_CONST char *buf ));
 
-typedef void* (*BER_MEMALLOC_FN)	LDAP_P(( ber_len_t size ));
-typedef void* (*BER_MEMCALLOC_FN)	LDAP_P(( ber_len_t n, ber_len_t size ));
-typedef void* (*BER_MEMREALLOC_FN)	LDAP_P(( void *p, ber_len_t size ));
-typedef void  (*BER_MEMFREE_FN)		LDAP_P(( void *p ));
+typedef void* (BER_MEMALLOC_FN)	LDAP_P(( ber_len_t size, void *ctx ));
+typedef void* (BER_MEMCALLOC_FN)	LDAP_P(( ber_len_t n, ber_len_t size, void *ctx ));
+typedef void* (BER_MEMREALLOC_FN)	LDAP_P(( void *p, ber_len_t size, void *ctx ));
+typedef void  (BER_MEMFREE_FN)		LDAP_P(( void *p, void *ctx ));
 
 typedef struct lber_memory_fns {
-	BER_MEMALLOC_FN	bmf_malloc;
-	BER_MEMCALLOC_FN bmf_calloc;
-	BER_MEMREALLOC_FN bmf_realloc;
-	BER_MEMFREE_FN bmf_free;
+	BER_MEMALLOC_FN	*bmf_malloc;
+	BER_MEMCALLOC_FN *bmf_calloc;
+	BER_MEMREALLOC_FN *bmf_realloc;
+	BER_MEMFREE_FN *bmf_free;
 } BerMemoryFunctions;
 
 /* LBER Sockbuf_IO options */
@@ -148,7 +152,8 @@ typedef struct lber_memory_fns {
 #define LBER_OPT_SOCKBUF_DEBUG		0x1002
 
 /* on/off values */
-#define LBER_OPT_ON		((void *) 1)
+LBER_V( char ) ber_pvt_opt_on;
+#define LBER_OPT_ON		((void *) &ber_pvt_opt_on)
 #define LBER_OPT_OFF	((void *) 0)
 
 #define LBER_OPT_SUCCESS	(0)
@@ -474,6 +479,10 @@ ber_flatten2 LDAP_P((
 	struct berval *bv,
 	int alloc ));
 
+LBER_F( int )
+ber_remaining LDAP_P((
+	BerElement *ber ));
+
 /*
  * LBER ber accessor functions
  */
@@ -525,9 +534,7 @@ LBER_V( Sockbuf_IO ) ber_sockbuf_io_tcp;
 LBER_V( Sockbuf_IO ) ber_sockbuf_io_readahead;
 LBER_V( Sockbuf_IO ) ber_sockbuf_io_fd;
 LBER_V( Sockbuf_IO ) ber_sockbuf_io_debug;
-#ifdef LDAP_CONNECTIONLESS
 LBER_V( Sockbuf_IO ) ber_sockbuf_io_udp;
-#endif
 
 /*
  * LBER memory.c
@@ -576,15 +583,15 @@ ber_bvdup LDAP_P((
 	struct berval *src ));
 
 LBER_F( struct berval * )
-ber_str2bv LDAP_P((
-	LDAP_CONST char *, ber_len_t len, int dup, struct berval *bv));
-
-LBER_F( struct berval * )
 ber_mem2bv LDAP_P((
 	LDAP_CONST char *, ber_len_t len, int dup, struct berval *bv));
 
-#define	ber_bvstr(a)	ber_str2bv(a, 0, 0, NULL)
-#define	ber_bvstrdup(a)	ber_str2bv(a, 0, 1, NULL)
+LBER_F( struct berval * )
+ber_str2bv LDAP_P((
+	LDAP_CONST char *, ber_len_t len, int dup, struct berval *bv));
+
+#define	ber_bvstr(a)	((ber_str2bv)((a), 0, 0, NULL))
+#define	ber_bvstrdup(a)	((ber_str2bv)((a), 0, 1, NULL))
 
 LBER_F( char * )
 ber_strdup LDAP_P((

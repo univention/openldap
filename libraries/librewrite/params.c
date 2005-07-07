@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/params.c,v 1.3.2.3 2004/03/06 16:10:31 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/params.c,v 1.3.4.3 2004/01/01 18:16:32 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.

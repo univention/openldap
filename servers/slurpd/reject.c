@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/reject.c,v 1.7.2.7 2003/12/18 03:25:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/reject.c,v 1.14.2.3 2004/01/01 18:16:42 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2003 The OpenLDAP Foundation.
+ * Copyright 1998-2004 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -108,11 +108,11 @@ write_reject(
 #endif
     } else {
 	fseek( rfp, 0, 2 );
-	if ( errmsg != NULL ) {
-	    fprintf( rfp, "%s: %s\n", ERROR_STR, errmsg );
-	} else {
-	    fprintf( rfp, "%s: %s\n", ERROR_STR, ldap_err2string( lderr ));
+	fprintf( rfp, "%s: %s", ERROR_STR, ldap_err2string( lderr ));
+	if ( errmsg && *errmsg ) {
+	    fprintf( rfp, ": %s", errmsg );
 	}
+	fprintf( rfp, "\n" );
 	if ((rc = re->re_write( ri, re, rfp )) < 0 ) {
 #ifdef NEW_LOGGING
 		LDAP_LOG ( SLURPD, ERR, "write_reject: "

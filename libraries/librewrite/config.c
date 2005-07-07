@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/config.c,v 1.4.2.4 2004/03/06 16:10:31 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/config.c,v 1.5.2.4 2004/01/01 18:16:32 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -39,7 +39,7 @@ rewrite_parse_builtin_map(
  * lines handled are of the form:
  *
  *      rewriteEngine 		{on|off}
- *      rewriteMaxPasses        numPasses
+ *      rewriteMaxPasses        numPasses [numPassesPerRule]
  *      rewriteContext 		contextName [alias aliasedContextName]
  *      rewriteRule 		pattern substPattern [ruleFlags]
  *      rewriteMap 		mapType mapName [mapArgs]
@@ -103,7 +103,25 @@ rewrite_parse(
 					fname, lineno, "" );
 			return -1;
 		}
+
 		info->li_max_passes = atoi( argv[ 1 ] );
+		if ( info->li_max_passes <= 0 ) {
+			Debug( LDAP_DEBUG_ANY,
+					"[%s:%d] negative or null rewriteMaxPasses'\n",
+					fname, lineno, 0 );
+		}
+
+		if ( argc > 2 ) {
+			info->li_max_passes_per_rule = atoi( argv[ 2 ] );
+			if ( info->li_max_passes_per_rule <= 0 ) {
+				Debug( LDAP_DEBUG_ANY,
+						"[%s:%d] negative or null rewriteMaxPassesPerRule'\n",
+						fname, lineno, 0 );
+			}
+
+		} else {
+			info->li_max_passes_per_rule = info->li_max_passes;
+		}
 		rc = REWRITE_SUCCESS;
 	
 	/*

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/config.c,v 1.25.2.6 2003/12/18 03:25:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/config.c,v 1.30.2.8 2004/03/25 22:57:56 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2003 The OpenLDAP Foundation.
+ * Copyright 1998-2004 The OpenLDAP Foundation.
  * Portions Copyright 2003 Mark Benson.
  * Portions Copyright 2002 John Morrissey.
  * All rights reserved.
@@ -47,6 +47,7 @@
 #include <ac/ctype.h>
 
 #include <ldap.h>
+#include <lutil.h>
 
 #include "slurp.h"
 #include "globals.h"
@@ -141,6 +142,7 @@ slurpd_read_config(
 			lineno, cargv[1] );
 		    fprintf( stderr, "line (ignored)\n" );
 		}
+		LUTIL_SLASHPATH( cargv[1] );
 		strcpy( sglob->slapd_replogfile, cargv[1] );
 	    }
 	} else if ( strcasecmp( cargv[0], "replica" ) == 0 ) {
@@ -164,6 +166,7 @@ slurpd_read_config(
 		
                 return( 1 );
             }
+	    LUTIL_SLASHPATH( cargv[1] );
 	    savefname = strdup( cargv[1] );
 	    savelineno = lineno;
 	    
@@ -189,6 +192,7 @@ slurpd_read_config(
 			return( 1 );
 		}
 
+		LUTIL_SLASHPATH( cargv[1] );
 		slurpd_pid_file = ch_strdup( cargv[1] );
 
 	} else if ( strcasecmp( cargv[0], "replica-argsfile" ) == 0 ) {
@@ -207,8 +211,41 @@ slurpd_read_config(
 			return( 1 );
 		}
 
+		LUTIL_SLASHPATH( cargv[1] );
 		slurpd_args_file = ch_strdup( cargv[1] );
-	}
+
+		} else if ( strcasecmp( cargv[0], "replicationinterval" ) == 0 ) {
+			int c;
+			if ( cargc < 2 ) {
+#ifdef NEW_LOGGING
+				LDAP_LOG( CONFIG, CRIT, "%s: %d: missing interval in "
+					"\"replicationinterval <seconds>\" line.\n",
+					fname, lineno, 0 );
+#else
+				Debug( LDAP_DEBUG_ANY, "%s: line %d: missing interval in "
+					"\"replicationinterval <seconds>\" line\n",
+					fname, lineno, 0 );
+#endif
+				return( 1 );
+			}
+
+			c = atoi( cargv[1] );
+			if( c < 1 ) {
+#ifdef NEW_LOGGING
+				LDAP_LOG( CONFIG, CRIT, "%s: line %d: invalid interval "
+					"(%d) in \"replicationinterval <seconds>\" line\n",
+					fname, lineno, c );
+#else
+				Debug( LDAP_DEBUG_ANY, "%s: line %d: invalid interval "
+					"(%d) in \"replicationinterval <seconds>\" line\n",
+					fname, lineno, c );
+#endif
+
+				return( 1 );
+			}
+
+			sglob->no_work_interval = c;
+		}
     }
     fclose( fp );
 #ifdef NEW_LOGGING

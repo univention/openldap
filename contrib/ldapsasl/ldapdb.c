@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/contrib/ldapsasl/ldapdb.c,v 1.1.2.7 2003/11/29 22:10:03 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/ldapsasl/ldapdb.c,v 1.5.2.3 2003/12/01 00:56:52 kurt Exp $ */
 /* SASL LDAP auxprop implementation
  * Copyright (C) 2002,2003 Howard Chu, All rights reserved. <hyc@symas.com>
  *

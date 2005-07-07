@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/rewrite.c,v 1.5.2.4 2004/03/06 16:10:31 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/rewrite.c,v 1.6.2.5 2004/06/28 18:19:47 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -30,6 +30,7 @@
 #include <stdio.h>
 
 #include <rewrite.h>
+#include <ldap.h>
 
 int ldap_debug;
 int ldap_syslog;
@@ -62,6 +63,8 @@ apply(
 			rewriteContext != NULL;
 			rewriteContext = sep,
 			sep ? sep = strchr( rewriteContext, ',' ) : NULL ) {
+		char	*errmsg = "";
+
 		if ( sep != NULL ) {
 			sep[ 0 ] = '\0';
 			sep++;
@@ -70,8 +73,35 @@ apply(
 		rc = rewrite_session( info, rewriteContext, string,
 				cookie, &result );
 		
-		fprintf( stdout, "%s -> %s\n", string, 
-				( result ? result : "unwilling to perform" ) );
+		switch ( rc ) {
+		case REWRITE_REGEXEC_OK:
+			errmsg = "ok";
+			break;
+
+		case REWRITE_REGEXEC_ERR:
+			errmsg = "error";
+			break;
+
+		case REWRITE_REGEXEC_STOP:
+			errmsg = "stop";
+			break;
+
+		case REWRITE_REGEXEC_UNWILLING:
+			errmsg = "unwilling to perform";
+			break;
+
+		default:
+			if (rc >= REWRITE_REGEXEC_USER) {
+				errmsg = "user-defined";
+			} else {
+				errmsg = "unknown";
+			}
+			break;
+		}
+		
+		fprintf( stdout, "%s -> %s [%d:%s]\n", string, 
+				( result ? result : "(null)" ),
+				rc, errmsg );
 		if ( result == NULL ) {
 			break;
 		}
@@ -91,17 +121,28 @@ apply(
 int
 main( int argc, char *argv[] )
 {
-	FILE *fin = NULL;
-	char *rewriteContext = REWRITE_DEFAULT_CONTEXT;
+	FILE	*fin = NULL;
+	char	*rewriteContext = REWRITE_DEFAULT_CONTEXT;
+	int	debug = 0;
+	char	*next;
 
 	while ( 1 ) {
-		int opt = getopt( argc, argv, "f:hr:" );
+		int opt = getopt( argc, argv, "d:f:hr:" );
 
 		if ( opt == EOF ) {
 			break;
 		}
 
 		switch ( opt ) {
+		case 'd':
+			debug = strtol( optarg, &next, 10 );
+			if ( next == NULL || next[0] != '\0' ) {
+				fprintf( stderr, "illegal log level '%s'\n",
+						optarg );
+				exit( EXIT_FAILURE );
+			}
+			break;
+
 		case 'f':
 			fin = fopen( optarg, "r" );
 			if ( fin == NULL ) {
@@ -130,6 +171,11 @@ main( int argc, char *argv[] )
 			rewriteContext = optarg;
 			break;
 		}
+	}
+	
+	if ( debug != 0 ) {
+		ber_set_option(NULL, LBER_OPT_DEBUG_LEVEL, &debug);
+		ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, &debug);
 	}
 	
 	if ( optind >= argc ) {

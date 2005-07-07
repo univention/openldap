@@ -1,8 +1,17 @@
 /* dbcache.c - manage cache of open databases */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dbcache.c,v 1.15.2.8 2003/11/29 12:59:10 hyc Exp $ */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dbcache.c,v 1.28.2.5 2004/02/23 22:08:06 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 2000-2004 The OpenLDAP Foundation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
 
 #include "portable.h"
@@ -19,6 +28,7 @@
 #include "back-bdb.h"
 #include "lutil_hash.h"
 
+#ifdef BDB_INDEX_USE_HASH
 /* Pass-thru hash function. Since the indexer is already giving us hash
  * values as keys, we don't need BDB to re-hash them.
  */
@@ -42,6 +52,10 @@ bdb_db_hash(
 	}
 	return ret;
 }
+#define	BDB_INDEXTYPE	DB_HASH
+#else
+#define	BDB_INDEXTYPE	DB_BTREE
+#endif
 
 int
 bdb_db_cache(
@@ -57,7 +71,7 @@ bdb_db_cache(
 
 	*dbout = NULL;
 
-	for( i=BDB_NDB; bdb->bi_databases[i]; i++ ) {
+	for( i=BDB_NDB; i < bdb->bi_ndatabases; i++ ) {
 		if( !strcmp( bdb->bi_databases[i]->bdi_name, name) ) {
 			*dbout = bdb->bi_databases[i]->bdi_db;
 			return 0;
@@ -67,7 +81,7 @@ bdb_db_cache(
 	ldap_pvt_thread_mutex_lock( &bdb->bi_database_mutex );
 
 	/* check again! may have been added by another thread */
-	for( i=BDB_NDB; bdb->bi_databases[i]; i++ ) {
+	for( i=BDB_NDB; i < bdb->bi_ndatabases; i++ ) {
 		if( !strcmp( bdb->bi_databases[i]->bdi_name, name) ) {
 			*dbout = bdb->bi_databases[i]->bdi_db;
 			ldap_pvt_thread_mutex_unlock( &bdb->bi_database_mutex );
@@ -100,7 +114,9 @@ bdb_db_cache(
 	}
 
 	rc = db->bdi_db->set_pagesize( db->bdi_db, BDB_PAGESIZE );
+#ifdef BDB_INDEX_USE_HASH
 	rc = db->bdi_db->set_h_hash( db->bdi_db, bdb_db_hash );
+#endif
 	rc = db->bdi_db->set_flags( db->bdi_db, DB_DUP | DB_DUPSORT );
 	rc = db->bdi_db->set_dup_compare( db->bdi_db, bdb_bt_compare );
 
@@ -111,8 +127,8 @@ bdb_db_cache(
 	__atoe( file );
 #endif
 	rc = DB_OPEN( db->bdi_db,
-		file, name,
-		DB_HASH, bdb->bi_db_opflags | DB_CREATE | DB_THREAD,
+		file, NULL /* name */,
+		BDB_INDEXTYPE, bdb->bi_db_opflags | DB_CREATE | DB_THREAD,
 		bdb->bi_dbenv_mode );
 
 	ch_free( file );
@@ -131,7 +147,6 @@ bdb_db_cache(
 		return rc;
 	}
 
-	bdb->bi_databases[i+1] = NULL;
 	bdb->bi_databases[i] = db;
 	bdb->bi_ndatabases = i+1;
 

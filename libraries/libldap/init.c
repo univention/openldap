@@ -1,8 +1,18 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/init.c,v 1.76.2.5 2003/12/02 17:31:54 kurt Exp $ */
-/*
- * Copyright 1998-2003 The OpenLDAP Foundation, All Rights Reserved.
- * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+/* $OpenLDAP: pkg/ldap/libraries/libldap/init.c,v 1.82.2.5 2004/09/07 22:34:42 kurt Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 1998-2004 The OpenLDAP Foundation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
  */
+
 #include "portable.h"
 
 #include <stdio.h>
@@ -81,13 +91,13 @@ static const struct ol_attribute {
 #endif
 
 #ifdef HAVE_TLS
-  	{0, ATTR_TLS,		"TLS",			NULL,	LDAP_OPT_X_TLS},
-	{1, ATTR_TLS,		"TLS_CERT",		NULL,	LDAP_OPT_X_TLS_CERTFILE},
-	{1, ATTR_TLS,		"TLS_KEY",		NULL,	LDAP_OPT_X_TLS_KEYFILE},
-  	{0, ATTR_TLS,		"TLS_CACERT",	NULL,	LDAP_OPT_X_TLS_CACERTFILE},
-  	{0, ATTR_TLS,		"TLS_CACERTDIR",NULL,	LDAP_OPT_X_TLS_CACERTDIR},
-  	{0, ATTR_TLS,		"TLS_REQCERT",	NULL,	LDAP_OPT_X_TLS_REQUIRE_CERT},
-	{0, ATTR_TLS,		"TLS_RANDFILE",	NULL,	LDAP_OPT_X_TLS_RANDOM_FILE},
+	{1, ATTR_TLS,	"TLS_CERT",			NULL,	LDAP_OPT_X_TLS_CERTFILE},
+	{1, ATTR_TLS,	"TLS_KEY",			NULL,	LDAP_OPT_X_TLS_KEYFILE},
+  	{0, ATTR_TLS,	"TLS_CACERT",		NULL,	LDAP_OPT_X_TLS_CACERTFILE},
+  	{0, ATTR_TLS,	"TLS_CACERTDIR",	NULL,	LDAP_OPT_X_TLS_CACERTDIR},
+  	{0, ATTR_TLS,	"TLS_REQCERT",		NULL,	LDAP_OPT_X_TLS_REQUIRE_CERT},
+	{0, ATTR_TLS,	"TLS_RANDFILE",		NULL,	LDAP_OPT_X_TLS_RANDOM_FILE},
+	{0, ATTR_TLS,	"TLS_CIPHER_SUITE",	NULL,	LDAP_OPT_X_TLS_CIPHER_SUITE},
 #endif
 
 	{0, ATTR_NONE,		NULL,		NULL,	0}
@@ -398,7 +408,8 @@ static void
 ldap_int_destroy_global_options(void)
 {
 	struct ldapoptions *gopts = LDAP_INT_GLOBAL_OPT();
-    gopts->ldo_valid = LDAP_UNINITIALIZED;
+
+	gopts->ldo_valid = LDAP_UNINITIALIZED;
 
 	if ( gopts->ldo_defludp ) {
 		ldap_free_urllist( gopts->ldo_defludp );
@@ -601,6 +612,4 @@ void ldap_int_initialize( struct ldapoptions *gopts, int *dbglvl )
 	}
 
 	openldap_ldap_init_w_env(gopts, NULL);
-
-	ldap_int_sasl_init();
 }

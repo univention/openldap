@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/context.c,v 1.4.2.4 2004/03/06 16:10:31 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/context.c,v 1.5.2.5 2004/07/25 20:49:24 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2004 The OpenLDAP Foundation.
@@ -218,10 +218,10 @@ rewrite_context_apply(
 	assert( op->lo_depth > 0 );
 
 	Debug( LDAP_DEBUG_TRACE, "==> rewrite_context_apply"
-			" [depth=%d] string='%s'\n%s",
-			op->lo_depth, string, "" );
+			" [depth=%d] string='%s'\n",
+			op->lo_depth, string, 0 );
 	
-	s = strdup( string );
+	s = (char *)string;
 	
 	for ( rule = context->lc_rule->lr_next;
 			rule != NULL && op->lo_num_passes < info->li_max_passes;
@@ -296,7 +296,7 @@ rewrite_context_apply(
 
 				if ( do_continue ) {
 					if ( rule->lr_next == NULL ) {
-						res = s;
+						res = ( s == string ? strdup( s ) : s );
 					}
 					goto rc_continue;
 				}
@@ -321,7 +321,9 @@ rewrite_context_apply(
 			if ( res != NULL ) {
 				struct rewrite_action *action;
 				
-				free( s );
+				if (s != string ) {
+					free( s );
+				}
 				s = res;
 
 				for ( action = rule->lr_action;
@@ -357,6 +359,15 @@ rewrite_context_apply(
 							goto rc_end_of_context;
 						}
 						break;
+
+					/*
+					 * This ends the rewrite context
+					 * and returns a user-defined
+					 * error code
+					 */
+					case REWRITE_ACTION_USER:
+						return_code = ((int *)action->la_args)[ 0 ];
+						goto rc_end_of_context;
 					
 					default:
 						/* ... */
@@ -370,7 +381,7 @@ rewrite_context_apply(
 			 * result back to the string
 			 */
 			} else if ( rule->lr_next == NULL ) {
-				res = s;
+				res = ( s == string ? strdup( s ) : s );
 			}
 			
 			break;
@@ -385,8 +396,15 @@ rewrite_context_apply(
 		 * This will instruct the server to return
 		 * an `unwilling to perform' error message
 		 */
-		 case REWRITE_REGEXEC_UNWILLING:
+		case REWRITE_REGEXEC_UNWILLING:
 			return_code = REWRITE_REGEXEC_UNWILLING;
+			goto rc_end_of_context;
+
+		/*
+		 * A user-defined error code has propagated ...
+		 */
+		default:
+			assert( rc >= REWRITE_REGEXEC_USER );
 			goto rc_end_of_context;
 
 		}
