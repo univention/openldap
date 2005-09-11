@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/modify.c,v 1.31.2.4 2005/06/13 20:28:24 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/modify.c,v 1.31.2.5 2005/08/09 21:04:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -65,7 +65,6 @@ backsql_modify( Operation *op, SlapReply *rs )
 	bsi.bsi_e = &m;
 	rs->sr_err = backsql_init_search( &bsi, &op->o_req_ndn,
 			LDAP_SCOPE_BASE, 
-			SLAP_NO_LIMIT, SLAP_NO_LIMIT,
 			(time_t)(-1), NULL, dbh, op, rs,
 			slap_anlist_all_attributes,
 			( BACKSQL_ISF_MATCHED | BACKSQL_ISF_GET_ENTRY ) );
@@ -151,7 +150,7 @@ backsql_modify( Operation *op, SlapReply *rs )
 			goto do_transact;
 		}
 
-		rs->sr_err = entry_schema_check( op->o_bd, &m, NULL, 0,
+		rs->sr_err = entry_schema_check( op, &m, NULL, 0,
 			&rs->sr_text, textbuf, sizeof( textbuf ) );
 		if ( rs->sr_err != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_TRACE, "   backsql_add(\"%s\"): "

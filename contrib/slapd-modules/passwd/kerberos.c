@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/kerberos.c,v 1.2.2.1 2005/01/20 18:03:46 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/kerberos.c,v 1.2.2.2 2005/08/09 16:41:27 kurt Exp $ */
 /*
  * Copyright 1998-2005 The OpenLDAP Foundation.
  * All rights reserved.
@@ -12,12 +12,12 @@
  * <http://www.OpenLDAP.org/license.html>.
  */
 
-#include <string.h>
 #include <unistd.h>
 
 #include <lber.h>
 #include <lber_pvt.h>	/* BER_BVC definition */
 #include "lutil.h"
+#include <ac/string.h>
 
 #ifdef HAVE_KRB5
 #include <krb5.h>

@@ -1,5 +1,5 @@
 /* common.c - common routines for the ldap client tools */
-/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.39.2.5 2005/06/03 19:12:00 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.39.2.6 2005/08/09 16:41:26 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -31,6 +31,14 @@
 #include <ac/string.h>
 #include <ac/unistd.h>
 #include <ac/errno.h>
+
+#ifdef HAVE_CYRUS_SASL
+#ifdef HAVE_SASL_SASL_H
+#include <sasl/sasl.h>
+#else
+#include <sasl.h>
+#endif
+#endif
 
 #include <ldap.h>
 
@@ -709,6 +717,9 @@ tool_args( int argc, char **argv )
 				LDAP_VENDOR_NAME, LDAP_VENDOR_VERSION );
 			if (version > 1) exit( EXIT_SUCCESS );
 		}
+
+		ldap_memfree( api.ldapai_vendor_name );
+		ldap_value_free( api.ldapai_extensions );
 	}
 
 	if (protocol == -1)
@@ -963,6 +974,9 @@ tool_bind( LDAP *ld )
 			}
 		}
 #endif
+		if ( ctrls ) {
+			ldap_controls_free( ctrls );
+		}
 		if ( err != LDAP_SUCCESS || msgbuf[0] ) {
 			fprintf( stderr, "ldap_bind: %s%s\n", ldap_err2string( err ),
 				msgbuf );

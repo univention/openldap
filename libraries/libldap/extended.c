@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/extended.c,v 1.32.2.2 2005/03/14 22:24:57 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/extended.c,v 1.32.2.3 2005/08/10 21:57:16 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -210,7 +210,7 @@ ldap_parse_extended_result (
 		return ld->ld_errno;
 	}
 
-	rc = ber_scanf( ber, "{iaa" /*}*/, &errcode,
+	rc = ber_scanf( ber, "{eaa" /*}*/, &errcode,
 		&ld->ld_matched, &ld->ld_error );
 
 	if( rc == LBER_ERROR ) {

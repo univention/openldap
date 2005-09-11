@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/tpool.c,v 1.30.2.3 2005/04/29 21:29:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/tpool.c,v 1.30.2.7 2005/09/01 16:16:51 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -29,12 +29,12 @@
 
 #ifndef LDAP_THREAD_HAVE_TPOOL
 
-enum ldap_int_thread_pool_state {
+typedef enum ldap_int_thread_pool_state_e {
 	LDAP_INT_THREAD_POOL_RUNNING,
 	LDAP_INT_THREAD_POOL_FINISHING,
 	LDAP_INT_THREAD_POOL_STOPPING,
-	LDAP_INT_THREAD_POOL_PAUSING,
-};
+	LDAP_INT_THREAD_POOL_PAUSING
+} ldap_int_thread_pool_state_t;
 
 typedef struct ldap_int_thread_key_s {
 	void *ltk_key;
@@ -79,7 +79,7 @@ struct ldap_int_thread_pool_s {
 	LDAP_STAILQ_HEAD(tcq, ldap_int_thread_ctx_s) ltp_pending_list;
 	LDAP_SLIST_HEAD(tcl, ldap_int_thread_ctx_s) ltp_free_list;
 	LDAP_SLIST_HEAD(tclq, ldap_int_thread_ctx_s) ltp_active_list;
-	long ltp_state;
+	ldap_int_thread_pool_state_t ltp_state;
 	long ltp_max_count;
 	long ltp_max_pending;
 	long ltp_pending_count;
@@ -96,9 +96,15 @@ static ldap_pvt_thread_mutex_t ldap_pvt_thread_pool_mutex;
 
 static void *ldap_int_thread_pool_wrapper( void *pool );
 
+static ldap_pvt_thread_t ldap_int_main_tid;
+
+static ldap_int_thread_key_t ldap_int_main_thrctx[LDAP_MAXTHR];
+
 int
 ldap_int_thread_pool_startup ( void )
 {
+	ldap_int_main_tid = ldap_pvt_thread_self();
+
 	return ldap_pvt_thread_mutex_init(&ldap_pvt_thread_pool_mutex);
 }
 
@@ -187,7 +193,7 @@ ldap_pvt_thread_pool_init (
 	return(0);
 }
 
-#define	TID_HASH(tid, hash) do { int i; \
+#define	TID_HASH(tid, hash) do { unsigned i; \
 	unsigned char *ptr = (unsigned char *)&(tid); \
 	for (i=0, hash=0; i<sizeof(tid); i++) hash += ptr[i]; } while(0)
 
@@ -222,7 +228,6 @@ ldap_pvt_thread_pool_submit (
 	if (ctx) {
 		LDAP_SLIST_REMOVE_HEAD(&pool->ltp_free_list, ltc_next.l);
 	} else {
-		int i;
 		ctx = (ldap_int_thread_ctx_t *) LDAP_MALLOC(
 			sizeof(ldap_int_thread_ctx_t));
 		if (ctx == NULL) {
@@ -464,8 +469,11 @@ ldap_int_thread_pool_wrapper (
 			 *       check timer, leave thread (break;)
 			 */
 
-			if (pool->ltp_state == LDAP_INT_THREAD_POOL_RUNNING)
+			if (pool->ltp_state == LDAP_INT_THREAD_POOL_RUNNING
+				|| pool->ltp_state == LDAP_INT_THREAD_POOL_PAUSING)
+			{
 				ldap_pvt_thread_cond_wait(&pool->ltp_cond, &pool->ltp_mutex);
+			}
 
 			continue;
 		}
@@ -535,7 +543,7 @@ ldap_pvt_thread_pool_pause (
 	ldap_pvt_thread_mutex_lock(&pool->ltp_mutex);
 
 	/* If someone else has already requested a pause, we have to wait */
-	if (pool->ltp_state == LDAP_INT_THREAD_POOL_PAUSING) {
+	while (pool->ltp_state == LDAP_INT_THREAD_POOL_PAUSING) {
 		pool->ltp_pending_count++;
 		pool->ltp_active_count--;
 		ldap_pvt_thread_cond_wait(&pool->ltp_cond, &pool->ltp_mutex);
@@ -653,6 +661,8 @@ void *ldap_pvt_thread_pool_context( )
 	int i, hash;
 
 	tid = ldap_pvt_thread_self();
+	if ( TID_EQ( tid, ldap_int_main_tid ))
+		return ldap_int_main_thrctx;
 
 	TID_HASH( tid, hash );
 	for (i = hash & (LDAP_MAXTHR-1); !TID_EQ(thread_keys[i].id, tid_zero) &&
@@ -661,4 +671,15 @@ void *ldap_pvt_thread_pool_context( )
 	return thread_keys[i].ctx;
 }
 
+void ldap_pvt_thread_pool_context_reset( void *vctx )
+{
+	ldap_int_thread_key_t *ctx = vctx;
+	int i;
+
+	for ( i=0; i<MAXKEYS && ctx[i].ltk_key; i++) {
+		if ( ctx[i].ltk_free )
+			ctx[i].ltk_free( ctx[i].ltk_key, ctx[i].ltk_data );
+		ctx[i].ltk_key = NULL;
+	}
+}
 #endif /* LDAP_THREAD_HAVE_TPOOL */

@@ -1,5 +1,5 @@
 /* phonetic.c - routines to do phonetic matching */
-/* $OpenLDAP: pkg/ldap/servers/slapd/phonetic.c,v 1.19.2.1 2005/01/20 18:03:55 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/phonetic.c,v 1.19.2.2 2005/08/09 21:03:59 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -43,6 +43,7 @@
 			 ispunct((unsigned char) (x)) || \
 			 isdigit((unsigned char) (x)) || (x) == '\0')
 
+#if 0
 static char *
 first_word( char *s )
 {
@@ -98,6 +99,7 @@ word_dup( char *w )
 
 	return( ret );
 }
+#endif /* 0 */
 
 #ifndef MAXPHONEMELEN
 #define MAXPHONEMELEN	4

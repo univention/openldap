@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/bind.c,v 1.28.2.2 2005/06/03 19:54:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/bind.c,v 1.28.2.3 2005/08/09 21:04:05 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -76,7 +76,6 @@ backsql_bind( Operation *op, SlapReply *rs )
 
 	bsi.bsi_e = &e;
 	rc = backsql_init_search( &bsi, &op->o_req_ndn, LDAP_SCOPE_BASE, 
-			SLAP_NO_LIMIT, SLAP_NO_LIMIT,
 			(time_t)(-1), NULL, dbh, op, rs, anlist,
 			BACKSQL_ISF_GET_ENTRY );
 	if ( rc != LDAP_SUCCESS ) {

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/ldif.h,v 1.23.2.4 2005/05/18 16:29:20 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldif.h,v 1.23.2.5 2005/07/10 04:36:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -90,7 +90,7 @@ typedef struct LDIFFP {
 } LDIFFP;
 
 LDAP_LDIF_F( LDIFFP * )
-ldif_open LDAP_P(( char *file, char *mode ));
+ldif_open LDAP_P(( LDAP_CONST char *file, LDAP_CONST char *mode ));
 
 LDAP_LDIF_F( void )
 ldif_close LDAP_P(( LDIFFP * ));

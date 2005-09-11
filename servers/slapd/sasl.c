@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.212.2.7 2005/06/08 21:50:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.212.2.11 2005/08/19 18:09:04 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -147,7 +147,7 @@ slap_sasl_log(
 static const char *slap_propnames[] = {
 	"*slapConn", "*slapAuthcDN", "*slapAuthzDN", NULL };
 
-static Filter generic_filter = { LDAP_FILTER_PRESENT };
+static Filter generic_filter = { LDAP_FILTER_PRESENT, { 0 }, NULL };
 static struct berval generic_filterstr = BER_BVC("(objectclass=*)");
 
 #define	PROP_CONN	0
@@ -162,6 +162,8 @@ typedef struct lookup_info {
 } lookup_info;
 
 static slap_response sasl_ap_lookup;
+
+static struct berval sc_cleartext = BER_BVC("{CLEARTEXT}");
 
 static int
 sasl_ap_lookup( Operation *op, SlapReply *rs )
@@ -200,6 +202,14 @@ sasl_ap_lookup( Operation *op, SlapReply *rs )
 				"slap_ap_lookup: str2ad(%s): %s\n", name, text, 0 );
 			continue;
 		}
+
+		/* If it's the rootdn and a rootpw was present, we already set
+		 * it so don't override it here.
+		 */
+		if ( ad == slap_schema.si_ad_userPassword && sl->list[i].values && 
+			be_isroot_dn( op->o_bd, &op->o_req_ndn ))
+			continue;
+
 		a = attr_find( rs->sr_entry->e_attrs, ad );
 		if ( !a ) continue;
 		if ( ! access_allowed( op, rs->sr_entry, ad, NULL, ACL_AUTH, NULL ) ) {
@@ -210,6 +220,34 @@ sasl_ap_lookup( Operation *op, SlapReply *rs )
 			sl->list[i].name );
 		}
 		for ( bv = a->a_vals; bv->bv_val; bv++ ) {
+			/* ITS#3846 don't give hashed passwords to SASL */
+			if ( ad == slap_schema.si_ad_userPassword &&
+				bv->bv_val[0] == '{' ) {
+				rc = lutil_passwd_scheme( bv->bv_val );
+				if ( rc ) {
+					/* If it's not a recognized scheme, just assume it's
+					 * a cleartext password that happened to include brackets.
+					 *
+					 * If it's a recognized scheme, skip this value, unless the
+					 * scheme is {CLEARTEXT}. In that case, skip over the
+					 * scheme name and use the remainder. If there is nothing
+					 * past the scheme name, skip this value.
+					 */
+#ifdef SLAPD_CLEARTEXT
+					if ( !strncasecmp( bv->bv_val, sc_cleartext.bv_val,
+						sc_cleartext.bv_len )) {
+						struct berval cbv;
+						cbv.bv_len = bv->bv_len - sc_cleartext.bv_len;
+						if ( cbv.bv_len ) {
+							cbv.bv_val = bv->bv_val + sc_cleartext.bv_len;
+							sl->sparams->utils->prop_set( sl->sparams->propctx,
+								sl->list[i].name, cbv.bv_val, cbv.bv_len );
+						}
+					}
+#endif
+					continue;
+				}
+			}
 			sl->sparams->utils->prop_set( sl->sparams->propctx,
 				sl->list[i].name, bv->bv_val, bv->bv_len );
 		}
@@ -288,26 +326,69 @@ slap_auxprop_lookup(
 
 		op.o_bd = select_backend( &op.o_req_ndn, 0, 1 );
 
-		if ( op.o_bd && op.o_bd->be_search ) {
-			SlapReply rs = {REP_RESULT};
-			op.o_hdr = conn->c_sasl_bindop->o_hdr;
-			op.o_tag = LDAP_REQ_SEARCH;
-			op.o_ndn = conn->c_ndn;
-			op.o_callback = &cb;
-			op.o_time = slap_get_time();
-			op.o_do_not_cache = 1;
-			op.o_is_auth_check = 1;
-			op.o_req_dn = op.o_req_ndn;
-			op.ors_scope = LDAP_SCOPE_BASE;
-			op.ors_deref = LDAP_DEREF_NEVER;
-			op.ors_tlimit = SLAP_NO_LIMIT;
-			op.ors_slimit = 1;
-			op.ors_filter = &generic_filter;
-			op.ors_filterstr = generic_filterstr;
-			/* FIXME: we want all attributes, right? */
-			op.ors_attrs = NULL;
+		if ( op.o_bd ) {
+			/* For rootdn, see if we can use the rootpw */
+			if ( be_isroot_dn( op.o_bd, &op.o_req_ndn ) &&
+				!BER_BVISEMPTY( &op.o_bd->be_rootpw )) {
+				struct berval cbv = BER_BVNULL;
 
-			op.o_bd->be_search( &op, &rs );
+				/* If there's a recognized scheme, see if it's CLEARTEXT */
+				if ( lutil_passwd_scheme( op.o_bd->be_rootpw.bv_val )) {
+					if ( !strncasecmp( op.o_bd->be_rootpw.bv_val,
+						sc_cleartext.bv_val, sc_cleartext.bv_len )) {
+
+						/* If it's CLEARTEXT, skip past scheme spec */
+						cbv.bv_len = op.o_bd->be_rootpw.bv_len -
+							sc_cleartext.bv_len;
+						if ( cbv.bv_len ) {
+							cbv.bv_val = op.o_bd->be_rootpw.bv_val +
+								sc_cleartext.bv_len;
+						}
+					}
+				/* No scheme, use the whole value */
+				} else {
+					cbv = op.o_bd->be_rootpw;
+				}
+				if ( !BER_BVISEMPTY( &cbv )) {
+					for( i = 0; sl.list[i].name; i++ ) {
+						const char *name = sl.list[i].name;
+
+						if ( name[0] == '*' ) {
+							if ( flags & SASL_AUXPROP_AUTHZID ) continue;
+								name++;
+						} else if ( !(flags & SASL_AUXPROP_AUTHZID ) )
+							continue;
+
+						if ( !strcasecmp(name,"userPassword") ) {
+							sl.sparams->utils->prop_set( sl.sparams->propctx,
+								sl.list[i].name, cbv.bv_val, cbv.bv_len );
+							break;
+						}
+					}
+				}
+			}
+
+			if ( op.o_bd->be_search ) {
+				SlapReply rs = {REP_RESULT};
+				op.o_hdr = conn->c_sasl_bindop->o_hdr;
+				op.o_tag = LDAP_REQ_SEARCH;
+				op.o_ndn = conn->c_ndn;
+				op.o_callback = &cb;
+				op.o_time = slap_get_time();
+				op.o_do_not_cache = 1;
+				op.o_is_auth_check = 1;
+				op.o_req_dn = op.o_req_ndn;
+				op.ors_scope = LDAP_SCOPE_BASE;
+				op.ors_deref = LDAP_DEREF_NEVER;
+				op.ors_tlimit = SLAP_NO_LIMIT;
+				op.ors_slimit = 1;
+				op.ors_filter = &generic_filter;
+				op.ors_filterstr = generic_filterstr;
+				/* FIXME: we want all attributes, right? */
+				op.ors_attrs = NULL;
+
+				op.o_bd->be_search( &op, &rs );
+			}
 		}
 	}
 }
@@ -409,7 +490,7 @@ slap_auxprop_store(
 			}
 		}
 	}
-	slap_mods_free( modlist );
+	slap_mods_free( modlist, 1 );
 	return rc != LDAP_SUCCESS ? SASL_FAIL : SASL_OK;
 }
 #endif /* SASL_VERSION_FULL >= 2.1.16 */
@@ -579,7 +660,7 @@ slap_sasl_authorize(
 {
 	Connection *conn = (Connection *)context;
 	struct propval auxvals[3];
-	struct berval authcDN, authzDN=BER_BVNULL;
+	struct berval authcDN, authzDN = BER_BVNULL;
 	int rc;
 
 	/* Simple Binds don't support proxy authorization, ignore it */
@@ -624,7 +705,17 @@ slap_sasl_authorize(
 		return SASL_NOAUTHZ;
 	}
 
-	conn->c_sasl_authz_dn = authzDN;
+	/* FIXME: we need yet another dup because slap_sasl_getdn()
+	 * is using the bind operation slab */
+	if ( conn->c_sasl_bindop ) {
+		ber_dupbv( &conn->c_sasl_authz_dn, &authzDN );
+		slap_sl_free( authzDN.bv_val,
+				conn->c_sasl_bindop->o_tmpmemctx );
+
+	} else {
+		conn->c_sasl_authz_dn = authzDN;
+	}
+
 ok:
 	if (conn->c_sasl_bindop) {
 		Statslog( LDAP_DEBUG_STATS,
@@ -648,7 +739,7 @@ slap_sasl_authorize(
 	const char **user,
 	const char **errstr)
 {
-	struct berval authcDN, authzDN;
+	struct berval authcDN, authzDN = BER_BVNULL;
 	int rc;
 	Connection *conn = context;
 	char *realm;
@@ -702,7 +793,7 @@ slap_sasl_authorize(
 		return SASL_NOAUTHZ;
 	}
 
-	rc = slap_sasl_authorized(conn->c_sasl_bindop, &authcDN, &authzDN );
+	rc = slap_sasl_authorized( conn->c_sasl_bindop, &authcDN, &authzDN );
 	if( rc ) {
 		Debug( LDAP_DEBUG_TRACE, "SASL Authorize [conn=%ld]: "
 			"proxy authorization disallowed (%d)\n",
@@ -712,7 +803,17 @@ slap_sasl_authorize(
 		ch_free( authzDN.bv_val );
 		return SASL_NOAUTHZ;
 	}
-	conn->c_sasl_authz_dn = authzDN;
+
+	/* FIXME: we need yet another dup because slap_sasl_getdn()
+	 * is using the bind operation slab */
+	if ( conn->c_sasl_bindop ) {
+		ber_dupbv( &conn->c_sasl_authz_dn, &authzDN );
+		slap_sl_free( authzDN.bv_val,
+				conn->c_sasl_bindop->o_tmpmemctx );
+
+	} else {
+		conn->c_sasl_authz_dn = authzDN;
+	}
 
 ok:
 	Debug( LDAP_DEBUG_TRACE, "SASL Authorize [conn=%ld]: "
@@ -720,7 +821,7 @@ ok:
 		(long) (conn ? conn->c_connid : -1),
 		authzDN.bv_val ? authzDN.bv_val : "", 0 );
 
-	if (conn->c_sasl_bindop) {
+	if ( conn->c_sasl_bindop ) {
 		Statslog( LDAP_DEBUG_STATS,
 			"conn=%lu op=%lu BIND authcid=\"%s\" authzid=\"%s\"\n",
 			conn->c_connid, conn->c_sasl_bindop->o_opid, 
@@ -1492,17 +1593,19 @@ int slap_sasl_getdn( Connection *conn, Operation *op, struct berval *id,
 	int rc, is_dn = SET_NONE, do_norm = 1;
 	struct berval dn2, *mech;
 
-	assert( conn );
-	assert( id );
+	assert( conn != NULL );
+	assert( id != NULL );
 
-	Debug( LDAP_DEBUG_ARGS, "slap_sasl_getdn: conn %d id=%s [len=%d]\n", 
+	Debug( LDAP_DEBUG_ARGS, "slap_sasl_getdn: conn %lu id=%s [len=%lu]\n", 
 		conn->c_connid,
 		BER_BVISNULL( id ) ? "NULL" : ( BER_BVISEMPTY( id ) ? "<empty>" : id->bv_val ),
-		BER_BVISNULL( id ) ? 0 : ( BER_BVISEMPTY( id ) ? 0 : id->bv_len ) );
+		BER_BVISNULL( id ) ? 0 : ( BER_BVISEMPTY( id ) ? 0 :
+		                           (unsigned long) id->bv_len ) );
 
 	if ( !op ) {
 		op = conn->c_sasl_bindop;
 	}
+	assert( op != NULL );
 
 	BER_BVZERO( dn );
 
@@ -1616,13 +1719,16 @@ int slap_sasl_getdn( Connection *conn, Operation *op, struct berval *id,
 		irdn++;
 		DN[ irdn ] = NULL;
 
-		rc = ldap_dn2bv_x( DN, dn, LDAP_DN_FORMAT_LDAPV3, op->o_tmpmemctx );
+		rc = ldap_dn2bv_x( DN, dn, LDAP_DN_FORMAT_LDAPV3,
+				op->o_tmpmemctx );
 		if ( rc != LDAP_SUCCESS ) {
 			BER_BVZERO( dn );
 			return rc;
 		}
 
-		Debug( LDAP_DEBUG_TRACE, "slap_sasl_getdn: u:id converted to %s\n", dn->bv_val,0,0 );
+		Debug( LDAP_DEBUG_TRACE,
+			"slap_sasl_getdn: u:id converted to %s\n",
+			dn->bv_val, 0, 0 );
 
 	} else {
 		
@@ -1652,7 +1758,8 @@ int slap_sasl_getdn( Connection *conn, Operation *op, struct berval *id,
 	if( !BER_BVISNULL( &dn2 ) ) {
 		slap_sl_free( dn->bv_val, op->o_tmpmemctx );
 		*dn = dn2;
-		Debug( LDAP_DEBUG_TRACE, "getdn: dn:id converted to %s\n",
+		Debug( LDAP_DEBUG_TRACE,
+			"slap_sasl_getdn: dn:id converted to %s\n",
 			dn->bv_val, 0, 0 );
 	}
 

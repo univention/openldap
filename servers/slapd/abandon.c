@@ -1,5 +1,5 @@
 /* abandon.c - decode and handle an ldap abandon operation */
-/* $OpenLDAP: pkg/ldap/servers/slapd/abandon.c,v 1.45.2.4 2005/04/29 21:29:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/abandon.c,v 1.45.2.6 2005/08/17 16:15:35 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -36,7 +36,6 @@ do_abandon( Operation *op, SlapReply *rs )
 {
 	ber_int_t	id;
 	Operation	*o;
-	int		i;
 
 	Debug( LDAP_DEBUG_TRACE, "do_abandon\n", 0, 0, 0 );
 
@@ -51,6 +50,9 @@ do_abandon( Operation *op, SlapReply *rs )
 		send_ldap_discon( op, rs, LDAP_PROTOCOL_ERROR, "decoding error" );
 		return SLAPD_DISCONNECT;
 	}
+
+	Statslog( LDAP_DEBUG_STATS, "%s ABANDON msg=%ld\n",
+		op->o_log_prefix, (long) id, 0, 0, 0 );
 
 	if( get_ctrls( op, rs, 0 ) != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_ANY, "do_abandon: get_ctrls failed\n", 0, 0 ,0 );

@@ -1,5 +1,5 @@
 /* init.c - initialize various things */
-/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.81.2.4 2005/04/29 21:29:05 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.81.2.8 2005/08/31 17:11:42 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -92,6 +92,8 @@ slap_init( int mode, const char *name )
 	assert( mode );
 
 	if ( slapMode != SLAP_UNDEFINED_MODE ) {
+		/* Make sure we write something to stderr */
+		ldap_debug |= 1;
 		Debug( LDAP_DEBUG_ANY,
 		 "%s init: init called twice (old=%d, new=%d)\n",
 		 name, slapMode, mode );
@@ -101,19 +103,38 @@ slap_init( int mode, const char *name )
 
 	slapMode = mode;
 
+#ifdef SLAPD_MODULES
+	if ( module_init() != 0 ) {
+		ldap_debug |= 1;
+		Debug( LDAP_DEBUG_ANY,
+		    "%s: module_init failed\n",
+			name, 0, 0 );
+		return 1;
+	}
+#endif
+
+	if ( slap_schema_init( ) != 0 ) {
+		ldap_debug |= 1;
+		Debug( LDAP_DEBUG_ANY,
+		    "%s: slap_schema_init failed\n",
+		    name, 0, 0 );
+		return 1;
+	}
+
+
 	switch ( slapMode & SLAP_MODE ) {
 	case SLAP_SERVER_MODE:
+		ldap_pvt_thread_pool_init( &connection_pool,
+				connection_pool_max, 0);
+
+		/* FALLTHRU */
 	case SLAP_TOOL_MODE:
 		Debug( LDAP_DEBUG_TRACE,
 			"%s init: initiated %s.\n",	name,
 			(mode & SLAP_MODE) == SLAP_TOOL_MODE ? "tool" : "server",
 			0 );
 
-
 		slap_name = name;
-
-		ldap_pvt_thread_pool_init( &connection_pool,
-				connection_pool_max, 0);
 
 		ldap_pvt_thread_mutex_init( &entry2str_mutex );
 		ldap_pvt_thread_mutex_init( &replog_mutex );
@@ -153,11 +174,54 @@ slap_init( int mode, const char *name )
 		break;
 
 	default:
+		ldap_debug |= 1;
 		Debug( LDAP_DEBUG_ANY,
 			"%s init: undefined mode (%d).\n", name, mode, 0 );
 
 		rc = 1;
 		break;
+	}
+
+	if ( slap_controls_init( ) != 0 ) {
+		ldap_debug |= 1;
+		Debug( LDAP_DEBUG_ANY,
+		    "%s: slap_controls_init failed\n",
+		    name, 0, 0 );
+		return 1;
+	}
+
+#ifdef HAVE_TLS
+	/* Library defaults to full certificate checking. This is correct when
+	 * a client is verifying a server because all servers should have a
+	 * valid cert. But few clients have valid certs, so we want our default
+	 * to be no checking. The config file can override this as usual.
+	 */
+	rc = 0;
+	(void) ldap_pvt_tls_set_option( NULL, LDAP_OPT_X_TLS_REQUIRE_CERT, &rc );
+#endif
+
+	if ( frontend_init() ) {
+		ldap_debug |= 1;
+		Debug( LDAP_DEBUG_ANY,
+		    "%s: frontend_init failed\n",
+		    name, 0, 0 );
+		return 1;
+	}
+
+	if ( overlay_init() ) {
+		ldap_debug |= 1;
+		Debug( LDAP_DEBUG_ANY,
+		    "%s: overlay_init failed\n",
+		    name, 0, 0 );
+		return 1;
+	}
+
+	if ( acl_init() ) {
+		ldap_debug |= 1;
+		Debug( LDAP_DEBUG_ANY,
+		    "%s: acl_init failed\n",
+		    name, 0, 0 );
+		return 1;
 	}
 
 	return rc;
@@ -178,7 +242,7 @@ int slap_startup( Backend *be )
 	if( rc == 0 ) {
 		Slapi_PBlock *pb = slapi_pblock_new();
 
-		if ( slapi_int_call_plugins( NULL, SLAPI_PLUGIN_START_FN, pb ) < 0 ) {
+		if ( slapi_int_call_plugins( frontendDB, SLAPI_PLUGIN_START_FN, pb ) < 0 ) {
 			rc = -1;
 		}
 		slapi_pblock_destroy( pb );
@@ -204,7 +268,7 @@ int slap_shutdown( Backend *be )
 
 #ifdef LDAP_SLAPI
 	pb = slapi_pblock_new();
-	(void) slapi_int_call_plugins( NULL, SLAPI_PLUGIN_CLOSE_FN, pb );
+	(void) slapi_int_call_plugins( frontendDB, SLAPI_PLUGIN_CLOSE_FN, pb );
 	slapi_pblock_destroy( pb );
 #endif /* LDAP_SLAPI */
 

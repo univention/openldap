@@ -1,5 +1,5 @@
 /* thread.c - deal with thread subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/thread.c,v 1.29.2.2 2005/04/29 21:29:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/thread.c,v 1.29.2.3 2005/08/09 21:04:05 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2005 The OpenLDAP Foundation.
@@ -29,9 +29,15 @@
 
 #include <ldap_rq.h>
 
+static int 
+monitor_subsys_thread_update( 
+	Operation		*op,
+	SlapReply		*rs,
+	Entry 			*e );
+
 /*
-*  * initializes log subentry
-*   */
+ * initializes log subentry
+ */
 int
 monitor_subsys_thread_init(
 	BackendDB       	*be,
@@ -42,6 +48,8 @@ monitor_subsys_thread_init(
 	monitor_entry_t	*mp;
 	Entry		*e, **ep, *e_thread;
 	static char	buf[ BACKMONITOR_BUFSIZE ];
+
+	ms->mss_update = monitor_subsys_thread_update;
 
 	mi = ( monitor_info_t * )be->be_private;
 
@@ -216,12 +224,11 @@ monitor_subsys_thread_init(
 	return( 0 );
 }
 
-int 
+static int 
 monitor_subsys_thread_update( 
 	Operation		*op,
 	SlapReply		*rs,
-	Entry 			*e
-)
+	Entry 			*e )
 {
 	monitor_info_t	*mi = ( monitor_info_t * )op->o_bd->be_private;
 	Attribute		*a;

@@ -1,5 +1,5 @@
 .TH LDAP 3 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man3/ldap.3,v 1.34.2.1 2005/01/20 18:03:47 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man3/ldap.3,v 1.34.2.3 2005/08/29 18:26:09 kurt Exp $
 .\" Copyright 1998-2005 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
@@ -60,9 +60,9 @@ Errors can be interpreted by calling
 .BR ldap_err2string (3).
 .SH LDAP versions
 This library supports version 3 of the Lightweight Directory Access
-Protocol (LDAPv3) as defined in RFC 3377.  It also supports a varient
+Protocol (LDAPv3) as defined in RFC 3377.  It also supports a variant
 of version 2 of LDAP as defined by U-Mich LDAP and, to some degree,
-RFC 1777.  Version 2 (all varients) should be viewed as obsolete.
+RFC 1777.  Version 2 (all variants) should be viewed as obsolete.
 Version 3 should be used instead.
 .LP
 For backwards compatibility reasons, the library defaults to version 2.
@@ -148,7 +148,7 @@ synchronously bind to the directory
 .SM ldap_unbind_ext(3)
 synchronously unbind from the LDAP server and close the connection
 .TP
-.SM ldap_unbind_ext_s(3)
+.SM ldap_unbind(3) and ldap_unbind_s(3) are
 equivalent to
 .BR ldap_unbind_ext (3)
 .TP

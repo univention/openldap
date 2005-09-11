@@ -1,5 +1,5 @@
 /* filter.c - routines for parsing and dealing with filters */
-/* $OpenLDAP: pkg/ldap/servers/slapd/filter.c,v 1.125.2.1 2005/01/20 18:03:55 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/filter.c,v 1.125.2.4 2005/08/26 00:18:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -171,17 +171,22 @@ get_filter(
 		err = slap_bv2ad( &type, &f.f_desc, text );
 
 		if( err != LDAP_SUCCESS ) {
-			/* unrecognized attribute description or other error */
-			Debug( LDAP_DEBUG_ANY, 
-				"get_filter: conn %d unknown attribute "
-				"type=%s (%d)\n",
-				op->o_connid, type.bv_val, err );
+			err = slap_bv2undef_ad( &type, &f.f_desc, text,
+				SLAP_AD_PROXIED|SLAP_AD_NOINSERT );
 
-			f.f_choice = SLAPD_FILTER_COMPUTED;
-			f.f_result = LDAP_COMPARE_FALSE;
-			err = LDAP_SUCCESS;
-			*text = NULL;
-			break;
+			if ( err != LDAP_SUCCESS ) {
+				/* unrecognized attribute description or other error */
+				Debug( LDAP_DEBUG_ANY, 
+					"get_filter: conn %lu unknown attribute "
+					"type=%s (%d)\n",
+					op->o_connid, type.bv_val, err );
+
+				f.f_choice = SLAPD_FILTER_COMPUTED;
+				f.f_result = LDAP_COMPARE_FALSE;
+				err = LDAP_SUCCESS;
+				*text = NULL;
+				break;
+			}
 		}
 
 		assert( f.f_desc != NULL );
@@ -348,17 +353,22 @@ get_ssa(
 	rc = slap_bv2ad( &desc, &ssa.sa_desc, text );
 
 	if( rc != LDAP_SUCCESS ) {
-		Debug( LDAP_DEBUG_ANY, 
-			"get_ssa: conn %d unknown attribute type=%s (%d)\n",
-			op->o_connid, desc.bv_val, rc );
+		rc = slap_bv2undef_ad( &desc, &ssa.sa_desc, text,
+			SLAP_AD_PROXIED|SLAP_AD_NOINSERT );
 
-		/* skip over the rest of this filter */
-		for ( tag = ber_first_element( ber, &len, &last );
-			tag != LBER_DEFAULT;
-			tag = ber_next_element( ber, &len, last ) ) {
-			ber_scanf( ber, "x" );
+		if( rc != LDAP_SUCCESS ) {
+			Debug( LDAP_DEBUG_ANY, 
+				"get_ssa: conn %lu unknown attribute type=%s (%ld)\n",
+				op->o_connid, desc.bv_val, (long) rc );
+	
+			/* skip over the rest of this filter */
+			for ( tag = ber_first_element( ber, &len, &last );
+				tag != LBER_DEFAULT;
+				tag = ber_next_element( ber, &len, last ) ) {
+				ber_scanf( ber, "x" );
+			}
+			return rc;
 		}
-		return rc;
 	}
 
 	rc = LDAP_PROTOCOL_ERROR;
@@ -382,24 +392,39 @@ get_ssa(
 
 		switch ( tag ) {
 		case LDAP_SUBSTRING_INITIAL:
+			if ( ssa.sa_initial.bv_val != NULL
+				|| ssa.sa_any != NULL 
+				|| ssa.sa_final.bv_val != NULL )
+			{
+				rc = LDAP_PROTOCOL_ERROR;
+				goto return_error;
+			}
 			usage = SLAP_MR_SUBSTR_INITIAL;
 			break;
 
 		case LDAP_SUBSTRING_ANY:
+			if ( ssa.sa_final.bv_val != NULL ) {
+				rc = LDAP_PROTOCOL_ERROR;
+				goto return_error;
+			}
 			usage = SLAP_MR_SUBSTR_ANY;
 			break;
 
 		case LDAP_SUBSTRING_FINAL:
+			if ( ssa.sa_final.bv_val != NULL ) {
+				rc = LDAP_PROTOCOL_ERROR;
+				goto return_error;
+			}
+
 			usage = SLAP_MR_SUBSTR_FINAL;
 			break;
 
 		default:
-			rc = LDAP_PROTOCOL_ERROR;
-
 			Debug( LDAP_DEBUG_FILTER,
 				"  unknown substring choice=%ld\n",
 				(long) tag, 0, 0 );
 
+			rc = LDAP_PROTOCOL_ERROR;
 			goto return_error;
 		}
 
@@ -407,57 +432,28 @@ get_ssa(
 		rc = asserted_value_validate_normalize(
 			ssa.sa_desc, ssa.sa_desc->ad_type->sat_equality,
 			usage, &value, &nvalue, text, op->o_tmpmemctx );
-
-		if( rc != LDAP_SUCCESS ) {
-			goto return_error;
-		}
-
-		rc = LDAP_PROTOCOL_ERROR;
+		if( rc != LDAP_SUCCESS ) goto return_error;
 
 		switch ( tag ) {
 		case LDAP_SUBSTRING_INITIAL:
 			Debug( LDAP_DEBUG_FILTER, "  INITIAL\n", 0, 0, 0 );
-
-			if ( ssa.sa_initial.bv_val != NULL
-				|| ssa.sa_any != NULL 
-				|| ssa.sa_final.bv_val != NULL )
-			{
-				slap_sl_free( nvalue.bv_val, op->o_tmpmemctx );
-				goto return_error;
-			}
-
 			ssa.sa_initial = nvalue;
 			break;
 
 		case LDAP_SUBSTRING_ANY:
 			Debug( LDAP_DEBUG_FILTER, "  ANY\n", 0, 0, 0 );
-
-			if ( ssa.sa_final.bv_val != NULL ) {
-				slap_sl_free( nvalue.bv_val, op->o_tmpmemctx );
-				goto return_error;
-			}
-
 			ber_bvarray_add_x( &ssa.sa_any, &nvalue, op->o_tmpmemctx );
 			break;
 
 		case LDAP_SUBSTRING_FINAL:
 			Debug( LDAP_DEBUG_FILTER, "  FINAL\n", 0, 0, 0 );
-
-			if ( ssa.sa_final.bv_val != NULL ) {
-				slap_sl_free( nvalue.bv_val, op->o_tmpmemctx );
-				goto return_error;
-			}
-
 			ssa.sa_final = nvalue;
 			break;
 
 		default:
-			Debug( LDAP_DEBUG_FILTER,
-				"  unknown substring type=%ld\n",
-				(long) tag, 0, 0 );
-
 			assert( 0 );
 			slap_sl_free( nvalue.bv_val, op->o_tmpmemctx );
+			rc = LDAP_PROTOCOL_ERROR;
 
 return_error:
 			Debug( LDAP_DEBUG_FILTER, "  error=%ld\n",
@@ -477,7 +473,6 @@ return_error:
 	}
 
 	Debug( LDAP_DEBUG_FILTER, "end get_ssa\n", 0, 0, 0 );
-
 	return rc /* LDAP_SUCCESS */ ;
 }
 
@@ -794,8 +789,8 @@ filter_escape_value_x(
 	void *ctx )
 {
 	ber_len_t i;
-	assert( in );
-	assert( out );
+	assert( in != NULL );
+	assert( out != NULL );
 
 	i = in->bv_len * 3 + 1;
 	out->bv_val = ctx ? slap_sl_malloc( i, ctx ) : ch_malloc( i );
@@ -895,16 +890,21 @@ get_simple_vrFilter(
 		err = slap_bv2ad( &type, &vrf.vrf_desc, text );
 
 		if( err != LDAP_SUCCESS ) {
-			/* unrecognized attribute description or other error */
-			Debug( LDAP_DEBUG_ANY, 
-				"get_simple_vrFilter: conn %d unknown "
-				"attribute type=%s (%d)\n",
-				op->o_connid, type.bv_val, err );
+			err = slap_bv2undef_ad( &type, &vrf.vrf_desc, text,
+				SLAP_AD_PROXIED|SLAP_AD_NOINSERT );
 
-			vrf.vrf_choice = SLAPD_FILTER_COMPUTED;
-			vrf.vrf_result = LDAP_COMPARE_FALSE;
-			err = LDAP_SUCCESS;
-			break;
+			if( err != LDAP_SUCCESS ) {
+				/* unrecognized attribute description or other error */
+				Debug( LDAP_DEBUG_ANY, 
+					"get_simple_vrFilter: conn %lu unknown "
+					"attribute type=%s (%d)\n",
+					op->o_connid, type.bv_val, err );
+	
+				vrf.vrf_choice = SLAPD_FILTER_COMPUTED;
+				vrf.vrf_result = LDAP_COMPARE_FALSE;
+				err = LDAP_SUCCESS;
+				break;
+			}
 		}
 		} break;
 

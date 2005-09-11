@@ -1,5 +1,5 @@
 /* time.c - deal with time subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/time.c,v 1.29.2.2 2005/04/29 21:29:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/time.c,v 1.29.2.3 2005/08/09 21:04:05 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2005 The OpenLDAP Foundation.
@@ -31,11 +31,16 @@
 #include "proto-slap.h"
 #include "back-monitor.h"
 
+static int
+monitor_subsys_time_update(
+	Operation		*op,
+	SlapReply		*rs,
+	Entry                   *e );
+
 int
 monitor_subsys_time_init(
 	BackendDB		*be,
-	monitor_subsys_t	*ms
-)
+	monitor_subsys_t	*ms )
 {
 	monitor_info_t	*mi;
 	
@@ -44,6 +49,8 @@ monitor_subsys_time_init(
 	char		buf[ BACKMONITOR_BUFSIZE ];
 
 	assert( be != NULL );
+
+	ms->mss_update = monitor_subsys_time_update;
 
 	mi = ( monitor_info_t * )be->be_private;
 
@@ -166,7 +173,7 @@ monitor_subsys_time_init(
 	return( 0 );
 }
 
-int
+static int
 monitor_subsys_time_update(
 	Operation		*op,
 	SlapReply		*rs,
@@ -176,8 +183,8 @@ monitor_subsys_time_update(
 	static struct berval	bv_current = BER_BVC( "cn=current" );
 	struct berval		rdn;
 
-	assert( mi );
-	assert( e );
+	assert( mi != NULL );
+	assert( e != NULL );
 
 	dnRdn( &e->e_nname, &rdn );
 	

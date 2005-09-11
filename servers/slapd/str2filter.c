@@ -1,5 +1,5 @@
 /* str2filter.c - parse an RFC 2554 string filter */
-/* $OpenLDAP: pkg/ldap/servers/slapd/str2filter.c,v 1.40.2.1 2005/01/20 18:03:56 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/str2filter.c,v 1.40.2.2 2005/08/09 21:04:00 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -34,12 +34,6 @@
 
 #include "slap.h"
 
-#if 0 /* unused */
-static char	*find_matching_paren( const char *s );
-#endif /* unused */
-static Filter	*str2list( const char *str, long unsigned int ftype);
-static Filter	*str2simple( const char *str);
-static int	str2subvals( const char *val, Filter *f);
 
 Filter *
 str2filter_x( Operation *op, const char *str )

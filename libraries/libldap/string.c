@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/string.c,v 1.20.2.1 2005/01/20 18:03:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/string.c,v 1.20.2.2 2005/08/09 21:03:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -126,7 +126,7 @@ ldap_pvt_str2upperbv( char *str, struct berval *bv )
 {
 	char    *s = NULL;
 
-	assert( bv );
+	assert( bv != NULL );
 
 	/* to upper */
 	if ( str ) {
@@ -161,7 +161,7 @@ ldap_pvt_str2lowerbv( char *str, struct berval *bv )
 {
 	char    *s = NULL;
 
-	assert( bv );
+	assert( bv != NULL );
 
 	/* to lower */
 	if ( str ) {

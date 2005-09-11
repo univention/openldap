@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/util-int.c,v 1.51.2.1 2005/01/20 18:03:51 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/util-int.c,v 1.51.2.2 2005/08/09 21:03:56 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -59,9 +59,9 @@ extern int h_errno;
 # include <ldap_pvt_thread.h>
   ldap_pvt_thread_mutex_t ldap_int_resolv_mutex;
 
-#if (defined( HAVE_CTIME_R ) || defined( HAVE_REENTRANT_FUNCTIONS)) \
-	&& defined( CTIME_R_NARGS )
-# define USE_CTIME_R
+# if (defined( HAVE_CTIME_R ) || defined( HAVE_REENTRANT_FUNCTIONS)) \
+	 && defined( CTIME_R_NARGS )
+#   define USE_CTIME_R
 # else
 	static ldap_pvt_thread_mutex_t ldap_int_ctime_mutex;
 # endif
@@ -110,11 +110,13 @@ char *ldap_pvt_ctime( const time_t *tp, char *buf )
 #define BUFSTART (1024-32)
 #define BUFMAX (32*1024-32)
 
+#if defined(LDAP_R_COMPILE)
 static char *safe_realloc( char **buf, int len );
 
-#if !defined(HAVE_GETHOSTBYNAME_R) && defined(LDAP_R_COMPILE)
+#if !(defined(HAVE_GETHOSTBYNAME_R) && defined(HAVE_GETHOSTBYADDR_R))
 static int copy_hostent( struct hostent *res,
 	char **buf, struct hostent * src );
+#endif
 #endif
 
 int ldap_pvt_gethostbyname_a(
@@ -195,7 +197,7 @@ int ldap_pvt_gethostbyname_a(
 #endif	
 }
 
-#if !defined( GETNAMEINFO ) && !defined( HAVE_HERROR )
+#if !defined( HAVE_GETNAMEINFO ) && !defined( HAVE_HSTRERROR )
 static const char *
 hp_strerror( int err )
 {
@@ -463,7 +465,7 @@ static int copy_hostent(
 	int	n_alias=0;
 	int	total_alias_len=0;
 	int	n_addr=0;
-	int	total_addr_len;
+	int	total_addr_len=0;
 	int	total_len;
 	  
 	/* calculate the size needed for the buffer */

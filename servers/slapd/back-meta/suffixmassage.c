@@ -1,5 +1,5 @@
 /* suffixmassage.c - massages ldap backend dns */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/suffixmassage.c,v 1.1.2.3 2005/05/06 16:42:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/suffixmassage.c,v 1.1.2.4 2005/08/09 21:04:04 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2005 The OpenLDAP Foundation.
@@ -126,7 +126,7 @@ ldap_back_dn_massage(
 	int     i, src, dst;
 	struct berval pretty = {0,NULL}, *dn = odn;
 
-	assert( res );
+	assert( res != NULL );
 
 	if ( dn == NULL ) {
 		res->bv_val = NULL;

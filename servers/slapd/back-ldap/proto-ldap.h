@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/proto-ldap.h,v 1.3.2.2 2005/01/24 21:28:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/proto-ldap.h,v 1.3.2.4 2005/08/09 21:04:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2005 The OpenLDAP Foundation.
@@ -50,12 +50,15 @@ extern BI_entry_get_rw		ldap_back_entry_get;
 
 int ldap_back_freeconn( Operation *op, struct ldapconn *lc );
 struct ldapconn *ldap_back_getconn(struct slap_op *op, struct slap_rep *rs, ldap_back_send_t sendok);
+void ldap_back_release_conn( struct slap_op *op, struct slap_rep *rs, struct ldapconn *lc );
 int ldap_back_dobind(struct ldapconn *lc, Operation *op, SlapReply *rs, ldap_back_send_t sendok);
 int ldap_back_retry(struct ldapconn *lc, Operation *op, SlapReply *rs, ldap_back_send_t sendok);
 int ldap_back_map_result(SlapReply *rs);
 int ldap_back_op_result(struct ldapconn *lc, Operation *op, SlapReply *rs,
 	ber_int_t msgid, ldap_back_send_t sendok);
 int	back_ldap_LTX_init_module(int argc, char *argv[]);
+
+int ldap_back_init_cf( BackendInfo *bi );
 
 extern int ldap_back_conn_cmp( const void *c1, const void *c2);
 extern int ldap_back_conn_dup( void *c1, void *c2 );

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/back-meta.h,v 1.23.2.6 2005/05/06 16:42:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/back-meta.h,v 1.23.2.9 2005/08/17 16:15:36 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -177,6 +177,7 @@ typedef struct metasingleconn_t {
 typedef struct metaconn_t {
 	struct slap_conn	*mc_conn;
 	ldap_pvt_thread_mutex_t	mc_mutex;
+	unsigned		mc_refcnt;
 	
 	/*
 	 * means that the connection is bound; 
@@ -186,11 +187,23 @@ typedef struct metaconn_t {
 #define META_BOUND_NONE		(-1)
 #define META_BOUND_ALL		(-2)
 	/* supersedes the connection stuff */
-	metasingleconn_t	*mc_conns;
+	metasingleconn_t	mc_conns[ 1 ];
+	/* NOTE: mc_conns must be last, because
+	 * the required number of conns is malloc'ed
+	 * in one block with the metaconn_t structure */
 } metaconn_t;
+
+enum {
+	META_OP_ADD = 0,
+	META_OP_DELETE,
+	META_OP_MODIFY,
+	META_OP_MODRDN,
+	META_OP_LAST
+};
 
 typedef struct metatarget_t {
 	char			*mt_uri;
+	int			mt_scope;
 
 	struct berval		mt_psuffix;		/* pretty suffix */
 	struct berval		mt_nsuffix;		/* normalized suffix */
@@ -211,6 +224,7 @@ typedef struct metatarget_t {
 
 	unsigned		mt_flags;
 	int			mt_version;
+	time_t			mt_timeout[ META_OP_LAST ];
 } metatarget_t;
 
 typedef struct metadncache_t {
@@ -222,6 +236,11 @@ typedef struct metadncache_t {
 	long int		ttl;  /* seconds; 0: no cache, -1: no expiry */
 } metadncache_t;
 
+typedef struct metacandidates_t {
+	int			mc_ntargets;
+	SlapReply		*mc_candidates;
+} metacandidates_t;
+
 typedef struct metainfo_t {
 	int			mi_ntargets;
 	int			mi_defaulttarget;
@@ -230,7 +249,7 @@ typedef struct metainfo_t {
 	int			mi_nretries;
 
 	metatarget_t		*mi_targets;
-	SlapReply		*mi_candidates;
+	metacandidates_t	*mi_candidates;
 
 	metadncache_t		mi_cache;
 	
@@ -238,18 +257,13 @@ typedef struct metainfo_t {
 	Avlnode			*mi_conntree;
 
 	unsigned		flags;
-#if 0
-/* defined in <back-ldap/back-ldap.h> */
-#define LDAP_BACK_F_NONE		0x00U
-#define LDAP_BACK_F_SAVECRED		0x01U
-#define LDAP_BACK_F_USE_TLS		0x02U
-#define LDAP_BACK_F_PROPAGATE_TLS	0x04U
-#define LDAP_BACK_F_TLS_CRITICAL	0x08U
-#define LDAP_BACK_F_TLS_MASK		(LDAP_BACK_F_USE_TLS|LDAP_BACK_F_PROPAGATE_TLS|LDAP_BACK_F_TLS_CRITICAL)
-#define LDAP_BACK_F_CHASE_REFERRALS	0x10U
-#endif
+/* uses flags as defined in <back-ldap/back-ldap.h> */
+#define	META_BACK_F_ONERR_STOP	0x00010000U
+#define	META_BACK_ONERR_STOP(mi)	( (mi)->flags & META_BACK_F_ONERR_STOP )
+#define	META_BACK_ONERR_CONTINUE(mi)	( !META_BACK_ONERR_CONTINUE( (mi) ) )
 
 	int			mi_version;
+	time_t			mi_timeout[ META_OP_LAST ];
 } metainfo_t;
 
 typedef enum meta_op_type {
@@ -268,6 +282,11 @@ meta_back_getconn(
 	int			*candidate,
 	ldap_back_send_t	sendok );
 
+extern void
+meta_back_release_conn(
+       	Operation 		*op,
+	metaconn_t		*mc );
+
 extern int
 meta_back_retry(
 	Operation		*op,
@@ -277,7 +296,8 @@ meta_back_retry(
 	ldap_back_send_t	sendok );
 
 extern void
-meta_back_conn_free( metaconn_t *mc );
+meta_back_conn_free(
+	metaconn_t		*mc );
 
 extern int
 meta_back_init_one_conn(
@@ -301,7 +321,8 @@ meta_back_single_dobind(
 	metaconn_t		*msc,
 	int			candidate,
 	ldap_back_send_t	sendok,
-	int			retries );
+	int			retries,
+	int			dolock );
 
 extern int
 meta_back_op_result(
@@ -331,6 +352,7 @@ meta_back_conn_dup(
 extern int
 meta_back_is_candidate(
 	struct berval		*nsuffix,
+	int			suffixscope,
 	struct berval		*ndn,
 	int			scope );
 

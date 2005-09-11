@@ -1,5 +1,5 @@
 /* entry.c - ldbm backend entry_release routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/entry.c,v 1.21.2.2 2005/04/29 21:29:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/entry.c,v 1.21.2.3 2005/07/11 05:55:32 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -118,7 +118,7 @@ int ldbm_back_entry_get(
 	if ( oc && !is_entry_objectclass( e, oc, 0 )) {
 		Debug( LDAP_DEBUG_ACL,
 			"<= ldbm_back_entry_get: failed to find objectClass %s\n",
-			oc->soc_cname, 0, 0 ); 
+			oc->soc_cname.bv_val, 0, 0 ); 
 		rc = LDAP_NO_SUCH_ATTRIBUTE;
 		goto return_results;
 	}

@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/relay,v 1.3.2.5 2005/04/29 21:29:11 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/relay,v 1.3.2.6 2005/08/09 21:04:11 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -169,10 +169,10 @@ description: Just added as ldap://localhost.localdomain:389/ou=Referrals,$BASEDN
 dn: ou=Referrals,$BASEDN
 changetype: modify
 replace: ref
-ref: ldap://localhost:9010/ou=Referrals,$BASEDN
+ref: ldap://localhost:9012/ou=Referrals,$BASEDN
 -
 add: description
-description: ...and modified as ldap://localhost:9010/ou=Referrals,$BASEDN
+description: ...and modified as ldap://localhost:9012/ou=Referrals,$BASEDN
 -
 EOMODS
 

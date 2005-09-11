@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/ldap_features.h.in,v 1.18.2.1 2005/01/20 18:03:48 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap_features.hin,v 1.2.2.1 2005/08/29 18:46:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.

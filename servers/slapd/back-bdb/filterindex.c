@@ -1,5 +1,5 @@
 /* filterindex.c - generate the list of candidate entries from a filter */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/filterindex.c,v 1.51.2.4 2005/04/29 21:29:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/filterindex.c,v 1.51.2.5 2005/08/09 21:04:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2005 The OpenLDAP Foundation.
@@ -154,7 +154,7 @@ bdb_filter_candidates(
 		/* if no GE index, use pres */
 		Debug( LDAP_DEBUG_FILTER, "\tGE\n", 0, 0, 0 );
 		if( f->f_ava->aa_desc->ad_type->sat_ordering &&
-			( f->f_ava->aa_desc->ad_type->sat_ordering->smr_usage && SLAP_MR_ORDERED_INDEX ) )
+			( f->f_ava->aa_desc->ad_type->sat_ordering->smr_usage & SLAP_MR_ORDERED_INDEX ) )
 			rc = inequality_candidates( op, f->f_ava, ids, tmp, LDAP_FILTER_GE );
 		else
 			rc = presence_candidates( op, f->f_ava->aa_desc, ids );
@@ -164,7 +164,7 @@ bdb_filter_candidates(
 		/* if no LE index, use pres */
 		Debug( LDAP_DEBUG_FILTER, "\tLE\n", 0, 0, 0 );
 		if( f->f_ava->aa_desc->ad_type->sat_ordering &&
-			( f->f_ava->aa_desc->ad_type->sat_ordering->smr_usage && SLAP_MR_ORDERED_INDEX ) )
+			( f->f_ava->aa_desc->ad_type->sat_ordering->smr_usage & SLAP_MR_ORDERED_INDEX ) )
 			rc = inequality_candidates( op, f->f_ava, ids, tmp, LDAP_FILTER_LE );
 		else
 			rc = presence_candidates( op, f->f_ava->aa_desc, ids );

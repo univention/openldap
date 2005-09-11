@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/passwd.c,v 1.92.2.2 2005/03/18 16:36:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/passwd.c,v 1.92.2.6 2005/08/29 18:46:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -42,7 +42,7 @@
 #ifdef SLAPD_CRYPT
 # include <ac/crypt.h>
 
-# if defined( HAVE_GETPWNAM ) && defined( HAVE_PW_PASSWD )
+# if defined( HAVE_GETPWNAM ) && defined( HAVE_STRUCT_PASSWD_PW_PASSWD )
 #  ifdef HAVE_SHADOW_H
 #	include <shadow.h>
 #  endif
@@ -110,7 +110,7 @@ static LUTIL_PASSWD_HASH_FUNC hash_lanman;
 static LUTIL_PASSWD_CHK_FUNC chk_crypt;
 static LUTIL_PASSWD_HASH_FUNC hash_crypt;
 
-#if defined( HAVE_GETPWNAM ) && defined( HAVE_PW_PASSWD )
+#if defined( HAVE_GETPWNAM ) && defined( HAVE_STRUCT_PASSWD_PW_PASSWD )
 static LUTIL_PASSWD_CHK_FUNC chk_unix;
 #endif
 #endif
@@ -140,7 +140,7 @@ static const struct pw_scheme pw_schemes_default[] =
 
 #ifdef SLAPD_CRYPT
 	{ BER_BVC("{CRYPT}"),		chk_crypt, hash_crypt },
-# if defined( HAVE_GETPWNAM ) && defined( HAVE_PW_PASSWD )
+# if defined( HAVE_GETPWNAM ) && defined( HAVE_STRUCT_PASSWD_PW_PASSWD )
 	{ BER_BVC("{UNIX}"),		chk_unix, NULL },
 # endif
 #endif
@@ -197,11 +197,21 @@ static const struct pw_scheme *get_scheme(
 	const char* scheme )
 {
 	struct pw_slist *pws;
+	struct berval bv;
 
 	if (!pw_inited) lutil_passwd_init();
 
+	bv.bv_val = strchr( scheme, '}' );
+	if ( !bv.bv_val )
+		return NULL;
+
+	bv.bv_len = bv.bv_val - scheme + 1;
+	bv.bv_val = (char *) scheme;
+
 	for( pws=pw_schemes; pws; pws=pws->next ) {
-		if( strcasecmp(scheme, pws->s.name.bv_val ) == 0 ) {
+		if( bv.bv_len != pws->s.name.bv_len )
+			continue;
+		if( strncasecmp(bv.bv_val, pws->s.name.bv_val, bv.bv_len ) == 0 ) {
 			return &(pws->s);
 		}
 	}
@@ -293,10 +303,15 @@ lutil_passwd(
 	}
 
 #ifdef SLAPD_CLEARTEXT
+	/* Do we think there is a scheme specifier here that we
+	 * didn't recognize? Assume a scheme name is at least 1 character.
+	 */
+	if (( passwd->bv_val[0] == '{' ) &&
+		( strchr( passwd->bv_val, '}' ) > passwd->bv_val+1 ))
+		return 1;
 	if( is_allowed_scheme("{CLEARTEXT}", schemes ) ) {
-		return (( passwd->bv_len == cred->bv_len ) &&
-				( passwd->bv_val[0] != '{' /*'}'*/ ))
-			? memcmp( passwd->bv_val, cred->bv_val, passwd->bv_len )
+		return ( passwd->bv_len == cred->bv_len ) ?
+			memcmp( passwd->bv_val, cred->bv_val, passwd->bv_len )
 			: 1;
 	}
 #endif
@@ -672,18 +687,21 @@ static int chk_md5(
  */
 
 static void lmPasswd_to_key(
-	const unsigned char *lmPasswd,
+	const char *lmPasswd,
 	des_cblock *key)
 {
+	const unsigned char *lpw = (const unsigned char *) lmPasswd;
+	unsigned char *k = (unsigned char *) key;
+
 	/* make room for parity bits */
-	((char *)key)[0] = lmPasswd[0];
-	((char *)key)[1] = ((lmPasswd[0]&0x01)<<7) | (lmPasswd[1]>>1);
-	((char *)key)[2] = ((lmPasswd[1]&0x03)<<6) | (lmPasswd[2]>>2);
-	((char *)key)[3] = ((lmPasswd[2]&0x07)<<5) | (lmPasswd[3]>>3);
-	((char *)key)[4] = ((lmPasswd[3]&0x0F)<<4) | (lmPasswd[4]>>4);
-	((char *)key)[5] = ((lmPasswd[4]&0x1F)<<3) | (lmPasswd[5]>>5);
-	((char *)key)[6] = ((lmPasswd[5]&0x3F)<<2) | (lmPasswd[6]>>6);
-	((char *)key)[7] = ((lmPasswd[6]&0x7F)<<1);
+	k[0] = lpw[0];
+	k[1] = ((lpw[0] & 0x01) << 7) | (lpw[1] >> 1);
+	k[2] = ((lpw[1] & 0x03) << 6) | (lpw[2] >> 2);
+	k[3] = ((lpw[2] & 0x07) << 5) | (lpw[3] >> 3);
+	k[4] = ((lpw[3] & 0x0F) << 4) | (lpw[4] >> 4);
+	k[5] = ((lpw[4] & 0x1F) << 3) | (lpw[5] >> 5);
+	k[6] = ((lpw[5] & 0x3F) << 2) | (lpw[6] >> 6);
+	k[7] = ((lpw[6] & 0x7F) << 1);
 		
 	des_set_odd_parity( key );
 }	
@@ -768,9 +786,7 @@ static int chk_crypt(
 	const struct berval * cred,
 	const char **text )
 {
-	char *cr;
 	unsigned int i;
-	int rc;
 
 	for( i=0; i<cred->bv_len; i++) {
 		if(cred->bv_val[i] == '\0') {
@@ -799,7 +815,7 @@ static int chk_crypt(
 	return lutil_cryptptr( cred->bv_val, passwd->bv_val, NULL );
 }
 
-# if defined( HAVE_GETPWNAM ) && defined( HAVE_PW_PASSWD )
+# if defined( HAVE_GETPWNAM ) && defined( HAVE_STRUCT_PASSWD_PW_PASSWD )
 static int chk_unix(
 	const struct berval *sc,
 	const struct berval * passwd,
@@ -807,7 +823,7 @@ static int chk_unix(
 	const char **text )
 {
 	unsigned int i;
-	char *pw,*cr;
+	char *pw;
 
 	for( i=0; i<cred->bv_len; i++) {
 		if(cred->bv_val[i] == '\0') {

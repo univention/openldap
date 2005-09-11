@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/tests/progs/slapd-modify.c,v 1.3.2.2 2005/04/29 21:29:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/tests/progs/slapd-modify.c,v 1.3.2.5 2005/08/19 18:09:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -35,13 +35,21 @@
 static void
 do_modify( char *uri, char *host, int port, char *manager, char *passwd,
 		char *entry, char *attr, char *value, int maxloop,
-		int maxretries );
+		int maxretries, int delay );
 
 
 static void
 usage( char *name )
 {
-	fprintf( stderr, "usage: %s [-h <host>] -p port -D <managerDN> -w <passwd> -e <entry> [-l <loops>]\n",
+        fprintf( stderr,
+		"usage: %s "
+		"-H <uri> | ([-h <host>] -p <port>) "
+		"-D <manager> "
+		"-w <passwd> "
+		"-e <entry> "
+		"[-l <loops>] "
+		"[-r <maxretries>] "
+		"[-t <delay>]\n",
 			name );
 	exit( EXIT_FAILURE );
 }
@@ -60,8 +68,9 @@ main( int argc, char **argv )
 	char		*value = NULL;
 	int		loops = LOOPS;
 	int		retries = RETRIES;
+	int		delay = 0;
 
-	while ( (i = getopt( argc, argv, "H:h:p:D:w:e:a:l:r:" )) != EOF ) {
+	while ( (i = getopt( argc, argv, "H:h:p:D:w:e:a:l:r:t:" )) != EOF ) {
 		switch( i ) {
 		case 'H':		/* the server uri */
 			uri = strdup( optarg );
@@ -95,8 +104,12 @@ main( int argc, char **argv )
 			loops = atoi( optarg );
 			break;
 
-		case 'r':
+		case 'r':		/* number of retries */
 			retries = atoi( optarg );
+			break;
+
+		case 't':		/* delay in seconds */
+			delay = atoi( optarg );
 			break;
 
 		default:
@@ -131,7 +144,7 @@ main( int argc, char **argv )
 		value++;
 
 	do_modify( uri, host, port, manager, passwd, entry, ava, value,
-			loops, retries );
+			loops, retries, delay );
 	exit( EXIT_SUCCESS );
 }
 
@@ -139,7 +152,7 @@ main( int argc, char **argv )
 static void
 do_modify( char *uri, char *host, int port, char *manager,
 	char *passwd, char *entry, char* attr, char* value,
-	int maxloop, int maxretries )
+	int maxloop, int maxretries, int delay )
 {
 	LDAP	*ld = NULL;
 	int  	i = 0, do_retry = maxretries;
@@ -148,10 +161,12 @@ do_modify( char *uri, char *host, int port, char *manager,
 
 	struct ldapmod mod;
 	struct ldapmod *mods[2];
-	char *values[2] = { value, NULL };
+	char *values[2];
 
 	pid = getpid();
 	
+	values[0] = value;
+	values[1] = NULL;
 	mod.mod_op = LDAP_MOD_ADD;
 	mod.mod_type = attr;
 	mod.mod_values = values;
@@ -183,9 +198,19 @@ retry:;
 	rc = ldap_bind_s( ld, manager, passwd, LDAP_AUTH_SIMPLE );
 	if ( rc != LDAP_SUCCESS ) {
 		ldap_perror( ld, "ldap_bind" );
-		if ( rc == LDAP_BUSY && do_retry > 0 ) {
-			do_retry--;
-			goto retry;
+		switch ( rc ) {
+		case LDAP_BUSY:
+		case LDAP_UNAVAILABLE:
+			if ( do_retry > 0 ) {
+				do_retry--;
+				if ( delay > 0 ) {
+				    sleep( delay );
+				}
+				goto retry;
+			}
+		/* fallthru */
+		default:
+			break;
 		}
 		exit( EXIT_FAILURE );
 	}

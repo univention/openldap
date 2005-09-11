@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/add.c,v 1.27.2.6 2005/05/06 16:42:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/add.c,v 1.27.2.9 2005/08/17 21:33:45 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -43,6 +43,7 @@ meta_back_add( Operation *op, SlapReply *rs )
 	LDAPMod		**attrs;
 	struct berval	mdn = BER_BVNULL, mapped;
 	dncookie	dc;
+	int		msgid;
 	int		do_retry = 1;
 
 	Debug(LDAP_DEBUG_ARGS, "==> meta_back_add: %s\n",
@@ -68,7 +69,7 @@ meta_back_add( Operation *op, SlapReply *rs )
 
 	if ( ldap_back_dn_massage( &dc, &op->o_req_dn, &mdn ) ) {
 		send_ldap_result( op, rs );
-		return rs->sr_err;
+		goto done;
 	}
 
 	/* Count number of attributes in entry ( +1 ) */
@@ -82,7 +83,8 @@ meta_back_add( Operation *op, SlapReply *rs )
 	for ( i = 0, a = op->ora_e->e_attrs; a; a = a->a_next ) {
 		int			j, is_oc = 0;
 
-		if ( !isupdate && a->a_desc->ad_type->sat_no_user_mod  ) {
+		if ( !isupdate && !get_manageDIT( op ) && a->a_desc->ad_type->sat_no_user_mod  )
+		{
 			continue;
 		}
 
@@ -163,20 +165,58 @@ meta_back_add( Operation *op, SlapReply *rs )
 	attrs[ i ] = NULL;
 
 retry:;
-#if 0
 	rs->sr_err = ldap_add_ext( mc->mc_conns[ candidate ].msc_ld, mdn.bv_val,
 			      attrs, op->o_ctrls, NULL, &msgid );
-	rs->sr_err = meta_back_op_result( op, rs, &mc->mc_conns[ candidate ], msgid, LDAP_BACK_SENDERR );
-#endif
-	rs->sr_err = ldap_add_ext_s( mc->mc_conns[ candidate ].msc_ld, mdn.bv_val,
-			      attrs, op->o_ctrls, NULL );
 	if ( rs->sr_err == LDAP_UNAVAILABLE && do_retry ) {
 		do_retry = 0;
 		if ( meta_back_retry( op, rs, mc, candidate, LDAP_BACK_SENDERR ) ) {
 			goto retry;
 		}
+
+	} else if ( rs->sr_err == LDAP_SUCCESS ) {
+		struct timeval	tv, *tvp = NULL;
+		LDAPMessage	*res = NULL;
+		int		rc;
+
+		if ( mi->mi_targets[ candidate ].mt_timeout[ META_OP_ADD ] != 0 ) {
+			tv.tv_sec = mi->mi_targets[ candidate ].mt_timeout[ META_OP_ADD ];
+			tv.tv_usec = 0;
+			tvp = &tv;
+		}
+
+		rs->sr_err = LDAP_OTHER;
+		rc = ldap_result( mc->mc_conns[ candidate ].msc_ld,
+			msgid, LDAP_MSG_ONE, tvp, &res );
+		switch ( rc ) {
+		case -1:
+			send_ldap_result( op, rs );
+			goto cleanup;
+
+		case 0:
+			ldap_abandon_ext( mc->mc_conns[ candidate ].msc_ld,
+				msgid, NULL, NULL );
+			rs->sr_err = op->o_protocol >= LDAP_VERSION3 ?
+				LDAP_ADMINLIMIT_EXCEEDED : LDAP_OPERATIONS_ERROR;
+			send_ldap_result( op, rs );
+			goto cleanup;
+
+		case LDAP_RES_ADD:
+			rc = ldap_parse_result( mc->mc_conns[ candidate ].msc_ld,
+				res, &rs->sr_err, NULL, NULL, NULL, NULL, 1 );
+			if ( rc != LDAP_SUCCESS ) {
+				rs->sr_err = rc;
+			}
+			break;
+
+		default:
+			ldap_msgfree( res );
+			break;
+		}
 	}
 
+	(void)meta_back_op_result( mc, op, rs, candidate );
+
+cleanup:;
 	for ( --i; i >= 0; --i ) {
 		free( attrs[ i ]->mod_bvalues );
 		free( attrs[ i ] );
@@ -187,6 +227,9 @@ retry:;
 		BER_BVZERO( &mdn );
 	}
 
-	return meta_back_op_result( mc, op, rs, candidate );
+done:;
+	meta_back_release_conn( op, mc );
+
+	return rs->sr_err;
 }
 

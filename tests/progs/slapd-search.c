@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/tests/progs/slapd-search.c,v 1.21.2.2 2005/04/29 21:29:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/tests/progs/slapd-search.c,v 1.21.2.4 2005/08/19 18:09:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -38,12 +38,21 @@
 
 static void
 do_search( char *uri, char *host, int port, char *manager, char *passwd,
-		char *sbase, char *filter, int maxloop, int maxretries );
+		char *sbase, char *filter, int maxloop, int maxretries, int delay );
 
 static void
 usage( char *name )
 {
-	fprintf( stderr, "usage: %s [-h <host>] -p port -b <searchbase> -f <searchfiter> [-l <loops>]\n",
+        fprintf( stderr,
+		"usage: %s "
+		"-H <uri> | ([-h <host>] -p <port>) "
+		"-D <manager> "
+		"-w <passwd> "
+		"-b <searchbase> "
+		"-f <searchfilter> "
+		"[-l <loops>] "
+		"[-r <maxretries>] "
+		"[-t <delay>]\n",
 			name );
 	exit( EXIT_FAILURE );
 }
@@ -61,8 +70,9 @@ main( int argc, char **argv )
 	char		*filter  = NULL;
 	int		loops = LOOPS;
 	int		retries = RETRIES;
+	int		delay = 0;
 
-	while ( (i = getopt( argc, argv, "b:D:f:H:h:l:p:w:r:" )) != EOF ) {
+	while ( (i = getopt( argc, argv, "b:D:f:H:h:l:p:w:r:t:" )) != EOF ) {
 		switch( i ) {
 		case 'H':		/* the server uri */
 			uri = strdup( optarg );
@@ -100,6 +110,10 @@ main( int argc, char **argv )
 			retries = atoi( optarg );
 			break;
 
+		case 't':		/* delay in seconds */
+			delay = atoi( optarg );
+			break;
+
 		default:
 			usage( argv[0] );
 			break;
@@ -118,14 +132,14 @@ main( int argc, char **argv )
 	}
 
 	do_search( uri, host, port, manager, passwd, sbase, filter,
-			( 10 * loops ), retries );
+			( 10 * loops ), retries, delay );
 	exit( EXIT_SUCCESS );
 }
 
 
 static void
 do_search( char *uri, char *host, int port, char *manager, char *passwd,
-		char *sbase, char *filter, int maxloop, int maxretries )
+		char *sbase, char *filter, int maxloop, int maxretries, int delay )
 {
 	LDAP	*ld = NULL;
 	int  	i = 0, do_retry = maxretries;
@@ -157,11 +171,21 @@ retry:;
 
 	rc = ldap_bind_s( ld, manager, passwd, LDAP_AUTH_SIMPLE );
 	if ( rc != LDAP_SUCCESS ) {
-		if ( rc == LDAP_BUSY && do_retry == 1 ) {
-			do_retry = 0;
-			goto retry;
-		}
 		ldap_perror( ld, "ldap_bind" );
+		switch ( rc ) {
+		case LDAP_BUSY:
+		case LDAP_UNAVAILABLE:
+			if ( do_retry > 0 ) {
+				do_retry--;
+				if ( delay != 0 ) {
+				    sleep( delay );
+				}
+				goto retry;
+			}
+		/* fallthru */
+		default:
+			break;
+		}
 		exit( EXIT_FAILURE );
 	}
 
@@ -172,8 +196,8 @@ retry:;
 				filter, attrs, 0, &res );
 		if ( rc != LDAP_SUCCESS ) {
 			ldap_perror( ld, "ldap_search" );
-			if ( rc == LDAP_BUSY && do_retry == 1 ) {
-				do_retry = 0;
+			if ( rc == LDAP_BUSY && do_retry > 0 ) {
+				do_retry--;
 				goto retry;
 			}
 			if ( rc != LDAP_NO_SUCH_OBJECT ) break;
@@ -188,5 +212,3 @@ retry:;
 
 	ldap_unbind( ld );
 }
-
-

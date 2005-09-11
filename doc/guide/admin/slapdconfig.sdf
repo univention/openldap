@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/openldap-guide/admin/slapdconfig.sdf,v 1.79.2.3 2005/06/13 01:01:48 kurt Exp $
+# $OpenLDAP: pkg/openldap-guide/admin/slapdconfig.sdf,v 1.79.2.4 2005/08/09 16:45:32 kurt Exp $
 # Copyright 1999-2005, The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
@@ -236,6 +236,7 @@ supported backend types listed in Table 5.2.
 Types	Description
 bdb	Berkeley DB transactional backend
 dnssrv	DNS SRV backend
+hdb	Hierarchical variant of bdb backend
 ldap	Lightweight Directory Access Protocol (Proxy) backend
 ldbm	Lightweight DBM backend
 meta	Meta Directory backend
@@ -562,12 +563,14 @@ If specified multiple times, each {{TERM:URL}} is provided.
 >	updateref	ldap://master.example.net
 
 
-H3: BDB Database Directives
+H3: BDB and HDB Database Directives
 
-Directives in this category only apply to a {{TERM:BDB}} database.
-That is, they must follow a "database bdb" line and come before any
+Directives in this category only apply to both the {{TERM:BDB}}
+and the {{TERM:HDB}} database.
+That is, they must follow a "database bdb" or "database hdb" line
+and come before any
 subsequent "backend" or "database" line.  For a complete reference
-of BDB configuration directives, see {{slapd-bdb}}(5).
+of BDB/HDB configuration directives, see {{slapd-bdb}}(5).
 
 
 H4: directory <directory>

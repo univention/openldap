@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test011-glue-slapadd,v 1.5.2.1 2005/01/20 18:04:07 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test011-glue-slapadd,v 1.5.2.2 2005/09/01 20:28:11 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -15,11 +15,6 @@
 
 echo "running defines.sh"
 . $SRCDIR/scripts/defines.sh
-
-if test $GLUE = glueno; then 
-	echo "Backend glue overlay not available, test skipped"
-	exit 0
-fi 
 
 mkdir -p $TESTDIR $DBDIR1A $DBDIR1B $DBDIR1C
 

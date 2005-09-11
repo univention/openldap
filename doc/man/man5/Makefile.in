@@ -1,5 +1,5 @@
 # man5 Makefile.in for OpenLDAP
-# $OpenLDAP: pkg/ldap/doc/man/man5/Makefile.in,v 1.8.2.2 2005/01/24 21:28:50 kurt Exp $
+# $OpenLDAP: pkg/ldap/doc/man/man5/Makefile.in,v 1.8.2.3 2005/07/10 04:36:40 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.

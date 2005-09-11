@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.296.2.4 2005/04/29 21:29:04 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.296.2.8 2005/08/29 21:38:48 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -49,6 +49,8 @@ static Connection *connections = NULL;
 
 static ldap_pvt_thread_mutex_t conn_nextid_mutex;
 static unsigned long conn_nextid = 0;
+
+static const char conn_lost_str[] = "connection lost";
 
 /* structure state (protected by connections_mutex) */
 #define SLAP_C_UNINITIALIZED	0x00	/* MUST BE ZERO (0) */
@@ -191,7 +193,7 @@ int connections_shutdown(void)
 		ldap_pvt_thread_mutex_lock( &connections[i].c_mutex );
 
 		/* connections_mutex and c_mutex are locked */
-		connection_closing( &connections[i] );
+		connection_closing( &connections[i], "slapd shutdown" );
 		connection_close( &connections[i] );
 
 		ldap_pvt_thread_mutex_unlock( &connections[i].c_mutex );
@@ -222,7 +224,7 @@ int connections_timeout_idle(time_t now)
 
 		if( difftime( c->c_activitytime+global_idletimeout, now) < 0 ) {
 			/* close it */
-			connection_closing( c );
+			connection_closing( c, "idletimeout" );
 			connection_close( c );
 			i++;
 		}
@@ -492,6 +494,7 @@ long connection_init(
 	if ( flags == CONN_IS_CLIENT ) {
 		c->c_conn_state = SLAP_C_CLIENT;
 		c->c_struct_state = SLAP_C_USED;
+		c->c_close_reason = "?";			/* should never be needed */
 		ber_sockbuf_ctrl( c->c_sb, LBER_SB_OPT_SET_FD, &s );
 		ldap_pvt_thread_mutex_unlock( &c->c_mutex );
 		ldap_pvt_thread_mutex_unlock( &connections_mutex );
@@ -563,6 +566,7 @@ long connection_init(
 
 	c->c_conn_state = SLAP_C_INACTIVE;
 	c->c_struct_state = SLAP_C_USED;
+	c->c_close_reason = "?";			/* should never be needed */
 
 	c->c_ssf = c->c_transport_ssf = ssf;
 	c->c_tls_ssf = 0;
@@ -598,21 +602,21 @@ void connection2anonymous( Connection *c )
 		ber_sockbuf_ctrl( c->c_sb, LBER_SB_OPT_SET_MAX_INCOMING, &max );
 	}
 
-	if(c->c_authmech.bv_val != NULL ) {
-		free(c->c_authmech.bv_val);
+	if ( !BER_BVISNULL( &c->c_authmech ) ) {
+		ch_free(c->c_authmech.bv_val);
 	}
 	BER_BVZERO( &c->c_authmech );
 
-	if(c->c_dn.bv_val != NULL) {
-		free(c->c_dn.bv_val);
+	if ( !BER_BVISNULL( &c->c_dn ) ) {
+		ch_free(c->c_dn.bv_val);
 	}
 	BER_BVZERO( &c->c_dn );
-	if(c->c_ndn.bv_val != NULL) {
-		free(c->c_ndn.bv_val);
+	if ( !BER_BVISNULL( &c->c_ndn ) ) {
+		ch_free(c->c_ndn.bv_val);
 	}
 	BER_BVZERO( &c->c_ndn );
-	if(c->c_sasl_authz_dn.bv_val != NULL) {
-		free(c->c_sasl_authz_dn.bv_val);
+	if ( !BER_BVISNULL( &c->c_sasl_authz_dn ) ) {
+		ber_memfree_x( c->c_sasl_authz_dn.bv_val, NULL );
 	}
 	BER_BVZERO( &c->c_sasl_authz_dn );
 
@@ -625,6 +629,7 @@ connection_destroy( Connection *c )
 	/* note: connections_mutex should be locked by caller */
 	ber_socket_t	sd;
 	unsigned long	connid;
+	const char		*close_reason;
 
 	assert( connections != NULL );
 	assert( c != NULL );
@@ -635,6 +640,7 @@ connection_destroy( Connection *c )
 
 	/* only for stats (print -1 as "%lu" may give unexpected results ;) */
 	connid = c->c_connid;
+	close_reason = c->c_close_reason;
 
 	backend_connection_destroy(c);
 
@@ -672,9 +678,10 @@ connection_destroy( Connection *c )
 	if ( sd != AC_SOCKET_INVALID ) {
 		slapd_remove( sd, 1, 0 );
 
-		Statslog( LDAP_DEBUG_STATS,
-			"conn=%lu fd=%ld closed\n",
-			connid, (long) sd, 0, 0, 0 );
+		Statslog( LDAP_DEBUG_STATS, (close_reason
+									 ? "conn=%lu fd=%ld closed (%s)\n"
+									 : "conn=%lu fd=%ld closed\n"),
+			connid, (long) sd, close_reason, 0, 0 );
 	}
 
 	ber_sockbuf_free( c->c_sb );
@@ -688,6 +695,7 @@ connection_destroy( Connection *c )
 
 	c->c_conn_state = SLAP_C_INVALID;
 	c->c_struct_state = SLAP_C_UNUSED;
+	c->c_close_reason = "?";			/* should never be needed */
 
 #ifdef LDAP_SLAPI
 	/* call destructors, then constructors; avoids unnecessary allocation */
@@ -740,7 +748,7 @@ static void connection_abandon( Connection *c )
 	}
 }
 
-void connection_closing( Connection *c )
+void connection_closing( Connection *c, const char *why )
 {
 	assert( connections != NULL );
 	assert( c != NULL );
@@ -758,6 +766,7 @@ void connection_closing( Connection *c )
 			c->c_connid, sd, 0 );
 		/* update state to closing */
 		c->c_conn_state = SLAP_C_CLOSING;
+		c->c_close_reason = why;
 
 		/* don't listen on this port anymore */
 		slapd_clr_read( sd, 1 );
@@ -773,6 +782,9 @@ void connection_closing( Connection *c )
 			ldap_pvt_thread_yield();
 			ldap_pvt_thread_mutex_lock( &c->c_mutex );
 		}
+	} else if( why == NULL && c->c_close_reason == conn_lost_str ) {
+		/* Client closed connection after doing Unbind. */
+		c->c_close_reason = NULL;
 	}
 }
 
@@ -1085,7 +1097,8 @@ operations_error:
 	case LBER_ERROR:
 	case LDAP_REQ_UNBIND:
 		/* c_mutex is locked */
-		connection_closing( conn );
+		connection_closing(
+			conn, tag == LDAP_REQ_UNBIND ? NULL : "operations error" );
 		break;
 
 	case LDAP_REQ_BIND:
@@ -1144,6 +1157,14 @@ void connection_client_stop(
 	c->c_listener = NULL;
 	c->c_conn_state = SLAP_C_INVALID;
 	c->c_struct_state = SLAP_C_UNUSED;
+	c->c_close_reason = "?";			/* should never be needed */
+	ber_sockbuf_free( c->c_sb );
+	c->c_sb = ber_sockbuf_alloc( );
+	{
+		ber_len_t max = sockbuf_max_incoming;
+		ber_sockbuf_ctrl( c->c_sb, LBER_SB_OPT_SET_MAX_INCOMING, &max );
+	}
+
 	connection_return( c );
 	slapd_remove( s, 0, 1 );
 }
@@ -1209,7 +1230,7 @@ int connection_read(ber_socket_t s)
 				s, rc, c->c_connid );
 			c->c_needs_tls_accept = 0;
 			/* connections_mutex and c_mutex are locked */
-			connection_closing( c );
+			connection_closing( c, "TLS negotiation failure" );
 
 #if 0
 			/* Drain input before close, to allow SSL error codes
@@ -1247,6 +1268,9 @@ int connection_read(ber_socket_t s)
 					"unable to get TLS client DN, error=%d id=%lu\n",
 					s, rc, c->c_connid );
 			}
+			Statslog( LDAP_DEBUG_STATS,
+				"conn=%lu fd=%d TLS established tls_ssf=%u ssf=%u\n",
+			    c->c_connid, (int) s, c->c_tls_ssf, c->c_ssf, 0 );
 			slap_sasl_external( c, c->c_tls_ssf, &authid );
 			if ( authid.bv_val ) free( authid.bv_val );
 		}
@@ -1281,7 +1305,7 @@ int connection_read(ber_socket_t s)
 				"error=%d id=%lu, closing\n",
 				s, rc, c->c_connid );
 			/* connections_mutex and c_mutex are locked */
-			connection_closing( c );
+			connection_closing( c, "SASL layer install failure" );
 			connection_close( c );
 			connection_return( c );
 			ldap_pvt_thread_mutex_unlock( &connections_mutex );
@@ -1310,7 +1334,7 @@ int connection_read(ber_socket_t s)
 			"connection_read(%d): input error=%d id=%lu, closing.\n",
 			s, rc, c->c_connid );
 		/* connections_mutex and c_mutex are locked */
-		connection_closing( c );
+		connection_closing( c, conn_lost_str );
 		connection_close( c );
 		connection_return( c );
 		ldap_pvt_thread_mutex_unlock( &connections_mutex );
@@ -1474,16 +1498,32 @@ connection_input(
 	 * already pending ops, let them go first.  Abandon operations
 	 * get exceptions to some, but not all, cases.
 	 */
-	if (tag != LDAP_REQ_ABANDON && conn->c_conn_state == SLAP_C_CLOSING) {
-		defer = "closing";
-	} else if (tag != LDAP_REQ_ABANDON && conn->c_writewaiter) {
-		defer = "awaiting write";
-	} else if (conn->c_n_ops_executing >= connection_pool_max/2) {
-		defer = "too many executing";
-	} else if (conn->c_conn_state == SLAP_C_BINDING) {
-		defer = "binding";
-	} else if (tag != LDAP_REQ_ABANDON && conn->c_n_ops_pending) {
-		defer = "pending operations";
+	switch( tag ){
+	default:
+		/* Abandon and Unbind are exempt from these checks */
+		if (conn->c_conn_state == SLAP_C_CLOSING) {
+			defer = "closing";
+			break;
+		} else if (conn->c_writewaiter) {
+			defer = "awaiting write";
+			break;
+		} else if (conn->c_n_ops_pending) {
+			defer = "pending operations";
+			break;
+		}
+		/* FALLTHRU */
+	case LDAP_REQ_ABANDON:
+		/* Unbind is exempt from these checks */
+		if (conn->c_n_ops_executing >= connection_pool_max/2) {
+			defer = "too many executing";
+			break;
+		} else if (conn->c_conn_state == SLAP_C_BINDING) {
+			defer = "binding";
+			break;
+		}
+		/* FALLTHRU */
+	case LDAP_REQ_UNBIND:
+		break;
 	}
 
 	if( defer ) {

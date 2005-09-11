@@ -1,5 +1,5 @@
 /* schema_prep.c - load builtin schema */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.141.2.5 2005/06/03 19:54:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.141.2.11 2005/08/26 00:18:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -297,8 +297,8 @@ static int objectSubClassIndexer(
 
 				ocvalues[noc] = sup->soc_cname;
 
-				assert( ocvalues[noc].bv_val );
-				assert( ocvalues[noc].bv_len );
+				assert( ocvalues[noc].bv_val != NULL );
+				assert( ocvalues[noc].bv_len != 0 );
 
 				noc++;
 
@@ -321,7 +321,9 @@ static ObjectClassSchemaCheckFN rootDseObjectClass;
 static ObjectClassSchemaCheckFN aliasObjectClass;
 static ObjectClassSchemaCheckFN referralObjectClass;
 static ObjectClassSchemaCheckFN subentryObjectClass;
+#ifdef LDAP_DYNAMIC_OBJECTS
 static ObjectClassSchemaCheckFN dynamicObjectClass;
+#endif
 
 static struct slap_schema_oc_map {
 	char *ssom_name;
@@ -417,7 +419,9 @@ static AttributeTypeSchemaCheckFN aliasAttribute;
 static AttributeTypeSchemaCheckFN referralAttribute;
 static AttributeTypeSchemaCheckFN subentryAttribute;
 static AttributeTypeSchemaCheckFN administrativeRoleAttribute;
+#ifdef LDAP_DYNAMIC_OBJECTS
 static AttributeTypeSchemaCheckFN dynamicAttribute;
+#endif
 
 static struct slap_schema_ad_map {
 	char *ssam_name;
@@ -547,7 +551,7 @@ static struct slap_schema_ad_map {
 			"ORDERING UUIDOrderingMatch "
 			"SYNTAX 1.3.6.1.4.1.4203.666.2.6 "
 			"SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )",
-		NULL, SLAP_AT_HIDE,
+		NULL, SLAP_AT_HIDE|SLAP_AT_MANAGEABLE,
 		NULL, NULL,
 		NULL, NULL, NULL, NULL, NULL,
 		offsetof(struct slap_internal_schema, si_ad_entryUUID) },
@@ -850,8 +854,16 @@ static struct slap_schema_ad_map {
 	{ "authzTo", "( 1.3.6.1.4.1.4203.666.1.8 "
 			"NAME ( 'authzTo' 'saslAuthzTo' ) "
 			"DESC 'proxy authorization targets' "
+#ifdef SLAP_AUTHZ_SYNTAX
+			"EQUALITY authzMatch "
+			"SYNTAX 1.3.6.1.4.1.4203.666.2.7 "
+#else /* ! SLAP_AUTHZ_SYNTAX */
 			"EQUALITY caseExactMatch "
 			"SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 "
+#endif /* ! SLAP_AUTHZ_SYNTAX */
+#ifdef SLAP_ORDERED_PRETTYNORM
+			"X-ORDERED 'VALUES' "
+#endif /* SLAP_ORDERED_PRETTYNORM */
 			"USAGE distributedOperation )",
 		NULL, SLAP_AT_HIDE,
 		NULL, NULL,
@@ -860,25 +872,21 @@ static struct slap_schema_ad_map {
 	{ "authzFrom", "( 1.3.6.1.4.1.4203.666.1.9 "
 			"NAME ( 'authzFrom' 'saslAuthzFrom' ) "
 			"DESC 'proxy authorization sources' "
+#ifdef SLAP_AUTHZ_SYNTAX
+			"EQUALITY authzMatch "
+			"SYNTAX 1.3.6.1.4.1.4203.666.2.7 "
+#else /* ! SLAP_AUTHZ_SYNTAX */
 			"EQUALITY caseExactMatch "
 			"SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 "
+#endif /* ! SLAP_AUTHZ_SYNTAX */
+#ifdef SLAP_ORDERED_PRETTYNORM
+			"X-ORDERED 'VALUES' "
+#endif /* SLAP_ORDERED_PRETTYNORM */
 			"USAGE distributedOperation )",
 		NULL, SLAP_AT_HIDE,
 		NULL, NULL,
 		NULL, NULL, NULL, NULL, NULL,
 		offsetof(struct slap_internal_schema, si_ad_saslAuthzFrom) },
-#ifdef SLAPD_ACI_ENABLED
-	{ "OpenLDAPaci", "( 1.3.6.1.4.1.4203.666.1.5 "
-			"NAME 'OpenLDAPaci' "
-			"DESC 'OpenLDAP access control information (experimental)' "
-			"EQUALITY OpenLDAPaciMatch "
-			"SYNTAX 1.3.6.1.4.1.4203.666.2.1 "
-			"USAGE directoryOperation )",
-		NULL, SLAP_AT_HIDE,
-		NULL, NULL,
-		NULL, NULL, NULL, NULL, NULL,
-		offsetof(struct slap_internal_schema, si_ad_aci) },
-#endif
 
 #ifdef LDAP_DYNAMIC_OBJECTS
 	{ "entryTtl", "( 1.3.6.1.4.1.1466.101.119.3 NAME 'entryTtl' "
@@ -1008,14 +1016,31 @@ static struct slap_schema_ad_map {
 };
 
 static AttributeType slap_at_undefined = {
-	{ "1.1.1", NULL, NULL, 1, NULL,
+	{ "1.1.1", NULL, "Catchall for undefined attribute types", 1, NULL,
 		NULL, NULL, NULL, NULL,
-		0, 0, 0, 1, 3, NULL }, /* LDAPAttributeType */
+		0, 0, 0, 1, LDAP_SCHEMA_DSA_OPERATION, NULL }, /* LDAPAttributeType */
 	BER_BVC("UNDEFINED"), /* cname */
 	NULL, /* sup */
 	NULL, /* subtypes */
 	NULL, NULL, NULL, NULL,	/* matching rules routines */
-	NULL, /* syntax (this may need to be defined) */
+	NULL, /* syntax (will be set later to "octetString") */
+	NULL, /* schema check function */
+	NULL, /* oidmacro */
+	SLAP_AT_ABSTRACT|SLAP_AT_FINAL,	/* mask */
+	{ NULL }, /* next */
+	NULL /* attribute description */
+	/* mutex (don't know how to initialize it :) */
+};
+
+static AttributeType slap_at_proxied = {
+	{ "1.1.1", NULL, "Catchall for undefined proxied attribute types", 1, NULL,
+		NULL, NULL, NULL, NULL,
+		0, 0, 0, 0, LDAP_SCHEMA_USER_APPLICATIONS, NULL }, /* LDAPAttributeType */
+	BER_BVC("PROXIED"), /* cname */
+	NULL, /* sup */
+	NULL, /* subtypes */
+	NULL, NULL, NULL, NULL,	/* matching rules routines (will be set later) */
+	NULL, /* syntax (will be set later to "octetString") */
 	NULL, /* schema check function */
 	NULL, /* oidmacro */
 	SLAP_AT_ABSTRACT|SLAP_AT_FINAL,	/* mask */
@@ -1122,6 +1147,19 @@ slap_schema_load( void )
 			return LDAP_INAPPROPRIATE_MATCHING;
 		}
 	}
+
+	slap_at_undefined.sat_syntax = slap_schema.si_syn_octetString;
+	slap_schema.si_at_undefined = &slap_at_undefined;
+
+	slap_at_proxied.sat_equality = mr_find( "octetStringMatch" );
+	slap_at_proxied.sat_approx = mr_find( "octetStringMatch" );
+	slap_at_proxied.sat_ordering = mr_find( "octetStringOrderingMatch" );
+	slap_at_proxied.sat_substr = mr_find( "octetStringSubstringsMatch" );
+	slap_at_proxied.sat_syntax = slap_schema.si_syn_octetString;
+	slap_schema.si_at_proxied = &slap_at_proxied;
+
+	ldap_pvt_thread_mutex_init( &ad_undef_mutex );
+	ldap_pvt_thread_mutex_init( &oc_undef_mutex );
 
 	for( i=0; ad_map[i].ssam_name; i++ ) {
 		assert( ad_map[i].ssam_defn != NULL );
@@ -1231,6 +1269,7 @@ slap_schema_load( void )
 					mr->smr_filter = ad_map[i].ssam_mr_filter;
 				}
 
+				/* FIXME: no-one will free this at exit */
 				(*adp)->ad_type->sat_equality = mr;
 			}
 		}
@@ -1291,9 +1330,6 @@ slap_schema_load( void )
 			(*ocp)->soc_flags |= oc_map[i].ssom_flags;
 		}
 	}
-
-	slap_at_undefined.sat_syntax = slap_schema.si_syn_octetString;
-	slap_schema.si_at_undefined = &slap_at_undefined;
 
 	return LDAP_SUCCESS;
 }
@@ -1400,6 +1436,7 @@ static int subentryObjectClass (
 	return LDAP_SUCCESS;
 }
 
+#ifdef LDAP_DYNAMIC_OBJECTS
 static int dynamicObjectClass (
 	Backend *be,
 	Entry *e,
@@ -1418,6 +1455,7 @@ static int dynamicObjectClass (
 
 	return LDAP_SUCCESS;
 }
+#endif /* LDAP_DYNAMIC_OBJECTS */
 
 static int rootDseAttribute (
 	Backend *be,
@@ -1540,6 +1578,7 @@ static int administrativeRoleAttribute (
 	return LDAP_OBJECT_CLASS_VIOLATION;
 }
 
+#ifdef LDAP_DYNAMIC_OBJECTS
 static int dynamicAttribute (
 	Backend *be,
 	Entry *e,
@@ -1565,3 +1604,4 @@ static int dynamicAttribute (
 
 	return LDAP_SUCCESS;
 }
+#endif /* LDAP_DYNAMIC_OBJECTS */

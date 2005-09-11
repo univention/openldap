@@ -1,5 +1,5 @@
 /* oc.c - object class routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/oc.c,v 1.63.2.3 2005/04/29 21:29:05 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/oc.c,v 1.63.2.5 2005/08/25 05:01:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -57,7 +57,7 @@ int is_object_subclass(
 int is_entry_objectclass(
 	Entry*	e,
 	ObjectClass *oc,
-	int set_flags )
+	unsigned flags )
 {
 	/*
 	 * set_flags should only be true if oc is one of operational
@@ -67,15 +67,16 @@ int is_entry_objectclass(
 
 	Attribute *attr;
 	struct berval *bv;
-	AttributeDescription *objectClass = slap_schema.si_ad_objectClass;
 
-	assert(!( e == NULL || oc == NULL ));
+	assert( !( e == NULL || oc == NULL ) );
+	assert( ( flags & SLAP_OCF_MASK ) != SLAP_OCF_MASK );
 
 	if( e == NULL || oc == NULL ) {
 		return 0;
 	}
 
-	if( set_flags && ( e->e_ocflags & SLAP_OC__END )) {
+	if( flags == SLAP_OCF_SET_FLAGS && ( e->e_ocflags & SLAP_OC__END ) )
+	{
 		/* flags are set, use them */
 		return (e->e_ocflags & oc->soc_flags & SLAP_OC__MASK) != 0;
 	}
@@ -83,7 +84,7 @@ int is_entry_objectclass(
 	/*
 	 * find objectClass attribute
 	 */
-	attr = attr_find(e->e_attrs, objectClass);
+	attr = attr_find( e->e_attrs, slap_schema.si_ad_objectClass );
 	if( attr == NULL ) {
 		/* no objectClass attribute */
 		Debug( LDAP_DEBUG_ANY, "is_entry_objectclass(\"%s\", \"%s\") "
@@ -97,19 +98,30 @@ int is_entry_objectclass(
 	for( bv=attr->a_vals; bv->bv_val; bv++ ) {
 		ObjectClass *objectClass = oc_bvfind( bv );
 
-		if ( !set_flags && objectClass == oc ) {
-			return 1;
+		if ( objectClass == NULL ) {
+			/* FIXME: is this acceptable? */
+			continue;
+		}
+
+		if ( !( flags & SLAP_OCF_SET_FLAGS ) ) {
+			if ( objectClass == oc ) {
+				return 1;
+			}
+
+			if ( ( flags & SLAP_OCF_CHECK_SUP )
+				&& is_object_subclass( oc, objectClass ) )
+			{
+				return 1;
+			}
 		}
 		
-		if ( objectClass != NULL ) {
-			e->e_ocflags |= objectClass->soc_flags;
-		}
+		e->e_ocflags |= objectClass->soc_flags;
 	}
 
 	/* mark flags as set */
 	e->e_ocflags |= SLAP_OC__END;
 
-	return (e->e_ocflags & oc->soc_flags & SLAP_OC__MASK) != 0;
+	return ( e->e_ocflags & oc->soc_flags & SLAP_OC__MASK ) != 0;
 }
 
 
@@ -215,7 +227,9 @@ oc_bvfind_undef( struct berval *ocname )
 	AC_MEMCPY( oc->soc_cname.bv_val, ocname->bv_val, ocname->bv_len );
 
 	LDAP_STAILQ_NEXT( oc, soc_next ) = NULL;
+	ldap_pvt_thread_mutex_lock( &oc_undef_mutex );
 	LDAP_STAILQ_INSERT_HEAD( &oc_undef_list, oc, soc_next );
+	ldap_pvt_thread_mutex_unlock( &oc_undef_mutex );
 
 	return oc;
 }
@@ -385,6 +399,7 @@ oc_destroy( void )
 		if (o->soc_sups) ldap_memfree(o->soc_sups);
 		if (o->soc_required) ldap_memfree(o->soc_required);
 		if (o->soc_allowed) ldap_memfree(o->soc_allowed);
+		if (o->soc_oidmacro) ldap_memfree(o->soc_oidmacro);
 		ldap_objectclass_free((LDAPObjectClass *)o);
 	}
 	
@@ -462,8 +477,8 @@ oc_insert(
 		oir->oir_name.bv_len = strlen( soc->soc_oid );
 		oir->oir_oc = soc;
 
-		assert( oir->oir_name.bv_val );
-		assert( oir->oir_oc );
+		assert( oir->oir_name.bv_val != NULL );
+		assert( oir->oir_oc != NULL );
 
 		if ( avl_insert( &oc_index, (caddr_t) oir,
 			oc_index_cmp, avl_dup_error ) )
@@ -493,8 +508,8 @@ oc_insert(
 			oir->oir_name.bv_len = strlen( *names );
 			oir->oir_oc = soc;
 
-			assert( oir->oir_name.bv_val );
-			assert( oir->oir_oc );
+			assert( oir->oir_name.bv_val != NULL );
+			assert( oir->oir_oc != NULL );
 
 			if ( avl_insert( &oc_index, (caddr_t) oir,
 				oc_index_cmp, avl_dup_error ) )
@@ -604,7 +619,7 @@ oc_unparse( BerVarray *res, ObjectClass *start, ObjectClass *end, int sys )
 	ObjectClass *oc;
 	int i, num;
 	struct berval bv, *bva = NULL, idx;
-	char ibuf[32], *ptr;
+	char ibuf[32];
 
 	if ( !start )
 		start = LDAP_STAILQ_FIRST( &oc_list );

@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test020-proxycache,v 1.11.2.3 2005/05/06 16:42:53 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test020-proxycache,v 1.11.2.5 2005/08/29 20:16:38 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -27,6 +27,11 @@ if test $BACKLDAP = "ldapno" ; then
 	echo "LDAP backend not available, test skipped"
 	exit 0
 fi 
+
+if test "x$LVL" = "x0" ; then
+	echo "test020 needs a minimal log level; setting to LDAP_DEBUG_NONE..."
+	LVL=2048
+fi
 
 mkdir -p $TESTDIR $DBDIR1 $DBDIR2
 
@@ -268,8 +273,10 @@ else
 	exit 1
 fi
 
-echo "Comparing cache output..."
-$CMP $SLAVEOUT $PROXYCACHEOUT > $CMPOUT
+echo "Filtering ldapsearch results..."
+. $LDIFFILTER < $SLAVEOUT > $SEARCHFLT
+echo "Comparing filter output..."
+$CMP $SEARCHFLT $PROXYCACHEOUT > $CMPOUT
 
 if test $? != 0 ; then
 	echo "Comparison failed"

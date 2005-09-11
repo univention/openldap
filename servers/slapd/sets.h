@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/sets.h,v 1.18.2.1 2005/01/20 18:03:56 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sets.h,v 1.18.2.2 2005/08/29 18:26:10 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -21,7 +21,7 @@
 LDAP_BEGIN_DECL
 
 typedef struct slap_set_cookie {
-	struct slap_op *op;
+	struct slap_op *set_op;
 } SetCookie;
 
 /* this routine needs to return the bervals instead of

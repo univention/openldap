@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/alias.c,v 1.47.2.1 2005/01/20 18:03:59 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/alias.c,v 1.47.2.2 2005/08/09 21:04:03 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -228,7 +228,7 @@ static int dnlist_subordinate(
 	BerVarray dnlist,
 	struct berval *dn )
 {
-	assert( dnlist );
+	assert( dnlist != NULL );
 
 	for( ; dnlist->bv_val != NULL; dnlist++ ) {
 		if( dnIsSuffix( dnlist, dn ) ) {

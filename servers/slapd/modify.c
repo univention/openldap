@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.227.2.9 2005/06/09 17:25:55 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.227.2.14 2005/08/19 18:09:04 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -32,9 +32,6 @@
 #include <ac/time.h>
 
 #include "slap.h"
-#ifdef LDAP_SLAPI
-#include "slapi/slapi.h"
-#endif
 #include "lutil.h"
 
 
@@ -93,7 +90,7 @@ do_modify(
 
 		tmp.sml_nvalues = NULL;
 
-		if ( ber_scanf( op->o_ber, "{i{m[W]}}", &mop,
+		if ( ber_scanf( op->o_ber, "{e{m[W]}}", &mop,
 		    &tmp.sml_type, &tmp.sml_values ) == LBER_ERROR )
 		{
 			send_ldap_discon( op, rs, LDAP_PROTOCOL_ERROR,
@@ -143,7 +140,7 @@ do_modify(
 					goto cleanup;
 				}
 
-				if( mod->sml_values[1].bv_val ) {
+				if ( !BER_BVISNULL( &mod->sml_values[ 1 ] ) ) {
 					Debug( LDAP_DEBUG_ANY, "do_modify: modify/increment "
 						"operation (%ld) requires single value\n",
 						(long) mop, 0, 0 );
@@ -187,8 +184,8 @@ do_modify(
 		goto cleanup;
 	}
 
-	rs->sr_err = slap_mods_check( modlist, &rs->sr_text,
-		textbuf, textlen, NULL );
+	rs->sr_err = slap_mods_check( modlist,
+		&rs->sr_text, textbuf, textlen, NULL );
 
 	if ( rs->sr_err != LDAP_SUCCESS ) {
 		send_ldap_result( op, rs );
@@ -207,7 +204,7 @@ cleanup:
 
 	op->o_tmpfree( op->o_req_dn.bv_val, op->o_tmpmemctx );
 	op->o_tmpfree( op->o_req_ndn.bv_val, op->o_tmpmemctx );
-	if ( op->orm_modlist != NULL ) slap_mods_free( op->orm_modlist );
+	if ( op->orm_modlist != NULL ) slap_mods_free( op->orm_modlist, 1 );
 
 	return rs->sr_err;
 }
@@ -221,11 +218,7 @@ fe_op_modify( Operation *op, SlapReply *rs )
 	int		manageDSAit;
 	Modifications	*modlist = op->orm_modlist;
 	Modifications	**modtail = &modlist;
-#ifdef LDAP_SLAPI
-	LDAPMod		**modv = NULL;
-#endif
 	int		increment = op->orm_increment;
-	int		rc = 0;
 	BackendDB *op_be;
 	char		textbuf[ SLAP_TEXT_BUFLEN ];
 	size_t		textlen = sizeof( textbuf );
@@ -258,10 +251,10 @@ fe_op_modify( Operation *op, SlapReply *rs )
 		if ( tmp->sml_values == NULL ) {
 			Debug( LDAP_DEBUG_ARGS, "%s\n",
 			   "\t\tno values", NULL, NULL );
-		} else if ( tmp->sml_values[0].bv_val == NULL ) {
+		} else if ( BER_BVISNULL( &tmp->sml_values[ 0 ] ) ) {
 			Debug( LDAP_DEBUG_ARGS, "%s\n",
 			   "\t\tzero values", NULL, NULL );
-		} else if ( tmp->sml_values[1].bv_val == NULL ) {
+		} else if ( BER_BVISNULL( &tmp->sml_values[ 1 ] ) ) {
 			Debug( LDAP_DEBUG_ARGS, "%s, length %ld\n",
 			   "\t\tone value", (long) tmp->sml_values[0].bv_len, NULL );
 		} else {
@@ -351,13 +344,11 @@ fe_op_modify( Operation *op, SlapReply *rs )
 		goto cleanup;
 	}
 
-	{
-		rs->sr_err = slap_mods_obsolete_check( op, modlist,
-			&rs->sr_text, textbuf, textlen );
-		if ( rs->sr_err != LDAP_SUCCESS ) {
-			send_ldap_result( op, rs );
-			goto cleanup;
-		}
+	rs->sr_err = slap_mods_obsolete_check( op, modlist,
+		&rs->sr_text, textbuf, textlen );
+	if ( rs->sr_err != LDAP_SUCCESS ) {
+		send_ldap_result( op, rs );
+		goto cleanup;
 	}
 
 	/* check for modify/increment support */
@@ -365,61 +356,6 @@ fe_op_modify( Operation *op, SlapReply *rs )
 		send_ldap_error( op, rs, LDAP_UNWILLING_TO_PERFORM,
 			"modify/increment not supported in context" );
 	}
-
-#if defined( LDAP_SLAPI )
-#define pb	op->o_pb
-	if ( pb ) {
-		slapi_int_pblock_set_operation( pb, op );
-		slapi_pblock_set( pb, SLAPI_MODIFY_TARGET, (void *)op->o_req_dn.bv_val );
-		slapi_pblock_set( pb, SLAPI_MANAGEDSAIT, (void *)manageDSAit );
-		modv = slapi_int_modifications2ldapmods( &modlist );
-		slapi_pblock_set( pb, SLAPI_MODIFY_MODS, (void *)modv );
-
-		rs->sr_err = slapi_int_call_plugins( op->o_bd,
-			SLAPI_PLUGIN_PRE_MODIFY_FN, pb );
-
-		/*
-		 * It's possible that the preoperation plugin changed the
-		 * modification array, so we need to convert it back to
-		 * a Modification list.
-		 *
-		 * Calling slapi_int_modifications2ldapmods() destroyed modlist so
-		 * we don't need to free it.
-		 */
-		slapi_pblock_get( pb, SLAPI_MODIFY_MODS, (void **)&modv );
-		modlist = slapi_int_ldapmods2modifications( modv );
-
-		if ( rs->sr_err < 0 ) {
-			/*
-			 * A preoperation plugin failure will abort the
-			 * entire operation.
-			 */
-			Debug(LDAP_DEBUG_TRACE,
-				"do_modify: modify preoperation plugin failed.\n",
-				0, 0, 0);
-			if ( ( slapi_pblock_get( op->o_pb, SLAPI_RESULT_CODE,
-				(void *)&rs->sr_err ) != 0 ) || rs->sr_err == LDAP_SUCCESS )
-			{
-				rs->sr_err = LDAP_OTHER;
-			}
-			slapi_int_free_ldapmods( modv );
-			modv = NULL;
-			goto cleanup;
-		}
-	}
-
-	/*
-	 * NB: it is valid for the plugin to return no modifications
-	 * (for example, a plugin might store some attributes elsewhere
-	 * and remove them from the modification list; if only those
-	 * attribute types were included in the modification request,
-	 * then slapi_int_ldapmods2modifications() above will return
-	 * NULL).
-	 *
-	 * However, the post-operation plugin should still be 
-	 * called.
-	 */
-#endif /* defined( LDAP_SLAPI ) */
 
 	/*
 	 * do the modify if 1 && (2 || 3)
@@ -511,20 +447,7 @@ fe_op_modify( Operation *op, SlapReply *rs )
 		    "operation not supported within namingContext" );
 	}
 
-#if defined( LDAP_SLAPI )
-	if ( pb != NULL && slapi_int_call_plugins( op->o_bd,
-		SLAPI_PLUGIN_POST_MODIFY_FN, pb ) < 0 )
-	{
-		Debug(LDAP_DEBUG_TRACE,
-			"do_modify: modify postoperation plugins failed.\n", 0, 0, 0);
-	}
-#endif /* defined( LDAP_SLAPI ) */
-
 cleanup:;
-#if defined( LDAP_SLAPI )
-	if ( modv != NULL ) slapi_int_free_ldapmods( modv );
-#endif
-
 	return rs->sr_err;
 }
 
@@ -576,8 +499,9 @@ slap_mods_no_user_mod_check(
 	for ( ; ml != NULL; ml = ml->sml_next ) {
 		if ( !is_at_no_user_mod( ml->sml_desc->ad_type ) ) continue;
 
-		if( get_manageDIT( op )) {
+		if ( get_manageDIT( op ) ) {
 			if ( ml->sml_desc->ad_type->sat_flags & SLAP_AT_MANAGEABLE ) {
+				ml->sml_flags |= SLAP_MOD_MANAGING;
 				continue;
 			}
 
@@ -600,6 +524,34 @@ slap_mods_no_user_mod_check(
 	return LDAP_SUCCESS;
 }
 
+int
+slap_mods_no_repl_user_mod_check(
+	Operation *op,
+	Modifications *ml,
+	const char **text,
+	char *textbuf,
+	size_t textlen )
+{
+	Modifications *mods;
+	Modifications *modp;
+
+	for ( mods = ml; mods != NULL; mods = mods->sml_next ) {
+		assert( mods->sml_op == LDAP_MOD_ADD );
+
+		/* check doesn't already appear */
+		for ( modp = ml; modp != NULL; modp = modp->sml_next ) {
+			if ( mods->sml_desc == modp->sml_desc && mods != modp ) {
+				snprintf( textbuf, textlen,
+					"attribute '%s' provided more than once",
+					mods->sml_desc->ad_cname.bv_val );
+				return LDAP_TYPE_OR_VALUE_EXISTS;
+			}
+		}
+	}
+
+	return LDAP_SUCCESS;
+}
+
 /*
  * Do basic attribute type checking and syntax validation.
  */
@@ -616,13 +568,14 @@ int slap_mods_check(
 		AttributeDescription *ad = NULL;
 
 		/* convert to attribute description */
-		rc = slap_bv2ad( &ml->sml_type, &ml->sml_desc, text );
-
-		if( rc != LDAP_SUCCESS ) {
-			snprintf( textbuf, textlen, "%s: %s",
-				ml->sml_type.bv_val, *text );
-			*text = textbuf;
-			return rc;
+		if ( ml->sml_desc == NULL ) {
+			rc = slap_bv2ad( &ml->sml_type, &ml->sml_desc, text );
+			if( rc != LDAP_SUCCESS ) {
+				snprintf( textbuf, textlen, "%s: %s",
+					ml->sml_type.bv_val, *text );
+				*text = textbuf;
+				return rc;
+			}
 		}
 
 		ad = ml->sml_desc;
@@ -716,14 +669,25 @@ int slap_mods_check(
 			 * check that each value is valid per syntax
 			 *	and pretty if appropriate
 			 */
-			for( nvals = 0; ml->sml_values[nvals].bv_val; nvals++ ) {
+			for ( nvals = 0; ml->sml_values[nvals].bv_val; nvals++ ) {
 				struct berval pval;
-				if( pretty ) {
+
+				if ( pretty ) {
+#ifdef SLAP_ORDERED_PRETTYNORM
+					rc = ordered_value_pretty( ad,
+						&ml->sml_values[nvals], &pval, ctx );
+#else /* ! SLAP_ORDERED_PRETTYNORM */
 					rc = pretty( ad->ad_type->sat_syntax,
 						&ml->sml_values[nvals], &pval, ctx );
+#endif /* ! SLAP_ORDERED_PRETTYNORM */
 				} else {
+#ifdef SLAP_ORDERED_PRETTYNORM
+					rc = ordered_value_validate( ad,
+						&ml->sml_values[nvals] );
+#else /* ! SLAP_ORDERED_PRETTYNORM */
 					rc = validate( ad->ad_type->sat_syntax,
 						&ml->sml_values[nvals] );
+#endif /* ! SLAP_ORDERED_PRETTYNORM */
 				}
 
 				if( rc != 0 ) {
@@ -768,13 +732,21 @@ int slap_mods_check(
 				ml->sml_nvalues = ber_memalloc_x(
 					(nvals+1)*sizeof(struct berval), ctx );
 
-				for( nvals = 0; ml->sml_values[nvals].bv_val; nvals++ ) {
+				for ( nvals = 0; ml->sml_values[nvals].bv_val; nvals++ ) {
+#ifdef SLAP_ORDERED_PRETTYNORM
+					rc = ordered_value_normalize(
+						SLAP_MR_VALUE_OF_ATTRIBUTE_SYNTAX,
+						ad,
+						ad->ad_type->sat_equality,
+						&ml->sml_values[nvals], &ml->sml_nvalues[nvals], ctx );
+#else /* ! SLAP_ORDERED_PRETTYNORM */
 					rc = ad->ad_type->sat_equality->smr_normalize(
 						SLAP_MR_VALUE_OF_ATTRIBUTE_SYNTAX,
 						ad->ad_type->sat_syntax,
 						ad->ad_type->sat_equality,
 						&ml->sml_values[nvals], &ml->sml_nvalues[nvals], ctx );
-					if( rc ) {
+#endif /* ! SLAP_ORDERED_PRETTYNORM */
+					if ( rc ) {
 						Debug( LDAP_DEBUG_ANY,
 							"<= str2entry NULL (ssyn_normalize %d)\n",
 							rc, 0, 0 );
@@ -786,8 +758,7 @@ int slap_mods_check(
 					}
 				}
 
-				ml->sml_nvalues[nvals].bv_val = NULL;
-				ml->sml_nvalues[nvals].bv_len = 0;
+				BER_BVZERO( &ml->sml_nvalues[nvals] );
 			}
 
 			/* check for duplicates, but ignore Deletes.
@@ -874,7 +845,7 @@ int slap_mods_opattrs(
 	assert( modtail != NULL );
 	assert( *modtail == NULL );
 
-	if ( SLAP_LASTMOD( op->o_bd )) {
+	if ( SLAP_LASTMOD( op->o_bd ) ) {
 		time_t now = slap_get_time();
 
 		slap_get_csn( op, csnbuf, sizeof(csnbuf), &csn, manage_ctxcsn );
@@ -884,7 +855,7 @@ int slap_mods_opattrs(
 
 		slap_timestamp( &now, &timestamp );
 
-		if( op->o_dn.bv_len == 0 ) {
+		if ( BER_BVISEMPTY( &op->o_dn ) ) {
 			BER_BVSTR( &name, SLAPD_ANONYMOUS );
 			nname = name;
 		} else {
@@ -893,10 +864,20 @@ int slap_mods_opattrs(
 		}
 	}
 
-	if( op->o_tag == LDAP_REQ_ADD ) {
+	if ( op->o_tag == LDAP_REQ_ADD ) {
 		struct berval tmpval;
 
-		{
+		mod = *modtail;
+		if ( get_manageDIT( op ) ) {
+			for ( mod = mods; mod != *modtail; mod = mod->sml_next ) {
+				if ( mod->sml_desc == slap_schema.si_ad_structuralObjectClass ) {
+					break;
+				}
+			}
+
+		}
+
+		if ( mod == *modtail ) {
 			int rc = mods_structural_class( mods, &tmpval,
 				text, textbuf, textlen );
 			if( rc != LDAP_SUCCESS ) return rc;
@@ -904,137 +885,181 @@ int slap_mods_opattrs(
 			mod = (Modifications *) ch_malloc( sizeof( Modifications ) );
 			mod->sml_op = mop;
 			mod->sml_flags = SLAP_MOD_INTERNAL;
-			mod->sml_type.bv_val = NULL;
+			BER_BVZERO( &mod->sml_type );
 			mod->sml_desc = slap_schema.si_ad_structuralObjectClass;
 			mod->sml_values =
 				(BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
 			ber_dupbv( &mod->sml_values[0], &tmpval );
-			mod->sml_values[1].bv_len = 0;
-			mod->sml_values[1].bv_val = NULL;
-			assert( mod->sml_values[0].bv_val );
+			BER_BVZERO( &mod->sml_values[1] );
+			assert( !BER_BVISNULL( &mod->sml_values[0] ) );
 			mod->sml_nvalues =
 				(BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
 			ber_dupbv( &mod->sml_nvalues[0], &tmpval );
-			mod->sml_nvalues[1].bv_len = 0;
-			mod->sml_nvalues[1].bv_val = NULL;
-			assert( mod->sml_nvalues[0].bv_val );
+			BER_BVZERO( &mod->sml_nvalues[1] );
+			assert( !BER_BVISNULL( &mod->sml_nvalues[0] ) );
 			*modtail = mod;
 			modtail = &mod->sml_next;
 		}
 
-		if ( SLAP_LASTMOD( op->o_bd )) {
-			char uuidbuf[ LDAP_LUTIL_UUIDSTR_BUFSIZE ];
+		if ( SLAP_LASTMOD( op->o_bd ) ) {
+			mod = *modtail;
+			if ( get_manageDIT( op ) ) {
+				for ( mod = mods; mod != *modtail; mod = mod->sml_next ) {
+					if ( mod->sml_desc == slap_schema.si_ad_entryUUID ) {
+						break;
+					}
+				}
+			}
 
-			tmpval.bv_len = lutil_uuidstr( uuidbuf, sizeof( uuidbuf ) );
-			tmpval.bv_val = uuidbuf;
-		
+			if ( mod == *modtail ) {
+				char uuidbuf[ LDAP_LUTIL_UUIDSTR_BUFSIZE ];
+
+				tmpval.bv_len = lutil_uuidstr( uuidbuf, sizeof( uuidbuf ) );
+				tmpval.bv_val = uuidbuf;
+			
+				mod = (Modifications *) ch_malloc( sizeof( Modifications ) );
+				mod->sml_op = mop;
+				mod->sml_flags = SLAP_MOD_INTERNAL;
+				BER_BVZERO( &mod->sml_type );
+				mod->sml_desc = slap_schema.si_ad_entryUUID;
+				mod->sml_values =
+					(BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
+				ber_dupbv( &mod->sml_values[0], &tmpval );
+				BER_BVZERO( &mod->sml_values[1] );
+				assert( !BER_BVISNULL( &mod->sml_values[0] ) );
+				mod->sml_nvalues =
+					(BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
+				(*mod->sml_desc->ad_type->sat_equality->smr_normalize)(
+						SLAP_MR_VALUE_OF_ATTRIBUTE_SYNTAX,
+						mod->sml_desc->ad_type->sat_syntax,
+						mod->sml_desc->ad_type->sat_equality,
+						mod->sml_values, mod->sml_nvalues, NULL );
+				BER_BVZERO( &mod->sml_nvalues[1] );
+				*modtail = mod;
+				modtail = &mod->sml_next;
+			}
+
+			mod = *modtail;
+			if ( get_manageDIT( op ) ) {
+				for ( mod = mods; mod != *modtail; mod = mod->sml_next ) {
+					if ( mod->sml_desc == slap_schema.si_ad_creatorsName ) {
+						break;
+					}
+				}
+			}
+
+			if ( mod == *modtail ) {
+				mod = (Modifications *) ch_malloc( sizeof( Modifications ) );
+				mod->sml_op = mop;
+				mod->sml_flags = SLAP_MOD_INTERNAL;
+				BER_BVZERO( &mod->sml_type );
+				mod->sml_desc = slap_schema.si_ad_creatorsName;
+				mod->sml_values =
+					(BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
+				ber_dupbv( &mod->sml_values[0], &name );
+				BER_BVZERO( &mod->sml_values[1] );
+				assert( !BER_BVISNULL( &mod->sml_values[0] ) );
+				mod->sml_nvalues =
+					(BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
+				ber_dupbv( &mod->sml_nvalues[0], &nname );
+				BER_BVZERO( &mod->sml_nvalues[1] );
+				assert( !BER_BVISNULL( &mod->sml_nvalues[0] ) );
+				*modtail = mod;
+				modtail = &mod->sml_next;
+			}
+	
+			mod = *modtail;
+			if ( get_manageDIT( op ) ) {
+				for ( mod = mods; mod != *modtail; mod = mod->sml_next ) {
+					if ( mod->sml_desc == slap_schema.si_ad_createTimestamp ) {
+						break;
+					}
+				}
+			}
+
+			if ( mod == *modtail ) {
+				mod = (Modifications *) ch_malloc( sizeof( Modifications ) );
+				mod->sml_op = mop;
+				mod->sml_flags = SLAP_MOD_INTERNAL;
+				BER_BVZERO( &mod->sml_type );
+				mod->sml_desc = slap_schema.si_ad_createTimestamp;
+				mod->sml_values =
+					(BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
+				ber_dupbv( &mod->sml_values[0], &timestamp );
+				BER_BVZERO( &mod->sml_values[1] );
+				assert( !BER_BVISNULL( &mod->sml_values[0] ) );
+				mod->sml_nvalues = NULL;
+				*modtail = mod;
+				modtail = &mod->sml_next;
+			}
+		}
+	}
+
+	if ( SLAP_LASTMOD( op->o_bd ) ) {
+		mod = (Modifications *) ch_malloc( sizeof( Modifications ) );
+		mod->sml_op = mop;
+		mod->sml_flags = SLAP_MOD_INTERNAL;
+		BER_BVZERO( &mod->sml_type );
+		mod->sml_desc = slap_schema.si_ad_entryCSN;
+		mod->sml_values = (BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
+		ber_dupbv( &mod->sml_values[0], &csn );
+		BER_BVZERO( &mod->sml_values[1] );
+		assert( !BER_BVISNULL( &mod->sml_values[0] ) );
+		mod->sml_nvalues = NULL;
+		*modtail = mod;
+		modtail = &mod->sml_next;
+	
+		mod = *modtail;
+		if ( get_manageDIT( op ) ) {
+			for ( mod = mods; mod != *modtail; mod = mod->sml_next ) {
+				if ( mod->sml_desc == slap_schema.si_ad_modifiersName ) {
+					break;
+				}
+			}
+		}
+
+		if ( mod == *modtail ) {
 			mod = (Modifications *) ch_malloc( sizeof( Modifications ) );
 			mod->sml_op = mop;
 			mod->sml_flags = SLAP_MOD_INTERNAL;
-			mod->sml_type.bv_val = NULL;
-			mod->sml_desc = slap_schema.si_ad_entryUUID;
-			mod->sml_values =
-				(BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
-			ber_dupbv( &mod->sml_values[0], &tmpval );
-			mod->sml_values[1].bv_len = 0;
-			mod->sml_values[1].bv_val = NULL;
-			assert( mod->sml_values[0].bv_val );
-			mod->sml_nvalues =
-				(BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
-			(*mod->sml_desc->ad_type->sat_equality->smr_normalize)(
-					SLAP_MR_VALUE_OF_ATTRIBUTE_SYNTAX,
-					mod->sml_desc->ad_type->sat_syntax,
-					mod->sml_desc->ad_type->sat_equality,
-					mod->sml_values, mod->sml_nvalues, NULL );
-			mod->sml_nvalues[1].bv_len = 0;
-			mod->sml_nvalues[1].bv_val = NULL;
-			*modtail = mod;
-			modtail = &mod->sml_next;
-
-			mod = (Modifications *) ch_malloc( sizeof( Modifications ) );
-			mod->sml_op = mop;
-			mod->sml_flags = SLAP_MOD_INTERNAL;
-			mod->sml_type.bv_val = NULL;
-			mod->sml_desc = slap_schema.si_ad_creatorsName;
-			mod->sml_values =
-				(BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
+			BER_BVZERO( &mod->sml_type );
+			mod->sml_desc = slap_schema.si_ad_modifiersName;
+			mod->sml_values = (BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
 			ber_dupbv( &mod->sml_values[0], &name );
-			mod->sml_values[1].bv_len = 0;
-			mod->sml_values[1].bv_val = NULL;
-			assert( mod->sml_values[0].bv_val );
+			BER_BVZERO( &mod->sml_values[1] );
+			assert( !BER_BVISNULL( &mod->sml_values[0] ) );
 			mod->sml_nvalues =
 				(BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
 			ber_dupbv( &mod->sml_nvalues[0], &nname );
-			mod->sml_nvalues[1].bv_len = 0;
-			mod->sml_nvalues[1].bv_val = NULL;
-			assert( mod->sml_nvalues[0].bv_val );
+			BER_BVZERO( &mod->sml_nvalues[1] );
+			assert( !BER_BVISNULL( &mod->sml_nvalues[0] ) );
 			*modtail = mod;
 			modtail = &mod->sml_next;
+		}
 
+		mod = *modtail;
+		if ( get_manageDIT( op ) ) {
+			for ( mod = mods; mod != *modtail; mod = mod->sml_next ) {
+				if ( mod->sml_desc == slap_schema.si_ad_modifyTimestamp ) {
+					break;
+				}
+			}
+		}
+
+		if ( mod == *modtail ) {
 			mod = (Modifications *) ch_malloc( sizeof( Modifications ) );
 			mod->sml_op = mop;
 			mod->sml_flags = SLAP_MOD_INTERNAL;
-			mod->sml_type.bv_val = NULL;
-			mod->sml_desc = slap_schema.si_ad_createTimestamp;
-			mod->sml_values =
-				(BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
+			BER_BVZERO( &mod->sml_type );
+			mod->sml_desc = slap_schema.si_ad_modifyTimestamp;
+			mod->sml_values = (BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
 			ber_dupbv( &mod->sml_values[0], &timestamp );
-			mod->sml_values[1].bv_len = 0;
-			mod->sml_values[1].bv_val = NULL;
-			assert( mod->sml_values[0].bv_val );
+			BER_BVZERO( &mod->sml_values[1] );
+			assert( !BER_BVISNULL( &mod->sml_values[0] ) );
 			mod->sml_nvalues = NULL;
 			*modtail = mod;
 			modtail = &mod->sml_next;
 		}
-	}
-
-	if ( SLAP_LASTMOD( op->o_bd )) {
-		mod = (Modifications *) ch_malloc( sizeof( Modifications ) );
-		mod->sml_op = mop;
-		mod->sml_flags = SLAP_MOD_INTERNAL;
-		mod->sml_type.bv_val = NULL;
-		mod->sml_desc = slap_schema.si_ad_entryCSN;
-		mod->sml_values = (BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
-		ber_dupbv( &mod->sml_values[0], &csn );
-		mod->sml_values[1].bv_len = 0;
-		mod->sml_values[1].bv_val = NULL;
-		assert( mod->sml_values[0].bv_val );
-		mod->sml_nvalues = NULL;
-		*modtail = mod;
-		modtail = &mod->sml_next;
-
-		mod = (Modifications *) ch_malloc( sizeof( Modifications ) );
-		mod->sml_op = mop;
-		mod->sml_flags = SLAP_MOD_INTERNAL;
-		mod->sml_type.bv_val = NULL;
-		mod->sml_desc = slap_schema.si_ad_modifiersName;
-		mod->sml_values = (BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
-		ber_dupbv( &mod->sml_values[0], &name );
-		mod->sml_values[1].bv_len = 0;
-		mod->sml_values[1].bv_val = NULL;
-		assert( mod->sml_values[0].bv_val );
-		mod->sml_nvalues =
-			(BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
-		ber_dupbv( &mod->sml_nvalues[0], &nname );
-		mod->sml_nvalues[1].bv_len = 0;
-		mod->sml_nvalues[1].bv_val = NULL;
-		assert( mod->sml_nvalues[0].bv_val );
-		*modtail = mod;
-		modtail = &mod->sml_next;
-
-		mod = (Modifications *) ch_malloc( sizeof( Modifications ) );
-		mod->sml_op = mop;
-		mod->sml_flags = SLAP_MOD_INTERNAL;
-		mod->sml_type.bv_val = NULL;
-		mod->sml_desc = slap_schema.si_ad_modifyTimestamp;
-		mod->sml_values = (BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
-		ber_dupbv( &mod->sml_values[0], &timestamp );
-		mod->sml_values[1].bv_len = 0;
-		mod->sml_values[1].bv_val = NULL;
-		assert( mod->sml_values[0].bv_val );
-		mod->sml_nvalues = NULL;
-		*modtail = mod;
-		modtail = &mod->sml_next;
 	}
 
 	*modtail = NULL;

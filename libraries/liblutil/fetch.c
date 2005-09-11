@@ -1,5 +1,5 @@
 /* fetch.c - routines for fetching data at URLs */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/fetch.c,v 1.2.2.3 2005/05/18 16:29:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/fetch.c,v 1.2.2.4 2005/07/10 04:36:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -40,8 +40,7 @@
 
 FILE *
 ldif_open_url(
-	LDAP_CONST char *urlstr
-)
+	LDAP_CONST char *urlstr )
 {
 	FILE *url;
 	char *p = NULL;
@@ -76,8 +75,7 @@ int
 ldif_fetch_url(
     LDAP_CONST char	*urlstr,
     char	**valuep,
-    ber_len_t *vlenp
-)
+    ber_len_t *vlenp )
 {
 	FILE *url;
 	char buffer[1024];

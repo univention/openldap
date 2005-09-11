@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/unbind.c,v 1.48.2.1 2005/01/20 18:03:51 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/unbind.c,v 1.48.2.3 2005/08/12 15:25:20 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -90,14 +90,14 @@ ldap_ld_free(
 	while ( ld->ld_requests != NULL ) {
 		ldap_free_request( ld, ld->ld_requests );
 	}
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
-#endif
 
 	/* free and unbind from all open connections */
 	while ( ld->ld_conns != NULL ) {
 		ldap_free_connection( ld, ld->ld_conns, 1, close );
 	}
+#ifdef LDAP_R_COMPILE
+	ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
+#endif
 
 #ifdef LDAP_R_COMPILE
 	ldap_pvt_thread_mutex_lock( &ld->ld_res_mutex );
@@ -172,6 +172,16 @@ ldap_ld_free(
 	}
 #endif
 
+	if ( ld->ld_options.ldo_sctrls != NULL ) {
+		ldap_controls_free( ld->ld_options.ldo_sctrls );
+		ld->ld_options.ldo_sctrls = NULL;
+	}
+
+	if ( ld->ld_options.ldo_cctrls != NULL ) {
+		ldap_controls_free( ld->ld_options.ldo_cctrls );
+		ld->ld_options.ldo_cctrls = NULL;
+	}
+
 	ber_sockbuf_free( ld->ld_sb );   
    
 #ifdef LDAP_R_COMPILE
@@ -189,7 +199,8 @@ ldap_unbind_s( LDAP *ld )
 	return( ldap_unbind_ext( ld, NULL, NULL ) );
 }
 
-
+/* FIXME: this function is called only by ldap_free_connection(),
+ * which, most of the times, is called with ld_req_mutex locked */
 int
 ldap_send_unbind(
 	LDAP *ld,
@@ -211,7 +222,8 @@ ldap_send_unbind(
 		return( ld->ld_errno );
 	}
 
-	LDAP_NEXT_MSGID( ld, id );
+	id = ++(ld)->ld_msgid;
+
 	/* fill it in */
 	if ( ber_printf( ber, "{itn" /*}*/, id,
 	    LDAP_REQ_UNBIND ) == -1 ) {
@@ -232,18 +244,12 @@ ldap_send_unbind(
 		return( ld->ld_errno );
 	}
 
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_lock( &ld->ld_req_mutex );
-#endif
 	ld->ld_errno = LDAP_SUCCESS;
 	/* send the message */
 	if ( ber_flush( sb, ber, 1 ) == -1 ) {
 		ld->ld_errno = LDAP_SERVER_DOWN;
 		ber_free( ber, 1 );
 	}
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
-#endif
 
 	return( ld->ld_errno );
 }

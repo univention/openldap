@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/sasl.c,v 1.58.2.1 2005/01/20 18:03:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/sasl.c,v 1.58.2.2 2005/08/10 21:57:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -306,7 +306,7 @@ ldap_parse_sasl_bind_result(
 	} else {
 		ber_len_t len;
 
-		tag = ber_scanf( ber, "{iaa" /*}*/,
+		tag = ber_scanf( ber, "{eaa" /*}*/,
 			&errcode, &ld->ld_matched, &ld->ld_error );
 
 		if( tag == LBER_ERROR ) {

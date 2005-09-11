@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/ppolicy.c,v 1.3.2.1 2005/01/20 18:03:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/ppolicy.c,v 1.3.2.2 2005/08/09 21:03:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2005 The OpenLDAP Foundation.
@@ -130,15 +130,15 @@ ldap_parse_passwordpolicy_control(
         LDAPPasswordPolicyError *errorp )
 {
 	BerElement  *ber;
-	int i, exp = -1, grace = -1;
+	int exp = -1, grace = -1;
 	ber_tag_t tag;
 	ber_len_t berLen;
         char *last;
-        LDAPPasswordPolicyError err = PP_noError;
+	int err = PP_noError;
         
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );
-	assert( ctrl );
+	assert( ctrl != NULL );
 
 	/* Create a BerElement from the berval returned in the control. */
 	ber = ber_init(&ctrl->ldctl_value);
@@ -172,7 +172,7 @@ ldap_parse_passwordpolicy_control(
                     
                     break;
                 case PPOLICY_ERROR:
-                    if (ber_get_enum( ber, (int *)&err ) == LBER_DEFAULT) goto exit;
+                    if (ber_get_enum( ber, &err ) == LBER_DEFAULT) goto exit;
                     break;
                 default:
                     goto exit;

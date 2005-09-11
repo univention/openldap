@@ -1,5 +1,5 @@
 /* acl.c - routines to parse and check acl's */
-/* $OpenLDAP: pkg/ldap/servers/slapd/acl.c,v 1.250.2.6 2005/06/08 21:50:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/acl.c,v 1.250.2.14 2005/08/29 18:26:09 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -37,58 +37,50 @@
 #include "lber_pvt.h"
 #include "lutil.h"
 
-#ifdef LDAP_SLAPI
-#include "slapi/slapi.h"
-#endif /* LDAPI_SLAPI */
-
 #define ACL_BUF_SIZE 	1024	/* use most appropriate size */
 
 /*
  * speed up compares
  */
-static struct berval 
-	aci_bv_entry 		= BER_BVC("entry"),
-	aci_bv_children 	= BER_BVC("children"),
-	aci_bv_onelevel 	= BER_BVC("onelevel"),
-	aci_bv_subtree 		= BER_BVC("subtree"),
-	aci_bv_br_entry		= BER_BVC("[entry]"),
-	aci_bv_br_all		= BER_BVC("[all]"),
-	aci_bv_access_id 	= BER_BVC("access-id"),
+const struct berval	aci_bv[] = {
+	BER_BVC("entry"),
+	BER_BVC("children"),
+	BER_BVC("onelevel"),
+	BER_BVC("subtree"),
+	BER_BVC("[entry]"),
+	BER_BVC("[all]"),
+	BER_BVC("access-id"),
 #if 0
-	aci_bv_anonymous	= BER_BVC("anonymous"),
+	BER_BVC("anonymous"),
 #endif
-	aci_bv_public		= BER_BVC("public"),
-	aci_bv_users		= BER_BVC("users"),
-	aci_bv_self 		= BER_BVC("self"),
-	aci_bv_dnattr 		= BER_BVC("dnattr"),
-	aci_bv_group		= BER_BVC("group"),
-	aci_bv_role		= BER_BVC("role"),
-	aci_bv_set		= BER_BVC("set"),
-	aci_bv_set_ref		= BER_BVC("set-ref"),
-	aci_bv_grant		= BER_BVC("grant"),
-	aci_bv_deny		= BER_BVC("deny"),
+	BER_BVC("public"),
+	BER_BVC("users"),
+	BER_BVC("self"),
+	BER_BVC("dnattr"),
+	BER_BVC("group"),
+	BER_BVC("role"),
+	BER_BVC("set"),
+	BER_BVC("set-ref"),
+	BER_BVC("grant"),
+	BER_BVC("deny"),
 
-	aci_bv_ip_eq		= BER_BVC("IP="),
+	BER_BVC("IP="),
 #ifdef LDAP_PF_LOCAL
-	aci_bv_path_eq		= BER_BVC("PATH="),
+	BER_BVC("PATH="),
 #if 0
-	aci_bv_dirsep		= BER_BVC(LDAP_DIRSEP),
+	BER_BVC(LDAP_DIRSEP),
 #endif
 #endif /* LDAP_PF_LOCAL */
 	
-	aci_bv_group_class 	= BER_BVC(SLAPD_GROUP_CLASS),
-	aci_bv_group_attr 	= BER_BVC(SLAPD_GROUP_ATTR),
-	aci_bv_role_class	= BER_BVC(SLAPD_ROLE_CLASS),
-	aci_bv_role_attr	= BER_BVC(SLAPD_ROLE_ATTR),
-	aci_bv_set_attr		= BER_BVC(SLAPD_ACI_SET_ATTR);
+	BER_BVC(SLAPD_GROUP_CLASS),
+	BER_BVC(SLAPD_GROUP_ATTR),
+	BER_BVC(SLAPD_ROLE_CLASS),
+	BER_BVC(SLAPD_ROLE_ATTR),
 
-typedef enum slap_aci_scope_t {
-	SLAP_ACI_SCOPE_ENTRY		= 0x1,
-	SLAP_ACI_SCOPE_CHILDREN		= 0x2,
-	SLAP_ACI_SCOPE_SUBTREE		= ( SLAP_ACI_SCOPE_ENTRY | SLAP_ACI_SCOPE_CHILDREN )
-} slap_aci_scope_t;
+	BER_BVC(SLAPD_ACI_SET_ATTR)
+};
 
-static AccessControl * acl_get(
+static AccessControl * slap_acl_get(
 	AccessControl *ac, int *count,
 	Operation *op, Entry *e,
 	AttributeDescription *desc,
@@ -96,7 +88,7 @@ static AccessControl * acl_get(
 	int nmatch, regmatch_t *matches,
 	AccessControlState *state );
 
-static slap_control_t acl_mask(
+static slap_control_t slap_acl_mask(
 	AccessControl *ac, slap_mask_t *mask,
 	Operation *op, Entry *e,
 	AttributeDescription *desc,
@@ -106,35 +98,18 @@ static slap_control_t acl_mask(
 	int count,
 	AccessControlState *state );
 
-#ifdef SLAPD_ACI_ENABLED
-static int aci_mask(
-	Operation *op, Entry *e,
-	AttributeDescription *desc,
-	struct berval *val,
-	struct berval *aci,
-	int nmatch,
-	regmatch_t *matches,
-	slap_access_t *grant,
-	slap_access_t *deny,
-	slap_aci_scope_t scope);
-#endif /* SLAPD_ACI_ENABLED */
-
 static int	regex_matches(
 	struct berval *pat, char *str, char *buf,
 	int nmatch, regmatch_t *matches);
-static int	string_expand(
-	struct berval *newbuf, struct berval *pattern,
-	char *match, int nmatch, regmatch_t *matches);
 
-typedef	struct AciSetCookie {
-	Operation *op;
-	Entry *e;
-} AciSetCookie;
+typedef	struct AclSetCookie {
+	SetCookie	asc_cookie;
+#define	asc_op		asc_cookie.set_op
+	Entry		*asc_e;
+} AclSetCookie;
 
-SLAP_SET_GATHER aci_set_gather;
-SLAP_SET_GATHER aci_set_gather2;
-static int aci_match_set ( struct berval *subj, Operation *op,
-    Entry *e, int setref );
+SLAP_SET_GATHER acl_set_gather;
+SLAP_SET_GATHER acl_set_gather2;
 
 /*
  * access_allowed - check whether op->o_ndn is allowed the requested access
@@ -142,7 +117,7 @@ static int aci_match_set ( struct berval *subj, Operation *op,
  * the whole attribute is assumed (all values).
  *
  * This routine loops through all access controls and calls
- * acl_mask() on each applicable access control.
+ * slap_acl_mask() on each applicable access control.
  * The loop exits when a definitive answer is reached or
  * or no more controls remain.
  *
@@ -166,9 +141,10 @@ slap_access_always_allowed(
 	AccessControlState	*state,
 	slap_mask_t		*maskp )
 {
-	assert( maskp );
+	assert( maskp != NULL );
 
-	ACL_PRIV_SET( *maskp, ACL_ACCESS2PRIV( access ) );
+	/* assign all */
+	ACL_LVL_ASSIGN_MANAGE( *maskp );
 
 	return 1;
 }
@@ -207,15 +183,7 @@ slap_access_allowed(
 
 	assert( attr != NULL );
 
-#ifdef LDAP_SLAPI
-	if ( op->o_pb != NULL ) {
-		ret = slapi_int_access_allowed( op, e, desc, val, access, state );
-		if ( ret == 0 ) {
-			/* ACL plugin denied access */
-			goto done;
-		}
-	}
-#endif /* LDAP_SLAPI */
+	ACL_INIT( mask );
 
 	/* grant database root access */
 	if ( be_isroot( op ) ) {
@@ -228,8 +196,13 @@ slap_access_allowed(
 	 * no-user-modification operational attributes are ignored
 	 * by ACL_WRITE checking as any found here are not provided
 	 * by the user
+	 *
+	 * NOTE: but they are not ignored for ACL_MANAGE, because
+	 * if we get here it means a non-root user is trying to 
+	 * manage data, so we need to check its privileges.
 	 */
-	if ( access_level >= ACL_WRITE && is_at_no_user_mod( desc->ad_type )
+	if ( access_level == ACL_WRITE
+		&& is_at_no_user_mod( desc->ad_type )
 		&& desc != slap_schema.si_ad_entry
 		&& desc != slap_schema.si_ad_children )
 	{
@@ -281,7 +254,7 @@ slap_access_allowed(
 		memset( matches, '\0', sizeof( matches ) );
 	}
 
-	while ( ( a = acl_get( a, &count, op, e, desc, val,
+	while ( ( a = slap_acl_get( a, &count, op, e, desc, val,
 		MAXREMATCHES, matches, state ) ) != NULL )
 	{
 		int i;
@@ -315,7 +288,7 @@ slap_access_allowed(
 		}
 
 vd_access:
-		control = acl_mask( a, &mask, op,
+		control = slap_acl_mask( a, &mask, op,
 			e, desc, val, MAXREMATCHES, matches, count, state );
 
 		if ( control != ACL_BREAK ) {
@@ -351,6 +324,39 @@ done:
 }
 
 int
+fe_access_allowed(
+	Operation		*op,
+	Entry			*e,
+	AttributeDescription	*desc,
+	struct berval		*val,
+	slap_access_t		access,
+	AccessControlState	*state,
+	slap_mask_t		*maskp )
+{
+	BackendDB		*be_orig;
+	int			rc;
+
+	/*
+	 * NOTE: control gets here if FIXME
+	 * if an appropriate backend cannot be selected for the operation,
+	 * we assume that the frontend should handle this
+	 * FIXME: should select_backend() take care of this,
+	 * and return frontendDB instead of NULL?  maybe for some value
+	 * of the flags?
+	 */
+	be_orig = op->o_bd;
+
+	op->o_bd = select_backend( &op->o_req_ndn, 0, 0 );
+	if ( op->o_bd == NULL ) {
+		op->o_bd = frontendDB;
+	}
+	rc = slap_access_allowed( op, e, desc, val, access, state, maskp );
+	op->o_bd = be_orig;
+
+	return rc;
+}
+
+int
 access_allowed_mask(
 	Operation		*op,
 	Entry			*e,
@@ -368,12 +374,10 @@ access_allowed_mask(
 	char				accessmaskbuf[ACCESSMASK_MAXLEN];
 #endif
 	slap_mask_t			mask;
-	slap_control_t			control;
 	slap_access_t			access_level;
 	const char			*attr;
 	int				st_same_attr = 0;
 	static AccessControlState	state_init = ACL_STATE_INIT;
-	BI_access_allowed		*bi_access_allowed = NULL;
 
 	assert( e != NULL );
 	assert( desc != NULL );
@@ -389,10 +393,17 @@ access_allowed_mask(
 
 	assert( attr != NULL );
 
-	if ( op && op->o_is_auth_check &&
-		( access_level == ACL_SEARCH || access_level == ACL_READ ) )
-	{
-		access = ACL_AUTH;
+	if ( op ) {
+		if ( op->o_is_auth_check &&
+			( access_level == ACL_SEARCH || access_level == ACL_READ ) )
+		{
+			access = ACL_AUTH;
+
+		} else if ( get_manageDIT( op ) && access_level == ACL_WRITE &&
+			desc == slap_schema.si_ad_entry )
+		{
+			access = ACL_MANAGE;
+		}
 	}
 
 	if ( state ) {
@@ -444,11 +455,18 @@ access_allowed_mask(
 	/* this is enforced in backend_add() */
 	if ( op->o_bd->bd_info->bi_access_allowed ) {
 		/* delegate to backend */
-		ret = op->o_bd->bd_info->bi_access_allowed( op, e, desc, val, access, state, &mask );
+		ret = op->o_bd->bd_info->bi_access_allowed( op, e,
+				desc, val, access, state, &mask );
 
 	} else {
-		/* use default */
-		ret = slap_access_allowed( op, e, desc, val, access, state, &mask );
+		BackendDB	*be_orig = op->o_bd;
+
+		/* use default (but pass through frontend
+		 * for global ACL overlays) */
+		op->o_bd = frontendDB;
+		ret = frontendDB->bd_info->bi_access_allowed( op, e,
+				desc, val, access, state, &mask );
+		op->o_bd = be_orig;
 	}
 
 	if ( !ret ) {
@@ -458,14 +476,12 @@ access_allowed_mask(
 				e->e_dn, attr, 0 );
 			ACL_INIT( mask );
 
-		} else if ( control == ACL_BREAK ) {
+		} else {
 			Debug( LDAP_DEBUG_ACL,
 				"=> access_allowed: no more rules\n", 0, 0, 0 );
 
 			goto done;
 		}
-
-		ret = ACL_GRANT( mask, access );
 	}
 
 	Debug( LDAP_DEBUG_ACL,
@@ -528,10 +544,17 @@ access_allowed_mask(
 
 	assert( attr != NULL );
 
-	if ( op && op->o_is_auth_check &&
-		( access_level == ACL_SEARCH || access_level == ACL_READ ) )
-	{
-		access = ACL_AUTH;
+	if ( op ) {
+		if ( op->o_is_auth_check &&
+			( access_level == ACL_SEARCH || access_level == ACL_READ ) )
+		{
+			access = ACL_AUTH;
+
+		} else if ( get_manageDIT( op ) && access_level == ACL_WRITE &&
+			desc == slap_schema.si_ad_entry )
+		{
+			access = ACL_MANAGE;
+		}
 	}
 
 	if ( state ) {
@@ -581,16 +604,6 @@ access_allowed_mask(
 	}
 	assert( be != NULL );
 
-#ifdef LDAP_SLAPI
-	if ( op->o_pb != NULL ) {
-		ret = slapi_int_access_allowed( op, e, desc, val, access, state );
-		if ( ret == 0 ) {
-			/* ACL plugin denied access */
-			goto done;
-		}
-	}
-#endif /* LDAP_SLAPI */
-
 	/* grant database root access */
 	if ( be_isroot( op ) ) {
 		Debug( LDAP_DEBUG_ACL, "<= root access granted\n", 0, 0, 0 );
@@ -605,8 +618,12 @@ access_allowed_mask(
 	 * no-user-modification operational attributes are ignored
 	 * by ACL_WRITE checking as any found here are not provided
 	 * by the user
+	 *
+	 * NOTE: but they are not ignored for ACL_MANAGE, because
+	 * if we get here it means a non-root user is trying to 
+	 * manage data, so we need to check its privileges.
 	 */
-	if ( access_level >= ACL_WRITE && is_at_no_user_mod( desc->ad_type )
+	if ( access_level == ACL_WRITE && is_at_no_user_mod( desc->ad_type )
 		&& desc != slap_schema.si_ad_entry
 		&& desc != slap_schema.si_ad_children )
 	{
@@ -683,7 +700,7 @@ access_allowed_mask(
 		memset( matches, '\0', sizeof(matches) );
 	}
 
-	while ( ( a = acl_get( a, &count, op, e, desc, val,
+	while ( ( a = slap_acl_get( a, &count, op, e, desc, val,
 		MAXREMATCHES, matches, state ) ) != NULL )
 	{
 		int i;
@@ -717,7 +734,7 @@ access_allowed_mask(
 		}
 
 vd_access:
-		control = acl_mask( a, &mask, op,
+		control = slap_acl_mask( a, &mask, op,
 			e, desc, val, MAXREMATCHES, matches, count, state );
 
 		if ( control != ACL_BREAK ) {
@@ -765,13 +782,13 @@ done:
 #endif /* SLAP_OVERLAY_ACCESS */
 
 /*
- * acl_get - return the acl applicable to entry e, attribute
+ * slap_acl_get - return the acl applicable to entry e, attribute
  * attr.  the acl returned is suitable for use in subsequent calls to
  * acl_access_allowed().
  */
 
 static AccessControl *
-acl_get(
+slap_acl_get(
 	AccessControl *a,
 	int			*count,
 	Operation	*op,
@@ -881,7 +898,7 @@ acl_get(
 
 			if( state && !( state->as_recorded & ACL_STATE_RECORDED_VD )) {
 				state->as_recorded |= ACL_STATE_RECORDED_VD;
-				state->as_vd_acl = prev;
+				state->as_vd_acl = a;
 				state->as_vd_acl_count = *count;
 				state->as_vd_access = a->acl_access;
 				state->as_vd_access_count = 1;
@@ -906,7 +923,7 @@ acl_get(
 	
 				if ( a->acl_attrs[0].an_desc->ad_type->sat_syntax != slap_schema.si_syn_distinguishedName ) {
 					if (value_match( &match, desc,
-						desc->ad_type->sat_equality, 0,
+						/* desc->ad_type->sat_equality */ a->acl_attrval_mr, 0,
 						val, &a->acl_attrval, &text ) != LDAP_SUCCESS ||
 							match )
 						continue;
@@ -1136,7 +1153,7 @@ acl_mask_dn(
 				return 1;
 			}
 
-			if ( string_expand( &bv, &b->a_pat, 
+			if ( acl_string_expand( &bv, &b->a_pat, 
 					e->e_nname.bv_val,
 					tmp_nmatch, tmp_matchesp ) )
 			{
@@ -1180,7 +1197,7 @@ acl_mask_dn(
 			}
 
 			rdnlen = dn_rdnlen( NULL, opndn );
-			if ( rdnlen != odnlen - patlen - 1 ) {
+			if ( rdnlen - ( odnlen - patlen - 1 ) != 0 ) {
 				goto dn_match_cleanup;
 			}
 
@@ -1199,8 +1216,8 @@ acl_mask_dn(
 			}
 
 		} else if ( b->a_style == ACL_STYLE_LEVEL ) {
-			int level;
-			struct berval ndn;
+			int		level = b->a_level;
+			struct berval	ndn;
 
 			if ( odnlen <= patlen ) {
 				goto dn_match_cleanup;
@@ -1211,7 +1228,6 @@ acl_mask_dn(
 				goto dn_match_cleanup;
 			}
 			
-			level = b->a_level;
 			ndn = *opndn;
 			for ( ; level > 0; level-- ) {
 				if ( BER_BVISEMPTY( &ndn ) ) {
@@ -1353,7 +1369,7 @@ acl_mask_dnattr(
 
 
 /*
- * acl_mask - modifies mask based upon the given acl and the
+ * slap_acl_mask - modifies mask based upon the given acl and the
  * requested access to entry e, attribute attr, value val.  if val
  * is null, access to the whole attribute is assumed (all values).
  *
@@ -1362,7 +1378,7 @@ acl_mask_dnattr(
  */
 
 static slap_control_t
-acl_mask(
+slap_acl_mask(
 	AccessControl		*a,
 	slap_mask_t		*mask,
 	Operation		*op,
@@ -1375,14 +1391,15 @@ acl_mask(
 	AccessControlState	*state )
 {
 	int		i;
-	Access	*b;
+	Access		*b;
 #ifdef LDAP_DEBUG
-	char accessmaskbuf[ACCESSMASK_MAXLEN];
+	char		accessmaskbuf[ACCESSMASK_MAXLEN];
 #if !defined( SLAP_DYNACL ) && defined( SLAPD_ACI_ENABLED )
-	char accessmaskbuf1[ACCESSMASK_MAXLEN];
+	char		accessmaskbuf1[ACCESSMASK_MAXLEN];
 #endif /* !SLAP_DYNACL && SLAPD_ACI_ENABLED */
 #endif /* DEBUG */
-	const char *attr;
+	const char	*attr;
+	slap_mask_t	a2pmask = ACL_ACCESS2PRIV( *mask );
 
 	assert( a != NULL );
 	assert( mask != NULL );
@@ -1494,7 +1511,7 @@ acl_mask(
 
 					bv.bv_len = sizeof( buf ) - 1;
 					bv.bv_val = buf;
-					if ( string_expand( &bv, &b->a_sockurl_pat,
+					if ( acl_string_expand( &bv, &b->a_sockurl_pat,
 							e->e_ndn, nmatch, matches ) )
 					{
 						continue;
@@ -1539,7 +1556,7 @@ acl_mask(
 						bv.bv_len = sizeof(buf) - 1;
 						bv.bv_val = buf;
 
-						if ( string_expand(&bv, &b->a_domain_pat,
+						if ( acl_string_expand(&bv, &b->a_domain_pat,
 								e->e_ndn, nmatch, matches) )
 						{
 							continue;
@@ -1596,7 +1613,7 @@ acl_mask(
 
 						bv.bv_len = sizeof( buf ) - 1;
 						bv.bv_val = buf;
-						if ( string_expand( &bv, &b->a_peername_pat,
+						if ( acl_string_expand( &bv, &b->a_peername_pat,
 								e->e_ndn, nmatch, matches ) )
 						{
 							continue;
@@ -1615,11 +1632,12 @@ acl_mask(
 						int		port_number = -1;
 						
 						if ( strncasecmp( op->o_conn->c_peer_name.bv_val, 
-									aci_bv_ip_eq.bv_val, aci_bv_ip_eq.bv_len ) != 0 ) 
+									aci_bv[ ACI_BV_IP_EQ ].bv_val,
+									aci_bv[ ACI_BV_IP_EQ ].bv_len ) != 0 ) 
 							continue;
 
-						ip.bv_val = op->o_conn->c_peer_name.bv_val + aci_bv_ip_eq.bv_len;
-						ip.bv_len = op->o_conn->c_peer_name.bv_len - aci_bv_ip_eq.bv_len;
+						ip.bv_val = op->o_conn->c_peer_name.bv_val + aci_bv[ ACI_BV_IP_EQ ].bv_len;
+						ip.bv_len = op->o_conn->c_peer_name.bv_len - aci_bv[ ACI_BV_IP_EQ ].bv_len;
 
 						port = strrchr( ip.bv_val, ':' );
 						if ( port ) {
@@ -1658,11 +1676,14 @@ acl_mask(
 						struct berval path;
 						
 						if ( strncmp( op->o_conn->c_peer_name.bv_val,
-									aci_bv_path_eq.bv_val, aci_bv_path_eq.bv_len ) != 0 )
+									aci_bv[ ACI_BV_PATH_EQ ].bv_val,
+									aci_bv[ ACI_BV_PATH_EQ ].bv_len ) != 0 )
 							continue;
 
-						path.bv_val = op->o_conn->c_peer_name.bv_val + aci_bv_path_eq.bv_len;
-						path.bv_len = op->o_conn->c_peer_name.bv_len - aci_bv_path_eq.bv_len;
+						path.bv_val = op->o_conn->c_peer_name.bv_val
+							+ aci_bv[ ACI_BV_PATH_EQ ].bv_len;
+						path.bv_len = op->o_conn->c_peer_name.bv_len
+							- aci_bv[ ACI_BV_PATH_EQ ].bv_len;
 
 						if ( ber_bvcmp( &b->a_peername_pat, &path ) != 0 )
 							continue;
@@ -1697,7 +1718,7 @@ acl_mask(
 
 					bv.bv_len = sizeof( buf ) - 1;
 					bv.bv_val = buf;
-					if ( string_expand( &bv, &b->a_sockname_pat,
+					if ( acl_string_expand( &bv, &b->a_sockname_pat,
 							e->e_ndn, nmatch, matches ) )
 					{
 						continue;
@@ -1751,6 +1772,9 @@ acl_mask(
 				continue;
 			}
 
+			Debug( LDAP_DEBUG_ACL, "<= check a_group_pat: %s\n",
+				b->a_group_pat.bv_val, 0, 0 );
+
 			/* b->a_group is an unexpanded entry name, expanded it should be an 
 			 * entry with objectclass group* and we test to see if odn is one of
 			 * the values in the attribute group
@@ -1802,7 +1826,7 @@ acl_mask(
 					continue;
 				}
 				
-				if ( string_expand( &bv, &b->a_group_pat,
+				if ( acl_string_expand( &bv, &b->a_group_pat,
 						e->e_nname.bv_val,
 						tmp_nmatch, tmp_matchesp ) )
 				{
@@ -1837,6 +1861,9 @@ acl_mask(
 		if ( !BER_BVISEMPTY( &b->a_set_pat ) ) {
 			struct berval	bv;
 			char		buf[ACL_BUF_SIZE];
+
+			Debug( LDAP_DEBUG_ACL, "<= check a_set_pat: %s\n",
+				b->a_set_pat.bv_val, 0, 0 );
 
 			if ( b->a_set_style == ACL_STYLE_EXPAND ) {
 				int		tmp_nmatch;
@@ -1884,7 +1911,7 @@ acl_mask(
 					continue;
 				}
 				
-				if ( string_expand( &bv, &b->a_set_pat,
+				if ( acl_string_expand( &bv, &b->a_set_pat,
 						e->e_nname.bv_val,
 						tmp_nmatch, tmp_matchesp ) )
 				{
@@ -1895,7 +1922,7 @@ acl_mask(
 				bv = b->a_set_pat;
 			}
 			
-			if ( aci_match_set( &bv, op, e, 0 ) == 0 ) {
+			if ( acl_match_set( &bv, op, e, 0 ) == 0 ) {
 				continue;
 			}
 		}
@@ -1940,6 +1967,9 @@ acl_mask(
 			slap_dynacl_t	*da;
 			slap_access_t	tgrant, tdeny;
 
+			Debug( LDAP_DEBUG_ACL, "<= check a_dynacl\n",
+				0, 0, 0 );
+
 			/* this case works different from the others above.
 			 * since aci's themselves give permissions, we need
 			 * to first check b->a_access_mask, the ACL's access level.
@@ -1952,7 +1982,7 @@ acl_mask(
 			/* first check if the right being requested
 			 * is allowed by the ACL clause.
 			 */
-			if ( ! ACL_GRANT( b->a_access_mask, *mask ) ) {
+			if ( ! ACL_PRIV_ISSET( b->a_access_mask, a2pmask ) ) {
 				continue;
 			}
 
@@ -1961,7 +1991,14 @@ acl_mask(
 			ACL_INIT(tdeny);
 
 			for ( da = b->a_dynacl; da; da = da->da_next ) {
-				slap_access_t	grant, deny;
+				slap_access_t	grant,
+						deny;
+
+				ACL_INIT(grant);
+				ACL_INIT(deny);
+
+				Debug( LDAP_DEBUG_ACL, "    <= check a_dynacl: %s\n",
+					da->da_name, 0, 0 );
 
 				(void)( *da->da_mask )( da->da_private, op, e, desc, val, nmatch, matches, &grant, &deny );
 
@@ -1978,7 +2015,7 @@ acl_mask(
 				continue;
 			}
 
-			/* this could be improved by changing acl_mask so that it can deal with
+			/* this could be improved by changing slap_acl_mask so that it can deal with
 			 * by clauses that return grant/deny pairs.  Right now, it does either
 			 * additive or subtractive rights, but not both at the same time.  So,
 			 * we need to combine the grant/deny pair into a single rights mask in
@@ -2006,6 +2043,9 @@ acl_mask(
 			struct berval	parent_ndn;
 			BerVarray	bvals = NULL;
 			int		ret, stop;
+
+			Debug( LDAP_DEBUG_ACL, "    <= check a_aci_at: %s\n",
+				b->a_aci_at->ad_cname.bv_val, 0, 0 );
 
 			/* this case works different from the others above.
 			 * since aci's themselves give permissions, we need
@@ -2040,11 +2080,11 @@ acl_mask(
 				* rights given by the acis.
 				*/
 				for ( i = 0; !BER_BVISNULL( &at->a_nvals[i] ); i++ ) {
-					if (aci_mask( op,
+					if ( aci_mask( op,
 						e, desc, val,
 						&at->a_nvals[i],
 						nmatch, matches,
-						&grant, &deny, SLAP_ACI_SCOPE_ENTRY ) != 0)
+						&grant, &deny, SLAP_ACI_SCOPE_ENTRY ) != 0 )
 					{
 						tgrant |= grant;
 						tdeny |= deny;
@@ -2071,13 +2111,13 @@ acl_mask(
 							break;
 						}
 
-						for( i = 0; bvals[i].bv_val != NULL; i++){
+						for ( i = 0; !BER_BVISNULL( &bvals[i] ); i++ ) {
 #if 0
 							/* FIXME: this breaks acl caching;
 							 * see also ACL_RECORD_VALUE_STATE above */
 							ACL_RECORD_VALUE_STATE;
 #endif
-							if (aci_mask(op, e, desc, val, &bvals[i],
+							if ( aci_mask( op, e, desc, val, &bvals[i],
 									nmatch, matches,
 									&grant, &deny, SLAP_ACI_SCOPE_CHILDREN ) != 0 )
 							{
@@ -2131,7 +2171,7 @@ acl_mask(
 				continue;
 			}
 
-			/* this could be improved by changing acl_mask so that it can deal with
+			/* this could be improved by changing slap_acl_mask so that it can deal with
 			 * by clauses that return grant/deny pairs.  Right now, it does either
 			 * additive or subtractive rights, but not both at the same time.  So,
 			 * we need to combine the grant/deny pair into a single rights mask in
@@ -2186,6 +2226,8 @@ acl_mask(
 			*mask = modmask;
 		}
 
+		a2pmask = *mask;
+
 		Debug( LDAP_DEBUG_ACL,
 			"<= acl_mask: [%d] mask: %s\n",
 			i, accessmask2str(*mask, accessmaskbuf, 1), 0 );
@@ -2221,8 +2263,7 @@ int
 acl_check_modlist(
 	Operation	*op,
 	Entry	*e,
-	Modifications	*mlist
-)
+	Modifications	*mlist )
 {
 	struct berval *bv;
 	AccessControlState state = ACL_STATE_INIT;
@@ -2274,7 +2315,9 @@ acl_check_modlist(
 		 * by ACL_WRITE checking as any found here are not provided
 		 * by the user
 		 */
-		if ( is_at_no_user_mod( mlist->sml_desc->ad_type ) ) {
+		if ( is_at_no_user_mod( mlist->sml_desc->ad_type )
+				&& ! ( mlist->sml_flags & SLAP_MOD_MANAGING ) )
+		{
 			Debug( LDAP_DEBUG_ACL, "acl: no-user-mod %s:"
 				" modify access granted\n",
 				mlist->sml_desc->ad_cname.bv_val, 0, 0 );
@@ -2289,7 +2332,9 @@ acl_check_modlist(
 			 * This prevents abuse from selfwriters.
 			 */
 			if ( ! access_allowed( op, e,
-				mlist->sml_desc, NULL, ACL_WDEL, &state ) )
+				mlist->sml_desc, NULL,
+				( mlist->sml_flags & SLAP_MOD_MANAGING ) ? ACL_MANAGE : ACL_WDEL,
+				&state ) )
 			{
 				ret = 0;
 				goto done;
@@ -2307,7 +2352,9 @@ acl_check_modlist(
 				bv->bv_val != NULL; bv++ )
 			{
 				if ( ! access_allowed( op, e,
-					mlist->sml_desc, bv, ACL_WADD, &state ) )
+					mlist->sml_desc, bv,
+					( mlist->sml_flags & SLAP_MOD_MANAGING ) ? ACL_MANAGE : ACL_WADD,
+					&state ) )
 				{
 					ret = 0;
 					goto done;
@@ -2318,7 +2365,9 @@ acl_check_modlist(
 		case LDAP_MOD_DELETE:
 			if ( mlist->sml_values == NULL ) {
 				if ( ! access_allowed( op, e,
-					mlist->sml_desc, NULL, ACL_WDEL, NULL ) )
+					mlist->sml_desc, NULL,
+					( mlist->sml_flags & SLAP_MOD_MANAGING ) ? ACL_MANAGE : ACL_WDEL,
+					NULL ) )
 				{
 					ret = 0;
 					goto done;
@@ -2330,7 +2379,9 @@ acl_check_modlist(
 				bv->bv_val != NULL; bv++ )
 			{
 				if ( ! access_allowed( op, e,
-					mlist->sml_desc, bv, ACL_WDEL, &state ) )
+					mlist->sml_desc, bv,
+					( mlist->sml_flags & SLAP_MOD_MANAGING ) ? ACL_MANAGE : ACL_WDEL,
+					&state ) )
 				{
 					ret = 0;
 					goto done;
@@ -2355,8 +2406,8 @@ done:
 	return( ret );
 }
 
-static int
-aci_get_part(
+int
+acl_get_part(
 	struct berval	*list,
 	int		ix,
 	char		sep,
@@ -2398,15 +2449,15 @@ aci_get_part(
 	return bv->bv_len;
 }
 
-typedef struct aci_set_gather_t {
+typedef struct acl_set_gather_t {
 	SetCookie		*cookie;
 	BerVarray		bvals;
-} aci_set_gather_t;
+} acl_set_gather_t;
 
 static int
-aci_set_cb_gather( Operation *op, SlapReply *rs )
+acl_set_cb_gather( Operation *op, SlapReply *rs )
 {
-	aci_set_gather_t	*p = (aci_set_gather_t *)op->o_callback->sc_private;
+	acl_set_gather_t	*p = (acl_set_gather_t *)op->o_callback->sc_private;
 	
 	if ( rs->sr_type == REP_SEARCH ) {
 		BerValue	bvals[ 2 ];
@@ -2449,17 +2500,17 @@ aci_set_cb_gather( Operation *op, SlapReply *rs )
 }
 
 BerVarray
-aci_set_gather( SetCookie *cookie, struct berval *name, AttributeDescription *desc )
+acl_set_gather( SetCookie *cookie, struct berval *name, AttributeDescription *desc )
 {
-	AciSetCookie		*cp = (AciSetCookie *)cookie;
+	AclSetCookie		*cp = (AclSetCookie *)cookie;
 	int			rc = 0;
 	LDAPURLDesc		*ludp = NULL;
 	Operation		op2 = { 0 };
 	SlapReply		rs = {REP_RESULT};
 	AttributeName		anlist[ 2 ], *anlistp = NULL;
 	int			nattrs = 0;
-	slap_callback		cb = { NULL, aci_set_cb_gather, NULL, NULL };
-	aci_set_gather_t	p = { 0 };
+	slap_callback		cb = { NULL, acl_set_cb_gather, NULL, NULL };
+	acl_set_gather_t	p = { 0 };
 	const char		*text = NULL;
 	static struct berval	defaultFilter_bv = BER_BVC( "(objectClass=*)" );
 
@@ -2468,7 +2519,7 @@ aci_set_gather( SetCookie *cookie, struct berval *name, AttributeDescription *de
 	 * also return the syntax or some "comparison cookie".
 	 */
 	if ( strncasecmp( name->bv_val, "ldap:///", STRLENOF( "ldap:///" ) ) != 0 ) {
-		return aci_set_gather2( cookie, name, desc );
+		return acl_set_gather2( cookie, name, desc );
 	}
 
 	rc = ldap_url_parse( name->bv_val, &ludp );
@@ -2488,7 +2539,7 @@ aci_set_gather( SetCookie *cookie, struct berval *name, AttributeDescription *de
 	/* Grab the searchbase and see if an appropriate database can be found */
 	ber_str2bv( ludp->lud_dn, 0, 0, &op2.o_req_dn );
 	rc = dnNormalize( 0, NULL, NULL, &op2.o_req_dn,
-			&op2.o_req_ndn, cp->op->o_tmpmemctx );
+			&op2.o_req_ndn, cp->asc_op->o_tmpmemctx );
 	BER_BVZERO( &op2.o_req_dn );
 	if ( rc != LDAP_SUCCESS ) {
 		goto url_done;
@@ -2503,13 +2554,13 @@ aci_set_gather( SetCookie *cookie, struct berval *name, AttributeDescription *de
 	/* Grab the filter */
 	if ( ludp->lud_filter ) {
 		ber_str2bv_x( ludp->lud_filter, 0, 0, &op2.ors_filterstr,
-				cp->op->o_tmpmemctx );
+				cp->asc_op->o_tmpmemctx );
 		
 	} else {
 		op2.ors_filterstr = defaultFilter_bv;
 	}
 
-	op2.ors_filter = str2filter_x( cp->op, op2.ors_filterstr.bv_val );
+	op2.ors_filter = str2filter_x( cp->asc_op, op2.ors_filterstr.bv_val );
 	if ( op2.ors_filter == NULL ) {
 		rc = LDAP_PROTOCOL_ERROR;
 		goto url_done;
@@ -2524,7 +2575,7 @@ aci_set_gather( SetCookie *cookie, struct berval *name, AttributeDescription *de
 			;
 
 		anlistp = slap_sl_malloc( sizeof( AttributeName ) * ( nattrs + 2 ),
-				cp->op->o_tmpmemctx );
+				cp->asc_op->o_tmpmemctx );
 
 		for ( ; ludp->lud_attrs[ nattrs ]; nattrs++ ) {
 			ber_str2bv( ludp->lud_attrs[ nattrs ], 0, 0, &anlistp[ nattrs ].an_name );
@@ -2547,19 +2598,19 @@ aci_set_gather( SetCookie *cookie, struct berval *name, AttributeDescription *de
 	
 	p.cookie = cookie;
 	
-	op2.o_hdr = cp->op->o_hdr;
+	op2.o_hdr = cp->asc_op->o_hdr;
 	op2.o_tag = LDAP_REQ_SEARCH;
 	op2.o_ndn = op2.o_bd->be_rootndn;
 	op2.o_callback = &cb;
 	op2.o_time = slap_get_time();
 	op2.o_do_not_cache = 1;
 	op2.o_is_auth_check = 0;
-	ber_dupbv_x( &op2.o_req_dn, &op2.o_req_ndn, cp->op->o_tmpmemctx );
+	ber_dupbv_x( &op2.o_req_dn, &op2.o_req_ndn, cp->asc_op->o_tmpmemctx );
 	op2.ors_slimit = SLAP_NO_LIMIT;
 	op2.ors_tlimit = SLAP_NO_LIMIT;
 	op2.ors_attrs = anlistp;
 	op2.ors_attrsonly = 0;
-	op2.o_private = cp->op->o_private;
+	op2.o_private = cp->asc_op->o_private;
 
 	cb.sc_private = &p;
 
@@ -2570,28 +2621,28 @@ aci_set_gather( SetCookie *cookie, struct berval *name, AttributeDescription *de
 
 url_done:;
 	if ( op2.ors_filter ) {
-		filter_free_x( cp->op, op2.ors_filter );
+		filter_free_x( cp->asc_op, op2.ors_filter );
 	}
 	if ( !BER_BVISNULL( &op2.o_req_ndn ) ) {
-		slap_sl_free( op2.o_req_ndn.bv_val, cp->op->o_tmpmemctx );
+		slap_sl_free( op2.o_req_ndn.bv_val, cp->asc_op->o_tmpmemctx );
 	}
 	if ( !BER_BVISNULL( &op2.o_req_dn ) ) {
-		slap_sl_free( op2.o_req_dn.bv_val, cp->op->o_tmpmemctx );
+		slap_sl_free( op2.o_req_dn.bv_val, cp->asc_op->o_tmpmemctx );
 	}
 	if ( ludp ) {
 		ldap_free_urldesc( ludp );
 	}
 	if ( anlistp && anlistp != anlist ) {
-		slap_sl_free( anlistp, cp->op->o_tmpmemctx );
+		slap_sl_free( anlistp, cp->asc_op->o_tmpmemctx );
 	}
 
 	return p.bvals;
 }
 
 BerVarray
-aci_set_gather2( SetCookie *cookie, struct berval *name, AttributeDescription *desc )
+acl_set_gather2( SetCookie *cookie, struct berval *name, AttributeDescription *desc )
 {
-	AciSetCookie	*cp = (AciSetCookie *)cookie;
+	AclSetCookie	*cp = (AclSetCookie *)cookie;
 	BerVarray	bvals = NULL;
 	struct berval	ndn;
 	int		rc = 0;
@@ -2600,39 +2651,38 @@ aci_set_gather2( SetCookie *cookie, struct berval *name, AttributeDescription *d
 	 * plain strings, since syntax is not known.  It should
 	 * also return the syntax or some "comparison cookie".
 	 */
-	rc = dnNormalize( 0, NULL, NULL, name, &ndn, cp->op->o_tmpmemctx );
+	rc = dnNormalize( 0, NULL, NULL, name, &ndn, cp->asc_op->o_tmpmemctx );
 	if ( rc == LDAP_SUCCESS ) {
 		if ( desc == slap_schema.si_ad_entryDN ) {
 			bvals = (BerVarray)slap_sl_malloc( sizeof( BerValue ) * 2,
-					cp->op->o_tmpmemctx );
+					cp->asc_op->o_tmpmemctx );
 			bvals[ 0 ] = ndn;
 			BER_BVZERO( &bvals[ 1 ] );
 			BER_BVZERO( &ndn );
 
 		} else {
-			backend_attribute( cp->op,
-				cp->e, &ndn, desc, &bvals, ACL_NONE );
+			backend_attribute( cp->asc_op,
+				cp->asc_e, &ndn, desc, &bvals, ACL_NONE );
 		}
 
 		if ( !BER_BVISNULL( &ndn ) ) {
-			slap_sl_free( ndn.bv_val, cp->op->o_tmpmemctx );
+			slap_sl_free( ndn.bv_val, cp->asc_op->o_tmpmemctx );
 		}
 	}
 
 	return bvals;
 }
 
-static int
-aci_match_set (
+int
+acl_match_set (
 	struct berval *subj,
 	Operation *op,
 	Entry *e,
-	int setref
-)
+	int setref )
 {
 	struct berval	set = BER_BVNULL;
 	int		rc = 0;
-	AciSetCookie	cookie;
+	AclSetCookie	cookie;
 
 	if ( setref == 0 ) {
 		ber_dupbv_x( &set, subj, op->o_tmpmemctx );
@@ -2645,12 +2695,12 @@ aci_match_set (
 		AttributeDescription	*desc = NULL;
 
 		/* format of string is "entry/setAttrName" */
-		if ( aci_get_part( subj, 0, '/', &subjdn ) < 0 ) {
+		if ( acl_get_part( subj, 0, '/', &subjdn ) < 0 ) {
 			return 0;
 		}
 
-		if ( aci_get_part( subj, 1, '/', &setat ) < 0 ) {
-			setat = aci_bv_set_attr;
+		if ( acl_get_part( subj, 1, '/', &setat ) < 0 ) {
+			setat = aci_bv[ ACI_BV_SET_ATTR ];
 		}
 
 		/*
@@ -2678,707 +2728,17 @@ aci_match_set (
 	}
 
 	if ( !BER_BVISNULL( &set ) ) {
-		cookie.op = op;
-		cookie.e = e;
-		rc = ( slap_set_filter( aci_set_gather, (SetCookie *)&cookie, &set,
+		cookie.asc_op = op;
+		cookie.asc_e = e;
+		rc = ( slap_set_filter(
+			acl_set_gather,
+			(SetCookie *)&cookie, &set,
 			&op->o_ndn, &e->e_nname, NULL ) > 0 );
 		slap_sl_free( set.bv_val, op->o_tmpmemctx );
 	}
 
 	return(rc);
 }
-
-#ifdef SLAPD_ACI_ENABLED
-static int
-aci_list_map_rights(
-	struct berval *list )
-{
-	struct berval bv;
-	slap_access_t mask;
-	int i;
-
-	ACL_INIT(mask);
-	for (i = 0; aci_get_part(list, i, ',', &bv) >= 0; i++) {
-		if (bv.bv_len <= 0)
-			continue;
-		switch (*bv.bv_val) {
-		case 'c':
-			ACL_PRIV_SET(mask, ACL_PRIV_COMPARE);
-			break;
-		case 's':
-			/* **** NOTE: draft-ietf-ldapext-aci-model-0.3.txt defines
-			 * the right 's' to mean "set", but in the examples states
-			 * that the right 's' means "search".  The latter definition
-			 * is used here.
-			 */
-			ACL_PRIV_SET(mask, ACL_PRIV_SEARCH);
-			break;
-		case 'r':
-			ACL_PRIV_SET(mask, ACL_PRIV_READ);
-			break;
-		case 'w':
-			ACL_PRIV_SET(mask, ACL_PRIV_WRITE);
-			break;
-		case 'x':
-			/* **** NOTE: draft-ietf-ldapext-aci-model-0.3.txt does not 
-			 * define any equivalent to the AUTH right, so I've just used
-			 * 'x' for now.
-			 */
-			ACL_PRIV_SET(mask, ACL_PRIV_AUTH);
-			break;
-		default:
-			break;
-		}
-
-	}
-	return(mask);
-}
-
-static int
-aci_list_has_attr(
-	struct berval *list,
-	const struct berval *attr,
-	struct berval *val )
-{
-	struct berval bv, left, right;
-	int i;
-
-	for (i = 0; aci_get_part(list, i, ',', &bv) >= 0; i++) {
-		if (aci_get_part(&bv, 0, '=', &left) < 0
-			|| aci_get_part(&bv, 1, '=', &right) < 0)
-		{
-			if (ber_bvstrcasecmp(attr, &bv) == 0)
-				return(1);
-		} else if (val == NULL) {
-			if (ber_bvstrcasecmp(attr, &left) == 0)
-				return(1);
-		} else {
-			if (ber_bvstrcasecmp(attr, &left) == 0) {
-				/* this is experimental code that implements a
-				 * simple (prefix) match of the attribute value.
-				 * the ACI draft does not provide for aci's that
-				 * apply to specific values, but it would be
-				 * nice to have.  If the <attr> part of an aci's
-				 * rights list is of the form <attr>=<value>,
-				 * that means the aci applies only to attrs with
-				 * the given value.  Furthermore, if the attr is
-				 * of the form <attr>=<value>*, then <value> is
-				 * treated as a prefix, and the aci applies to 
-				 * any value with that prefix.
-				 *
-				 * Ideally, this would allow r.e. matches.
-				 */
-				if (aci_get_part(&right, 0, '*', &left) < 0
-					|| right.bv_len <= left.bv_len)
-				{
-					if (ber_bvstrcasecmp(val, &right) == 0)
-						return(1);
-				} else if (val->bv_len >= left.bv_len) {
-					if (strncasecmp( val->bv_val, left.bv_val, left.bv_len ) == 0)
-						return(1);
-				}
-			}
-		}
-	}
-	return(0);
-}
-
-static slap_access_t
-aci_list_get_attr_rights(
-	struct berval *list,
-	const struct berval *attr,
-	struct berval *val )
-{
-    struct berval bv;
-    slap_access_t mask;
-    int i;
-
-	/* loop through each rights/attr pair, skip first part (action) */
-	ACL_INIT(mask);
-	for (i = 1; aci_get_part(list, i + 1, ';', &bv) >= 0; i += 2) {
-		if (aci_list_has_attr(&bv, attr, val) == 0)
-			continue;
-		if (aci_get_part(list, i, ';', &bv) < 0)
-			continue;
-		mask |= aci_list_map_rights(&bv);
-	}
-	return(mask);
-}
-
-static int
-aci_list_get_rights(
-	struct berval *list,
-	const struct berval *attr,
-	struct berval *val,
-	slap_access_t *grant,
-	slap_access_t *deny )
-{
-    struct berval perm, actn;
-    slap_access_t *mask;
-    int i, found;
-
-	if (attr == NULL || attr->bv_len == 0 
-			|| ber_bvstrcasecmp( attr, &aci_bv_entry ) == 0) {
-		attr = &aci_bv_br_entry;
-	}
-
-	found = 0;
-	ACL_INIT(*grant);
-	ACL_INIT(*deny);
-	/* loop through each permissions clause */
-	for (i = 0; aci_get_part(list, i, '$', &perm) >= 0; i++) {
-		if (aci_get_part(&perm, 0, ';', &actn) < 0)
-			continue;
-		if (ber_bvstrcasecmp( &aci_bv_grant, &actn ) == 0) {
-			mask = grant;
-		} else if (ber_bvstrcasecmp( &aci_bv_deny, &actn ) == 0) {
-			mask = deny;
-		} else {
-			continue;
-		}
-
-		found = 1;
-		*mask |= aci_list_get_attr_rights(&perm, attr, val);
-		*mask |= aci_list_get_attr_rights(&perm, &aci_bv_br_all, NULL);
-	}
-	return(found);
-}
-
-static int
-aci_group_member (
-	struct berval	*subj,
-	struct berval	*defgrpoc,
-	struct berval	*defgrpat,
-	Operation	*op,
-	Entry		*e,
-	int		nmatch,
-	regmatch_t	*matches
-)
-{
-	struct berval subjdn;
-	struct berval grpoc;
-	struct berval grpat;
-	ObjectClass *grp_oc = NULL;
-	AttributeDescription *grp_ad = NULL;
-	const char *text;
-	int rc;
-
-	/* format of string is "group/objectClassValue/groupAttrName" */
-	if (aci_get_part(subj, 0, '/', &subjdn) < 0) {
-		return(0);
-	}
-
-	if (aci_get_part(subj, 1, '/', &grpoc) < 0) {
-		grpoc = *defgrpoc;
-	}
-
-	if (aci_get_part(subj, 2, '/', &grpat) < 0) {
-		grpat = *defgrpat;
-	}
-
-	rc = slap_bv2ad( &grpat, &grp_ad, &text );
-	if( rc != LDAP_SUCCESS ) {
-		rc = 0;
-		goto done;
-	}
-	rc = 0;
-
-	grp_oc = oc_bvfind( &grpoc );
-
-	if (grp_oc != NULL && grp_ad != NULL ) {
-		char buf[ACL_BUF_SIZE];
-		struct berval bv, ndn;
-		bv.bv_len = sizeof( buf ) - 1;
-		bv.bv_val = (char *)&buf;
-		if ( string_expand(&bv, &subjdn,
-				e->e_ndn, nmatch, matches) )
-		{
-			rc = LDAP_OTHER;
-			goto done;
-		}
-		if ( dnNormalize( 0, NULL, NULL, &bv, &ndn, op->o_tmpmemctx ) == LDAP_SUCCESS ) {
-			rc = ( backend_group( op, e, &ndn, &op->o_ndn,
-				grp_oc, grp_ad ) == 0 );
-			slap_sl_free( ndn.bv_val, op->o_tmpmemctx );
-		}
-	}
-
-done:
-	return(rc);
-}
-
-static int
-aci_mask(
-	Operation		*op,
-	Entry			*e,
-	AttributeDescription	*desc,
-	struct berval		*val,
-	struct berval		*aci,
-	int			nmatch,
-	regmatch_t		*matches,
-	slap_access_t		*grant,
-	slap_access_t		*deny,
-	slap_aci_scope_t	asserted_scope
-)
-{
-	struct berval		bv, scope, perms, type, sdn;
-	int			rc;
-		
-
-	assert( !BER_BVISNULL( &desc->ad_cname ) );
-
-	/* parse an aci of the form:
-		oid # scope # action;rights;attr;rights;attr 
-			$ action;rights;attr;rights;attr # type # subject
-
-	   [NOTE: the following comment is very outdated,
-	   as the draft version it refers to (Ando, 2004-11-20)].
-
-	   See draft-ietf-ldapext-aci-model-04.txt section 9.1 for
-	   a full description of the format for this attribute.
-	   Differences: "this" in the draft is "self" here, and
-	   "self" and "public" is in the position of type.
-
-	   <scope> = {entry|children|subtree}
-	   <type> = {public|users|access-id|subtree|onelevel|children|
-	             self|dnattr|group|role|set|set-ref}
-
-	   This routine now supports scope={ENTRY,CHILDREN}
-	   with the semantics:
-	     - ENTRY applies to "entry" and "subtree";
-	     - CHILDREN aplies to "children" and "subtree"
-	 */
-
-	/* check that the aci has all 5 components */
-	if ( aci_get_part( aci, 4, '#', NULL ) < 0 ) {
-		return 0;
-	}
-
-	/* check that the aci family is supported */
-	if ( aci_get_part( aci, 0, '#', &bv ) < 0 ) {
-		return 0;
-	}
-
-	/* check that the scope matches */
-	if ( aci_get_part( aci, 1, '#', &scope ) < 0 ) {
-		return 0;
-	}
-
-	/* note: scope can be either ENTRY or CHILDREN;
-	 * they respectively match "entry" and "children" in bv
-	 * both match "subtree" */
-	switch ( asserted_scope ) {
-	case SLAP_ACI_SCOPE_ENTRY:
-		if ( ber_bvstrcasecmp( &scope, &aci_bv_entry ) != 0
-				&& ber_bvstrcasecmp( &scope, &aci_bv_subtree ) != 0 )
-		{
-			return 0;
-		}
-		break;
-
-	case SLAP_ACI_SCOPE_CHILDREN:
-		if ( ber_bvstrcasecmp( &scope, &aci_bv_children ) != 0
-				&& ber_bvstrcasecmp( &scope, &aci_bv_subtree ) != 0 )
-		{
-			return 0;
-		}
-		break;
-
-	default:
-		return 0;
-	}
-
-	/* get the list of permissions clauses, bail if empty */
-	if ( aci_get_part( aci, 2, '#', &perms ) <= 0 ) {
-		return 0;
-	}
-
-	/* check if any permissions allow desired access */
-	if ( aci_list_get_rights( &perms, &desc->ad_cname, val, grant, deny ) == 0 ) {
-		return 0;
-	}
-
-	/* see if we have a DN match */
-	if ( aci_get_part( aci, 3, '#', &type ) < 0 ) {
-		return 0;
-	}
-
-	/* see if we have a public (i.e. anonymous) access */
-	if ( ber_bvstrcasecmp( &aci_bv_public, &type ) == 0 ) {
-		return 1;
-	}
-	
-	/* otherwise require an identity */
-	if ( BER_BVISNULL( &op->o_ndn ) || BER_BVISEMPTY( &op->o_ndn ) ) {
-		return 0;
-	}
-
-	/* see if we have a users access */
-	if ( ber_bvstrcasecmp( &aci_bv_users, &type ) == 0 ) {
-		return 1;
-	}
-	
-	/* NOTE: this may fail if a DN contains a valid '#' (unescaped);
-	 * just grab all the berval up to its end (ITS#3303).
-	 * NOTE: the problem could be solved by providing the DN with
-	 * the embedded '#' encoded as hexpairs: "cn=Foo#Bar" would 
-	 * become "cn=Foo\23Bar" and be safely used by aci_mask(). */
-#if 0
-	if ( aci_get_part( aci, 4, '#', &sdn ) < 0 ) {
-		return 0;
-	}
-#endif
-	sdn.bv_val = type.bv_val + type.bv_len + STRLENOF( "#" );
-	sdn.bv_len = aci->bv_len - ( sdn.bv_val - aci->bv_val );
-
-	if ( ber_bvstrcasecmp( &aci_bv_access_id, &type ) == 0 ) {
-		struct berval ndn;
-		
-		rc = dnNormalize( 0, NULL, NULL, &sdn, &ndn, op->o_tmpmemctx );
-		if ( rc != LDAP_SUCCESS ) {
-			return 0;
-		}
-
-		if ( dn_match( &op->o_ndn, &ndn ) ) {
-			rc = 1;
-		}
-		slap_sl_free( ndn.bv_val, op->o_tmpmemctx );
-
-		return rc;
-
-	} else if ( ber_bvstrcasecmp( &aci_bv_subtree, &type ) == 0 ) {
-		struct berval ndn;
-		
-		rc = dnNormalize( 0, NULL, NULL, &sdn, &ndn, op->o_tmpmemctx );
-		if ( rc != LDAP_SUCCESS ) {
-			return 0;
-		}
-
-		if ( dnIsSuffix( &op->o_ndn, &ndn ) ) {
-			rc = 1;
-		}
-		slap_sl_free( ndn.bv_val, op->o_tmpmemctx );
-
-		return rc;
-
-	} else if ( ber_bvstrcasecmp( &aci_bv_onelevel, &type ) == 0 ) {
-		struct berval ndn, pndn;
-		
-		rc = dnNormalize( 0, NULL, NULL, &sdn, &ndn, op->o_tmpmemctx );
-		if ( rc != LDAP_SUCCESS ) {
-			return 0;
-		}
-
-		dnParent( &ndn, &pndn );
-
-		if ( dn_match( &op->o_ndn, &pndn ) ) {
-			rc = 1;
-		}
-		slap_sl_free( ndn.bv_val, op->o_tmpmemctx );
-
-		return rc;
-
-	} else if ( ber_bvstrcasecmp( &aci_bv_children, &type ) == 0 ) {
-		struct berval ndn;
-		
-		rc = dnNormalize( 0, NULL, NULL, &sdn, &ndn, op->o_tmpmemctx );
-		if ( rc != LDAP_SUCCESS ) {
-			return 0;
-		}
-
-		if ( !dn_match( &op->o_ndn, &ndn )
-				&& dnIsSuffix( &op->o_ndn, &ndn ) )
-		{
-			rc = 1;
-		}
-		slap_sl_free( ndn.bv_val, op->o_tmpmemctx );
-
-		return rc;
-
-	} else if ( ber_bvstrcasecmp( &aci_bv_self, &type ) == 0 ) {
-		if ( dn_match( &op->o_ndn, &e->e_nname ) ) {
-			return 1;
-		}
-
-	} else if ( ber_bvstrcasecmp( &aci_bv_dnattr, &type ) == 0 ) {
-		Attribute		*at;
-		AttributeDescription	*ad = NULL;
-		const char		*text;
-
-		rc = slap_bv2ad( &sdn, &ad, &text );
-
-		if( rc != LDAP_SUCCESS ) {
-			return 0;
-		}
-
-		rc = 0;
-
-		for ( at = attrs_find( e->e_attrs, ad );
-				at != NULL;
-				at = attrs_find( at->a_next, ad ) )
-		{
-			if ( value_find_ex( ad,
-				SLAP_MR_ATTRIBUTE_VALUE_NORMALIZED_MATCH |
-					SLAP_MR_ASSERTED_VALUE_NORMALIZED_MATCH,
-				at->a_nvals,
-				&op->o_ndn, op->o_tmpmemctx ) == 0 )
-			{
-				rc = 1;
-				break;
-			}
-		}
-
-		return rc;
-
-	} else if ( ber_bvstrcasecmp( &aci_bv_group, &type ) == 0 ) {
-		if ( aci_group_member( &sdn, &aci_bv_group_class,
-				&aci_bv_group_attr, op, e, nmatch, matches ) )
-		{
-			return 1;
-		}
-
-	} else if ( ber_bvstrcasecmp( &aci_bv_role, &type ) == 0 ) {
-		if ( aci_group_member( &sdn, &aci_bv_role_class,
-				&aci_bv_role_attr, op, e, nmatch, matches ) )
-		{
-			return 1;
-		}
-
-	} else if ( ber_bvstrcasecmp( &aci_bv_set, &type ) == 0 ) {
-		if ( aci_match_set( &sdn, op, e, 0 ) ) {
-			return 1;
-		}
-
-	} else if ( ber_bvstrcasecmp( &aci_bv_set_ref, &type ) == 0 ) {
-		if ( aci_match_set( &sdn, op, e, 1 ) ) {
-			return 1;
-		}
-	}
-
-	return 0;
-}
-
-#ifdef SLAP_DYNACL
-/*
- * FIXME: there is a silly dependence that makes it difficult
- * to move ACIs in a run-time loadable module under the "dynacl" 
- * umbrella, because sets share some helpers with ACIs.
- */
-static int
-dynacl_aci_parse( const char *fname, int lineno, slap_style_t sty, const char *right, void **privp )
-{
-	AttributeDescription	*ad = NULL;
-	const char		*text = NULL;
-
-	if ( sty != ACL_STYLE_REGEX && sty != ACL_STYLE_BASE ) {
-		fprintf( stderr, "%s: line %d: "
-			"inappropriate style \"%s\" in \"aci\" by clause\n",
-			fname, lineno, sty );
-		return -1;
-	}
-
-	if ( right != NULL && *right != '\0' ) {
-		if ( slap_str2ad( right, &ad, &text ) != LDAP_SUCCESS ) {
-			fprintf( stderr,
-				"%s: line %d: aci \"%s\": %s\n",
-				fname, lineno, right, text );
-			return -1;
-		}
-
-	} else {
-		ad = slap_schema.si_ad_aci;
-	}
-
-	if ( !is_at_syntax( ad->ad_type, SLAPD_ACI_SYNTAX) ) {
-		fprintf( stderr, "%s: line %d: "
-			"aci \"%s\": inappropriate syntax: %s\n",
-			fname, lineno, right,
-			ad->ad_type->sat_syntax_oid );
-		return -1;
-	}
-
-	*privp = (void *)ad;
-
-	return 0;
-}
-
-static int
-dynacl_aci_unparse( void *priv, struct berval *bv )
-{
-	AttributeDescription	*ad = ( AttributeDescription * )priv;
-	char *ptr;
-
-	assert( ad );
-
-	bv->bv_val = ch_malloc( STRLENOF(" aci=") + ad->ad_cname.bv_len + 1 );
-	ptr = lutil_strcopy( bv->bv_val, " aci=" );
-	ptr = lutil_strcopy( ptr, ad->ad_cname.bv_val );
-	bv->bv_len = ptr - bv->bv_val;
-
-	return 0;
-}
-
-
-static int
-dynacl_aci_mask(
-		void			*priv,
-		Operation		*op,
-		Entry			*e,
-		AttributeDescription	*desc,
-		struct berval		*val,
-		int			nmatch,
-		regmatch_t		*matches,
-		slap_access_t		*grantp,
-		slap_access_t		*denyp )
-{
-	AttributeDescription	*ad = ( AttributeDescription * )priv;
-	Attribute		*at;
-	slap_access_t		tgrant, tdeny, grant, deny;
-#ifdef LDAP_DEBUG
-	char			accessmaskbuf[ACCESSMASK_MAXLEN];
-	char			accessmaskbuf1[ACCESSMASK_MAXLEN];
-#endif /* LDAP_DEBUG */
-
-	/* start out with nothing granted, nothing denied */
-	ACL_INIT(tgrant);
-	ACL_INIT(tdeny);
-
-	/* get the aci attribute */
-	at = attr_find( e->e_attrs, ad );
-	if ( at != NULL ) {
-		int		i;
-
-		/* the aci is an multi-valued attribute.  The
-		 * rights are determined by OR'ing the individual
-		 * rights given by the acis.
-		 */
-		for ( i = 0; !BER_BVISNULL( &at->a_nvals[i] ); i++ ) {
-			if ( aci_mask( op, e, desc, val, &at->a_nvals[i],
-					nmatch, matches, &grant, &deny,
-					SLAP_ACI_SCOPE_ENTRY ) != 0 )
-			{
-				tgrant |= grant;
-				tdeny |= deny;
-			}
-		}
-		
-		Debug( LDAP_DEBUG_ACL, "<= aci_mask grant %s deny %s\n",
-			  accessmask2str( tgrant, accessmaskbuf, 1 ), 
-			  accessmask2str( tdeny, accessmaskbuf1, 1 ), 0 );
-	}
-
-	/* If the entry level aci didn't contain anything valid for the 
-	 * current operation, climb up the tree and evaluate the
-	 * acis with scope set to subtree
-	 */
-	if ( tgrant == ACL_PRIV_NONE && tdeny == ACL_PRIV_NONE ) {
-		struct berval	parent_ndn;
-
-#if 1
-		/* to solve the chicken'n'egg problem of accessing
-		 * the OpenLDAPaci attribute, the direct access
-		 * to the entry's attribute is unchecked; however,
-		 * further accesses to OpenLDAPaci values in the 
-		 * ancestors occur through backend_attribute(), i.e.
-		 * with the identity of the operation, requiring
-		 * further access checking.  For uniformity, this
-		 * makes further requests occur as the rootdn, if
-		 * any, i.e. searching for the OpenLDAPaci attribute
-		 * is considered an internal search.  If this is not
-		 * acceptable, then the same check needs be performed
-		 * when accessing the entry's attribute. */
-		Operation	op2 = *op;
-
-		if ( !BER_BVISNULL( &op->o_bd->be_rootndn ) ) {
-			op2.o_dn = op->o_bd->be_rootdn;
-			op2.o_ndn = op->o_bd->be_rootndn;
-		}
-#endif
-
-		dnParent( &e->e_nname, &parent_ndn );
-		while ( !BER_BVISEMPTY( &parent_ndn ) ){
-			int		i;
-			BerVarray	bvals = NULL;
-			int		ret, stop;
-
-			Debug( LDAP_DEBUG_ACL, "checking ACI of \"%s\"\n", parent_ndn.bv_val, 0, 0 );
-			ret = backend_attribute( &op2, NULL, &parent_ndn, ad, &bvals, ACL_AUTH );
-
-			switch ( ret ) {
-			case LDAP_SUCCESS :
-				stop = 0;
-				if ( !bvals ) {
-					break;
-				}
-
-				for ( i = 0; !BER_BVISNULL( &bvals[i] ); i++) {
-					if ( aci_mask( op, e, desc, val,
-							&bvals[i],
-							nmatch, matches,
-							&grant, &deny,
-							SLAP_ACI_SCOPE_CHILDREN ) != 0 )
-					{
-						tgrant |= grant;
-						tdeny |= deny;
-						/* evaluation stops as soon as either a "deny" or a 
-						 * "grant" directive matches.
-						 */
-						if ( tgrant != ACL_PRIV_NONE || tdeny != ACL_PRIV_NONE ) {
-							stop = 1;
-						}
-					}
-					Debug( LDAP_DEBUG_ACL, "<= aci_mask grant %s deny %s\n", 
-						accessmask2str( tgrant, accessmaskbuf, 1 ),
-						accessmask2str( tdeny, accessmaskbuf1, 1 ), 0 );
-				}
-				break;
-
-			case LDAP_NO_SUCH_ATTRIBUTE:
-				/* just go on if the aci-Attribute is not present in
-				 * the current entry 
-				 */
-				Debug( LDAP_DEBUG_ACL, "no such attribute\n", 0, 0, 0 );
-				stop = 0;
-				break;
-
-			case LDAP_NO_SUCH_OBJECT:
-				/* We have reached the base object */
-				Debug( LDAP_DEBUG_ACL, "no such object\n", 0, 0, 0 );
-				stop = 1;
-				break;
-
-			default:
-				stop = 1;
-				break;
-			}
-
-			if ( stop ) {
-				break;
-			}
-			dnParent( &parent_ndn, &parent_ndn );
-		}
-	}
-
-	*grantp = tgrant;
-	*denyp = tdeny;
-
-	return 0;
-}
-
-/* need to register this at some point */
-static slap_dynacl_t	dynacl_aci = {
-	"aci",
-	dynacl_aci_parse,
-	dynacl_aci_unparse,
-	dynacl_aci_mask,
-	NULL,
-	NULL,
-	NULL
-};
-
-#endif /* SLAP_DYNACL */
-
-#endif	/* SLAPD_ACI_ENABLED */
 
 #ifdef SLAP_DYNACL
 
@@ -3440,28 +2800,24 @@ slap_dynacl_get( const char *name )
 int
 acl_init( void )
 {
-	int		i, rc;
-#ifdef SLAP_DYNACL
-	slap_dynacl_t	*known_dynacl[] = {
+	int	rc = 0;
+
 #ifdef SLAPD_ACI_ENABLED
-		&dynacl_aci,
-#endif  /* SLAPD_ACI_ENABLED */
-		NULL
-	};
-
-	for ( i = 0; known_dynacl[ i ]; i++ ) {
-		rc = slap_dynacl_register( known_dynacl[ i ] ); 
-		if ( rc ) {
-			return rc;
-		}
+#ifdef SLAP_DYNACL
+	rc = dynacl_aci_init();
+#else /* !SLAP_DYNACL */
+	rc = aci_init();
+#endif /* !SLAP_DYNACL */
+	if ( rc != 0 ) {
+		return rc;
 	}
-#endif /* SLAP_DYNACL */
+#endif /* SLAPD_ACI_ENABLED */
 
-	return 0;
+	return rc;
 }
 
-static int
-string_expand(
+int
+acl_string_expand(
 	struct berval	*bv,
 	struct berval	*pat,
 	char		*match,
@@ -3545,8 +2901,8 @@ string_expand(
 	*dp = '\0';
 	bv->bv_len = size;
 
-	Debug( LDAP_DEBUG_TRACE, "=> string_expand: pattern:  %.*s\n", (int)pat->bv_len, pat->bv_val, 0 );
-	Debug( LDAP_DEBUG_TRACE, "=> string_expand: expanded: %s\n", bv->bv_val, 0, 0 );
+	Debug( LDAP_DEBUG_TRACE, "=> acl_string_expand: pattern:  %.*s\n", (int)pat->bv_len, pat->bv_val, 0 );
+	Debug( LDAP_DEBUG_TRACE, "=> acl_string_expand: expanded: %s\n", bv->bv_val, 0, 0 );
 
 	return 0;
 }
@@ -3572,7 +2928,7 @@ regex_matches(
 		str = "";
 	};
 
-	string_expand( &bv, pat, buf, nmatch, matches );
+	acl_string_expand( &bv, pat, buf, nmatch, matches );
 	rc = regcomp( &re, newbuf, REG_EXTENDED|REG_ICASE );
 	if ( rc ) {
 		char error[ACL_BUF_SIZE];

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/test.c,v 1.50.2.1 2005/01/20 18:03:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/test.c,v 1.50.2.3 2005/08/09 21:03:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -59,7 +59,7 @@ static char *dnsuffix;
 static char *
 get_line( char *line, int len, FILE *fp, const char *prompt )
 {
-	printf(prompt);
+	fputs(prompt, stdout);
 
 	if ( fgets( line, len, fp ) == NULL )
 		return( NULL );

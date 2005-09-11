@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/bind.c,v 1.40.2.5 2005/05/06 16:42:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/bind.c,v 1.40.2.12 2005/08/31 17:11:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 
+#include <ac/errno.h>
 #include <ac/socket.h>
 #include <ac/string.h>
 
@@ -46,7 +47,7 @@ int
 meta_back_bind( Operation *op, SlapReply *rs )
 {
 	metainfo_t	*mi = ( metainfo_t * )op->o_bd->be_private;
-	metaconn_t	*mc;
+	metaconn_t	*mc = NULL;
 
 	int		rc = LDAP_OTHER,
 			i, gotit = 0, isroot = 0;
@@ -128,6 +129,11 @@ meta_back_bind( Operation *op, SlapReply *rs )
 			rs->sr_err = lerr;
 			candidates[ i ].sr_tag = META_NOT_CANDIDATE;
 
+			if ( META_BACK_ONERR_STOP( mi ) ) {
+				rc = rs->sr_err;
+				break;
+			}
+				
 		} else {
 			rc = LDAP_SUCCESS;
 		}
@@ -136,6 +142,8 @@ meta_back_bind( Operation *op, SlapReply *rs )
 	if ( isroot ) {
 		mc->mc_auth_target = META_BOUND_ALL;
 	}
+
+	meta_back_release_conn( op, mc );
 
 	/*
 	 * rc is LDAP_SUCCESS if at least one bind succeeded,
@@ -208,7 +216,7 @@ rebind:;
 			op->o_ctrls, NULL, &msgid );
 	if ( rs->sr_err == LDAP_SUCCESS ) {
 		LDAPMessage	*res;
-		struct timeval	tv;
+		struct timeval	tv = { 0, 100000 };
 		int		rc;
 		int		nretries = mt->mt_nretries;
 
@@ -220,14 +228,19 @@ retry:;
 		tv.tv_usec = META_BIND_TIMEOUT;
 		switch ( ldap_result( msc->msc_ld, msgid, 0, &tv, &res ) ) {
 		case 0:
-			Debug( LDAP_DEBUG_ANY, "%s meta_back_single_bind: ldap_result=%d nretries=%d\n",
-				op->o_log_prefix, 0, nretries );
+			Debug( LDAP_DEBUG_ANY,
+				"%s meta_back_single_bind: "
+				"ldap_result=0 nretries=%d%s\n",
+				op->o_log_prefix, nretries,
+				rebinding ? " rebinding" : "" );
 
 			if ( nretries != META_RETRY_NEVER ) {
 				ldap_pvt_thread_yield();
 				if ( nretries > 0 ) {
 					nretries--;
 				}
+				tv.tv_sec = 0;
+				tv.tv_usec = 100000;
 				goto retry;
 			}
 			rs->sr_err = LDAP_BUSY;
@@ -252,18 +265,33 @@ retry:;
 				ldap_abandon_ext( msc->msc_ld, msgid, NULL, NULL );
 			}
 
-			Debug( LDAP_DEBUG_ANY, "### %s meta_back_single_bind: err=%d nretries=%d\n",
+			Debug( LDAP_DEBUG_ANY,
+				"### %s meta_back_single_bind: "
+				"err=%d nretries=%d\n",
 				op->o_log_prefix, rs->sr_err, nretries );
 
 			rc = slap_map_api2result( rs );
 			if ( rs->sr_err == LDAP_UNAVAILABLE && nretries != META_RETRY_NEVER ) {
-				ldap_unbind_ext_s( msc->msc_ld, NULL, NULL );
-				msc->msc_ld = NULL;
-			        msc->msc_bound = 0;
+				ldap_pvt_thread_mutex_lock( &mi->mi_conn_mutex );
+				if ( mc->mc_refcnt == 1 ) {
+					ldap_unbind_ext_s( msc->msc_ld, NULL, NULL );
+					msc->msc_ld = NULL;
+				        msc->msc_bound = 0;
 
-			        /* mc here must be the regular mc, reset and ready for init */
-			        rc = meta_back_init_one_conn( op, rs, mt, msc,
-						LDAP_BACK_DONTSEND );
+					( void )rewrite_session_delete( mt->mt_rwmap.rwm_rw, op->o_conn );
+
+				        /* mc here must be the regular mc,
+					 * reset and ready for init */
+				        rc = meta_back_init_one_conn( op, rs,
+						mt, msc, LDAP_BACK_DONTSEND );
+
+				} else {
+					/* can't do anything about it */
+					rc = 0;
+				}
+
+				ldap_pvt_thread_mutex_unlock( &mi->mi_conn_mutex );
+
 				if ( rc ) {
 					if ( nretries > 0 ) {
 						nretries--;
@@ -323,7 +351,8 @@ meta_back_single_dobind(
 	metaconn_t		*mc,
 	int			candidate,
 	ldap_back_send_t	sendok,
-	int			nretries )
+	int			nretries,
+	int			dolock )
 {
 	metainfo_t		*mi = ( metainfo_t * )op->o_bd->be_private;
 	metatarget_t		*mt = &mi->mi_targets[ candidate ];
@@ -358,7 +387,7 @@ rebind:;
 			NULL, NULL, &msgid );
 	if ( rc == LDAP_SUCCESS ) {
 		LDAPMessage	*res;
-		struct timeval	tv;
+		struct timeval	tv = { 0, 100000 };
 
 		/*
 		 * handle response!!!
@@ -368,14 +397,19 @@ retry:;
 		tv.tv_usec = META_BIND_TIMEOUT;
 		switch ( ldap_result( msc->msc_ld, msgid, 0, &tv, &res ) ) {
 		case 0:
-			Debug( LDAP_DEBUG_ANY, "%s meta_back_single_dobind: ldap_result=%d nretries=%d\n",
-				op->o_log_prefix, 0, nretries );
+			Debug( LDAP_DEBUG_ANY,
+				"%s meta_back_single_dobind: "
+				"ldap_result=0 nretries=%d%s\n",
+				op->o_log_prefix, nretries,
+				rebinding ? " rebinding" : "" );
 
 			if ( nretries != META_RETRY_NEVER ) {
 				ldap_pvt_thread_yield();
 				if ( nretries > 0 ) {
 					nretries--;
 				}
+				tv.tv_sec = 0;
+				tv.tv_usec = 100000;
 				goto retry;
 			}
 
@@ -401,17 +435,38 @@ retry:;
 				ldap_abandon_ext( msc->msc_ld, msgid, NULL, NULL );
 			}
 
-			Debug( LDAP_DEBUG_ANY, "### %s meta_back_single_dobind: err=%d nretries=%d\n",
-					op->o_log_prefix, rs->sr_err, nretries );
+			Debug( LDAP_DEBUG_ANY,
+				"### %s meta_back_single_dobind: "
+				"err=%d nretries=%d\n",
+				op->o_log_prefix, rs->sr_err, nretries );
 
 			rc = slap_map_api2result( rs );
 			if ( rc == LDAP_UNAVAILABLE && nretries != META_RETRY_NEVER ) {
-				ldap_unbind_ext_s( msc->msc_ld, NULL, NULL );
-				msc->msc_ld = NULL;
-			        msc->msc_bound = 0;
+				if ( dolock ) {
+					ldap_pvt_thread_mutex_lock( &mi->mi_conn_mutex );
+				}
 
-			        /* mc here must be the regular mc, reset and ready for init */
-			        rc = meta_back_init_one_conn( op, rs, mt, msc, LDAP_BACK_DONTSEND );
+				if ( mc->mc_refcnt == 1 ) {
+					ldap_unbind_ext_s( msc->msc_ld, NULL, NULL );
+					msc->msc_ld = NULL;
+				        msc->msc_bound = 0;
+
+					( void )rewrite_session_delete( mt->mt_rwmap.rwm_rw, op->o_conn );
+
+				        /* mc here must be the regular mc,
+					 * reset and ready for init */
+				        rc = meta_back_init_one_conn( op, rs,
+						mt, msc, LDAP_BACK_DONTSEND );
+				
+
+				} else {
+					/* can't do anything about it */
+					rc = LDAP_UNAVAILABLE;
+				}
+
+				if ( dolock ) {
+					ldap_pvt_thread_mutex_unlock( &mi->mi_conn_mutex );
+				}
 
 				if ( rc == LDAP_SUCCESS ) {
 					ldap_pvt_thread_yield();
@@ -433,6 +488,7 @@ retry:;
 		}
 
 	} else {
+		rs->sr_err = rc;
 		rc = slap_map_api2result( rs );
 	}
 
@@ -456,15 +512,22 @@ meta_back_dobind(
 {
 	metainfo_t		*mi = ( metainfo_t * )op->o_bd->be_private;
 
-	int			bound = 0, i;
+	int			bound = 0,
+				i,
+				isroot = 0;
 
 	SlapReply		*candidates = meta_back_candidates_get( op );
 
-	ldap_pvt_thread_mutex_lock( &mc->mc_mutex );
+	if ( be_isroot( op ) ) {
+		isroot = 1;
+	}
 
 	Debug( LDAP_DEBUG_TRACE,
-		"%s meta_back_dobind: conn=%ld\n",
-		op->o_log_prefix, mc->mc_conn->c_connid, 0 );
+		"%s meta_back_dobind: conn=%ld%s\n",
+		op->o_log_prefix, mc->mc_conn->c_connid,
+		isroot ? " (isroot)" : "" );
+
+	ldap_pvt_thread_mutex_lock( &mc->mc_mutex );
 
 	/*
 	 * all the targets are bound as pseudoroot
@@ -500,11 +563,24 @@ meta_back_dobind(
 			continue;
 		}
 
-		rc = meta_back_single_dobind( op, rs, mc, i,
-				LDAP_BACK_DONTSEND, mt->mt_nretries );
-		if ( rc != LDAP_SUCCESS ) {
-			rs->sr_err = slap_map_api2result( rs );
+		if ( isroot && !BER_BVISNULL( &mi->mi_targets[ i ].mt_pseudorootdn ) )
+		{
+			Operation	op2 = *op;
 
+			op2.o_tag = LDAP_REQ_BIND;
+			op2.o_req_dn = mi->mi_targets[ i ].mt_pseudorootdn;
+			op2.o_req_ndn = mi->mi_targets[ i ].mt_pseudorootdn;
+			op2.orb_cred = mi->mi_targets[ i ].mt_pseudorootpw;
+			op2.orb_method = LDAP_AUTH_SIMPLE;
+
+			rc = meta_back_single_bind( &op2, rs, mc, i );
+
+		} else {
+			rc = meta_back_single_dobind( op, rs, mc, i,
+				LDAP_BACK_DONTSEND, mt->mt_nretries, 1 );
+		}
+
+		if ( rc != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_ANY, "%s meta_back_dobind[%d]: "
 					"(anonymous) err=%d\n",
 					op->o_log_prefix, i, rc );
@@ -516,7 +592,12 @@ meta_back_dobind(
 			 * due to technical reasons (remote host down?)
 			 * so better clear the handle
 			 */
-			candidates[ i ].sr_tag = META_NOT_CANDIDATE;
+			/* leave the target candidate, but record the error for later use */
+			candidates[ i ].sr_err = rc;
+			if ( META_BACK_ONERR_STOP( mi ) ) {
+				bound = 0;
+				goto done;
+			}
 			continue;
 		} /* else */
 		
@@ -535,11 +616,15 @@ done:;
 		"%s meta_back_dobind: conn=%ld bound=%d\n",
 		op->o_log_prefix, mc->mc_conn->c_connid, bound );
 
-	if ( bound == 0 && ( sendok & LDAP_BACK_SENDERR ) ) {
-		if ( rs->sr_err == LDAP_SUCCESS ) {
-			rs->sr_err = LDAP_BUSY;
+	if ( bound == 0 ) {
+		meta_back_release_conn( op, mc );
+
+		if ( sendok & LDAP_BACK_SENDERR ) {
+			if ( rs->sr_err == LDAP_SUCCESS ) {
+				rs->sr_err = LDAP_BUSY;
+			}
+			send_ldap_result( op, rs );
 		}
-		send_ldap_result( op, rs );
 	}
 
 	return( bound > 0 );
@@ -580,10 +665,11 @@ meta_back_op_result(
 
 	int			i,
 				rerr = LDAP_SUCCESS;
-	char			*rmsg = NULL;
-	char			*rmatch = NULL;
-	int			free_rmsg = 0,
-				free_rmatch = 0;
+	char			*rmsg = NULL,
+				*rmatch = NULL;
+	const char		*save_rmsg = NULL,
+				*save_rmatch = NULL;
+	void			*rmatch_ctx = NULL;
 
 	if ( candidate != META_TARGET_NONE ) {
 		metasingleconn_t	*msc = &mc->mc_conns[ candidate ];
@@ -600,16 +686,19 @@ meta_back_op_result(
 			 */
 			ldap_get_option( msc->msc_ld,
 					LDAP_OPT_ERROR_STRING, &rmsg );
+			if ( rmsg != NULL && rmsg[ 0 ] == '\0' ) {
+				ldap_memfree( rmsg );
+				rmsg = NULL;
+			}
+
 			ldap_get_option( msc->msc_ld,
 					LDAP_OPT_MATCHED_DN, &rmatch );
-			rerr = rs->sr_err = slap_map_api2result( rs );
+			if ( rmatch != NULL && rmatch[ 0 ] == '\0' ) {
+				ldap_memfree( rmatch );
+				rmatch = NULL;
+			}
 
-			if ( rmsg ) {
-				free_rmsg = 1;
-			}
-			if ( rmatch ) {
-				free_rmatch = 1;
-			}
+			rerr = rs->sr_err = slap_map_api2result( rs );
 
 			Debug(LDAP_DEBUG_ANY,
 					"==> meta_back_op_result: target"
@@ -637,8 +726,18 @@ meta_back_op_result(
 				 */
 				ldap_get_option( msc->msc_ld,
 						LDAP_OPT_ERROR_STRING, &msg );
+				if ( msg != NULL && msg[ 0 ] == '\0' ) {
+					ldap_memfree( msg );
+					msg = NULL;
+				}
+
 				ldap_get_option( msc->msc_ld,
 						LDAP_OPT_MATCHED_DN, &match );
+				if ( match != NULL && match[ 0 ] == '\0' ) {
+					ldap_memfree( match );
+					match = NULL;
+				}
+
 				rs->sr_err = slap_map_api2result( rs );
 	
 				Debug(LDAP_DEBUG_ANY,
@@ -654,44 +753,60 @@ meta_back_op_result(
 				switch ( rs->sr_err ) {
 				default:
 					rerr = rs->sr_err;
-					if ( rmsg ) {
-						ber_memfree( rmsg );
+					if ( msg != NULL ) {
+						if ( rmsg ) {
+							ldap_memfree( rmsg );
+						}
+						rmsg = msg;
+						msg = NULL;
 					}
-					rmsg = msg;
-					free_rmsg = 1;
-					msg = NULL;
-					if ( rmatch ) {
-						ber_memfree( rmatch );
+					if ( match != NULL ) {
+						if ( rmatch ) {
+							ldap_memfree( rmatch );
+						}
+						rmatch = match;
+						match = NULL;
 					}
-					rmatch = match;
-					free_rmatch = 1;
-					match = NULL;
 					break;
 				}
-	
-				/* better test the pointers before freeing? */
-				if ( match ) {
-					free( match );
-				}
+
 				if ( msg ) {
-					free( msg );
+					ldap_memfree( msg );
+				}
+	
+				if ( match ) {
+					ldap_memfree( match );
 				}
 			}
 		}
 	}
 	
 	rs->sr_err = rerr;
-	rs->sr_text = rmsg;
-	rs->sr_matched = rmatch;
+	if ( rmsg != NULL ) {
+		save_rmsg = rs->sr_text;
+		rs->sr_text = rmsg;
+	}
+	if ( rmatch != NULL ) {
+		struct berval	dn, pdn;
+
+		ber_str2bv( rmatch, 0, 0, &dn );
+		if ( dnPretty( NULL, &dn, &pdn, op->o_tmpmemctx ) == LDAP_SUCCESS ) {
+			ldap_memfree( rmatch );
+			rmatch_ctx = op->o_tmpmemctx;
+			rmatch = pdn.bv_val;
+		}
+		save_rmatch = rs->sr_matched;
+		rs->sr_matched = rmatch;
+	}
 	send_ldap_result( op, rs );
-	if ( free_rmsg ) {
+	if ( rmsg != NULL ) {
 		ber_memfree( rmsg );
+		rs->sr_text = save_rmsg;
 	}
-	if ( free_rmatch ) {
-		ber_memfree( rmatch );
+	if ( rmatch != NULL ) {
+		ber_memfree_x( rmatch, rmatch_ctx );
+		rs->sr_matched = save_rmatch;
 	}
-	rs->sr_text = NULL;
-	rs->sr_matched = NULL;
 
 	return ( ( rerr == LDAP_SUCCESS ) ? 0 : -1 );
 }

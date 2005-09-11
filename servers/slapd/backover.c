@@ -1,5 +1,5 @@
 /* backover.c - backend overlay routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backover.c,v 1.31.2.10 2005/06/13 22:29:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backover.c,v 1.31.2.12 2005/08/09 21:03:57 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2005 The OpenLDAP Foundation.
@@ -29,7 +29,12 @@
 
 static slap_overinst *overlays;
 
-enum db_which { db_open = 0, db_close, db_destroy };
+enum db_which {
+	db_open = 0,
+	db_close,
+	db_destroy,
+	db_last
+};
 
 static int
 over_db_func(
@@ -74,7 +79,6 @@ over_db_config(
 	BackendInfo *bi_orig = be->bd_info;
 	struct ConfigOCs *be_cf_ocs = be->be_cf_ocs;
 	ConfigArgs ca = {0};
-	ConfigTable *ct;
 	int rc = 0;
 
 	if ( oi->oi_orig->bi_db_config ) {
@@ -230,45 +234,6 @@ over_back_response ( Operation *op, SlapReply *rs )
 	return rc;
 }
 
-enum op_which {
-	op_bind = 0,
-	op_unbind,
-	op_search,
-	op_compare,
-	op_modify,
-	op_modrdn,
-	op_add,
-	op_delete,
-	op_abandon,
-	op_cancel,
-	op_extended,
-	op_aux_operational,
-	op_aux_chk_referrals,
-	op_aux_chk_controls,
-	op_last
-};
-
-/*
- * default return code in case of missing backend function
- * and overlay stack returning SLAP_CB_CONTINUE
- */
-static int op_rc[] = {
-	LDAP_UNWILLING_TO_PERFORM,	/* bind */
-	LDAP_UNWILLING_TO_PERFORM,	/* unbind */
-	LDAP_UNWILLING_TO_PERFORM,	/* search */
-	SLAP_CB_CONTINUE,		/* compare; pass to frontend */
-	LDAP_UNWILLING_TO_PERFORM,	/* modify */
-	LDAP_UNWILLING_TO_PERFORM,	/* modrdn */
-	LDAP_UNWILLING_TO_PERFORM,	/* add */
-	LDAP_UNWILLING_TO_PERFORM,	/* delete */
-	LDAP_UNWILLING_TO_PERFORM,	/* abandon */
-	LDAP_UNWILLING_TO_PERFORM,	/* cancel */
-	LDAP_UNWILLING_TO_PERFORM,	/* extended */
-	LDAP_SUCCESS,			/* aux_operational */
-	LDAP_SUCCESS,			/* aux_chk_referrals */
-	SLAP_CB_CONTINUE		/* aux_chk_controls; pass to frontend */
-};
-
 #ifdef SLAP_OVERLAY_ACCESS
 static int
 over_access_allowed(
@@ -338,20 +303,20 @@ over_access_allowed(
 
 	return rc;
 }
-#endif /* SLAP_OVERLAY_ACCESS */
 
 static int
-over_op_func(
-	Operation *op,
-	SlapReply *rs,
-	enum op_which which
-)
+over_acl_group(
+	Operation		*op,
+	Entry			*e,
+	struct berval		*gr_ndn,
+	struct berval		*op_ndn,
+	ObjectClass		*group_oc,
+	AttributeDescription	*group_at )
 {
 	slap_overinfo *oi;
 	slap_overinst *on;
-	BI_op_bind **func;
+	BackendInfo *bi = op->o_bd->bd_info;
 	BackendDB *be = op->o_bd, db;
-	slap_callback cb = {NULL, over_back_response, NULL, NULL};
 	int rc = SLAP_CB_CONTINUE;
 
 	/* FIXME: used to happen for instance during abandon
@@ -361,14 +326,152 @@ over_op_func(
 	oi = op->o_bd->bd_info->bi_private;
 	on = oi->oi_list;
 
- 	if ( !SLAP_ISOVERLAY( op->o_bd )) {
- 		db = *op->o_bd;
-		db.be_flags |= SLAP_DBFLAG_OVERLAY;
-		op->o_bd = &db;
+	for ( ; on; on = on->on_next ) {
+		if ( on->on_bi.bi_acl_group ) {
+			/* NOTE: do not copy the structure until required */
+		 	if ( !SLAP_ISOVERLAY( op->o_bd ) ) {
+ 				db = *op->o_bd;
+				db.be_flags |= SLAP_DBFLAG_OVERLAY;
+				op->o_bd = &db;
+			}
+
+			op->o_bd->bd_info = (BackendInfo *)on;
+			rc = on->on_bi.bi_acl_group( op, e,
+				gr_ndn, op_ndn, group_oc, group_at );
+			if ( rc != SLAP_CB_CONTINUE ) break;
+		}
 	}
-	cb.sc_next = op->o_callback;
-	cb.sc_private = oi;
-	op->o_callback = &cb;
+
+	if ( rc == SLAP_CB_CONTINUE ) {
+		BI_acl_group		*bi_acl_group;
+
+		/* if the database structure was changed, o_bd points to a
+		 * copy of the structure; put the original bd_info in place */
+		if ( SLAP_ISOVERLAY( op->o_bd ) ) {
+			op->o_bd->bd_info = oi->oi_orig;
+		}
+
+		if ( oi->oi_orig->bi_acl_group ) {
+			bi_acl_group = oi->oi_orig->bi_acl_group;
+		} else {
+			bi_acl_group = backend_group;
+		}
+
+		rc = bi_acl_group( op, e,
+			gr_ndn, op_ndn, group_oc, group_at );
+	}
+	/* should not fall thru this far without anything happening... */
+	if ( rc == SLAP_CB_CONTINUE ) {
+		/* access not allowed */
+		rc = 0;
+	}
+
+	op->o_bd = be;
+	op->o_bd->bd_info = bi;
+
+	return rc;
+}
+
+static int
+over_acl_attribute(
+	Operation		*op,
+	Entry			*target,
+	struct berval		*entry_ndn,
+	AttributeDescription	*entry_at,
+	BerVarray		*vals,
+	slap_access_t		access )
+{
+	slap_overinfo *oi;
+	slap_overinst *on;
+	BackendInfo *bi = op->o_bd->bd_info;
+	BackendDB *be = op->o_bd, db;
+	int rc = SLAP_CB_CONTINUE;
+
+	/* FIXME: used to happen for instance during abandon
+	 * when global overlays are used... */
+	assert( op->o_bd != NULL );
+
+	oi = op->o_bd->bd_info->bi_private;
+	on = oi->oi_list;
+
+	for ( ; on; on = on->on_next ) {
+		if ( on->on_bi.bi_acl_attribute ) {
+			/* NOTE: do not copy the structure until required */
+		 	if ( !SLAP_ISOVERLAY( op->o_bd ) ) {
+ 				db = *op->o_bd;
+				db.be_flags |= SLAP_DBFLAG_OVERLAY;
+				op->o_bd = &db;
+			}
+
+			op->o_bd->bd_info = (BackendInfo *)on;
+			rc = on->on_bi.bi_acl_attribute( op, target,
+				entry_ndn, entry_at, vals, access );
+			if ( rc != SLAP_CB_CONTINUE ) break;
+		}
+	}
+
+	if ( rc == SLAP_CB_CONTINUE ) {
+		BI_acl_attribute		*bi_acl_attribute;
+
+		/* if the database structure was changed, o_bd points to a
+		 * copy of the structure; put the original bd_info in place */
+		if ( SLAP_ISOVERLAY( op->o_bd ) ) {
+			op->o_bd->bd_info = oi->oi_orig;
+		}
+
+		if ( oi->oi_orig->bi_acl_attribute ) {
+			bi_acl_attribute = oi->oi_orig->bi_acl_attribute;
+		} else {
+			bi_acl_attribute = backend_attribute;
+		}
+
+		rc = bi_acl_attribute( op, target,
+			entry_ndn, entry_at, vals, access );
+	}
+	/* should not fall thru this far without anything happening... */
+	if ( rc == SLAP_CB_CONTINUE ) {
+		/* access not allowed */
+		rc = 0;
+	}
+
+	op->o_bd = be;
+	op->o_bd->bd_info = bi;
+
+	return rc;
+}
+#endif /* SLAP_OVERLAY_ACCESS */
+
+/*
+ * default return code in case of missing backend function
+ * and overlay stack returning SLAP_CB_CONTINUE
+ */
+static int op_rc[ op_last ] = {
+	LDAP_UNWILLING_TO_PERFORM,	/* bind */
+	LDAP_UNWILLING_TO_PERFORM,	/* unbind */
+	LDAP_UNWILLING_TO_PERFORM,	/* search */
+	SLAP_CB_CONTINUE,		/* compare; pass to frontend */
+	LDAP_UNWILLING_TO_PERFORM,	/* modify */
+	LDAP_UNWILLING_TO_PERFORM,	/* modrdn */
+	LDAP_UNWILLING_TO_PERFORM,	/* add */
+	LDAP_UNWILLING_TO_PERFORM,	/* delete */
+	LDAP_UNWILLING_TO_PERFORM,	/* abandon */
+	LDAP_UNWILLING_TO_PERFORM,	/* cancel */
+	LDAP_UNWILLING_TO_PERFORM,	/* extended */
+	LDAP_SUCCESS,			/* aux_operational */
+	LDAP_SUCCESS,			/* aux_chk_referrals */
+	SLAP_CB_CONTINUE		/* aux_chk_controls; pass to frontend */
+};
+
+int overlay_op_walk(
+	Operation *op,
+	SlapReply *rs,
+	slap_operation_t which,
+	slap_overinfo *oi,
+	slap_overinst *on
+)
+{
+	BI_op_bind **func;
+	int rc = SLAP_CB_CONTINUE;
 
 	for (; on; on=on->on_next ) {
 		func = &on->on_bi.bi_op_bind;
@@ -394,14 +497,48 @@ over_op_func(
 	 */
 	if ( rc == LDAP_UNWILLING_TO_PERFORM ) {
 		slap_callback *sc_next;
-		for ( ; op->o_callback && op->o_callback != cb.sc_next; 
-			op->o_callback = sc_next ) {
+		for ( ; op->o_callback && op->o_callback->sc_response !=
+			over_back_response; op->o_callback = sc_next ) {
 			sc_next = op->o_callback->sc_next;
 			if ( op->o_callback->sc_cleanup ) {
 				op->o_callback->sc_cleanup( op, rs );
 			}
 		}
 	}
+	return rc;
+}
+
+static int
+over_op_func(
+	Operation *op,
+	SlapReply *rs,
+	slap_operation_t which
+)
+{
+	slap_overinfo *oi;
+	slap_overinst *on;
+	BackendDB *be = op->o_bd, db;
+	slap_callback cb = {NULL, over_back_response, NULL, NULL};
+	int rc = SLAP_CB_CONTINUE;
+
+	/* FIXME: used to happen for instance during abandon
+	 * when global overlays are used... */
+	assert( op->o_bd != NULL );
+
+	oi = op->o_bd->bd_info->bi_private;
+	on = oi->oi_list;
+
+ 	if ( !SLAP_ISOVERLAY( op->o_bd )) {
+ 		db = *op->o_bd;
+		db.be_flags |= SLAP_DBFLAG_OVERLAY;
+		op->o_bd = &db;
+	}
+	cb.sc_next = op->o_callback;
+	cb.sc_private = oi;
+	op->o_callback = &cb;
+
+	rc = overlay_op_walk( op, rs, which, oi, on );
+
 	op->o_bd = be;
 	op->o_callback = cb.sc_next;
 	return rc;
@@ -491,16 +628,24 @@ over_aux_chk_controls( Operation *op, SlapReply *rs )
 	return over_op_func( op, rs, op_aux_chk_controls );
 }
 
+enum conn_which {
+	conn_init = 0,
+	conn_destroy,
+	conn_last
+};
+
 static int
-over_connection_destroy(
+over_connection_func(
 	BackendDB	*bd,
-	Connection	*conn
+	Connection	*conn,
+	enum conn_which	which
 )
 {
-	slap_overinfo *oi;
-	slap_overinst *on;
-	BackendDB db;
-	int rc = SLAP_CB_CONTINUE;
+	slap_overinfo		*oi;
+	slap_overinst		*on;
+	BackendDB		db;
+	int			rc = SLAP_CB_CONTINUE;
+	BI_connection_init	**func;
 
 	/* FIXME: used to happen for instance during abandon
 	 * when global overlays are used... */
@@ -509,23 +654,25 @@ over_connection_destroy(
 	oi = bd->bd_info->bi_private;
 	on = oi->oi_list;
 
- 	if ( !SLAP_ISOVERLAY( bd )) {
+ 	if ( !SLAP_ISOVERLAY( bd ) ) {
  		db = *bd;
 		db.be_flags |= SLAP_DBFLAG_OVERLAY;
 		bd = &db;
 	}
 
-	for (; on; on=on->on_next ) {
-		if ( on->on_bi.bi_connection_destroy ) {
+	for ( ; on; on = on->on_next ) {
+		func = &on->on_bi.bi_connection_init;
+		if ( func[ which ] ) {
 			bd->bd_info = (BackendInfo *)on;
-			rc = on->on_bi.bi_connection_destroy( bd, conn );
+			rc = func[ which ]( bd, conn );
 			if ( rc != SLAP_CB_CONTINUE ) break;
 		}
 	}
 
-	if ( oi->oi_orig->bi_connection_destroy && rc == SLAP_CB_CONTINUE ) {
+	func = &oi->oi_orig->bi_connection_init;
+	if ( func[ which ] && rc == SLAP_CB_CONTINUE ) {
 		bd->bd_info = oi->oi_orig;
-		rc = oi->oi_orig->bi_connection_destroy( bd, conn );
+		rc = func[ which ]( bd, conn );
 	}
 	/* should not fall thru this far without anything happening... */
 	if ( rc == SLAP_CB_CONTINUE ) {
@@ -533,6 +680,24 @@ over_connection_destroy(
 	}
 
 	return rc;
+}
+
+static int
+over_connection_init(
+	BackendDB	*bd,
+	Connection	*conn
+)
+{
+	return over_connection_func( bd, conn, conn_init );
+}
+
+static int
+over_connection_destroy(
+	BackendDB	*bd,
+	Connection	*conn
+)
+{
+	return over_connection_func( bd, conn, conn_destroy );
 }
 
 int
@@ -574,7 +739,7 @@ overlay_find( const char *over_type )
 {
 	slap_overinst *on = overlays;
 
-	assert( over_type );
+	assert( over_type != NULL );
 
 	for ( ; on; on = on->on_next ) {
 		if ( strcmp( on->on_bi.bi_type, over_type ) == 0 ) {
@@ -609,7 +774,7 @@ overlay_is_inst( BackendDB *be, const char *over_type )
 {
 	slap_overinst	*on;
 
-	assert( be );
+	assert( be != NULL );
 
 	if ( !overlay_is_over( be ) ) {
 		return 0;
@@ -746,10 +911,13 @@ overlay_config( BackendDB *be, const char *ov )
 		bi->bi_chk_controls = over_aux_chk_controls;
 
 #ifdef SLAP_OVERLAY_ACCESS
-		/* this has a specific arglist */
+		/* these have specific arglists */
 		bi->bi_access_allowed = over_access_allowed;
+		bi->bi_acl_group = over_acl_group;
+		bi->bi_acl_attribute = over_acl_attribute;
 #endif /* SLAP_OVERLAY_ACCESS */
 		
+		bi->bi_connection_init = over_connection_init;
 		bi->bi_connection_destroy = over_connection_destroy;
 
 		be->bd_info = bi;

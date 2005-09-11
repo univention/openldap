@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/options.c,v 1.67.2.3 2005/06/03 19:12:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/options.c,v 1.67.2.4 2005/08/09 21:03:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -388,7 +388,8 @@ ldap_set_option(
 			LDAPControl *const *controls =
 				(LDAPControl *const *) invalue;
 
-			ldap_controls_free( lo->ldo_sctrls );
+			if( lo->ldo_sctrls )
+				ldap_controls_free( lo->ldo_sctrls );
 
 			if( controls == NULL || *controls == NULL ) {
 				lo->ldo_sctrls = NULL;
@@ -407,7 +408,8 @@ ldap_set_option(
 			LDAPControl *const *controls =
 				(LDAPControl *const *) invalue;
 
-			ldap_controls_free( lo->ldo_cctrls );
+			if( lo->ldo_cctrls )
+				ldap_controls_free( lo->ldo_cctrls );
 
 			if( controls == NULL || *controls == NULL ) {
 				lo->ldo_cctrls = NULL;

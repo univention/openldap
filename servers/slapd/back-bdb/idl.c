@@ -1,5 +1,5 @@
 /* idl.c - ldap id list handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/idl.c,v 1.94.2.6 2005/06/13 01:01:49 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/idl.c,v 1.94.2.7 2005/08/09 21:04:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2005 The OpenLDAP Foundation.
@@ -1212,8 +1212,6 @@ ID bdb_idl_next( ID *ids, ID *cursor )
  */
 int bdb_idl_append_one( ID *ids, ID id )
 {
-	unsigned x;
-
 	if (BDB_IDL_IS_RANGE( ids )) {
 		/* if already in range, treat as a dup */
 		if (id >= BDB_IDL_FIRST(ids) && id <= BDB_IDL_LAST(ids))

@@ -1,5 +1,5 @@
 /* sl_malloc.c - malloc routines using a per-thread slab */
-/* $OpenLDAP: pkg/ldap/servers/slapd/sl_malloc.c,v 1.24.2.2 2005/05/06 16:42:51 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sl_malloc.c,v 1.24.2.4 2005/08/09 21:04:00 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2005 The OpenLDAP Foundation.
@@ -95,18 +95,20 @@ slap_sl_mem_create(
 	void *ctx
 )
 {
-	struct slab_heap *sh = NULL;
+	struct slab_heap *sh;
 	ber_len_t size_shift;
 	int pad = 2*sizeof(int)-1, pad_shift;
 	int order = -1, order_start = -1, order_end = -1;
-	int i, k;
+	int i;
 	struct slab_object *so;
 
 #ifdef NO_THREADS
 	sh = slheap;
 #else
+	void *sh_tmp = NULL;
 	ldap_pvt_thread_pool_getkey(
-		ctx, (void *)slap_sl_mem_init, (void **)&sh, NULL );
+		ctx, (void *)slap_sl_mem_init, &sh_tmp, NULL );
+	sh = sh_tmp;
 #endif
 
 	/* round up to doubleword boundary */
@@ -247,7 +249,7 @@ slap_sl_malloc(
 	struct slab_object *so_new, *so_left, *so_right;
 	ber_len_t *ptr, *new;
 	unsigned long diff;
-	int i, j, k;
+	int i, j;
 
 	/* ber_set_option calls us like this */
 	if (!ctx) return ber_memalloc_x(size, NULL);
@@ -347,12 +349,8 @@ void *
 slap_sl_realloc(void *ptr, ber_len_t size, void *ctx)
 {
 	struct slab_heap *sh = ctx;
-	int size_shift;
-	int pad = 2*sizeof(int)-1, pad_shift;
-	int order_start = -1, order = -1;
-	struct slab_object *so;
+	int pad = 2*sizeof(int) -1;
 	ber_len_t *p = (ber_len_t *)ptr, *new;
-	unsigned long diff;
 
 	if (ptr == NULL)
 		return slap_sl_malloc(size, ctx);
@@ -420,7 +418,7 @@ slap_sl_free(void *ptr, void *ctx)
 	int order_start = -1, order = -1;
 	struct slab_object *so;
 	unsigned long diff;
-	int i, k, inserted = 0;
+	int i, inserted = 0;
 
 	if (!sh || ptr < sh->sh_base || ptr >= sh->sh_end) {
 		ber_memfree_x(ptr, NULL);
@@ -479,7 +477,7 @@ slap_sl_free(void *ptr, void *ctx)
 						Debug(LDAP_DEBUG_TRACE, "slap_sl_free: "
 							"free object not found while bit is clear.\n",
 							0, 0, 0);
-						assert(so);
+						assert(so != NULL);
 
 					}
 				} else {
@@ -529,7 +527,7 @@ slap_sl_free(void *ptr, void *ctx)
 						Debug(LDAP_DEBUG_TRACE, "slap_sl_free: "
 							"free object not found while bit is clear.\n",
 							0, 0, 0 );
-						assert( so );
+						assert(so != NULL);
 
 					}
 				} else {
@@ -553,8 +551,8 @@ slap_sl_free(void *ptr, void *ctx)
 void *
 slap_sl_context( void *ptr )
 {
-	struct slab_heap *sh = NULL;
-	void *ctx;
+	struct slab_heap *sh;
+	void *ctx, *sh_tmp;
 
 	if ( slapMode & SLAP_TOOL_MODE ) return NULL;
 
@@ -563,8 +561,10 @@ slap_sl_context( void *ptr )
 #else
 	ctx = ldap_pvt_thread_pool_context();
 
-	ldap_pvt_thread_pool_getkey(ctx, (void *)slap_sl_mem_init,
-			(void **)&sh, NULL);
+	sh_tmp = NULL;
+	ldap_pvt_thread_pool_getkey(
+		ctx, (void *)slap_sl_mem_init, &sh_tmp, NULL);
+	sh = sh_tmp;
 #endif
 
 	if (sh && ptr >= sh->sh_base && ptr <= sh->sh_end) {
@@ -633,7 +633,7 @@ print_slheap(int level, void *ctx)
 		Debug(level, "free list:\n", 0, 0, 0);
 		so = LDAP_LIST_FIRST(&sh->sh_free[i-order_start]);
 		while (so) {
-			Debug(level, "%x\n",so->so_ptr, 0, 0);
+			Debug(level, "%lx\n", (unsigned long) so->so_ptr, 0, 0);
 			so = LDAP_LIST_NEXT(so, so_link);
 		}
 	}

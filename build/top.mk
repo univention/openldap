@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/build/top.mk,v 1.93.2.5 2005/05/18 16:29:20 kurt Exp $
+# $OpenLDAP: pkg/ldap/build/top.mk,v 1.93.2.7 2005/08/29 18:46:17 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -70,8 +70,7 @@ MKDEP_CFLAGS = @OL_MKDEP_FLAGS@
 
 MKVERSION = $(top_srcdir)/build/mkversion -v "$(VERSION)"
 
-# libtool 1.5+ requires "--tag=CC", but leave it off until we migrate
-LIBTOOL = @LIBTOOL@ # --tag=CC
+LIBTOOL = @LIBTOOL@
 LIBRELEASE = @OPENLDAP_LIBRELEASE@
 LIBVERSION = @OPENLDAP_LIBVERSION@
 LTVERSION = -release $(LIBRELEASE) -version-info $(LIBVERSION)
@@ -162,7 +161,7 @@ LDAP_LIBLBER_LA = $(LDAP_LIBDIR)/liblber/liblber.la
 LDAP_LIBLDAP_LA = $(LDAP_LIBDIR)/libldap/libldap.la
 LDAP_LIBLDAP_R_LA = $(LDAP_LIBDIR)/libldap_r/libldap_r.la
 
-LDAP_LIBLREWRITE_LA = $(LDAP_LIBDIR)/librewrite/liblrewrite.la
+LDAP_LIBREWRITE_A = $(LDAP_LIBDIR)/librewrite/librewrite.a
 LDAP_LIBLUNICODE_A = $(LDAP_LIBDIR)/liblunicode/liblunicode.a
 LDAP_LIBLUTIL_A = $(LDAP_LIBDIR)/liblutil/liblutil.a
 
@@ -170,7 +169,7 @@ LDAP_L = $(LDAP_LIBLUTIL_A) \
 	$(LDAP_LIBLDAP_LA) $(LDAP_LIBLBER_LA)
 SLURPD_L = $(LDAP_LIBLUTIL_A) \
 	$(LDAP_LIBLDAP_R_LA) $(LDAP_LIBLBER_LA)
-SLAPD_L = $(LDAP_LIBLUNICODE_A) $(LDAP_LIBLREWRITE_LA) \
+SLAPD_L = $(LDAP_LIBLUNICODE_A) $(LDAP_LIBREWRITE_A) \
 	$(SLURPD_L)
 
 WRAP_LIBS = @WRAP_LIBS@

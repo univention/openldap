@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/compare.c,v 1.30.2.6 2005/05/06 16:42:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/compare.c,v 1.30.2.10 2005/08/29 18:26:11 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -35,7 +35,7 @@ int
 meta_back_compare( Operation *op, SlapReply *rs )
 {
 	metainfo_t		*mi = ( metainfo_t * )op->o_bd->be_private;
-	metaconn_t		*mc;
+	metaconn_t		*mc = NULL;
 	char			*match = NULL,
 				*err = NULL;
 	struct berval		mmatch = BER_BVNULL;
@@ -58,7 +58,9 @@ meta_back_compare( Operation *op, SlapReply *rs )
 	
 	msgid = ch_calloc( sizeof( int ), mi->mi_ntargets );
 	if ( msgid == NULL ) {
-		return -1;
+		send_ldap_error( op, rs, LDAP_OTHER, NULL );
+		rc = LDAP_OTHER;
+		goto done;
 	}
 
 	/*
@@ -69,7 +71,6 @@ meta_back_compare( Operation *op, SlapReply *rs )
 	dc.ctx = "compareDN";
 
 	for ( i = 0; i < mi->mi_ntargets; i++ ) {
-		metasingleconn_t	*msc = &mc->mc_conns[ i ];
 		struct berval		mdn = BER_BVNULL;
 		struct berval		mapped_attr = op->orc_ava->aa_desc->ad_cname;
 		struct berval		mapped_value = op->orc_ava->aa_value;
@@ -178,7 +179,7 @@ meta_back_compare( Operation *op, SlapReply *rs )
 			struct timeval		tv = { 0 };
 
 			tv.tv_sec = 0;
-			tv.tv_usec = 0;
+			tv.tv_usec = 100000;	/* 0.1 s */
 
 			if ( msgid[ i ] == -1 ) {
 				continue;
@@ -288,13 +289,19 @@ finish:;
 		 * At least one compare failed with matched portion,
 		 * and none was successful
 		 */
-	} else if ( match != NULL &&  match[0] != '\0' ) {
-		struct berval matched;
+	} else if ( match != NULL && match[ 0 ] != '\0' ) {
+		struct berval matched, pmatched;
 
 		ber_str2bv( match, 0, 0, &matched );
 
 		dc.ctx = "matchedDN";
 		ldap_back_dn_massage( &dc, &matched, &mmatch );
+		if ( dnPretty( NULL, &mmatch, &pmatched, NULL ) == LDAP_SUCCESS ) {
+			if ( mmatch.bv_val != match ) {
+				free( mmatch.bv_val );
+			}
+			mmatch = pmatched;
+		}
 	}
 
 	if ( rres != LDAP_SUCCESS ) {
@@ -314,7 +321,10 @@ finish:;
 	if ( msgid ) {
 		free( msgid );
 	}
-	
+
+done:;
+	meta_back_release_conn( op, mc );
+
 	return rc;
 }
 

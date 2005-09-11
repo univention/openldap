@@ -1,5 +1,5 @@
 /* entry.c - routines for dealing with entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.129.2.5 2005/05/18 16:29:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.129.2.8 2005/08/26 00:18:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -36,8 +36,8 @@
 #include "slap.h"
 #include "ldif.h"
 
-static unsigned char	*ebuf;	/* buf returned by entry2str		 */
-static unsigned char	*ecur;	/* pointer to end of currently used ebuf */
+static char		*ebuf;	/* buf returned by entry2str		 */
+static char		*ecur;	/* pointer to end of currently used ebuf */
 static int		emaxsize;/* max size of ebuf			 */
 
 /*
@@ -70,7 +70,6 @@ str2entry2( char *s, int checkvals )
 {
 	int rc;
 	Entry		*e;
-	struct berval	*nvalsp;
 	struct berval	*type, *vals, *nvals;
 	char 	*freeval;
 	AttributeDescription *ad, *ad_prev;
@@ -217,10 +216,10 @@ str2entry2( char *s, int checkvals )
 					goto fail;
 				}
 
-				rc = slap_bv2undef_ad( type+i, &ad, &text );
+				rc = slap_bv2undef_ad( type+i, &ad, &text, 0 );
 				if( rc != LDAP_SUCCESS ) {
 					Debug( LDAP_DEBUG_ANY,
-						"<= str2entry: str2undef_ad(%s): %s\n",
+						"<= str2entry: slap_str2undef_ad(%s): %s\n",
 							type[i].bv_val, text, 0 );
 					goto fail;
 				}
@@ -231,6 +230,7 @@ str2entry2( char *s, int checkvals )
 			int j, k;
 			atail->a_next = (Attribute *) ch_malloc( sizeof(Attribute) );
 			atail = atail->a_next;
+			atail->a_flags = 0;
 			atail->a_desc = ad_prev;
 			atail->a_vals = ch_malloc( (attr_cnt + 1) * sizeof(struct berval));
 			if( ad_prev->ad_type->sat_equality &&
@@ -268,15 +268,24 @@ str2entry2( char *s, int checkvals )
 			slap_syntax_transform_func *pretty =
 				ad->ad_type->sat_syntax->ssyn_pretty;
 
-			if( pretty ) {
+			if ( pretty ) {
+#ifdef SLAP_ORDERED_PRETTYNORM
+				rc = ordered_value_pretty( ad,
+					&vals[i], &pval, NULL );
+#else /* ! SLAP_ORDERED_PRETTYNORM */
 				rc = pretty( ad->ad_type->sat_syntax,
 					&vals[i], &pval, NULL );
+#endif /* ! SLAP_ORDERED_PRETTYNORM */
 
-			} else if( validate ) {
+			} else if ( validate ) {
 				/*
 			 	 * validate value per syntax
 			 	 */
+#ifdef SLAP_ORDERED_PRETTYNORM
+				rc = ordered_value_validate( ad, &vals[i] );
+#else /* ! SLAP_ORDERED_PRETTYNORM */
 				rc = validate( ad->ad_type->sat_syntax, &vals[i] );
+#endif /* ! SLAP_ORDERED_PRETTYNORM */
 
 			} else {
 				Debug( LDAP_DEBUG_ANY,
@@ -303,16 +312,24 @@ str2entry2( char *s, int checkvals )
 			}
 		}
 
-		if( ad->ad_type->sat_equality &&
+		if ( ad->ad_type->sat_equality &&
 			ad->ad_type->sat_equality->smr_normalize )
 		{
+#ifdef SLAP_ORDERED_PRETTYNORM
+			rc = ordered_value_normalize(
+				SLAP_MR_VALUE_OF_ATTRIBUTE_SYNTAX,
+				ad,
+				ad->ad_type->sat_equality,
+				&vals[i], &nvals[i], NULL );
+#else /* ! SLAP_ORDERED_PRETTYNORM */
 			rc = ad->ad_type->sat_equality->smr_normalize(
 				SLAP_MR_VALUE_OF_ATTRIBUTE_SYNTAX,
 				ad->ad_type->sat_syntax,
 				ad->ad_type->sat_equality,
 				&vals[i], &nvals[i], NULL );
+#endif /* ! SLAP_ORDERED_PRETTYNORM */
 
-			if( rc ) {
+			if ( rc ) {
 				Debug( LDAP_DEBUG_ANY,
 			   		"<= str2entry NULL (smr_normalize %d)\n", rc, 0, 0 );
 				goto fail;
@@ -347,7 +364,7 @@ fail:
 		while ( ecur + (n) > ebuf + emaxsize ) { \
 			ptrdiff_t	offset; \
 			offset = (int) (ecur - ebuf); \
-			ebuf = (unsigned char *) ch_realloc( (char *) ebuf, \
+			ebuf = ch_realloc( ebuf, \
 				emaxsize + GRABSIZE ); \
 			emaxsize += GRABSIZE; \
 			ecur = ebuf + offset; \
@@ -379,7 +396,7 @@ entry2str(
 		/* put "dn: <dn>" */
 		tmplen = e->e_name.bv_len;
 		MAKE_SPACE( LDIF_SIZE_NEEDED( 2, tmplen ));
-		ldif_sput( (char **) &ecur, LDIF_PUT_VALUE, "dn", e->e_dn, tmplen );
+		ldif_sput( &ecur, LDIF_PUT_VALUE, "dn", e->e_dn, tmplen );
 	}
 
 	/* put the attributes */
@@ -389,7 +406,7 @@ entry2str(
 			bv = &a->a_vals[i];
 			tmplen = a->a_desc->ad_cname.bv_len;
 			MAKE_SPACE( LDIF_SIZE_NEEDED( tmplen, bv->bv_len ));
-			ldif_sput( (char **) &ecur, LDIF_PUT_VALUE,
+			ldif_sput( &ecur, LDIF_PUT_VALUE,
 				a->a_desc->ad_cname.bv_val,
 				bv->bv_val, bv->bv_len );
 		}
@@ -398,7 +415,7 @@ entry2str(
 	*ecur = '\0';
 	*len = ecur - ebuf;
 
-	return( (char *) ebuf );
+	return( ebuf );
 }
 
 void
@@ -726,11 +743,11 @@ int entry_decode(struct berval *bv, Entry **e)
 		if( rc != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_TRACE,
 				"<= entry_decode: str2ad(%s): %s\n", ptr, text, 0 );
-			rc = slap_bv2undef_ad( &bv, &ad, &text );
+			rc = slap_bv2undef_ad( &bv, &ad, &text, 0 );
 
 			if( rc != LDAP_SUCCESS ) {
 				Debug( LDAP_DEBUG_ANY,
-					"<= entry_decode: str2undef_ad(%s): %s\n",
+					"<= entry_decode: slap_str2undef_ad(%s): %s\n",
 						ptr, text, 0 );
 				return rc;
 			}

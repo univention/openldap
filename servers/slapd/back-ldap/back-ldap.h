@@ -1,5 +1,5 @@
 /* back-ldap.h - ldap backend header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.63.2.7 2005/06/03 19:54:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.63.2.10 2005/08/17 21:45:37 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -26,19 +26,19 @@
 
 LDAP_BEGIN_DECL
 
-struct slap_conn;
-struct slap_op;
-struct slap_backend_db;
-
 struct ldapconn {
-	struct slap_conn	*lc_conn;
+	Connection		*lc_conn;
+#define	LDAP_BACK_PRIV_CONN	((void *)0x0)
+#define	LDAP_BACK_PRIV_CONN_TLS	((void *)0x1)
 	LDAP			*lc_ld;
 	struct berval		lc_cred;
 	struct berval 		lc_bound_ndn;
 	struct berval		lc_local_ndn;
 	int			lc_bound;
 	int			lc_ispriv;
-	ldap_pvt_thread_mutex_t	lc_mutex;
+	int			lc_is_tls;
+	unsigned		lc_refcnt;
+	unsigned		lc_flags;
 };
 
 /*
@@ -84,6 +84,7 @@ struct ldapinfo {
 #define LDAP_BACK_AUTH_NONE		0x00U
 #define	LDAP_BACK_AUTH_NATIVE_AUTHZ	0x01U
 #define	LDAP_BACK_AUTH_OVERRIDE		0x02U
+#define	LDAP_BACK_AUTH_PRESCRIPTIVE	0x04U
 
 	BerVarray	idassert_authz;
 	/* end of ID assert stuff */

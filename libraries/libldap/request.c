@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/request.c,v 1.103.2.3 2005/06/03 19:12:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/request.c,v 1.103.2.5 2005/08/12 15:25:19 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -55,6 +55,7 @@
 
 static LDAPConn *find_connection LDAP_P(( LDAP *ld, LDAPURLDesc *srv, int any ));
 static void use_connection LDAP_P(( LDAP *ld, LDAPConn *lc ));
+static void ldap_free_request_int LDAP_P(( LDAP *ld, LDAPRequest *lr ));
 
 static BerElement *
 re_encode_request( LDAP *ld,
@@ -135,7 +136,7 @@ ldap_send_initial_request(
 	ldap_pvt_thread_mutex_lock( &ld->ld_req_mutex );
 #endif
 	rc = ldap_send_server_request( ld, ber, msgid, NULL,
-									servers, NULL, NULL );
+		servers, NULL, NULL );
 #ifdef LDAP_R_COMPILE
 	ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
 #endif
@@ -200,8 +201,8 @@ ldap_send_server_request(
 		if ( srvlist == NULL ) {
 			lc = ld->ld_defconn;
 		} else {
-			if (( lc = find_connection( ld, srvlist, 1 )) ==
-			    NULL ) {
+			lc = find_connection( ld, srvlist, 1 );
+			if ( lc == NULL ) {
 				if ( (bind != NULL) && (parentreq != NULL) ) {
 					/* Remember the bind in the parent */
 					incparent = 1;
@@ -234,13 +235,14 @@ ldap_send_server_request(
 	rc = 0;
 	if ( ld->ld_requests &&
 		ld->ld_requests->lr_status == LDAP_REQST_WRITING &&
-		ldap_int_flush_request( ld, ld->ld_requests ) < 0 ) {
+		ldap_int_flush_request( ld, ld->ld_requests ) < 0 )
+	{
 		rc = -1;
 	}
 	if ( rc ) return rc;
 
-	if (( lr = (LDAPRequest *)LDAP_CALLOC( 1, sizeof( LDAPRequest ))) ==
-	    NULL ) {
+	lr = (LDAPRequest *)LDAP_CALLOC( 1, sizeof( LDAPRequest ));
+	if ( lr == NULL ) {
 		ld->ld_errno = LDAP_NO_MEMORY;
 		ldap_free_connection( ld, lc, 0, 0 );
 		ber_free( ber, 1 );
@@ -261,7 +263,7 @@ ldap_send_server_request(
 			++parentreq->lr_outrefcnt;
 		}
 		lr->lr_origid = parentreq->lr_origid;
-		lr->lr_parentcnt = parentreq->lr_parentcnt + 1;
+		lr->lr_parentcnt = ++parentreq->lr_parentcnt;
 		lr->lr_parent = parentreq;
 		lr->lr_refnext = parentreq->lr_child;
 		parentreq->lr_child = lr;
@@ -269,11 +271,11 @@ ldap_send_server_request(
 		lr->lr_origid = lr->lr_msgid;
 	}
 
+	lr->lr_prev = NULL;
 	if (( lr->lr_next = ld->ld_requests ) != NULL ) {
 		lr->lr_next->lr_prev = lr;
 	}
 	ld->ld_requests = lr;
-	lr->lr_prev = NULL;
 
 	ld->ld_errno = LDAP_SUCCESS;
 	if ( ldap_int_flush_request( ld, lr ) == -1 ) {
@@ -289,27 +291,36 @@ ldap_new_connection( LDAP *ld, LDAPURLDesc *srvlist, int use_ldsb,
 {
 	LDAPConn	*lc;
 	LDAPURLDesc	*srv;
-	Sockbuf		*sb = NULL;
 
-	Debug( LDAP_DEBUG_TRACE, "ldap_new_connection\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_TRACE, "ldap_new_connection %d %d %d\n",
+		use_ldsb, connect, (bind != NULL) );
 	/*
 	 * make a new LDAP server connection
 	 * XXX open connection synchronously for now
 	 */
-	if (( lc = (LDAPConn *)LDAP_CALLOC( 1, sizeof( LDAPConn ))) == NULL ||
-	    ( !use_ldsb && ( (sb = ber_sockbuf_alloc()) == NULL ))) {
-		if ( lc != NULL ) {
-			LDAP_FREE( (char *)lc );
-		}
+	lc = (LDAPConn *)LDAP_CALLOC( 1, sizeof( LDAPConn ) );
+	if ( lc == NULL ) {
 		ld->ld_errno = LDAP_NO_MEMORY;
 		return( NULL );
 	}
+	
+	if ( use_ldsb ) {
+		assert( ld->ld_sb != NULL );
+		lc->lconn_sb = ld->ld_sb;
 
-	lc->lconn_sb = ( use_ldsb ) ? ld->ld_sb : sb;
+	} else {
+		lc->lconn_sb = ber_sockbuf_alloc();
+		if ( lc->lconn_sb == NULL ) {
+			LDAP_FREE( (char *)lc );
+			ld->ld_errno = LDAP_NO_MEMORY;
+			return( NULL );
+		}
+	}
 
 	if ( connect ) {
 		for ( srv = srvlist; srv != NULL; srv = srv->lud_next ) {
-			if ( ldap_int_open_connection( ld, lc, srv, 0 ) != -1 ) {
+			if ( ldap_int_open_connection( ld, lc, srv, 0 ) != -1 )
+			{
 				break;
 			}
 		}
@@ -318,12 +329,12 @@ ldap_new_connection( LDAP *ld, LDAPURLDesc *srvlist, int use_ldsb,
 			if ( !use_ldsb ) {
 				ber_sockbuf_free( lc->lconn_sb );
 			}
-		    LDAP_FREE( (char *)lc );
-		    ld->ld_errno = LDAP_SERVER_DOWN;
-		    return( NULL );
+			LDAP_FREE( (char *)lc );
+			ld->ld_errno = LDAP_SERVER_DOWN;
+			return( NULL );
 		}
 
-		lc->lconn_server = ldap_url_dup(srv);
+		lc->lconn_server = ldap_url_dup( srv );
 	}
 
 	lc->lconn_status = LDAP_CONNST_CONNECTED;
@@ -338,14 +349,17 @@ ldap_new_connection( LDAP *ld, LDAPURLDesc *srvlist, int use_ldsb,
 		int		err = 0;
 		LDAPConn	*savedefconn;
 
-		/* Set flag to prevent additional referrals from being processed on this
+		/* Set flag to prevent additional referrals
+		 * from being processed on this
 		 * connection until the bind has completed
 		 */
 		lc->lconn_rebind_inprogress = 1;
 		/* V3 rebind function */
 		if ( ld->ld_rebind_proc != NULL) {
 			LDAPURLDesc	*srvfunc;
-			if( ( srvfunc = ldap_url_dup( srvlist)) == NULL) {
+
+			srvfunc = ldap_url_dup( srvlist );
+			if ( srvfunc == NULL ) {
 				ld->ld_errno = LDAP_NO_MEMORY;
 				err = -1;
 			} else {
@@ -355,27 +369,27 @@ ldap_new_connection( LDAP *ld, LDAPURLDesc *srvlist, int use_ldsb,
 
 				Debug( LDAP_DEBUG_TRACE, "Call application rebind_proc\n", 0, 0, 0);
 #ifdef LDAP_R_COMPILE
-		ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
-		ldap_pvt_thread_mutex_unlock( &ld->ld_res_mutex );
+				ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
+				ldap_pvt_thread_mutex_unlock( &ld->ld_res_mutex );
 #endif
 				err = (*ld->ld_rebind_proc)( ld,
 					bind->ri_url, bind->ri_request, bind->ri_msgid,
 					ld->ld_rebind_params );
 #ifdef LDAP_R_COMPILE
-		ldap_pvt_thread_mutex_lock( &ld->ld_res_mutex );
-		ldap_pvt_thread_mutex_lock( &ld->ld_req_mutex );
+				ldap_pvt_thread_mutex_lock( &ld->ld_res_mutex );
+				ldap_pvt_thread_mutex_lock( &ld->ld_req_mutex );
 #endif
 
 				ld->ld_defconn = savedefconn;
 				--lc->lconn_refcnt;
 
-				if( err != 0) {
-				err = -1;
+				if ( err != 0 ) {
+					err = -1;
 					ldap_free_connection( ld, lc, 1, 0 );
 					lc = NULL;
+				}
+				ldap_free_urldesc( srvfunc );
 			}
-				ldap_free_urldesc( srvfunc);
-		}
 		} else {
 			savedefconn = ld->ld_defconn;
 			++lc->lconn_refcnt;	/* avoid premature free */
@@ -396,12 +410,12 @@ ldap_new_connection( LDAP *ld, LDAPURLDesc *srvlist, int use_ldsb,
 			ld->ld_defconn = savedefconn;
 			--lc->lconn_refcnt;
 
-		if ( err != 0 ) {
-			ldap_free_connection( ld, lc, 1, 0 );
-			lc = NULL;
+			if ( err != 0 ) {
+				ldap_free_connection( ld, lc, 1, 0 );
+				lc = NULL;
+			}
 		}
-	}
-		if( lc != NULL)
+		if ( lc != NULL )
 			lc->lconn_rebind_inprogress = 0;
 	}
 
@@ -460,25 +474,30 @@ ldap_free_connection( LDAP *ld, LDAPConn *lc, int force, int unbind )
 {
 	LDAPConn	*tmplc, *prevlc;
 
-	Debug( LDAP_DEBUG_TRACE, "ldap_free_connection\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_TRACE,
+		"ldap_free_connection %d %d\n",
+		force, unbind, 0 );
 
 	if ( force || --lc->lconn_refcnt <= 0 ) {
 		if ( lc->lconn_status == LDAP_CONNST_CONNECTED ) {
 			ldap_mark_select_clear( ld, lc->lconn_sb );
 			if ( unbind ) {
-				ldap_send_unbind( ld, lc->lconn_sb, NULL, NULL );
+				ldap_send_unbind( ld, lc->lconn_sb,
+						NULL, NULL );
 			}
 		}
 
-		if( lc->lconn_ber != NULL ) {
+		if ( lc->lconn_ber != NULL ) {
 			ber_free( lc->lconn_ber, 1 );
 		}
 
 		ldap_int_sasl_close( ld, lc );
 
 		prevlc = NULL;
-		for ( tmplc = ld->ld_conns; tmplc != NULL;
-		    tmplc = tmplc->lconn_next ) {
+		for ( tmplc = ld->ld_conns;
+			tmplc != NULL;
+			tmplc = tmplc->lconn_next )
+		{
 			if ( tmplc == lc ) {
 				if ( prevlc == NULL ) {
 				    ld->ld_conns = tmplc->lconn_next;
@@ -495,23 +514,39 @@ ldap_free_connection( LDAP *ld, LDAPConn *lc, int force, int unbind )
 			LDAP_FREE( lc->lconn_krbinstance );
 		}
 #endif
+
+		/* FIXME: is this at all possible? */
+		if ( force ) {
+			LDAPRequest	*lr;
+
+			for ( lr = ld->ld_requests; lr; ) {
+				LDAPRequest	*lr_next = lr->lr_next;
+
+				if ( lr->lr_conn == lc ) {
+					ldap_free_request_int( ld, lr );
+				}
+
+				lr = lr_next;
+			}
+		}
 		if ( lc->lconn_sb != ld->ld_sb ) {
 			ber_sockbuf_free( lc->lconn_sb );
 		}
-		if( lc->lconn_rebind_queue != NULL) {
+		if ( lc->lconn_rebind_queue != NULL) {
 			int i;
-			for( i = 0; lc->lconn_rebind_queue[i] != NULL; i++) {
-				LDAP_VFREE(lc->lconn_rebind_queue[i]);
+			for( i = 0; lc->lconn_rebind_queue[i] != NULL; i++ ) {
+				LDAP_VFREE( lc->lconn_rebind_queue[i] );
 			}
-			LDAP_FREE( lc->lconn_rebind_queue);
+			LDAP_FREE( lc->lconn_rebind_queue );
 		}
 		LDAP_FREE( lc );
-		Debug( LDAP_DEBUG_TRACE, "ldap_free_connection: actually freed\n",
-		    0, 0, 0 );
+		Debug( LDAP_DEBUG_TRACE,
+			"ldap_free_connection: actually freed\n",
+			0, 0, 0 );
 	} else {
 		lc->lconn_lastused = time( NULL );
 		Debug( LDAP_DEBUG_TRACE, "ldap_free_connection: refcnt %d\n",
-		    lc->lconn_refcnt, 0, 0 );
+				lc->lconn_refcnt, 0, 0 );
 	}
 }
 
@@ -608,11 +643,14 @@ ldap_dump_requests_and_responses( LDAP *ld )
 }
 #endif /* LDAP_DEBUG */
 
-void
+static void
 ldap_free_request_int( LDAP *ld, LDAPRequest *lr )
 {
 	if ( lr->lr_prev == NULL ) {
+		/* free'ing the first request? */
+		assert( ld->ld_requests == lr );
 		ld->ld_requests = lr->lr_next;
+
 	} else {
 		lr->lr_prev->lr_next = lr->lr_next;
 	}
@@ -706,7 +744,7 @@ int
 ldap_chase_v3referrals( LDAP *ld, LDAPRequest *lr, char **refs, int sref, char **errstrp, int *hadrefp )
 {
 	char		*unfollowed;
-	int			 unfollowedcnt = 0;
+	int		 unfollowedcnt = 0;
 	LDAPRequest	*origreq;
 	LDAPURLDesc	*srv = NULL;
 	BerElement	*ber;
@@ -872,10 +910,10 @@ ldap_chase_v3referrals( LDAP *ld, LDAPRequest *lr, char **refs, int sref, char *
 #endif
 		if ( rc < 0 ) {
 			/* Failure, try next referral in the list */
-			Debug( LDAP_DEBUG_ANY, "Unable to chase referral \"%s\" (%s)\n", 
-				refarray[i], ldap_err2string( ld->ld_errno ), 0);
-			unfollowedcnt += ldap_append_referral( ld, &unfollowed, refarray[i]);
-			ldap_free_urllist(srv);
+			Debug( LDAP_DEBUG_ANY, "Unable to chase referral \"%s\" (%d: %s)\n", 
+				refarray[i], ld->ld_errno, ldap_err2string( ld->ld_errno ) );
+			unfollowedcnt += ldap_append_referral( ld, &unfollowed, refarray[i] );
+			ldap_free_urllist( srv );
 			srv = NULL;
 		} else {
 			/* Success, no need to try this referral list further */
@@ -884,30 +922,30 @@ ldap_chase_v3referrals( LDAP *ld, LDAPRequest *lr, char **refs, int sref, char *
 			*hadrefp = 1;
 
 			/* check if there is a queue of referrals that came in during bind */
-			if( lc == NULL) {
-				if (( lc = find_connection( ld, srv, 1 )) == NULL ) {
+			if ( lc == NULL) {
+				lc = find_connection( ld, srv, 1 );
+				if ( lc == NULL ) {
 					ld->ld_errno = LDAP_OPERATIONS_ERROR;
 					rc = -1;
 					goto done;
 				}
 			}
 
-			if( lc->lconn_rebind_queue != NULL) {
+			if ( lc->lconn_rebind_queue != NULL ) {
 				/* Release resources of previous list */
-				LDAP_VFREE(refarray);
+				LDAP_VFREE( refarray );
 				refarray = NULL;
-				ldap_free_urllist(srv);
+				ldap_free_urllist( srv );
 				srv = NULL;
 
 				/* Pull entries off end of queue so list always null terminated */
-				for( j = 0; lc->lconn_rebind_queue[j] != NULL; j++) {
+				for( j = 0; lc->lconn_rebind_queue[j] != NULL; j++ )
 					;
-				}
-				refarray = lc->lconn_rebind_queue[j-1];
+				refarray = lc->lconn_rebind_queue[j - 1];
 				lc->lconn_rebind_queue[j-1] = NULL;
 				/* we pulled off last entry from queue, free queue */
 				if ( j == 1 ) {
-					LDAP_FREE( lc->lconn_rebind_queue);
+					LDAP_FREE( lc->lconn_rebind_queue );
 					lc->lconn_rebind_queue = NULL;
 				}
 				/* restart the loop the with new referral list */
@@ -918,11 +956,11 @@ ldap_chase_v3referrals( LDAP *ld, LDAPRequest *lr, char **refs, int sref, char *
 		}
 	} /* end for loop */
 done:
-	LDAP_VFREE(refarray);
-	ldap_free_urllist(srv);
+	LDAP_VFREE( refarray );
+	ldap_free_urllist( srv );
 	LDAP_FREE( *errstrp );
 	
-	if( rc == 0) {
+	if( rc == 0 ) {
 		*errstrp = NULL;
 		LDAP_FREE( unfollowed );
 		return count;
@@ -992,10 +1030,9 @@ ldap_chase_referrals( LDAP *ld,
 
 	/* parse out & follow referrals */
 	for ( ref = p; rc == 0 && ref != NULL; ref = p ) {
-		if (( p = strchr( ref, '\n' )) != NULL ) {
+		p = strchr( ref, '\n' );
+		if ( p != NULL ) {
 			*p++ = '\0';
-		} else {
-			p = NULL;
 		}
 
 		rc = ldap_url_parse_ext( ref, &srv );
@@ -1008,7 +1045,7 @@ ldap_chase_referrals( LDAP *ld,
 			continue;
 		}
 
-		if( srv->lud_dn != NULL && srv->lud_dn == '\0' ) {
+		if ( srv->lud_dn != NULL && srv->lud_dn == '\0' ) {
 			LDAP_FREE( srv->lud_dn );
 			srv->lud_dn = NULL;
 		}
@@ -1022,7 +1059,7 @@ ldap_chase_referrals( LDAP *ld,
 		ber = re_encode_request( ld, origreq->lr_ber,
 		    id, sref, srv, &rinfo.ri_request );
 
-		if( ber == NULL ) {
+		if ( ber == NULL ) {
 			return -1 ;
 		}
 
@@ -1032,12 +1069,12 @@ ldap_chase_referrals( LDAP *ld,
 		rinfo.ri_msgid = origreq->lr_origid;
 
 #ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_lock( &ld->ld_req_mutex );
+		ldap_pvt_thread_mutex_lock( &ld->ld_req_mutex );
 #endif
 		rc = ldap_send_server_request( ld, ber, id,
-		    lr, srv, NULL, &rinfo );
+			lr, srv, NULL, &rinfo );
 #ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
+		ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
 #endif
 
 		LDAP_FREE( rinfo.ri_url );
@@ -1046,8 +1083,8 @@ ldap_chase_referrals( LDAP *ld,
 			++count;
 		} else {
 			Debug( LDAP_DEBUG_ANY,
-			    "Unable to chase referral (%s)\n", 
-			    ldap_err2string( ld->ld_errno ), 0, 0 );
+				"Unable to chase referral \"%s\" (%d: %s)\n", 
+				ref, ld->ld_errno, ldap_err2string( ld->ld_errno ) );
 			rc = ldap_append_referral( ld, &unfollowed, ref );
 		}
 

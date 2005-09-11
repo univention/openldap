@@ -1,5 +1,5 @@
 /* search.c - search operation */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.221.2.4 2005/04/29 21:29:07 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.221.2.9 2005/08/25 05:01:18 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2005 The OpenLDAP Foundation.
@@ -314,7 +314,9 @@ bdb_search( Operation *op, SlapReply *rs )
 	Entry		*matched = NULL;
 	EntryInfo	*ei, ei_root = {0};
 	struct berval	realbase = BER_BVNULL;
+#ifdef SLAP_ACL_HONOR_DISCLOSE
 	slap_mask_t	mask;
+#endif
 	int		manageDSAit;
 	int		tentries = 0;
 	ID		lastid = NOID;
@@ -475,7 +477,7 @@ dn2entry_retry:
 			bdb_cache_return_entry_r(bdb->bi_dbenv, &bdb->bi_cache, e, &lock);
 		}
 		send_ldap_result( op, rs );
-		return 1;
+		return rs->sr_err;
 	}
 #endif /* SLAP_ACL_HONOR_DISCLOSE */
 
@@ -641,7 +643,7 @@ dn2entry_retry:
 	for ( id = bdb_idl_first( candidates, &cursor );
 		  id != NOID ; id = bdb_idl_next( candidates, &cursor ) )
 	{
-		int scopeok = 0;
+		int scopeok;
 
 loop_begin:
 
@@ -731,6 +733,7 @@ fetch_entry_retry:
 		 * scope while we are looking at it, and unless we're using
 		 * BDB_HIER, its parents cannot be moved either.
 		 */
+		scopeok = 0;
 		switch( op->ors_scope ) {
 		case LDAP_SCOPE_BASE:
 			/* This is always true, yes? */
@@ -830,7 +833,7 @@ fetch_entry_retry:
 
 		if ( rs->sr_err == LDAP_COMPARE_TRUE ) {
 			/* check size limit */
-			if ( --op->ors_slimit == -1) {
+			if ( --op->ors_slimit == -1 ) {
 #ifdef SLAP_ZONE_ALLOC
 				slap_zn_runlock(bdb->bi_cache.c_zctx, e);
 #endif
@@ -847,6 +850,12 @@ fetch_entry_retry:
 
 			if ( get_pagedresults(op) > SLAP_CONTROL_IGNORED ) {
 				if ( rs->sr_nentries >= ((PagedResultsState *)op->o_pagedresults_state)->ps_size ) {
+#ifdef SLAP_ZONE_ALLOC
+					slap_zn_runlock(bdb->bi_cache.c_zctx, e);
+#endif
+					bdb_cache_return_entry_r( bdb->bi_dbenv,
+							&bdb->bi_cache, e, &lock );
+					e = NULL;
 					send_paged_response( op, rs, &lastid, tentries );
 					goto done;
 				}
@@ -953,7 +962,7 @@ static int oc_filter(
 {
 	int rc = 0;
 
-	assert( f );
+	assert( f != NULL );
 
 	if( cur > *max ) *max = cur;
 

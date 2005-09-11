@@ -1,5 +1,5 @@
 /* dn2id.c - routines to deal with the dn2id index */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/dn2id.c,v 1.70.2.1 2005/01/20 18:03:59 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/dn2id.c,v 1.70.2.2 2005/08/09 21:04:03 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -122,7 +122,7 @@ dn2id(
 
 	Debug( LDAP_DEBUG_TRACE, "=> dn2id( \"%s\" )\n", dn->bv_val, 0, 0 );
 
-	assert( idp );
+	assert( idp != NULL );
 
 	/* first check the cache */
 	*idp = cache_find_entry_ndn2id( be, &li->li_cache, dn );

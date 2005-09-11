@@ -1,5 +1,5 @@
 /* syncrepl.c -- Replication Engine which uses the LDAP Sync protocol */
-/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.168.2.6 2005/06/08 21:50:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.168.2.11 2005/08/25 17:05:42 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2005 The OpenLDAP Foundation.
@@ -482,6 +482,8 @@ do_syncrep1(
 
 			LDAP_STAILQ_REMOVE( &slap_sync_cookie, sc, sync_cookie, sc_next );
 
+			/* ctxcsn wasn't parsed yet, do it now */
+			slap_parse_sync_cookie( sc, op->o_tmpmemctx );
 			if ( BER_BVISNULL( &sc->ctxcsn ) ) {
 				/* if cmdline cookie does not have ctxcsn */
 				/* component, set it to an initial value */
@@ -535,8 +537,8 @@ do_syncrep2(
 
 	int		syncstate;
 	struct berval	syncUUID = BER_BVNULL;
-	struct sync_cookie	syncCookie = { 0 };
-	struct sync_cookie	syncCookie_req = { 0 };
+	struct sync_cookie	syncCookie = { BER_BVNULL };
+	struct sync_cookie	syncCookie_req = { BER_BVNULL };
 	struct berval		cookie = BER_BVNULL;
 
 	int	rc, err, i;
@@ -607,6 +609,7 @@ do_syncrep2(
 				rctrlp = *rctrls;
 				ber_init2( ber, &rctrlp->ldctl_value, LBER_USE_DER );
 				ber_scanf( ber, "{em" /*"}"*/, &syncstate, &syncUUID );
+				/* FIXME: what if syncUUID is NULL or empty? */
 				if ( ber_peek_tag( ber, &len ) == LDAP_TAG_SYNC_COOKIE ) {
 					ber_scanf( ber, /*"{"*/ "m}", &cookie );
 					if ( !BER_BVISNULL( &cookie ) ) {
@@ -615,7 +618,7 @@ do_syncrep2(
 					}
 					if ( !BER_BVISNULL( &syncCookie.octet_str ) )
 					{
-						slap_parse_sync_cookie( &syncCookie );
+						slap_parse_sync_cookie( &syncCookie, NULL );
 					}
 				}
 				if ( syncrepl_message_to_entry( si, op, msg,
@@ -629,7 +632,7 @@ do_syncrep2(
 				}
 				ldap_controls_free( rctrls );
 				if ( modlist ) {
-					slap_mods_free( modlist );
+					slap_mods_free( modlist, 1 );
 				}
 				if ( rc_efree && entry ) {
 					entry_free( entry );
@@ -660,7 +663,7 @@ do_syncrep2(
 						}
 						if ( !BER_BVISNULL( &syncCookie.octet_str ) )
 						{
-							slap_parse_sync_cookie( &syncCookie );
+							slap_parse_sync_cookie( &syncCookie, NULL );
 						}
 					}
 					if ( ber_peek_tag( ber, &len ) == LDAP_TAG_REFRESHDELETES )
@@ -744,7 +747,7 @@ do_syncrep2(
 							}
 							if ( !BER_BVISNULL( &syncCookie.octet_str ) )
 							{
-								slap_parse_sync_cookie( &syncCookie );
+								slap_parse_sync_cookie( &syncCookie, NULL );
 							}
 						}
 						if ( ber_peek_tag( ber, &len ) ==
@@ -771,7 +774,7 @@ do_syncrep2(
 							}
 							if ( !BER_BVISNULL( &syncCookie.octet_str ) )
 							{
-								slap_parse_sync_cookie( &syncCookie );
+								slap_parse_sync_cookie( &syncCookie, NULL );
 							}
 						}
 						if ( ber_peek_tag( ber, &len ) ==
@@ -1022,7 +1025,7 @@ do_syncrepl(
 	return NULL;
 }
 
-int
+static int
 syncrepl_message_to_entry(
 	syncinfo_t	*si,
 	Operation	*op,
@@ -1193,7 +1196,7 @@ typedef struct dninfo {
 	AttributeDescription **ads;
 } dninfo;
 
-int
+static int
 syncrepl_entry(
 	syncinfo_t* si,
 	Operation *op,
@@ -1205,7 +1208,7 @@ syncrepl_entry(
 	struct berval* syncCSN )
 {
 	Backend *be = op->o_bd;
-	slap_callback	cb = { NULL };
+	slap_callback	cb = { NULL, NULL, NULL, NULL };
 	struct berval	*syncuuid_bv = NULL;
 	struct berval	syncUUID_strrep = BER_BVNULL;
 	struct berval	uuid_bv = BER_BVNULL;
@@ -1465,7 +1468,7 @@ retry_add:;
 
 			op->o_tag = LDAP_REQ_MODIFY;
 
-			assert( *modlist );
+			assert( *modlist != NULL );
 
 			/* Delete all the old attrs */
 			for ( i = 0; i < dni.attrs; i++ ) {
@@ -1858,7 +1861,7 @@ syncrepl_add_glue(
 	return;
 }
 
-void
+static void
 syncrepl_updateCookie(
 	syncinfo_t *si,
 	Operation *op,
@@ -1866,8 +1869,8 @@ syncrepl_updateCookie(
 	struct sync_cookie *syncCookie )
 {
 	Backend *be = op->o_bd;
-	Modifications mod = {0};
-	struct berval vals[2];
+	Modifications mod = { { 0 } };
+	struct berval vals[ 2 ];
 
 	int rc;
 
@@ -2072,7 +2075,7 @@ null_callback(
 	return LDAP_SUCCESS;
 }
 
-struct berval *
+static struct berval *
 slap_uuidstr_from_normalized(
 	struct berval* uuidstr,
 	struct berval* normalized,
@@ -2240,21 +2243,22 @@ syncinfo_free( syncinfo_t *sie )
 /* NOTE: used & documented in slapd.conf(5) */
 #define IDSTR			"rid"
 #define PROVIDERSTR		"provider"
+#define SCHEMASTR		"schemachecking"
+#define FILTERSTR		"filter"
+#define SEARCHBASESTR		"searchbase"
+#define SCOPESTR		"scope"
+#define ATTRSONLYSTR		"attrsonly"
+#define ATTRSSTR		"attrs"
 #define TYPESTR			"type"
 #define INTERVALSTR		"interval"
-#define SEARCHBASESTR		"searchbase"
-#define FILTERSTR		"filter"
-#define SCOPESTR		"scope"
-#define ATTRSSTR		"attrs"
-#define ATTRSONLYSTR		"attrsonly"
+#define RETRYSTR		"retry"
 #define SLIMITSTR		"sizelimit"
 #define TLIMITSTR		"timelimit"
-#define SCHEMASTR		"schemachecking"
 
 /* FIXME: undocumented */
 #define OLDAUTHCSTR		"bindprincipal"
 #define EXATTRSSTR		"exattrs"
-#define RETRYSTR		"retry"
+#define MANAGEDSAITSTR		"manageDSAit"
 
 /* FIXME: unused */
 #define LASTMODSTR		"lastmod"
@@ -2263,7 +2267,6 @@ syncinfo_free( syncinfo_t *sie )
 #define LMREQSTR		"req"
 #define SRVTABSTR		"srvtab"
 #define SUFFIXSTR		"suffix"
-#define MANAGEDSAITSTR		"manageDSAit"
 
 /* mandatory */
 #define GOT_ID			0x0001
@@ -2278,11 +2281,13 @@ static struct {
 } scopes[] = {
 	{ BER_BVC("base"), LDAP_SCOPE_BASE },
 	{ BER_BVC("one"), LDAP_SCOPE_ONELEVEL },
+	{ BER_BVC("onelevel"), LDAP_SCOPE_ONELEVEL },	/* OpenLDAP extension */
 #ifdef LDAP_SCOPE_SUBORDINATE
 	{ BER_BVC("children"), LDAP_SCOPE_SUBORDINATE },
-	{ BER_BVC("subordinate"), 0 },
+	{ BER_BVC("subordinate"), LDAP_SCOPE_SUBORDINATE },
 #endif
 	{ BER_BVC("sub"), LDAP_SCOPE_SUBTREE },
+	{ BER_BVC("subtree"), LDAP_SCOPE_SUBTREE },	/* OpenLDAP extension */
 	{ BER_BVNULL, 0 }
 };
 
@@ -2357,9 +2362,7 @@ parse_syncrepl_line(
 			int j;
 			val = cargv[ i ] + STRLENOF( SCOPESTR "=" );
 			for ( j=0; !BER_BVISNULL(&scopes[j].key); j++ ) {
-				if (!strncasecmp( val, scopes[j].key.bv_val,
-					scopes[j].key.bv_len )) {
-					while (!scopes[j].val) j--;
+				if (!strcasecmp( val, scopes[j].key.bv_val )) {
 					si->si_scope = scopes[j].val;
 					break;
 				}
@@ -2659,11 +2662,11 @@ syncrepl_unparse( syncinfo_t *si, struct berval *bv )
 {
 	struct berval bc;
 	char buf[BUFSIZ*2], *ptr;
-	int i, len;
+	int i;
 
 	bindconf_unparse( &si->si_bindconf, &bc );
 	ptr = buf;
-	ptr += sprintf( ptr, IDSTR "=%03d " PROVIDERSTR "=%s",
+	ptr += sprintf( ptr, IDSTR "=%03ld " PROVIDERSTR "=%s",
 		si->si_rid, si->si_provideruri.bv_val );
 	if ( !BER_BVISNULL( &bc )) {
 		ptr = lutil_strcopy( ptr, bc.bv_val );
@@ -2737,11 +2740,11 @@ syncrepl_unparse( syncinfo_t *si, struct berval *bv )
 		for (i=0; si->si_retryinterval[i]; i++) {
 			if ( space ) *ptr++ = ' ';
 			space = 1;
-			ptr += sprintf( ptr, "%d ", si->si_retryinterval[i] );
+			ptr += sprintf( ptr, "%ld ", (long) si->si_retryinterval[i] );
 			if ( si->si_retrynum_init[i] == -1 )
 				*ptr++ = '+';
 			else
-				ptr += sprintf( ptr, "%d", si->si_retrynum_init );
+				ptr += sprintf( ptr, "%d", si->si_retrynum_init[i] );
 		}
 		*ptr++ = '"';
 	}

@@ -1,5 +1,5 @@
 /* tools.c - tools for slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/tools.c,v 1.72.2.5 2005/04/29 21:29:07 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/tools.c,v 1.72.2.7 2005/08/09 21:04:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2005 The OpenLDAP Foundation.
@@ -35,7 +35,7 @@ static dn_id hbuf[HOLE_SIZE], *holes = hbuf;
 static unsigned nhmax = HOLE_SIZE;
 static unsigned nholes;
 
-Avlnode *index_attrs, index_dummy;
+static Avlnode *index_attrs, index_dummy;
 
 int bdb_tool_entry_open(
 	BackendDB *be, int mode )
@@ -140,7 +140,8 @@ ID bdb_tool_dn2id_get(
 {
 	Operation op = {0};
 	Opheader ohdr = {0};
-	EntryInfo ei = {0};
+	EntryInfo *ei = NULL;
+	int rc;
 
 	if ( BER_BVISEMPTY(dn) )
 		return 0;
@@ -150,11 +151,12 @@ ID bdb_tool_dn2id_get(
 	op.o_tmpmemctx = NULL;
 	op.o_tmpmfuncs = &ch_mfuncs;
 
-	ei.bei_id = NOID;
-
-	bdb_dn2id( &op, NULL, dn, &ei );
+	rc = bdb_cache_find_ndn( &op, NULL, dn, &ei );
+	if ( ei ) bdb_cache_entryinfo_unlock( ei );
+	if ( rc == DB_NOTFOUND )
+		return NOID;
 	
-	return ei.bei_id;
+	return ei->bei_id;
 }
 
 int bdb_tool_id2entry_get(
@@ -183,7 +185,9 @@ Entry* bdb_tool_entry_get( BackendDB *be, ID id )
 {
 	int rc;
 	Entry *e = NULL;
+#ifndef BDB_HIER
 	struct berval bv;
+#endif
 
 	assert( be != NULL );
 	assert( slapMode & SLAP_TOOL_MODE );
@@ -327,8 +331,8 @@ ID bdb_tool_entry_put(
 	assert( be != NULL );
 	assert( slapMode & SLAP_TOOL_MODE );
 
-	assert( text );
-	assert( text->bv_val );
+	assert( text != NULL );
+	assert( text->bv_val != NULL );
 	assert( text->bv_val[0] == '\0' );	/* overconservative? */
 
 	Debug( LDAP_DEBUG_TRACE, "=> " LDAP_XSTRING(bdb_tool_entry_put)
@@ -524,8 +528,8 @@ ID bdb_tool_entry_modify(
 	assert( be != NULL );
 	assert( slapMode & SLAP_TOOL_MODE );
 
-	assert( text );
-	assert( text->bv_val );
+	assert( text != NULL );
+	assert( text->bv_val != NULL );
 	assert( text->bv_val[0] == '\0' );	/* overconservative? */
 
 	assert ( e->e_id != NOID );
