@@ -1,5 +1,5 @@
 /* attr.c - backend routines for dealing with attributes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/attr.c,v 1.19.2.6 2005/05/06 16:42:51 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/attr.c,v 1.19.2.7 2005/07/11 05:55:31 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2005 The OpenLDAP Foundation.
@@ -289,6 +289,7 @@ bdb_attr_index_unparser( void *v1, void *v2 )
 		bv.bv_val = ptr;
 		ber_bvarray_add( bva, &bv );
 	}
+	return 0;
 }
 
 static AttributeDescription addef = { NULL, NULL, BER_BVC("default") };

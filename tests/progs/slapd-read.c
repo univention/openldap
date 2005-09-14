@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/tests/progs/slapd-read.c,v 1.22.2.2 2005/04/29 21:29:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/tests/progs/slapd-read.c,v 1.22.2.4 2005/08/19 18:09:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -38,12 +38,18 @@
 
 static void
 do_read( char *uri, char *host, int port, char *entry, int maxloop,
-		int maxretries );
+		int maxretries, int delay );
 
 static void
 usage( char *name )
 {
-	fprintf( stderr, "usage: %s [-h <host>] -p port -e <entry> [-l <loops>]\n",
+        fprintf( stderr,
+		"usage: %s "
+		"-H <uri> | ([-h <host>] -p <port>) "
+		"-e <entry> "
+		"[-l <loops>] "
+		"[-r <maxretries>] "
+		"[-t <delay>]\n",
 			name );
 	exit( EXIT_FAILURE );
 }
@@ -58,8 +64,9 @@ main( int argc, char **argv )
 	char		*entry = NULL;
 	int		loops = LOOPS;
 	int		retries = RETRIES;
+	int		delay = 0;
 
-	while ( (i = getopt( argc, argv, "H:h:p:e:l:r:" )) != EOF ) {
+	while ( (i = getopt( argc, argv, "H:h:p:e:l:r:t:" )) != EOF ) {
 		switch( i ) {
 		case 'H':		/* the server uri */
 			uri = strdup( optarg );
@@ -85,6 +92,10 @@ main( int argc, char **argv )
 			retries = atoi( optarg );
 			break;
 
+		case 't':		/* delay in seconds */
+			delay = atoi( optarg );
+			break;
+
 		default:
 			usage( argv[0] );
 			break;
@@ -100,14 +111,14 @@ main( int argc, char **argv )
 		exit( EXIT_FAILURE );
 	}
 
-	do_read( uri, host, port, entry, ( 20 * loops ), retries );
+	do_read( uri, host, port, entry, ( 20 * loops ), retries, delay );
 	exit( EXIT_SUCCESS );
 }
 
 
 static void
 do_read( char *uri, char *host, int port, char *entry, int maxloop,
-		int maxretries )
+		int maxretries, int delay )
 {
 	LDAP	*ld = NULL;
 	int  	i = 0, do_retry = maxretries;
@@ -140,9 +151,19 @@ retry:;
 	rc = ldap_bind_s( ld, NULL, NULL, LDAP_AUTH_SIMPLE );
 	if ( rc != LDAP_SUCCESS ) {
 		ldap_perror( ld, "ldap_bind" );
-		if ( rc == LDAP_BUSY && do_retry > 0 ) {
-			do_retry--;
-			goto retry;
+		switch ( rc ) {
+		case LDAP_BUSY:
+		case LDAP_UNAVAILABLE:
+			if ( do_retry > 0 ) {
+				do_retry--;
+				if ( delay > 0 ) {
+				    sleep( delay );
+				}
+				goto retry;
+			}
+		/* fallthru */
+		default:
+			break;
 		}
 		exit( EXIT_FAILURE );
 	}

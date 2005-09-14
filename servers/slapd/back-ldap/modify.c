@@ -1,5 +1,5 @@
 /* modify.c - ldap backend modify function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modify.c,v 1.58.2.2 2005/01/24 21:28:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modify.c,v 1.58.2.5 2005/08/17 21:33:45 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -48,7 +48,7 @@ ldap_back_modify(
 
 	lc = ldap_back_getconn( op, rs, LDAP_BACK_SENDERR );
 	if ( !lc || !ldap_back_dobind( lc, op, rs, LDAP_BACK_SENDERR ) ) {
-		return -1;
+		return rs->sr_err;
 	}
 
 	for ( i = 0, ml = op->oq_modify.rs_modlist; ml; i++, ml = ml->sml_next )
@@ -64,7 +64,8 @@ ldap_back_modify(
 
 	isupdate = be_shadow_update( op );
 	for ( i = 0, ml = op->oq_modify.rs_modlist; ml; ml = ml->sml_next ) {
-		if ( !isupdate && ml->sml_desc->ad_type->sat_no_user_mod  ) {
+		if ( !isupdate && !!get_manageDIT( op ) && ml->sml_desc->ad_type->sat_no_user_mod  )
+		{
 			continue;
 		}
 
@@ -121,6 +122,10 @@ cleanup:;
 		ch_free( modv[ i ]->mod_bvalues );
 	}
 	ch_free( modv );
+
+	if ( lc != NULL ) {
+		ldap_back_release_conn( op, rs, lc );
+	}
 
 	return rc;
 }

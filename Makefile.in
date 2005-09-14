@@ -1,5 +1,5 @@
 # Master Makefile for OpenLDAP
-# $OpenLDAP: pkg/ldap/Makefile.in,v 1.27.2.1 2005/01/20 18:03:41 kurt Exp $
+# $OpenLDAP: pkg/ldap/Makefile.in,v 1.27.2.2 2005/08/29 19:04:23 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -25,10 +25,11 @@ makefiles:	FORCE
 install-common: all FORCE
 
 clean-local: FORCE
-	$(RM) config.log
+	$(RM) config.cache config.log configure.lineno
+	$(RM) -r autom4te.cache
 
 veryclean-local: FORCE
-	$(RM) config.cache config.status libtool stamp-h stamp-h.in
+	$(RM) config.status libtool stamp-h stamp-h.in
 
 distclean: veryclean FORCE
 

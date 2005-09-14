@@ -1,5 +1,5 @@
 /* aclparse.c - routines to parse and check acl's */
-/* $OpenLDAP: pkg/ldap/servers/slapd/aclparse.c,v 1.145.2.6 2005/06/03 19:54:13 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/aclparse.c,v 1.145.2.12 2005/08/25 05:01:16 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -39,7 +39,7 @@
 #include "lutil.h"
 
 static const char style_base[] = "base";
-static char *style_strings[] = {
+char *style_strings[] = {
 	"regex",
 	"expand",
 	"exact",
@@ -70,7 +70,14 @@ static int		check_scope( BackendDB *be, AccessControl *a );
 
 #ifdef SLAP_DYNACL
 static int
-slap_dynacl_config( const char *fname, int lineno, Access *b, const char *name, slap_style_t sty, const char *right )
+slap_dynacl_config(
+	const char *fname,
+	int lineno,
+	Access *b,
+	const char *name,
+	const char *opts,
+	slap_style_t sty,
+	const char *right )
 {
 	slap_dynacl_t	*da, *tmp;
 	int		rc = 0;
@@ -93,7 +100,7 @@ slap_dynacl_config( const char *fname, int lineno, Access *b, const char *name, 
 	*tmp = *da;
 
 	if ( tmp->da_parse ) {
-		rc = ( *tmp->da_parse )( fname, lineno, sty, right, &tmp->da_private );
+		rc = ( *tmp->da_parse )( fname, lineno, opts, sty, right, &tmp->da_private );
 		if ( rc ) {
 			ch_free( tmp );
 			return rc;
@@ -452,6 +459,8 @@ parse_acl(
 					}
 
 				} else if ( strncasecmp( left, "val", 3 ) == 0 ) {
+					char	*mr;
+					
 					if ( !BER_BVISEMPTY( &a->acl_attrval ) ) {
 						fprintf( stderr,
 				"%s: line %d: attr val already specified in to clause.\n",
@@ -465,8 +474,34 @@ parse_acl(
 							fname, lineno );
 						acl_usage();
 					}
+
 					ber_str2bv( right, 0, 1, &a->acl_attrval );
 					a->acl_attrval_style = ACL_STYLE_BASE;
+
+					mr = strchr( left, '/' );
+					if ( mr != NULL ) {
+						mr[ 0 ] = '\0';
+						mr++;
+
+						a->acl_attrval_mr = mr_find( mr );
+						if ( a->acl_attrval_mr == NULL ) {
+							fprintf( stderr, "%s: line %d: "
+								"invalid matching rule \"%s\".\n",
+								fname, lineno, mr );
+							acl_usage();
+						}
+
+						if( !mr_usable_with_at( a->acl_attrval_mr, a->acl_attrs[ 0 ].an_desc->ad_type ) )
+						{
+							fprintf( stderr, "%s: line %d: "
+								"matching rule \"%s\" use "
+								"with attr \"%s\" not appropriate.\n",
+								fname, lineno, mr,
+								a->acl_attrs[ 0 ].an_name.bv_val );
+							acl_usage();
+						}
+					}
+					
 					if ( style != NULL ) {
 						if ( strcasecmp( style, "regex" ) == 0 ) {
 							int e = regcomp( &a->acl_attrval_re, a->acl_attrval.bv_val,
@@ -491,6 +526,8 @@ parse_acl(
 							} else if ( a->acl_attrs[0].an_desc->ad_type->
 								sat_syntax == slap_schema.si_syn_distinguishedName )
 							{
+								struct berval	bv;
+
 								if ( !strcasecmp( style, "baseObject" ) ||
 									!strcasecmp( style, "base" ) )
 								{
@@ -515,6 +552,18 @@ parse_acl(
 									a->acl_attrval_style = ACL_STYLE_BASE;
 								}
 
+								bv = a->acl_attrval;
+								rc = dnNormalize( 0, NULL, NULL, &bv, &a->acl_attrval, NULL );
+								if ( rc != LDAP_SUCCESS ) {
+									fprintf( stderr, 
+										"%s: line %d: unable to normalize DN \"%s\" "
+										"for attributeType \"%s\" (%d).\n",
+										fname, lineno, bv.bv_val,
+										a->acl_attrs[0].an_desc->ad_cname.bv_val, rc );
+									acl_usage();
+								}
+								ber_memfree( bv.bv_val );
+
 							} else {
 								fprintf( stderr, 
 									"%s: line %d: unknown val.<style> \"%s\" "
@@ -525,7 +574,21 @@ parse_acl(
 							}
 						}
 					}
-					
+
+					/* Check for appropriate matching rule */
+					if ( a->acl_attrval_style != ACL_STYLE_REGEX ) {
+						if ( a->acl_attrval_mr == NULL ) {
+							a->acl_attrval_mr = a->acl_attrs[ 0 ].an_desc->ad_type->sat_equality;
+						}
+
+						if ( a->acl_attrval_mr == NULL ) {
+							fprintf( stderr, "%s: line %d: "
+								"attr \"%s\" must have an EQUALITY matching rule.\n",
+								fname, lineno, a->acl_attrs[ 0 ].an_name.bv_val );
+							acl_usage();
+						}
+					}
+
 				} else {
 					fprintf( stderr,
 						"%s: line %d: expecting <what> got \"%s\"\n",
@@ -905,12 +968,12 @@ parse_acl(
 							fprintf( stderr,
 								"%s: line %d: \"onelevel\" should be used "
 								"instead of \"level{1}\" in by DN clause\n",
-								fname, lineno, 0 );
+								fname, lineno );
 						} else if ( level == 0 && sty == ACL_STYLE_LEVEL ) {
 							fprintf( stderr,
 								"%s: line %d: \"base\" should be used "
 								"instead of \"level{0}\" in by DN clause\n",
-								fname, lineno, 0 );
+								fname, lineno );
 						}
 
 						bdn->a_level = level;
@@ -978,7 +1041,7 @@ parse_acl(
 						fprintf( stderr, "%s: line %d: "
 							"deprecated group style \"regex\"; "
 							"use \"expand\" instead\n",
-							fname, lineno, style );
+							fname, lineno );
 						sty = ACL_STYLE_EXPAND;
 						break;
 
@@ -1053,7 +1116,7 @@ parse_acl(
 						}
 
 					} else {
-						b->a_group_oc = oc_find(SLAPD_GROUP_CLASS);
+						b->a_group_oc = oc_find( SLAPD_GROUP_CLASS );
 
 						if( b->a_group_oc == NULL ) {
 							fprintf( stderr,
@@ -1434,17 +1497,23 @@ parse_acl(
 
 #ifdef SLAP_DYNACL
 				{
-					char		*name = NULL;
+					char		*name = NULL,
+							*opts = NULL;
 					
 					if ( strcasecmp( left, "aci" ) == 0 ) {
 						name = "aci";
 						
 					} else if ( strncasecmp( left, "dynacl/", STRLENOF( "dynacl/" ) ) == 0 ) {
 						name = &left[ STRLENOF( "dynacl/" ) ];
+						opts = strchr( name, '/' );
+						if ( opts ) {
+							opts[ 0 ] = '\0';
+							opts++;
+						}
 					}
 
 					if ( name ) {
-						if ( slap_dynacl_config( fname, lineno, b, name, sty, right ) ) {
+						if ( slap_dynacl_config( fname, lineno, b, name, opts, sty, right ) ) {
 							fprintf( stderr, "%s: line %d: "
 								"unable to configure dynacl \"%s\"\n",
 								fname, lineno, name );
@@ -1483,7 +1552,7 @@ parse_acl(
 						}
 
 					} else {
-						b->a_aci_at = slap_schema.si_ad_aci;
+						b->a_aci_at = slap_ad_aci;
 					}
 
 					if( !is_at_syntax( b->a_aci_at->ad_type,
@@ -2053,7 +2122,7 @@ acl_usage( void )
 		"<access clause> ::= access to <what> "
 				"[ by <who> <access> [ <control> ] ]+ \n"
 		"<what> ::= * | [dn[.<dnstyle>]=<DN>] [filter=<filter>] [attrs=<attrlist>]\n"
-		"<attrlist> ::= <attr> [val[.<attrstyle>]=<value>] | <attr> , <attrlist>\n"
+		"<attrlist> ::= <attr> [val[/matchingRule][.<attrstyle>]=<value>] | <attr> , <attrlist>\n"
 		"<attr> ::= <attrname> | entry | children\n",
 		"<who> ::= [ * | anonymous | users | self | dn[.<dnstyle>]=<DN> ]\n"
 			"\t[ realanonymous | realusers | realself | realdn[.<dnstyle>]=<DN> ]\n"
@@ -2063,10 +2132,10 @@ acl_usage( void )
 			"\t[peername[.<peernamestyle>]=<peer>] [sockname[.<style>]=<name>]\n"
 			"\t[domain[.<domainstyle>]=<domain>] [sockurl[.<style>]=<url>]\n"
 #ifdef SLAPD_ACI_ENABLED
-			"\t[aci=[<attrname>]]\n"
+			"\t[aci[=<attrname>]]\n"
 #endif
 #ifdef SLAP_DYNACL
-			"\t[dynacl/<name>[.<dynstyle>][=<pattern>]]\n"
+			"\t[dynacl/<name>[/<options>][.<dynstyle>][=<pattern>]]\n"
 #endif /* SLAP_DYNACL */
 			"\t[ssf=<n>] [transport_ssf=<n>] [tls_ssf=<n>] [sasl_ssf=<n>]\n",
 		"<style> ::= exact | regex | base(Object)\n"
@@ -2194,6 +2263,22 @@ access_free( Access *a )
 	if ( !BER_BVISNULL( &a->a_group_pat ) ) {
 		free( a->a_group_pat.bv_val );
 	}
+#ifdef SLAP_DYNACL
+	if ( a->a_dynacl != NULL ) {
+		slap_dynacl_t	*da;
+		for ( da = a->a_dynacl; da; ) {
+			slap_dynacl_t	*tmp = da;
+
+			da = da->da_next;
+
+			if ( tmp->da_destroy ) {
+				tmp->da_destroy( tmp->da_private );
+			}
+
+			ch_free( tmp );
+		}
+	}
+#endif /* SLAP_DYNACL */
 	free( a );
 }
 
@@ -2207,6 +2292,9 @@ acl_free( AccessControl *a )
 		filter_free( a->acl_filter );
 	}
 	if ( !BER_BVISNULL( &a->acl_dn_pat ) ) {
+		if ( a->acl_dn_style == ACL_STYLE_REGEX ) {
+			regfree( &a->acl_dn_re );
+		}
 		free ( a->acl_dn_pat.bv_val );
 	}
 	if ( a->acl_attrs ) {
@@ -2234,7 +2322,7 @@ acl_destroy( AccessControl *a, AccessControl *end )
 {
 	AccessControl *n;
 
-	for (; a && a!= end; a=n) {
+	for ( ; a && a != end; a = n ) {
 		n = a->acl_next;
 		acl_free( a );
 	}
@@ -2398,10 +2486,10 @@ access2text( Access *b, char *ptr )
 	if ( !BER_BVISEMPTY( &b->a_group_pat ) ) {
 		ptr = lutil_strcopy( ptr, " group/" );
 		ptr = lutil_strcopy( ptr, b->a_group_oc ?
-			b->a_group_oc->soc_cname.bv_val : "groupOfNames" );
+			b->a_group_oc->soc_cname.bv_val : SLAPD_GROUP_CLASS );
 		*ptr++ = '/';
 		ptr = lutil_strcopy( ptr, b->a_group_at ?
-			b->a_group_at->ad_cname.bv_val : "member" );
+			b->a_group_at->ad_cname.bv_val : SLAPD_GROUP_ATTR );
 		*ptr++ = '.';
 		ptr = lutil_strcopy( ptr, style_strings[b->a_group_style] );
 		*ptr++ = '=';
@@ -2467,8 +2555,9 @@ access2text( Access *b, char *ptr )
 
 		for ( da = b->a_dynacl; da; da = da->da_next ) {
 			if ( da->da_unparse ) {
-				struct berval bv;
+				struct berval bv = BER_BVNULL;
 				(void)( *da->da_unparse )( da->da_private, &bv );
+				assert( !BER_BVISNULL( &bv ) );
 				ptr = lutil_strcopy( ptr, bv.bv_val );
 				ch_free( bv.bv_val );
 			}

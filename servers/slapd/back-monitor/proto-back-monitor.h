@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/proto-back-monitor.h,v 1.25.2.3 2005/06/08 21:50:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/proto-back-monitor.h,v 1.25.2.4 2005/08/09 21:04:05 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2005 The OpenLDAP Foundation.
@@ -68,6 +68,10 @@ monitor_cache_release LDAP_P((
 	monitor_info_t		*mi,
 	Entry			*e ));
 
+extern int
+monitor_cache_destroy LDAP_P((
+	monitor_info_t		*mi ));
+
 /*
  * connections
  */
@@ -75,18 +79,6 @@ extern int
 monitor_subsys_conn_init LDAP_P((
 	BackendDB		*be,
 	monitor_subsys_t	*ms ));
-extern int
-monitor_subsys_conn_update LDAP_P((
-	Operation		*op,
-	SlapReply		*rs,
-	Entry			*e ));
-extern int
-monitor_subsys_conn_create LDAP_P((
-	Operation		*op,
-	SlapReply		*rs,
-	struct berval		*ndn,
-	Entry			*e_parent,
-	Entry			**ep ));
 
 /*
  * databases 
@@ -95,11 +87,6 @@ extern int
 monitor_subsys_database_init LDAP_P((
 	BackendDB		*be,
 	monitor_subsys_t	*ms ));
-extern int
-monitor_subsys_database_modify LDAP_P((
-	Operation		*op,
-	SlapReply		*rs,
-	Entry			*e ));
 
 /*
  * entry
@@ -190,11 +177,6 @@ extern int
 monitor_subsys_log_init LDAP_P((
 	BackendDB		*be,
 	monitor_subsys_t	*ms ));
-extern int
-monitor_subsys_log_modify LDAP_P((
-	Operation		*op,
-	SlapReply		*rs,
-	Entry			*e ));
 
 /*
  * operations
@@ -203,11 +185,6 @@ extern int
 monitor_subsys_ops_init LDAP_P((
 	BackendDB		*be,
 	monitor_subsys_t	*ms ));
-extern int
-monitor_subsys_ops_update LDAP_P((
-	Operation		*op,
-	SlapReply		*rs,
-	Entry			*e ));
 
 /*
  * overlay
@@ -224,11 +201,6 @@ extern int
 monitor_subsys_sent_init LDAP_P((
 	BackendDB		*be,
 	monitor_subsys_t	*ms ));
-extern int
-monitor_subsys_sent_update LDAP_P((
-	Operation		*op,
-	SlapReply		*rs,
-	Entry			*e ));
 
 /*
  * threads
@@ -237,11 +209,6 @@ extern int
 monitor_subsys_thread_init LDAP_P((
 	BackendDB		*be,
 	monitor_subsys_t	*ms ));
-extern int
-monitor_subsys_thread_update LDAP_P((
-	Operation		*op,
-	SlapReply		*rs,
-	Entry			*e ));
 
 /*
  * time
@@ -249,11 +216,6 @@ monitor_subsys_thread_update LDAP_P((
 extern int monitor_subsys_time_init LDAP_P((
 	BackendDB		*be,
 	monitor_subsys_t	*ms ));
-extern int
-monitor_subsys_time_update LDAP_P((
-	Operation		*op,
-	SlapReply		*rs,
-	Entry			*e ));
 
 /*
  * waiters
@@ -262,11 +224,6 @@ extern int
 monitor_subsys_rww_init LDAP_P((
 	BackendDB		*be,
 	monitor_subsys_t	*ms ));
-extern int
-monitor_subsys_rww_update LDAP_P((
-	Operation		*op,
-	SlapReply		*rs,
-	Entry			*e ));
 
 /*
  * former external.h

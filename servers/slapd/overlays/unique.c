@@ -1,5 +1,5 @@
 /* unique.c - attribute uniqueness module */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/unique.c,v 1.8.2.3 2005/03/14 22:25:02 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/unique.c,v 1.8.2.5 2005/08/29 18:26:11 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2005 The OpenLDAP Foundation.
@@ -139,7 +139,7 @@ static int unique_config(
 				up->next = ud->attrs;
 				ud->attrs = up;
 			}
-			Debug(LDAP_DEBUG_ANY, "%s: line %d: new attribute <%s>\n",
+			Debug(LDAP_DEBUG_CONFIG, "%s: line %d: new attribute <%s>\n",
 				fname, lineno, argv[i]);
 		}
 	} else if(!strcasecmp(*argv, "unique_strict")) {
@@ -149,7 +149,7 @@ static int unique_config(
 		ber_str2bv( argv[1], 0, 0, &bv );
 		ch_free(ud->dn.bv_val);
 		dnNormalize(0, NULL, NULL, &bv, &ud->dn, NULL);
-		Debug(LDAP_DEBUG_ANY, "%s: line %d: new base dn <%s>\n",
+		Debug(LDAP_DEBUG_CONFIG, "%s: line %d: new base dn <%s>\n",
 			fname, lineno, argv[1]);
 	} else {
 		return(SLAP_CONF_UNKNOWN);
@@ -506,7 +506,7 @@ static int unique_modrdn(
 	Operation nop = *op;
 
 	char *key, *kp;
-	int i, rc, ks = 16;		/* a handful of extra bytes */
+	int i, ks = 16;			/* a handful of extra bytes */
 	LDAPRDN	newrdn;
 	struct berval bv[2];
 

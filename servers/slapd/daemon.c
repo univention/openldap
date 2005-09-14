@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.318.2.7 2005/06/09 16:31:12 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.318.2.9 2005/08/09 21:03:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -206,7 +206,7 @@ static struct slap_daemon {
 #define SLAP_EVENT_FD(i)	SLAP_EV_PTRFD(revents[i].data.ptr)
 #define	SLAP_SOCK_SET_MUTE(s)	SLAP_SOCK_CLR_READ(s)
 #define	SLAP_SOCK_CLR_MUTE(s)	SLAP_SOCK_SET_READ(s)
-#define	SLAP_SOCK_IS_MUTE(s)	!SLAP_SOCK_IS_READ(s)
+#define	SLAP_SOCK_IS_MUTE(s)	(!SLAP_SOCK_IS_READ(s))
 
 #define SLAP_SOCK_SET_INIT	\
 	slap_daemon.sd_epolls = ch_malloc(sizeof(struct epoll_event) * dtblsize * 2);	\
@@ -301,7 +301,7 @@ static struct slap_daemon {
 
 #define	SLAP_SOCK_SET_MUTE(s)	FD_CLR(s, &readfds)
 #define SLAP_SOCK_CLR_MUTE(s)	FD_SET(s, &readfds)
-#define	SLAP_SOCK_IS_MUTE(s)	FD_ISSET(s, &readfds)
+#define	SLAP_SOCK_IS_MUTE(s)	(!FD_ISSET(s, &readfds))
 
 #endif
 
@@ -558,9 +558,9 @@ static int get_url_perms(
 {
 	int	i;
 
-	assert( exts );
-	assert( perms );
-	assert( crit );
+	assert( exts != NULL );
+	assert( perms != NULL );
+	assert( crit != NULL );
 
 	*crit = 0;
 	for ( i = 0; exts[ i ]; i++ ) {
@@ -1005,16 +1005,6 @@ static int slap_open_listener(
 #ifdef LDAP_PF_LOCAL
 	case AF_LOCAL: {
 		char *addr = ((struct sockaddr_un *)*sal)->sun_path;
-#if 0 /* don't muck with socket perms */
-		if ( chmod( addr, l.sl_perms ) < 0 && crit ) {
-			int err = sock_errno();
-			Debug( LDAP_DEBUG_ANY, "daemon: fchmod(%ld) failed errno=%d (%s)",
-			       (long) l.sl_sd, err, sock_errstr(err) );
-			tcp_close( l.sl_sd );
-			slap_free_listener_addresses(psal);
-			return -1;
-		}
-#endif
 		l.sl_name.bv_len = strlen(addr) + sizeof("PATH=") - 1;
 		l.sl_name.bv_val = ber_memalloc( l.sl_name.bv_len + 1 );
 		snprintf( l.sl_name.bv_val, l.sl_name.bv_len + 1, 
@@ -1372,12 +1362,15 @@ slapd_handle_listener(
 
 			if( getpeereid( s, &uid, &gid ) == 0 ) {
 				authid.bv_val = ch_malloc(
-					sizeof("uidnumber=4294967295+gidnumber=4294967295,"
-					"cn=peercred,cn=external,cn=auth"));
+					STRLENOF( "gidNumber=4294967295+uidNumber=4294967295,"
+					"cn=peercred,cn=external,cn=auth" ) + 1 );
 				authid.bv_len = sprintf( authid.bv_val,
-					"uidnumber=%d+gidnumber=%d,"
+					"gidNumber=%d+uidNumber=%d,"
 					"cn=peercred,cn=external,cn=auth",
-					(int) uid, (int) gid);
+					(int) gid, (int) uid );
+				assert( authid.bv_len <=
+					STRLENOF( "gidNumber=4294967295+uidNumber=4294967295,"
+					"cn=peercred,cn=external,cn=auth" ) );
 			}
 		}
 		dnsname = "local";
@@ -1765,14 +1758,14 @@ slapd_daemon_task(
 			if ( !SLAP_EVENT_IS_READ( slap_listeners[l]->sl_sd ))
 				continue;
 			
-			ns--;
-
 			rc = slapd_handle_listener(slap_listeners[l]);
 
 #ifdef LDAP_CONNECTIONLESS
 			/* This is a UDP session, let the data loop process it */
 			if ( rc ) continue;
 #endif
+
+			ns--;
 
 			/* Don't need to look at this in the data loops */
 			SLAP_EVENT_CLR_READ( slap_listeners[l]->sl_sd );
@@ -2010,9 +2003,6 @@ slapd_daemon_task(
 		close_listeners ( 0 );
 	}
 
-	free ( slap_listeners );
-	slap_listeners = NULL;
-
 	if( !slapd_gentle_shutdown ) {
 		slapd_abrupt_shutdown = 1;
 		connections_shutdown();
@@ -2022,6 +2012,9 @@ slapd_daemon_task(
 	    "slapd shutdown: waiting for %d threads to terminate\n",
 	    ldap_pvt_thread_pool_backload(&connection_pool), 0, 0 );
 	ldap_pvt_thread_pool_destroy(&connection_pool, 1);
+
+	free ( slap_listeners );
+	slap_listeners = NULL;
 
 	return NULL;
 }
@@ -2060,7 +2053,7 @@ int slapd_daemon( void )
 
 }
 
-int sockinit(void)
+static int sockinit(void)
 {
 #if defined( HAVE_WINSOCK2 )
     WORD wVersionRequested;
@@ -2101,7 +2094,7 @@ int sockinit(void)
 	return 0;
 }
 
-int sockdestroy(void)
+static int sockdestroy(void)
 {
 #if defined( HAVE_WINSOCK2 ) || defined( HAVE_WINSOCK )
 	WSACleanup();

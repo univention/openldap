@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/ldap_op.c,v 1.53.2.1 2005/01/20 18:04:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/ldap_op.c,v 1.53.2.2 2005/08/09 21:04:10 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -321,7 +321,7 @@ op_ldap_modify(
 		continue;
 	    }
 
-	    assert( ldm );
+	    assert( ldm != NULL );
 
 	    /*
 	     * We should have an attribute: value pair here.
@@ -505,7 +505,7 @@ op_ldap_modrdn(
     }
 #endif /* LDAP_DEBUG */
 
-    assert( newrdn );
+    assert( newrdn != NULL );
 
     /* Do the modrdn */
     rc = ldap_rename2_s( ri->ri_ldp, re->re_dn, newrdn, newsup, drdnflag );
@@ -711,7 +711,7 @@ retry:
     }
 
 	{	/* set version 3 */
-		int err, version = 3;
+		int err, version = LDAP_VERSION3;
 		err = ldap_set_option(ri->ri_ldp,
 			LDAP_OPT_PROTOCOL_VERSION, &version);
 

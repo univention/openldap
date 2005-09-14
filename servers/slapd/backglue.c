@@ -1,5 +1,5 @@
-/* glue.c - backend glue overlay */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/glue.c,v 1.7.2.5 2005/04/29 21:29:10 kurt Exp $ */
+/* backglue.c - backend glue */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.91.2.1 2005/09/01 20:28:10 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2005 The OpenLDAP Foundation.
@@ -28,8 +28,6 @@
 
 #include "portable.h"
 
-#ifdef SLAPD_OVER_GLUE
-
 #include <stdio.h>
 
 #include <ac/string.h>
@@ -41,7 +39,6 @@
 typedef struct gluenode {
 	BackendDB *gn_be;
 	struct berval gn_pdn;
-	int gn_async;
 } gluenode;
 
 typedef struct glueinfo {
@@ -69,7 +66,7 @@ glue_back_select (
 	int i;
 
 	for (i = 0; i<gi->gi_nodes; i++) {
-		assert( gi->gi_n[i].gn_be->be_nsuffix );
+		assert( gi->gi_n[i].gn_be->be_nsuffix != NULL );
 
 		if (dnIsSuffix(dn, &gi->gi_n[i].gn_be->be_nsuffix[0])) {
 			return gi->gi_n[i].gn_be;
@@ -153,22 +150,14 @@ glue_op_response ( Operation *op, SlapReply *rs )
 	return 0;
 }
 
-enum glue_which {
-	op_modify = 0,
-	op_modrdn,
-	op_add,
-	op_delete
-};
-
 static int
 glue_op_func ( Operation *op, SlapReply *rs )
 {
 	slap_overinst	*on = (slap_overinst *)op->o_bd->bd_info;
-	glueinfo		*gi = (glueinfo *)on->on_bi.bi_private;
 	BackendDB *b0 = op->o_bd;
 	BackendInfo *bi0 = op->o_bd->bd_info;
 	BI_op_modify **func;
-	enum glue_which which;
+	slap_operation_t which;
 	int rc;
 
 	op->o_bd = glue_back_select (b0, &op->o_req_ndn);
@@ -181,7 +170,7 @@ glue_op_func ( Operation *op, SlapReply *rs )
 	case LDAP_REQ_MODRDN: which = op_modrdn; break;
 	}
 
-	func = &op->o_bd->bd_info->bi_op_modify;
+	func = &op->o_bd->bd_info->bi_op_bind;
 	if ( func[which] )
 		rc = func[which]( op, rs );
 	else
@@ -196,7 +185,6 @@ static int
 glue_chk_referrals ( Operation *op, SlapReply *rs )
 {
 	slap_overinst	*on = (slap_overinst *)op->o_bd->bd_info;
-	glueinfo		*gi = (glueinfo *)on->on_bi.bi_private;
 	BackendDB *b0 = op->o_bd;
 	BackendInfo *bi0 = op->o_bd->bd_info;
 	int rc;
@@ -218,7 +206,6 @@ static int
 glue_chk_controls ( Operation *op, SlapReply *rs )
 {
 	slap_overinst	*on = (slap_overinst *)op->o_bd->bd_info;
-	glueinfo		*gi = (glueinfo *)on->on_bi.bi_private;
 	BackendDB *b0 = op->o_bd;
 	BackendInfo *bi0 = op->o_bd->bd_info;
 	int rc = SLAP_CB_CONTINUE;
@@ -341,8 +328,8 @@ glue_op_search ( Operation *op, SlapReply *rs )
 			}
 			op->o_bd = btmp;
 
-			assert( op->o_bd->be_suffix );
-			assert( op->o_bd->be_nsuffix );
+			assert( op->o_bd->be_suffix != NULL );
+			assert( op->o_bd->be_nsuffix != NULL );
 			
 			if (scope0 == LDAP_SCOPE_ONELEVEL && 
 				dn_match(pdn, &ndn))
@@ -526,10 +513,8 @@ glue_close (
 	BackendInfo *bi
 )
 {
-	slap_overinst *on = glue_tool_inst( bi );
-	glueinfo		*gi = on->on_bi.bi_private;
 	static int glueClosed = 0;
-	int i, rc = 0;
+	int rc = 0;
 
 	if (glueClosed) return 0;
 
@@ -549,14 +534,23 @@ glue_entry_release_rw (
 )
 {
 	BackendDB *b0, b2;
-	int rc;
+	int rc = -1;
 
 	b0 = op->o_bd;
 	b2 = *op->o_bd;
 	b2.bd_info = (BackendInfo *)glue_tool_inst( op->o_bd->bd_info );
 	op->o_bd = glue_back_select (&b2, &e->e_nname);
 
-	rc = op->o_bd->be_release( op, e, rw );
+	if ( op->o_bd->be_release ) {
+		rc = op->o_bd->be_release( op, e, rw );
+
+	} else {
+		/* FIXME: mimic be_entry_release_rw
+		 * when no be_release() available */
+		/* free entry */
+		entry_free( e );
+		rc = 0;
+	}
 	op->o_bd = b0;
 	return rc;
 }
@@ -645,7 +639,7 @@ glue_tool_entry_put (
 )
 {
 	BackendDB *be, b2;
-	int rc;
+	int rc = -1;
 
 	b2 = *b0;
 	b2.bd_info = (BackendInfo *)glue_tool_inst( b0->bd_info );
@@ -656,18 +650,26 @@ glue_tool_entry_put (
 		return NOID;
 
 	if (!glueBack) {
-		rc = be->be_entry_open (be, glueMode);
-		if (rc != 0)
+		if ( be->be_entry_open ) {
+			rc = be->be_entry_open (be, glueMode);
+		}
+		if (rc != 0) {
 			return NOID;
+		}
 	} else if (be != glueBack) {
 		/* If this entry belongs in a different branch than the
 		 * previous one, close the current database and open the
 		 * new one.
 		 */
-		glueBack->be_entry_close (glueBack);
-		rc = be->be_entry_open (be, glueMode);
-		if (rc != 0)
+		if ( glueBack->be_entry_close ) {
+			glueBack->be_entry_close (glueBack);
+		}
+		if ( be->be_entry_open ) {
+			rc = be->be_entry_open (be, glueMode);
+		}
+		if (rc != 0) {
 			return NOID;
+		}
 	}
 	glueBack = be;
 	return be->be_entry_put (be, e, text);
@@ -741,6 +743,8 @@ glue_db_init(
 	oi->oi_bi.bi_tool_id2entry_get = 0;
 	oi->oi_bi.bi_tool_entry_modify = 0;
 
+	SLAP_DBFLAGS( be ) |= SLAP_DBFLAG_GLUE_INSTANCE;
+
 	return 0;
 }
 
@@ -767,78 +771,158 @@ glue_db_close(
 	return 0;
 }
 
-static int
-glue_db_config(
-	BackendDB	*be,
-	const char	*fname,
-	int		lineno,
-	int		argc,
-	char	**argv
-)
+int
+glue_sub_del( BackendDB *b0 )
 {
-	slap_overinst	*on = (slap_overinst *)be->bd_info;
-	glueinfo		*gi = (glueinfo *)on->on_bi.bi_private;
+	BackendDB *be;
+	int rc = 0;
 
-	/* redundant; could be applied just once */
-	SLAP_DBFLAGS( be ) |= SLAP_DBFLAG_GLUE_INSTANCE;
+	/* Find the top backend for this subordinate */
+	be = b0;
+	while ( be=LDAP_STAILQ_NEXT( be, be_next )) {
+		slap_overinfo *oi;
+		slap_overinst *on;
+		glueinfo *gi;
+		int i;
 
-	if ( strcasecmp( argv[0], "glue-sub" ) == 0 ) {
-		int i, async = 0, advertise = 0;
-		BackendDB *b2;
-		struct berval bv, dn;
-		gluenode *gn;
+		if ( SLAP_GLUE_SUBORDINATE( be ))
+			continue;
+		if ( !SLAP_GLUE_INSTANCE( be ))
+			continue;
+		if ( !dnIsSuffix( &b0->be_nsuffix[0], &be->be_nsuffix[0] ))
+			continue;
 
-		if ( argc < 2 ) {
-			fprintf( stderr, "%s: line %d: too few arguments in "
-				"\"glue-sub <suffixDN> [async] [advertise]\"\n", fname, lineno );
-			return -1;
+		/* OK, got the right backend, find the overlay */
+		oi = (slap_overinfo *)be->bd_info;
+		for ( on=oi->oi_list; on; on=on->on_next ) {
+			if ( on->on_bi.bi_type == glue.on_bi.bi_type )
+				break;
 		}
-		for ( i = 2; i < argc; i++ ) {
-			if ( strcasecmp( argv[i], "async" ) == 0 ) {
-				async = 1;
+		assert( on != NULL );
+		gi = on->on_bi.bi_private;
+		for ( i=0; i < gi->gi_nodes; i++ ) {
+			if ( gi->gi_n[i].gn_be == b0 ) {
+				int j;
 
-			} else if ( strcasecmp( argv[i], "advertise" ) == 0 ) {
-				advertise = 1;
+				for (j=i+1; j < gi->gi_nodes; j++)
+					gi->gi_n[j-1] = gi->gi_n[j];
 
-			} else {
-				fprintf( stderr, "%s: line %d: unrecognized option "
-					"\"%s\" ignored.\n", fname, lineno, argv[i] );
+				gi->gi_nodes--;
 			}
 		}
-		ber_str2bv( argv[1], 0, 0, &bv );
-		if ( dnNormalize( 0, NULL, NULL, &bv, &dn, NULL )) {
-			fprintf( stderr, "invalid suffixDN \"%s\"\n", argv[1] );
-			return -1;
-		}
-		b2 = select_backend( &dn, 0, 1 );
-		if ( !b2 ) {
-			fprintf( stderr, "%s: line %d: unknown suffix \"%s\"\n",
-				fname, lineno, argv[1] );
-			return -1;
-		}
-		SLAP_DBFLAGS(b2) |= SLAP_DBFLAG_GLUE_SUBORDINATE;
-		if ( advertise ) {
-			SLAP_DBFLAGS(b2) |= SLAP_DBFLAG_GLUE_ADVERTISE;
-		}
-		gi = (glueinfo *)ch_realloc( gi, sizeof(glueinfo) +
-			gi->gi_nodes * sizeof(gluenode));
-		gi->gi_n[gi->gi_nodes].gn_be = b2;
-		dnParent( &b2->be_nsuffix[0], &gi->gi_n[gi->gi_nodes].gn_pdn );
-		gi->gi_n[gi->gi_nodes].gn_async = async;
-		gi->gi_nodes++;
-		on->on_bi.bi_private = gi;
-		return 0;
 	}
-	return SLAP_CONF_UNKNOWN;
+	if ( be == NULL )
+		rc = LDAP_NO_SUCH_OBJECT;
+
+	return rc;
+}
+
+typedef struct glue_Addrec {
+	struct glue_Addrec *ga_next;
+	BackendDB *ga_be;
+} glue_Addrec;
+
+/* List of added subordinates */
+static glue_Addrec *ga_list;
+
+/* Attach all the subordinate backends to their superior */
+static int
+glue_sub_attach()
+{
+	glue_Addrec *ga, *gnext = NULL;
+	int rc = 0;
+
+	/* For all the subordinate backends */
+	for ( ga=ga_list; ga != NULL; ga = gnext ) {
+		BackendDB *be;
+
+		gnext = ga->ga_next;
+
+		/* Find the top backend for this subordinate */
+		be = ga->ga_be;
+		while ( be=LDAP_STAILQ_NEXT( be, be_next )) {
+			slap_overinfo *oi;
+			slap_overinst *on;
+			glueinfo *gi;
+
+			if ( SLAP_GLUE_SUBORDINATE( be ))
+				continue;
+			if ( !dnIsSuffix( &ga->ga_be->be_nsuffix[0], &be->be_nsuffix[0] ))
+				continue;
+
+			/* If it's not already configured, set up the overlay */
+			if ( !SLAP_GLUE_INSTANCE( be )) {
+				rc = overlay_config( be, glue.on_bi.bi_type );
+				if ( rc )
+					break;
+			}
+			/* Find the overlay instance */
+			oi = (slap_overinfo *)be->bd_info;
+			for ( on=oi->oi_list; on; on=on->on_next ) {
+				if ( on->on_bi.bi_type == glue.on_bi.bi_type )
+					break;
+			}
+			assert( on != NULL );
+			gi = on->on_bi.bi_private;
+			gi = (glueinfo *)ch_realloc( gi, sizeof(glueinfo) +
+				gi->gi_nodes * sizeof(gluenode));
+			gi->gi_n[gi->gi_nodes].gn_be = ga->ga_be;
+			dnParent( &ga->ga_be->be_nsuffix[0],
+				&gi->gi_n[gi->gi_nodes].gn_pdn );
+			gi->gi_nodes++;
+			on->on_bi.bi_private = gi;
+			break;
+		}
+		if ( !be ) {
+			Debug( LDAP_DEBUG_ANY, "glue: no superior found for sub %s!\n",
+				ga->ga_be->be_suffix[0].bv_val, 0, 0 );
+			rc = LDAP_NO_SUCH_OBJECT;
+		}
+		ch_free( ga );
+		if ( rc ) break;
+	}
+
+	ga_list = gnext;
+
+	return rc;
 }
 
 int
-glue_init()
+glue_sub_add( BackendDB *be, int advert, int online )
 {
+	glue_Addrec *ga;
+	int rc = 0;
+
+	SLAP_DBFLAGS( be ) |= SLAP_DBFLAG_GLUE_SUBORDINATE;
+	if ( advert )
+		SLAP_DBFLAGS( be ) |= SLAP_DBFLAG_GLUE_ADVERTISE;
+
+	ga = ch_malloc( sizeof( glue_Addrec ));
+	ga->ga_next = NULL;
+	ga->ga_be = be;
+	if ( ga_list ) {
+		glue_Addrec *g2 = ga_list;
+
+		for ( ; g2 && g2->ga_next; g2=g2->ga_next );
+		g2->ga_next = ga;
+	} else {
+		ga_list = ga;
+	}
+
+	if ( online )
+		rc = glue_sub_attach();
+
+	return rc;
+}
+
+int
+glue_sub_init()
+{
+	int rc;
+
 	glue.on_bi.bi_type = "glue";
 
 	glue.on_bi.bi_db_init = glue_db_init;
-	glue.on_bi.bi_db_config = glue_db_config;
 	glue.on_bi.bi_db_close = glue_db_close;
 	glue.on_bi.bi_db_destroy = glue_db_destroy;
 
@@ -851,15 +935,8 @@ glue_init()
 	glue.on_bi.bi_chk_referrals = glue_chk_referrals;
 	glue.on_bi.bi_chk_controls = glue_chk_controls;
 
-	return overlay_register( &glue );
-}
+	rc = overlay_register( &glue );
+	if ( rc ) return rc;
 
-#if SLAPD_OVER_GLUE == SLAPD_MOD_DYNAMIC
-int
-init_module( int argc, char *argv[] )
-{
-	return glue_init();
+	return glue_sub_attach();
 }
-#endif	/* SLAPD_OVER_GLUE == SLAPD_MOD_DYNAMIC */
-
-#endif	/* defined(SLAPD_OVER_GLUE */

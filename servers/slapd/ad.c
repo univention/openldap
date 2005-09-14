@@ -1,5 +1,5 @@
 /* ad.c - routines for dealing with attribute descriptions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.74.2.1 2005/01/20 18:03:54 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.74.2.7 2005/08/29 18:26:09 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -174,12 +174,15 @@ int slap_bv2ad(
 	}
 
 	/* find valid base attribute type; parse in place */
-	memset( &desc, 0, sizeof( desc ));
+	memset( &desc, 0, sizeof( desc ) );
 	desc.ad_cname = *bv;
 	name = bv->bv_val;
-	options = strchr(name, ';');
-	if( options != NULL ) {
+	options = strchr( name, ';' );
+	if ( options != NULL && (unsigned) ( options - name ) < bv->bv_len ) {
+		/* don't go past the end of the berval! */
 		desc.ad_cname.bv_len = options - name;
+	} else {
+		options = NULL;
 	}
 	desc.ad_type = at_bvfind( &desc.ad_cname );
 	if( desc.ad_type == NULL ) {
@@ -247,7 +250,7 @@ int slap_bv2ad(
 
 				rc = strncasecmp( opt, tags[i].bv_val,
 					(unsigned) optlen < tags[i].bv_len
-						? optlen : tags[i].bv_len );
+						? (unsigned) optlen : tags[i].bv_len );
 
 				if( rc == 0 && (unsigned)optlen == tags[i].bv_len ) {
 					/* duplicate (ignore) */
@@ -385,7 +388,7 @@ done:;
 					if( lp != desc.ad_tags.bv_val ) {
 						*cp++ = ';';
 						j = (lp
-						     ? lp - desc.ad_tags.bv_val - 1
+						     ? (unsigned) (lp - desc.ad_tags.bv_val - 1)
 						     : strlen( desc.ad_tags.bv_val ));
 						cp = lutil_strncopy(cp, desc.ad_tags.bv_val, j);
 					}
@@ -510,7 +513,6 @@ int ad_inlist(
 	for( ; attrs->an_name.bv_val; attrs++ ) {
 		AttributeType *a;
 		ObjectClass *oc;
-		int rc;
 		
 		if ( attrs->an_desc ) {
 			int lr;
@@ -555,6 +557,20 @@ int ad_inlist(
 			continue;
 		}
 
+		if ( ber_bvccmp( &attrs->an_name, '*' ) ) {
+			if ( !is_at_operational( desc->ad_type ) ) {
+				return 1;
+			}
+			continue;
+		}
+
+		if ( ber_bvccmp( &attrs->an_name, '+' ) ) {
+			if ( is_at_operational( desc->ad_type ) ) {
+				return 1;
+			}
+			continue;
+		}
+
 		/*
 		 * EXTENSION: see if requested description is @objectClass
 		 * if so, return attributes which the class requires/allows
@@ -584,8 +600,6 @@ int ad_inlist(
 		}
 		if( oc != NULL ) {
 			if ( attrs->an_oc_exclude ) {
-				int gotit = 0;
-
 				if ( oc == slap_schema.si_oc_extensibleObject ) {
 					/* extensibleObject allows the return of anything */
 					return 0;
@@ -650,15 +664,12 @@ int ad_inlist(
 			}
 
 		} else {
-			/* short-circuit this search next time around */
-			if (!slap_schema.si_at_undefined->sat_ad) {
-				const char *text;
-				slap_bv2undef_ad(&attrs->an_name,
-					&attrs->an_desc, &text);
-			} else {
-				attrs->an_desc =
-					slap_schema.si_at_undefined->sat_ad;
-			}
+			const char      *text;
+
+			/* give it a chance of being retrieved by a proxy... */
+			(void)slap_bv2undef_ad( &attrs->an_name,
+				&attrs->an_desc, &text,
+				SLAP_AD_PROXIED|SLAP_AD_NOINSERT );
 		}
 	}
 
@@ -669,21 +680,24 @@ int ad_inlist(
 int slap_str2undef_ad(
 	const char *str,
 	AttributeDescription **ad,
-	const char **text )
+	const char **text,
+	unsigned flags )
 {
 	struct berval bv;
 	bv.bv_val = (char *) str;
 	bv.bv_len = strlen( str );
 
-	return slap_bv2undef_ad( &bv, ad, text );
+	return slap_bv2undef_ad( &bv, ad, text, flags );
 }
 
 int slap_bv2undef_ad(
 	struct berval *bv,
 	AttributeDescription **ad,
-	const char **text )
+	const char **text,
+	unsigned flags )
 {
 	AttributeDescription *desc;
+	AttributeType *at;
 
 	assert( ad != NULL );
 
@@ -698,23 +712,33 @@ int slap_bv2undef_ad(
 		return LDAP_UNDEFINED_TYPE;
 	}
 
-	for( desc = slap_schema.si_at_undefined->sat_ad; desc;
-		desc=desc->ad_next ) 
-	{
+	/* use the appropriate type */
+	if ( flags & SLAP_AD_PROXIED ) {
+		at = slap_schema.si_at_proxied;
+
+	} else {
+		at = slap_schema.si_at_undefined;
+	}
+
+	for( desc = at->sat_ad; desc; desc=desc->ad_next ) {
 		if( desc->ad_cname.bv_len == bv->bv_len &&
-		    !strcasecmp( desc->ad_cname.bv_val, bv->bv_val ))
+		    !strcasecmp( desc->ad_cname.bv_val, bv->bv_val ) )
 		{
 		    	break;
 		}
 	}
-	
+
 	if( !desc ) {
+		if ( flags & SLAP_AD_NOINSERT ) {
+			*text = NULL;
+			return LDAP_UNDEFINED_TYPE;
+		}
+	
 		desc = ch_malloc(sizeof(AttributeDescription) + 1 +
 			bv->bv_len);
 		
 		desc->ad_flags = SLAP_DESC_NONE;
-		desc->ad_tags.bv_val = NULL;
-		desc->ad_tags.bv_len = 0;
+		BER_BVZERO( &desc->ad_tags );
 
 		desc->ad_cname.bv_len = bv->bv_len;
 		desc->ad_cname.bv_val = (char *)(desc+1);
@@ -723,9 +747,17 @@ int slap_bv2undef_ad(
 		/* canonical to upper case */
 		ldap_pvt_str2upper( desc->ad_cname.bv_val );
 
-		desc->ad_type = slap_schema.si_at_undefined;
+		/* shouldn't we protect this for concurrency? */
+		desc->ad_type = at;
+		ldap_pvt_thread_mutex_lock( &ad_undef_mutex );
 		desc->ad_next = desc->ad_type->sat_ad;
 		desc->ad_type->sat_ad = desc;
+		ldap_pvt_thread_mutex_unlock( &ad_undef_mutex );
+
+		Debug( LDAP_DEBUG_ANY,
+			"%s attributeDescription \"%s\" inserted.\n",
+			( flags & SLAP_AD_PROXIED ) ? "PROXIED" : "UNKNOWN",
+			desc->ad_cname.bv_val, 0 );
 	}
 
 	if( !*ad ) {
@@ -735,6 +767,56 @@ int slap_bv2undef_ad(
 	}
 
 	return LDAP_SUCCESS;
+}
+
+static int
+undef_remove(
+	AttributeType	*at,
+	char		*name )
+{
+	AttributeDescription	**u_ad;
+
+	for ( u_ad = &at->sat_ad; *u_ad; ) {
+		struct berval	bv;
+
+		ber_str2bv( name, 0, 0, &bv );
+
+		/* remove iff undef == name or undef == name;tag */
+		if ( (*u_ad)->ad_cname.bv_len >= bv.bv_len
+			&& strncasecmp( (*u_ad)->ad_cname.bv_val, bv.bv_val, bv.bv_len ) == 0
+			&& ( (*u_ad)->ad_cname.bv_val[ bv.bv_len ] == '\0'
+				|| (*u_ad)->ad_cname.bv_val[ bv.bv_len ] == ';' ) )
+		{
+			AttributeDescription	*tmp = *u_ad;
+
+			*u_ad = (*u_ad)->ad_next;
+
+			ch_free( tmp );
+
+		} else {
+			u_ad = &(*u_ad)->ad_next;
+		}
+	}
+
+	return 0;
+}
+
+int
+slap_ad_undef_remove(
+	char *name )
+{
+	int	rc;
+
+	ldap_pvt_thread_mutex_lock( &ad_undef_mutex );
+
+	rc = undef_remove( slap_schema.si_at_undefined, name );
+	if ( rc == 0 ) {
+		rc = undef_remove( slap_schema.si_at_proxied, name );
+	}
+
+	ldap_pvt_thread_mutex_unlock( &ad_undef_mutex );
+
+	return rc;
 }
 
 int
@@ -778,13 +860,17 @@ str2anlist( AttributeName *an, char *in, const char *brkstr )
 	AttributeName *anew;
 
 	/* find last element in list */
-	for (i = 0; an && an[i].an_name.bv_val; i++);
+	i = 0;
+	if ( an != NULL ) {
+		for ( i = 0; !BER_BVISNULL( &an[ i ].an_name ) ; i++)
+			;
+	}
 	
 	/* protect the input string from strtok */
 	str = ch_strdup( in );
 
 	/* Count words in string */
-	j=1;
+	j = 1;
 	for ( s = str; *s; s++ ) {
 		if ( strchr( brkstr, *s ) != NULL ) {
 			j++;
@@ -842,7 +928,7 @@ str2anlist( AttributeName *an, char *in, const char *brkstr )
 		anew++;
 	}
 
-	anew->an_name.bv_val = NULL;
+	BER_BVZERO( &anew->an_name );
 	free( str );
 	return( an );
 
@@ -993,8 +1079,6 @@ file2anlist( AttributeName *an, const char *fname, const char *brkstr )
 	}
 
 	while ( fgets( lcur, LBUFSIZ, fp ) != NULL ) {
-		char *str, *s, *next;
-		const char *delimstr = brkstr;
 		if ( ( c = strchr( lcur, '\n' ) ) ) {
 			if ( c == line ) {
 				*c = '\0';

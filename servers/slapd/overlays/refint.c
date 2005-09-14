@@ -1,5 +1,5 @@
 /* refint.c - referential integrity module */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/refint.c,v 1.7.2.4 2005/06/08 21:50:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/refint.c,v 1.7.2.6 2005/08/19 18:09:05 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2005 The OpenLDAP Foundation.
@@ -570,7 +570,7 @@ refint_response(
 	rc = nop.o_bd->be_search(&nop, &nrs);
 
 	ch_free( nop.ors_filterstr.bv_val );
-	while ( fptr = ftop.f_or ) {
+	while ( (fptr = ftop.f_or) != NULL ) {
 		ftop.f_or = fptr->f_next;
 		ch_free( fptr );
 	}
@@ -653,7 +653,7 @@ done:
 	for(dp = dd.mods; dp; dp = dd.mods) {
 		dd.mods = dp->next;
 		ch_free(dp->dn.bv_val);
-		slap_mods_free(dp->mm);
+		slap_mods_free(dp->mm, 1);
 	}
 	dd.mods = NULL;
 

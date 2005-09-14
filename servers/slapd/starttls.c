@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/starttls.c,v 1.36.2.1 2005/01/20 18:03:56 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/starttls.c,v 1.36.2.3 2005/08/17 16:15:36 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -25,8 +25,10 @@
 int
 starttls_extop ( Operation *op, SlapReply *rs )
 {
-	void *ctx;
 	int rc;
+
+	Statslog( LDAP_DEBUG_STATS, "%s STARTTLS\n",
+	    op->o_log_prefix, 0, 0, 0, 0 );
 
 	if ( op->ore_reqdata != NULL ) {
 		/* no request data should be provided */

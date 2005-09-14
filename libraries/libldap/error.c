@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/error.c,v 1.64.2.2 2005/01/20 18:03:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/error.c,v 1.64.2.3 2005/08/09 21:03:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -179,7 +179,7 @@ ldap_perror( LDAP *ld, LDAP_CONST char *str )
 
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );
-	assert( str );
+	assert( str != NULL );
 
 	e = ldap_int_error( ld->ld_errno );
 

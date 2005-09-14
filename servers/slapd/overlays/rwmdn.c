@@ -1,5 +1,5 @@
 /* rwmdn.c - massages dns */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmdn.c,v 1.11.2.3 2005/04/29 21:29:10 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmdn.c,v 1.11.2.4 2005/08/09 21:04:08 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -159,9 +159,9 @@ rwm_dn_massage(
 	struct berval	mdn;
 	static char	*dmy = "";
 
-	assert( dc );
-	assert( in );
-	assert( dn );
+	assert( dc != NULL );
+	assert( in != NULL );
+	assert( dn != NULL );
 
 	rc = rewrite_session( dc->rwmap->rwm_rw, dc->ctx,
 			( in->bv_val ? in->bv_val : dmy ), 
@@ -221,9 +221,9 @@ rwm_dn_massage(
 	int     	i, src, dst;
 	struct berval	tmpin;
 
-	assert( dc );
-	assert( in );
-	assert( dn );
+	assert( dc != NULL );
+	assert( in != NULL );
+	assert( dn != NULL );
 
 	BER_BVZERO( dn );
 

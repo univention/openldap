@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/dncache.c,v 1.10.2.2 2005/04/29 21:29:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/dncache.c,v 1.10.2.3 2005/08/09 21:04:04 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -97,8 +97,8 @@ meta_dncache_get_target(
 	time_t			curr_time;
 	int			target = META_TARGET_NONE;
 
-	assert( cache );
-	assert( ndn );
+	assert( cache != NULL );
+	assert( ndn != NULL );
 
 	tmp_entry.dn = *ndn;
 	ldap_pvt_thread_mutex_lock( &cache->mutex );
@@ -149,8 +149,8 @@ meta_dncache_update_entry(
 	time_t			curr_time = 0L;
 	int			err = 0;
 
-	assert( cache );
-	assert( ndn );
+	assert( cache != NULL );
+	assert( ndn != NULL );
 
 	/*
 	 * if cache->ttl < 0, cache never expires;
@@ -209,8 +209,8 @@ meta_dncache_delete_entry(
 	metadncacheentry_t	*entry,
 				tmp_entry;
 
-	assert( cache );
-	assert( ndn );
+	assert( cache != NULL );
+	assert( ndn != NULL );
 
 	tmp_entry.dn = *ndn;
 

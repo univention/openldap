@@ -1,5 +1,5 @@
 /* map.c - ldap backend mapping routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/map.c,v 1.1.2.6 2005/05/10 16:07:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/map.c,v 1.1.2.8 2005/08/09 21:04:04 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -87,7 +87,7 @@ ldap_back_map_init ( struct ldapmap *lm, struct ldapmapping **m )
 {
 	struct ldapmapping *mapping;
 
-	assert( m );
+	assert( m != NULL );
 
 	*m = NULL;
 	
@@ -116,7 +116,7 @@ ldap_back_mapping ( struct ldapmap *map, struct berval *s, struct ldapmapping **
 	Avlnode *tree;
 	struct ldapmapping fmapping;
 
-	assert( m );
+	assert( m != NULL );
 
 	if ( remap == BACKLDAP_REMAP ) {
 		tree = map->remap;
@@ -483,43 +483,40 @@ ldap_back_int_filter_map_rewrite(
 		ber_memfree( vtmp.bv_val );
 		break;
 
-	case SLAPD_FILTER_COMPUTED:
+	case SLAPD_FILTER_COMPUTED: {
+		struct berval	bv;
+
 		switch ( f->f_result ) {
 		case LDAP_COMPARE_FALSE:
 			if ( dc->target->mt_flags & LDAP_BACK_F_SUPPORT_T_F ) {
-				ber_str2bv( "(|)", STRLENOF( "(|)" ), 1, fstr );
-
-			} else {
-#if 0
-				ber_str2bv( "(?=false)", STRLENOF( "(?=false)" ), 1, fstr );
-#endif
-				/* better than nothing... */
-				ber_str2bv( "(!(objectClass=*))", STRLENOF( "(!(objectClass=*))" ), 1, fstr );
+				BER_BVSTR( &bv, "(|)" );
+				break;
 			}
+			/* fallthru */
+
+		/* FIXME: treat UNDEFINED as FALSE */
+		case SLAPD_COMPARE_UNDEFINED:
+			/* better than nothing... */
+			BER_BVSTR( &bv, "(!(objectClass=*))" );
 			break;
 
 		case LDAP_COMPARE_TRUE:
 			if ( dc->target->mt_flags & LDAP_BACK_F_SUPPORT_T_F ) {
-				ber_str2bv( "(&)", STRLENOF( "(&)" ), 1, fstr );
-
-			} else {
-#if 0
-				ber_str2bv( "(?=true)", STRLENOF( "(?=true)" ), 1, fstr );
-#endif
-				/* better than nothing... */
-				ber_str2bv( "(objectClass=*)", STRLENOF( "(objectClass=*)" ), 1, fstr );
+				BER_BVSTR( &bv, "(&)" );
+				break;
 			}
-			break;
 
-		case SLAPD_COMPARE_UNDEFINED:
-			ber_str2bv( "(?=undefined)", STRLENOF( "(?=undefined)" ), 1, fstr );
+			/* better than nothing... */
+			BER_BVSTR( &bv, "(objectClass=*)" );
 			break;
 
 		default:
-			ber_str2bv( "(?=error)", STRLENOF( "(?=error)" ), 1, fstr );
+			BER_BVSTR( &bv, "(?=error)" );
 			break;
 		}
-		break;
+
+		ber_dupbv( fstr, &bv );
+		} break;
 
 	default:
 		ber_str2bv( "(?=unknown)", STRLENOF( "(?=unknown)" ), 1, fstr );
@@ -604,8 +601,8 @@ ldap_back_referral_result_rewrite(
 {
 	int		i, last;
 
-	assert( dc );
-	assert( a_vals );
+	assert( dc != NULL );
+	assert( a_vals != NULL );
 
 	for ( last = 0; !BER_BVISNULL( &a_vals[ last ] ); last++ )
 		;

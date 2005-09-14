@@ -1,5 +1,5 @@
 /* readw.c - deal with read waiters subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/rww.c,v 1.26.2.2 2005/04/29 21:29:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/rww.c,v 1.26.2.3 2005/08/09 21:04:05 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2005 The OpenLDAP Foundation.
@@ -27,6 +27,12 @@
 #include "slap.h"
 #include "lutil.h"
 #include "back-monitor.h"
+
+static int
+monitor_subsys_rww_update(
+	Operation		*op,
+	SlapReply		*rs,
+	Entry                   *e );
 
 enum {
 	MONITOR_RWW_READ = 0,
@@ -57,6 +63,8 @@ monitor_subsys_rww_init(
 	int			i;
 
 	assert( be != NULL );
+
+	ms->mss_update = monitor_subsys_rww_update;
 
 	mi = ( monitor_info_t * )be->be_private;
 
@@ -139,12 +147,11 @@ monitor_subsys_rww_init(
 	return( 0 );
 }
 
-int
+static int
 monitor_subsys_rww_update(
 	Operation		*op,
 	SlapReply		*rs,
-	Entry                   *e
-)
+	Entry                   *e )
 {
 	monitor_info_t *mi = (monitor_info_t *)op->o_bd->be_private;
 	Connection	*c;
@@ -206,7 +213,7 @@ monitor_subsys_rww_update(
 	snprintf( buf, sizeof( buf ), "%ld", num );
 
 	a = attr_find( e->e_attrs, mi->mi_ad_monitorCounter );
-	assert( a );
+	assert( a != NULL );
 	len = strlen( buf );
 	if ( len > a->a_vals[ 0 ].bv_len ) {
 		a->a_vals[ 0 ].bv_val = ber_memrealloc( a->a_vals[ 0 ].bv_val, len + 1 );

@@ -1,5 +1,5 @@
 /* add.c - ldap BerkeleyDB back-end add routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/add.c,v 1.126.2.4 2005/06/03 19:54:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/add.c,v 1.126.2.5 2005/08/09 21:04:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2005 The OpenLDAP Foundation.
@@ -52,7 +52,7 @@ bdb_add(Operation *op, SlapReply *rs )
 	ctrls[num_ctrls] = 0;
 
 	/* check entry's schema */
-	rs->sr_err = entry_schema_check( op->o_bd, op->oq_add.rs_e, NULL,
+	rs->sr_err = entry_schema_check( op, op->oq_add.rs_e, NULL,
 		get_manageDIT(op), &rs->sr_text, textbuf, textlen );
 	if ( rs->sr_err != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE,

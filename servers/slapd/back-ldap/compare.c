@@ -1,5 +1,5 @@
 /* compare.c - ldap backend compare function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/compare.c,v 1.52.2.2 2005/01/24 21:28:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/compare.c,v 1.52.2.3 2005/07/11 05:55:31 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2005 The OpenLDAP Foundation.
@@ -44,6 +44,7 @@ ldap_back_compare(
 
 	lc = ldap_back_getconn( op, rs, LDAP_BACK_SENDERR );
 	if ( !lc || !ldap_back_dobind( lc, op, rs, LDAP_BACK_SENDERR ) ) {
+		lc = NULL;
 		goto cleanup;
 	}
 
@@ -70,5 +71,9 @@ retry:
 cleanup:
 	(void)ldap_back_proxy_authz_ctrl_free( op, &ctrls );
 	
+	if ( lc != NULL ) {
+		ldap_back_release_conn( op, rs, lc );
+	}
+
 	return rs->sr_err;
 }

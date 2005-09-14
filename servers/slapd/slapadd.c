@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapadd.c,v 1.11.2.8 2005/06/08 21:50:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapadd.c,v 1.11.2.10 2005/09/01 16:16:51 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -63,13 +63,22 @@ slapadd( int argc, char **argv )
 	ID	ctxcsn_id, id;
 	int ret;
 	struct berval bvtext;
-	int i, checkvals;
-	struct berval mc;
+	int checkvals;
+	char opbuf[OPERATION_BUFFER_SIZE];
+	Operation *op;
+
 	slap_tool_init( progname, SLAPADD, argc, argv );
+
+	memset( opbuf, 0, sizeof(opbuf) );
+	op = (Operation *)opbuf;
 
 	if( !be->be_entry_open ||
 		!be->be_entry_close ||
-		!be->be_entry_put )
+		!be->be_entry_put ||
+		(update_ctxcsn &&
+		 (!be->be_dn2id_get ||
+		  !be->be_id2entry_get ||
+		  !be->be_entry_modify)) )
 	{
 		fprintf( stderr, "%s: database doesn't support necessary operations.\n",
 			progname );
@@ -182,7 +191,9 @@ slapadd( int argc, char **argv )
 			}
 
 			/* check schema */
-			rc = entry_schema_check( be, e, NULL, manage,
+			op->o_bd = be;
+
+			rc = entry_schema_check( op, e, NULL, manage,
 				&text, textbuf, textlen );
 
 			if( rc != LDAP_SUCCESS ) {
@@ -302,19 +313,15 @@ slapadd( int argc, char **argv )
 				if( continuemode ) continue;
 				break;
 			}
-		}
-
-		if ( verbose ) {
-			if ( dryrun ) {
-				fprintf( stderr, "added: \"%s\"\n",
-					e->e_dn );
-			} else {
+			if ( verbose )
 				fprintf( stderr, "added: \"%s\" (%08lx)\n",
 					e->e_dn, (long) id );
-			}
+		} else {
+			if ( verbose )
+				fprintf( stderr, "added: \"%s\"\n",
+					e->e_dn );
 		}
 
-done:;
 		entry_free( e );
 	}
 

@@ -1,5 +1,5 @@
 /* add.c - ldap backend add function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/add.c,v 1.53.2.2 2005/01/24 21:28:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/add.c,v 1.53.2.4 2005/08/17 21:33:45 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -54,6 +54,7 @@ ldap_back_add(
 
 	lc = ldap_back_getconn( op, rs, LDAP_BACK_SENDERR );
 	if ( !lc || !ldap_back_dobind( lc, op, rs, LDAP_BACK_SENDERR ) ) {
+		lc = NULL;
 		goto cleanup;
 	}
 
@@ -68,7 +69,8 @@ ldap_back_add(
 
 	isupdate = be_shadow_update( op );
 	for ( i = 0, a = op->oq_add.rs_e->e_attrs; a; a = a->a_next ) {
-		if ( !isupdate && a->a_desc->ad_type->sat_no_user_mod  ) {
+		if ( !isupdate && !get_manageDIT( op ) && a->a_desc->ad_type->sat_no_user_mod  )
+		{
 			continue;
 		}
 
@@ -114,6 +116,10 @@ cleanup:
 			ch_free( attrs[ i ]->mod_vals.modv_bvals );
 		}
 		ch_free( attrs );
+	}
+
+	if ( lc ) {
+		ldap_back_release_conn( op, rs, lc );
 	}
 
 	Debug( LDAP_DEBUG_ARGS, "<== ldap_back_add(\"%s\"): %d\n",

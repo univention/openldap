@@ -1,5 +1,5 @@
 /* add.c - ldap ldbm back-end add routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/add.c,v 1.92.2.3 2005/06/03 19:54:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/add.c,v 1.92.2.4 2005/08/09 21:04:03 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -45,7 +45,7 @@ ldbm_back_add(
 	Debug(LDAP_DEBUG_ARGS, "==> ldbm_back_add: %s\n",
 		op->o_req_dn.bv_val, 0, 0);
 	
-	rs->sr_err = entry_schema_check( op->o_bd, op->oq_add.rs_e, NULL,
+	rs->sr_err = entry_schema_check( op, op->oq_add.rs_e, NULL,
 		get_manageDIT(op), &rs->sr_text, textbuf, textlen );
 
 	if ( rs->sr_err != LDAP_SUCCESS ) {

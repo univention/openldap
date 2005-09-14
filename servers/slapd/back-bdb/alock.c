@@ -1,5 +1,5 @@
 /* alock.c - access lock library */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/alock.c,v 1.3.2.2 2005/06/13 01:01:49 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/alock.c,v 1.3.2.3 2005/08/09 21:04:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005 The OpenLDAP Foundation.
@@ -234,7 +234,7 @@ alock_read_slot ( alock_info_t * info,
 
 	if (slot_data->al_appname) free (slot_data->al_appname);
 	slot_data->al_appname = calloc (1, ALOCK_MAX_APPNAME);
-	strncpy (slot_data->al_appname, slotbuf+32, ALOCK_MAX_APPNAME-1);
+	strncpy (slot_data->al_appname, (char *)slotbuf+32, ALOCK_MAX_APPNAME-1);
 	(slot_data->al_appname) [ALOCK_MAX_APPNAME-1] = '\0';
 
 	return 0;
@@ -259,7 +259,7 @@ alock_write_slot ( alock_info_t * info,
 	alock_write_iattr (slotbuf+16, slot_data->al_stamp);
 	alock_write_iattr (slotbuf+24, slot_data->al_pid);
 
-	strncpy (slotbuf+32, slot_data->al_appname, ALOCK_MAX_APPNAME-1);
+	strncpy ((char *)slotbuf+32, slot_data->al_appname, ALOCK_MAX_APPNAME-1);
 	slotbuf[ALOCK_SLOT_SIZE-1] = '\0';
 
 	res = lseek (info->al_fd, 
@@ -295,10 +295,11 @@ alock_query_slot ( alock_info_t * info )
 	
 	(void) memset ((void *) &slot_data, 0, sizeof (alock_slot_t));
 	alock_read_slot (info, &slot_data);
-	if (slot_data.al_lock == ALOCK_UNLOCKED) return ALOCK_UNLOCKED;
 
 	if (slot_data.al_appname != NULL) free (slot_data.al_appname);
 	slot_data.al_appname = NULL;
+
+	if (slot_data.al_lock == ALOCK_UNLOCKED) return ALOCK_UNLOCKED;
 
 	res = alock_test_lock (info->al_fd, info->al_slot);
 	if (res < 0) return -1;

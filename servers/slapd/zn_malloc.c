@@ -1,5 +1,5 @@
 /* zn_malloc.c - zone-based malloc routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/zn_malloc.c,v 1.3.2.2 2005/01/20 18:03:56 kurt Exp $*/
+/* $OpenLDAP: pkg/ldap/servers/slapd/zn_malloc.c,v 1.3.2.3 2005/08/09 21:04:01 kurt Exp $*/
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2005 The OpenLDAP Foundation.
@@ -542,7 +542,7 @@ slap_zn_free(void *ptr, void *ctx)
 						Debug(LDAP_DEBUG_ANY, "slap_zn_free: "
 							"free object not found while bit is clear.\n",
 							0, 0, 0);
-						assert(zo);
+						assert(zo != NULL);
 
 					}
 				} else {
@@ -604,7 +604,7 @@ slap_zn_free(void *ptr, void *ctx)
 						Debug(LDAP_DEBUG_ANY, "slap_zn_free: "
 							"free object not found while bit is clear.\n",
 							0, 0, 0 );
-						assert( zo );
+						assert(zo != NULL);
 
 					}
 				} else {

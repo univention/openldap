@@ -1,5 +1,5 @@
 /* schema.c - routines to manage schema definitions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema.c,v 1.100.2.2 2005/06/08 21:50:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema.c,v 1.100.2.3 2005/08/09 21:04:00 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -103,7 +103,7 @@ schema_info( Entry **entry, const char **text )
 		}
 
 		nvals[0].bv_val = strchr( frontendDB->be_schemandn.bv_val, '=' );
-		assert( nvals[0].bv_val );
+		assert( nvals[0].bv_val != NULL );
 		nvals[0].bv_val++;
 		nvals[0].bv_len = frontendDB->be_schemandn.bv_len -
 			(nvals[0].bv_val - frontendDB->be_schemandn.bv_val);

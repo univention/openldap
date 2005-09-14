@@ -1,5 +1,5 @@
 /* modrdn.c - ldap backend modrdn function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modrdn.c,v 1.38.2.2 2005/01/24 21:28:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modrdn.c,v 1.38.2.4 2005/08/09 21:04:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -45,7 +45,7 @@ ldap_back_modrdn(
 
 	lc = ldap_back_getconn( op, rs, LDAP_BACK_SENDERR );
 	if ( !lc || !ldap_back_dobind( lc, op, rs, LDAP_BACK_SENDERR ) ) {
-		return( -1 );
+		return rs->sr_err;
 	}
 
 	if ( op->orr_newSup ) {
@@ -77,6 +77,10 @@ retry:
 
 cleanup:
 	(void)ldap_back_proxy_authz_ctrl_free( op, &ctrls );
+
+	if ( lc != NULL ) {
+		ldap_back_release_conn( op, rs, lc );
+	}
 
 	return rc;
 }

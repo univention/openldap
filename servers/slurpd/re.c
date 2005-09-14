@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/re.c,v 1.36.2.1 2005/01/20 18:04:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/re.c,v 1.36.2.2 2005/08/09 21:04:10 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -423,6 +423,7 @@ getchangetype(
 
 
 
+#if 0
 /*
  * Find the first line which is not a "replica:" line in buf.
  * Returns a pointer to the line.  Returns NULL if there are
@@ -448,6 +449,7 @@ skip_replica_lines(
 	}
     }
 }
+#endif /* 0 */
 
 
 

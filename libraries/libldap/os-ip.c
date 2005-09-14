@@ -1,5 +1,5 @@
 /* os-ip.c -- platform-specific TCP & UDP related code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.108.2.4 2005/04/29 21:29:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.108.2.6 2005/08/09 21:03:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -903,6 +903,7 @@ ldap_int_select( LDAP *ld, struct timeval *timeout )
 #endif
 
 	sip = (struct selectinfo *)ld->ld_selectinfo;
+	assert( sip != NULL );
 
 #ifdef HAVE_POLL
 	{

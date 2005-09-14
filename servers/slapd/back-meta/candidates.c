@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/candidates.c,v 1.12.2.3 2005/05/06 16:42:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/candidates.c,v 1.12.2.6 2005/08/17 16:15:37 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -23,6 +23,7 @@
 #include "portable.h"
 
 #include <stdio.h>
+#include "ac/string.h"
 
 #include "slap.h"
 #include "../back-ldap/back-ldap.h"
@@ -50,10 +51,6 @@
  * A possible extension will include the handling of multiple suffixes
  */
 
-static int
-meta_back_is_candidate_unique(
-	metainfo_t	*mi,
-	struct berval	*ndn );
 
 /*
  * returns 1 if suffix is candidate for dn, otherwise 0
@@ -63,11 +60,46 @@ meta_back_is_candidate_unique(
 int 
 meta_back_is_candidate(
 	struct berval	*nsuffix,
+	int		suffixscope,
 	struct berval	*ndn,
 	int		scope )
 {
 	if ( dnIsSuffix( ndn, nsuffix ) ) {
-		return META_CANDIDATE;
+		switch ( suffixscope ) {
+		case LDAP_SCOPE_SUBTREE:
+		default:
+			return META_CANDIDATE;
+
+#ifdef LDAP_SCOPE_SUBORDINATE
+		case LDAP_SCOPE_SUBORDINATE:
+			if ( ndn->bv_len > nsuffix->bv_len ) {
+				return META_CANDIDATE;
+			}
+			break;
+#endif /* LDAP_SCOPE_SUBORDINATE */
+
+		/* nearly useless; not allowed by config */
+		case LDAP_SCOPE_ONELEVEL:
+			if ( ndn->bv_len > nsuffix->bv_len ) {
+				struct berval	rdn = *ndn;
+
+				rdn.bv_len -= nsuffix->bv_len
+					+ STRLENOF( "," );
+				if ( dnIsOneLevelRDN( &rdn ) ) {
+					return META_CANDIDATE;
+				}
+			}
+			break;
+
+		/* nearly useless; not allowed by config */
+		case LDAP_SCOPE_BASE:
+			if ( ndn->bv_len == nsuffix->bv_len ) {
+				return META_CANDIDATE;
+			}
+			break;
+		}
+
+		return META_NOT_CANDIDATE;
 	}
 
 	if ( scope == LDAP_SCOPE_SUBTREE && dnIsSuffix( nsuffix, ndn ) ) {
@@ -81,31 +113,12 @@ meta_back_is_candidate(
 }
 
 /*
- * meta_back_is_candidate_unique
- *
- * checks whether a candidate is unique
- * Note: dn MUST be normalized
- */
-static int
-meta_back_is_candidate_unique(
-	metainfo_t	*mi,
-	struct berval	*ndn )
-{
-	switch ( meta_back_select_unique_candidate( mi, ndn ) ) {
-	case META_TARGET_MULTIPLE:
-	case META_TARGET_NONE:
-		return 0;
-	}
-
-	return 1;
-}
-
-/*
  * meta_back_select_unique_candidate
  *
- * returns the index of the candidate in case it is unique, otherwise -1
- * Note: dn MUST be normalized.
- * Note: if defined, the default candidate is returned in case of no match.
+ * returns the index of the candidate in case it is unique, otherwise
+ * META_TARGET_NONE if none matches, or
+ * META_TARGET_MULTIPLE if more than one matches
+ * Note: ndn MUST be normalized.
  */
 int
 meta_back_select_unique_candidate(
@@ -115,7 +128,9 @@ meta_back_select_unique_candidate(
 	int	i, candidate = META_TARGET_NONE;
 
 	for ( i = 0; i < mi->mi_ntargets; ++i ) {
-		if ( meta_back_is_candidate( &mi->mi_targets[ i ].mt_nsuffix, ndn, LDAP_SCOPE_BASE ) )
+		if ( meta_back_is_candidate( &mi->mi_targets[ i ].mt_nsuffix,
+				mi->mi_targets[ i ].mt_scope,
+				ndn, LDAP_SCOPE_BASE ) )
 		{
 			if ( candidate == META_TARGET_NONE ) {
 				candidate = i;

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.263.2.11 2005/06/03 19:12:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.263.2.16 2005/08/25 05:01:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -207,6 +207,9 @@ typedef struct ldapcontrol {
 #define LDAP_CONTROL_SUBENTRIES			"1.3.6.1.4.1.4203.1.10.1" /* RFC 3672 */
 #define LDAP_CONTROL_PAGEDRESULTS		"1.2.840.113556.1.4.319"  /* RFC 2696 */
 #define LDAP_CONTROL_VALUESRETURNFILTER	"1.2.826.0.1.334810.2.3"  /* RFC 3876 */
+#define LDAP_CONTROL_ASSERT				"1.3.6.1.1.12"
+#define LDAP_CONTROL_PRE_READ			"1.3.6.1.1.13.1"
+#define LDAP_CONTROL_POST_READ			"1.3.6.1.1.13.2"
 
 /*  standard track - not implemented in slapd(8) */
 #define LDAP_CONTROL_SORTREQUEST    "1.2.840.113556.1.4.473" /* RFC 2891 */
@@ -216,13 +219,11 @@ typedef struct ldapcontrol {
 #define LDAP_CONTROL_PROXY_AUTHZ		"2.16.840.1.113730.3.4.18"
 
 /* various works in progress */
-#define LDAP_CONTROL_ASSERT				"1.3.6.1.4.1.4203.666.5.9"
 #define LDAP_CONTROL_NOOP				"1.3.6.1.4.1.4203.666.5.2"
-#define LDAP_CONTROL_PRE_READ			"1.3.6.1.4.1.4203.666.5.10.1"
-#define LDAP_CONTROL_POST_READ			"1.3.6.1.4.1.4203.666.5.10.2"
 #define LDAP_CONTROL_NO_SUBORDINATES	"1.3.6.1.4.1.4203.666.5.11"
 #define LDAP_CONTROL_MANAGEDIT			"1.3.6.1.4.1.4203.666.5.12"
 #define LDAP_CONTROL_SLURP				"1.3.6.1.4.1.4203.666.5.13"
+#define LDAP_CONTROL_VALSORT			"1.3.6.1.4.1.4203.666.5.14"
 
 /* LDAP Duplicated Entry Control Extension *//* not implemented in slapd(8) */
 #define LDAP_CONTROL_DUPENT_REQUEST		"2.16.840.1.113719.1.27.101.1"
@@ -244,7 +245,7 @@ typedef struct ldapcontrol {
 #define LDAP_CONTROL_VLVRESPONSE    "2.16.840.1.113730.3.4.10"
 
 /* Password policy Controls *//* work in progress */
-/* ITS#3458: released, but not to latest draft; disabled by default */
+/* ITS#3458: released; disabled by default */
 #define LDAP_CONTROL_PASSWORDPOLICYREQUEST	"1.3.6.1.4.1.42.2.27.8.5.1"
 #define LDAP_CONTROL_PASSWORDPOLICYRESPONSE	"1.3.6.1.4.1.42.2.27.8.5.1"
 
@@ -298,6 +299,7 @@ typedef struct ldapcontrol {
 #define LDAP_CONTROL_X_SEARCH_OPTIONS		"1.2.840.113556.1.4.1340"
 #define LDAP_SEARCH_FLAG_DOMAIN_SCOPE		1 /* do not generate referrals */
 #define LDAP_SEARCH_FLAG_PHANTOM_ROOT		2 /* search all NCs subordinate to base */
+#define LDAP_CONTROL_X_EXTENDED_DN		"1.2.840.113556.1.4.529"
 
 /* LDAP Unsolicited Notifications */
 #define	LDAP_NOTICE_OF_DISCONNECTION	"1.3.6.1.4.1.1466.20036" /* RFC 2251 */
@@ -345,10 +347,10 @@ typedef struct ldapcontrol {
 #define LDAP_FEATURE_ABSOLUTE_FILTERS "1.3.6.1.4.1.4203.1.5.3"  /* (&) (|) */
 #define LDAP_FEATURE_LANGUAGE_TAG_OPTIONS "1.3.6.1.4.1.4203.1.5.4"
 #define LDAP_FEATURE_LANGUAGE_RANGE_OPTIONS "1.3.6.1.4.1.4203.1.5.5"
+#define LDAP_FEATURE_MODIFY_INCREMENT "1.3.6.1.1.14"
 
 #ifdef LDAP_DEVEL
 /* LDAP Experimental (works in progress) Features */
-#define LDAP_FEATURE_MODIFY_INCREMENT "1.3.6.1.4.1.4203.666.8.2"
 #define LDAP_FEATURE_SUBORDINATE_SCOPE \
 	"1.3.6.1.4.1.4203.666.8.1" /* "children" */
 #define LDAP_FEATURE_CHILDREN_SCOPE LDAP_FEATURE_SUBORDINATE_SCOPE
@@ -1337,6 +1339,10 @@ ldap_initialize LDAP_P((
  */
 
 LDAP_F( int )
+ldap_tls_inplace LDAP_P((
+	LDAP *ld ));
+
+LDAP_F( int )
 ldap_start_tls LDAP_P((
 	LDAP *ld,
 	LDAPControl **serverctrls,
@@ -1959,7 +1965,7 @@ ldap_parse_vlv_control LDAP_P((
  * LDAP Transactions
  *	in txn.c
  */
-#ifdef LDAP_GROUPING_TRANSACTION
+#ifdef LDAP_GROUP_TRANSACTION
 LDAP_F( int )
 ldap_parse_txn_create LDAP_P((
 	LDAP *ld,

@@ -1,5 +1,5 @@
 /* abandon.c */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/abandon.c,v 1.36.2.1 2005/01/20 18:03:49 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/abandon.c,v 1.36.2.3 2005/08/09 21:03:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -130,7 +130,7 @@ do_abandon(
 		}
 		if ( lr->lr_origid == msgid ) {/* child:  abandon it */
 			(void) do_abandon( ld,
-				msgid, lr->lr_msgid, sctrls, cctrls );
+				lr->lr_origid, lr->lr_msgid, sctrls, cctrls );
 		}
 	}
 
@@ -159,6 +159,15 @@ do_abandon(
 	if ( err == 0 ) {
 		ld->ld_errno = LDAP_SUCCESS;
 		return LDAP_SUCCESS;
+	}
+
+	/* fetch again the request that we are abandoning */
+	if ( lr != NULL ) {
+		for ( lr = ld->ld_requests; lr != NULL; lr = lr->lr_next ) {
+			if ( lr->lr_msgid == msgid ) {	/* this message */
+				break;
+			}
+		}
 	}
 
 	err = 0;
@@ -229,6 +238,7 @@ do_abandon(
 			} else {
 				/* send the message */
 				if ( lr != NULL ) {
+					assert( lr->lr_conn != NULL );
 					sb = lr->lr_conn->lconn_sb;
 				} else {
 					sb = ld->ld_sb;
@@ -253,6 +263,12 @@ do_abandon(
 		}
 	}
 
+#ifdef LDAP_R_COMPILE
+	/* ld_abandoned is actually protected by the ld_res_mutex;
+	 * give up the ld_req_mutex and get the other */
+	ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
+	ldap_pvt_thread_mutex_lock( &ld->ld_res_mutex );
+#endif
 	i = 0;
 	if ( ld->ld_abandoned != NULL ) {
 		for ( ; ld->ld_abandoned[i] != -1; i++ )
@@ -267,7 +283,7 @@ do_abandon(
 	if ( ld->ld_abandoned == NULL ) {
 		ld->ld_abandoned = old_abandon;
 		ld->ld_errno = LDAP_NO_MEMORY;
-		return( ld->ld_errno );
+		goto done;
 	}
 
 	ld->ld_abandoned[i] = msgid;
@@ -277,5 +293,10 @@ do_abandon(
 		ld->ld_errno = LDAP_SUCCESS;
 	}
 
+done:;
+#ifdef LDAP_R_COMPILE
+	ldap_pvt_thread_mutex_unlock( &ld->ld_res_mutex );
+	ldap_pvt_thread_mutex_lock( &ld->ld_req_mutex );
+#endif
 	return( ld->ld_errno );
 }

@@ -1,5 +1,5 @@
 /*  ldap-int.h - defines & prototypes internal to the LDAP library */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.160.2.2 2005/06/03 19:12:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.160.2.3 2005/08/09 21:03:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -119,7 +119,7 @@ LDAP_BEGIN_DECL
 #define LDAP_BOOL_TLS			3
 
 #define LDAP_BOOLEANS	unsigned long
-#define LDAP_BOOL(n)	(1 << (n))
+#define LDAP_BOOL(n)	((LDAP_BOOLEANS)1 << (n))
 #define LDAP_BOOL_GET(lo, bool)	\
 	((lo)->ldo_booleans & LDAP_BOOL(bool) ? -1 : 0)
 #define LDAP_BOOL_SET(lo, bool) ((lo)->ldo_booleans |= LDAP_BOOL(bool))

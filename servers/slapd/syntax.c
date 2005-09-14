@@ -1,5 +1,5 @@
 /* syntax.c - routines to manage syntax definitions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/syntax.c,v 1.40.2.1 2005/01/20 18:03:56 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/syntax.c,v 1.40.2.2 2005/08/25 05:01:18 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -178,14 +178,15 @@ register_syntax(
 
 	code = syn_add( syn, def, &err );
 
-	ldap_memfree( syn );
-
 	if ( code ) {
 		Debug( LDAP_DEBUG_ANY, "Error in register_syntax: %s %s in %s\n",
 		    scherr2str(code), err, def->sd_desc );
+		ldap_syntax_free( syn );
 
 		return( -1 );
 	}
+
+	ldap_memfree( syn );
 
 	return( 0 );
 }

@@ -1,5 +1,5 @@
 /* rwmmap.c - rewrite/mapping routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmmap.c,v 1.14.2.6 2005/05/06 16:42:53 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmmap.c,v 1.14.2.8 2005/08/09 21:04:08 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -71,7 +71,7 @@ rwm_map_init( struct ldapmap *lm, struct ldapmapping **m )
 	const char		*text;
 	int			rc;
 
-	assert( m );
+	assert( m != NULL );
 
 	*m = NULL;
 	
@@ -82,19 +82,21 @@ rwm_map_init( struct ldapmap *lm, struct ldapmapping **m )
 	}
 
 	/* FIXME: I don't think this is needed any more... */
-	rc = slap_str2ad( "objectClass", &mapping->m_src_ad, &text );
+	rc = slap_str2ad( "objectClass", &mapping[0].m_src_ad, &text );
 	if ( rc != LDAP_SUCCESS ) {
 		return rc;
 	}
 
-	mapping->m_dst_ad = mapping->m_src_ad;
-	ber_dupbv( &mapping->m_dst, &mapping->m_src_ad->ad_cname );
-	ber_dupbv( &mapping->m_dst, &mapping->m_src );
+	mapping[0].m_dst_ad = mapping[0].m_src_ad;
+	ber_dupbv( &mapping[0].m_src, &mapping[0].m_src_ad->ad_cname );
+	ber_dupbv( &mapping[0].m_dst, &mapping[0].m_src );
 
-	mapping[1].m_src = mapping->m_src;
-	mapping[1].m_dst = mapping->m_dst;
+	mapping[1].m_src = mapping[0].m_src;
+	mapping[1].m_dst = mapping[0].m_dst;
+	mapping[1].m_src_ad = mapping[0].m_src_ad;
+	mapping[1].m_dst_ad = mapping[1].m_src_ad;
 
-	avl_insert( &lm->map, (caddr_t)mapping, 
+	avl_insert( &lm->map, (caddr_t)&mapping[0], 
 			rwm_mapping_cmp, rwm_mapping_dup );
 	avl_insert( &lm->remap, (caddr_t)&mapping[1], 
 			rwm_mapping_cmp, rwm_mapping_dup );
@@ -110,7 +112,7 @@ rwm_mapping( struct ldapmap *map, struct berval *s, struct ldapmapping **m, int 
 	Avlnode *tree;
 	struct ldapmapping fmapping;
 
-	assert( m );
+	assert( m != NULL );
 
 	if ( remap == RWM_REMAP ) {
 		tree = map->remap;
@@ -163,7 +165,7 @@ rwm_map_attrnames(
 {
 	int		i, j;
 
-	assert( anp );
+	assert( anp != NULL );
 
 	*anp = NULL;
 
@@ -450,19 +452,16 @@ rwm_int_filter_map_rewrite(
 			vtmp,
 			tmp;
 	static struct berval
-#if 0
-			ber_bvfalse = BER_BVC( "(?=false)" ),
-#endif
 			/* better than nothing... */
 			ber_bvfalse = BER_BVC( "(!(objectClass=*))" ),
 			ber_bvtf_false = BER_BVC( "(|)" ),
-#if 0
-			ber_bvtrue = BER_BVC( "(?=true)" ),
-#endif
 			/* better than nothing... */
 			ber_bvtrue = BER_BVC( "(objectClass=*)" ),
 			ber_bvtf_true = BER_BVC( "(&)" ),
+#if 0
+			/* no longer needed; preserved for completeness */
 			ber_bvundefined = BER_BVC( "(?=undefined)" ),
+#endif
 			ber_bverror = BER_BVC( "(?=error)" ),
 			ber_bvunknown = BER_BVC( "(?=unknown)" ),
 			ber_bvnone = BER_BVC( "(?=none)" );
@@ -678,9 +677,12 @@ rwm_int_filter_map_rewrite(
 		case LDAP_COMPARE_FALSE:
 			if ( dc->rwmap->rwm_flags & RWM_F_SUPPORT_T_F ) {
 				tmp = ber_bvtf_false;
-			} else {
-				tmp = ber_bvfalse;
+				break;
 			}
+			/* fallthru */
+
+		case SLAPD_COMPARE_UNDEFINED:
+			tmp = ber_bvfalse;
 			break;
 
 		case LDAP_COMPARE_TRUE:
@@ -689,10 +691,6 @@ rwm_int_filter_map_rewrite(
 			} else {
 				tmp = ber_bvtrue;
 			}
-			break;
-			
-		case SLAPD_COMPARE_UNDEFINED:
-			tmp = ber_bvundefined;
 			break;
 			
 		default:
@@ -798,7 +796,7 @@ rwm_referral_rewrite(
 	struct berval		dn = BER_BVNULL,
 				ndn = BER_BVNULL;
 
-	assert( a_vals );
+	assert( a_vals != NULL );
 
 	/*
 	 * Rewrite the dn if needed

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/session.c,v 1.11.2.1 2005/01/20 18:03:53 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/session.c,v 1.11.2.2 2005/08/09 21:03:56 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2005 The OpenLDAP Foundation.
@@ -177,7 +177,7 @@ rewrite_session_return(
 		struct rewrite_session *session
 )
 {
-	assert( session );
+	assert( session != NULL );
 	ldap_pvt_thread_mutex_unlock( &session->ls_mutex );
 }
 

@@ -1,5 +1,5 @@
 /* root_dse.c - Provides the Root DSA-Specific Entry */
-/* $OpenLDAP: pkg/ldap/servers/slapd/root_dse.c,v 1.95.2.6 2005/05/18 16:29:22 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/root_dse.c,v 1.95.2.9 2005/08/12 19:25:37 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -29,6 +29,7 @@
 #endif
 
 static struct berval supportedFeatures[] = {
+	BER_BVC(LDAP_FEATURE_MODIFY_INCREMENT),		/* Modify/increment */
 	BER_BVC(LDAP_FEATURE_ALL_OP_ATTRS),			/* All Op Attrs (+) */
 	BER_BVC(LDAP_FEATURE_OBJECTCLASS_ATTRS),	/* OCs in Attrs List (@class) */
 	BER_BVC(LDAP_FEATURE_ABSOLUTE_FILTERS),		/* (&) and (|) search filters */
@@ -36,9 +37,6 @@ static struct berval supportedFeatures[] = {
 	BER_BVC(LDAP_FEATURE_LANGUAGE_RANGE_OPTIONS),/* Language Range Options */
 #ifdef LDAP_FEATURE_SUBORDINATE_SCOPE
 	BER_BVC(LDAP_FEATURE_SUBORDINATE_SCOPE),	/* "children" search scope */
-#endif
-#ifdef LDAP_FEATURE_MODIFY_INCREMENT
-	BER_BVC(LDAP_FEATURE_MODIFY_INCREMENT),		/* Modify/increment */
 #endif
 	{0,NULL}
 };
@@ -52,8 +50,10 @@ root_dse_info(
 	const char **text )
 {
 	Entry		*e;
-	struct berval val, *bv;
-	struct berval nval;
+	struct berval val;
+#ifdef LDAP_SLAPI
+	struct berval *bv;
+#endif
 	int		i, j;
 	char ** supportedSASLMechanisms;
 	BackendDB *be;
@@ -64,8 +64,10 @@ root_dse_info(
 		= slap_schema.si_ad_objectClass;
 	AttributeDescription *ad_namingContexts
 		= slap_schema.si_ad_namingContexts;
+#ifdef LDAP_SLAPI
 	AttributeDescription *ad_supportedExtension
 		= slap_schema.si_ad_supportedExtension;
+#endif
 	AttributeDescription *ad_supportedLDAPVersion
 		= slap_schema.si_ad_supportedLDAPVersion;
 	AttributeDescription *ad_supportedSASLMechanisms
@@ -324,7 +326,7 @@ slap_discover_feature(
 	char		*attrs[ 2 ] = { NULL, NULL };
 
 	ber_str2bv( val, 0, 0, &bv_val );
-	attrs[ 0 ] = attr;
+	attrs[ 0 ] = (char *) attr;
 
 	rc = ldap_initialize( &ld, uri );
 	if ( rc != LDAP_SUCCESS ) {

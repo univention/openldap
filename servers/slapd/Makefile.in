@@ -1,5 +1,5 @@
 ## Makefile.in for slapd
-# $OpenLDAP: pkg/ldap/servers/slapd/Makefile.in,v 1.163.2.5 2005/05/06 16:42:50 kurt Exp $
+# $OpenLDAP: pkg/ldap/servers/slapd/Makefile.in,v 1.163.2.9 2005/09/01 20:28:10 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -35,9 +35,10 @@ SRCS	= main.c globals.c bconfig.c config.c daemon.c \
 		oidm.c starttls.c index.c sets.c referral.c root_dse.c \
 		sasl.c module.c mra.c mods.c sl_malloc.c zn_malloc.c limits.c \
 		operational.c matchedValues.c cancel.c syncrepl.c \
-		backover.c ctxcsn.c ldapsync.c frontend.c \
+		backglue.c backover.c ctxcsn.c ldapsync.c frontend.c \
 		slapadd.c slapcat.c slapcommon.c slapdn.c slapindex.c \
 		slappasswd.c slaptest.c slapauth.c slapacl.c component.c \
+		aci.c \
 		$(@PLAT@_SRCS)
 
 OBJS	= main.o globals.o bconfig.o config.o daemon.o \
@@ -52,9 +53,10 @@ OBJS	= main.o globals.o bconfig.o config.o daemon.o \
 		oidm.o starttls.o index.o sets.o referral.o root_dse.o \
 		sasl.o module.o mra.o mods.o sl_malloc.o zn_malloc.o limits.o \
 		operational.o matchedValues.o cancel.o syncrepl.o \
-		backover.o ctxcsn.o ldapsync.o frontend.o \
+		backglue.o backover.o ctxcsn.o ldapsync.o frontend.o \
 		slapadd.o slapcat.o slapcommon.o slapdn.o slapindex.o \
 		slappasswd.o slaptest.o slapauth.o slapacl.o component.o \
+		aci.o \
 		$(@PLAT@_OBJS)
 
 LDAP_INCDIR= ../../include -I$(srcdir) -I$(srcdir)/slapi -I.
@@ -401,23 +403,16 @@ all-cffiles: slapd $(SLAPD_DYNAMIC_BACKENDS) dynamic_overlays
 	touch all-cffiles
 
 install-schema: FORCE
-	@-$(MKDIR) $(DESTDIR)$(schemadir)
-	i="$(srcdir)/schema/README" ; \
-	SF=`basename $$i` ; \
-	SD="$(DESTDIR)$(schemadir)/$$SF" ; \
-	echo $(INSTALL) $(INSTALLFLAGS) -m 444 $$i $$SD ; \
-	$(INSTALL) $(INSTALLFLAGS) -m 444 $$i $$SD
-	for i in $(srcdir)/schema/*.schema ; do \
-		SF=`basename $$i` ; \
-		SD="$(DESTDIR)$(schemadir)/$$SF" ; \
-		if test ! -f $$SD ; then \
-			echo "installing $$SF in $(schemadir)" ; \
-			echo $(INSTALL) $(INSTALLFLAGS) -m 444 $$i $$SD ; \
-			$(INSTALL) $(INSTALLFLAGS) -m 444 $$i $$SD ; \
-		else \
-			echo "PRESERVING EXISTING SCHEMA FILE $$SD" ; \
-		fi ; \
-		$(INSTALL) $(INSTALLFLAGS) -m 444 $$i $$SD.default ; \
+	@if test -d $(DESTDIR)$(schemadir) ; then \
+		echo "MOVING EXISTING SCHEMA DIR to $(DESTDIR)$(schemadir).$$$$" ; \
+		mv $(DESTDIR)$(schemadir) $(DESTDIR)$(schemadir).$$$$ ; \
+	fi
+	$(MKDIR) $(DESTDIR)$(schemadir)
+	@SD=$(DESTDIR)$(schemadir) ; \
+	files=`cd $(srcdir)/schema ; echo README *.ldif *.schema` ; \
+	for i in $$files ; do \
+		echo $(INSTALL) $(INSTALLFLAGS) -m 444 schema/$$i $$SD/$$i ; \
+		$(INSTALL) $(INSTALLFLAGS) -m 444 $(srcdir)/schema/$$i $$SD/$$i ; \
 	done
 
 install-conf: FORCE

@@ -1,5 +1,5 @@
 /* attr.c - routines for dealing with attributes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/attr.c,v 1.100.2.7 2005/06/10 15:11:25 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/attr.c,v 1.100.2.9 2005/08/25 05:01:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -111,7 +111,7 @@ attr_dup( Attribute *a )
 	tmp = attr_alloc( a->a_desc );
 
 	if ( a->a_vals != NULL ) {
-		int i;
+		int	i;
 
 		for ( i = 0; !BER_BVISNULL( &a->a_vals[i] ); i++ ) {
 			/* EMPTY */ ;
@@ -126,16 +126,20 @@ attr_dup( Attribute *a )
 		BER_BVZERO( &tmp->a_vals[i] );
 
 		/* a_nvals must be non null; it may be equal to a_vals */
-		assert( a->a_nvals );
+		assert( a->a_nvals != NULL );
 
 		if ( a->a_nvals != a->a_vals ) {
+			int	j;
+
 			tmp->a_nvals = ch_malloc( (i + 1) * sizeof(struct berval) );
-			for ( i = 0; !BER_BVISNULL( &a->a_nvals[i] ); i++ ) {
-				ber_dupbv( &tmp->a_nvals[i], &a->a_nvals[i] );
-				if ( BER_BVISNULL( &tmp->a_nvals[i] ) ) break;
+			for ( j = 0; !BER_BVISNULL( &a->a_nvals[j] ); j++ ) {
+				assert( j < i );
+				ber_dupbv( &tmp->a_nvals[j], &a->a_nvals[j] );
+				if ( BER_BVISNULL( &tmp->a_nvals[j] ) ) break;
 				/* FIXME: error? */
 			}
-			BER_BVZERO( &tmp->a_nvals[i] );
+			assert( j == i );
+			BER_BVZERO( &tmp->a_nvals[j] );
 
 		} else {
 			tmp->a_nvals = tmp->a_vals;

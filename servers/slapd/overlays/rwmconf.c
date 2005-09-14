@@ -1,5 +1,5 @@
 /* rwmconf.c - rewrite/map configuration file routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmconf.c,v 1.16.2.2 2005/05/06 16:42:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmconf.c,v 1.16.2.4 2005/08/26 00:17:33 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -175,14 +175,13 @@ rwm_map_config(
 					fname, lineno, src );
 
 				/*
-				 * FIXME: this should become an err
-				 *
-				 * FIXME: or, we should create a fake ad
+				 * we create a fake "proxied" ad 
 				 * and add it here.
 				 */
 
 				rc = slap_bv2undef_ad( &mapping[0].m_src,
-						&mapping[0].m_src_ad, &text );
+						&mapping[0].m_src_ad, &text,
+						SLAP_AD_PROXIED );
 				if ( rc != LDAP_SUCCESS ) {
 					fprintf( stderr,
 	"%s: line %d: source attributeType '%s': %d (%s)\n",
@@ -202,11 +201,12 @@ rwm_map_config(
 				fname, lineno, dst );
 
 			rc = slap_bv2undef_ad( &mapping[0].m_dst,
-					&mapping[0].m_dst_ad, &text );
+					&mapping[0].m_dst_ad, &text,
+					SLAP_AD_PROXIED );
 			if ( rc != LDAP_SUCCESS ) {
 				fprintf( stderr,
 	"%s: line %d: destination attributeType '%s': %d (%s)\n",
-					fname, lineno, src, rc, text ? text : "null" );
+					fname, lineno, dst, rc, text ? text : "null" );
 				return 1;
 			}
 		}

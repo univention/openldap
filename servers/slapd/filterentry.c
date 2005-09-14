@@ -1,5 +1,5 @@
 /* filterentry.c - apply a filter to an entry */
-/* $OpenLDAP: pkg/ldap/servers/slapd/filterentry.c,v 1.91.2.6 2005/04/29 21:29:04 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/filterentry.c,v 1.91.2.7 2005/08/09 21:03:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -444,7 +444,7 @@ static int test_mra_filter(
 				int		ret;
 				const char	*text;
 
-				assert( ad );
+				assert( ad != NULL );
 
 				if ( mra->ma_desc ) {
 					/* have a mra type? check for subtype */
@@ -588,7 +588,7 @@ test_ava_filter(
 		}
 
 		mr = slap_schema.si_ad_entryDN->ad_type->sat_equality;
-		assert( mr );
+		assert( mr != NULL );
 
 		rc = value_match( &match, slap_schema.si_ad_entryDN, mr,
 			SLAP_MR_EXT, &e->e_nname, &ava->aa_value, &text );

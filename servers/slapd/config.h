@@ -1,5 +1,5 @@
 /* config.h - configuration abstraction structure */
-/* $OpenLDAP: pkg/ldap/servers/slapd/config.h,v 1.2.2.7 2005/06/03 19:54:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/config.h,v 1.2.2.9 2005/08/09 21:03:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -62,6 +62,7 @@ typedef enum {
 #define	ARG_NO_INSERT	0x04000000	/* no arbitrary inserting */
 #define	ARG_NO_DELETE	0x08000000	/* no runtime deletes */
 #define ARG_UNIQUE	0x10000000
+#define	ARG_QUOTE	0x20000000	/* wrap with quotes before parsing */
 #define ARG_OFFSET	0x40000000
 #define ARG_MAGIC	0x80000000
 
@@ -108,7 +109,7 @@ typedef struct config_args_s {
 	char *line;
 	char *tline;
 	const char *fname;
-	unsigned long lineno;
+	int lineno;
 	char log[MAXPATHLEN + STRLENOF(": line 18446744073709551615") + 1];
 	char msg[SLAP_TEXT_BUFLEN];
 	int depth;
@@ -153,8 +154,18 @@ typedef struct config_args_s {
 #define value_ndn values.v_dn.vdn_ndn
 
 int config_register_schema(ConfigTable *ct, ConfigOCs *co);
+int config_del_vals(ConfigTable *cf, ConfigArgs *c);
 int config_get_vals(ConfigTable *ct, ConfigArgs *c);
 int config_add_vals(ConfigTable *ct, ConfigArgs *c);
+
+void init_config_argv( ConfigArgs *c );
+int init_config_attrs(ConfigTable *ct);
+int init_config_ocs( ConfigOCs *ocs );
+int config_parse_vals(ConfigTable *ct, ConfigArgs *c, int valx);
+int config_parse_add(ConfigTable *ct, ConfigArgs *c);
+int read_config_file(const char *fname, int depth, ConfigArgs *cf,
+	ConfigTable *cft );
+
 ConfigTable * config_find_keyword(ConfigTable *ct, ConfigArgs *c);
 Entry * config_build_entry( Operation *op, SlapReply *rs, CfEntryInfo *parent,
 	ConfigArgs *c, struct berval *rdn, ConfigOCs *main, ConfigOCs *extra );

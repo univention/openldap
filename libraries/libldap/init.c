@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/init.c,v 1.93.2.2 2005/04/29 21:29:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/init.c,v 1.93.2.3 2005/08/31 17:11:42 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -396,6 +396,9 @@ static void
 ldap_int_destroy_global_options(void)
 {
 	struct ldapoptions *gopts = LDAP_INT_GLOBAL_OPT();
+
+	if ( gopts == NULL )
+		return;
 
 	gopts->ldo_valid = LDAP_UNINITIALIZED;
 

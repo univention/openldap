@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/schema.c,v 1.66.2.1 2005/01/20 18:03:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/schema.c,v 1.66.2.3 2005/08/19 18:09:03 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -959,26 +959,23 @@ ldap_attributetype2bv(  LDAPAttributeType * at, struct berval *bv )
  * interpretation of the specs).
  */
 
-#define TK_NOENDQUOTE	-2
-#define TK_OUTOFMEM	-1
-#define TK_EOS		0
-#define TK_UNEXPCHAR	1
-#define TK_BAREWORD	2
-#define TK_QDSTRING	3
-#define TK_LEFTPAREN	4
-#define TK_RIGHTPAREN	5
-#define TK_DOLLAR	6
-#define TK_QDESCR	TK_QDSTRING
+typedef enum tk_t {
+	TK_NOENDQUOTE	= -2,
+	TK_OUTOFMEM	= -1,
+	TK_EOS		= 0,
+	TK_UNEXPCHAR	= 1,
+	TK_BAREWORD	= 2,
+	TK_QDSTRING	= 3,
+	TK_LEFTPAREN	= 4,
+	TK_RIGHTPAREN	= 5,
+	TK_DOLLAR	= 6,
+	TK_QDESCR	= TK_QDSTRING
+} tk_t;
 
-struct token {
-	int type;
-	char *sval;
-};
-
-static int
+static tk_t
 get_token( const char ** sp, char ** token_val )
 {
-	int kind;
+	tk_t kind;
 	const char * p;
 	const char * q;
 	char * res;
@@ -1150,7 +1147,7 @@ parse_qdescrs(const char **sp, int *code)
 {
 	char ** res;
 	char ** res1;
-	int kind;
+	tk_t kind;
 	char * sval;
 	int size;
 	int pos;
@@ -1217,7 +1214,7 @@ static char *
 parse_woid(const char **sp, int *code)
 {
 	char * sval;
-	int kind;
+	tk_t kind;
 
 	parse_whsp(sp);
 	kind = get_token(sp, &sval);
@@ -1232,10 +1229,13 @@ parse_woid(const char **sp, int *code)
 
 /* Parse a noidlen */
 static char *
-parse_noidlen(const char **sp, int *code, int *len, int allow_quoted)
+parse_noidlen(const char **sp, int *code, int *len, int flags)
 {
 	char * sval;
+	const char *savepos;
 	int quoted = 0;
+	int allow_quoted = ( flags & LDAP_SCHEMA_ALLOW_QUOTED );
+	int allow_oidmacro = ( flags & LDAP_SCHEMA_ALLOW_OID_MACRO );
 
 	*len = 0;
 	/* Netscape puts the SYNTAX value in quotes (incorrectly) */
@@ -1243,9 +1243,22 @@ parse_noidlen(const char **sp, int *code, int *len, int allow_quoted)
 		quoted = 1;
 		(*sp)++;
 	}
+	savepos = *sp;
 	sval = ldap_int_parse_numericoid(sp, code, 0);
 	if ( !sval ) {
-		return NULL;
+		if ( allow_oidmacro
+			&& *sp == savepos
+			&& *code == LDAP_SCHERR_NODIGIT )
+		{
+			if ( get_token(sp, &sval) != TK_BAREWORD ) {
+				if ( sval != NULL ) {
+					LDAP_FREE(sval);
+				}
+				return NULL;
+			}
+		} else {
+			return NULL;
+		}
 	}
 	if ( **sp == '{' /*}*/ ) {
 		(*sp)++;
@@ -1284,7 +1297,7 @@ parse_oids(const char **sp, int *code, const int allow_quoted)
 {
 	char ** res;
 	char ** res1;
-	int kind;
+	tk_t kind;
 	char * sval;
 	int size;
 	int pos;
@@ -1312,6 +1325,11 @@ parse_oids(const char **sp, int *code, const int allow_quoted)
 		     ( allow_quoted && kind == TK_QDSTRING ) ) {
 			res[pos++] = sval;
 			res[pos] = NULL;
+		} else if ( kind == TK_RIGHTPAREN ) {
+			/* FIXME: be liberal in what we accept... */
+			parse_whsp(sp);
+			LDAP_FREE(res);
+			return NULL;
 		} else {
 			*code = LDAP_SCHERR_UNEXPTOKEN;
 			LDAP_FREE(sval);
@@ -1441,7 +1459,7 @@ ldap_str2syntax( LDAP_CONST char * s,
 	LDAP_CONST char ** errp,
 	LDAP_CONST unsigned flags )
 {
-	int kind;
+	tk_t kind;
 	const char * ss = s;
 	char * sval;
 	int seen_name = 0;
@@ -1583,7 +1601,7 @@ ldap_str2matchingrule( LDAP_CONST char * s,
 	LDAP_CONST char ** errp,
 	LDAP_CONST unsigned flags )
 {
-	int kind;
+	tk_t kind;
 	const char * ss = s;
 	char * sval;
 	int seen_name = 0;
@@ -1782,7 +1800,7 @@ ldap_str2matchingruleuse( LDAP_CONST char * s,
 	LDAP_CONST char ** errp,
 	LDAP_CONST unsigned flags )
 {
-	int kind;
+	tk_t kind;
 	const char * ss = s;
 	char * sval;
 	int seen_name = 0;
@@ -1924,7 +1942,7 @@ ldap_str2matchingruleuse( LDAP_CONST char * s,
 				mru->mru_applies_oids = parse_oids(&ss,
 							     code,
 							     flags);
-				if ( !mru->mru_applies_oids ) {
+				if ( !mru->mru_applies_oids && *code != LDAP_SUCCESS ) {
 					*errp = ss;
 					ldap_matchingruleuse_free(mru);
 					return NULL;
@@ -1984,7 +2002,7 @@ ldap_str2attributetype( LDAP_CONST char * s,
 	LDAP_CONST char ** errp,
 	LDAP_CONST unsigned flags )
 {
-	int kind;
+	tk_t kind;
 	const char * ss = s;
 	char * sval;
 	int seen_name = 0;
@@ -2362,7 +2380,7 @@ ldap_str2objectclass( LDAP_CONST char * s,
 	LDAP_CONST char ** errp,
 	LDAP_CONST unsigned flags )
 {
-	int kind;
+	tk_t kind;
 	const char * ss = s;
 	char * sval;
 	int seen_name = 0;
@@ -2437,6 +2455,7 @@ ldap_str2objectclass( LDAP_CONST char * s,
 				}
 			}
 			LDAP_FREE(sval);
+			*code = 0;
 		} else {
 			*errp = ss;
 			ldap_objectclass_free(oc);
@@ -2520,11 +2539,12 @@ ldap_str2objectclass( LDAP_CONST char * s,
 				oc->oc_sup_oids = parse_oids(&ss,
 							     code,
 							     flags);
-				if ( !oc->oc_sup_oids ) {
+				if ( !oc->oc_sup_oids && *code != LDAP_SUCCESS ) {
 					*errp = ss;
 					ldap_objectclass_free(oc);
 					return NULL;
 				}
+				*code = 0;
 			} else if ( !strcasecmp(sval,"ABSTRACT") ) {
 				LDAP_FREE(sval);
 				if ( seen_kind ) {
@@ -2568,11 +2588,12 @@ ldap_str2objectclass( LDAP_CONST char * s,
 				}
 				seen_must = 1;
 				oc->oc_at_oids_must = parse_oids(&ss,code,0);
-				if ( !oc->oc_at_oids_must ) {
+				if ( !oc->oc_at_oids_must && *code != LDAP_SUCCESS ) {
 					*errp = ss;
 					ldap_objectclass_free(oc);
 					return NULL;
 				}
+				*code = 0;
 				parse_whsp(&ss);
 			} else if ( !strcasecmp(sval,"MAY") ) {
 				LDAP_FREE(sval);
@@ -2584,15 +2605,17 @@ ldap_str2objectclass( LDAP_CONST char * s,
 				}
 				seen_may = 1;
 				oc->oc_at_oids_may = parse_oids(&ss,code,0);
-				if ( !oc->oc_at_oids_may ) {
+				if ( !oc->oc_at_oids_may && *code != LDAP_SUCCESS ) {
 					*errp = ss;
 					ldap_objectclass_free(oc);
 					return NULL;
 				}
+				*code = 0;
 				parse_whsp(&ss);
 			} else if ( sval[0] == 'X' && sval[1] == '-' ) {
 				/* Should be parse_qdstrings */
 				ext_vals = parse_qdescrs(&ss, code);
+				*code = 0;
 				if ( !ext_vals ) {
 					*errp = ss;
 					ldap_objectclass_free(oc);
@@ -2644,7 +2667,7 @@ ldap_str2contentrule( LDAP_CONST char * s,
 	LDAP_CONST char ** errp,
 	LDAP_CONST unsigned flags )
 {
-	int kind;
+	tk_t kind;
 	const char * ss = s;
 	char * sval;
 	int seen_name = 0;
@@ -2809,7 +2832,7 @@ ldap_str2contentrule( LDAP_CONST char * s,
 				}
 				seen_must = 1;
 				cr->cr_at_oids_must = parse_oids(&ss,code,0);
-				if ( !cr->cr_at_oids_must ) {
+				if ( !cr->cr_at_oids_must && *code != LDAP_SUCCESS ) {
 					*errp = ss;
 					ldap_contentrule_free(cr);
 					return NULL;
@@ -2825,7 +2848,7 @@ ldap_str2contentrule( LDAP_CONST char * s,
 				}
 				seen_may = 1;
 				cr->cr_at_oids_may = parse_oids(&ss,code,0);
-				if ( !cr->cr_at_oids_may ) {
+				if ( !cr->cr_at_oids_may && *code != LDAP_SUCCESS ) {
 					*errp = ss;
 					ldap_contentrule_free(cr);
 					return NULL;
@@ -2841,7 +2864,7 @@ ldap_str2contentrule( LDAP_CONST char * s,
 				}
 				seen_not = 1;
 				cr->cr_at_oids_not = parse_oids(&ss,code,0);
-				if ( !cr->cr_at_oids_not ) {
+				if ( !cr->cr_at_oids_not && *code != LDAP_SUCCESS ) {
 					*errp = ss;
 					ldap_contentrule_free(cr);
 					return NULL;
@@ -2898,7 +2921,8 @@ ldap_str2structurerule( LDAP_CONST char * s,
 	LDAP_CONST char ** errp,
 	LDAP_CONST unsigned flags )
 {
-	int kind, ret;
+	tk_t kind;
+	int ret;
 	const char * ss = s;
 	char * sval;
 	int seen_name = 0;
@@ -3081,7 +3105,7 @@ ldap_str2nameform( LDAP_CONST char * s,
 	LDAP_CONST char ** errp,
 	LDAP_CONST unsigned flags )
 {
-	int kind;
+	tk_t kind;
 	const char * ss = s;
 	char * sval;
 	int seen_name = 0;
@@ -3211,7 +3235,7 @@ ldap_str2nameform( LDAP_CONST char * s,
 				}
 				seen_must = 1;
 				nf->nf_at_oids_must = parse_oids(&ss,code,0);
-				if ( !nf->nf_at_oids_must ) {
+				if ( !nf->nf_at_oids_must && *code != LDAP_SUCCESS ) {
 					*errp = ss;
 					ldap_nameform_free(nf);
 					return NULL;
@@ -3227,7 +3251,7 @@ ldap_str2nameform( LDAP_CONST char * s,
 				}
 				seen_may = 1;
 				nf->nf_at_oids_may = parse_oids(&ss,code,0);
-				if ( !nf->nf_at_oids_may ) {
+				if ( !nf->nf_at_oids_may && *code != LDAP_SUCCESS ) {
 					*errp = ss;
 					ldap_nameform_free(nf);
 					return NULL;

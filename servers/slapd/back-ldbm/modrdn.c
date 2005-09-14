@@ -1,5 +1,5 @@
 /* modrdn.c - ldbm backend modrdn routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/modrdn.c,v 1.153.2.3 2005/04/29 21:29:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/modrdn.c,v 1.153.2.4 2005/08/09 21:04:03 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -52,7 +52,6 @@ ldbm_back_modrdn(
 	int		isroot = -1;
 	int 		rc_id = 0;
 	ID              id = NOID;
-	const char	*text = NULL;
 	char		textbuf[SLAP_TEXT_BUFLEN];
 	size_t		textlen = sizeof textbuf;
 	/* Added to support newSuperior */ 
@@ -530,7 +529,7 @@ return_results:
 			tmp = mod->sml_next;
 			free( mod );
 		}
-		slap_mods_free( mod );
+		slap_mods_free( mod, 1 );
 	}
 
 	/* LDAP v3 Support */

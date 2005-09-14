@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/back-sql.h,v 1.30.2.6 2005/06/09 16:31:12 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/back-sql.h,v 1.30.2.8 2005/08/10 16:28:50 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -223,11 +223,9 @@ typedef struct {
 #undef BACKSQL_ARBITRARY_KEY
 
 /*
- * define to enable experimental support for syncporv overlay
+ * define to enable support for syncprov overlay
  */
-#ifdef LDAP_DEVEL
 #define BACKSQL_SYNCPROV
-#endif /* LDAP_DEVEL */
 
 /*
  * define to the appropriate aliasing string
@@ -436,8 +434,6 @@ typedef struct backsql_srch_info {
  * is used */
 #define BACKSQL_SCOPE_BASE_LIKE		( LDAP_SCOPE_BASE | 0x1000 )
 	Filter			*bsi_filter;
-	int			bsi_slimit,
-				bsi_tlimit;
 	time_t			bsi_stoptime;
 
 	backsql_entryID		*bsi_id_list,

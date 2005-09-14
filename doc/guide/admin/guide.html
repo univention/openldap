@@ -23,7 +23,7 @@
 <DIV CLASS="title">
 <H1 CLASS="doc-title">OpenLDAP Software 2.3 Administrator's Guide</H1>
 <ADDRESS CLASS="doc-author">The OpenLDAP Project &lt;<A HREF="http://www.openldap.org/">http://www.openldap.org/</A>&gt;</ADDRESS>
-<ADDRESS CLASS="doc-modified">10 May 2005</ADDRESS>
+<ADDRESS CLASS="doc-modified">9 July 2005</ADDRESS>
 <BR CLEAR="All">
 </DIV>
 <DIV CLASS="contents">
@@ -547,9 +547,9 @@ This command will search for and retrieve every entry in the database.</OL>
 <P>Cyrus SASL is available from <A HREF="http://asg.web.cmu.edu/sasl/sasl-library.html">http://asg.web.cmu.edu/sasl/sasl-library.html</A>. Cyrus SASL will make use of OpenSSL and Kerberos/GSSAPI libraries if preinstalled.</P>
 <P>OpenLDAP Software will not be fully LDAPv3 compliant unless OpenLDAP's configure detects a usable Cyrus SASL installation.</P>
 <H3><A NAME="Database Software">4.2.4. Database Software</A></H3>
-<P>OpenLDAP's <EM>slapd</EM>(8) primary database backend, <TERM>BDB</TERM>, requires <A HREF="http://www.sleepycat.com/">Sleepycat Software</A> <A HREF="http://www.sleepycat.com/products/transactional.shtml">Berkeley DB</A>. If not available at configure time, you will not be able build <EM>slapd</EM>(8) with this primary database backend.</P>
+<P>OpenLDAP's <EM>slapd</EM>(8) <TERM>BDB</TERM> and <TERM>HDB</TERM> primary database backends require <A HREF="http://www.sleepycat.com/">Sleepycat Software</A> <A HREF="http://www.sleepycat.com/products/transactional.shtml">Berkeley DB</A>. If not available at configure time, you will not be able build <EM>slapd</EM>(8) with these primary database backends.</P>
 <P>Your operating system may provide a supported version of <A HREF="http://www.sleepycat.com/products/transactional.shtml">Berkeley DB</A> in the base system or as an optional software component.  If not, you'll have to obtain and install it yourself.</P>
-<P><A HREF="http://www.sleepycat.com/products/transactional.shtml">Berkeley DB</A> is available from <A HREF="http://www.sleepycat.com/">Sleepycat Software</A>'s download page <A HREF="http://www.sleepycat.com/download/">http://www.sleepycat.com/download/</A>.  There are several versions available.  Generally, the most recent release (with published patches) is recommended.  This package is required if you wish to use the <TERM>BDB</TERM> database backend.</P>
+<P><A HREF="http://www.sleepycat.com/products/transactional.shtml">Berkeley DB</A> is available from <A HREF="http://www.sleepycat.com/">Sleepycat Software</A>'s download page <A HREF="http://www.sleepycat.com/download/">http://www.sleepycat.com/download/</A>.  There are several versions available.  Generally, the most recent release (with published patches) is recommended.  This package is required if you wish to use the <TERM>BDB</TERM> or <TERM>HDB</TERM> database backends.</P>
 <P>OpenLDAP's <EM>slapd</EM>(8) LDBM backend supports a variety of data base managers including <A HREF="http://www.sleepycat.com/products/transactional.shtml">Berkeley DB</A> and <A HREF="http://www.gnu.org/software/gdbm/">GDBM</A>. <A HREF="http://www.gnu.org/software/gdbm/">GDBM</A> is available from <A HREF="http://www.fsf.org/">FSF</A>'s download site <A HREF="ftp://ftp.gnu.org/pub/gnu/gdbm/">ftp://ftp.gnu.org/pub/gnu/gdbm/</A>.</P>
 <H3><A NAME="Threads">4.2.5. Threads</A></H3>
 <P>OpenLDAP is designed to take advantage of threads.  OpenLDAP supports POSIX <EM>pthreads</EM>, Mach <EM>CThreads</EM>, and a number of other varieties.  <TT>configure</TT> will complain if it cannot find a suitable thread subsystem.   If this occurs, please consult the <TT>Software|Installation|Platform Hints</TT> section of the OpenLDAP FAQ <A HREF="http://www.openldap.org/faq/">http://www.openldap.org/faq/</A>.</P>
@@ -664,6 +664,9 @@ Specify additional libraries
 <H1><A NAME="Configuring slapd">5. Configuring slapd</A></H1>
 <P>Once the software has been built and installed, you are ready to configure <EM>slapd</EM>(8) for use at your site. Unlike previous OpenLDAP releases, the slapd runtime configuration in 2.3 is fully LDAP-enabled and can be managed using the standard LDAP operations with data in <TERM>LDIF</TERM>. The LDAP configuration engine allows all of slapd's configuration options to be changed on the fly, generally without requiring a server restart for the changes to take effect. The old style <EM>slapd.conf</EM>(5) file is still supported, but must be converted to the new <EM>slapd.d</EM>(5) format to allow runtime changes to be saved. While the old style configuration uses a single file, normally installed as <TT>/usr/local/etc/openldap/slapd.conf</TT>, the new style uses a slapd backend database to store the configuration. The configuration database normally resides in the <TT>/usr/local/etc/openldap/slapd.d</TT> directory.</P>
 <P>An alternate configuration directory (or file) can be specified via a command-line option to <EM>slapd</EM>(8) or <EM>slurpd</EM>(8). This chapter describes the general format of the configuration system, followed by a detailed description of commonly used config settings.</P>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG>some of the backends and of the distributed overlays do not support runtime configuration yet.  In those cases, the old style <EM>slapd.conf</EM>(5) file must be used.
+<HR WIDTH="80%" ALIGN="Left"></P>
 <P><HR WIDTH="80%" ALIGN="Left">
 <STRONG>Note: </STRONG>the current version of <EM>slurpd</EM> has not been updated for compatibility with this new configuration engine. If you must use slurpd for replication at your site, you will have to maintain an old-style <EM>slapd.conf</EM> file for slurpd to use.
 <HR WIDTH="80%" ALIGN="Left"></P>
@@ -1057,10 +1060,26 @@ Berkeley DB transactional backend
 </TR>
 <TR>
 <TD>
+<TT>config</TT>
+</TD>
+<TD>
+Slapd configuration backend
+</TD>
+</TR>
+<TR>
+<TD>
 <TT>dnssrv</TT>
 </TD>
 <TD>
 DNS SRV backend
+</TD>
+</TR>
+<TR>
+<TD>
+<TT>hdb</TT>
+</TD>
+<TD>
+Hierarchical variant of bdb backend
 </TD>
 </TR>
 <TR>
@@ -1141,7 +1160,7 @@ SQL Programmable backend
 <PRE>
         olcBackend: bdb
 </PRE>
-<P>There are no other directives defined for this entry, so generally it will not be needed. However, specific backend types may define additional attributes for their particular use.</P>
+<P>There are no other directives defined for this entry.  Specific backend types may define additional attributes for their particular use but so far none have ever been defined.  As such, these directives usually do not appear in any actual configurations.</P>
 <H4><A NAME="Sample Entry">5.2.5.2. Sample Entry</A></H4>
 <PRE>
  dn: olcBackend=bdb,cn=config
@@ -1153,6 +1172,7 @@ SQL Programmable backend
 <H4><A NAME="olcDatabase: [{&lt;index&gt;}]&lt;type&gt;">5.2.6.1. olcDatabase: [{&lt;index&gt;}]&lt;type&gt;</A></H4>
 <P>This directive names a specific database instance. The numeric {&lt;index&gt;} may be provided to distinguish multiple databases of the same type. Usually the index can be omitted, and slapd will generate it automatically. <TT>&lt;type&gt;</TT> should be one of the supported backend types listed in Table 5.2 or the <TT>frontend</TT> type.</P>
 <P>The <TT>frontend</TT> is a special database that is used to hold database-level options that should be applied to all the other databases. Subsequent database definitions may also override some frontend settings.</P>
+<P>The <TT>config</TT> database is also special; both the <TT>config</TT> and the <TT>frontend</TT> databases are always created implicitly even if they are not explicitly configured, and they are created before any other databases.</P>
 <P>Example:</P>
 <PRE>
         olcDatabase: bdb
@@ -1293,15 +1313,21 @@ SQL Programmable backend
 <PRE>
         olcUpdateref:   ldap://master.example.net
 </PRE>
-<H4><A NAME="Sample Entry">5.2.6.14. Sample Entry</A></H4>
+<H4><A NAME="Sample Entries">5.2.6.14. Sample Entries</A></H4>
 <PRE>
 dn: olcDatabase=frontend,cn=config
 objectClass: olcDatabaseConfig
+objectClass: olcFrontendConfig
 olcDatabase: frontend
 olcReadOnly: FALSE
+
+dn: olcDatabase=config,cn=config
+objectClass: olcDatabaseConfig
+olcDatabase: config
+olcRootDN: cn=Manager,dc=example,dc=com
 </PRE>
 <H3><A NAME="BDB and HDB Database Directives">5.2.7. BDB and HDB Database Directives</A></H3>
-<P>Directives in this category apply to both the <TERM>BDB</TERM> and the <TERM>HDB</TERM> database. They are used in an olcDatabase entry in addition to the generic database directives defined above.  For a complete reference of BDB/HDB configuration directives, see <EM>slapd-bdb</EM>(5). BDB and HDB database entries must have the <TT>olcBdbConfig</TT> objectClass in addition to the <TT>olcDatabaseConfig</TT> class.</P>
+<P>Directives in this category apply to both the <TERM>BDB</TERM> and the <TERM>HDB</TERM> database. They are used in an olcDatabase entry in addition to the generic database directives defined above.  For a complete reference of BDB/HDB configuration directives, see <EM>slapd-bdb</EM>(5). In addition to the <TT>olcDatabaseConfig</TT> objectClass, BDB and HDB database entries must have the <TT>olcBdbConfig</TT> and <TT>olcHdbConfig</TT> objectClass, respectively.</P>
 <H4><A NAME="olcDbDirectory: &lt;directory&gt;">5.2.7.1. olcDbDirectory: &lt;directory&gt;</A></H4>
 <P>This directive specifies the directory where the BDB files containing the database and associated indices live.</P>
 <P>Default:</P>
@@ -1381,7 +1407,7 @@ olcReadOnly: FALSE
 <PRE>
 dn: olcDatabase=hdb,cn=config
 objectClass: olcDatabaseConfig
-objectClass: olcBdbConfig
+objectClass: olcHdbConfig
 olcDatabase: hdb
 olcSuffix: &quot;dc=example,dc=com&quot;
 olcDbDirectory: /usr/local/var/openldap-data
@@ -2047,6 +2073,14 @@ DNS SRV backend
 </TR>
 <TR>
 <TD>
+<TT>hdb</TT>
+</TD>
+<TD>
+Hierarchical variant of bdb backend
+</TD>
+</TR>
+<TR>
+<TD>
 <TT>ldap</TT>
 </TD>
 <TD>
@@ -2240,8 +2274,8 @@ SQL Programmable backend
 <PRE>
         updateref       ldap://master.example.net
 </PRE>
-<H3><A NAME="BDB Database Directives">6.2.4. BDB Database Directives</A></H3>
-<P>Directives in this category only apply to a <TERM>BDB</TERM> database. That is, they must follow a &quot;database bdb&quot; line and come before any subsequent &quot;backend&quot; or &quot;database&quot; line.  For a complete reference of BDB configuration directives, see <EM>slapd-bdb</EM>(5).</P>
+<H3><A NAME="BDB and HDB Database Directives">6.2.4. BDB and HDB Database Directives</A></H3>
+<P>Directives in this category only apply to both the <TERM>BDB</TERM> and the <TERM>HDB</TERM> database. That is, they must follow a &quot;database bdb&quot; or &quot;database hdb&quot; line and come before any subsequent &quot;backend&quot; or &quot;database&quot; line.  For a complete reference of BDB/HDB configuration directives, see <EM>slapd-bdb</EM>(5).</P>
 <H4><A NAME="directory &lt;directory&gt;">6.2.4.1. directory &lt;directory&gt;</A></H4>
 <P>This directive specifies the directory where the BDB files containing the database and associated indices live.</P>
 <P>Default:</P>
@@ -3797,11 +3831,11 @@ object identifier
 <P><HR WIDTH="80%" ALIGN="Left">
 <STRONG>Note: </STRONG>it is not required that the authentication request DN nor the user's authentication DN resulting from the mapping refer to an entry held in the directory.  However, additional capabilities become available (see below).
 <HR WIDTH="80%" ALIGN="Left"></P>
-<P>The LDAP administrator will need to tell the slapd server how to map an authentication request DN to a user's authentication DN. This is done by adding one or more <TT>sasl-regexp</TT> directives to the <EM>slapd.conf</EM>(5) file.  This directive takes two arguments:</P>
+<P>The LDAP administrator will need to tell the slapd server how to map an authentication request DN to a user's authentication DN. This is done by adding one or more <TT>authz-regexp</TT> directives to the <EM>slapd.conf</EM>(5) file.  This directive takes two arguments:</P>
 <PRE>
-        sasl-regexp   &lt;search pattern&gt;   &lt;replacement pattern&gt;
+        authz-regexp   &lt;search pattern&gt;   &lt;replacement pattern&gt;
 </PRE>
-<P>The authentication request DN is compared to the search pattern using the regular expression functions <EM>regcomp</EM>() and <EM>regexec</EM>(), and if it matches, it is rewritten as the replacement pattern. If there are multiple <TT>sasl-regexp</TT> directives, only the first whose search pattern matches the authentication identity is used. The string that is output from the replacement pattern should be the authentication DN of the user or an LDAP URL.  If replacement string produces a DN, the entry named by this DN need not be held by this server.  If the replace string produces an LDAP URL, that LDAP URL must evaluate to one and only one entry held by this server.</P>
+<P>The authentication request DN is compared to the search pattern using the regular expression functions <EM>regcomp</EM>() and <EM>regexec</EM>(), and if it matches, it is rewritten as the replacement pattern. If there are multiple <TT>authz-regexp</TT> directives, only the first whose search pattern matches the authentication identity is used. The string that is output from the replacement pattern should be the authentication DN of the user or an LDAP URL.  If replacement string produces a DN, the entry named by this DN need not be held by this server.  If the replace string produces an LDAP URL, that LDAP URL must evaluate to one and only one entry held by this server.</P>
 <P>The search pattern can contain any of the regular expression characters listed in <EM>regexec</EM>(3C). The main characters of note are dot &quot;.&quot;, asterisk &quot;*&quot;, and the open and close parenthesis &quot;(&quot; and &quot;)&quot;.  Essentially, the dot matches any character, the asterisk allows zero or more repeats of the immediately preceding character or pattern, and terms in parenthesis are remembered for the replacement pattern.</P>
 <P>The replacement pattern will produce either a DN or URL refering to the user.  Anything from the authentication request DN that matched a string in parenthesis in the search pattern is stored in the variable &quot;$1&quot;. That variable &quot;$1&quot; can appear in the replacement pattern, and will be replaced by the string from the authentication request DN. If there were multiple sets of parentheses in the search pattern, the variables $2, $3, etc are used.</P>
 <H3><A NAME="Direct Mapping">11.2.5. Direct Mapping</A></H3>
@@ -3814,20 +3848,20 @@ object identifier
 <PRE>
         uid=adamson,ou=people,dc=example,dc=com
 </PRE>
-<P>then the following <TT>sasl-regexp</TT> directive in <EM>slapd.conf</EM>(5) would provide for direct mapping.</P>
+<P>then the following <TT>authz-regexp</TT> directive in <EM>slapd.conf</EM>(5) would provide for direct mapping.</P>
 <PRE>
-        sasl-regexp
+        authz-regexp
           uid=([^,]*),cn=example.com,cn=gssapi,cn=auth
           uid=$1,ou=people,dc=example,dc=com
 </PRE>
 <P>An even more lenient rule could be written as</P>
 <PRE>
-        sasl-regexp
+        authz-regexp
           uid=([^,]*),cn=[^,]*,cn=auth
           uid=$1,ou=people,dc=example,dc=com
 </PRE>
-<P>Be careful about setting the search pattern too leniently, however, since it may mistakenly allow persons to become authenticated as a DN to which they should not have access.  It is better to write several strict directives than one lenient directive which has security holes.  If there is only one authentication mechanism in place at your site, and zero or one realms in use, you might be able to map between authentication identities and LDAP DN's with a single <TT>sasl-regexp</TT> directive.</P>
-<P>Don't forget to allow for the case where the realm is omitted as well as the case with an explicitly specified realm. This may well require a separate <TT>sasl-regexp</TT> directive for each case, with the explicit-realm entry being listed first.</P>
+<P>Be careful about setting the search pattern too leniently, however, since it may mistakenly allow persons to become authenticated as a DN to which they should not have access.  It is better to write several strict directives than one lenient directive which has security holes.  If there is only one authentication mechanism in place at your site, and zero or one realms in use, you might be able to map between authentication identities and LDAP DN's with a single <TT>authz-regexp</TT> directive.</P>
+<P>Don't forget to allow for the case where the realm is omitted as well as the case with an explicitly specified realm. This may well require a separate <TT>authz-regexp</TT> directive for each case, with the explicit-realm entry being listed first.</P>
 <H3><A NAME="Search-based mappings">11.2.6. Search-based mappings</A></H3>
 <P>There are a number of cases where mapping to a LDAP URL may be appropriate.  For instance, some sites may have person objects located in multiple areas of the LDAP tree, such as if there were an <TT>ou=accounting</TT> tree and an <TT>ou=engineering</TT> tree, with persons interspersed between them.  Or, maybe the desired mapping must be based upon information in the user's information. Consider the need to map the above authentication request DN to user whose entry is as follows:</P>
 <PRE>
@@ -3836,15 +3870,15 @@ object identifier
         cn: Mark Adamson
         uid: adamson
 </PRE>
-<P>The information in the authentication request DN is insufficient to allow the user's DN to be directly derived, instead the user's DN must be searched for.  For these situations, a replacement pattern which produces a LDAP URL can be used in the <TT>sasl-regexp</TT> directives.  This URL will then be used to perform an internal search of the LDAP database to find the person's authentication DN.</P>
+<P>The information in the authentication request DN is insufficient to allow the user's DN to be directly derived, instead the user's DN must be searched for.  For these situations, a replacement pattern which produces a LDAP URL can be used in the <TT>authz-regexp</TT> directives.  This URL will then be used to perform an internal search of the LDAP database to find the person's authentication DN.</P>
 <P>An LDAP URL, similar to other URL's, is of the form</P>
 <PRE>
         ldap://&lt;host&gt;/&lt;base&gt;?&lt;attrs&gt;?&lt;scope&gt;?&lt;filter&gt;
 </PRE>
 <P>This contains all of the elements necessary to perform an LDAP search:  the name of the server &lt;host&gt;, the LDAP DN search base &lt;base&gt;, the LDAP attributes to retrieve &lt;attrs&gt;, the search scope &lt;scope&gt; which is one of the three options &quot;base&quot;, &quot;one&quot;, or &quot;sub&quot;, and lastly an LDAP search filter &lt;filter&gt;.  Since the search is for an LDAP DN within the current server, the &lt;host&gt; portion should be empty.  The &lt;attrs&gt; field is also ignored since only the DN is of concern.  These two elements are left in the format of the URL to maintain the clarity of what information goes where in the string.</P>
-<P>Suppose that the person in the example from above did in fact have an authentication username of &quot;adamson&quot; and that information was kept in the attribute &quot;uid&quot; in their LDAP entry. The <TT>sasl-regexp</TT> directive might be written as</P>
+<P>Suppose that the person in the example from above did in fact have an authentication username of &quot;adamson&quot; and that information was kept in the attribute &quot;uid&quot; in their LDAP entry. The <TT>authz-regexp</TT> directive might be written as</P>
 <PRE>
-        sasl-regexp
+        authz-regexp
           uid=([^,]*),cn=example.com,cn=gssapi,cn=auth
           ldap:///ou=people,dc=example,dc=com??one?(uid=$1)
 </PRE>
@@ -3853,17 +3887,17 @@ object identifier
 <P>A more complex site might have several realms in use, each mapping to a different subtree in the directory.  These can be handled with statements of the form:</P>
 <PRE>
         # Match Engineering realm
-        sasl-regexp
+        authz-regexp
            uid=([^,]*),cn=engineering.example.com,cn=digest-md5,cn=auth
            ldap:///dc=eng,dc=example,dc=com??one?(&amp;(uid=$1)(objectClass=person))
 
         # Match Accounting realm
-        sasl-regexp
+        authz-regexp
            uid=([^,].*),cn=accounting.example.com,cn=digest-md5,cn=auth
            ldap:///dc=accounting,dc=example,dc=com??one?(&amp;(uid=$1)(objectClass=person))
 
         # Default realm is customers.example.com
-        sasl-regexp
+        authz-regexp
            uid=([^,]*),cn=digest-md5,cn=auth
            ldap:///dc=customers,dc=example,dc=com??one?(&amp;(uid=$1)(objectClass=person))
 </PRE>
@@ -3893,34 +3927,34 @@ object identifier
 <PRE>
         uid=&lt;username&gt;,cn=&lt;realm&gt;,cn=&lt;mechanism&gt;,cn=auth
 </PRE>
-<P>That authorization request DN is then run through the same <TT>sasl-regexp</TT> process to convert it into a legitimate authorization DN from the database. If it cannot be converted due to a failed search from an LDAP URL, the authorization request fails with &quot;inappropriate access&quot;.  Otherwise, the DN string is now a legitimate authorization DN ready to undergo approval.</P>
+<P>That authorization request DN is then run through the same <TT>authz-regexp</TT> process to convert it into a legitimate authorization DN from the database. If it cannot be converted due to a failed search from an LDAP URL, the authorization request fails with &quot;inappropriate access&quot;.  Otherwise, the DN string is now a legitimate authorization DN ready to undergo approval.</P>
 <P>If the authorization identity was provided in the second form, with a <TT>&quot;dn:&quot;</TT> prefix, the string after the prefix is already in authorization DN form, ready to undergo approval.</P>
 <H3><A NAME="Proxy Authorization Rules">11.3.3. Proxy Authorization Rules</A></H3>
 <P>Once slapd has the authorization DN, the actual approval process begins. There are two attributes that the LDAP administrator can put into LDAP entries to allow authorization:</P>
 <PRE>
-        saslAuthzTo
-        saslAuthzFrom
+        authzTo
+        authzFrom
 </PRE>
-<P>Both can be multivalued.  The <TT>saslAuthzTo</TT> attribute is a source rule, and it is placed into the entry associated with the authentication DN to tell what authorization DNs the authenticated DN is allowed to assume.  The second attribute is a destination rule, and it is placed into the entry associated with the requested authorization DN to tell which authenticated DNs may assume it.</P>
-<P>The choice of which authorization policy attribute to use is up to the administrator.  Source rules are checked first in the person's authentication DN entry, and if none of the <TT>saslAuthzTo</TT> rules specify the authorization is permitted, the <TT>saslAuthzFrom</TT> rules in the authorization DN entry are then checked. If neither case specifies that the request be honored, the request is denied. Since the default behaviour is to deny authorization requests, rules only specify that a request be allowed; there are no negative rules telling what authorizations to deny.</P>
-<P>The value(s) in the two attributes are of the same form as the output of the replacement pattern of a <TT>sasl-regexp</TT> directive: either a DN or an LDAP URL. For example, if a <TT>saslAuthzTo</TT> value is a DN, that DN is one the authenticated user can authorize to. On the other hand, if the <TT>saslAuthzTo</TT> value is an LDAP URL, the URL is used as an internal search of the LDAP database, and the authenticated user can become ANY DN returned by the search. If an LDAP entry looked like:</P>
+<P>Both can be multivalued.  The <TT>authzTo</TT> attribute is a source rule, and it is placed into the entry associated with the authentication DN to tell what authorization DNs the authenticated DN is allowed to assume.  The second attribute is a destination rule, and it is placed into the entry associated with the requested authorization DN to tell which authenticated DNs may assume it.</P>
+<P>The choice of which authorization policy attribute to use is up to the administrator.  Source rules are checked first in the person's authentication DN entry, and if none of the <TT>authzTo</TT> rules specify the authorization is permitted, the <TT>authzFrom</TT> rules in the authorization DN entry are then checked. If neither case specifies that the request be honored, the request is denied. Since the default behaviour is to deny authorization requests, rules only specify that a request be allowed; there are no negative rules telling what authorizations to deny.</P>
+<P>The value(s) in the two attributes are of the same form as the output of the replacement pattern of a <TT>authz-regexp</TT> directive: either a DN or an LDAP URL. For example, if a <TT>authzTo</TT> value is a DN, that DN is one the authenticated user can authorize to. On the other hand, if the <TT>authzTo</TT> value is an LDAP URL, the URL is used as an internal search of the LDAP database, and the authenticated user can become ANY DN returned by the search. If an LDAP entry looked like:</P>
 <PRE>
         dn: cn=WebUpdate,dc=example,dc=com
-        saslAuthzTo: ldap:///dc=example,dc=com??sub?(objectclass=person)
+        authzTo: ldap:///dc=example,dc=com??sub?(objectclass=person)
 </PRE>
 <P>then any user who authenticated as <TT>cn=WebUpdate,dc=example,dc=com</TT> could authorize to any other LDAP entry under the search base <TT>dc=example,dc=com</TT> which has an objectClass of <TT>Person</TT>.</P>
 <H4><A NAME="Notes on Proxy Authorization Rules">11.3.3.1. Notes on Proxy Authorization Rules</A></H4>
-<P>An LDAP URL in a <TT>saslAuthzTo</TT> or <TT>saslAuthzFrom</TT> attribute will return a set of DNs.  Each DN returned will be checked.  Searches which return a large set can cause the authorization process to take an uncomfortably long time. Also, searches should be performed on attributes that have been indexed by slapd.</P>
-<P>To help produce more sweeping rules for <TT>saslAuthzFrom</TT> and <TT>saslAuthzTo</TT>, the values of these attributes are allowed to be DNs with regular expression characters in them. This means a source rule like</P>
+<P>An LDAP URL in a <TT>authzTo</TT> or <TT>authzFrom</TT> attribute will return a set of DNs.  Each DN returned will be checked.  Searches which return a large set can cause the authorization process to take an uncomfortably long time. Also, searches should be performed on attributes that have been indexed by slapd.</P>
+<P>To help produce more sweeping rules for <TT>authzFrom</TT> and <TT>authzTo</TT>, the values of these attributes are allowed to be DNs with regular expression characters in them. This means a source rule like</P>
 <PRE>
-        saslAuthzTo: uid=[^,]*,dc=example,dc=com
+        authzTo: uid=[^,]*,dc=example,dc=com
 </PRE>
 <P>would allow that authenticated user to authorize to any DN that matches the regular expression pattern given. This regular expression comparison can be evaluated much faster than an LDAP search for <TT>(uid=*)</TT>.</P>
 <P>Also note that the values in an authorization rule must be one of the two forms: an LDAP URL or a DN (with or without regular expression characters). Anything that does not begin with &quot;<TT>ldap://</TT>&quot; is taken as a DN. It is not permissable to enter another authorization identity of the form &quot;<TT>u:&lt;username&gt;</TT>&quot; as an authorization rule.</P>
 <H4><A NAME="Policy Configuration">11.3.3.2. Policy Configuration</A></H4>
-<P>The decision of which type of rules to use, <TT>saslAuthzFrom</TT> or <TT>saslAuthzTo</TT>, will depend on the site's situation. For example, if the set of people who may become a given identity can easily be written as a search filter, then a single destination rule could be written. If the set of people is not easily defined by a search filter, and the set of people is small, it may be better to write a source rule in the entries of each of those people who should be allowed to perform the proxy authorization.</P>
-<P>By default, processing of proxy authorization rules is disabled. The <TT>sasl-authz-policy</TT> directive must be set in the <EM>slapd.conf</EM>(5) file to enable authorization. This directive can be set to <TT>none</TT> for no rules (the default), <TT>from</TT> for source rules, <TT>to</TT> for destination rules, or <TT>both</TT> for both source and destination rules.</P>
-<P>Destination rules are extremely powerful. If ordinary users have access to write the <TT>saslAuthzTo</TT> attribute in their own entries, then they can write rules that would allow them to authorize as anyone else.  As such, when using destination rules, the <TT>saslAuthzTo</TT> attribute should be protected with an ACL that only allows privileged users to set its values.</P>
+<P>The decision of which type of rules to use, <TT>authzFrom</TT> or <TT>authzTo</TT>, will depend on the site's situation. For example, if the set of people who may become a given identity can easily be written as a search filter, then a single destination rule could be written. If the set of people is not easily defined by a search filter, and the set of people is small, it may be better to write a source rule in the entries of each of those people who should be allowed to perform the proxy authorization.</P>
+<P>By default, processing of proxy authorization rules is disabled. The <TT>authz-policy</TT> directive must be set in the <EM>slapd.conf</EM>(5) file to enable authorization. This directive can be set to <TT>none</TT> for no rules (the default), <TT>from</TT> for source rules, <TT>to</TT> for destination rules, or <TT>both</TT> for both source and destination rules.</P>
+<P>Destination rules are extremely powerful. If ordinary users have access to write the <TT>authzTo</TT> attribute in their own entries, then they can write rules that would allow them to authorize as anyone else.  As such, when using destination rules, the <TT>authzTo</TT> attribute should be protected with an ACL that only allows privileged users to set its values.</P>
 <P></P>
 <HR>
 <H1><A NAME="Using TLS">12. Using TLS</A></H1>
@@ -4551,7 +4585,7 @@ operates.
 <H2><A NAME="Additional Copyright Notice">B.2. Additional Copyright Notice</A></H2>
 <P>Portions Copyright 1998-2005 Kurt D. Zeilenga.<BR>Portions Copyright 1998-2005 Net Boolean Incorporated.<BR>Portions Copyright 2001-2005 IBM Corporation.<BR><EM>All rights reserved.</EM></P>
 <P>Redistribution and use in source and binary forms, with or without modification, are permitted only as authorized by the <A HREF="#OpenLDAP Public License">OpenLDAP Public License</A>.</P>
-<P>Portions Copyright 1999-2003 Howard Y.H. Chu.<BR>Portions Copyright 1999-2003 Symas Corporation.<BR>Portions Copyright 1998-2003 Hallvard B. Furuseth.<BR><EM>All rights reserved.</EM></P>
+<P>Portions Copyright 1999-2005 Howard Y.H. Chu.<BR>Portions Copyright 1999-2005 Symas Corporation.<BR>Portions Copyright 1998-2003 Hallvard B. Furuseth.<BR><EM>All rights reserved.</EM></P>
 <P>Redistribution and use in source and binary forms, with or without modification, are permitted provided that this notice is preserved. The names of the copyright holders may not be used to endorse or promote products derived from this software without their specific prior written permission.  This software is provided ``as is'' without express or implied warranty.</P>
 <H2><A NAME="University of Michigan Copyright Notice">B.3. University of Michigan Copyright Notice</A></H2>
 <P>Portions Copyright 1992-1996 Regents of the University of Michigan.<BR><EM>All rights reserved.</EM></P>

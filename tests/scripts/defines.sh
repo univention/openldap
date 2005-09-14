@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.107.2.7 2005/06/03 19:54:18 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.107.2.12 2005/09/01 20:28:11 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -20,10 +20,10 @@ BACKRELAY=${AC_relay-relayno}
 BACKSQL=${AC_sql-sqlno}
 RDBMS=${SLAPD_USE_SQL-rdbmsno}
 RDBMSWRITE=${SLAPD_USE_SQLWRITE-no}
-GLUE=${AC_glue-glueno}
 PROXYCACHE=${AC_pcache-pcacheno}
 PPOLICY=${AC_ppolicy-ppolicyno}
 REFINT=${AC_refint-refintno}
+RETCODE=${AC_retcode-retcodeno}
 RWM=${AC_rwm-rwmno}
 TRANSLUCENT=${AC_translucent-translucentno}
 UNIQUE=${AC_unique-uniqueno}
@@ -31,6 +31,8 @@ SYNCPROV=${AC_syncprov-syncprovno}
 WITH_SASL=${AC_WITH_SASL-no}
 USE_SASL=${SLAPD_USE_SASL-no}
 WITHTLS=${AC_WITHTLS-yes}
+ACI=${AC_ACI_ENABLED-acino}
+VALSORT=${AC_valsort-valsortno}
 
 DATADIR=./testdata
 PROGDIR=./progs
@@ -48,6 +50,7 @@ DBDIR3=$TESTDIR/db.3.a
 DBDIR4=$TESTDIR/db.4.a
 DBDIR5=$TESTDIR/db.5.a
 DBDIR6=$TESTDIR/db.6.a
+SQLCONCURRENCYDIR=$DATADIR/sql-concurrency
 
 CONF=$DATADIR/slapd.conf
 CONFTWO=$DATADIR/slapd2.conf
@@ -72,6 +75,7 @@ REFSLAVECONF=$DATADIR/slapd-ref-slave.conf
 SCHEMACONF=$DATADIR/slapd-schema.conf
 GLUECONF=$DATADIR/slapd-glue.conf
 REFINTCONF=$DATADIR/slapd-refint.conf
+RETCODECONF=$DATADIR/slapd-retcode.conf
 UNIQUECONF=$DATADIR/slapd-unique.conf
 LIMITSCONF=$DATADIR/slapd-limits.conf
 DNCONF=$DATADIR/slapd-dn.conf
@@ -91,6 +95,9 @@ TRANSLUCENTLOCALCONF=$DATADIR/slapd-translucent-local.conf
 TRANSLUCENTREMOTECONF=$DATADIR/slapd-translucent-remote.conf
 METACONF=$DATADIR/slapd-meta.conf
 METACONF2=$DATADIR/slapd-meta2.conf
+GLUELDAPCONF=$DATADIR/slapd-glue-ldap.conf
+ACICONF=$DATADIR/slapd-aci.conf
+VALSORTCONF=$DATADIR/slapd-valsort.conf
 
 CONF1=$TESTDIR/slapd.1.conf
 CONF2=$TESTDIR/slapd.2.conf
@@ -116,7 +123,8 @@ SLAPCAT="../servers/slapd/slapd -Tc $LDAP_VERBOSE"
 SLAPINDEX="../servers/slapd/slapd -Ti $LDAP_VERBOSE"
 
 unset DIFF_OPTIONS
-DIFF="diff -iu"
+# NOTE: -u/-c is not that portable...
+DIFF="diff -i"
 CMP="diff -i"
 BCMP="diff -iB"
 CMPOUT=/dev/null
@@ -180,6 +188,7 @@ LDIFTRANSLUCENTCONFIG=$DATADIR/test-translucent-config.ldif
 LDIFTRANSLUCENTADD=$DATADIR/test-translucent-add.ldif
 LDIFTRANSLUCENTMERGED=$DATADIR/test-translucent-merged.ldif
 LDIFMETA=$DATADIR/test-meta.ldif
+LDIFVALSORT=$DATADIR/test-valsort.ldif
 SQLADD=$DATADIR/sql-add.ldif
 MONITOR=""
 REFDN="c=US"
@@ -191,6 +200,7 @@ BABSDN="cn=Barbara Jensen,ou=Information Technology DivisioN,OU=People,dc=exampl
 BJORNSDN="cn=Bjorn Jensen,ou=Information Technology DivisioN,OU=People,dc=example,dc=com"
 JAJDN="cn=James A Jones 1,ou=Alumni Association,ou=People,dc=example,dc=com"
 REFINTDN="cn=Manager,o=refint"
+RETCODEDN="ou=RetCodes,$BASEDN"
 UNIQUEDN="cn=Manager,o=unique"
 EMPTYDNDN="cn=Manager,c=US"
 TRANSLUCENTROOT="o=translucent"
@@ -199,6 +209,8 @@ TRANSLUCENTDN="uid=binder,o=translucent"
 TRANSLUCENTPASSWD="bindtest"
 METABASEDN="ou=Meta,dc=example,dc=com"
 METAMANAGERDN="cn=Manager,$METABASEDN"
+VALSORTDN="cn=Manager,o=valsort"
+VALSORTBASEDN="o=valsort"
 
 LOG1=$TESTDIR/slapd.1.log
 LOG2=$TESTDIR/slapd.2.log
@@ -216,6 +228,9 @@ SEARCHFLT2=$TESTDIR/ldapsearch2.flt
 LDIFFLT=$TESTDIR/ldif.flt
 TESTOUT=$TESTDIR/test.out
 INITOUT=$TESTDIR/init.out
+VALSORTOUT1=$DATADIR/valsort1.out
+VALSORTOUT2=$DATADIR/valsort2.out
+VALSORTOUT3=$DATADIR/valsort3.out
 
 SERVER1OUT=$TESTDIR/server1.out
 SERVER1FLT=$TESTDIR/server1.flt
@@ -268,6 +283,8 @@ TRANSLUCENTOUT=$DATADIR/translucent.search.out
 METAOUT=$DATADIR/meta.out
 METACONCURRENCYOUT=$DATADIR/metaconcurrency.out
 MANAGEOUT=$DATADIR/manage.out
+SUBTREERENAMEOUT=$DATADIR/subtree-rename.out
+ACIOUT=$DATADIR/aci.out
 
 # Just in case we linked the binaries dynamically
 LD_LIBRARY_PATH=`pwd`/../libraries:${LD_LIBRARY_PATH} export LD_LIBRARY_PATH

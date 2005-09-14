@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.198.2.5 2005/05/06 16:42:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.198.2.11 2005/09/01 20:28:10 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 
+#include <ac/ctype.h>
 #include <ac/socket.h>
 #include <ac/string.h>
 #include <ac/time.h>
@@ -181,7 +182,7 @@ struct option_helper {
 	const char	*oh_usage;
 } option_helpers[] = {
 	{ BER_BVC("slp"),	slapd_opt_slp,	NULL, "slp[={on|off}] enable/disable SLP" },
-	{ BER_BVNULL }
+	{ BER_BVNULL, 0, NULL, NULL }
 };
 
 static void
@@ -270,6 +271,8 @@ int main( int argc, char **argv )
 	size_t	l;
 
 	slap_sl_mem_init();
+
+	(void) ldap_pvt_thread_initialize();
 
 	serverName = lutil_progname( "slapd", argc, argv );
 
@@ -361,7 +364,17 @@ int main( int argc, char **argv )
 			scp = (struct sync_cookie *) ch_calloc( 1,
 										sizeof( struct sync_cookie ));
 			ber_str2bv( optarg, 0, 1, &scp->octet_str );
-			slap_parse_sync_cookie( scp );
+			
+			/* This only parses out the rid at this point */
+			slap_parse_sync_cookie( scp, NULL );
+
+			if ( scp->rid == -1 ) {
+				Debug( LDAP_DEBUG_ANY,
+						"main: invalid cookie \"%s\"\n",
+						optarg, 0, 0 );
+				slap_sync_cookie_free( scp, 1 );
+				goto destroy;
+			}
 
 			LDAP_STAILQ_FOREACH( scp_entry, &slap_sync_cookie, sc_next ) {
 				if ( scp->rid == scp_entry->rid ) {
@@ -378,7 +391,31 @@ int main( int argc, char **argv )
 		case 'd':	/* set debug level and 'do not detach' flag */
 			no_detach = 1;
 #ifdef LDAP_DEBUG
-			slap_debug |= atoi( optarg );
+			if ( optarg != NULL && optarg[ 0 ] != '-' && !isdigit( optarg[ 0 ] ) )
+			{
+				int	level;
+
+				if ( str2loglevel( optarg, &level ) ) {
+					fprintf( stderr,
+						"unrecognized log level "
+						"\"%s\"\n", optarg );
+					goto destroy;
+				}
+
+				slap_debug |= level;
+			} else {
+				int	level;
+				char	*next = NULL;
+
+				level = strtol( optarg, &next, 0 );
+				if ( next == NULL || next[ 0 ] != '\0' ) {
+					fprintf( stderr,
+						"unrecognized log level "
+						"\"%s\"\n", optarg );
+					goto destroy;
+				}
+				slap_debug |= level;
+			}
 #else
 			if ( atoi( optarg ) != 0 )
 				fputs( "must compile with LDAP_DEBUG for debugging\n",
@@ -506,8 +543,6 @@ unhandled_option:;
 		}
 	}
 
-	(void) ldap_pvt_thread_initialize();
-
 	ber_set_option(NULL, LBER_OPT_DEBUG_LEVEL, &slap_debug);
 	ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, &slap_debug);
 	ldif_debug = slap_debug;
@@ -569,69 +604,11 @@ unhandled_option:;
 	lutil_passwd_init();
 	slap_op_init();
 
-#ifdef SLAPD_MODULES
-	if ( module_init() != 0 ) {
-		rc = 1;
-		SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 17 );
-		goto destroy;
-	}
-#endif
-
-	if ( slap_schema_init( ) != 0 ) {
-		Debug( LDAP_DEBUG_ANY,
-		    "schema initialization error\n",
-		    0, 0, 0 );
-
-		goto destroy;
-	}
-
-	if ( slap_init( serverMode, serverName ) != 0 ) {
-		rc = 1;
+	rc = slap_init( serverMode, serverName );
+	if ( rc ) {
 		SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 18 );
 		goto destroy;
 	}
-
-	if ( slap_controls_init( ) != 0 ) {
-		Debug( LDAP_DEBUG_ANY,
-		    "controls initialization error\n",
-		    0, 0, 0 );
-
-		goto destroy;
-	}
-
-#ifdef HAVE_TLS
-	/* Library defaults to full certificate checking. This is correct when
-	 * a client is verifying a server because all servers should have a
-	 * valid cert. But few clients have valid certs, so we want our default
-	 * to be no checking. The config file can override this as usual.
-	 */
-	rc = 0;
-	(void) ldap_pvt_tls_set_option( NULL, LDAP_OPT_X_TLS_REQUIRE_CERT, &rc );
-#endif
-
-#ifdef LDAP_SLAPI
-	if ( slapi_int_initialize() != 0 ) {
-		Debug( LDAP_DEBUG_ANY,
-		    "slapi initialization error\n",
-		    0, 0, 0 );
-
-		goto destroy;
-	}
-#endif /* LDAP_SLAPI */
-
-	if ( frontend_init() ) {
-		goto destroy;
-	}
-
-	if ( overlay_init() ) {
-		goto destroy;
-	}
-
-#ifdef SLAP_DYNACL
-	if ( acl_init() ) {
-		goto destroy;
-	}
-#endif /* SLAP_DYNACL */
 
 	if ( read_config( configfile, configdir ) != 0 ) {
 		rc = 1;
@@ -652,6 +629,14 @@ unhandled_option:;
 			rc = 0;
 			goto destroy;
 		}
+	}
+
+	if ( glue_sub_init( ) != 0 ) {
+		Debug( LDAP_DEBUG_ANY,
+		    "subordinate config error\n",
+		    0, 0, 0 );
+
+		goto destroy;
 	}
 
 	if ( slap_schema_check( ) != 0 ) {
@@ -843,6 +828,13 @@ stop:
 	}
 
 	config_destroy();
+
+	if ( configfile )
+		ch_free( configfile );
+	if ( configdir )
+		ch_free( configdir );
+	if ( urls )
+		ch_free( urls );
 
 #ifdef CSRIMALLOC
 	mal_dumpleaktrace( leakfile );

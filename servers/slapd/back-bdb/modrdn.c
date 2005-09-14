@@ -1,5 +1,5 @@
 /* modrdn.c - bdb backend modrdn routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modrdn.c,v 1.160.2.3 2005/04/29 21:29:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modrdn.c,v 1.160.2.4 2005/08/09 21:04:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2005 The OpenLDAP Foundation.
@@ -797,8 +797,8 @@ retry:	/* transaction retry */
 		}
 
 	} else {
-		rc = bdb_cache_modrdn( e, &op->orr_nnewrdn, &dummy, neip,
-			bdb->bi_dbenv, locker, &lock );
+		rc = bdb_cache_modrdn( bdb, e, &op->orr_nnewrdn, &dummy, neip,
+			locker, &lock );
 		switch( rc ) {
 		case DB_LOCK_DEADLOCK:
 		case DB_LOCK_NOTGRANTED:
@@ -874,7 +874,7 @@ done:
 			if ( mod->sml_nvalues ) free( mod->sml_nvalues[0].bv_val );
 			free( mod );
 		}
-		slap_mods_free( mod );
+		slap_mods_free( mod, 1 );
 	}
 
 	/* LDAP v3 Support */

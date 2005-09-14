@@ -1,5 +1,5 @@
 /* schema_init.c - init builtin schema */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_init.c,v 1.360.2.3 2005/04/29 21:29:05 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_init.c,v 1.360.2.8 2005/08/25 05:01:18 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -50,8 +50,6 @@
 #define HASH_Update(c,buf,len)	lutil_HASHUpdate(c,buf,len)
 #define HASH_Final(d,c)			lutil_HASHFinal(d,c)
 
-#define	OpenLDAPaciMatch			NULL
-
 /* approx matching rules */
 #define directoryStringApproxMatchOID	"1.3.6.1.4.1.4203.666.4.4"
 #define directoryStringApproxMatch		approxMatch
@@ -69,10 +67,18 @@
 #define csnIndexer				generalizedTimeIndexer
 #define csnFilter				generalizedTimeFilter
 
+#ifdef SLAP_AUTHZ_SYNTAX
+/* FIXME: temporary */
+#define authzMatch				octetStringMatch
+#endif /* SLAP_AUTHZ_SYNTAX */
+
 unsigned int index_substr_if_minlen = SLAP_INDEX_SUBSTR_IF_MINLEN_DEFAULT;
 unsigned int index_substr_if_maxlen = SLAP_INDEX_SUBSTR_IF_MAXLEN_DEFAULT;
 unsigned int index_substr_any_len = SLAP_INDEX_SUBSTR_ANY_LEN_DEFAULT;
 unsigned int index_substr_any_step = SLAP_INDEX_SUBSTR_ANY_STEP_DEFAULT;
+
+ldap_pvt_thread_mutex_t	ad_undef_mutex;
+ldap_pvt_thread_mutex_t	oc_undef_mutex;
 
 static int
 inValidate(
@@ -121,7 +127,7 @@ static int certificateValidate( Syntax *syntax, struct berval *in )
 #define certificateValidate sequenceValidate
 #endif
 
-static int
+int
 octetStringMatch(
 	int *matchp,
 	slap_mask_t flags,
@@ -404,7 +410,7 @@ octetStringSubstringsIndexer(
 	BerVarray *keysp,
 	void *ctx )
 {
-	ber_len_t i, j, len, nkeys;
+	ber_len_t i, nkeys;
 	size_t slen, mlen;
 	BerVarray keys;
 
@@ -521,7 +527,7 @@ octetStringSubstringsFilter (
 {
 	SubstringsAssertion *sa;
 	char pre;
-	ber_len_t len, max, nkeys = 0;
+	ber_len_t nkeys = 0;
 	size_t slen, mlen, klen;
 	BerVarray keys;
 	HASH_CONTEXT HASHcontext;
@@ -892,8 +898,8 @@ nameUIDPretty(
 	struct berval *out,
 	void *ctx )
 {
-	assert( val );
-	assert( out );
+	assert( val != NULL );
+	assert( out != NULL );
 
 
 	Debug( LDAP_DEBUG_TRACE, ">>> nameUIDPretty: <%s>\n", val->bv_val, 0, 0 );
@@ -1856,7 +1862,7 @@ telephoneNumberNormalize(
 	return LDAP_SUCCESS;
 }
 
-static int
+int
 numericoidValidate(
 	Syntax *syntax,
 	struct berval *in )
@@ -2321,7 +2327,7 @@ integerBitAndMatch(
 		return LDAP_CONSTRAINT_VIOLATION;
 	}
 
-	*matchp = (lValue & lAssertedValue) ? 0 : 1;
+	*matchp = ((lValue & lAssertedValue) == lAssertedValue) ? 0 : 1;
 	return LDAP_SUCCESS;
 }
 
@@ -2352,7 +2358,7 @@ integerBitOrMatch(
 		return LDAP_CONSTRAINT_VIOLATION;
 	}
 
-	*matchp = (lValue | lAssertedValue) ? 0 : -1;
+	*matchp = ((lValue & lAssertedValue) != 0) ? 0 : -1;
 	return LDAP_SUCCESS;
 }
 
@@ -2362,7 +2368,6 @@ serialNumberAndIssuerValidate(
 	struct berval *in )
 {
 	int rc;
-	int state;
 	ber_len_t n;
 	struct berval sn, i;
 	if( in->bv_len < 3 ) return LDAP_INVALID_SYNTAX;
@@ -2396,12 +2401,11 @@ serialNumberAndIssuerPretty(
 	void *ctx )
 {
 	int rc;
-	int state;
 	ber_len_t n;
 	struct berval sn, i, newi;
 
-	assert( val );
-	assert( out );
+	assert( val != NULL );
+	assert( out != NULL );
 
 	Debug( LDAP_DEBUG_TRACE, ">>> serialNumberAndIssuerPretty: <%s>\n",
 		val->bv_val, 0, 0 );
@@ -2436,13 +2440,14 @@ serialNumberAndIssuerPretty(
 	out->bv_len = sn.bv_len + newi.bv_len + 1;
 	out->bv_val = slap_sl_realloc( newi.bv_val, out->bv_len + 1, ctx );
 
-	if( BER_BVISNULL( out ) ) {
+	if( out->bv_val == NULL ) {
+		out->bv_len = 0;
 		slap_sl_free( newi.bv_val, ctx );
 		return LDAP_OTHER;
 	}
 
 	/* push issuer over */
-	AC_MEMCPY( &out->bv_val[sn.bv_len+1], newi.bv_val, newi.bv_len );
+	AC_MEMCPY( &out->bv_val[sn.bv_len+1], out->bv_val, newi.bv_len );
 	/* insert sn and "$" */
 	AC_MEMCPY( out->bv_val, sn.bv_val, sn.bv_len );
 	out->bv_val[sn.bv_len] = '$';
@@ -2471,12 +2476,11 @@ serialNumberAndIssuerNormalize(
 	void *ctx )
 {
 	int rc;
-	int state;
 	ber_len_t n;
 	struct berval sn, i, newi;
 
-	assert( val );
-	assert( out );
+	assert( val != NULL );
+	assert( out != NULL );
 
 	Debug( LDAP_DEBUG_TRACE, ">>> serialNumberAndIssuerNormalize: <%s>\n",
 		val->bv_val, 0, 0 );
@@ -2513,13 +2517,14 @@ serialNumberAndIssuerNormalize(
 	out->bv_len = sn.bv_len + newi.bv_len + 1;
 	out->bv_val = slap_sl_realloc( newi.bv_val, out->bv_len + 1, ctx );
 
-	if( BER_BVISNULL( out ) ) {
+	if( out->bv_val == NULL ) {
+		out->bv_len = 0;
 		slap_sl_free( newi.bv_val, ctx );
 		return LDAP_OTHER;
 	}
 
 	/* push issuer over */
-	AC_MEMCPY( &out->bv_val[sn.bv_len+1], newi.bv_val, newi.bv_len );
+	AC_MEMCPY( &out->bv_val[sn.bv_len+1], out->bv_val, newi.bv_len );
 	/* insert sn and "$" */
 	AC_MEMCPY( out->bv_val, sn.bv_val, sn.bv_len );
 	out->bv_val[sn.bv_len] = '$';
@@ -2900,7 +2905,6 @@ int generalizedTimeIndexer(
 	void *ctx )
 {
 	int i, j;
-	size_t slen, mlen;
 	BerVarray keys;
 	char tmp[5];
 	BerValue bvtmp; /* 40 bit index */
@@ -3420,14 +3424,6 @@ static slap_syntax_defs_rec syntax_defs[] = {
 		serialNumberAndIssuerValidate,
 		serialNumberAndIssuerPretty},
 
-#ifdef SLAPD_ACI_ENABLED
-	/* OpenLDAP Experimental Syntaxes */
-	{"( 1.3.6.1.4.1.4203.666.2.1 DESC 'OpenLDAP Experimental ACI' )",
-		SLAP_SYNTAX_HIDE,
-		UTF8StringValidate /* THIS WILL CHANGE FOR NEW ACI SYNTAX */,
-		NULL},
-#endif
-
 #ifdef SLAPD_AUTHPASSWD
 	/* needs updating */
 	{"( 1.3.6.1.4.1.4203.666.2.2 DESC 'OpenLDAP authPassword' )",
@@ -3443,6 +3439,13 @@ static slap_syntax_defs_rec syntax_defs[] = {
 	/* OpenLDAP Void Syntax */
 	{"( 1.3.6.1.4.1.4203.1.1.1 DESC 'OpenLDAP void' )" ,
 		SLAP_SYNTAX_HIDE, inValidate, NULL},
+
+#ifdef SLAP_AUTHZ_SYNTAX
+	/* FIXME: OID is unused, but not registered yet */
+	{"( 1.3.6.1.4.1.4203.666.2.7 DESC 'OpenLDAP authz' )",
+		SLAP_SYNTAX_HIDE, authzValidate, authzPretty},
+#endif /* SLAP_AUTHZ_SYNTAX */
+
 	{NULL, 0, NULL, NULL}
 };
 
@@ -3837,15 +3840,6 @@ static slap_mrule_defs_rec mrule_defs[] = {
 		NULL},
 #endif
 
-#ifdef SLAPD_ACI_ENABLED
-	{"( 1.3.6.1.4.1.4203.666.4.2 NAME 'OpenLDAPaciMatch' "
-		"SYNTAX 1.3.6.1.4.1.4203.666.2.1 )",
-		SLAP_MR_HIDE | SLAP_MR_EQUALITY, NULL,
-		NULL, NULL, OpenLDAPaciMatch,
-		NULL, NULL,
-		NULL},
-#endif
-
 	{"( 1.2.840.113556.1.4.803 NAME 'integerBitAndMatch' "
 		"SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )",
 		SLAP_MR_EXT, NULL,
@@ -3887,6 +3881,16 @@ static slap_mrule_defs_rec mrule_defs[] = {
 		NULL, NULL, csnOrderingMatch,
 		NULL, NULL,
 		"CSNMatch" },
+
+#ifdef SLAP_AUTHZ_SYNTAX
+	/* FIXME: OID is unused, but not registered yet */
+	{"( 1.3.6.1.4.1.4203.666.4.12 NAME 'authzMatch' "
+		"SYNTAX 1.3.6.1.4.1.4203.666.2.7 )",
+		SLAP_MR_HIDE | SLAP_MR_EQUALITY, NULL,
+		NULL, authzNormalize, authzMatch,
+		NULL, NULL,
+		NULL},
+#endif /* SLAP_AUTHZ_SYNTAX */
 
 	{NULL, SLAP_MR_NONE, NULL,
 		NULL, NULL, NULL, NULL, NULL,
@@ -3946,4 +3950,7 @@ schema_destroy( void )
 	mr_destroy();
 	mru_destroy();
 	syn_destroy();
+
+	ldap_pvt_thread_mutex_destroy( &ad_undef_mutex );
+	ldap_pvt_thread_mutex_destroy( &oc_undef_mutex );
 }

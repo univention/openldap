@@ -1,5 +1,5 @@
 /* operational.c - ldbm backend operational attributes function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/operational.c,v 1.12.2.1 2005/01/20 18:04:00 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/operational.c,v 1.12.2.2 2005/08/09 21:04:03 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -55,7 +55,7 @@ ldbm_back_operational(
 {
 	Attribute	**ap;
 
-	assert( rs->sr_entry );
+	assert( rs->sr_entry != NULL );
 
 	for ( ap = &rs->sr_operational_attrs; *ap; ap = &(*ap)->a_next )
 		/* just count */ ;
@@ -67,7 +67,7 @@ ldbm_back_operational(
 
 		hs = has_children( op->o_bd, rs->sr_entry );
 		*ap = slap_operational_hasSubordinate( hs );
-		assert( *ap );
+		assert( *ap != NULL );
 
 		ap = &(*ap)->a_next;
 	}

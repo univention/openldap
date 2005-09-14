@@ -1,5 +1,5 @@
 /* init.c - initialize ldap backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/init.c,v 1.79.2.6 2005/06/03 20:04:31 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/init.c,v 1.79.2.8 2005/08/09 21:04:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2005 The OpenLDAP Foundation.
@@ -108,7 +108,7 @@ ldap_back_db_init( Backend *be )
 	li->idassert_sb.sb_tls = SB_TLS_DEFAULT;
 
 	/* by default, use proxyAuthz control on each operation */
-	li->idassert_flags = LDAP_BACK_AUTH_NONE;
+	li->idassert_flags = LDAP_BACK_AUTH_PRESCRIPTIVE;
 
 	li->idassert_authz = NULL;
 
@@ -202,8 +202,10 @@ void
 ldap_back_conn_free( void *v_lc )
 {
 	struct ldapconn	*lc = v_lc;
-	
-	ldap_unbind_ext_s( lc->lc_ld, NULL, NULL );
+
+	if ( lc->lc_ld != NULL ) {	
+		ldap_unbind_ext( lc->lc_ld, NULL, NULL );
+	}
 	if ( !BER_BVISNULL( &lc->lc_bound_ndn ) ) {
 		ch_free( lc->lc_bound_ndn.bv_val );
 	}
@@ -214,7 +216,6 @@ ldap_back_conn_free( void *v_lc )
 	if ( !BER_BVISNULL( &lc->lc_local_ndn ) ) {
 		ch_free( lc->lc_local_ndn.bv_val );
 	}
-	ldap_pvt_thread_mutex_destroy( &lc->lc_mutex );
 	ch_free( lc );
 }
 
@@ -281,6 +282,10 @@ ldap_back_db_destroy(
 		if ( !BER_BVISNULL( &li->idassert_sasl_realm ) ) {
 			ch_free( li->idassert_sasl_realm.bv_val );
 			BER_BVZERO( &li->idassert_sasl_realm );
+		}
+		if ( li->idassert_authz != NULL ) {
+			ber_bvarray_free( li->idassert_authz );
+			li->idassert_authz = NULL;
 		}
                 if ( li->conntree ) {
 			avl_free( li->conntree, ldap_back_conn_free );

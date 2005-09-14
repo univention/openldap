@@ -2,7 +2,7 @@
 .\" Copyright 1998-2005 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2004, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-rwm.5,v 1.8.2.2 2005/01/24 21:28:50 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-rwm.5,v 1.8.2.4 2005/08/09 16:58:45 kurt Exp $
 .\"
 .\" Portions of this document should probably be moved to slapd-ldap(5)
 .\" and maybe manual pages for librewrite.
@@ -22,6 +22,8 @@ either remotely, in conjunction with the proxy backend described in
 .BR slapd-ldap (5),
 or locally, in conjunction with the relay backend described in
 .BR slapd-relay (5).
+.LP
+This overlay is experimental.
 .SH MAPPING
 An important feature of the
 .B rwm
@@ -39,7 +41,7 @@ slapd's schema, some attribute names might be different but serve the
 same purpose, etc.
 If local or foreign name is `*', the name is preserved.
 If local name is omitted, the foreign name is removed.
-Unmapped names are preseved if both local and foreign name are `*',
+Unmapped names are preserved if both local and foreign name are `*',
 and removed if local name is omitted and foreign name is `*'.
 .LP
 The local 
@@ -120,7 +122,7 @@ The underlying concept is to build a lightweight rewrite module
 for the slapd server (initially dedicated to the LDAP backend):
 .LP
 .SH Passes
-An incoming string is matched agains a set of 
+An incoming string is matched against a set of
 .IR rewriteRules .
 Rules are made of a 
 .IR "regex match pattern" , 
@@ -256,7 +258,7 @@ operation structure which can be dereferenced later; operator
 assigns a variable in the rewrite context scope; operator
 .B &&
 assigns a variable that scopes the entire session, e.g. its value
-can be derefenced later by other rewrite contexts
+can be dereferenced later by other rewrite contexts
 .TP
 .B *
 variable dereferencing; <name> must refer to a variable that is
@@ -363,7 +365,7 @@ altering too much the configuration file).
 <Context name> is the name that identifies the context, i.e. the name
 used by the application to refer to the set of rules it contains.
 It is used also to reference sub contexts in string rewriting.
-A context may aliase another one.
+A context may alias another one.
 In this case the alias context contains no rule, and any reference to
 it will result in accessing the aliased one.
 .TP

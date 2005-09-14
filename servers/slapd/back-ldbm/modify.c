@@ -1,5 +1,5 @@
 /* modify.c - ldbm backend modify routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/modify.c,v 1.115.2.2 2005/06/03 19:54:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/modify.c,v 1.115.2.3 2005/08/09 21:04:03 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -164,7 +164,7 @@ int ldbm_modify_internal(
 	}
 
 	/* check that the entry still obeys the schema */
-	rc = entry_schema_check( op->o_bd, e, save_attrs, get_manageDIT(op),
+	rc = entry_schema_check( op, e, save_attrs, get_manageDIT(op),
 		text, textbuf, textlen );
 	if ( rc != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_ANY, "entry failed schema check: %s\n",

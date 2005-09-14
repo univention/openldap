@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/xmap.c,v 1.6.2.2 2005/01/24 21:28:51 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/xmap.c,v 1.6.2.4 2005/08/29 18:46:18 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2005 The OpenLDAP Foundation.
@@ -263,7 +263,7 @@ rewrite_xmap_apply(
 			break;
 		}
 
-#ifdef HAVE_PW_GECOS
+#ifdef HAVE_STRUCT_PASSWD_PW_GECOS
 		if ( pwd->pw_gecos != NULL && pwd->pw_gecos[0] != '\0' ) {
 			int l = strlen( pwd->pw_gecos );
 			
@@ -279,7 +279,7 @@ rewrite_xmap_apply(
 			}
 			val->bv_len = l;
 		} else
-#endif /* HAVE_PW_GECOS */
+#endif /* HAVE_STRUCT_PASSWD_PW_GECOS */
 		{
 			val->bv_val = strdup( key->bv_val );
 			val->bv_len = key->bv_len;
@@ -437,8 +437,8 @@ rewrite_xmap_destroy(
 {
 	struct rewrite_map *map;
 
-	assert( pmap );
-	assert( *pmap );
+	assert( pmap != NULL );
+	assert( *pmap != NULL );
 
 	map = *pmap;
 

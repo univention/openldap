@@ -1,5 +1,5 @@
 /* oidm.c - object identifier macro routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/oidm.c,v 1.11.2.3 2005/04/29 21:29:05 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/oidm.c,v 1.11.2.4 2005/08/09 21:03:59 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -119,9 +119,9 @@ usage:	fprintf( stderr, "\tObjectIdentifier <name> <oid>\n");
 		return 1;
 	}
 
-	om = (OidMacro *) SLAP_MALLOC( sizeof(OidMacro) );
+	om = (OidMacro *) SLAP_CALLOC( sizeof(OidMacro), 1 );
 	if( om == NULL ) {
-		Debug( LDAP_DEBUG_ANY, "parse_oidm: SLAP_MALLOC failed", 0, 0, 0 );
+		Debug( LDAP_DEBUG_ANY, "parse_oidm: SLAP_CALLOC failed", 0, 0, 0 );
 		return 1;
 	}
 
@@ -156,7 +156,7 @@ void oidm_unparse( BerVarray *res, OidMacro *start, OidMacro *end, int sys )
 {
 	OidMacro *om;
 	int i, j, num;
-	struct berval bv, *bva = NULL, idx;
+	struct berval *bva = NULL, idx;
 	char ibuf[32], *ptr;
 
 	if ( !start )

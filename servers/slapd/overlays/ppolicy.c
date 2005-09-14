@@ -1,8 +1,8 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/ppolicy.c,v 1.31.2.6 2005/06/08 21:50:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/ppolicy.c,v 1.31.2.12 2005/08/26 00:17:33 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2005 The OpenLDAP Foundation.
- * Portions Copyright 2004 Howard Chu, Symas Corporation.
+ * Portions Copyright 2004-2005 Howard Chu, Symas Corporation.
  * Portions Copyright 2004 Hewlett-Packard Company.
  * All rights reserved.
  *
@@ -23,7 +23,7 @@
 #include "portable.h"
 
 /* This file implements "Password Policy for LDAP Directories",
- * based on draft behera-ldap-password-policy-08
+ * based on draft behera-ldap-password-policy-09
  */
 
 #ifdef SLAPD_OVER_PPOLICY
@@ -111,7 +111,7 @@ static struct schema_info {
 		"EQUALITY generalizedTimeMatch "
 		"ORDERING generalizedTimeOrderingMatch "
 		"SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 "
-		"SINGLE-VALUE USAGE directoryOperation NO-USER-MODIFICATION )",
+		"SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )",
 		&ad_pwdChangedTime },
 	{	"( 1.3.6.1.4.1.42.2.27.8.1.17 "
 		"NAME ( 'pwdAccountLockedTime' ) "
@@ -119,7 +119,7 @@ static struct schema_info {
 		"EQUALITY generalizedTimeMatch "
 		"ORDERING generalizedTimeOrderingMatch "
 		"SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 "
-		"SINGLE-VALUE USAGE directoryOperation )",
+		"SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )",
 		&ad_pwdAccountLockedTime },
 	{	"( 1.3.6.1.4.1.42.2.27.8.1.19 "
 		"NAME ( 'pwdFailureTime' ) "
@@ -127,21 +127,21 @@ static struct schema_info {
 		"EQUALITY generalizedTimeMatch "
 		"ORDERING generalizedTimeOrderingMatch "
 		"SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 "
-		"USAGE directoryOperation )",
+		"NO-USER-MODIFICATION USAGE directoryOperation )",
 		&ad_pwdFailureTime },
 	{	"( 1.3.6.1.4.1.42.2.27.8.1.20 "
 		"NAME ( 'pwdHistory' ) "
 		"DESC 'The history of users passwords' "
 		"EQUALITY octetStringMatch "
 		"SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 "
-		"USAGE directoryOperation NO-USER-MODIFICATION )",
+		"NO-USER-MODIFICATION USAGE directoryOperation )",
 		&ad_pwdHistory },
 	{	"( 1.3.6.1.4.1.42.2.27.8.1.21 "
 		"NAME ( 'pwdGraceUseTime' ) "
 		"DESC 'The timestamps of the grace login once the password has expired' "
 		"EQUALITY generalizedTimeMatch "
 		"SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 "
-		"USAGE directoryOperation NO-USER-MODIFICATION )",
+		"NO-USER-MODIFICATION USAGE directoryOperation )",
 		&ad_pwdGraceUseTime }, 
 	{	"( 1.3.6.1.4.1.42.2.27.8.1.22 "
 		"NAME ( 'pwdReset' ) "
@@ -155,7 +155,12 @@ static struct schema_info {
 		"DESC 'The pwdPolicy subentry in effect for this object' "
 		"EQUALITY distinguishedNameMatch "
 		"SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 "
-		"SINGLE-VALUE USAGE directoryOperation )",
+		"SINGLE-VALUE "
+#if 0
+		/* Not until MANAGEDIT control is released */
+		"NO-USER-MODIFICATION "
+#endif
+		"USAGE directoryOperation )",
 		&ad_pwdPolicySubentry },
 	{ NULL, NULL }
 };
@@ -211,10 +216,8 @@ account_locked( Operation *op, Entry *e,
 		PassPolicy *pp, Modifications **mod ) 
 {
 	Attribute       *la;
-	int rc;
-	Entry *de;
 
-	assert(mod);
+	assert(mod != NULL);
 
 	if ( (la = attr_find( e->e_attrs, ad_pwdAccountLockedTime )) != NULL ) {
 		BerVarray vals = la->a_nvals;
@@ -225,8 +228,10 @@ account_locked( Operation *op, Entry *e,
 		 */
 		if (vals[0].bv_val != NULL) {
 			time_t then, now;
-			struct berval bv;
 			Modifications *m;
+
+			if (!pp->pwdLockoutDuration)
+				return 1;
 
 			if ((then = parse_time( vals[0].bv_val )) == (time_t)0)
 				return 1;
@@ -307,12 +312,11 @@ ppolicy_get( Operation *op, Entry *e, PassPolicy *pp )
 	pp_info *pi = on->on_bi.bi_private;
 	Attribute *a;
 	BerVarray vals;
-	int i, rc, nent;
+	int rc;
 	Entry *pe = NULL;
-	AttributeDescription *oca = slap_schema.si_ad_objectClass;
+#if 0
 	const char *text;
-	AttributeDescription *ad;
-	struct berval bv;
+#endif
 
 	memset( pp, 0, sizeof(PassPolicy) );
 
@@ -413,12 +417,9 @@ password_scheme( struct berval *cred, struct berval *sch )
 
 	for(e = 1; cred->bv_val[e] && cred->bv_val[e] != '}'; e++);
 	if (cred->bv_val[e]) {
-		char *sc = ch_calloc( sizeof(char), e + 2);
-		sc[e + 1] = '\0'; /* terminate string */
-		strncpy( sc, cred->bv_val, e + 1);
-		e = lutil_passwd_scheme( sc );
-		free( sc );
-		if (e && sch) {
+		int rc;
+		rc = lutil_passwd_scheme( cred->bv_val );
+		if (rc && sch) {
 			sch->bv_val = cred->bv_val;
 			sch->bv_len = e;
 			return LDAP_SUCCESS;
@@ -432,7 +433,6 @@ check_password_quality( struct berval *cred, PassPolicy *pp, LDAPPasswordPolicyE
 {
 	int rc = LDAP_SUCCESS, ok = LDAP_SUCCESS;
 	char *ptr = cred->bv_val;
-	char *modpath;
 	struct berval sch;
 
 	assert( cred != NULL );
@@ -625,9 +625,9 @@ make_pwd_history_value( char *timebuf, struct berval *bv, Attribute *pa )
 	int nlen;
 
 	snprintf( str, MAX_PWD_HISTORY_SZ,
-		  "%s#%s#%d#", timebuf,
+		  "%s#%s#%lu#", timebuf,
 		  pa->a_desc->ad_type->sat_syntax->ssyn_oid,
-		  pa->a_nvals[0].bv_len );
+		  (unsigned long) pa->a_nvals[0].bv_len );
 	str[MAX_PWD_HISTORY_SZ-1] = 0;
 	nlen = strlen(str);
 
@@ -681,10 +681,9 @@ ppolicy_bind_resp( Operation *op, SlapReply *rs )
 	slap_overinst *on = ppb->on;
 	Modifications *mod = ppb->mod, *m;
 	int pwExpired = 0;
-	int ngut = -1, warn = -1, age, rc, i;
+	int ngut = -1, warn = -1, age, rc;
 	Attribute *a;
-	time_t now, then, pwtime = (time_t)-1;
-	const char *txt;
+	time_t now, pwtime = (time_t)-1;
 	char nowstr[ LDAP_LUTIL_GENTIME_BUFSIZE ];
 	struct berval timestamp;
 	BackendInfo *bi = op->o_bd->bd_info;
@@ -925,7 +924,7 @@ locked:
 		op2.o_ndn = op->o_bd->be_rootndn;
 		op2.o_bd->bd_info = (BackendInfo *)on->on_info;
 		rc = op->o_bd->be_modify( &op2, &r2 );
-		slap_mods_free( mod );
+		slap_mods_free( mod, 1 );
 	}
 
 	if ( ppb->send_ctrl ) {
@@ -950,10 +949,13 @@ ppolicy_bind( Operation *op, SlapReply *rs )
 {
 	slap_overinst *on = (slap_overinst *)op->o_bd->bd_info;
 
+	/* Reset lockout status on all Bind requests */
+	pwcons[op->o_conn->c_conn_idx].restricted = 0;
+
 	/* Root bypasses policy */
 	if ( !be_isroot_dn( op->o_bd, &op->o_req_ndn )) {
 		Entry *e;
-		int i, rc;
+		int rc;
 		ppbind *ppb;
 		slap_callback *cb;
 
@@ -1004,9 +1006,9 @@ ppolicy_bind( Operation *op, SlapReply *rs )
 
 /* Reset the restricted flag for the next session on this connection */
 static int
-ppolicy_unbind( Operation *op, SlapReply *rs )
+ppolicy_connection_destroy( BackendDB *bd, Connection *conn )
 {
-	pwcons[op->o_conn->c_conn_idx].restricted = 0;
+	pwcons[conn->c_conn_idx].restricted = 0;
 	return SLAP_CB_CONTINUE;
 }
 
@@ -1017,7 +1019,7 @@ ppolicy_restrict(
 	SlapReply *rs )
 {
 	slap_overinst *on = (slap_overinst *)op->o_bd->bd_info;
-	int i, send_ctrl = 0;
+	int send_ctrl = 0;
 
 	/* Did we receive a password policy request control? */
 	if ( op->o_ctrlflag[ppolicy_cid] ) {
@@ -1052,7 +1054,6 @@ ppolicy_add(
 	slap_overinst *on = (slap_overinst *)op->o_bd->bd_info;
 	pp_info *pi = on->on_bi.bi_private;
 	PassPolicy pp;
-	int pw;
 	Attribute *pa;
 	const char *txt;
 
@@ -1071,7 +1072,7 @@ ppolicy_add(
 		ppolicy_get( op, op->ora_e, &pp );
 		if (pp.pwdCheckQuality > 0 && !be_isroot( op )) {
 			struct berval *bv = &(pa->a_vals[0]);
-			int rc, i, send_ctrl = 0; 
+			int rc, send_ctrl = 0;
 			LDAPPasswordPolicyError pErr = PP_noError;
 
 			/* Did we receive a password policy request control? */
@@ -1149,7 +1150,7 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 				hsize = 0;
 	PassPolicy		pp;
 	Modifications		*mods = NULL, *modtail, *ml, *delmod, *addmod;
-	Attribute		*pa, *ha, *ra, at;
+	Attribute		*pa, *ha, at;
 	const char		*txt;
 	pw_hist			*tl = NULL, *p;
 	int			zapReset, send_ctrl = 0;
@@ -1271,7 +1272,6 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 	if (pp.pwdInHistory > 0 && (ha = attr_find( e->e_attrs, ad_pwdHistory ))) {
 		struct berval oldpw;
 		time_t oldtime;
-		char *oid;
 
 		for(i=0; ha->a_nvals[i].bv_val; i++) {
 			rc = parse_pwdhistory( &(ha->a_nvals[i]), NULL,
@@ -1438,7 +1438,6 @@ do_modify:
 		struct berval timestamp;
 		char timebuf[ LDAP_LUTIL_GENTIME_BUFSIZE ];
 		time_t now = slap_get_time();
-		Attribute *ga;
 		
 		/*
 		 * keep the necessary pwd.. operational attributes
@@ -1458,7 +1457,7 @@ do_modify:
 			ber_dupbv( &mods->sml_values[0], &timestamp );
 			mods->sml_values[1].bv_len = 0;
 			mods->sml_values[1].bv_val = NULL;
-			assert( mods->sml_values[0].bv_val );
+			assert( mods->sml_values[0].bv_val != NULL );
 		} else {
 			mods->sml_op = LDAP_MOD_DELETE;
 			mods->sml_values = NULL;
@@ -1774,6 +1773,11 @@ int ppolicy_init()
 				scherr2str(code), err );
 			return code;
 		}
+		/* Allow Manager to set these as needed */
+		if ( is_at_no_user_mod( (*pwd_OpSchema[i].ad)->ad_type )) {
+			(*pwd_OpSchema[i].ad)->ad_type->sat_flags |=
+				SLAP_AT_MANAGEABLE;
+		}
 	}
 
 	code = register_supported_control( LDAP_CONTROL_PASSWORDPOLICYREQUEST,
@@ -1794,11 +1798,11 @@ int ppolicy_init()
 
 	ppolicy.on_bi.bi_op_add = ppolicy_add;
 	ppolicy.on_bi.bi_op_bind = ppolicy_bind;
-	ppolicy.on_bi.bi_op_unbind = ppolicy_unbind;
 	ppolicy.on_bi.bi_op_compare = ppolicy_restrict;
 	ppolicy.on_bi.bi_op_delete = ppolicy_restrict;
 	ppolicy.on_bi.bi_op_modify = ppolicy_modify;
 	ppolicy.on_bi.bi_op_search = ppolicy_restrict;
+	ppolicy.on_bi.bi_connection_destroy = ppolicy_connection_destroy;
 
 	return overlay_register( &ppolicy );
 }

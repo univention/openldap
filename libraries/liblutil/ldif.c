@@ -1,5 +1,5 @@
 /* ldif.c - routines for dealing with LDIF files */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/ldif.c,v 1.2.2.4 2005/05/18 16:29:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/ldif.c,v 1.2.2.6 2005/08/09 21:03:56 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -389,9 +389,9 @@ ldif_must_b64_encode_register( LDAP_CONST char *name, LDAP_CONST char *oid )
 	int		i;
 	ber_len_t	len;
 
-	assert( must_b64_encode );
-	assert( name );
-	assert( oid );
+	assert( must_b64_encode != NULL );
+	assert( name != NULL );
+	assert( oid != NULL );
 
 	len = strlen( name );
 
@@ -444,7 +444,7 @@ ldif_must_b64_encode_release( void )
 {
 	int	i;
 
-	assert( must_b64_encode );
+	assert( must_b64_encode != NULL );
 
 	if ( must_b64_encode == default_must_b64_encode ) {
 		return;
@@ -470,8 +470,8 @@ ldif_must_b64_encode( LDAP_CONST char *s )
 	int		i;
 	struct berval	bv;
 
-	assert( must_b64_encode );
-	assert( s );
+	assert( must_b64_encode != NULL );
+	assert( s != NULL );
 
 	ber_str2bv( s, 0, 0, &bv );
 
@@ -747,8 +747,8 @@ int ldif_is_not_printable(
 
 LDIFFP *
 ldif_open(
-	char *file,
-	char *mode
+	LDAP_CONST char *file,
+	LDAP_CONST char *mode
 )
 {
 	FILE *fp = fopen( file, mode );

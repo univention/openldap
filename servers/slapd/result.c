@@ -1,5 +1,5 @@
 /* result.c - routines to send ldap results, errors, and referrals */
-/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.244.2.7 2005/06/03 19:54:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.244.2.11 2005/08/25 05:01:18 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -37,10 +37,6 @@
 
 #include "slap.h"
 
-#ifdef LDAP_SLAPI
-#include "slapi/slapi.h"
-#endif
-
 const struct berval slap_dummy_bv = BER_BVNULL;
 
 int slap_null_cb( Operation *op, SlapReply *rs )
@@ -50,7 +46,7 @@ int slap_null_cb( Operation *op, SlapReply *rs )
 
 int slap_freeself_cb( Operation *op, SlapReply *rs )
 {
-	assert( op->o_callback );
+	assert( op->o_callback != NULL );
 
 	op->o_tmpfree( op->o_callback, op->o_tmpmemctx );
 	op->o_callback = NULL;
@@ -193,7 +189,7 @@ static long send_ldap_ber(
 		    err, sock_errstr(err), 0 );
 
 		if ( err != EWOULDBLOCK && err != EAGAIN ) {
-			connection_closing( conn );
+			connection_closing( conn, "connection lost on write" );
 
 			ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
 			ldap_pvt_thread_mutex_unlock( &conn->c_write_mutex );
@@ -246,36 +242,16 @@ static int
 send_ldap_controls( Operation *o, BerElement *ber, LDAPControl **c )
 {
 	int rc;
-#ifdef LDAP_SLAPI
-	LDAPControl **sctrls = NULL;
 
-	/*
-	 * Retrieve any additional controls that may be set by the
-	 * plugin.
-	 */
-
-	if ( o->o_pb &&
-		slapi_pblock_get( o->o_pb, SLAPI_RESCONTROLS, &sctrls ) != 0 )
-	{
-		sctrls = NULL;
-	}
-
-	if ( c == NULL && sctrls == NULL ) return 0;
-#else
-	if( c == NULL ) return 0;
-#endif /* LDAP_SLAPI */
+	if( c == NULL )
+		return 0;
 
 	rc = ber_printf( ber, "t{"/*}*/, LDAP_TAG_CONTROLS );
 	if( rc == -1 ) return rc;
 
-#ifdef LDAP_SLAPI
-	if ( c != NULL )
-#endif /* LDAP_SLAPI */
-	{
-		for( ; *c != NULL; c++) {
-			rc = send_ldap_control( ber, *c );
-			if( rc == -1 ) return rc;
-		}
+	for( ; *c != NULL; c++) {
+		rc = send_ldap_control( ber, *c );
+		if( rc == -1 ) return rc;
 	}
 
 #ifdef LDAP_DEVEL
@@ -290,10 +266,10 @@ send_ldap_controls( Operation *o, BerElement *ber, LDAPControl **c )
 
 		ber_init2( sber, NULL, LBER_USE_DER );
 
-		ber_printf( sber, "{i}", LDAP_UNWILLING_TO_PERFORM );
+		ber_printf( sber, "{e}", LDAP_UNWILLING_TO_PERFORM );
 
 		if( ber_flatten2( ber, &sorted.ldctl_value, 0 ) == -1 ) {
-			return LBER_ERROR;
+			return -1;
 		}
 
 		(void) ber_free_buf( ber );
@@ -302,15 +278,6 @@ send_ldap_controls( Operation *o, BerElement *ber, LDAPControl **c )
 		if( rc == -1 ) return rc;
 	}
 #endif
-
-#ifdef LDAP_SLAPI
-	if ( sctrls != NULL ) {
-		for ( c = sctrls; *c != NULL; c++ ) {
-			rc = send_ldap_control( ber, *c );
-			if( rc == -1 ) return rc;
-		}
-	}
-#endif /* LDAP_SLAPI */
 
 	rc = ber_printf( ber, /*{*/"N}" );
 
@@ -476,15 +443,6 @@ send_ldap_response(
 		goto cleanup;
 	}
 
-#ifdef LDAP_SLAPI
-	if ( op->o_pb ) {
-		slapi_pblock_set( op->o_pb, SLAPI_RESULT_CODE, (void *)rs->sr_err );
-		slapi_pblock_set( op->o_pb, SLAPI_RESULT_MATCHED,
-			(void *)rs->sr_matched );
-		slapi_pblock_set( op->o_pb, SLAPI_RESULT_TEXT, (void *)rs->sr_text );
-	}
-#endif /* LDAP_SLAPI */
-
 	ldap_pvt_thread_mutex_lock( &slap_counters.sc_sent_mutex );
 	ldap_pvt_mp_add_ulong( slap_counters.sc_pdu, 1 );
 	ldap_pvt_mp_add_ulong( slap_counters.sc_bytes, (unsigned long)bytes );
@@ -611,26 +569,6 @@ slap_send_ldap_result( Operation *op, SlapReply *rs )
 		}
 	}
 
-#ifdef LDAP_SLAPI
-	/*
-	 * Call pre-result plugins. To avoid infinite recursion plugins
-	 * should just set SLAPI_RESULT_CODE rather than sending a
-	 * result if they wish to change the result.
-	 */
-	if ( op->o_callback == NULL && op->o_pb != NULL ) {
-		slapi_int_pblock_set_operation( op->o_pb, op );
-		slapi_pblock_set( op->o_pb, SLAPI_RESULT_CODE,
-			(void *)rs->sr_err );
-		slapi_pblock_set( op->o_pb, SLAPI_RESULT_TEXT,
-			(void *)rs->sr_text );
-		slapi_pblock_set( op->o_pb, SLAPI_RESULT_MATCHED,
-			(void *)rs->sr_matched );
-
-		(void) slapi_int_call_plugins( op->o_bd, SLAPI_PLUGIN_PRE_RESULT_FN,
-			op->o_pb );
-	}
-#endif /* LDAP_SLAPI */
-
 	if ( op->o_protocol < LDAP_VERSION3 ) {
 		tmp = v2ref( rs->sr_ref, rs->sr_text );
 		rs->sr_text = tmp;
@@ -675,7 +613,12 @@ send_ldap_sasl( Operation *op, SlapReply *rs )
 	rs->sr_tag = req2res( op->o_tag );
 	rs->sr_msgid = (rs->sr_tag != LBER_SEQUENCE) ? op->o_msgid : 0;
 
-	send_ldap_response( op, rs );
+	if ( send_ldap_response( op, rs ) == SLAP_CB_CONTINUE ) {
+		Statslog( LDAP_DEBUG_STATS,
+			"%s RESULT tag=%lu err=%d text=%s\n",
+			op->o_log_prefix, rs->sr_tag, rs->sr_err,
+			rs->sr_text ? rs->sr_text : "", 0 );
+	}
 }
 
 void
@@ -692,7 +635,12 @@ slap_send_ldap_extended( Operation *op, SlapReply *rs )
 	rs->sr_tag = req2res( op->o_tag );
 	rs->sr_msgid = (rs->sr_tag != LBER_SEQUENCE) ? op->o_msgid : 0;
 
-	send_ldap_response( op, rs );
+	if ( send_ldap_response( op, rs ) == SLAP_CB_CONTINUE ) {
+		Statslog( LDAP_DEBUG_STATS,
+			"%s RESULT oid=%s err=%d text=%s\n",
+			op->o_log_prefix, rs->sr_rspoid ? rs->sr_rspoid : "",
+			rs->sr_err, rs->sr_text ? rs->sr_text : "", 0 );
+	}
 }
 
 void
@@ -706,7 +654,12 @@ slap_send_ldap_intermediate( Operation *op, SlapReply *rs )
 		rs->sr_rspdata != NULL ? rs->sr_rspdata->bv_len : 0 );
 	rs->sr_tag = LDAP_RES_INTERMEDIATE;
 	rs->sr_msgid = op->o_msgid;
-	send_ldap_response( op, rs );
+	if ( send_ldap_response( op, rs ) == SLAP_CB_CONTINUE ) {
+		Statslog( LDAP_DEBUG_STATS2,
+			"%s INTERM oid=%s\n",
+			op->o_log_prefix,
+			rs->sr_rspoid ? rs->sr_rspoid : "", 0, 0, 0 );
+	}
 }
 
 int
@@ -719,11 +672,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 	char		*edn;
 	int		userattrs;
 	AccessControlState acl_state = ACL_STATE_INIT;
-#ifdef LDAP_SLAPI
-	/* Support for computed attribute plugins */
-	computed_attr_context	 ctx;
-	AttributeName	*anp;
-#endif
+	int			 attrsonly;
 	AttributeDescription *ad_entry = slap_schema.si_ad_entry;
 
 	/* a_flags: array of flags telling if the i-th element will be
@@ -756,7 +705,8 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 				*sc_next = op->o_callback;
 
 		rc = SLAP_CB_CONTINUE;
-		for ( sc_next = op->o_callback; sc_next; op->o_callback = sc_next) {
+		for ( sc_next = op->o_callback; sc_next; op->o_callback = sc_next )
+		{
 			sc_next = op->o_callback->sc_next;
 			if ( op->o_callback->sc_response ) {
 				rc = op->o_callback->sc_response( op, rs );
@@ -776,6 +726,8 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 		op->o_connid, rs->sr_entry->e_name.bv_val,
 		op->ors_attrsonly ? " (attrsOnly)" : "" );
 
+	attrsonly = op->ors_attrsonly;
+
 	if ( !access_allowed( op, rs->sr_entry, ad_entry, NULL, ACL_READ, NULL )) {
 		Debug( LDAP_DEBUG_ACL,
 			"send_search_entry: conn %lu access to entry (%s) not allowed\n", 
@@ -794,7 +746,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 		struct berval	bv;
 
 		bv.bv_len = entry_flatsize( rs->sr_entry, 0 );
-		bv.bv_val = op->o_tmpalloc(bv.bv_len, op->o_tmpmemctx );
+		bv.bv_val = op->o_tmpalloc( bv.bv_len, op->o_tmpmemctx );
 
 		ber_init2( ber, &bv, LBER_USE_DER );
 		ber_set_option( ber, LBER_OPT_BER_MEMCTX, &op->o_tmpmemctx );
@@ -884,7 +836,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 		int finish = 0;
 
 		if ( rs->sr_attrs == NULL ) {
-			/* all attrs request, skip operational attributes */
+			/* all user attrs request, skip operational attributes */
 			if( is_at_operational( desc->ad_type ) ) {
 				continue;
 			}
@@ -893,20 +845,19 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 			/* specific attrs requested */
 			if ( is_at_operational( desc->ad_type ) ) {
 				if ( !SLAP_OPATTRS( rs->sr_attr_flags ) &&
-						!ad_inlist( desc, rs->sr_attrs ) )
+					!ad_inlist( desc, rs->sr_attrs ) )
 				{
 					continue;
 				}
 
 			} else {
-				if ( !userattrs && !ad_inlist( desc, rs->sr_attrs ) )
-				{
+				if ( !userattrs && !ad_inlist( desc, rs->sr_attrs ) ) {
 					continue;
 				}
 			}
 		}
 
-		if ( op->ors_attrsonly ) {
+		if ( attrsonly ) {
 			if ( ! access_allowed( op, rs->sr_entry, desc, NULL,
 				ACL_READ, &acl_state ) )
 			{
@@ -1042,7 +993,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 		AttributeDescription *desc = a->a_desc;
 
 		if ( rs->sr_attrs == NULL ) {
-			/* all attrs request, skip operational attributes */
+			/* all user attrs request, skip operational attributes */
 			if( is_at_operational( desc->ad_type ) ) {
 				continue;
 			}
@@ -1051,7 +1002,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 			/* specific attrs requested */
 			if( is_at_operational( desc->ad_type ) ) {
 				if ( !SLAP_OPATTRS( rs->sr_attr_flags ) && 
-						!ad_inlist( desc, rs->sr_attrs ) )
+					!ad_inlist( desc, rs->sr_attrs ) )
 				{
 					continue;
 				}
@@ -1085,7 +1036,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 			goto error_return;
 		}
 
-		if ( ! op->ors_attrsonly ) {
+		if ( ! attrsonly ) {
 			for ( i = 0; a->a_vals[i].bv_val != NULL; i++ ) {
 				if ( ! access_allowed( op, rs->sr_entry,
 					desc, &a->a_vals[i], ACL_READ, &acl_state ) )
@@ -1125,46 +1076,6 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 			goto error_return;
 		}
 	}
-
-#ifdef LDAP_SLAPI
-	/*
-	 * First, setup the computed attribute context that is
-	 * passed to all plugins.
-	 */
-	if ( op->o_pb ) {
-		ctx.cac_pb = op->o_pb;
-		ctx.cac_attrs = rs->sr_attrs;
-		ctx.cac_attrsonly = op->ors_attrsonly;
-		ctx.cac_userattrs = userattrs;
-		ctx.cac_opattrs = rs->sr_attr_flags;
-		ctx.cac_acl_state = acl_state;
-		ctx.cac_private = (void *)ber;
-
-		/*
-		 * For each client requested attribute, call the plugins.
-		 */
-		if ( rs->sr_attrs != NULL ) {
-			for ( anp = rs->sr_attrs; anp->an_name.bv_val != NULL; anp++ ) {
-				rc = compute_evaluator( &ctx, anp->an_name.bv_val,
-					rs->sr_entry, slapi_int_compute_output_ber );
-				if ( rc == 1 ) break;
-			}
-		} else {
-			/*
-			 * Technically we shouldn't be returning operational attributes
-			 * when the user requested only user attributes. We'll let the
-			 * plugin decide whether to be naughty or not.
-			 */
-			rc = compute_evaluator( &ctx, "*",
-				rs->sr_entry, slapi_int_compute_output_ber );
-		}
-		if ( rc == 1 ) {
-			if ( op->o_res_ber == NULL ) ber_free_buf( ber );
-			send_ldap_error( op, rs, LDAP_OTHER, "computed attribute error" );
-			goto error_return;
-		}
-	}
-#endif /* LDAP_SLAPI */
 
 	/* free e_flags */
 	if ( e_flags ) {
@@ -1422,10 +1333,19 @@ slap_send_search_reference( Operation *op, SlapReply *rs )
 #ifdef LDAP_CONNECTIONLESS
 	}
 #endif
+	if ( rs->sr_ref != NULL ) {
+		int	r;
 
-	Statslog( LDAP_DEBUG_STATS2, "%s REF dn=\"%s\"\n",
-		op->o_log_prefix, rs->sr_entry ? rs->sr_entry->e_dn : "(null)",
-		0, 0, 0 );
+		for ( r = 0; !BER_BVISNULL( &rs->sr_ref[ r ] ); r++ ) {
+			Statslog( LDAP_DEBUG_STATS2, "%s REF #%d \"%s\"\n",
+				op->o_log_prefix, r, rs->sr_ref[0].bv_val,
+				0, 0 );
+		}
+
+	} else {
+		Statslog( LDAP_DEBUG_STATS2, "%s REF \"(null)\"\n",
+			op->o_log_prefix, 0, 0, 0, 0 );
+	}
 
 	Debug( LDAP_DEBUG_TRACE, "<= send_search_reference\n", 0, 0, 0 );
 
@@ -1535,6 +1455,7 @@ int slap_read_controls(
 	myop = *op;
 	myop.o_bd = NULL;
 	myop.o_res_ber = ber;
+	myop.o_callback = NULL;
 
 	rc = slap_send_search_entry( &myop, rs );
 	if( rc ) return rc;
@@ -1546,7 +1467,7 @@ int slap_read_controls(
 	c.ldctl_oid = oid->bv_val;
 	c.ldctl_iscritical = 0;
 
-	if ( ctrl == NULL ) {
+	if ( *ctrl == NULL ) {
 		/* first try */
 		*ctrl = (LDAPControl *) slap_sl_calloc( 1, sizeof(LDAPControl), NULL );
 	} else {

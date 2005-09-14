@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.35.2.7 2005/05/06 16:42:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.35.2.11 2005/08/26 00:18:03 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -96,6 +96,7 @@ meta_back_db_config(
 		LDAPURLDesc 	*ludp, *tmpludp;
 		struct berval	dn;
 		int		rc;
+		int		c;
 		
 		if ( argc != 2 ) {
 			fprintf( stderr,
@@ -129,6 +130,10 @@ meta_back_db_config(
 		mi->mi_targets[ i ].mt_flags = mi->flags;
 		mi->mi_targets[ i ].mt_version = mi->mi_version;
 
+		for ( c = 0; c < META_OP_LAST; c++ ) {
+			mi->mi_targets[ i ].mt_timeout[ c ] = mi->mi_timeout[ c ];
+		}
+
 		/*
 		 * uri MUST be legal!
 		 */
@@ -154,9 +159,7 @@ meta_back_db_config(
 		/*
 		 * copies and stores uri and suffix
 		 */
-		dn.bv_val = ludp->lud_dn;
-		dn.bv_len = strlen( ludp->lud_dn );
-
+		ber_str2bv( ludp->lud_dn, 0, 0, &dn );
 		rc = dnPrettyNormal( NULL, &dn, &mi->mi_targets[ i ].mt_psuffix,
 			&mi->mi_targets[ i ].mt_nsuffix, NULL );
 		if( rc != LDAP_SUCCESS ) {
@@ -168,6 +171,25 @@ meta_back_db_config(
 
 		ludp->lud_dn[ 0 ] = '\0';
 
+		switch ( ludp->lud_scope ) {
+		case LDAP_SCOPE_DEFAULT:
+			mi->mi_targets[ i ].mt_scope = LDAP_SCOPE_SUBTREE;
+			break;
+
+		case LDAP_SCOPE_SUBTREE:
+#ifdef LDAP_SCOPE_SUBORDINATE
+		case LDAP_SCOPE_SUBORDINATE:
+#endif /* LDAP_SCOPE_SUBORDINATE */
+			mi->mi_targets[ i ].mt_scope = ludp->lud_scope;
+			break;
+
+		default:
+			fprintf( stderr, "%s: line %d: "
+					"invalid scope for target '%s'\n",
+					fname, lineno, argv[ 1 ] );
+			return( 1 );
+		}
+
 		/* check all, to apply the scope check on the first one */
 		for ( tmpludp = ludp; tmpludp; tmpludp = tmpludp->lud_next ) {
 			if ( tmpludp->lud_dn != NULL && tmpludp->lud_dn[ 0 ] != '\0' ) {
@@ -177,10 +199,6 @@ meta_back_db_config(
 					fname, lineno );
 				return( 1 );
 
-			}
-
-			if ( tmpludp->lud_scope == LDAP_SCOPE_BASE ) {
-				tmpludp->lud_scope = LDAP_SCOPE_DEFAULT;
 			}
 		}
 
@@ -351,14 +369,33 @@ meta_back_db_config(
 		
 	/* save bind creds for referral rebinds? */
 	} else if ( strcasecmp( argv[ 0 ], "rebind-as-user" ) == 0 ) {
-		if (argc != 1) {
+		if ( argc > 2 ) {
 			fprintf( stderr,
-	"%s: line %d: rebind-as-user takes no arguments\n",
+	"%s: line %d: \"rebind-as-user {NO|yes}\" takes 1 argument.\n",
 			    fname, lineno );
 			return( 1 );
 		}
 
-		mi->flags |= LDAP_BACK_F_SAVECRED;
+		if ( argc == 1 ) {
+			fprintf( stderr,
+	"%s: line %d: deprecated use of \"rebind-as-user {NO|yes}\" with no arguments.\n",
+			    fname, lineno );
+			mi->flags |= LDAP_BACK_F_SAVECRED;
+
+		} else {
+			if ( strcasecmp( argv[ 1 ], "no" ) == 0 ) {
+				mi->flags &= ~LDAP_BACK_F_SAVECRED;
+
+			} else if ( strcasecmp( argv[ 1 ], "yes" ) == 0 ) {
+				mi->flags |= LDAP_BACK_F_SAVECRED;
+
+			} else {
+				fprintf( stderr,
+	"%s: line %d: \"rebind-as-user {NO|yes}\" unknown argument \"%s\".\n",
+				    fname, lineno, argv[ 1 ] );
+				return 1;
+			}
+		}
 
 	} else if ( strcasecmp( argv[ 0 ], "chase-referrals" ) == 0 ) {
 		unsigned	*flagsp = mi->mi_ntargets ?
@@ -381,7 +418,7 @@ meta_back_db_config(
 
 		} else {
 			fprintf( stderr,
-		"%s: line %d: \"chase-referrals {yes|no}\": unknown argument \"%s\".\n",
+		"%s: line %d: \"chase-referrals {YES|no}\": unknown argument \"%s\".\n",
 					fname, lineno, argv[ 1 ] );
 			return( 1 );
 		}
@@ -430,7 +467,7 @@ meta_back_db_config(
 
 		if ( argc != 2 ) {
 			fprintf( stderr,
-		"%s: line %d: \"t-f-support {no|yes|discover}\" needs 1 argument.\n",
+		"%s: line %d: \"t-f-support {NO|yes|discover}\" needs 1 argument.\n",
 					fname, lineno );
 			return( 1 );
 		}
@@ -451,6 +488,89 @@ meta_back_db_config(
 			return 1;
 		}
 
+	/* onerr? */
+	} else if ( strcasecmp( argv[ 0 ], "onerr" ) == 0 ) {
+		if ( argc != 2 ) {
+			fprintf( stderr,
+	"%s: line %d: \"onerr {CONTINUE|stop}\" takes 1 argument\n",
+			    fname, lineno );
+			return( 1 );
+		}
+
+		if ( strcasecmp( argv[ 1 ], "continue" ) == 0 ) {
+			mi->flags &= ~META_BACK_F_ONERR_STOP;
+
+		} else if ( strcasecmp( argv[ 1 ], "stop" ) == 0 ) {
+			mi->flags |= META_BACK_F_ONERR_STOP;
+
+		} else {
+			fprintf( stderr,
+	"%s: line %d: \"onerr {CONTINUE|stop}\": invalid arg \"%s\".\n",
+				fname, lineno, argv[ 1 ] );
+			return 1;
+		}
+
+	} else if ( strcasecmp( argv[ 0 ], "timeout" ) == 0 ) {
+		char	*sep, *next;
+		time_t	*tv = mi->mi_ntargets ?
+				mi->mi_targets[ mi->mi_ntargets - 1 ].mt_timeout
+				: mi->mi_timeout;
+		int	c;
+
+		if ( argc < 2 ) {
+			fprintf( stderr,
+	"%s: line %d: \"timeout [{add|delete|modify|modrdn}=]<val> [...]\" takes at least 1 argument\n",
+			    fname, lineno );
+			return( 1 );
+		}
+
+		for ( c = 1; c < argc; c++ ) {
+			time_t	*t = NULL, val;
+
+			sep = strchr( argv[ c ], '=' );
+			if ( sep != NULL ) {
+				size_t	len = sep - argv[ c ];
+
+				if ( strncasecmp( argv[ c ], "add", len ) == 0 ) {
+					t = &tv[ META_OP_ADD ];
+				} else if ( strncasecmp( argv[ c ], "delete", len ) == 0 ) {
+					t = &tv[ META_OP_DELETE ];
+				} else if ( strncasecmp( argv[ c ], "modify", len ) == 0 ) {
+					t = &tv[ META_OP_MODIFY ];
+				} else if ( strncasecmp( argv[ c ], "modrdn", len ) == 0 ) {
+					t = &tv[ META_OP_MODRDN ];
+				} else {
+					fprintf( stderr,
+		"%s: line %d: unknown operation \"%s\" for timeout #%d.\n",
+						fname, lineno, argv[ c ], c );
+					return 1;
+				}
+				sep++;
+	
+			} else {
+				sep = argv[ c ];
+			}
+	
+			val = strtoul( sep, &next, 10 );
+			if ( next == sep || next[ 0 ] != '\0' ) {
+				fprintf( stderr,
+		"%s: line %d: unable to parse value \"%s\" for timeout.\n",
+					fname, lineno, sep );
+				return 1;
+			}
+		
+			if ( t ) {
+				*t = val;
+	
+			} else {
+				int	i;
+	
+				for ( i = 0; i < META_OP_LAST; i++ ) {
+					tv[ i ] = val;
+				}
+			}
+		}
+	
 	/* name to use as pseudo-root dn */
 	} else if ( strcasecmp( argv[ 0 ], "pseudorootdn" ) == 0 ) {
 		int 		i = mi->mi_ntargets - 1;
@@ -503,7 +623,7 @@ meta_back_db_config(
 	/* dn massaging */
 	} else if ( strcasecmp( argv[ 0 ], "suffixmassage" ) == 0 ) {
 		BackendDB 	*tmp_be;
-		int 		i = mi->mi_ntargets - 1;
+		int 		i = mi->mi_ntargets - 1, rc;
 		struct berval	dn, nvnc, pvnc, nrnc, prnc;
 
 		if ( i < 0 ) {
@@ -531,8 +651,7 @@ meta_back_db_config(
 			return 1;
 		}
 
-		dn.bv_val = argv[ 1 ];
-		dn.bv_len = strlen( argv[ 1 ] );
+		ber_str2bv( argv[ 1 ], 0, 0, &dn );
 		if ( dnPrettyNormal( NULL, &dn, &pvnc, &nvnc, NULL ) != LDAP_SUCCESS ) {
 			fprintf( stderr, "%s: line %d: "
 					"suffix '%s' is invalid\n",
@@ -551,8 +670,7 @@ meta_back_db_config(
 			return 1;						
 		}
 
-		dn.bv_val = argv[ 2 ];
-		dn.bv_len = strlen( argv[ 2 ] );
+		ber_str2bv( argv[ 2 ], 0, 0, &dn );
 		if ( dnPrettyNormal( NULL, &dn, &prnc, &nrnc, NULL ) != LDAP_SUCCESS ) {
 			fprintf( stderr, "%s: line %d: "
 					"massaged suffix '%s' is invalid\n",
@@ -583,8 +701,15 @@ meta_back_db_config(
 		 * FIXME: no extra rewrite capabilities should be added
 		 * to the database
 		 */
-	 	return suffix_massage_config( mi->mi_targets[ i ].mt_rwmap.rwm_rw,
+	 	rc = suffix_massage_config( mi->mi_targets[ i ].mt_rwmap.rwm_rw,
 				&pvnc, &nvnc, &prnc, &nrnc );
+
+		free( pvnc.bv_val );
+		free( nvnc.bv_val );
+		free( prnc.bv_val );
+		free( nrnc.bv_val );
+
+		return rc;
 		
 	/* rewrite stuff ... */
  	} else if ( strncasecmp( argv[ 0 ], "rewrite", 7 ) == 0 ) {
@@ -772,7 +897,20 @@ ldap_back_map_config(
 				/*
 				 * FIXME: this should become an err
 				 */
-				goto error_return;
+				/*
+				 * we create a fake "proxied" ad 
+				 * and add it here.
+				 */
+
+				rc = slap_bv2undef_ad( &mapping->src,
+						&ad, &text, SLAP_AD_PROXIED );
+				if ( rc != LDAP_SUCCESS ) {
+					fprintf( stderr,
+	"%s: line %d: source attributeType '%s': %d (%s)\n",
+						fname, lineno, src,
+						rc, text ? text : "" );
+					goto error_return;
+				}
 			}
 
 			ad = NULL;
@@ -784,6 +922,21 @@ ldap_back_map_config(
 	"%s: line %d: warning, destination attributeType '%s' "
 	"is not defined in schema\n",
 				fname, lineno, dst );
+
+			/*
+			 * we create a fake "proxied" ad 
+			 * and add it here.
+			 */
+
+			rc = slap_bv2undef_ad( &mapping->dst,
+					&ad, &text, SLAP_AD_PROXIED );
+			if ( rc != LDAP_SUCCESS ) {
+				fprintf( stderr,
+	"%s: line %d: source attributeType '%s': %d (%s)\n",
+					fname, lineno, dst,
+					rc, text ? text : "" );
+				return 1;
+			}
 		}
 	}
 

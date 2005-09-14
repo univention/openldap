@@ -1,5 +1,5 @@
 /* ldapmodrdn.c - generic program to modify an entry's RDN using LDAP */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodrdn.c,v 1.106.2.2 2005/04/29 21:28:59 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodrdn.c,v 1.106.2.3 2005/08/09 16:41:26 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -265,7 +265,7 @@ static int domodrdn(
 	}
 
 	for ( ; ; ) {
-		struct timeval	tv = { 0 };
+		struct timeval	tv = { 0, 0 };
 
 		if ( tool_check_abandon( ld, id ) ) {
 			return LDAP_CANCELLED;

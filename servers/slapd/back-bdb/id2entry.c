@@ -1,5 +1,5 @@
 /* id2entry.c - routines to deal with the id2entry database */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/id2entry.c,v 1.62.2.4 2005/04/29 21:29:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/id2entry.c,v 1.62.2.5 2005/07/11 05:55:31 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2005 The OpenLDAP Foundation.
@@ -400,7 +400,7 @@ dn2entry_retry:
 	if ( oc && !is_entry_objectclass( e, oc, 0 )) {
 		Debug( LDAP_DEBUG_ACL,
 			"<= bdb_entry_get: failed to find objectClass %s\n",
-			oc->soc_cname, 0, 0 ); 
+			oc->soc_cname.bv_val, 0, 0 ); 
 		rc = LDAP_NO_SUCH_ATTRIBUTE;
 		goto return_results;
 	}

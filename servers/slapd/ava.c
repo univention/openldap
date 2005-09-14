@@ -1,5 +1,5 @@
 /* ava.c - routines for dealing with attribute value assertions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ava.c,v 1.40.2.3 2005/04/29 21:29:04 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ava.c,v 1.40.2.4 2005/08/26 00:18:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -85,10 +85,15 @@ get_ava(
 	rc = slap_bv2ad( &type, &aa->aa_desc, text );
 
 	if( rc != LDAP_SUCCESS ) {
-		Debug( LDAP_DEBUG_FILTER,
-		"get_ava: unknown attributeType %s\n", type.bv_val, 0, 0 );
-		op->o_tmpfree( aa, op->o_tmpmemctx );
-		return rc;
+		rc = slap_bv2undef_ad( &type, &aa->aa_desc, text,
+				SLAP_AD_PROXIED|SLAP_AD_NOINSERT );
+
+		if( rc != LDAP_SUCCESS ) {
+			Debug( LDAP_DEBUG_FILTER,
+			"get_ava: unknown attributeType %s\n", type.bv_val, 0, 0 );
+			op->o_tmpfree( aa, op->o_tmpmemctx );
+			return rc;
+		}
 	}
 
 	rc = asserted_value_validate_normalize(

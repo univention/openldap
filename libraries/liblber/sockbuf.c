@@ -1,5 +1,5 @@
 /* sockbuf.c - i/o routines with support for adding i/o layers. */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/sockbuf.c,v 1.60.2.1 2005/01/20 18:03:49 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/sockbuf.c,v 1.60.2.2 2005/08/09 21:03:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -104,13 +104,13 @@ ber_sockbuf_ctrl( Sockbuf *sb, int opt, void *arg )
 
 		case LBER_SB_OPT_GET_FD:
 			if ( arg != NULL ) {
-				*((int *)arg) = sb->sb_fd;
+				*((ber_socket_t *)arg) = sb->sb_fd;
 			}
 			ret = ( sb->sb_fd == AC_SOCKET_INVALID ? -1 : 1);
 			break;
 
 		case LBER_SB_OPT_SET_FD:
-			sb->sb_fd = *((int *)arg);
+			sb->sb_fd = *((ber_socket_t *)arg);
 			ret = 1;
 			break;
 

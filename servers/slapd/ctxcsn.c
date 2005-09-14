@@ -1,5 +1,5 @@
 /* ctxcsn.c -- Context CSN Management Routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ctxcsn.c,v 1.31.2.3 2005/06/08 21:50:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ctxcsn.c,v 1.31.2.4 2005/08/09 21:03:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2005 The OpenLDAP Foundation.
@@ -37,7 +37,6 @@ slap_get_commit_csn(
 )
 {
 	struct slap_csn_entry *csne, *committed_csne = NULL;
-	int i = 0;
 
 	if ( maxcsn ) {
 		BER_BVZERO( maxcsn );
@@ -125,7 +124,6 @@ slap_create_context_csn_entry(
 	struct berval *context_csn )
 {
 	Entry* e;
-	int rc;
 
 	struct berval bv;
 

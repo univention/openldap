@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/groupings.c,v 1.4.2.1 2005/01/20 18:03:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/groupings.c,v 1.4.2.2 2005/08/09 21:03:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2005 The OpenLDAP Foundation.
@@ -127,6 +127,7 @@ int ldap_grouping_end(
 	LDAPControl **cctrls,
 	int *msgidp )
 {
+	return 0;
 }
 
 int ldap_grouping_end_s(
@@ -137,6 +138,7 @@ int ldap_grouping_end_s(
 	LDAPControl **cctrls,
 	struct berval **retgrpdatap )
 {
+	return 0;
 }
 
 #endif

@@ -1,5 +1,5 @@
 # Makefile.in for tests
-# $OpenLDAP: pkg/ldap/tests/Makefile.in,v 1.54.2.1 2005/01/20 18:04:06 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/Makefile.in,v 1.54.2.2 2005/08/17 21:34:50 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -63,5 +63,5 @@ clean-local:	FORCE
 	-$(RM) -r testrun *leak *gmon *core
 
 veryclean-local: FORCE
-	@-$(RM) run data schema ucdata
+	@-$(RM) run testdata schema ucdata
 

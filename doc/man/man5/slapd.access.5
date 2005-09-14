@@ -82,7 +82,7 @@ It can have the forms
 .nf
 	[dn[.<dnstyle>]=]<dnpattern>
 	filter=<ldapfilter>
-	attrs=<attrlist>[ val[.<attrstyle>]=<attrval>]
+	attrs=<attrlist>[ val[/matchingRule][.<attrstyle>]=<attrval>]
 .fi
 .LP
 with
@@ -190,13 +190,13 @@ form is given,
 is implied, i.e. all attributes are addressed.
 .LP
 Using the form
-.B attrs=<attr> val[.<attrstyle>]=<attrval>
+.B attrs=<attr> val[/matchingRule][.<attrstyle>]=<attrval>
 specifies access to a particular value of a single attribute.
 In this case, only a single attribute type may be given. The
 .B <attrstyle>
 .B exact
 (the default) uses the attribute's equality matching rule to compare the
-value. If the
+value, unless a different (and compatible) matching rule is specified. If the
 .B <attrstyle>
 is
 .BR regex ,
@@ -255,7 +255,7 @@ It can have the forms
 	sasl_ssf=<n>
 
 	aci[=<attrname>]
-	dynacl/name[.<dynstyle>][=<pattern>]
+	dynacl/name[/<options>][.<dynstyle>][=<pattern>]
 .fi
 .LP
 with
@@ -633,7 +633,7 @@ operational attribute is used.
 ACIs are experimental; they must be enabled at compile time.
 .LP
 The statement
-.B dynacl/<name>[.<dynstyle>][=<pattern>]
+.B dynacl/<name>[/<options>][.<dynstyle>][=<pattern>]
 means that access checking is delegated to the admin-defined method
 indicated by
 .BR <name> ,
@@ -641,6 +641,7 @@ which can be registered at run-time by means of the
 .B moduleload
 statement.
 The fields
+.BR <options> ,
 .B <dynstyle>
 and
 .B <pattern>
@@ -806,6 +807,25 @@ or the (even more silly) example
 .LP
 which grants everybody search and compare privileges, and adds read
 privileges to authenticated clients.
+.LP
+One useful application is to easily grant write privileges to an
+.B updatedn
+that is different from the
+.BR rootdn .
+In this case, since the
+.B updatedn
+needs write access to (almost) all data, one can use
+.LP
+.nf
+	access to *
+		by dn.exact="cn=The Update DN,dc=example,dc=com" write
+		by * break
+.fi
+.LP
+as the first access rule.
+As a consequence, unless the operation is performed with the 
+.B updatedn
+identity, control is passed straight to the subsequent rules.
 .SH OPERATION REQUIREMENTS
 Operations require different privileges on different portions of entries.
 The following summary applies to primary database backends such as
@@ -853,7 +873,7 @@ The
 .B modify
 operation requires 
 .B write (=w)
-privileges on the attibutes being modified.
+privileges on the attributes being modified.
 .LP
 The
 .B modrdn
@@ -950,7 +970,7 @@ in
 and
 .B <who>
 clauses, to avoid possible incorrect specifications of the access rules 
-as well as for performance (avoid unrequired regex matching when an exact
+as well as for performance (avoid unnecessary regex matching when an exact
 match suffices) reasons.
 .LP
 An administrator might create a rule of the form:

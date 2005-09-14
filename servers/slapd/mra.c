@@ -1,5 +1,5 @@
 /* mra.c - routines for dealing with extensible matching rule assertions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/mra.c,v 1.40.2.2 2005/01/20 18:03:55 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/mra.c,v 1.40.2.4 2005/08/26 00:18:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -57,12 +57,10 @@ get_mra(
 	struct berval type = BER_BVNULL;
 	struct berval value = BER_BVNULL;
 	struct berval rule_text = BER_BVNULL;
-	MatchingRuleAssertion ma;
+	MatchingRuleAssertion ma = { 0 };
 #ifdef LDAP_COMP_MATCH
 	AttributeAliasing* aa = NULL;
 #endif
-
-	memset( &ma, 0, sizeof ma);
 
 	rtag = ber_scanf( ber, "{t" /*"}"*/, &tag );
 
@@ -143,7 +141,12 @@ get_mra(
 	if( type.bv_val != NULL ) {
 		rc = slap_bv2ad( &type, &ma.ma_desc, text );
 		if( rc != LDAP_SUCCESS ) {
-			return rc;
+			rc = slap_bv2undef_ad( &type, &ma.ma_desc, text,
+				SLAP_AD_PROXIED|SLAP_AD_NOINSERT );
+
+			if( rc != LDAP_SUCCESS ) {
+				return rc;
+			}
 		}
 	}
 

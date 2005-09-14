@@ -1,5 +1,5 @@
 /* slapcommon.c - common routine for the slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.c,v 1.23.2.9 2005/06/10 15:11:26 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.c,v 1.23.2.15 2005/09/01 20:28:10 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -393,41 +393,17 @@ slap_tool_init(
 	 * initialize stuff and figure out which backend we're dealing with
 	 */
 
-#ifdef SLAPD_MODULES
-	if ( module_init() != 0 ) {
-		fprintf( stderr, "%s: module_init failed!\n", progname );
-		exit( EXIT_FAILURE );
-	}
-#endif
-		
-	rc = slap_schema_init();
-
-	if ( rc != 0 ) {
-		fprintf( stderr, "%s: slap_schema_init failed!\n", progname );
-		exit( EXIT_FAILURE );
-	}
-
 	rc = slap_init( mode, progname );
-
 	if ( rc != 0 ) {
 		fprintf( stderr, "%s: slap_init failed!\n", progname );
-		exit( EXIT_FAILURE );
-	}
-
-	if ( frontend_init() ) {
-		fprintf( stderr, "%s: frontend_init failed!\n", progname );
-		exit( EXIT_FAILURE );
-	}
-
-	if ( overlay_init() ) {
-		fprintf( stderr, "%s: overlay_init failed!\n", progname );
 		exit( EXIT_FAILURE );
 	}
 
 	rc = read_config( conffile, confdir );
 
 	if ( rc != 0 ) {
-		fprintf( stderr, "%s: bad configuration file!\n", progname );
+		fprintf( stderr, "%s: bad configuration %s!\n",
+			progname, confdir ? "directory" : "file" );
 		exit( EXIT_FAILURE );
 	}
 
@@ -446,6 +422,13 @@ slap_tool_init(
 
 	default:
 		break;
+	}
+
+	rc = glue_sub_init();
+
+	if ( rc != 0 ) {
+		fprintf( stderr, "%s: subordinate configuration error\n", progname );
+		exit( EXIT_FAILURE );
 	}
 
 	rc = slap_schema_check();
@@ -525,12 +508,17 @@ slap_tool_init(
 		}
 
 	} else if ( dbnum == -1 ) {
+		/* no suffix and no dbnum specified, just default to
+		 * the first available database
+		 */
 		if ( nbackends <= 0 ) {
 			fprintf( stderr, "No available databases\n" );
 			exit( EXIT_FAILURE );
 		}
 		LDAP_STAILQ_FOREACH( be, &backendDB, be_next ) {
 			dbnum++;
+
+			/* db #0 is cn=config, don't select it as a default */
 			if ( dbnum < 1 ) continue;
 		
 		 	if ( SLAP_MONITOR(be))
@@ -552,19 +540,19 @@ slap_tool_init(
 			exit( EXIT_FAILURE );
 		}
 		
-		if ( nosubordinates == 0 && dbnum > 0 ) {
+		if ( nosubordinates == 0 && dbnum > 1 ) {
 			Debug( LDAP_DEBUG_ANY,
 				"The first database does not allow %s;"
 				" using the first available one (%d)\n",
-				progname, dbnum + 1, 0 );
+				progname, dbnum, 0 );
 		}
 
 	} else if ( dbnum < 0 || dbnum > (nbackends-1) ) {
 		fprintf( stderr,
 			"Database number selected via -n is out of range\n"
-			"Must be in the range 1 to %d"
-			" (number of databases in the config file)\n",
-			nbackends );
+			"Must be in the range 0 to %d"
+			" (number of configured databases)\n",
+			nbackends-1 );
 		exit( EXIT_FAILURE );
 
 	} else {
@@ -579,6 +567,14 @@ startup:;
 #ifdef CSRIMALLOC
 	mal_leaktrace(1);
 #endif
+
+	if ( conffile != NULL ) {
+		ch_free( conffile );
+	}
+
+	if ( ldiffile != NULL ) {
+		ch_free( ldiffile );
+	}
 
 	/* slapdn doesn't specify a backend to startup */
 	if ( !dryrun && tool != SLAPDN && slap_startup( be ) ) {

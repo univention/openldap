@@ -1,5 +1,5 @@
 /* extended.c - ldap backend extended routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/extended.c,v 1.22.2.2 2005/01/24 21:28:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/extended.c,v 1.22.2.5 2005/08/29 18:26:10 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2005 The OpenLDAP Foundation.
@@ -31,11 +31,11 @@
 BI_op_extended ldap_back_exop_passwd;
 
 static struct exop {
-	struct berval	*oid;
+	struct berval	oid;
 	BI_op_extended	*extended;
 } exop_table[] = {
-	{ (struct berval *)&slap_EXOP_MODIFY_PASSWD, ldap_back_exop_passwd },
-	{ NULL, NULL }
+	{ BER_BVC(LDAP_EXOP_MODIFY_PASSWD), ldap_back_exop_passwd },
+	{ BER_BVNULL, NULL }
 };
 
 int
@@ -46,7 +46,7 @@ ldap_back_extended(
 	int	i;
 
 	for ( i = 0; exop_table[i].extended != NULL; i++ ) {
-		if ( bvmatch( exop_table[i].oid, &op->oq_extended.rs_reqoid ) )
+		if ( bvmatch( &exop_table[i].oid, &op->oq_extended.rs_reqoid ) )
 		{
 			struct ldapconn	*lc;
 			LDAPControl	**oldctrls = NULL;
@@ -68,7 +68,8 @@ ldap_back_extended(
 				op->o_ctrls = oldctrls;
 				send_ldap_result( op, rs );
 				rs->sr_text = NULL;
-				return rs->sr_err;
+				rc = rs->sr_err;
+				goto done;
 			}
 
 			rc = ( *exop_table[i].extended )( op, rs );
@@ -79,6 +80,11 @@ ldap_back_extended(
 			}
 			op->o_ctrls = oldctrls;
 
+done:;
+			if ( lc != NULL ) {
+				ldap_back_release_conn( op, rs, lc );
+			}
+			
 			return rc;
 		}
 	}
@@ -168,6 +174,10 @@ retry:
 		rs->sr_matched = NULL;
 		rs->sr_text = NULL;
 		rc = -1;
+	}
+
+	if ( lc != NULL ) {
+		ldap_back_release_conn( op, rs, lc );
 	}
 
 	return rc;

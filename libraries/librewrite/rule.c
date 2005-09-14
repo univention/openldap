@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/rule.c,v 1.14.2.1 2005/01/20 18:03:53 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/rule.c,v 1.14.2.4 2005/08/17 16:15:34 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2005 The OpenLDAP Foundation.
@@ -72,8 +72,8 @@ destroy_action(
 {
 	struct rewrite_action	*action;
 
-	assert( paction );
-	assert( *paction );
+	assert( paction != NULL );
+	assert( *paction != NULL );
 
 	action = *paction;
 
@@ -418,7 +418,9 @@ recurse:;
 			rule->lr_pattern, string, strcnt + 1 );
 	
 	op->lo_num_passes++;
-	if ( regexec( &rule->lr_regex, string, nmatch, match, 0 ) != 0 ) {
+
+	rc = regexec( &rule->lr_regex, string, nmatch, match, 0 );
+	if ( rc != 0 ) {
 		if ( *result == NULL && string != arg ) {
 			free( string );
 		}
@@ -462,8 +464,8 @@ rewrite_rule_destroy(
 	struct rewrite_rule *rule;
 	struct rewrite_action *action;
 
-	assert( prule );
-	assert( *prule );
+	assert( prule != NULL );
+	assert( *prule != NULL );
 
 	rule = *prule;
 

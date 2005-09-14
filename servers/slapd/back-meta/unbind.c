@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/unbind.c,v 1.11.2.3 2005/05/06 16:42:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/unbind.c,v 1.11.2.5 2005/08/09 21:04:04 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -24,9 +24,9 @@
 
 #include <stdio.h>
 
+#include <ac/errno.h>
 #include <ac/socket.h>
 #include <ac/string.h>
-#include <ac/errno.h>
 
 #include "slap.h"
 #include "../back-ldap/back-ldap.h"
@@ -38,8 +38,10 @@ meta_back_conn_destroy(
 	Connection	*conn )
 {
 	metainfo_t	*mi = ( metainfo_t * )be->be_private;
-	metaconn_t *mc,
+	metaconn_t	*mc,
 			mc_curr = { 0 };
+	int		i;
+
 
 	Debug( LDAP_DEBUG_TRACE,
 		"=>meta_back_conn_destroy: fetching conn %ld\n",
@@ -53,27 +55,30 @@ meta_back_conn_destroy(
 	ldap_pvt_thread_mutex_unlock( &mi->mi_conn_mutex );
 
 	if ( mc ) {
-		int	i;
-
 		Debug( LDAP_DEBUG_TRACE,
 			"=>meta_back_conn_destroy: destroying conn %ld\n",
 			mc->mc_conn->c_connid, 0, 0 );
 		
+		assert( mc->mc_refcnt == 0 );
+
 		/*
 		 * Cleanup rewrite session
 		 */
 		for ( i = 0; i < mi->mi_ntargets; ++i ) {
-			if ( mc->mc_conns[ i ].msc_ld == NULL ) {
-				continue;
+			if ( mc->mc_conns[ i ].msc_ld != NULL ) {
+				meta_clear_one_candidate( &mc->mc_conns[ i ] );
 			}
-
-			rewrite_session_delete( mi->mi_targets[ i ].mt_rwmap.rwm_rw, conn );
-			meta_clear_one_candidate( &mc->mc_conns[ i ] );
 		}
+
 		meta_back_conn_free( mc );
 	}
 
-	/* no response to unbind */
+	/*
+	 * Cleanup rewrite session
+	 */
+	for ( i = 0; i < mi->mi_ntargets; ++i ) {
+		rewrite_session_delete( mi->mi_targets[ i ].mt_rwmap.rwm_rw, conn );
+	}
 
 	return 0;
 }

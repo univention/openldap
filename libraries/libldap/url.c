@@ -1,5 +1,5 @@
 /* LIBLDAP url.c -- LDAP URL (RFC 2255) related routines */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/url.c,v 1.84.2.2 2005/01/28 17:29:48 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/url.c,v 1.84.2.4 2005/08/17 16:15:34 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -53,7 +53,7 @@ static const char* skip_url_prefix LDAP_P((
 
 int ldap_pvt_url_scheme2proto( const char *scheme )
 {
-	assert( scheme );
+	assert( scheme != NULL );
 
 	if( scheme == NULL ) {
 		return -1;
@@ -81,7 +81,7 @@ int ldap_pvt_url_scheme2proto( const char *scheme )
 
 int ldap_pvt_url_scheme_port( const char *scheme, int port )
 {
-	assert( scheme );
+	assert( scheme != NULL );
 
 	if( port ) return port;
 	if( scheme == NULL ) return port;
@@ -110,7 +110,7 @@ int ldap_pvt_url_scheme_port( const char *scheme, int port )
 int
 ldap_pvt_url_scheme2tls( const char *scheme )
 {
-	assert( scheme );
+	assert( scheme != NULL );
 
 	if( scheme == NULL ) {
 		return -1;
@@ -804,7 +804,7 @@ ldap_url_parse_ext( LDAP_CONST char *url_in, LDAPURLDesc **ludpp )
 		return LDAP_URL_ERR_BADSCHEME;
 	}
 
-	assert( scheme );
+	assert( scheme != NULL );
 
 	/* make working copy of the remainder of the URL */
 	url = LDAP_STRDUP( url_tmp );
@@ -1228,14 +1228,9 @@ ldap_url_duplist (LDAPURLDesc *ludlist)
 	return dest;
 }
 
-int
-ldap_url_parselist (LDAPURLDesc **ludlist, const char *url )
-{
-	return ldap_url_parselist_ext( ludlist, url, ", " );
-}
-
-int
-ldap_url_parselist_ext (LDAPURLDesc **ludlist, const char *url, const char *sep )
+static int
+ldap_url_parselist_int (LDAPURLDesc **ludlist, const char *url, const char *sep,
+	int (*url_parse)( const char *, LDAPURLDesc ** ) )
 {
 	int i, rc;
 	LDAPURLDesc *ludp;
@@ -1254,7 +1249,7 @@ ldap_url_parselist_ext (LDAPURLDesc **ludlist, const char *url, const char *sep 
 	for (i = 0; urls[i] != NULL; i++) ;
 	/* ...and put them in the "stack" backward */
 	while (--i >= 0) {
-		rc = ldap_url_parse( urls[i], &ludp );
+		rc = url_parse( urls[i], &ludp );
 		if ( rc != 0 ) {
 			ldap_charray_free(urls);
 			ldap_free_urllist(*ludlist);
@@ -1266,6 +1261,18 @@ ldap_url_parselist_ext (LDAPURLDesc **ludlist, const char *url, const char *sep 
 	}
 	ldap_charray_free(urls);
 	return LDAP_URL_SUCCESS;
+}
+
+int
+ldap_url_parselist (LDAPURLDesc **ludlist, const char *url )
+{
+	return ldap_url_parselist_int( ludlist, url, ", ", ldap_url_parse );
+}
+
+int
+ldap_url_parselist_ext (LDAPURLDesc **ludlist, const char *url, const char *sep )
+{
+	return ldap_url_parselist_int( ludlist, url, sep, ldap_url_parse_ext );
 }
 
 int

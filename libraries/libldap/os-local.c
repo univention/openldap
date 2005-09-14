@@ -1,5 +1,5 @@
 /* os-local.c -- platform-specific domain socket code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.37.2.2 2005/03/17 21:23:54 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.37.2.3 2005/08/29 18:46:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -156,8 +156,8 @@ ldap_pvt_is_socket_ready(LDAP *ld, int s)
 
 #if !defined(HAVE_GETPEEREID) && \
 	!defined(SO_PEERCRED) && !defined(LOCAL_PEERCRED) && \
-	defined(HAVE_SENDMSG) && (defined(HAVE_MSGHDR_MSG_ACCRIGHTS) || \
-				  defined(HAVE_MSGHDR_MSG_CONTROL))
+	defined(HAVE_SENDMSG) && (defined(HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS) || \
+				  defined(HAVE_STRUCT_MSGHDR_MSG_CONTROL))
 #define DO_SENDMSG
 static const char abandonPDU[] = {LDAP_TAG_MESSAGE, 6,
 	LDAP_TAG_MSGID, 1, 0, LDAP_REQ_ABANDON, 1, 0};
@@ -195,7 +195,7 @@ sendcred:
 				/* Abandon, noop, has no reply */
 				struct iovec iov;
 				struct msghdr msg = {0};
-# ifdef HAVE_MSGHDR_MSG_CONTROL
+# ifdef HAVE_STRUCT_MSGHDR_MSG_CONTROL
 # ifndef CMSG_SPACE
 # define CMSG_SPACE(len)	(_CMSG_ALIGN( sizeof(struct cmsghdr)) + _CMSG_ALIGN(len) )
 # endif
@@ -207,14 +207,14 @@ sendcred:
 					unsigned char control[CMSG_SPACE(sizeof(int))];
 				} control_un;
 				struct cmsghdr *cmsg;
-# endif /* HAVE_MSGHDR_MSG_CONTROL */
+# endif /* HAVE_STRUCT_MSGHDR_MSG_CONTROL */
 				msg.msg_name = NULL;
 				msg.msg_namelen = 0;
 				iov.iov_base = (char *) abandonPDU;
 				iov.iov_len = sizeof abandonPDU;
 				msg.msg_iov = &iov;
 				msg.msg_iovlen = 1;
-# ifdef HAVE_MSGHDR_MSG_CONTROL
+# ifdef HAVE_STRUCT_MSGHDR_MSG_CONTROL
 				msg.msg_control = control_un.control;
 				msg.msg_controllen = sizeof( control_un.control );
 				msg.msg_flags = 0;
@@ -228,7 +228,7 @@ sendcred:
 # else
 				msg.msg_accrights = (char *)fds;
 				msg.msg_accrightslen = sizeof(int);
-# endif /* HAVE_MSGHDR_MSG_CONTROL */
+# endif /* HAVE_STRUCT_MSGHDR_MSG_CONTROL */
 				sendmsg( s, &msg, 0 );
 				close(fds[0]);
 				close(fds[1]);

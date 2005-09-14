@@ -1,5 +1,5 @@
 /* ldapmodify.c - generic program to modify or add entries using LDAP */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodify.c,v 1.158.2.4 2005/06/03 19:12:00 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodify.c,v 1.158.2.5 2005/08/09 16:41:26 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -316,12 +316,12 @@ main( int argc, char **argv )
 #endif
 		|| preread || postread )
 	{
-		int err;
 		int i = 0;
 		LDAPControl c[1];
 
 #ifdef LDAP_GROUP_TRANSACTION
 		if( txn ) {
+			int err;
 			txnber = ber_alloc_t( LBER_USE_DER );
 			if( txnber == NULL ) return EXIT_FAILURE;
 
@@ -720,6 +720,9 @@ end_line:
 	if ( newrdn != NULL ) {
 		free( newrdn );
 	}
+	if ( newsup != NULL ) {
+		free( newsup );
+	}
 	if ( pmods != NULL ) {
 		ldap_mods_free( pmods, 1 );
 	}
@@ -1117,7 +1120,7 @@ static int process_response(
 {
 	LDAPMessage	*res;
 	int		rc = LDAP_OTHER;
-	struct timeval	tv = { 0 };
+	struct timeval	tv = { 0, 0 };
 
 	for ( ; ; ) {
 		tv.tv_sec = 0;
@@ -1144,7 +1147,6 @@ static int process_response(
 		}
 	}
 
-done:;
 	if ( ldap_msgtype( res ) != LDAP_RES_INTERMEDIATE ) {
 		rc = ldap_result2error( ld, res, 1 );
 		if( rc != LDAP_SUCCESS ) ldap_perror( ld, opstr );

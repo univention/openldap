@@ -1,5 +1,5 @@
 /* search.c - ldbm backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/search.c,v 1.128.2.3 2005/04/29 21:29:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/search.c,v 1.128.2.5 2005/08/25 17:46:54 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -39,8 +39,7 @@ ldbm_back_search(
     SlapReply	*rs )
 {
 	struct ldbminfo	*li = (struct ldbminfo *) op->o_bd->be_private;
-	int		rc, err;
-	const char *text = NULL;
+	int		rc;
 	time_t		stoptime;
 	ID_BLOCK		*candidates;
 	ID		id, cursor;
@@ -48,6 +47,9 @@ ldbm_back_search(
 	Entry	*matched = NULL;
 	struct berval	realbase = BER_BVNULL;
 	int		manageDSAit = get_manageDSAit( op );
+#ifdef SLAP_ACL_HONOR_DISCLOSE
+	slap_mask_t	mask;
+#endif
 
 	Debug(LDAP_DEBUG_TRACE, "=> ldbm_back_search\n", 0, 0, 0);
 
@@ -131,10 +133,16 @@ ldbm_back_search(
 	}
 
 #ifdef SLAP_ACL_HONOR_DISCLOSE
-	if ( ! access_allowed( op, e, slap_schema.si_ad_entry,
-				NULL, ACL_DISCLOSE, NULL ) )
+	/* NOTE: __NEW__ "search" access is required
+	 * on searchBase object */
+	if ( ! access_allowed_mask( op, e, slap_schema.si_ad_entry,
+				NULL, ACL_SEARCH, NULL, &mask ) )
 	{
-		rs->sr_err = LDAP_NO_SUCH_OBJECT;
+		if ( !ACL_GRANT( mask, ACL_DISCLOSE ) ) {
+			rs->sr_err = LDAP_NO_SUCH_OBJECT;
+		} else {
+			rs->sr_err = LDAP_INSUFFICIENT_ACCESS;
+		}
 
 		cache_return_entry_r( &li->li_cache, e );
 		ldap_pvt_thread_rdwr_runlock(&li->li_giant_rwlock);
@@ -368,6 +376,8 @@ searchit:
 					op->ors_scope == LDAP_SCOPE_ONELEVEL
 						? LDAP_SCOPE_BASE
 						: LDAP_SCOPE_SUBTREE );
+
+				ber_bvarray_free( erefs );
 
 				send_search_reference( op, rs );
 
