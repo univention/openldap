@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/proto-perl.h,v 1.2.2.1 2005/01/20 18:04:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/proto-perl.h,v 1.2.2.2 2005/09/28 00:30:34 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -24,7 +24,6 @@ extern BI_init		perl_back_initialize;
 
 extern BI_open		perl_back_open;
 extern BI_close		perl_back_close;
-extern BI_destroy	perl_back_destroy;
 
 extern BI_db_init	perl_back_db_init;
 extern BI_db_open	perl_back_db_open;

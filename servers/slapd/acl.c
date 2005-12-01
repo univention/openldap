@@ -1,5 +1,5 @@
 /* acl.c - routines to parse and check acl's */
-/* $OpenLDAP: pkg/ldap/servers/slapd/acl.c,v 1.250.2.14 2005/08/29 18:26:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/acl.c,v 1.250.2.15 2005/09/28 00:30:30 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -851,7 +851,8 @@ slap_acl_get(
 						continue;
 
 				} else if ( a->acl_dn_style == ACL_STYLE_ONE ) {
-					int	rdnlen = -1, sep = 0;
+					ber_len_t	rdnlen = 0;
+					int		sep = 0;
 
 					if ( dnlen <= patlen )
 						continue;
@@ -942,7 +943,7 @@ slap_acl_get(
 							continue;
 	
 					} else if ( a->acl_attrval_style == ACL_STYLE_ONE ) {
-						int rdnlen = -1;
+						ber_len_t	rdnlen = 0;
 	
 						if ( !DN_SEPARATOR( val->bv_val[vdnlen - patlen - 1] ) )
 							continue;
@@ -1186,7 +1187,7 @@ acl_mask_dn(
 			}
 
 		} else if ( b->a_style == ACL_STYLE_ONE ) {
-			int rdnlen = -1;
+			ber_len_t	rdnlen = 0;
 
 			if ( odnlen <= patlen ) {
 				goto dn_match_cleanup;

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.111.2.6 2005/08/09 21:04:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.111.2.7 2005/09/28 00:30:32 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2005 The OpenLDAP Foundation.
@@ -217,6 +217,8 @@ BI_entry_get_rw bdb_entry_get;
 #define bdb_idl_cache_get			BDB_SYMBOL(idl_cache_get)
 #define bdb_idl_cache_put			BDB_SYMBOL(idl_cache_put)
 #define bdb_idl_cache_del			BDB_SYMBOL(idl_cache_del)
+#define bdb_idl_cache_add_id		BDB_SYMBOL(idl_cache_add_id)
+#define bdb_idl_cache_del_id		BDB_SYMBOL(idl_cache_del_id)
 
 int bdb_idl_cache_get(
 	struct bdb_info *bdb,
@@ -237,6 +239,20 @@ bdb_idl_cache_del(
 	struct bdb_info	*bdb,
 	DB		*db,
 	DBT		*key );
+
+void
+bdb_idl_cache_add_id(
+	struct bdb_info	*bdb,
+	DB		*db,
+	DBT		*key,
+	ID		id );
+
+void
+bdb_idl_cache_del_id(
+	struct bdb_info	*bdb,
+	DB		*db,
+	DBT		*key,
+	ID		id );
 
 #define bdb_idl_first				BDB_SYMBOL(idl_first)
 #define bdb_idl_next				BDB_SYMBOL(idl_next)
@@ -292,7 +308,7 @@ bdb_idl_union(
 ID bdb_idl_first( ID *ids, ID *cursor );
 ID bdb_idl_next( ID *ids, ID *cursor );
 
-void bdb_idl_sort( ID *ids );
+void bdb_idl_sort( ID *ids, ID *tmp );
 int bdb_idl_append( ID *a, ID *b );
 int bdb_idl_append_one( ID *ids, ID id );
 

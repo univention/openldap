@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test009-referral,v 1.33.2.1 2005/01/20 18:04:07 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test009-referral,v 1.33.2.3 2005/10/05 17:41:32 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -20,7 +20,7 @@ echo "running defines.sh"
 # Test default referral
 #
 
-mkdir $TESTDIR $DBDIR1 $DBDIR2
+mkdir -p $TESTDIR $DBDIR1 $DBDIR2
 
 echo "Running slapadd to build slapd database..."
 . $CONFFILTER $BACKEND $MONITORDB < $CONF > $CONF1
@@ -49,6 +49,8 @@ if test $WAIT != 0 ; then
 fi
 
 KILLPIDS="$PID $SLAVEPID"
+
+sleep 1
 
 echo "Testing for master slapd..."
 for i in 0 1 2 3 4 5; do

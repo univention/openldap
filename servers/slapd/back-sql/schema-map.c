@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/schema-map.c,v 1.44.2.5 2005/08/09 21:04:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/schema-map.c,v 1.44.2.6 2005/10/05 17:42:20 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -231,7 +231,7 @@ backsql_add_sysmaps( backsql_info *bi, backsql_oc_map_rec *oc_map )
 		snprintf( tmp, sizeof(tmp), 
 			"DELETE FROM ldap_entry_objclasses "
 			"WHERE entry_id=(SELECT id FROM ldap_entries "
-			"WHERE oc_map_id=%lu"
+			"WHERE oc_map_id=%lu "
 			"AND keyval=?) AND oc_name=?",
 			oc_map->bom_id );
 		at_map->bam_delete_proc = ch_strdup( tmp );

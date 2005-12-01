@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/unbind.c,v 1.11.2.5 2005/08/09 21:04:04 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/unbind.c,v 1.11.2.6 2005/09/28 00:30:33 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -57,13 +57,10 @@ meta_back_conn_destroy(
 	if ( mc ) {
 		Debug( LDAP_DEBUG_TRACE,
 			"=>meta_back_conn_destroy: destroying conn %ld\n",
-			mc->mc_conn->c_connid, 0, 0 );
+			LDAP_BACK_PCONN_ID( mc->mc_conn ), 0, 0 );
 		
 		assert( mc->mc_refcnt == 0 );
 
-		/*
-		 * Cleanup rewrite session
-		 */
 		for ( i = 0; i < mi->mi_ntargets; ++i ) {
 			if ( mc->mc_conns[ i ].msc_ld != NULL ) {
 				meta_clear_one_candidate( &mc->mc_conns[ i ] );

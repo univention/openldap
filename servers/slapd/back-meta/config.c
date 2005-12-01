@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.35.2.11 2005/08/26 00:18:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.35.2.13 2005/10/10 17:35:27 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -69,6 +69,21 @@ new_target(
 	return 0;
 }
 
+static int
+check_true_false( char *str )
+{
+	if ( strcasecmp( str, "true" ) == 0 || strcasecmp( str, "yes" ) == 0 ) {
+		return 1;
+	}
+
+	if ( strcasecmp( str, "false" ) == 0 || strcasecmp( str, "no" ) == 0 ) {
+		return 0;
+	}
+
+	return -1;
+}
+
+
 int
 meta_back_db_config(
 		BackendDB	*be,
@@ -102,6 +117,13 @@ meta_back_db_config(
 			fprintf( stderr,
 	"%s: line %d: missing address"
 	" in \"uri <protocol>://<server>[:port]/<naming context>\" line\n",
+				fname, lineno );
+			return 1;
+		}
+
+		if ( be->be_nsuffix == NULL ) {
+			fprintf( stderr,
+	"%s: line %d: the suffix must be defined before any target.\n",
 				fname, lineno );
 			return 1;
 		}
@@ -148,12 +170,29 @@ meta_back_db_config(
 		/*
 		 * uri MUST have the <dn> part!
 		 */
-		if ( ludp->lud_dn == NULL || ludp->lud_dn[ 0 ] == '\0' ) {
+		if ( ludp->lud_dn == NULL ) {
 			fprintf( stderr,
 	"%s: line %d: missing <naming context> "
 	" in \"uri <protocol>://<server>[:port]/<naming context>\" line\n",
 				fname, lineno );
 			return 1;
+
+		} else if ( ludp->lud_dn[ 0 ] == '\0' ) {
+			int	j = -1;
+
+			for ( j = 0; !BER_BVISNULL( &be->be_nsuffix[ j ] ); j++ ) {
+				if ( BER_BVISEMPTY( &be->be_nsuffix[ j ] ) ) {
+					break;
+				}
+			}
+
+			if ( BER_BVISNULL( &be->be_nsuffix[ j ] ) ) {
+				fprintf( stderr,
+		"%s: line %d: missing <naming context> "
+		" in \"uri <protocol>://<server>[:port]/<naming context>\" line\n",
+					fname, lineno );
+				return 1;
+			}
 		}
 
 		/*
@@ -378,20 +417,23 @@ meta_back_db_config(
 
 		if ( argc == 1 ) {
 			fprintf( stderr,
-	"%s: line %d: deprecated use of \"rebind-as-user {NO|yes}\" with no arguments.\n",
+	"%s: line %d: deprecated use of \"rebind-as-user {FALSE|true}\" with no arguments.\n",
 			    fname, lineno );
 			mi->flags |= LDAP_BACK_F_SAVECRED;
 
 		} else {
-			if ( strcasecmp( argv[ 1 ], "no" ) == 0 ) {
+			switch ( check_true_false( argv[ 1 ] ) ) {
+			case 0:
 				mi->flags &= ~LDAP_BACK_F_SAVECRED;
+				break;
 
-			} else if ( strcasecmp( argv[ 1 ], "yes" ) == 0 ) {
+			case 1:
 				mi->flags |= LDAP_BACK_F_SAVECRED;
+				break;
 
-			} else {
+			default:
 				fprintf( stderr,
-	"%s: line %d: \"rebind-as-user {NO|yes}\" unknown argument \"%s\".\n",
+	"%s: line %d: \"rebind-as-user {FALSE|true}\" unknown argument \"%s\".\n",
 				    fname, lineno, argv[ 1 ] );
 				return 1;
 			}
@@ -404,21 +446,24 @@ meta_back_db_config(
 
 		if ( argc != 2 ) {
 			fprintf( stderr,
-	"%s: line %d: \"chase-referrals\" needs 1 argument.\n",
+	"%s: line %d: \"chase-referrals {TRUE|false}\" needs 1 argument.\n",
 					fname, lineno );
 			return( 1 );
 		}
 
 		/* this is the default; we add it because the default might change... */
-		if ( strcasecmp( argv[ 1 ], "yes" ) == 0 ) {
+		switch ( check_true_false( argv[ 1 ] ) ) {
+		case 1:
 			*flagsp |= LDAP_BACK_F_CHASE_REFERRALS;
+			break;
 
-		} else if ( strcasecmp( argv[ 1 ], "no" ) == 0 ) {
+		case 0:
 			*flagsp &= ~LDAP_BACK_F_CHASE_REFERRALS;
+			break;
 
-		} else {
+		default:
 			fprintf( stderr,
-		"%s: line %d: \"chase-referrals {YES|no}\": unknown argument \"%s\".\n",
+		"%s: line %d: \"chase-referrals {TRUE|false}\": unknown argument \"%s\".\n",
 					fname, lineno, argv[ 1 ] );
 			return( 1 );
 		}
@@ -467,25 +512,31 @@ meta_back_db_config(
 
 		if ( argc != 2 ) {
 			fprintf( stderr,
-		"%s: line %d: \"t-f-support {NO|yes|discover}\" needs 1 argument.\n",
+		"%s: line %d: \"t-f-support {FALSE|true|discover}\" needs 1 argument.\n",
 					fname, lineno );
 			return( 1 );
 		}
 
-		if ( strcasecmp( argv[ 1 ], "no" ) == 0 ) {
+		switch ( check_true_false( argv[ 1 ] ) ) {
+		case 0:
 			*flagsp &= ~(LDAP_BACK_F_SUPPORT_T_F|LDAP_BACK_F_SUPPORT_T_F_DISCOVER);
+			break;
 
-		} else if ( strcasecmp( argv[ 1 ], "yes" ) == 0 ) {
+		case 1:
 			*flagsp |= LDAP_BACK_F_SUPPORT_T_F;
+			break;
 
-		} else if ( strcasecmp( argv[ 1 ], "discover" ) == 0 ) {
-			*flagsp |= LDAP_BACK_F_SUPPORT_T_F_DISCOVER;
+		default:
+			if ( strcasecmp( argv[ 1 ], "discover" ) == 0 ) {
+				*flagsp |= LDAP_BACK_F_SUPPORT_T_F_DISCOVER;
 
-		} else {
-			fprintf( stderr,
+			} else {
+				fprintf( stderr,
 	"%s: line %d: unknown value \"%s\" for \"t-f-support {no|yes|discover}\".\n",
-				fname, lineno, argv[ 1 ] );
-			return 1;
+					fname, lineno, argv[ 1 ] );
+				return 1;
+			}
+			break;
 		}
 
 	/* onerr? */
@@ -506,6 +557,31 @@ meta_back_db_config(
 		} else {
 			fprintf( stderr,
 	"%s: line %d: \"onerr {CONTINUE|stop}\": invalid arg \"%s\".\n",
+				fname, lineno, argv[ 1 ] );
+			return 1;
+		}
+
+	/* bind-defer? */
+	} else if ( strcasecmp( argv[ 0 ], "pseudoroot-bind-defer" ) == 0 ) {
+		if ( argc != 2 ) {
+			fprintf( stderr,
+	"%s: line %d: \"pseudoroot-bind-defer {FALSE|true}\" takes 1 argument\n",
+			    fname, lineno );
+			return( 1 );
+		}
+
+		switch ( check_true_false( argv[ 1 ] ) ) {
+		case 0:
+			mi->flags &= ~META_BACK_F_DEFER_ROOTDN_BIND;
+			break;
+
+		case 1:
+			mi->flags |= META_BACK_F_DEFER_ROOTDN_BIND;
+			break;
+
+		default:
+			fprintf( stderr,
+	"%s: line %d: \"pseudoroot-bind-defer {FALSE|true}\": invalid arg \"%s\".\n",
 				fname, lineno, argv[ 1 ] );
 			return 1;
 		}
@@ -977,6 +1053,10 @@ suffix_massage_regexize( const char *s )
 	const char *p, *r;
 	int i;
 
+	if ( s[ 0 ] == '\0' ) {
+		return ch_strdup( "^(.+)$" );
+	}
+
 	for ( i = 0, p = s; 
 			( r = strchr( p, ',' ) ) != NULL; 
 			p = r + 1, i++ )
@@ -984,10 +1064,11 @@ suffix_massage_regexize( const char *s )
 
 	res = ch_calloc( sizeof( char ),
 			strlen( s )
-			+ STRLENOF( "(.+,)?" )
-			+ STRLENOF( "[ ]?" ) * i + 1 );
+			+ STRLENOF( "((.+),)?" )
+			+ STRLENOF( "[ ]?" ) * i
+			+ STRLENOF( "$" ) + 1 );
 
-	ptr = lutil_strcopy( res, "(.+,)?" );
+	ptr = lutil_strcopy( res, "((.+),)?" );
 	for ( i = 0, p = s;
 			( r = strchr( p, ',' ) ) != NULL;
 			p = r + 1 , i++ ) {
@@ -998,26 +1079,37 @@ suffix_massage_regexize( const char *s )
 			r++;
 		}
 	}
-	lutil_strcopy( ptr, p );
+	ptr = lutil_strcopy( ptr, p );
+	ptr[ 0 ] = '$';
+	ptr++;
+	ptr[ 0 ] = '\0';
 
 	return res;
 }
 
 static char *
-suffix_massage_patternize( const char *s )
+suffix_massage_patternize( const char *s, const char *p )
 {
 	ber_len_t	len;
-	char		*res;
+	char		*res, *ptr;
 
-	len = strlen( s );
+	len = strlen( p );
+
+	if ( s[ 0 ] == '\0' ) {
+		len++;
+	}
 
 	res = ch_calloc( sizeof( char ), len + STRLENOF( "%1" ) + 1 );
 	if ( res == NULL ) {
 		return NULL;
 	}
 
-	strcpy( res, "%1" );
-	strcpy( &res[ STRLENOF( "%1" ) ], s );
+	ptr = lutil_strcopy( res, ( p[ 0 ] == '\0' ? "%2" : "%1" ) );
+	if ( s[ 0 ] == '\0' ) {
+		ptr[ 0 ] = ',';
+		ptr++;
+	}
+	lutil_strcopy( ptr, p );
 
 	return res;
 }
@@ -1046,12 +1138,21 @@ suffix_massage_config(
 
 	rargv[ 0 ] = "rewriteRule";
 	rargv[ 1 ] = suffix_massage_regexize( pvnc->bv_val );
-	rargv[ 2 ] = suffix_massage_patternize( prnc->bv_val );
+	rargv[ 2 ] = suffix_massage_patternize( pvnc->bv_val, prnc->bv_val );
 	rargv[ 3 ] = ":";
 	rargv[ 4 ] = NULL;
 	rewrite_parse( info, "<suffix massage>", ++line, 4, rargv );
 	ch_free( rargv[ 1 ] );
 	ch_free( rargv[ 2 ] );
+
+	if ( BER_BVISEMPTY( pvnc ) ) {
+		rargv[ 0 ] = "rewriteRule";
+		rargv[ 1 ] = "^$";
+		rargv[ 2 ] = prnc->bv_val;
+		rargv[ 3 ] = ":";
+		rargv[ 4 ] = NULL;
+		rewrite_parse( info, "<suffix massage>", ++line, 4, rargv );
+	}
 	
 	rargv[ 0 ] = "rewriteContext";
 	rargv[ 1 ] = "searchEntryDN";
@@ -1060,13 +1161,22 @@ suffix_massage_config(
 
 	rargv[ 0 ] = "rewriteRule";
 	rargv[ 1 ] = suffix_massage_regexize( prnc->bv_val );
-	rargv[ 2 ] = suffix_massage_patternize( pvnc->bv_val );
+	rargv[ 2 ] = suffix_massage_patternize( prnc->bv_val, pvnc->bv_val );
 	rargv[ 3 ] = ":";
 	rargv[ 4 ] = NULL;
 	rewrite_parse( info, "<suffix massage>", ++line, 4, rargv );
 	ch_free( rargv[ 1 ] );
 	ch_free( rargv[ 2 ] );
 
+	if ( BER_BVISEMPTY( prnc ) ) {
+		rargv[ 0 ] = "rewriteRule";
+		rargv[ 1 ] = "^$";
+		rargv[ 2 ] = pvnc->bv_val;
+		rargv[ 3 ] = ":";
+		rargv[ 4 ] = NULL;
+		rewrite_parse( info, "<suffix massage>", ++line, 4, rargv );
+	}
+	
 	/* backward compatibility */
 	rargv[ 0 ] = "rewriteContext";
 	rargv[ 1 ] = "searchResult";

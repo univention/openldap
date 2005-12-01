@@ -1,5 +1,5 @@
 /* backover.c - backend overlay routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backover.c,v 1.31.2.12 2005/08/09 21:03:57 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backover.c,v 1.31.2.15 2005/10/05 17:42:19 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2005 The OpenLDAP Foundation.
@@ -145,6 +145,8 @@ over_db_config(
 			ct = config_find_keyword( on->on_bi.bi_cf_ocs->co_table, &ca );
 			if ( ct ) {
 				rc = config_add_vals( ct, &ca );
+				if ( rc != SLAP_CONF_UNKNOWN )
+					break;
 			}
 		}
 		if (on->on_bi.bi_db_config && rc == SLAP_CONF_UNKNOWN) {
@@ -866,6 +868,7 @@ overlay_config( BackendDB *be, const char *ov )
 		oi = ch_malloc( sizeof( slap_overinfo ) );
 		oi->oi_orig = be->bd_info;
 		oi->oi_bi = *be->bd_info;
+		oi->oi_origdb = be;
 
 		/* NOTE: the first time a global overlay is configured,
 		 * frontendDB gets this flag; it is used later by overlays

@@ -1,5 +1,5 @@
 /* tls.c - Handle tls/ssl using SSLeay or OpenSSL. */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/tls.c,v 1.118.2.3 2005/08/12 15:25:20 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/tls.c,v 1.118.2.8 2005/10/12 18:33:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -199,6 +199,15 @@ ldap_pvt_tls_init_def_ctx( void )
 	char *certfile = tls_opt_certfile;
 	char *keyfile = tls_opt_keyfile;
 
+#ifdef LDAP_R_COMPILE
+	ldap_pvt_thread_mutex_lock( &tls_def_ctx_mutex );
+#endif
+
+	if ( !certfile && !keyfile && !cacertfile && !cacertdir ) {
+		/* minimum configuration not provided */
+		return LDAP_NOT_SUPPORTED;
+	}
+
 #ifdef HAVE_EBCDIC
 	/* This ASCII/EBCDIC handling is a real pain! */
 	if ( ciphersuite ) {
@@ -221,10 +230,6 @@ ldap_pvt_tls_init_def_ctx( void )
 		keyfile = LDAP_STRDUP( keyfile );
 		__atoe( keyfile );
 	}
-#endif
-
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_lock( &tls_def_ctx_mutex );
 #endif
 	if ( tls_def_ctx == NULL ) {
 		int i;
@@ -753,6 +758,10 @@ ldap_int_tls_connect( LDAP *ld, LDAPConn *conn )
 
 		if ((err = ERR_peek_error())) {
 			char buf[256];
+
+			if ( ld->ld_error ) {
+				LDAP_FREE( ld->ld_error );
+			}
 			ld->ld_error = LDAP_STRDUP(ERR_error_string(err, buf));
 #ifdef HAVE_EBCDIC
 			if ( ld->ld_error ) __etoa(ld->ld_error);
@@ -1036,7 +1045,10 @@ ldap_pvt_tls_check_hostname( LDAP *ld, void *s, const char *name_in )
 			Debug( LDAP_DEBUG_ANY,
 				"TLS: unable to get common name from peer certificate.\n",
 				0, 0, 0 );
-       		ret = LDAP_CONNECT_ERROR;
+			ret = LDAP_CONNECT_ERROR;
+			if ( ld->ld_error ) {
+				LDAP_FREE( ld->ld_error );
+			}
 			ld->ld_error = LDAP_STRDUP(
 				_("TLS: unable to get CN from peer certificate"));
 
@@ -1061,12 +1073,15 @@ ldap_pvt_tls_check_hostname( LDAP *ld, void *s, const char *name_in )
 		}
 
 		if( ret == LDAP_LOCAL_ERROR ) {
-       		 Debug( LDAP_DEBUG_ANY, "TLS: hostname (%s) does not match "
-       			 "common name in certificate (%s).\n", 
-       			 name, buf, 0 );
-       		 ret = LDAP_CONNECT_ERROR;
-       		 ld->ld_error = LDAP_STRDUP(
-       		  	 _("TLS: hostname does not match CN in peer certificate"));
+			Debug( LDAP_DEBUG_ANY, "TLS: hostname (%s) does not match "
+				"common name in certificate (%s).\n", 
+				name, buf, 0 );
+			ret = LDAP_CONNECT_ERROR;
+			if ( ld->ld_error ) {
+				LDAP_FREE( ld->ld_error );
+			}
+			ld->ld_error = LDAP_STRDUP(
+				_("TLS: hostname does not match CN in peer certificate"));
 		}
 	}
 	X509_free(x);

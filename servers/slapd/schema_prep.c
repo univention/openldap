@@ -1,5 +1,5 @@
 /* schema_prep.c - load builtin schema */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.141.2.11 2005/08/26 00:18:02 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.141.2.12 2005/09/28 00:30:31 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -545,13 +545,13 @@ static struct slap_schema_ad_map {
 		NULL, NULL,
 		NULL, NULL, NULL, NULL, NULL,
 		offsetof(struct slap_internal_schema, si_ad_entryDN) },
-	{ "entryUUID", "( 1.3.6.1.4.1.4203.666.1.6 NAME 'entryUUID' "   
+	{ "entryUUID", "( 1.3.6.1.1.16.4 NAME 'entryUUID' "   
 			"DESC 'UUID of the entry' "
 			"EQUALITY UUIDMatch "
 			"ORDERING UUIDOrderingMatch "
-			"SYNTAX 1.3.6.1.4.1.4203.666.2.6 "
+			"SYNTAX 1.3.6.1.1.16.1 "
 			"SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )",
-		NULL, SLAP_AT_HIDE|SLAP_AT_MANAGEABLE,
+		NULL, SLAP_AT_MANAGEABLE,
 		NULL, NULL,
 		NULL, NULL, NULL, NULL, NULL,
 		offsetof(struct slap_internal_schema, si_ad_entryUUID) },
@@ -579,8 +579,9 @@ static struct slap_schema_ad_map {
 #ifdef LDAP_SUPERIOR_UUID
 	{ "superiorUUID", "( 1.3.6.1.4.1.4203.666.1.11 NAME 'superiorUUID' "   
 			"DESC 'UUID of the superior entry' "
-			"EQUALITY octetStringMatch "
-			"SYNTAX 1.3.6.1.4.1.1466.115.121.1.40{64} "
+			"EQUALITY UUIDMatch "
+			"ORDERING UUIDOrderingMatch "
+			"SYNTAX 1.3.6.1.1.16.1 "
 			"SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )",
 		NULL, SLAP_AT_HIDE,
 		NULL, NULL,
@@ -942,6 +943,26 @@ static struct slap_schema_ad_map {
 		NULL, NULL,
 		NULL, NULL, NULL, NULL, NULL,
 		offsetof(struct slap_internal_schema, si_ad_uid) },
+	{ "uidNumber", /* for ldapi:// */
+		"( 1.3.6.1.1.1.1.0 NAME 'uidNumber' "
+    		"DESC 'An integer uniquely identifying a user "
+				"in an administrative domain' "
+    		"EQUALITY integerMatch "
+    		"SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 SINGLE-VALUE )",
+		NULL, 0,
+		NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		offsetof(struct slap_internal_schema, si_ad_uidNumber) },
+	{ "gidNumber", /* for ldapi:// */
+		"( 1.3.6.1.1.1.1.1 NAME 'gidNumber' "
+    		"DESC 'An integer uniquely identifying a group "
+				"in an administrative domain' "
+    		"EQUALITY integerMatch "
+    		"SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 SINGLE-VALUE )",
+		NULL, 0,
+		NULL, NULL,
+		NULL, NULL, NULL, NULL, NULL,
+		offsetof(struct slap_internal_schema, si_ad_gidNumber) },
 	{ "userPassword", "( 2.5.4.35 NAME 'userPassword' "
 			"DESC 'RFC2256/2307: password of user' "
 			"EQUALITY octetStringMatch "

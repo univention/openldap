@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/back-meta.h,v 1.23.2.9 2005/08/17 16:15:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/back-meta.h,v 1.23.2.11 2005/10/05 17:42:20 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -166,10 +166,16 @@ typedef struct metasingleconn_t {
 	LDAP            	*msc_ld;
 	struct berval          	msc_bound_ndn;
 	struct berval		msc_cred;
+	unsigned		msc_mscflags;
+	/* NOTE: lc_lcflags is redefined to msc_mscflags to reuse the macros
+	 * defined for back-ldap */
+#define	lc_lcflags		msc_mscflags
+#if 0
 	int             	msc_bound;
 #define META_UNBOUND		0
 #define META_BOUND		1
 #define META_ANONYMOUS		2
+#endif
 
 	struct metainfo_t	*msc_info;
 } metasingleconn_t;
@@ -179,11 +185,16 @@ typedef struct metaconn_t {
 	ldap_pvt_thread_mutex_t	mc_mutex;
 	unsigned		mc_refcnt;
 	
+	struct berval          	mc_local_ndn;
+	/* NOTE: msc_mscflags is used to recycle the #define
+	 * in metasingleconn_t */
+	unsigned		msc_mscflags;
+
 	/*
 	 * means that the connection is bound; 
 	 * of course only one target actually is ...
 	 */
-	int             	mc_auth_target;
+	int             	mc_authz_target;
 #define META_BOUND_NONE		(-1)
 #define META_BOUND_ALL		(-2)
 	/* supersedes the connection stuff */
@@ -258,9 +269,13 @@ typedef struct metainfo_t {
 
 	unsigned		flags;
 /* uses flags as defined in <back-ldap/back-ldap.h> */
-#define	META_BACK_F_ONERR_STOP	0x00010000U
+#define	META_BACK_F_ONERR_STOP		0x00010000U
+#define	META_BACK_F_DEFER_ROOTDN_BIND	0x00020000U
+
 #define	META_BACK_ONERR_STOP(mi)	( (mi)->flags & META_BACK_F_ONERR_STOP )
 #define	META_BACK_ONERR_CONTINUE(mi)	( !META_BACK_ONERR_CONTINUE( (mi) ) )
+
+#define META_BACK_DEFER_ROOTDN_BIND(mi)	( (mi)->flags & META_BACK_F_DEFER_ROOTDN_BIND )
 
 	int			mi_version;
 	time_t			mi_timeout[ META_OP_LAST ];
@@ -297,14 +312,17 @@ meta_back_retry(
 
 extern void
 meta_back_conn_free(
-	metaconn_t		*mc );
+	void			*v_mc );
 
 extern int
 meta_back_init_one_conn(
 	Operation		*op,
 	SlapReply		*rs,
 	metatarget_t		*mt, 
+	metaconn_t		*mc,
 	metasingleconn_t	*msc,
+	int			ispriv,
+	int			isauthz,
 	ldap_back_send_t	sendok );
 
 extern int
@@ -403,6 +421,8 @@ meta_dncache_delete_entry(
 
 extern void
 meta_dncache_free( void *entry );
+
+extern LDAP_REBIND_PROC		*meta_back_rebind_f;
 
 LDAP_END_DECL
 

@@ -2,7 +2,7 @@
 .\" Copyright 1998-2005 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-meta.5,v 1.29.2.5 2005/08/09 16:58:45 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-meta.5,v 1.29.2.6 2005/10/05 17:42:19 kurt Exp $
 .\"
 .\" Portions of this document should probably be moved to slapd-ldap(5)
 .\" and maybe manual pages for librewrite.
@@ -243,6 +243,13 @@ the target using the "pseudorootdn" DN.
 
 Note: cleartext credentials must be supplied here; as a consequence,
 using the pseudorootdn/pseudorootpw directives is inherently unsafe.
+
+.TP
+.B pseudoroot-bind-defer {NO|yes}
+This directive, when set to 
+.BR yes ,
+causes the authentication to the remote servers with the pseudo-root
+identity to be deferred until actually needed by subsequent operations.
 
 .TP
 .B rewrite* ...

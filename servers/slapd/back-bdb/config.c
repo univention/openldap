@@ -1,5 +1,5 @@
 /* config.c - bdb backend configuration file routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/config.c,v 1.43.2.10 2005/08/12 15:25:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/config.c,v 1.43.2.11 2005/10/12 21:33:52 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2005 The OpenLDAP Foundation.
@@ -172,8 +172,8 @@ bdb_online_index( void *ctx, void *arg )
 	struct bdb_info *bdb = be->be_private;
 
 	Connection conn = {0};
-	char opbuf[OPERATION_BUFFER_SIZE];
-	Operation *op = (Operation *)opbuf;
+	OperationBuffer opbuf;
+	Operation *op = (Operation *) &opbuf;
 
 	DBC *curs;
 	DBT key, data;

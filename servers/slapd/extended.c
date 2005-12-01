@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/extended.c,v 1.78.2.3 2005/08/17 16:15:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/extended.c,v 1.78.2.4 2005/10/10 17:35:27 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -69,9 +69,6 @@ static struct {
 	{ &slap_EXOP_CANCEL, SLAP_EXOP_HIDE, cancel_extop },
 	{ &slap_EXOP_WHOAMI, 0, whoami_extop },
 	{ &slap_EXOP_MODIFY_PASSWD, SLAP_EXOP_WRITES, passwd_extop },
-#ifdef HAVE_TLS
-	{ &slap_EXOP_START_TLS, 0, starttls_extop },
-#endif
 	{ NULL, 0, NULL }
 };
 

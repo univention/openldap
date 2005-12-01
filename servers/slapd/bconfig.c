@@ -1,5 +1,5 @@
 /* bconfig.c - the config backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/bconfig.c,v 1.17.2.25 2005/09/01 20:28:10 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/bconfig.c,v 1.17.2.29 2005/10/12 21:33:52 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005 The OpenLDAP Foundation.
@@ -393,7 +393,7 @@ static ConfigTable config_back_cf_table[] = {
 			"SUP labeledURI SINGLE-VALUE )", NULL, NULL },
 	{ "replica", "host or uri", 2, 0, 0, ARG_DB|ARG_MAGIC,
 		&config_replica, "( OLcfgDbAt:0.7 NAME 'olcReplica' "
-			"SUP labeledURI )", NULL, NULL },
+			"SUP labeledURI X-ORDERED 'VALUES' )", NULL, NULL },
 	{ "replica-argsfile", NULL, 0, 0, 0, ARG_STRING,
 		&replica_argsFile, "( OLcfgGlAt:43 NAME 'olcReplicaArgsFile' "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
@@ -1379,7 +1379,7 @@ config_passwd_hash(ConfigArgs *c) {
 	}
 	for(i = 1; i < c->argc; i++) {
 		if(!lutil_passwd_scheme(c->argv[i])) {
-			sprintf( c->msg, "<%s> schema not available", c->argv[0] );
+			sprintf( c->msg, "<%s> scheme not available", c->argv[0] );
 			Debug(LDAP_DEBUG_ANY, "%s: %s (%s)\n",
 				c->log, c->msg, c->argv[i]);
 		} else {
@@ -2613,7 +2613,7 @@ config_setup_ldif( BackendDB *be, const char *dir, int readit ) {
 	setup_cookie sc;
 	slap_callback cb = { NULL, config_ldif_resp, NULL, NULL };
 	Connection conn = {0};
-	char opbuf[OPERATION_BUFFER_SIZE];
+	OperationBuffer opbuf;
 	Operation *op;
 	SlapReply rs = {REP_RESULT};
 	Filter filter = { LDAP_FILTER_PRESENT };
@@ -2665,7 +2665,7 @@ config_setup_ldif( BackendDB *be, const char *dir, int readit ) {
 	if ( readit ) {
 		void *thrctx = ldap_pvt_thread_pool_context();
 
-		op = (Operation *)opbuf;
+		op = (Operation *) &opbuf;
 		connection_fake_init( &conn, op, thrctx );
 
 		filter.f_desc = slap_schema.si_ad_objectClass;
@@ -3427,6 +3427,11 @@ config_back_add( Operation *op, SlapReply *rs )
 		BackendDB *be = op->o_bd;
 		slap_callback sc = { NULL, slap_null_cb, NULL, NULL };
 		op->o_bd = &cfb->cb_db;
+		/* FIXME: there must be a better way. */
+		if ( ber_bvcmp( &op->o_bd->be_rootndn, &be->be_rootndn )) {
+			op->o_bd->be_rootdn = be->be_rootdn;
+			op->o_bd->be_rootndn= be->be_rootndn;
+		}
 		sc.sc_next = op->o_callback;
 		op->o_callback = &sc;
 		op->o_bd->be_add( op, rs );
@@ -3751,6 +3756,10 @@ config_back_modify( Operation *op, SlapReply *rs )
 		BackendDB *be = op->o_bd;
 		slap_callback sc = { NULL, slap_null_cb, NULL, NULL };
 		op->o_bd = &cfb->cb_db;
+		if ( ber_bvcmp( &op->o_bd->be_rootndn, &be->be_rootndn )) {
+			op->o_bd->be_rootdn = be->be_rootdn;
+			op->o_bd->be_rootndn= be->be_rootndn;
+		}
 		sc.sc_next = op->o_callback;
 		op->o_callback = &sc;
 		op->o_bd->be_modify( op, rs );
@@ -4044,7 +4053,7 @@ config_back_db_open( BackendDB *be )
 	BackendInfo *bi;
 	ConfigArgs c;
 	Connection conn = {0};
-	char opbuf[OPERATION_BUFFER_SIZE];
+	OperationBuffer opbuf;
 	Operation *op;
 	slap_callback cb = { NULL, slap_null_cb, NULL, NULL };
 	SlapReply rs = {REP_RESULT};
@@ -4056,7 +4065,7 @@ config_back_db_open( BackendDB *be )
 
 	if ( cfb->cb_use_ldif ) {
 		thrctx = ldap_pvt_thread_pool_context();
-		op = (Operation *)opbuf;
+		op = (Operation *) &opbuf;
 		connection_fake_init( &conn, op, thrctx );
 
 		op->o_dn = be->be_rootdn;

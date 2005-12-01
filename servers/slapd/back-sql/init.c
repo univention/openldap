@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/init.c,v 1.47.2.8 2005/08/09 21:04:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/init.c,v 1.47.2.9 2005/10/12 21:33:53 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -224,8 +224,8 @@ backsql_db_open(
 	SQLHDBC 	dbh = SQL_NULL_HDBC;
 	struct berbuf	bb = BB_NULL;
 
-	char		opbuf[ OPERATION_BUFFER_SIZE ];
-	Operation*	op = (Operation *)opbuf;
+	OperationBuffer	opbuf;
+	Operation*	op = (Operation *) &opbuf;
 	
 	Debug( LDAP_DEBUG_TRACE, "==>backsql_db_open(): "
 		"testing RDBMS connection\n", 0, 0, 0 );
@@ -581,8 +581,8 @@ backsql_db_close(
 int
 backsql_connection_destroy( Backend *bd, Connection *c )
 {
-	char		opbuf[ OPERATION_BUFFER_SIZE ];
-	Operation*	op = (Operation *)opbuf;
+	OperationBuffer opbuf;
+	Operation*	op = (Operation *) &opbuf;
 
 	op->o_hdr = (Opheader *)&op[ 1 ];
 	op->o_connid = c->c_connid;

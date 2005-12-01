@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/sql-test001-concurrency,v 1.2.4.1 2005/08/29 18:50:01 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/sql-test001-concurrency,v 1.2.4.2 2005/09/29 21:31:32 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2004 The OpenLDAP Foundation.
@@ -27,7 +27,7 @@ if test $RDBMS = "rdbmsno" ; then
 fi
 
 SQLDATADIR=$TESTDIR/sql-concurrency
-mkdir -p $SQLDATADIR
+mkdir -p $TESTDIR $SQLDATADIR
 
 echo "Starting slapd on TCP/IP port $PORT1..."
 . $CONFFILTER $BACKEND $MONITORDB < $SQLCONF > $CONF1

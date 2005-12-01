@@ -1,5 +1,5 @@
 /* ch_malloc.c - malloc routines that test returns from malloc and friends */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ch_malloc.c,v 1.25.2.1 2005/01/20 18:03:54 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ch_malloc.c,v 1.25.2.2 2005/09/28 00:30:30 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -75,6 +75,7 @@ ch_realloc(
 
 	if( size == 0 ) {
 		ch_free( block );
+		return NULL;
 	}
 
 	ctx = slap_sl_context( block );

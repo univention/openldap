@@ -1,5 +1,5 @@
 /* bind.c - decode an ldap bind operation and pass it to a backend db */
-/* $OpenLDAP: pkg/ldap/servers/slapd/bind.c,v 1.189.2.4 2005/08/09 21:03:57 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/bind.c,v 1.189.2.5 2005/09/28 00:30:30 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -452,6 +452,8 @@ fe_op_bind( Operation *op, SlapReply *rs )
 	}
 
 	if( op->o_bd->be_bind ) {
+		op->o_conn->c_authz_cookie = NULL;
+
 		rs->sr_err = (op->o_bd->be_bind)( op, rs );
 
 		if ( rs->sr_err == 0 ) {

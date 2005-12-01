@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/conf.sh,v 1.32.2.7 2005/08/25 05:01:20 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/conf.sh,v 1.32.2.9 2005/09/29 19:07:59 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -41,7 +41,6 @@ sed -e "s/@BACKEND@/${BACKEND}/"			\
 	-e "s/^#${AC_relay}#//"				\
 	-e "s/^#${AC_sql}#//"				\
 		-e "s/^#${RDBMS}#//"			\
-	-e "s/^#${AC_glue}#//"				\
 	-e "s/^#${AC_pcache}#//"			\
 	-e "s/^#${AC_ppolicy}#//"			\
 	-e "s/^#${AC_refint}#//"			\
@@ -69,4 +68,7 @@ sed -e "s/@BACKEND@/${BACKEND}/"			\
 	-e "s;@PORT6@;${PORT6};"			\
 	-e "s/@SASL_MECH@/${SASL_MECH}/"		\
 	-e "s/@CACHETTL@/${CACHETTL}/"			\
-	-e "s/@ENTRY_LIMIT@/${CACHE_ENTRY_LIMIT}/"
+	-e "s/@ENTRY_LIMIT@/${CACHE_ENTRY_LIMIT}/"	\
+	-e "s;@TESTDIR@;${TESTDIR};"			\
+	-e "s;@DATADIR@;${DATADIR};"			\
+	-e "s;@SCHEMADIR@;${SCHEMADIR};"

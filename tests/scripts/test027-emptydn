@@ -44,6 +44,8 @@ if test $WAIT != 0 ; then
 fi
 KILLPIDS="$PID"
 
+sleep 1
+
 echo "Testing slapd empty DN handling..."
 for i in 0 1 2 3 4 5; do
 	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
@@ -91,7 +93,7 @@ fi
 echo "Comparison of database generated via slapadd succeeded"
 
 echo "Cleaning up database directories..."
-/bin/rm -rf testrun/db.*
+/bin/rm -rf $TESTDIR/db.*
 
 mkdir -p $TESTDIR $DBDIR1 $DBDIR2
 
@@ -103,6 +105,8 @@ if test $WAIT != 0 ; then
     read foo
 fi
 KILLPIDS="$PID"
+
+sleep 1
 
 echo "Testing slapd empty DN handling..."
 for i in 0 1 2 3 4 5; do

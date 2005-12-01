@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/compare.c,v 1.30.2.10 2005/08/29 18:26:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/compare.c,v 1.30.2.11 2005/09/28 00:30:33 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -176,10 +176,9 @@ meta_back_compare( Operation *op, SlapReply *rs )
 			metasingleconn_t	*msc = &mc->mc_conns[ i ];
 			int			lrc;
 			LDAPMessage		*res = NULL;
-			struct timeval		tv = { 0 };
+			struct timeval		tv;
 
-			tv.tv_sec = 0;
-			tv.tv_usec = 100000;	/* 0.1 s */
+			LDAP_BACK_TV_SET( &tv );
 
 			if ( msgid[ i ] == -1 ) {
 				continue;

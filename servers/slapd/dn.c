@@ -1,5 +1,5 @@
 /* dn.c - routines for dealing with distinguished names */
-/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.170.2.4 2005/08/17 16:15:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.170.2.5 2005/09/28 00:30:31 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -73,7 +73,12 @@ LDAPRDN_validate( LDAPRDN rdn )
 
 			rc = slap_bv2ad( &ava->la_attr, &ad, &text );
 			if ( rc != LDAP_SUCCESS ) {
-				return LDAP_INVALID_SYNTAX;
+				rc = slap_bv2undef_ad( &ava->la_attr,
+					&ad, &text,
+					SLAP_AD_PROXIED|SLAP_AD_NOINSERT );
+				if ( rc != LDAP_SUCCESS ) {
+					return LDAP_INVALID_SYNTAX;
+				}
 			}
 
 			ava->la_private = ( void * )ad;
@@ -132,7 +137,12 @@ LDAPDN_validate( LDAPDN dn )
 
 				rc = slap_bv2ad( &ava->la_attr, &ad, &text );
 				if ( rc != LDAP_SUCCESS ) {
-					return LDAP_INVALID_SYNTAX;
+					rc = slap_bv2undef_ad( &ava->la_attr,
+						&ad, &text,
+						SLAP_AD_PROXIED|SLAP_AD_NOINSERT );
+					if ( rc != LDAP_SUCCESS ) {
+						return LDAP_INVALID_SYNTAX;
+					}
 				}
 
 				ava->la_private = ( void * )ad;
@@ -344,7 +354,12 @@ LDAPRDN_rewrite( LDAPRDN rdn, unsigned flags, void *ctx )
 
 			rc = slap_bv2ad( &ava->la_attr, &ad, &text );
 			if ( rc != LDAP_SUCCESS ) {
-				return LDAP_INVALID_SYNTAX;
+				rc = slap_bv2undef_ad( &ava->la_attr,
+					&ad, &text,
+					SLAP_AD_PROXIED|SLAP_AD_NOINSERT );
+				if ( rc != LDAP_SUCCESS ) {
+					return LDAP_INVALID_SYNTAX;
+				}
 			}
 			
 			ava->la_private = ( void * )ad;
@@ -469,7 +484,12 @@ LDAPDN_rewrite( LDAPDN dn, unsigned flags, void *ctx )
 
 				rc = slap_bv2ad( &ava->la_attr, &ad, &text );
 				if ( rc != LDAP_SUCCESS ) {
-					return LDAP_INVALID_SYNTAX;
+					rc = slap_bv2undef_ad( &ava->la_attr,
+						&ad, &text,
+						SLAP_AD_PROXIED|SLAP_AD_NOINSERT );
+					if ( rc != LDAP_SUCCESS ) {
+						return LDAP_INVALID_SYNTAX;
+					}
 				}
 				
 				ava->la_private = ( void * )ad;
@@ -1187,7 +1207,7 @@ dnExtractRdn(
 /*
  * We can assume the input is a prettied or normalized DN
  */
-int 
+ber_len_t
 dn_rdnlen(
 	Backend		*be,
 	struct berval	*dn_in )

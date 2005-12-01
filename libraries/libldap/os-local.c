@@ -1,5 +1,5 @@
 /* os-local.c -- platform-specific domain socket code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.37.2.3 2005/08/29 18:46:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.37.2.4 2005/09/28 00:30:28 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -167,11 +167,12 @@ static int
 ldap_pvt_connect(LDAP *ld, ber_socket_t s, struct sockaddr_un *sa, int async)
 {
 	int rc;
-	struct timeval	tv, *opt_tv=NULL;
+	struct timeval	tv = { 0 },
+			*opt_tv = NULL;
 
-	if ( (opt_tv = ld->ld_options.ldo_tm_net) != NULL ) {
-		tv.tv_usec = opt_tv->tv_usec;
-		tv.tv_sec = opt_tv->tv_sec;
+	opt_tv = ld->ld_options.ldo_tm_net;
+	if ( opt_tv != NULL ) {
+		tv = *opt_tv;
 	}
 
 	oslocal_debug(ld, "ldap_connect_timeout: fd: %d tm: %ld async: %d\n",

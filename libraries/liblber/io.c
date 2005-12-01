@@ -1,5 +1,5 @@
 /* io.c - ber general i/o routines */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/io.c,v 1.107.2.1 2005/01/20 18:03:49 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/io.c,v 1.107.2.2 2005/09/28 00:30:28 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -559,7 +559,7 @@ ber_get_next(
 
 		/* Now look for the length */
 		if (*ber->ber_ptr & 0x80) {	/* multi-byte */
-			ber_len_t i;
+			int i;
 			unsigned char *p = (unsigned char *)ber->ber_ptr;
 			int llen = *p++ & 0x7f;
 			if (llen > (int)sizeof(ber_len_t)) {

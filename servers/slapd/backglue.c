@@ -1,5 +1,5 @@
 /* backglue.c - backend glue */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.91.2.1 2005/09/01 20:28:10 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.91.2.3 2005/09/29 19:07:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2005 The OpenLDAP Foundation.
@@ -477,16 +477,17 @@ glue_open (
 	if (slapMode & SLAP_TOOL_MODE) {
 		for (i = 0; i<gi->gi_nodes; i++) {
 			same = 0;
-			/* Same type as our main backend? */
-			if ( gi->gi_n[i].gn_be->bd_info == on->on_info->oi_orig )
+			/* Same bi_open as our main backend? */
+			if ( gi->gi_n[i].gn_be->bd_info->bi_open ==
+				on->on_info->oi_orig->bi_open )
 				bsame = 1;
 
 			/* Loop thru the bd_info's and make sure we only
 			 * invoke their bi_open functions once each.
 			 */
 			for ( j = 0; j<i; j++ ) {
-				if ( gi->gi_n[i].gn_be->bd_info ==
-					gi->gi_n[j].gn_be->bd_info ) {
+				if ( gi->gi_n[i].gn_be->bd_info->bi_open ==
+					gi->gi_n[j].gn_be->bd_info->bi_open ) {
 					same = 1;
 					break;
 				}
@@ -715,6 +716,7 @@ glue_db_init(
 {
 	slap_overinst	*on = (slap_overinst *)be->bd_info;
 	slap_overinfo	*oi = on->on_info;
+	BackendInfo	*bi = oi->oi_orig;
 	glueinfo *gi;
 
 	gi = ch_calloc( 1, sizeof(glueinfo));
@@ -729,14 +731,23 @@ glue_db_init(
 
 	oi->oi_bi.bi_entry_release_rw = glue_entry_release_rw;
 
-	oi->oi_bi.bi_tool_entry_open = glue_tool_entry_open;
-	oi->oi_bi.bi_tool_entry_close = glue_tool_entry_close;
-	oi->oi_bi.bi_tool_entry_first = glue_tool_entry_first;
-	oi->oi_bi.bi_tool_entry_next = glue_tool_entry_next;
-	oi->oi_bi.bi_tool_entry_get = glue_tool_entry_get;
-	oi->oi_bi.bi_tool_entry_put = glue_tool_entry_put;
-	oi->oi_bi.bi_tool_entry_reindex = glue_tool_entry_reindex;
-	oi->oi_bi.bi_tool_sync = glue_tool_sync;
+	/* Only advertise these if the root DB supports them */
+	if ( bi->bi_tool_entry_open )
+		oi->oi_bi.bi_tool_entry_open = glue_tool_entry_open;
+	if ( bi->bi_tool_entry_close )
+		oi->oi_bi.bi_tool_entry_close = glue_tool_entry_close;
+	if ( bi->bi_tool_entry_first )
+		oi->oi_bi.bi_tool_entry_first = glue_tool_entry_first;
+	if ( bi->bi_tool_entry_next )
+		oi->oi_bi.bi_tool_entry_next = glue_tool_entry_next;
+	if ( bi->bi_tool_entry_get )
+		oi->oi_bi.bi_tool_entry_get = glue_tool_entry_get;
+	if ( bi->bi_tool_entry_put )
+		oi->oi_bi.bi_tool_entry_put = glue_tool_entry_put;
+	if ( bi->bi_tool_entry_reindex )
+		oi->oi_bi.bi_tool_entry_reindex = glue_tool_entry_reindex;
+	if ( bi->bi_tool_sync )
+		oi->oi_bi.bi_tool_sync = glue_tool_sync;
 
 	/*FIXME : need to add support */
 	oi->oi_bi.bi_tool_dn2id_get = 0;
@@ -779,7 +790,7 @@ glue_sub_del( BackendDB *b0 )
 
 	/* Find the top backend for this subordinate */
 	be = b0;
-	while ( be=LDAP_STAILQ_NEXT( be, be_next )) {
+	while ( (be=LDAP_STAILQ_NEXT( be, be_next )) != NULL ) {
 		slap_overinfo *oi;
 		slap_overinst *on;
 		glueinfo *gi;
@@ -826,7 +837,7 @@ typedef struct glue_Addrec {
 static glue_Addrec *ga_list;
 
 /* Attach all the subordinate backends to their superior */
-static int
+int
 glue_sub_attach()
 {
 	glue_Addrec *ga, *gnext = NULL;
@@ -840,7 +851,7 @@ glue_sub_attach()
 
 		/* Find the top backend for this subordinate */
 		be = ga->ga_be;
-		while ( be=LDAP_STAILQ_NEXT( be, be_next )) {
+		while ( (be=LDAP_STAILQ_NEXT( be, be_next )) != NULL ) {
 			slap_overinfo *oi;
 			slap_overinst *on;
 			glueinfo *gi;
@@ -898,16 +909,9 @@ glue_sub_add( BackendDB *be, int advert, int online )
 		SLAP_DBFLAGS( be ) |= SLAP_DBFLAG_GLUE_ADVERTISE;
 
 	ga = ch_malloc( sizeof( glue_Addrec ));
-	ga->ga_next = NULL;
+	ga->ga_next = ga_list;
 	ga->ga_be = be;
-	if ( ga_list ) {
-		glue_Addrec *g2 = ga_list;
-
-		for ( ; g2 && g2->ga_next; g2=g2->ga_next );
-		g2->ga_next = ga;
-	} else {
-		ga_list = ga;
-	}
+	ga_list = ga;
 
 	if ( online )
 		rc = glue_sub_attach();
@@ -918,8 +922,6 @@ glue_sub_add( BackendDB *be, int advert, int online )
 int
 glue_sub_init()
 {
-	int rc;
-
 	glue.on_bi.bi_type = "glue";
 
 	glue.on_bi.bi_db_init = glue_db_init;
@@ -935,8 +937,5 @@ glue_sub_init()
 	glue.on_bi.bi_chk_referrals = glue_chk_referrals;
 	glue.on_bi.bi_chk_controls = glue_chk_controls;
 
-	rc = overlay_register( &glue );
-	if ( rc ) return rc;
-
-	return glue_sub_attach();
+	return overlay_register( &glue );
 }

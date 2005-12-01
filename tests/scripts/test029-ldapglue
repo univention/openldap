@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test029-ldapglue,v 1.3.2.2 2005/09/01 20:28:11 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test029-ldapglue,v 1.3.2.3 2005/10/05 17:41:32 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -96,6 +96,8 @@ if test $WAIT != 0 ; then
     read foo
 fi
 KILLPIDS="$PID1 $PID2 $PID3"
+
+sleep 1
 
 echo "Using ldapsearch to check that slapd is running..."
 for i in 0 1 2 3 4 5; do

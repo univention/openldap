@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.198.2.11 2005/09/01 20:28:10 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.198.2.14 2005/10/10 17:35:27 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -261,14 +261,15 @@ int main( int argc, char **argv )
 	struct sync_cookie *scp = NULL;
 	struct sync_cookie *scp_entry = NULL;
 
+	char	*serverNamePrefix = "";
+	size_t	l;
+
 #ifdef CSRIMALLOC
 	FILE *leakfile;
 	if( ( leakfile = fopen( "slapd.leak", "w" )) == NULL ) {
 		leakfile = stderr;
 	}
 #endif
-	char	*serverNamePrefix = "";
-	size_t	l;
 
 	slap_sl_mem_init();
 
@@ -631,7 +632,7 @@ unhandled_option:;
 		}
 	}
 
-	if ( glue_sub_init( ) != 0 ) {
+	if ( glue_sub_attach( ) != 0 ) {
 		Debug( LDAP_DEBUG_ANY,
 		    "subordinate config error\n",
 		    0, 0, 0 );
@@ -668,7 +669,12 @@ unhandled_option:;
 		ldap_pvt_tls_set_option( NULL, LDAP_OPT_X_TLS_CTX, NULL );
 
 		rc = ldap_pvt_tls_init_def_ctx();
-		if( rc != 0) {
+		if( rc == 0) {
+			ldap_pvt_tls_get_option( NULL, LDAP_OPT_X_TLS_CTX, &slap_tls_ctx );
+			/* Restore previous ctx */
+			ldap_pvt_tls_set_option( NULL, LDAP_OPT_X_TLS_CTX, def_ctx );
+			load_extop( &slap_EXOP_START_TLS, 0, starttls_extop );
+		} else if ( rc != LDAP_NOT_SUPPORTED ) {
 			Debug( LDAP_DEBUG_ANY,
 			    "main: TLS init def ctx failed: %d\n",
 			    rc, 0, 0 );
@@ -676,10 +682,6 @@ unhandled_option:;
 			SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 20 );
 			goto destroy;
 		}
-		/* Retrieve slapd's own ctx */
-		ldap_pvt_tls_get_option( NULL, LDAP_OPT_X_TLS_CTX, &slap_tls_ctx );
-		/* Restore previous ctx */
-		ldap_pvt_tls_set_option( NULL, LDAP_OPT_X_TLS_CTX, def_ctx );
 	}
 #endif
 

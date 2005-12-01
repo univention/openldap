@@ -1,5 +1,95 @@
 OpenLDAP 2.3 Change Log
 
+OpenLDAP 2.3.11 Release
+	Fixed libldap reentrancy issue (ITS#3988)
+	Fixed libldap ndelay without timeout
+	Fixed slapd ldaps:// not configured issue (ITS#4082,4083)
+	Fixed slapd-bdb/hdb mode argument parsing (ITS#4077)
+	Fixed slapd WIN32 writefds init issue
+	Fixed slapadd buffer alignment issue (ITS#4078)
+	Updated slapd syncrepl to use ldap_unbind_ext
+	Removed lint
+
+OpenLDAP 2.3.10 Release
+	Fixed libldap chasing of chased referrals (ITS#2942)
+	Added libldap LDAP_NOT_SUPPORTED for TLS (ITS#4072)
+	Added libldap LDAP_MSG_RECEIVED support
+	Dropped libldap LDAP_MORE_RESULTS_TO_RETURN use
+	Fixed slapd cn=config updated rootdn issue (ITS#4035)
+	Fixed slapd-meta bus error (ITS#4073)
+	Fixed slapd-meta/ldap/rwm empty naming context issue (ITS#4071)
+
+OpenLDAP 2.3.9 Release
+	Fixed slapd req_pwdexop bug
+	Fixed slapo-syncprov queued UUIDs bug (ITS#4068)
+	Fixed slapo-syncprov memory leak
+	Fixed slapd anlist leak
+	Removed lint
+	Build Environment
+		Updated testsuite to test only primary backends by default
+		Disable test041-aci
+
+OpenLDAP 2.3.8 Release
+	Fixed slapd undef HAVE_EPOLL issue
+	Fixed slapd connection-get wake bug (ITS#3999)
+	Fixed slapd uninitialized var bug (ITS#3854)
+	Fixed slapd add entry without parent bug (ITS#2757)
+	Fixed slapd cn=config value escaping bug (ITS#3807)
+	Fixed slapd cn=config missing host/uri bug (ITS#4009)
+	Fixed slapd alock symbol bug (ITS#3978)
+	Fixed slapd replogfile assert (ITS#4003)
+	Fixed slapd rewrite session var set bug (ITS#4023)
+	Fixed slapd syncrepl empty uniqueMember bug (ITS#4040)
+	Fixed slapd alias resolution bug (ITS#4030)
+	Fixed slapd password-hash cleartext bug (ITS#4021)
+	Fixed slapd realloc zero bug (ITS#3981)
+	Fixed slapd nested overlay configuration bug (ITS#4047)
+	Fixed slapd password modify oldPassword ignore bug (ITS#4049)
+	Added slapd password oldPassword verify (ITS#4051)
+	Fixed slapd select_backend manageDSAit with glue issue (ITS#4027)
+	Updated slapd authz backend detection (ITS#4018)
+	Fixed slapd-bdb/hdb pointer/integer size mismatch (ITS#4015)
+	Updated slapd-hdb index management
+	Fixed slapd-glue mixtures bug (ITS#3979)
+	Fixed slapd-ldap unlock issue (ITS#4001)
+	Fixed slapd-ldap manageDIT check bug (ITS#4005)
+	Fixed slapd-ldap resource release issue (ITS#4016)
+	Fixed slapd-meta rootdn lookup bug (ITS#4004)
+	Fixed slapd-meta null value assert issue (ITS#4028)
+	Added slapd-meta pooled connections (ITS#4056)
+	Added slapd-meta target DSA bind defer when auth'd as rootdn (ITS#4057)
+	Fixed slapd-meta pseudorootdn issue
+	Fixed slapd-monitor unavailable issue (ITS#4013)
+	Fixed slapd-perl init/destroy bug (ITS#3923)
+	Fixed slapd-sql missing space issue (ITS#4061)
+	Fixed slapo-accesslog timestamp normalization issue
+	Fixed slapo-accesslog normalizer issue 
+	Fixed slapo-ppolicy replication issues (ITS#3980)
+	Added slapo-ppolicy pwdattribute descriptor support (ITS#4025)
+	Fixed slapo-syncprov/unique interact issues (ITS#3989)
+	Fixed slapo-syncprov/subordinate interact issues (ITS#3996)
+	Fixed slapo-syncprov schema check assert (ITS#4031)
+	Fixed slapo-syncprov psearch flush in qtask
+	Fixed slapo-syncprov abandon checks
+	Fixed slapo-unique ignore writes not under unique_base (ITS#4066)
+	Fixed slapo-valsort unknown valsort-attr bug (ITS#4047)
+	Fixed slapcat out-of-memory problem (ITS#4010)
+	Fixed slurpd unrecognized slave names bug (ITS#4012)
+	Fixed liblber dgram len bug (ITS#4046)
+	Fixed libldap SASL and TLS potential ld_error leaks (ITS#4064)
+	Fixed liblutil/csn time counter issue 
+	Updated contrib/ldapc++ to avoid deprecated functions
+	Documentation
+		Added slapo-valsort(5) man page (ITS#3994)
+		Added slap tool -F option documentation (ITS#4026)
+	Build Environment
+		Fixed misc POSIX conformance issues (ITS#2667)
+		Fixed --without-threads build issue (ITS#4006)
+		Fixed test script exit checks (ITS#4045)
+		Added test suite parameterized directory support
+		Fixed test suite tool error handling
+		Updated contrib/ldapc++ build environment
+
 OpenLDAP 2.3.7 Release
 	Updated slapd ManageDIT support
 	Updated slapd ACI syntax checking (ITS#3877)
@@ -38,7 +128,6 @@ OpenLDAP 2.3.7 Release
 		Fixed tests --disable-monitor support
 		Fixed tests veryclean-local testdata cleanup
 		Add subtree rename test (hdb only)
-	
 
 OpenLDAP 2.3.6 Release
 	Fixed slapd dnRelativeMatch return (ITS#3931)

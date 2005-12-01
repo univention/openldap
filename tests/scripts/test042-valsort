@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test042-valsort,v 1.1.2.1 2005/08/29 18:50:01 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test042-valsort,v 1.1.2.2 2005/10/05 17:41:32 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 2004-2005 The OpenLDAP Foundation.
@@ -40,6 +40,8 @@ if test $WAIT != 0 ; then
     read foo
 fi
 KILLPIDS="$PID"
+
+sleep 1
 
 echo "Testing slapd sorted values operations..."
 for i in 0 1 2 3 4 5; do

@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.107.2.12 2005/09/01 20:28:11 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.107.2.14 2005/10/05 17:41:31 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -34,9 +34,10 @@ WITHTLS=${AC_WITHTLS-yes}
 ACI=${AC_ACI_ENABLED-acino}
 VALSORT=${AC_valsort-valsortno}
 
-DATADIR=./testdata
 PROGDIR=./progs
-TESTDIR=./testrun
+DATADIR=${USER_DATADIR-./testdata}
+TESTDIR=${USER_TESTDIR-./testrun}
+SCHEMADIR=${USER_SCHEMADIR-./schema}
 
 DBDIR1A=$TESTDIR/db.1.a
 DBDIR1B=$TESTDIR/db.1.b

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenLDAP: pkg/ldap/tests/run.in,v 1.28.2.7 2005/08/29 18:46:18 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/run.in,v 1.28.2.12 2005/10/05 17:42:20 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -19,8 +19,9 @@ USAGE="$0 [-b <backend>] [-c] [-k] [-p] [-u] [-w] <script>"
 SRCDIR="@srcdir@"
 TOPSRCDIR="@top_srcdir@"
 LN_S="@LN_S@"
+EGREP_CMD="@EGREP@"
 
-export SRCDIR TOPSRCDIR LN_S
+export SRCDIR TOPSRCDIR LN_S EGREP_CMD
 
 # backends
 AC_bdb=@BUILD_BDB@
@@ -33,7 +34,6 @@ AC_relay=relay@BUILD_RELAY@
 AC_sql=sql@BUILD_SQL@
 
 # overlays
-AC_glue=glue@BUILD_GLUE@
 AC_pcache=pcache@BUILD_PROXYCACHE@
 AC_ppolicy=ppolicy@BUILD_PPOLICY@
 AC_refint=refint@BUILD_REFINT@
@@ -51,7 +51,7 @@ AC_WITH_MODULES_ENABLED=@WITH_MODULES_ENABLED@
 AC_ACI_ENABLED=aci@WITH_ACI_ENABLED@
 
 export AC_bdb AC_hdb AC_ldap AC_ldbm AC_meta AC_monitor AC_relay AC_sql 
-export AC_glue AC_pcache AC_ppolicy AC_refint AC_retcode AC_rwm AC_unique AC_syncprov
+export AC_pcache AC_ppolicy AC_refint AC_retcode AC_rwm AC_unique AC_syncprov
 export AC_translucent AC_WITH_SASL AC_WITH_TLS AC_WITH_MODULES_ENABLED AC_ACI_ENABLED
 export AC_valsort
 
@@ -60,17 +60,7 @@ if test ! -x ../servers/slapd/slapd ; then
 	exit 1
 fi
 
-if test $AC_bdb != no ; then
-	BACKEND=bdb
-elif test $AC_ldbm != no ; then
-	BACKEND=ldbm
-elif test $AC_hdb != no ; then
-	BACKEND=hdb
-else
-	echo "Not configured with a suitable database backend"
-	exit 1
-fi
-
+BACKEND=
 CLEAN=no
 WAIT=0
 KILLSERVERS=yes
@@ -85,7 +75,7 @@ while test $# -gt 0 ; do
 
 		-c | -clean)
 			CLEAN=yes
-			shift; shift ;;
+			shift ;;
 
 		-k | -kill)
 			KILLSERVERS=no
@@ -116,6 +106,18 @@ while test $# -gt 0 ; do
 	esac
 done
 
+if test -z "$BACKEND" ; then
+	for b in bdb ldbm hdb ; do
+		if eval "test \"\$AC_$b\" != no" ; then
+			BACKEND=$b
+			break
+		fi
+	done
+	if test -z "$BACKEND" ; then
+		echo "No suitable default database backend configured" >&2
+		exit 1
+	fi
+fi
 BACKENDTYPE=`eval 'echo $AC_'$BACKEND`
 if test "x$BACKENDTYPE" = "x" ; then
 	BACKENDTYPE="unknown"
@@ -125,6 +127,9 @@ export BACKEND BACKENDTYPE WAIT KILLSERVERS PRESERVE USERDATA
 if test $# = 0 ; then
 	echo "$USAGE"; exit 1
 fi
+
+# need defines.sh for the definitions of the directories
+. $SRCDIR/scripts/defines.sh
 
 SCRIPTDIR="${SRCDIR}/scripts"
 SCRIPTNAME="$1"
@@ -141,20 +146,20 @@ else
 	exit 1;
 fi
 
-if test ! -r testdata/test.ldif ; then
-	${LN_S} ${SRCDIR}/data testdata
+if test ! -r ${DATADIR}/test.ldif ; then
+	${LN_S} ${SRCDIR}/data ${DATADIR}
 fi
-if test ! -r schema/core.schema ; then
-	${LN_S} ${TOPSRCDIR}/servers/slapd/schema schema
+if test ! -r ${SCHEMADIR}/core.schema ; then
+	${LN_S} ${TOPSRCDIR}/servers/slapd/schema ${SCHEMADIR}
 fi
 
-if test -d testrun ; then
+if test -d ${TESTDIR} ; then
 	if test $PRESERVE = no ; then
 		echo "Cleaning up test run directory leftover from previous run."
-		/bin/rm -rf testrun
+		/bin/rm -rf ${TESTDIR}
 	elif test $PRESERVE = yes ; then
 		echo "Cleaning up only database directories leftover from previous run."
-		/bin/rm -rf testrun/db.*
+		/bin/rm -rf ${TESTDIR}/db.*
 	fi
 fi
 
@@ -163,8 +168,8 @@ if test $USERDATA = yes ; then
 		echo "User data directory (userdata) does not exist."
 		exit 1
 	fi
-	mkdir -p testrun
-	cp -R userdata/* testrun
+	mkdir -p ${TESTDIR}
+	cp -R userdata/* ${TESTDIR}
 fi
 
 # disable LDAP initialization
@@ -176,9 +181,9 @@ RC=$?
 
 if test $CLEAN = yes ; then
 	echo "Cleaning up test run directory from this run."
-	/bin/rm -rf testrun
+	/bin/rm -rf ${TESTDIR}
 	echo "Cleaning up symlinks."
-	/bin/rm -f testdata schema
+	/bin/rm -f ${DATADIR} ${SCHEMADIR}
 fi
 
 exit $RC

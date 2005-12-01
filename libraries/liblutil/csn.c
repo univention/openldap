@@ -1,5 +1,5 @@
 /* csn.c - Change Sequence Number routines */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/csn.c,v 1.11.2.1 2005/01/20 18:03:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/csn.c,v 1.11.2.2 2005/10/05 17:42:19 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2005 The OpenLDAP Foundation.
@@ -67,7 +67,7 @@ lutil_csnstr(char *buf, size_t len, unsigned int replica, unsigned int mod)
 		csntime = t;
 		csnop = 0;
 	}
-	op = ++csnop;
+	op = csnop++;
 
 #ifdef HAVE_GMTIME_R
 	ltm = gmtime_r( &t, &ltm_buf );

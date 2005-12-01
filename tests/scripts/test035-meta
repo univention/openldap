@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test035-meta,v 1.4.2.2 2005/05/06 16:42:53 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test035-meta,v 1.4.2.4 2005/10/05 17:41:32 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -36,6 +36,8 @@ if test $WAIT != 0 ; then
     read foo
 fi
 KILLPIDS="$PID"
+
+sleep 1
 
 echo "Using ldapsearch to check that slapd is running..."
 for i in 0 1 2 3 4 5; do
@@ -74,6 +76,8 @@ if test $WAIT != 0 ; then
 fi
 KILLPIDS="$KILLPIDS $PID"
 
+sleep 1
+
 echo "Using ldapsearch to check that slapd is running..."
 for i in 0 1 2 3 4 5; do
 	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT2 \
@@ -110,6 +114,8 @@ if test $WAIT != 0 ; then
     read foo
 fi
 KILLPIDS="$KILLPIDS $PID"
+
+sleep 1
 
 echo "Using ldapsearch to check that slapd is running..."
 for i in 0 1 2 3 4 5; do
@@ -259,7 +265,7 @@ case $RC in
 		exit 0
 	;;
 	*)
-		echo "Compare failed ($RC)!"
+		echo "Modify failed ($RC)!"
 		test $KILLSERVERS != no && kill -HUP $KILLPIDS
 		exit $RC
 	;;
@@ -485,7 +491,7 @@ case $RC in
 		echo "### Hit LDAP_BUSY problem; you may want to re-run the test"
 	;;
 	*)
-		echo "Compare failed ($RC)!"
+		echo "WhoAmI failed ($RC)!"
 		test $KILLSERVERS != no && kill -HUP $KILLPIDS
 		exit $RC
 	;;

@@ -1,5 +1,5 @@
 # Makefile.in for back-meta
-# $OpenLDAP: pkg/ldap/servers/slapd/back-meta/Makefile.in,v 1.12.2.3 2005/06/03 19:54:16 kurt Exp $
+# $OpenLDAP: pkg/ldap/servers/slapd/back-meta/Makefile.in,v 1.12.2.4 2005/09/28 00:30:33 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -29,8 +29,7 @@ BUILD_MOD = @BUILD_META@
 mod_DEFS = -DSLAPD_IMPORT
 MOD_DEFS = $(@BUILD_META@_DEFS)
 
-shared_LDAP_LIBS = $(LDAP_LIBLDAP_R_LA) $(LDAP_LIBLBER_LA) \
-	$(LDAP_LIBLREWRITE_LA)
+shared_LDAP_LIBS = $(LDAP_LIBLDAP_R_LA) $(LDAP_LIBLBER_LA)
 NT_LINK_LIBS = -L.. -lslapd $(@BUILD_LIBS_DYNAMIC@_LDAP_LIBS)
 UNIX_LINK_LIBS = $(@BUILD_LIBS_DYNAMIC@_LDAP_LIBS)
 

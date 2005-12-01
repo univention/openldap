@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test021-certificate,v 1.12.2.1 2005/01/20 18:04:08 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test021-certificate,v 1.12.2.3 2005/10/05 17:41:32 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -18,7 +18,7 @@ echo "running defines.sh"
 
 if test "$AC_WITH_TLS" != "yes" ; then
 	echo "test disabled, requires --with-tls"
-	exit
+	exit 0
 fi
 
 mkdir -p $TESTDIR $DBDIR1
@@ -34,6 +34,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Starting slapd on TCP/IP port $PORT1..."
+#valgrind -v --gdb-attach=yes --logfile=info --num-callers=16 --leak-check=yes --leak-resolution=high $SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING </dev/tty > $LOG1 2>&1 &
 $SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
@@ -43,6 +44,8 @@ fi
 KILLPIDS="$PID"
 
 echo "Testing certificate handling..."
+
+sleep 1
 
 for i in 0 1 2 3 4 5; do
 	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \

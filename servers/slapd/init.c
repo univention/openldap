@@ -1,5 +1,5 @@
 /* init.c - initialize various things */
-/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.81.2.8 2005/08/31 17:11:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.81.2.9 2005/09/28 00:30:31 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -213,6 +213,15 @@ slap_init( int mode, const char *name )
 		Debug( LDAP_DEBUG_ANY,
 		    "%s: overlay_init failed\n",
 		    name, 0, 0 );
+		return 1;
+	}
+
+	if ( glue_sub_init() ) {
+		ldap_debug |= 1;
+		Debug( LDAP_DEBUG_ANY,
+		    "%s: glue/subordinate init failed\n",
+		    name, 0, 0 );
+
 		return 1;
 	}
 

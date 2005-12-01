@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/unbind.c,v 1.48.2.3 2005/08/12 15:25:20 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/unbind.c,v 1.48.2.4 2005/10/05 17:42:19 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -139,6 +139,13 @@ ldap_ld_free(
 		ldap_free_urllist( ld->ld_options.ldo_defludp );
 		ld->ld_options.ldo_defludp = NULL;
 	}
+
+#ifdef LDAP_CONNECTIONLESS
+	if ( ld->ld_options.ldo_peer != NULL ) {
+		LDAP_FREE( ld->ld_options.ldo_peer );
+		ld->ld_options.ldo_peer = NULL;
+	}
+#endif
 
 	if ( ld->ld_options.ldo_tm_api != NULL ) {
 		LDAP_FREE( ld->ld_options.ldo_tm_api );

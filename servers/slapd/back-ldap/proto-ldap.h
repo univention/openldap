@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/proto-ldap.h,v 1.3.2.4 2005/08/09 21:04:02 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/proto-ldap.h,v 1.3.2.5 2005/09/28 00:30:32 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2005 The OpenLDAP Foundation.
@@ -77,6 +77,8 @@ ldap_back_proxy_authz_ctrl_free(
 		LDAPControl	***pctrls );
 
 extern int chain_init( void );
+
+extern LDAP_REBIND_PROC		*ldap_back_rebind_f;
 
 LDAP_END_DECL
 

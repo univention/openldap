@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/open.c,v 1.105.2.3 2005/04/29 21:29:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/open.c,v 1.105.2.4 2005/10/12 01:10:47 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -160,6 +160,7 @@ ldap_create( LDAP **ldp )
 #ifdef LDAP_R_COMPILE
 	ldap_pvt_thread_mutex_init( &ld->ld_req_mutex );
 	ldap_pvt_thread_mutex_init( &ld->ld_res_mutex );
+	ldap_pvt_thread_mutex_init( &ld->ld_conn_mutex );
 #endif
 	*ldp = ld;
 	return LDAP_SUCCESS;

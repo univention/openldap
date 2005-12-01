@@ -1,5 +1,5 @@
 # Makefile.in for tests
-# $OpenLDAP: pkg/ldap/tests/Makefile.in,v 1.54.2.2 2005/08/17 21:34:50 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/Makefile.in,v 1.54.2.3 2005/10/07 16:53:35 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -21,9 +21,13 @@ BUILD_HDB=@BUILD_HDB@
 BUILD_LDBM=@BUILD_LDBM@
 BUILD_SQL=@BUILD_SQL@
 
+# test primary backends (default)
 test tests:
 	@$(MAKE) bdb
 	@$(MAKE) hdb
+
+# test all backends
+alltests: tests
 	@$(MAKE) ldbm
 	@$(MAKE) sql
 

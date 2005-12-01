@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/main.c,v 1.42.2.2 2005/01/20 18:04:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/main.c,v 1.42.2.3 2005/10/10 17:35:27 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -156,10 +156,20 @@ int main( int argc, char **argv )
 
 #ifdef HAVE_TLS
 	if( ldap_pvt_tls_init() || ldap_pvt_tls_init_def_ctx() ) {
-		fprintf( stderr, "TLS Initialization failed.\n" );
-		SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 20 );
-		rc = 1;
-		goto stop;
+		rc = 0;
+		/* See if we actually need TLS */
+		for ( i=0; i < sglob->num_replicas; i++ ) {
+			if ( sglob->replicas[i]->ri_tls || ( sglob->replicas[i]->ri_uri &&
+				!strncmp( sglob->replicas[i]->ri_uri, "ldaps:", 6 ))) {
+				rc = 1;
+				break;
+			}
+		}
+		if ( rc ) {
+			fprintf( stderr, "TLS Initialization failed.\n" );
+			SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 20 );
+			goto stop;
+		}
 	}
 #endif
 

@@ -1,5 +1,5 @@
 /* at.c - routines for dealing with attribute types */
-/* $OpenLDAP: pkg/ldap/servers/slapd/at.c,v 1.62.2.5 2005/08/26 00:18:02 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/at.c,v 1.62.2.6 2005/09/28 00:30:30 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -405,13 +405,13 @@ at_insert(
 	}
 
 	if ( sat->sat_oid ) {
-		slap_ad_undef_remove( sat->sat_oid );
+		slap_ad_undef_promote( sat->sat_oid, sat );
 	}
 
 	names = sat->sat_names;
 	if ( names ) {
 		while ( *names ) {
-			slap_ad_undef_remove( *names );
+			slap_ad_undef_promote( *names, sat );
 			names++;
 		}
 	}

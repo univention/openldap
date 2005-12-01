@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test036-meta-concurrency,v 1.6.2.2 2005/05/10 16:07:04 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test036-meta-concurrency,v 1.6.2.5 2005/10/05 17:41:32 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -25,7 +25,7 @@ fi
 
 # to be removed some time...
 if test "x$TEST_META" = "xno" ; then
-	echo "### disabled by \"TEST_META=no\"; unset TEST_META to re-enable"
+	echo '### Test disabled by "TEST_META=no"; unset TEST_META to re-enable'
 	echo ""
 	exit 0
 else
@@ -40,7 +40,7 @@ rm -rf $TESTDIR
 mkdir -p $TESTDIR $DBDIR1 $DBDIR2
 
 # NOTE: this could be added to all tests...
-if test "$BACKEND" = "bdb" -o "$BACKEND" = "hdb" ; then
+if test "$BACKEND" = "bdb" || test "$BACKEND" = "hdb" ; then
 	if test "x$DB_CONFIG" != "x" ; then \
 		if test -f $DB_CONFIG ; then
 			echo "==> using DB_CONFIG \"$DB_CONFIG\""
@@ -64,6 +64,8 @@ if test $WAIT != 0 ; then
     read foo
 fi
 KILLPIDS="$PID"
+
+sleep 1
 
 echo "Using ldapsearch to check that slapd is running..."
 for i in 0 1 2 3 4 5; do
@@ -102,6 +104,8 @@ if test $WAIT != 0 ; then
 fi
 KILLPIDS="$KILLPIDS $PID"
 
+sleep 1
+
 echo "Using ldapsearch to check that slapd is running..."
 for i in 0 1 2 3 4 5; do
 	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT2 \
@@ -138,6 +142,8 @@ if test $WAIT != 0 ; then
     read foo
 fi
 KILLPIDS="$KILLPIDS $PID"
+
+sleep 1
 
 echo "Using ldapsearch to check that slapd is running..."
 for i in 0 1 2 3 4 5; do
@@ -214,4 +220,3 @@ fi
 
 echo ">>>>> Test succeeded"
 exit 0
-

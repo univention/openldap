@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/replica.c,v 1.23.2.1 2005/01/20 18:04:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/replica.c,v 1.23.2.2 2005/09/28 00:30:35 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -52,7 +52,7 @@ replicate(
     Ri		*ri = (Ri *) ri_arg;
 
     Debug( LDAP_DEBUG_ARGS, "begin replication thread for %s:%d\n",
-	    ((Ri *)ri)->ri_hostname, ((Ri *)ri)->ri_port, 0 );
+	    ri->ri_hostname, ri->ri_port, 0 );
 
     ri->ri_process( ri );
 

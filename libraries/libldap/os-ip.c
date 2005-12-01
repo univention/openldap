@@ -1,5 +1,5 @@
 /* os-ip.c -- platform-specific TCP & UDP related code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.108.2.6 2005/08/09 21:03:55 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.108.2.8 2005/10/11 17:42:18 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -209,7 +209,8 @@ ldap_pvt_connect(LDAP *ld, ber_socket_t s,
 	int async)
 {
 	int rc;
-	struct timeval	tv, *opt_tv=NULL;
+	struct timeval	tv = { 0 },
+			*opt_tv = NULL;
 
 #ifdef LDAP_CONNECTIONLESS
 	/* We could do a connect() but that would interfere with
@@ -223,19 +224,19 @@ ldap_pvt_connect(LDAP *ld, ber_socket_t s,
 		return ( 0 );
 	}
 #endif
-	if ( (opt_tv = ld->ld_options.ldo_tm_net) != NULL ) {
-		tv.tv_usec = opt_tv->tv_usec;
-		tv.tv_sec = opt_tv->tv_sec;
+	opt_tv = ld->ld_options.ldo_tm_net;
+	if ( opt_tv != NULL ) {
+		tv = *opt_tv;
 	}
 
 	osip_debug(ld, "ldap_connect_timeout: fd: %d tm: %ld async: %d\n",
 			s, opt_tv ? tv.tv_sec : -1L, async);
 
-	if ( ldap_pvt_ndelay_on(ld, s) == -1 )
+	if ( opt_tv && ldap_pvt_ndelay_on(ld, s) == -1 )
 		return ( -1 );
 
 	if ( connect(s, sin, addrlen) != AC_SOCKET_ERROR ) {
-		if ( ldap_pvt_ndelay_off(ld, s) == -1 )
+		if ( opt_tv && ldap_pvt_ndelay_off(ld, s) == -1 )
 			return ( -1 );
 		return ( 0 );
 	}

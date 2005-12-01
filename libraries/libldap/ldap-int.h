@@ -1,5 +1,5 @@
 /*  ldap-int.h - defines & prototypes internal to the LDAP library */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.160.2.3 2005/08/09 21:03:55 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.160.2.5 2005/10/12 01:10:47 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -256,6 +256,7 @@ typedef struct ldapreq {
 	char		*lr_res_matched;/* result matched DN string */
 	BerElement	*lr_ber;	/* ber encoded request contents */
 	LDAPConn	*lr_conn;	/* connection used to send request */
+	struct berval	lr_dn;	/* DN of request, in lr_ber */
 	struct ldapreq	*lr_parent;	/* request that spawned this referral */
 	struct ldapreq	*lr_child;	/* first child request */
 	struct ldapreq	*lr_refnext;	/* next referral spawned */
@@ -333,6 +334,7 @@ struct ldap {
 	LDAPMessage	*ld_responses;	/* list of outstanding responses */
 
 #ifdef LDAP_R_COMPILE
+	ldap_pvt_thread_mutex_t	ld_conn_mutex;
 	ldap_pvt_thread_mutex_t	ld_req_mutex;
 	ldap_pvt_thread_mutex_t	ld_res_mutex;
 #endif

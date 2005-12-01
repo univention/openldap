@@ -1,5 +1,5 @@
 #! /bin/sh -
-# $OpenLDAP: pkg/ldap/build/mkdep,v 1.29.2.1 2005/01/20 18:03:44 kurt Exp $
+# $OpenLDAP: pkg/ldap/build/mkdep,v 1.29.2.2 2005/09/28 00:30:28 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -161,7 +161,7 @@ for i in $files; do
 	esac
 done
 for i in $FILES; do
-	$MKDEP_CC $MKDEP_CFLAGS $FLAGS $i | egrep '^#.*"' > $TMP.sed
+	$MKDEP_CC $MKDEP_CFLAGS $FLAGS $i | grep '^#.*"' > $TMP.sed
 awk '
 BEGIN {
 	file = "'$i'"

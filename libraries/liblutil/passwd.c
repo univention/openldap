@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/passwd.c,v 1.92.2.6 2005/08/29 18:46:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/passwd.c,v 1.92.2.8 2005/09/29 19:07:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -73,6 +73,10 @@ static lutil_cryptfunc lutil_crypt;
 lutil_cryptfunc *lutil_cryptptr = lutil_crypt;
 #endif
 
+/* KLUDGE:
+ *  chk_fn is NULL iff name is {CLEARTEXT}
+ *	otherwise, things will break
+ */
 struct pw_scheme {
 	struct berval name;
 	LUTIL_PASSWD_CHK_FUNC *chk_fn;
@@ -147,7 +151,7 @@ static const struct pw_scheme pw_schemes_default[] =
 
 #ifdef SLAPD_CLEARTEXT
 	/* pseudo scheme */
-	{ {0, "{CLEARTEXT}"},		NULL, hash_clear },
+	{ BER_BVC("{CLEARTEXT}"),	NULL, hash_clear },
 #endif
 
 	{ BER_BVNULL, NULL, NULL }
@@ -209,9 +213,7 @@ static const struct pw_scheme *get_scheme(
 	bv.bv_val = (char *) scheme;
 
 	for( pws=pw_schemes; pws; pws=pws->next ) {
-		if( bv.bv_len != pws->s.name.bv_len )
-			continue;
-		if( strncasecmp(bv.bv_val, pws->s.name.bv_val, bv.bv_len ) == 0 ) {
+		if ( ber_bvstrcasecmp(&bv, &pws->s.name ) == 0 ) {
 			return &(pws->s);
 		}
 	}
@@ -308,7 +310,9 @@ lutil_passwd(
 	 */
 	if (( passwd->bv_val[0] == '{' ) &&
 		( strchr( passwd->bv_val, '}' ) > passwd->bv_val+1 ))
+	{
 		return 1;
+	}
 	if( is_allowed_scheme("{CLEARTEXT}", schemes ) ) {
 		return ( passwd->bv_len == cred->bv_len ) ?
 			memcmp( passwd->bv_val, cred->bv_val, passwd->bv_len )

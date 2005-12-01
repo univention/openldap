@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test002-populate,v 1.36.2.1 2005/01/20 18:04:07 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test002-populate,v 1.36.2.3 2005/10/05 17:41:31 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -16,7 +16,7 @@
 echo "running defines.sh"
 . $SRCDIR/scripts/defines.sh
 
-mkdir -p $TESTRUN $DBDIR1 
+mkdir -p $TESTDIR $DBDIR1 
 
 echo "Starting slapd on TCP/IP port $PORT1..."
 . $CONFFILTER $BACKEND $MONITORDB < $CONF > $CONF1
@@ -27,6 +27,8 @@ if test $WAIT != 0 ; then
     read foo
 fi
 KILLPIDS="$PID"
+
+sleep 1
 
 echo "Using ldapsearch to check that slapd is running..."
 for i in 0 1 2 3 4 5; do

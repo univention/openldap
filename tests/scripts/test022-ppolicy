@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test022-ppolicy,v 1.6.2.5 2005/08/26 00:19:55 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test022-ppolicy,v 1.6.2.8 2005/10/05 17:41:32 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -36,6 +36,8 @@ KILLPIDS="$PID"
 USER="uid=nd, ou=People, dc=example, dc=com"
 PASS=testpassword
 
+sleep 1
+
 echo "Using ldapsearch to check that slapd is running..."
 for i in 0 1 2 3 4 5; do
 	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
@@ -48,7 +50,7 @@ for i in 0 1 2 3 4 5; do
 	sleep 5
 done
 if test $RC != 0 ; then
-	echo "ldapsearch failed $(RC)!"
+	echo "ldapsearch failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit $RC
 fi
@@ -111,7 +113,7 @@ RC=$?
 if test $RC = 0 ; then
 	echo "Password expiration failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit 1
 fi
 
 COUNT=`grep "grace logins" $SEARCHOUT | wc -l`
@@ -206,7 +208,7 @@ RC=$?
 if test $RC = 0 ; then
 	echo "ldapmodify failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit 1
 fi
 
 echo "Testing forced reset..."
@@ -235,7 +237,7 @@ RC=$?
 if test $RC = 0 ; then
 	echo "Forced reset failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit 1
 fi
 
 COUNT=`grep "Operations are restricted" $SEARCHOUT | wc -l`
@@ -279,7 +281,7 @@ RC=$?
 if test $RC = 0 ; then
 	echo "Safe modify test 1 failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit 1
 fi
 
 sleep 2
@@ -303,7 +305,7 @@ RC=$?
 if test $RC = 0 ; then
 	echo "Length requirement test failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit 1
 fi
 COUNT=`grep "Password fails quality" $TESTOUT | wc -l`
 if test $COUNT != 1 ; then
@@ -329,7 +331,7 @@ RC=$?
 if test $RC = 0 ; then
 	echo "Hashed length requirement test failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit 1
 fi
 COUNT=`grep "Password fails quality" $TESTOUT | wc -l`
 if test $COUNT != 1 ; then

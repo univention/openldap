@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.318.2.9 2005/08/09 21:03:58 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.318.2.14 2005/10/12 14:59:19 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -39,8 +39,6 @@
 #include "lutil.h"
 
 #include "ldap_rq.h"
-
-#undef HAVE_EPOLL
 
 #if defined(HAVE_SYS_EPOLL_H) && defined(HAVE_EPOLL)
 #include <sys/epoll.h>
@@ -209,7 +207,7 @@ static struct slap_daemon {
 #define	SLAP_SOCK_IS_MUTE(s)	(!SLAP_SOCK_IS_READ(s))
 
 #define SLAP_SOCK_SET_INIT	\
-	slap_daemon.sd_epolls = ch_malloc(sizeof(struct epoll_event) * dtblsize * 2);	\
+	slap_daemon.sd_epolls = ch_calloc(1, sizeof(struct epoll_event) * dtblsize * 2);	\
 	slap_daemon.sd_index = ch_malloc(sizeof(int) * dtblsize);	\
 	slap_daemon.sd_epfd = epoll_create( dtblsize );	\
 	for (i=0; i<dtblsize; i++) slap_daemon.sd_index[i] = -1
@@ -234,7 +232,9 @@ static struct slap_daemon {
 #define SLAP_EVENT_INIT \
 	AC_MEMCPY( &readfds, &slap_daemon.sd_readers, sizeof(fd_set) );	\
 	if ( nwriters )	\
-		AC_MEMCPY( &writefds, &slap_daemon.sd_writers, sizeof(fd_set) )
+		AC_MEMCPY( &writefds, &slap_daemon.sd_writers, sizeof(fd_set) ); \
+	else \
+		FD_ZERO( &writefds )
 
 #ifdef FD_SETSIZE
 #define	CHK_SETSIZE	\
@@ -1574,7 +1574,10 @@ slapd_daemon_task(
 		ber_socket_t i;
 		int ns, nwriters;
 		int at;
-		ber_socket_t nfds, nrfds, nwfds;
+		ber_socket_t nfds;
+#if SLAP_EVENTS_ARE_INDEXED
+		ber_socket_t nrfds, nwfds;
+#endif
 #define SLAPD_EBADF_LIMIT 16
 
 		time_t	now;
@@ -1917,6 +1920,10 @@ slapd_daemon_task(
 #endif
 			 ) continue;
 
+			/* Don't log internal wake events */
+			if ( SLAP_EVENT_FD( i ) == wake_sds[0] )
+				continue;
+
 			r = SLAP_EVENT_IS_READ( i );
 			w = SLAP_EVENT_IS_WRITE( i );
 			if ( r || w ) {
@@ -1937,6 +1944,10 @@ slapd_daemon_task(
 			 */
 			if ( rc ) {
 				fd = SLAP_EVENT_FD( i );
+
+				/* Ignore wake events, they were handled above */
+				if ( fd == wake_sds[0] )
+					continue;
 
 				if( SLAP_EVENT_IS_WRITE( i ) ) {
 					Debug( LDAP_DEBUG_CONNS,

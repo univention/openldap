@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test000-rootdse,v 1.22.2.2 2005/08/25 05:01:20 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test000-rootdse,v 1.22.2.4 2005/10/05 17:41:31 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -16,7 +16,7 @@
 echo "running defines.sh"
 . $SRCDIR/scripts/defines.sh
 
-mkdir -p $TESTRUN $DBDIR1
+mkdir -p $TESTDIR $DBDIR1
 
 echo "Starting slapd on TCP/IP port $PORT1..."
 . $CONFFILTER $BACKEND $MONITORDB < $SCHEMACONF > $CONF1
@@ -27,6 +27,8 @@ if test $WAIT != 0 ; then
     read foo
 fi
 KILLPIDS="$PID"
+
+sleep 1
 
 echo "Using ldapsearch to retrieve the root DSE..."
 for i in 0 1 2 3 4 5; do
@@ -51,13 +53,14 @@ fi
 
 count=2
 if test $RC = 0 ; then
-	if test $MONITORDB = yes -o $MONITORDB = mod ; then
+	case $MONITORDB in yes | mod)
 		count=3
 		echo "Using ldapsearch to retrieve the cn=Monitor..."
 		$LDAPSEARCH -b "cn=Monitor" -s base -h $LOCALHOST -p $PORT1 \
 			'+extensibleObject' >> $SEARCHOUT 2>&1
 		RC=$?
-	fi
+		;;
+	esac
 fi
 
 test $KILLSERVERS != no && kill -HUP $KILLPIDS

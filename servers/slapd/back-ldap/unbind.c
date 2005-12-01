@@ -1,5 +1,5 @@
 /* unbind.c - ldap backend unbind function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/unbind.c,v 1.24.2.3 2005/08/09 21:04:02 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/unbind.c,v 1.24.2.4 2005/09/28 00:30:32 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -48,14 +48,14 @@ ldap_back_conn_destroy(
 	lc_curr.lc_conn = conn;
 	lc_curr.lc_local_ndn = conn->c_ndn;
 	
-	ldap_pvt_thread_mutex_trylock( &li->conn_mutex );
+	ldap_pvt_thread_mutex_lock( &li->conn_mutex );
 	lc = avl_delete( &li->conntree, (caddr_t)&lc_curr, ldap_back_conn_cmp );
 	ldap_pvt_thread_mutex_unlock( &li->conn_mutex );
 
 	if ( lc ) {
 		Debug( LDAP_DEBUG_TRACE,
 			"=>ldap_back_conn_destroy: destroying conn %ld (refcnt=%u)\n",
-			lc->lc_conn->c_connid, lc->lc_refcnt, 0 );
+			LDAP_BACK_PCONN_ID( lc->lc_conn ), lc->lc_refcnt, 0 );
 
 		assert( lc->lc_refcnt == 0 );
 

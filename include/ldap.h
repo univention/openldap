@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.263.2.16 2005/08/25 05:01:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.263.2.19 2005/10/10 17:35:25 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -610,7 +610,7 @@ typedef struct ldapcontrol {
 #define LDAP_NOT_SUPPORTED				(-12)
 #define LDAP_CONTROL_NOT_FOUND			(-13)
 #define LDAP_NO_RESULTS_RETURNED		(-14)
-#define LDAP_MORE_RESULTS_TO_RETURN		(-15)
+#define LDAP_MORE_RESULTS_TO_RETURN		(-15)	/* Obsolete */
 #define LDAP_CLIENT_LOOP				(-16)
 #define LDAP_REFERRAL_LIMIT_EXCEEDED	(-17)
 

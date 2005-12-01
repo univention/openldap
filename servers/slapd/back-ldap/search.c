@@ -1,5 +1,5 @@
 /* search.c - ldap backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.148.2.17 2005/08/29 18:26:10 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.148.2.18 2005/09/28 00:30:32 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -178,8 +178,7 @@ ldap_back_search(
 		stoptime = op->o_time + op->ors_tlimit;
 
 	} else {
-		tv.tv_sec = 0;
-		tv.tv_usec = 100000;
+		LDAP_BACK_TV_SET( &tv );
 	}
 
 	if ( op->ors_attrs ) {
@@ -264,8 +263,7 @@ fail:;
 		}
 
 		if ( rc == 0 ) {
-			tv.tv_sec = 0;
-			tv.tv_usec = 100000;
+			LDAP_BACK_TV_SET( &tv );
 			ldap_pvt_thread_yield();
 
 			/* check time limit */

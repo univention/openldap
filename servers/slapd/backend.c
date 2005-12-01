@@ -1,5 +1,5 @@
 /* backend.c - routines for dealing with back-end databases */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.288.2.16 2005/08/19 18:09:04 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.288.2.18 2005/10/05 17:42:19 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -477,7 +477,9 @@ int backend_destroy(void)
 		}
 		acl_destroy( bd->be_acl, frontendDB->be_acl );
 
-		assert( bd->be_replogfile == NULL );
+		if ( bd->be_replogfile != NULL ) {
+			free( bd->be_replogfile );
+		}
 		assert( bd->be_replica == NULL );
 	}
 
@@ -612,7 +614,13 @@ select_backend(
 						continue;
 					}
 				} else {
-					b2 = be;
+					/* If any parts of the tree are glued, use the first
+					 * match regardless of manageDSAit. Otherwise use the
+					 * last match.
+					 */
+					if( !( SLAP_DBFLAGS( be ) & ( SLAP_DBFLAG_GLUE_INSTANCE |
+						SLAP_DBFLAG_GLUE_SUBORDINATE )))
+						b2 = be;
 				}
 				return b2;
 			}
@@ -1184,19 +1192,17 @@ be_entry_get_rw(
 	int rw,
 	Entry **e )
 {
-	int rc;
-
 	*e = NULL;
 
-	if (op->o_bd == NULL) {
-		rc = LDAP_NO_SUCH_OBJECT;
-	} else if ( op->o_bd->be_fetch ) {
-		rc = ( op->o_bd->be_fetch )( op, ndn,
-			oc, at, rw, e );
-	} else {
-		rc = LDAP_UNWILLING_TO_PERFORM;
+	if ( op->o_bd == NULL ) {
+		return LDAP_NO_SUCH_OBJECT;
 	}
-	return rc;
+
+	if ( op->o_bd->be_fetch ) {
+		return op->o_bd->be_fetch( op, ndn, oc, at, rw, e );
+	}
+
+	return LDAP_UNWILLING_TO_PERFORM;
 }
 
 int 

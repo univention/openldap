@@ -1,5 +1,5 @@
 /* thr_nt.c - wrapper around NT threads */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_nt.c,v 1.29.2.1 2005/01/20 18:03:51 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_nt.c,v 1.29.2.2 2005/09/28 00:30:29 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -18,7 +18,9 @@
 
 #if defined( HAVE_NT_THREADS )
 
-#include "ldap_pvt_thread.h"
+#include "ldap_pvt_thread.h" /* Get the thread interface */
+#define LDAP_THREAD_IMPLEMENTATION
+#include "ldap_thr_debug.h"	 /* May rename the symbols defined below */
 
 typedef struct ldap_int_thread_s {
 	long tid;

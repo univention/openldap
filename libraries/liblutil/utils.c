@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/utils.c,v 1.24.2.1 2005/01/20 18:03:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/utils.c,v 1.24.2.2 2005/09/28 00:30:29 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -204,7 +204,7 @@ int lutil_parsetime( char *atm, struct lutil_tm *tm )
 {
 	while (atm && tm) {
 		char *ptr = atm;
-		int i, fracs;
+		unsigned i, fracs;
 
 		/* Is the stamp reasonably long? */
 		for (i=0; isdigit(atm[i]); i++);

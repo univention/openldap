@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/util.c,v 1.31.2.4 2005/08/09 21:04:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/util.c,v 1.31.2.5 2005/09/28 00:30:34 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -522,9 +522,9 @@ backsql_entryUUID(
 	/* note: works only with 32 bit architectures... */
 	snprintf( uuidbuf, sizeof( uuidbuf ),
 			"%08x-%04x-%04x-0000-000000000000",
-			( id->eid_oc_id & 0xFFFFFFFF ),
-			( ( id->eid_keyval & 0xFFFF0000 ) >> 020 /* 16 */ ),
-			( id->eid_keyval & 0xFFFF ) );
+			( (unsigned)id->eid_oc_id & 0xFFFFFFFF ),
+			( ( (unsigned)id->eid_keyval & 0xFFFF0000 ) >> 020 /* 16 */ ),
+			( (unsigned)id->eid_keyval & 0xFFFF ) );
 #endif /* ! BACKSQL_ARBITRARY_KEY */
 
 	uuid.bv_val = uuidbuf;

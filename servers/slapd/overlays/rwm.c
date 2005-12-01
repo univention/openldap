@@ -1,5 +1,5 @@
 /* rwm.c - rewrite/remap operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwm.c,v 1.37.2.11 2005/08/17 21:33:45 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwm.c,v 1.37.2.12 2005/09/28 00:30:35 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2005 The OpenLDAP Foundation.
@@ -669,7 +669,10 @@ rwm_op_search( Operation *op, SlapReply *rs )
 	char			*text = NULL;
 
 #ifdef ENABLE_REWRITE
-	rc = rwm_op_dn_massage( op, rs, "searchDN" );
+	rc = rewrite_session_var_set( rwmap->rwm_rw, op->o_conn,
+		"searchFilter", op->ors_filterstr.bv_val );
+	if ( rc == LDAP_SUCCESS )
+		rc = rwm_op_dn_massage( op, rs, "searchDN" );
 #else /* ! ENABLE_REWRITE */
 	rc = 1;
 	rc = rwm_op_dn_massage( op, rs, &rc );

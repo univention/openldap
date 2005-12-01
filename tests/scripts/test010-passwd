@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test010-passwd,v 1.18.2.2 2005/03/14 22:25:04 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test010-passwd,v 1.18.2.5 2005/10/05 17:41:32 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -27,6 +27,8 @@ if test $WAIT != 0 ; then
     read foo
 fi
 KILLPIDS="$PID"
+
+sleep 1
 
 echo "Using ldapsearch to check that slapd is running..."
 for i in 0 1 2 3 4 5; do
@@ -59,6 +61,36 @@ $LDAPSEARCH -h $LOCALHOST -p $PORT1 \
 	-D "$MANAGERDN" -w $PASSWD \
 	-b "$BASEDN" \
 	'objectclass=*' >> $SEARCHOUT 2>&1
+
+echo "Using ldappasswd to test a few error conditions ..."
+echo "Pass 0" >> $TESTOUT
+$LDAPPASSWD -h $LOCALHOST -p $PORT1 \
+	-w secret -a "" -s newsecret \
+	-D "cn=md5, $BASEDN" >> $TESTOUT 2>&1
+RC=$?
+if test $RC = 0 ; then
+	echo "ldappasswd unexpectantly passed ($RC)! old empty"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+$LDAPPASSWD -h $LOCALHOST -p $PORT1 \
+	-w secret -a oldsecret -s "" \
+	-D "cn=md5, $BASEDN" >> $TESTOUT 2>&1
+RC=$?
+if test $RC = 0 ; then
+	echo "ldappasswd unexpectantly passed ($RC)! new empty"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+$LDAPPASSWD -h $LOCALHOST -p $PORT1 \
+	-w secret -a oldsecret -s newsecret \
+	-D "cn=md5, $BASEDN" >> $TESTOUT 2>&1
+RC=$?
+if test $RC = 0 ; then
+	echo "ldappasswd unexpectantly passed ($RC)! wrong old"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
 
 echo "Using ldappasswd (PASS 1)  ..."
 echo "Pass 1" >> $TESTOUT
@@ -141,7 +173,7 @@ fi
 
 echo "Logging end state with ldapsearch..."
 echo "" >> $TESTOUT
-echo "++ Initial search" >> $TESTOUT
+echo "++ End search" >> $TESTOUT
 $LDAPSEARCH -h $LOCALHOST -p $PORT1 \
 	-D "$MANAGERDN" -w $PASSWD \
 	-b "$BASEDN" \

@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test004-modify,v 1.53.2.2 2005/03/14 22:25:04 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test004-modify,v 1.53.2.3 2005/10/05 17:41:31 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -35,6 +35,8 @@ if test $WAIT != 0 ; then
     read foo
 fi
 KILLPIDS="$PID"
+
+sleep 1
 
 echo "Testing slapd modify operations..."
 for i in 0 1 2 3 4 5; do

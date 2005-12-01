@@ -1,5 +1,5 @@
 /* modify.c - ldap backend modify function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modify.c,v 1.58.2.5 2005/08/17 21:33:45 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modify.c,v 1.58.2.6 2005/09/28 00:30:32 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -64,7 +64,7 @@ ldap_back_modify(
 
 	isupdate = be_shadow_update( op );
 	for ( i = 0, ml = op->oq_modify.rs_modlist; ml; ml = ml->sml_next ) {
-		if ( !isupdate && !!get_manageDIT( op ) && ml->sml_desc->ad_type->sat_no_user_mod  )
+		if ( !isupdate && !get_manageDIT( op ) && ml->sml_desc->ad_type->sat_no_user_mod  )
 		{
 			continue;
 		}

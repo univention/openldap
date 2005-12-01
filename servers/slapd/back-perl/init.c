@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/init.c,v 1.40.2.1 2005/01/20 18:04:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/init.c,v 1.40.2.2 2005/09/28 00:30:34 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -35,25 +35,10 @@ perl_back_initialize(
 	BackendInfo	*bi
 )
 {
-	char *embedding[] = { "", "-e", "0" };
-
-	Debug( LDAP_DEBUG_TRACE, "perl backend open\n", 0, 0, 0 );
-
-	if( PERL_INTERPRETER != NULL ) {
-		Debug( LDAP_DEBUG_ANY, "perl backend open: already opened\n",
-			0, 0, 0 );
-		return 1;
-	}
-	
-	PERL_INTERPRETER = perl_alloc();
-	perl_construct(PERL_INTERPRETER);
-	perl_parse(PERL_INTERPRETER, perl_back_xs_init, 3, embedding, (char **)NULL);
-	perl_run(PERL_INTERPRETER);
-
 	bi->bi_open = perl_back_open;
 	bi->bi_config = 0;
 	bi->bi_close = perl_back_close;
-	bi->bi_destroy = perl_back_destroy;
+	bi->bi_destroy = 0;
 
 	bi->bi_db_init = perl_back_db_init;
 	bi->bi_db_config = perl_back_db_config;
@@ -86,7 +71,22 @@ perl_back_open(
 	BackendInfo	*bi
 )
 {
+	char *embedding[] = { "", "-e", "0" };
+
+	Debug( LDAP_DEBUG_TRACE, "perl backend open\n", 0, 0, 0 );
+
+	if( PERL_INTERPRETER != NULL ) {
+		Debug( LDAP_DEBUG_ANY, "perl backend open: already opened\n",
+			0, 0, 0 );
+		return 1;
+	}
+	
 	ldap_pvt_thread_mutex_init( &perl_interpreter_mutex );
+
+	PERL_INTERPRETER = perl_alloc();
+	perl_construct(PERL_INTERPRETER);
+	perl_parse(PERL_INTERPRETER, perl_back_xs_init, 3, embedding, (char **)NULL);
+	perl_run(PERL_INTERPRETER);
 	return 0;
 }
 

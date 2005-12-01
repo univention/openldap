@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/session.c,v 1.11.2.2 2005/08/09 21:03:56 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/session.c,v 1.11.2.3 2005/09/28 00:30:30 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2005 The OpenLDAP Foundation.
@@ -204,6 +204,13 @@ rewrite_session_var_set_f(
 	session = rewrite_session_find( info, cookie );
 	if ( session == NULL ) {
 		session = rewrite_session_init( info, cookie );
+		if ( session == NULL ) {
+			return REWRITE_ERR;
+		}
+
+#ifdef USE_REWRITE_LDAP_PVT_THREADS
+		ldap_pvt_thread_mutex_lock( &session->ls_mutex );
+#endif /* USE_REWRITE_LDAP_PVT_THREADS */
 	}
 
 #ifdef USE_REWRITE_LDAP_PVT_THREADS

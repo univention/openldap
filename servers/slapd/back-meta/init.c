@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/init.c,v 1.37.2.4 2005/07/11 05:55:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/init.c,v 1.37.2.6 2005/10/05 17:42:20 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2005 The OpenLDAP Foundation.
@@ -30,7 +30,9 @@ int
 meta_back_open(
 	BackendInfo	*bi )
 {
+	/* FIXME: need to remove the pagedResults, and likely more... */
 	bi->bi_controls = slap_known_controls;
+
 	return 0;
 }
 
@@ -124,12 +126,19 @@ meta_back_db_open(
 	return 0;
 }
 
-static void
-conn_free( 
+void
+meta_back_conn_free( 
 	void 		*v_mc )
 {
 	metaconn_t		*mc = v_mc;
 	int			i, ntargets;
+
+	assert( mc != NULL );
+	assert( mc->mc_refcnt == 0 );
+
+	if ( !BER_BVISNULL( &mc->mc_local_ndn ) ) {
+		free( mc->mc_local_ndn.bv_val );
+	}
 
 	assert( mc->mc_conns != NULL );
 
@@ -154,6 +163,7 @@ conn_free(
 		}
 	}
 
+	ldap_pvt_thread_mutex_destroy( &mc->mc_mutex );
 	free( mc );
 }
 
@@ -218,7 +228,7 @@ meta_back_db_destroy(
 		ldap_pvt_thread_mutex_lock( &mi->mi_conn_mutex );
 
 		if ( mi->mi_conntree ) {
-			avl_free( mi->mi_conntree, conn_free );
+			avl_free( mi->mi_conntree, meta_back_conn_free );
 		}
 
 		/*

@@ -1,5 +1,5 @@
 /* uuid.c -- Universally Unique Identifier routines */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/uuid.c,v 1.25.2.1 2005/01/20 18:03:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/uuid.c,v 1.25.2.2 2005/09/28 00:30:29 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2005 The OpenLDAP Foundation.
@@ -169,7 +169,7 @@ lutil_eaddr( void )
 	if (memcmp(eaddr, zero, sizeof(eaddr)) == 0) {
 		/* XXX - who knows? */
 		lutil_entropy( eaddr, sizeof(eaddr) );
-		eaddr[0] |= 0x80; /* turn it into a multicast address */
+		eaddr[0] |= 0x01; /* turn it into a multicast address */
 	}
 
 	return eaddr;

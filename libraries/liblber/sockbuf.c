@@ -1,5 +1,5 @@
 /* sockbuf.c - i/o routines with support for adding i/o layers. */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/sockbuf.c,v 1.60.2.2 2005/08/09 21:03:55 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/sockbuf.c,v 1.60.2.3 2005/09/28 16:44:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -46,7 +46,7 @@
 #define LBER_MIN_BUFF_SIZE		4096
 #endif
 #ifndef LBER_MAX_BUFF_SIZE
-#define LBER_MAX_BUFF_SIZE		65536
+#define LBER_MAX_BUFF_SIZE		(65536*256)
 #endif
 #ifndef LBER_DEFAULT_READAHEAD
 #define LBER_DEFAULT_READAHEAD	16384
@@ -911,6 +911,7 @@ sb_dgram_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len )
 	addrlen = sizeof( struct sockaddr );
 	src = buf;
 	buf += addrlen;
+	len -= addrlen;
 	rc = recvfrom( sbiod->sbiod_sb->sb_fd, buf, len, 0, src, &addrlen );
 
 	return rc > 0 ? rc+sizeof(struct sockaddr) : rc;

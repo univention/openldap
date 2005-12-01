@@ -1,5 +1,5 @@
 /* slap.h - stand alone ldap server include file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.612.2.25 2005/08/26 00:18:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.612.2.29 2005/10/12 21:33:52 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -911,6 +911,8 @@ struct slap_internal_schema {
 	AttributeDescription *si_ad_name;
 	AttributeDescription *si_ad_cn;
 	AttributeDescription *si_ad_uid;
+	AttributeDescription *si_ad_uidNumber;
+	AttributeDescription *si_ad_gidNumber;
 	AttributeDescription *si_ad_userPassword;
 	AttributeDescription *si_ad_labeledURI;
 #ifdef SLAPD_AUTHPASSWD
@@ -1946,8 +1948,7 @@ typedef struct req_extended_s {
 } req_extended_s;
 
 typedef struct req_pwdexop_s {
-	struct berval rs_reqoid;
-	int rs_flags;
+	struct req_extended_s rs_extended;
 	struct berval rs_old;
 	struct berval rs_new;
 	Modifications *rs_mods;
@@ -2272,6 +2273,7 @@ typedef struct slap_overinst {
 typedef struct slap_overinfo {
 	BackendInfo oi_bi;
 	BackendInfo *oi_orig;
+	BackendDB	*oi_origdb;
 	struct slap_overinst *oi_list;
 } slap_overinfo;
 
@@ -2553,7 +2555,11 @@ typedef struct slap_op {
 	LDAP_STAILQ_ENTRY(slap_op)	o_next;	/* next operation in list	  */
 
 } Operation;
-#define	OPERATION_BUFFER_SIZE	(sizeof(Operation)+sizeof(Opheader)+SLAP_MAX_CIDS*sizeof(void *))
+#define	OPERATION_BUFFER_SIZE	( sizeof(Operation) + sizeof(Opheader) + \
+	SLAP_MAX_CIDS*sizeof(void *) )
+
+typedef LBER_ALIGNED_BUFFER(operation_buffer_u,OPERATION_BUFFER_SIZE)
+	OperationBuffer;
 
 #define send_ldap_error( op, rs, err, text ) do { \
 		(rs)->sr_err = err; (rs)->sr_text = text; \
@@ -2619,6 +2625,14 @@ typedef struct slap_conn {
 
 	/* authorization backend */
 	Backend *c_authz_backend;
+	void	*c_authz_cookie;
+#define SLAP_IS_AUTHZ_BACKEND( op )	\
+	( (op)->o_bd != NULL \
+		&& (op)->o_bd->be_private != NULL \
+		&& (op)->o_conn != NULL \
+		&& (op)->o_conn->c_authz_backend != NULL \
+		&& ( (op)->o_bd->be_private == (op)->o_conn->c_authz_backend->be_private \
+			|| (op)->o_bd->be_private == (op)->o_conn->c_authz_cookie ) )
 
 	AuthorizationInformation c_authz;
 

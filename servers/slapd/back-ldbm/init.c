@@ -1,5 +1,5 @@
 /* init.c - initialize ldbm backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/init.c,v 1.96.2.4 2005/04/29 21:29:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/init.c,v 1.96.2.5 2005/09/28 00:30:33 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -195,6 +195,28 @@ ldbm_back_db_open(
 )
 {
 	struct ldbminfo *li = (struct ldbminfo *) be->be_private;
+	int rc;
+
+	rc = alock_open( &li->li_alock_info, "slapd",
+		li->li_directory, ALOCK_UNIQUE );
+	if ( rc == ALOCK_BUSY ) {
+		Debug( LDAP_DEBUG_ANY,
+			"ldbm_back_db_open: database already in use\n",
+			0, 0, 0 );
+		return -1;
+	} else if ( rc == ALOCK_RECOVER ) {
+		Debug( LDAP_DEBUG_ANY,
+			"ldbm_back_db_open: unclean shutdown detected;"
+			" database may be inconsistent!\n",
+			0, 0, 0 );
+		rc = alock_recover( &li->li_alock_info );
+	}
+	if ( rc != ALOCK_CLEAN ) {
+		Debug( LDAP_DEBUG_ANY,
+			"ldbm_back_db_open: alock package is unstable;"
+			" database may be inconsistent!\n",
+			0, 0, 0 );
+	}
 	li->li_dbenv = ldbm_initialize_env( li->li_directory,
 		li->li_dbcachesize, &li->li_envdirok );
 

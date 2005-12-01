@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/acfilter.sh,v 1.8.2.1 2005/01/20 18:04:07 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/acfilter.sh,v 1.8.2.3 2005/09/29 19:07:59 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -15,4 +15,4 @@
 #
 # Strip comments
 #
-egrep -iv '^#'
+grep -v '^#'

@@ -1,5 +1,5 @@
 /* thr_stub.c - stubs for the threads */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_stub.c,v 1.22.2.2 2005/06/08 21:50:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_stub.c,v 1.22.2.3 2005/09/28 00:30:29 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -18,7 +18,10 @@
 
 #if defined( NO_THREADS )
 
-#include "ldap_pvt_thread.h"
+#include "ldap_pvt_thread.h" /* Get the thread interface */
+#define LDAP_THREAD_IMPLEMENTATION
+#define LDAP_THREAD_POOL_IMPLEMENTATION
+#include "ldap_thr_debug.h"  /* May rename the symbols defined below */
 
 /***********************************************************************
  *                                                                     *
@@ -214,6 +217,10 @@ int ldap_pvt_thread_pool_resume (
 void *ldap_pvt_thread_pool_context( )
 {
 	return(NULL);
+}
+
+void ldap_pvt_thread_pool_context_reset( void *vctx )
+{
 }
 
 ldap_pvt_thread_t

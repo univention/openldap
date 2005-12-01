@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/mods.c,v 1.47.2.3 2005/08/09 21:03:59 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/mods.c,v 1.47.2.5 2005/09/29 19:07:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -334,7 +334,7 @@ modify_delete_vindex(
 			rc = LDAP_NO_SUCH_ATTRIBUTE;
 		}
 	} else if ( a->a_desc->ad_type->sat_flags & SLAP_AT_ORDERED_VAL ) {
-	/* For an ordered attribute, renumber the value indices */
+		/* For an ordered attribute, renumber the value indices */
 		ordered_value_sort( a, 1 );
 	}
 

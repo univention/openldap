@@ -1,5 +1,5 @@
 /* slapcommon.c - common routine for the slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.c,v 1.23.2.15 2005/09/01 20:28:10 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.c,v 1.23.2.16 2005/09/28 00:30:31 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -424,7 +424,7 @@ slap_tool_init(
 		break;
 	}
 
-	rc = glue_sub_init();
+	rc = glue_sub_attach();
 
 	if ( rc != 0 ) {
 		fprintf( stderr, "%s: subordinate configuration error\n", progname );

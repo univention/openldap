@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/config.c,v 1.39.2.1 2005/01/20 18:04:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/config.c,v 1.39.2.2 2005/09/28 00:30:35 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -459,7 +459,7 @@ parse_replica_line(
 		ri->ri_port = atoi( hp );
 	    }
 	    if ( ri->ri_port <= 0 ) {
-		ri->ri_port = 0;
+		ri->ri_port = LDAP_PORT;
 	    }
 	    ri->ri_hostname = strdup( val );
 	    gots |= GOT_HOST;

@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test014-whoami,v 1.17.2.1 2005/01/20 18:04:07 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test014-whoami,v 1.17.2.3 2005/10/05 17:41:32 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -36,6 +36,8 @@ if test $WAIT != 0 ; then
     read foo
 fi
 KILLPIDS="$PID"
+
+sleep 1
 
 echo "Using ldapsearch to check that slapd is running..."
 for i in 0 1 2 3 4 5; do
@@ -422,6 +424,6 @@ echo ">>>>> Test succeeded"
 exit 0
 
 ## Note to developers: when SLAPD_DEBUG=-1 the command
-## awk '/^do_extended$/ {if (c) {print c} c=0} /<===slap_sasl_match:/ {c++} END {print c}' testrun/slapd.1.log
+## awk '/^do_extended$/ {if (c) {print c} c=0} /<===slap_sasl_match:/ {c++} END {print c}' $TESTDIR/slapd.1.log
 ## must return the sequence 1 2 3 4 5 6 7 8 9 9 1 2 3 4 5 6 7 8 9 9 9 1
 ## to indicate that the authzFrom and authzTo rules applied in the right order.

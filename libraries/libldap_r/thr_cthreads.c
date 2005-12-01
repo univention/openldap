@@ -1,5 +1,5 @@
 /* thr_cthreads.c - wrapper for mach cthreads */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_cthreads.c,v 1.17.2.1 2005/01/20 18:03:51 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_cthreads.c,v 1.17.2.2 2005/09/28 00:30:28 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -20,7 +20,9 @@
 #include "portable.h"
 
 #if defined( HAVE_MACH_CTHREADS )
-#include "ldap_pvt_thread.h"
+#include "ldap_pvt_thread.h" /* Get the thread interface */
+#define LDAP_THREAD_IMPLEMENTATION
+#include "ldap_thr_debug.h"  /* May rename the symbols defined below */
 
 int
 ldap_int_thread_initialize( void )

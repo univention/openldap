@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.144.2.7 2005/08/17 16:15:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.144.2.8 2005/09/28 00:30:31 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -1397,6 +1397,12 @@ int slap_sasl_regexp_config( const char *match, const char *replace )
 		"SASL match pattern %s could not be compiled by regexp engine\n",
 		reg->sr_match, 0, 0 );
 
+#ifdef ENABLE_REWRITE
+	/* Dummy block to force symbol references in librewrite */
+	if ( slapMode == ( SLAP_SERVER_MODE|SLAP_TOOL_MODE )) {
+		rewrite_info_init( 0 );
+	}
+#endif
 		return( LDAP_OTHER );
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/proto-back-monitor.h,v 1.25.2.4 2005/08/09 21:04:05 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/proto-back-monitor.h,v 1.25.2.5 2005/09/28 00:30:34 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2005 The OpenLDAP Foundation.
@@ -129,6 +129,8 @@ extern monitor_subsys_t *
 monitor_back_get_subsys_by_dn LDAP_P((
 	struct berval		*ndn,
 	int			sub ));
+extern int
+monitor_back_is_configured LDAP_P(( void ));
 extern int
 monitor_back_register_entry LDAP_P((
 	Entry			*e,

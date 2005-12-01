@@ -692,7 +692,7 @@ Child entries of <TT>cn=schema,cn=config</TT> contain user schema as loaded from
 Overlays are defined in children of the Database entry.
 <BR>
 Databases and Overlays may also have other miscellaneous children.</UL></UL>
-<P>The usual rules for LDIF files apply to the configuration information: Comment lines beginning with a '<TT>#</TT>' character are ignored.  If a line begins with white space, it is considered a continuation of the previous line (even if the previous line is a comment). Entries are separated by blank lines.</P>
+<P>The usual rules for LDIF files apply to the configuration information: Comment lines beginning with a '<TT>#</TT>' character are ignored.  If a line begins with a single space, it is considered a continuation of the previous line (even if the previous line is a comment) and the single leading space is removed. Entries are separated by blank lines.</P>
 <P>The general layout of the config LDIF is as follows:</P>
 <PRE>
         # global configuration settings
@@ -732,7 +732,7 @@ Databases and Overlays may also have other miscellaneous children.</UL></UL>
 </PRE>
 <P>Some of the entries listed above have a numeric index <TT>&quot;{X}&quot;</TT> in their names. While most configuration settings have an inherent ordering dependency (i.e., one setting must take effect before a subsequent one may be set), LDAP databases are inherently unordered. The numeric index is used to enforce a consistent ordering in the configuration database, so that all ordering dependencies are preserved. In most cases the index does not have to be provided; it will be automatically generated based on the order in which entries are created.</P>
 <P>Configuration directives are specified as values of individual attributes. Most of the attributes and objectClasses used in the slapd configuration have a prefix of <TT>&quot;olc&quot;</TT> (OpenLDAP Configuration) in their names. Generally there is a one-to-one correspondence between the attributes and the old-style <TT>slapd.conf</TT> configuration keywords, using the keyword as the attribute name, with the &quot;olc&quot; prefix attached.</P>
-<P>A configuration directive may take arguments.  If so, the arguments are separated by white space.  If an argument contains white space, the argument should be enclosed in double quotes <TT>&quot;like this&quot;</TT>. If an argument contains a double quote or a backslash character `<TT>\</TT>', the character should be preceded by a backslash character `<TT>\</TT>'. In the descriptions that follow, arguments that should be replaced by actual text are shown in brackets <TT>&lt;&gt;</TT>.</P>
+<P>A configuration directive may take arguments.  If so, the arguments are separated by white space.  If an argument contains white space, the argument should be enclosed in double quotes <TT>&quot;like this&quot;</TT>. In the descriptions that follow, arguments that should be replaced by actual text are shown in brackets <TT>&lt;&gt;</TT>.</P>
 <P>The distribution contains an example configuration file that will be installed in the <TT>/usr/local/etc/openldap</TT> directory. A number of files containing schema definitions (attribute types and object classes) are also provided in the <TT>/usr/local/etc/openldap/schema</TT> directory.</P>
 <H2><A NAME="Configuration Directives">5.2. Configuration Directives</A></H2>
 <P>This section details commonly used configuration directives.  For a complete list, see the <EM>slapd.d</EM>(5) manual page.  This section will treat the configuration directives in a top-down order, starting with the global directives in the <TT>cn=config</TT> entry. Each directive will be described along with its default value (if any) and an example of its use.</P>
@@ -1028,13 +1028,13 @@ dn: cn=test,cn=schema,cn=config
 objectClass: olcSchemaConfig
 cn: test
 olcAttributeTypes: ( 1.1.1
- NAME 'testAttr'
- EQUALITY integerMatch
- SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )
+  NAME 'testAttr'
+  EQUALITY integerMatch
+  SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )
 olcAttributeTypes: ( 1.1.2 NAME 'testTwo' EQUALITY caseIgnoreMatch
- SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.44 )
+  SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.44 )
 olcObjectClasses: ( 1.1.3 NAME 'testObject'
- MAY ( testAttr $ testTwo ) AUXILIARY )
+  MAY ( testAttr $ testTwo ) AUXILIARY )
 </PRE>
 <H3><A NAME="Backend-specific Directives">5.2.5. Backend-specific Directives</A></H3>
 <P>Backend directives apply to all database instances of the same type and, depending on the directive, may be overridden by database directives. Backend entries must have the <TT>olcBackendConfig</TT> objectClass.</P>

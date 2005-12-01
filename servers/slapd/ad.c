@@ -1,5 +1,5 @@
 /* ad.c - routines for dealing with attribute descriptions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.74.2.7 2005/08/29 18:26:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.74.2.9 2005/10/07 16:53:34 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -770,11 +770,15 @@ int slap_bv2undef_ad(
 }
 
 static int
-undef_remove(
+undef_promote(
 	AttributeType	*at,
-	char		*name )
+	char		*name,
+	AttributeType	*nat )
 {
-	AttributeDescription	**u_ad;
+	AttributeDescription	**u_ad, **n_ad;
+
+	/* Get to last ad on the new type */
+	for ( n_ad = &nat->sat_ad; *n_ad; n_ad = &(*n_ad)->ad_next ) ;
 
 	for ( u_ad = &at->sat_ad; *u_ad; ) {
 		struct berval	bv;
@@ -791,8 +795,9 @@ undef_remove(
 
 			*u_ad = (*u_ad)->ad_next;
 
-			ch_free( tmp );
-
+			tmp->ad_next = NULL;
+			*n_ad = tmp;
+			n_ad = &tmp->ad_next;
 		} else {
 			u_ad = &(*u_ad)->ad_next;
 		}
@@ -802,16 +807,17 @@ undef_remove(
 }
 
 int
-slap_ad_undef_remove(
-	char *name )
+slap_ad_undef_promote(
+	char *name,
+	AttributeType *at )
 {
 	int	rc;
 
 	ldap_pvt_thread_mutex_lock( &ad_undef_mutex );
 
-	rc = undef_remove( slap_schema.si_at_undefined, name );
+	rc = undef_promote( slap_schema.si_at_undefined, name, at );
 	if ( rc == 0 ) {
-		rc = undef_remove( slap_schema.si_at_proxied, name );
+		rc = undef_promote( slap_schema.si_at_proxied, name, at );
 	}
 
 	ldap_pvt_thread_mutex_unlock( &ad_undef_mutex );
@@ -982,8 +988,9 @@ anlist2attrs( AttributeName * anlist )
 	char **attrs;
 	ObjectClass *oc;
 
-	attrs = anlist2charray( anlist, 1 );
-                                                                                
+	if ( anlist == NULL )
+		return NULL;
+
 	for ( i = 0; anlist[i].an_name.bv_val; i++ ) {
 		if ( ( oc = anlist[i].an_oc ) ) {
 			for ( j = 0; oc->soc_required && oc->soc_required[j]; j++ ) ;
@@ -995,6 +1002,8 @@ anlist2attrs( AttributeName * anlist )
 
 	if ( i == 0 )
 		return NULL;
+                                                                                
+	attrs = anlist2charray( anlist, 1 );
                                                                                 
 	n = i;
                                                                                 
@@ -1020,9 +1029,8 @@ anlist2attrs( AttributeName * anlist )
 	i = 0;
 	while ( attrs && attrs[i] ) {
 		if ( *attrs[i] == '@' ) {
+			ch_free( attrs[i] );
 			for ( j = i; attrs[j]; j++ ) {
-				if ( j == i )
-					ch_free( attrs[i] );
 				attrs[j] = attrs[j+1];
 			}
 		} else {
@@ -1034,9 +1042,8 @@ anlist2attrs( AttributeName * anlist )
 		j = i + 1;
 		while ( attrs && attrs[j] ) {
 			if ( !strcmp( attrs[i], attrs[j] )) {
+				ch_free( attrs[j] );
 				for ( k = j; attrs && attrs[k]; k++ ) {
-					if ( k == j )
-						ch_free( attrs[j] );
 					attrs[k] = attrs[k+1];
 				}
 			} else {

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/re.c,v 1.36.2.2 2005/08/09 21:04:10 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/re.c,v 1.36.2.3 2005/09/28 00:30:35 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2005 The OpenLDAP Foundation.
@@ -321,7 +321,7 @@ get_repl_hosts(
 	if ( ldif_parse_line( line, &type, &value, &len ) < 0 ) {
 	    return( NULL );
 	}
-	port = 0;
+	port = LDAP_PORT;
 	if (( p = strchr( value, ':' )) != NULL ) {
 	    *p = '\0';
 	    p++;
@@ -544,11 +544,18 @@ Re_write(
     }
 
     if ( ri != NULL ) {		/* write a single "replica:" line */
-	if ( fprintf( fp, "replica: %s:%d\n", ri->ri_hostname,
-		ri->ri_port ) < 0 ) {
+	if ( ri->ri_port != 0 ) {
+	    rc = fprintf( fp, "replica: %s:%d\n", ri->ri_hostname,
+		    ri->ri_port );
+	} else {
+	    rc = fprintf( fp, "replica: %s\n", ri->ri_hostname );
+	}
+	if ( rc < 0 ) {
 	    rc = -1;
 	    goto bad;
 	}
+	rc = 0;
+
     } else {			/* write multiple "replica:" lines */
 	for ( i = 0; re->re_replicas && re->re_replicas[ i ].rh_hostname != NULL; i++ ) {
 	    if ( fprintf( fp, "replica: %s:%d\n",

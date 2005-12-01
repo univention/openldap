@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test003-search,v 1.57.2.1 2005/01/20 18:04:07 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test003-search,v 1.57.2.2 2005/10/05 17:41:31 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2005 The OpenLDAP Foundation.
@@ -44,6 +44,8 @@ if test $WAIT != 0 ; then
     read foo
 fi
 KILLPIDS="$PID"
+
+sleep 1
 
 echo "Testing slapd searching..."
 for i in 0 1 2 3 4 5; do
