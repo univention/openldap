@@ -1,18 +1,18 @@
-Source: openldap2.2
+Source: openldap2.3
 Section: net
 Priority: optional
-Maintainer: Torsten Landschoff <torsten@debian.org>
-Uploaders: Roland Bauerschmidt <rb@debian.org>, Stephen Frost <sfrost@debian.org>, Steve Langasek <vorlon@debian.org>
-Build-Depends: libdb4.2-dev, libwrap0-dev, libiodbc2-dev, libsasl2-dev (>= 2.1.18-1), dpkg-dev (>= 1.7.1), libncurses5-dev, autoconf2.13, debconf-utils, debhelper (>= 4.1.16), libltdl3-dev (>= 1.4.3), libslp-dev, po-debconf, libssl-dev (>= 0.9.7), libperl-dev (>= 5.8.0)
+Maintainer: Debian OpenLDAP Maintainers <pkg-openldap-devel@lists.alioth.debian.org>
+Uploaders: Roland Bauerschmidt <rb@debian.org>, Stephen Frost <sfrost@debian.org>, Steve Langasek <vorlon@debian.org>, Torsten Landschoff <torsten@debian.org>, Matthijs Mohlmann <matthijs@cacholong.nl>, Russ Allbery <rra@debian.org>
+Build-Depends: libdb4.2-dev, libwrap0-dev, libiodbc2-dev, libsasl2-dev (>= 2.1.18-1), dpkg-dev (>= 1.7.1), libncurses5-dev, debconf-utils, debhelper (>= 4.1.16), libltdl3-dev (>= 1.4.3), libslp-dev, po-debconf, libssl-dev (>= 0.9.7), libperl-dev (>= 5.8.0)
 Build-Conflicts: libbind-dev, bind-dev
-Standards-Version: 3.6.1
+Standards-Version: 3.6.2.1
 
 Package: slapd
 Section: net
 Priority: optional
 Architecture: any
 Pre-Depends: debconf (>= 0.5)
-Depends: ${shlibs:Depends}, coreutils (>= 4.5.1-1) | fileutils (>= 4.0i-1), psmisc, libldap-2.2-7 (= ${Source-Version}), perl (>> 5.8.0) | libmime-base64-perl
+Depends: ${shlibs:Depends}, coreutils (>= 4.5.1-1) | fileutils (>= 4.0i-1), psmisc, perl (>> 5.8.0) | libmime-base64-perl, libldap-2.3-0 (= ${Source-Version})
 Recommends: db4.2-util, libsasl2-modules
 Suggests: ldap-utils
 Conflicts: umich-ldapd, ldap-server, libbind-dev, bind-dev, libltdl3 (= 1.5.4-1)
@@ -27,7 +27,7 @@ Package: ldap-utils
 Section: net
 Priority: optional
 Architecture: any
-Depends: ${shlibs:Depends}, libldap-2.2-7 (= ${Source-Version})
+Depends: ${shlibs:Depends}, libldap-2.3-0 (= ${Source-Version})
 Recommends: libsasl2-modules
 Conflicts: umich-ldap-utils, openldap-utils, ldap-client
 Replaces: openldap-utils, slapd (<< 2.2.23-0.pre6), openldapd
@@ -37,7 +37,7 @@ Description: OpenLDAP utilities
  package. These utilities can access a local or remote LDAP server
  and contain all the client programs required to access LDAP servers.
 
-Package: libldap-2.2-7
+Package: libldap-2.3-0
 Section: libs
 Priority: important
 Architecture: any
@@ -47,4 +47,30 @@ Replaces: libldap2
 Description: OpenLDAP libraries 
  These are the run-time libraries for the OpenLDAP (Lightweight Directory
  Access Protocol) servers and clients.
+
+Package: libldap2.3-dev
+Section: libdevel
+Priority: extra
+Architecture: any
+Conflicts: libldap-dev, libopenldap-dev
+Replaces: libopenldap-dev
+Provides: libldap-dev
+Depends: libldap2.3 (= ${Source-Version})
+Description: OpenLDAP development libraries
+ This package allows development of LDAP applications using the OpenLDAP
+ libraries. It includes headers, libraries and links to allow static and
+ dynamic linking.
+
+#Package: libslapd2.3-dev
+#Section: libdevel
+#Priority: extra
+#Architecture: all
+#Depends: libldap2.3 (= ${Source-Version})
+#Description: OpenLDAP slapd back-end development headers
+# This package allows development of back-ends for the OpenLDAP slapd.
+# It includes headers used when developing a back-end for slapd.
+# These headers are, per upstream, *not* intended to be used outside of
+# their build system so you are on your own with them.  Things can and
+# probably will break, feel free to file bugs about them but don't expect
+# them to be fixed.
 

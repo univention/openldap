@@ -1,0 +1,18 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## use-lpthreads.dpatch by Matthijs Mohlmann <matthijs@cacholong.nl>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad openldap2.3-2.3.11~/configure.in openldap2.3-2.3.11/configure.in
+--- openldap2.3-2.3.11~/configure.in	2005-12-01 13:48:51.000000000 +0100
++++ openldap2.3-2.3.11/configure.in	2005-12-01 15:46:27.828727750 +0100
+@@ -1485,6 +1485,7 @@
+ 		
+ dnl		OL_PTHREAD_TRY([-mt],		[ol_cv_pthread_mt])
+ 		OL_PTHREAD_TRY([-kthread],	[ol_cv_pthread_kthread])
++    OL_PTHREAD_TRY([-lpthread], [ol_cv_pthread_lpthread])
+ 		OL_PTHREAD_TRY([-pthread],	[ol_cv_pthread_pthread])
+ 		OL_PTHREAD_TRY([-pthreads],	[ol_cv_pthread_pthreads])
+ 		OL_PTHREAD_TRY([-mthreads],	[ol_cv_pthread_mthreads])

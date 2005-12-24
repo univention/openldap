@@ -3,3 +3,4 @@ var/spool/slurpd
 var/lib/slapd
 var/run/slapd
 usr/share/slapd
+usr/share/lintian/overrides

@@ -1,6 +1,7 @@
 #!/usr/bin/make -f
 
 export DH_COMPAT = 4
+export DH_VERBOSE = 1
 
 CFLAGS = -Wall -g -D_FILE_OFFSET_BITS=64
 INSTALL = install
@@ -18,7 +19,7 @@ ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 INSTALL_PROGRAM += -s
 endif
 
-CONFIG	      = $(shell grep -v "^\#" debian/configure.options)
+CONFIG	      = $(shell grep -v "^\#" debian/configure.options.new)
 
 rootdir		:= $(shell pwd)
 installdir	:= $(rootdir)/debian/install
@@ -34,7 +35,7 @@ $(builddir)/Makefile:
 	perl debian/check_config
 	$(MAKE) -C $(builddir) depend
 
-build: build-stamp
+build: patch build-stamp
 build-stamp: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) $(MAKEVARS)
 	touch $@
@@ -65,7 +66,7 @@ binary-indep:
 	dh_testdir
 	dh_testroot
 	dh_clean -k
-
+	
 	dh_installdirs -i
 	sh debian/copy_slapd_dev_files
 	dh_installchangelogs -i
@@ -78,21 +79,23 @@ binary-indep:
 	# Don't build the libslapd2.2-dev package so nobody builds against
 	# it. We'll support it after sarge release...
 	#dh_builddeb -i -Nlibslapd2.2-dev
+	dh_builddeb -i
 
 binary-arch: install-stamp
 	dh_testdir
 	dh_testroot
 	dh_clean -k
-	# XXX: remove after libldap2.2-dev is officially built
-	rm -Rf debian/libldap2.2-dev
-
+	# XXX: remove after libldap2.3-dev is officially built
+	#rm -Rf debian/libldap2.3-dev
+	
 	dh_installdirs -a
 	cp -al $(installdir) $(tmpdir)
-	sh debian/move_files
-
+	
+	dh_install -a
 	dh_installchangelogs -a
 	dh_installdocs -a
 	dh_installexamples -a
+	dh_installman -a
 	dh_installinit -Xslapd.prerm -a -- "defaults 19 80"
 	dh_installdebconf -a
 	# when using OpenSSL, we do not need to add crontab entries
@@ -101,7 +104,7 @@ binary-arch: install-stamp
 	dh_link -a
 	dh_compress -a
 	dh_fixperms -a
-	dh_makeshlibs -plibldap-2.2-7
+	dh_makeshlibs -plibldap-2.3-0
 	dh_installdeb -a
 	perl -w debian/dh_installscripts-common -p slapd
 	dh_shlibdeps -a -l$(installdir)/usr/lib
@@ -111,7 +114,8 @@ binary-arch: install-stamp
 	# so nobody can build against it.
 	dh_builddeb -a -Nlibldap2.2-dev
 
-clean:
+clean: clean1 unpatch
+clean1:
 	dh_testdir
 	dh_testroot
 	# Update translation templates for debconf
@@ -125,10 +129,18 @@ clean:
 	fi
 	rm -f install-stamp build-stamp
 	rm -rf $(builddir) $(builddir_notls) $(installdir)
-
+	
 	dh_clean
 	# XXX: remove after libldap2.2-dev is officially built
 	rm -Rf debian/libldap2.2-dev
 
-.PHONY: binary binary-arch binary-indep build clean
+patch: patch-stamp
+patch-stamp:
+	dpatch apply-all
+	touch patch-stamp
 
+unpatch:
+	dpatch deapply-all
+	rm -rf patch-stamp debian/patched
+
+.PHONY: binary binary-arch binary-indep build clean

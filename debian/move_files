@@ -71,7 +71,7 @@ find debian/tmp -name \*.la|xargs rm
 echo done
 
 echo -n "Removing static backend archives... "
-rm debian/tmp/usr/lib/ldap/back_*.a
+rm -f debian/tmp/usr/lib/ldap/back_*.a
 echo done
 
 echo -n Installing:
