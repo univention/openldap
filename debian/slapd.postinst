@@ -1,0 +1,66 @@
+#! /bin/sh 
+
+set -e
+
+. /usr/share/debconf/confmodule
+
+# This will be replaced with debian/slapd.scripts-common which includes
+# various helper functions and $OLD_VERSION and $SLAPD_CONF
+#SCRIPTSCOMMON#
+
+postinst_initial_configuration() {					# {{{
+# Configure slapd for the first time (when first installed)
+# Usage: postinst_initial_configuration
+
+	if manual_configuration_wanted; then
+		echo "  Omitting slapd configuration as requested." >&2
+	else
+		create_new_configuration
+		configure_v2_protocol_support
+	fi
+}
+
+# }}}
+postinst_upgrade_configuration() {					# {{{
+# Handle upgrading slapd from some older version
+# Usage: postinst_upgrade_configuration
+
+	# Better back up the config file in any case
+	echo -n "  Backing up $SLAPD_CONF in `database_dumping_destdir`... " >&2
+	backup_config_once
+	echo done. >&2
+
+	configure_v2_protocol_support
+	if previous_version_older 2.1; then
+		autoconfigure_modules
+	fi
+	update_access_config_directives
+
+	if database_format_changed; then
+		# During upgrading we have to load the old data
+		move_incompatible_databases_away
+		# Change the configuration if we want to migrate DBs
+		db_get slapd/migrate_ldbm_to_bdb
+		if [ "$RET" = "true" ]; then
+			config_migrate_backend ldbm bdb
+			# Make sure we don't dump the DB for migration 
+			# again...
+			db_set slapd/migrate_ldbm_to_bdb false
+		fi
+		load_databases
+	fi
+}
+
+# }}}
+
+if is_initial_configuration "$@"; then
+	postinst_initial_configuration
+else
+	postinst_upgrade_configuration
+fi
+
+db_stop || true
+
+#DEBHELPER#
+
+# vim: set sw=8 foldmethod=marker: 

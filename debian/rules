@@ -1,0 +1,134 @@
+#!/usr/bin/make -f
+
+export DH_COMPAT = 4
+
+CFLAGS = -Wall -g -D_FILE_OFFSET_BITS=64
+INSTALL = install
+INSTALL_FILE    = $(INSTALL) -p    -o root -g root  -m  644
+INSTALL_PROGRAM = $(INSTALL) -p    -o root -g root  -m  755
+INSTALL_SCRIPT  = $(INSTALL) -p    -o root -g root  -m  755
+INSTALL_DIR     = $(INSTALL) -p -d -o root -g root  -m  755
+
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+CFLAGS += -O0
+else
+CFLAGS += -O2
+endif
+ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
+INSTALL_PROGRAM += -s
+endif
+
+CONFIG	      = $(shell grep -v "^\#" debian/configure.options)
+
+rootdir		:= $(shell pwd)
+installdir	:= $(rootdir)/debian/install
+tmpdir		:= $(rootdir)/debian/tmp
+builddir	:= $(rootdir)/debian/build
+
+MAKEVARS	:= DESTDIR=$(installdir)
+
+$(builddir)/Makefile:
+	mkdir -p $(builddir)
+	cd $(builddir) && CFLAGS="$(CFLAGS)" $(rootdir)/configure \
+		$(CONFIG) 
+	perl debian/check_config
+	$(MAKE) -C $(builddir) depend
+
+build: build-stamp
+build-stamp: $(builddir)/Makefile
+	$(MAKE) -C $(builddir) $(MAKEVARS)
+	touch $@
+
+install: install-stamp
+install-stamp: build-stamp
+	$(MAKE) -C $(builddir) $(MAKEVARS) install
+	for F in $(installdir)/usr/lib/*.so.*.*.*; do \
+	    if LD_LIBRARY_PATH=$(installdir)/usr/lib ldd -d -r $$F 2>&1 | grep '^undefined symbol:'; then \
+	        echo; \
+	        echo "library $$F has undefined references.  Please fix this before continuing."; \
+		exit 1; \
+	    fi; \
+	done
+	# Upstream installs schema files in mode 0444 - policy wants 0644
+	find $(installdir)/etc -type f|xargs chmod 0644
+	# Upstream manpages are section 8C but installed as section 8
+	find $(installdir)/usr/share/man -name \*.8 \
+		| xargs perl -pi -e 's#(\.TH \w+ 8)C#$$1#'
+	touch $@
+
+
+binary: binary-arch 
+# Don't build binary-indep for now (only liblslapd-dev was in there)
+# Reenable after sarge...
+
+binary-indep: 
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+
+	dh_installdirs -i
+	sh debian/copy_slapd_dev_files
+	dh_installchangelogs -i
+	dh_installdocs -i
+	dh_installdebconf -i
+	dh_installdeb -i
+	dh_compress -i
+	dh_gencontrol -i
+	dh_md5sums -i
+	# Don't build the libslapd2.2-dev package so nobody builds against
+	# it. We'll support it after sarge release...
+	#dh_builddeb -i -Nlibslapd2.2-dev
+
+binary-arch: install-stamp
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	# XXX: remove after libldap2.2-dev is officially built
+	rm -Rf debian/libldap2.2-dev
+
+	dh_installdirs -a
+	cp -al $(installdir) $(tmpdir)
+	sh debian/move_files
+
+	dh_installchangelogs -a
+	dh_installdocs -a
+	dh_installexamples -a
+	dh_installinit -Xslapd.prerm -a -- "defaults 19 80"
+	dh_installdebconf -a
+	# when using OpenSSL, we do not need to add crontab entries
+	#dh_installcron -a
+	dh_strip -a
+	dh_link -a
+	dh_compress -a
+	dh_fixperms -a
+	dh_makeshlibs -plibldap-2.2-7
+	dh_installdeb -a
+	perl -w debian/dh_installscripts-common -p slapd
+	dh_shlibdeps -a -l$(installdir)/usr/lib
+	dh_gencontrol -a
+	dh_md5sums -a
+	# Don't build the libldap2.2-dev package until after sarge release
+	# so nobody can build against it.
+	dh_builddeb -a -Nlibldap2.2-dev
+
+clean:
+	dh_testdir
+	dh_testroot
+	# Update translation templates for debconf
+	debconf-updatepo
+	# Update config.guess and config.sub
+	if [ -e /usr/share/misc/config.sub ]; then \
+	  rm build/config.sub build/config.guess; \
+	  cp -f /usr/share/misc/config.* build/; \
+	  rm contrib/ldapc++/config.sub contrib/ldapc++/config.guess; \
+	  cp -f /usr/share/misc/config.* contrib/ldapc++/; \
+	fi
+	rm -f install-stamp build-stamp
+	rm -rf $(builddir) $(builddir_notls) $(installdir)
+
+	dh_clean
+	# XXX: remove after libldap2.2-dev is officially built
+	rm -Rf debian/libldap2.2-dev
+
+.PHONY: binary binary-arch binary-indep build clean
+
