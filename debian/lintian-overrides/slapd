@@ -1,0 +1,8 @@
+# db_input is used for telling the user when something goes wrong during
+# configuration. That's a perfectly valid reason to use debconf in postinst.
+# -- Torsten
+slapd: postinst-uses-db-input
+
+# dh_shlibdeps is not smart enough to wipe additional relations. Since this
+# is not easy to fix we don't even try to do it at this time.  -- Torsten
+slapd: package-has-a-duplicate-relation depends: libldap-2.3-0, libldap-2.3-0 (= 2.3.11-1)
