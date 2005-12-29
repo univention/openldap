@@ -1,10 +1,3 @@
-#! /bin/sh /usr/share/dpatch/dpatch-run
-## man-slapd.dpatch by Matthijs Mohlmann <matthijs@cacholong.nl>
-##
-## All lines beginning with `## DP:' are a description of the patch.
-## DP: No description.
-
-@DPATCH@
 diff -urNad openldap2.3-2.3.11~/doc/man/man8/slapd.8 openldap2.3-2.3.11/doc/man/man8/slapd.8
 --- openldap2.3-2.3.11~/doc/man/man8/slapd.8	2005-12-01 13:48:49.000000000 +0100
 +++ openldap2.3-2.3.11/doc/man/man8/slapd.8	2005-12-01 15:49:26.415888750 +0100

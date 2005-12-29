@@ -1,0 +1,7 @@
+man-slapd
+use-lpthreads
+slurpd-in-spool
+ntlm-ldap_h-hack
+ntlm_c
+libldap-makefile_in
+add-autogen-sh

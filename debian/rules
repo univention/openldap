@@ -21,16 +21,20 @@ endif
 
 CONFIG	      = $(shell grep -v "^\#" debian/configure.options.new)
 
-rootdir		:= $(shell pwd)
-installdir	:= $(rootdir)/debian/install
-tmpdir		:= $(rootdir)/debian/tmp
-builddir	:= $(rootdir)/debian/build
+installdir	:= $(CURDIR)/debian/install
+tmpdir		:= $(CURDIR)/debian/tmp
+builddir	:= $(CURDIR)/debian/build
 
 MAKEVARS	:= DESTDIR=$(installdir)
 
+# Include the quilt patch system.
+include /usr/share/quilt/quilt.make
+
 $(builddir)/Makefile:
 	mkdir -p $(builddir)
-	cd $(builddir) && CFLAGS="$(CFLAGS)" $(rootdir)/configure \
+	chmod 755 $(CURDIR)/autogen.sh
+	./autogen.sh
+	cd $(builddir) && CFLAGS="$(CFLAGS)" $(CURDIR)/configure \
 		$(CONFIG) 
 	perl debian/check_config
 	$(MAKE) -C $(builddir) depend
@@ -133,14 +137,5 @@ clean1:
 	dh_clean
 	# XXX: remove after libldap2.2-dev is officially built
 	rm -Rf debian/libldap2.2-dev
-
-patch: patch-stamp
-patch-stamp:
-	dpatch apply-all
-	touch patch-stamp
-
-unpatch:
-	dpatch deapply-all
-	rm -rf patch-stamp debian/patched
 
 .PHONY: binary binary-arch binary-indep build clean

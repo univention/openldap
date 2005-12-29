@@ -1,7 +1,0 @@
-# patches to apply
-man-slapd.dpatch
-ntlm-ldap_h-hack.dpatch
-libldap-makefile_in.dpatch
-ntlm_c.dpatch
-use-lpthreads.dpatch
-slurpd-in-spool.dpatch
