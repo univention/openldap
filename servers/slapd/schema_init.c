@@ -1,8 +1,8 @@
 /* schema_init.c - init builtin schema */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_init.c,v 1.360.2.9 2005/09/28 00:30:31 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_init.c,v 1.360.2.13 2006/01/03 22:16:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -169,16 +169,13 @@ octetStringOrderingMatch(
 	return LDAP_SUCCESS;
 }
 
-void
-hashDigestify(
+static void
+hashPreset(
 	HASH_CONTEXT *HASHcontext,
-	unsigned char *HASHdigest,
 	struct berval *prefix,
 	char pre,
 	Syntax *syntax,
-	MatchingRule *mr,
-	unsigned char *value,
-	int value_len)
+	MatchingRule *mr)
 {
 	HASH_Init(HASHcontext);
 	if(prefix && prefix->bv_len > 0) {
@@ -188,9 +185,19 @@ hashDigestify(
 	if(pre) HASH_Update(HASHcontext, (unsigned char*)&pre, sizeof(pre));
 	HASH_Update(HASHcontext, (unsigned char*)syntax->ssyn_oid, syntax->ssyn_oidlen);
 	HASH_Update(HASHcontext, (unsigned char*)mr->smr_oid, mr->smr_oidlen);
-	HASH_Update(HASHcontext, value, value_len);
-	HASH_Final(HASHdigest, HASHcontext);
 	return;
+}
+
+static void
+hashIter(
+	HASH_CONTEXT *HASHcontext,
+	unsigned char *HASHdigest,
+	unsigned char *value,
+	int len)
+{
+	HASH_CONTEXT ctx = *HASHcontext;
+	HASH_Update( &ctx, value, len );
+	HASH_Final( HASHdigest, &ctx );
 }
 
 /* Index generation function */
@@ -225,9 +232,10 @@ int octetStringIndexer(
 	slen = syntax->ssyn_oidlen;
 	mlen = mr->smr_oidlen;
 
+	hashPreset( &HASHcontext, prefix, 0, syntax, mr);
 	for( i=0; !BER_BVISNULL( &values[i] ); i++ ) {
-		hashDigestify( &HASHcontext, HASHdigest, prefix, 0,
-			syntax, mr, (unsigned char *)values[i].bv_val, values[i].bv_len );
+		hashIter( &HASHcontext, HASHdigest,
+			(unsigned char *)values[i].bv_val, values[i].bv_len );
 		ber_dupbv_x( &keys[i], &digest, ctx );
 	}
 
@@ -263,8 +271,9 @@ int octetStringFilter(
 
 	keys = slap_sl_malloc( sizeof( struct berval ) * 2, ctx );
 
-	hashDigestify( &HASHcontext, HASHdigest, prefix, 0,
-		syntax, mr, (unsigned char *)value->bv_val, value->bv_len );
+	hashPreset( &HASHcontext, prefix, 0, syntax, mr );
+	hashIter( &HASHcontext, HASHdigest,
+		(unsigned char *)value->bv_val, value->bv_len );
 
 	ber_dupbv_x( keys, &digest, ctx );
 	BER_BVZERO( &keys[1] );
@@ -414,7 +423,7 @@ octetStringSubstringsIndexer(
 	size_t slen, mlen;
 	BerVarray keys;
 
-	HASH_CONTEXT HASHcontext;
+	HASH_CONTEXT HCany, HCini, HCfin;
 	unsigned char HASHdigest[HASH_BYTES];
 	struct berval digest;
 	digest.bv_val = (char *)HASHdigest;
@@ -460,6 +469,13 @@ octetStringSubstringsIndexer(
 	slen = syntax->ssyn_oidlen;
 	mlen = mr->smr_oidlen;
 
+	if ( flags & SLAP_INDEX_SUBSTR_ANY )
+		hashPreset( &HCany, prefix, SLAP_INDEX_SUBSTR_PREFIX, syntax, mr );
+	if( flags & SLAP_INDEX_SUBSTR_INITIAL )
+		hashPreset( &HCini, prefix, SLAP_INDEX_SUBSTR_INITIAL_PREFIX, syntax, mr );
+	if( flags & SLAP_INDEX_SUBSTR_FINAL )
+		hashPreset( &HCfin, prefix, SLAP_INDEX_SUBSTR_FINAL_PREFIX, syntax, mr );
+
 	nkeys = 0;
 	for ( i = 0; !BER_BVISNULL( &values[i] ); i++ ) {
 		ber_len_t j,max;
@@ -467,12 +483,12 @@ octetStringSubstringsIndexer(
 		if( ( flags & SLAP_INDEX_SUBSTR_ANY ) &&
 			( values[i].bv_len >= index_substr_any_len ) )
 		{
-			char pre = SLAP_INDEX_SUBSTR_PREFIX;
 			max = values[i].bv_len - (index_substr_any_len - 1);
 
 			for( j=0; j<max; j++ ) {
-				hashDigestify( &HASHcontext, HASHdigest, prefix, pre,
-					syntax, mr, (unsigned char *)&values[i].bv_val[j], index_substr_any_len);
+				hashIter( &HCany, HASHdigest,
+					(unsigned char *)&values[i].bv_val[j],
+					index_substr_any_len );
 				ber_dupbv_x( &keys[nkeys++], &digest, ctx );
 			}
 		}
@@ -484,19 +500,16 @@ octetStringSubstringsIndexer(
 			? index_substr_if_maxlen : values[i].bv_len;
 
 		for( j=index_substr_if_minlen; j<=max; j++ ) {
-			char pre;
 
 			if( flags & SLAP_INDEX_SUBSTR_INITIAL ) {
-				pre = SLAP_INDEX_SUBSTR_INITIAL_PREFIX;
-				hashDigestify( &HASHcontext, HASHdigest, prefix, pre,
-					syntax, mr, (unsigned char *)values[i].bv_val, j );
+				hashIter( &HCini, HASHdigest,
+					(unsigned char *)values[i].bv_val, j );
 				ber_dupbv_x( &keys[nkeys++], &digest, ctx );
 			}
 
 			if( flags & SLAP_INDEX_SUBSTR_FINAL ) {
-				pre = SLAP_INDEX_SUBSTR_FINAL_PREFIX;
-				hashDigestify( &HASHcontext, HASHdigest, prefix, pre,
-					syntax, mr, (unsigned char *)&values[i].bv_val[values[i].bv_len-j], j );
+				hashIter( &HCfin, HASHdigest,
+					(unsigned char *)&values[i].bv_val[values[i].bv_len-j], j );
 				ber_dupbv_x( &keys[nkeys++], &digest, ctx );
 			}
 
@@ -596,8 +609,9 @@ octetStringSubstringsFilter (
 		klen = index_substr_if_maxlen < value->bv_len
 			? index_substr_if_maxlen : value->bv_len;
 
-		hashDigestify( &HASHcontext, HASHdigest, prefix, pre,
-			syntax, mr, (unsigned char *)value->bv_val, klen );
+		hashPreset( &HASHcontext, prefix, pre, syntax, mr );
+		hashIter( &HASHcontext, HASHdigest,
+			(unsigned char *)value->bv_val, klen );
 		ber_dupbv_x( &keys[nkeys++], &digest, ctx );
 
 		/* If initial is too long and we have subany indexed, use it
@@ -607,10 +621,11 @@ octetStringSubstringsFilter (
 		{
 			ber_len_t j;
 			pre = SLAP_INDEX_SUBSTR_PREFIX;
+			hashPreset( &HASHcontext, prefix, pre, syntax, mr);
 			for ( j=index_substr_if_maxlen-1; j <= value->bv_len - index_substr_any_len; j+=index_substr_any_step )
 			{
-				hashDigestify( &HASHcontext, HASHdigest, prefix, pre,
-					syntax, mr, (unsigned char *)&value->bv_val[j], index_substr_any_len );
+				hashIter( &HASHcontext, HASHdigest,
+					(unsigned char *)&value->bv_val[j], index_substr_any_len );
 				ber_dupbv_x( &keys[nkeys++], &digest, ctx );
 			}
 		}
@@ -628,12 +643,13 @@ octetStringSubstringsFilter (
 
 			value = &sa->sa_any[i];
 
+			hashPreset( &HASHcontext, prefix, pre, syntax, mr);
 			for(j=0;
 				j <= value->bv_len - index_substr_any_len;
 				j += index_substr_any_step )
 			{
-				hashDigestify( &HASHcontext, HASHdigest, prefix, pre,
-					syntax, mr, (unsigned char *)&value->bv_val[j], klen ); 
+				hashIter( &HASHcontext, HASHdigest,
+					(unsigned char *)&value->bv_val[j], klen ); 
 				ber_dupbv_x( &keys[nkeys++], &digest, ctx );
 			}
 		}
@@ -649,8 +665,9 @@ octetStringSubstringsFilter (
 		klen = index_substr_if_maxlen < value->bv_len
 			? index_substr_if_maxlen : value->bv_len;
 
-		hashDigestify( &HASHcontext, HASHdigest, prefix, pre,
-			syntax, mr, (unsigned char *)&value->bv_val[value->bv_len-klen], klen );
+		hashPreset( &HASHcontext, prefix, pre, syntax, mr );
+		hashIter( &HASHcontext, HASHdigest,
+			(unsigned char *)&value->bv_val[value->bv_len-klen], klen );
 		ber_dupbv_x( &keys[nkeys++], &digest, ctx );
 
 		/* If final is too long and we have subany indexed, use it
@@ -660,10 +677,11 @@ octetStringSubstringsFilter (
 		{
 			ber_len_t j;
 			pre = SLAP_INDEX_SUBSTR_PREFIX;
+			hashPreset( &HASHcontext, prefix, pre, syntax, mr);
 			for ( j=0; j <= value->bv_len - index_substr_if_maxlen; j+=index_substr_any_step )
 			{
-				hashDigestify( &HASHcontext, HASHdigest, prefix, pre,
-					syntax, mr, (unsigned char *)&value->bv_val[j], index_substr_any_len );
+				hashIter( &HASHcontext, HASHdigest,
+					(unsigned char *)&value->bv_val[j], index_substr_any_len );
 				ber_dupbv_x( &keys[nkeys++], &digest, ctx );
 			}
 		}
@@ -2170,6 +2188,56 @@ UUIDValidate(
 }
 
 static int
+UUIDPretty(
+	Syntax *syntax,
+	struct berval *in,
+	struct berval *out,
+	void *ctx )
+{
+	int i;
+	int rc=LDAP_INVALID_SYNTAX;
+
+	assert( in != NULL );
+	assert( out != NULL );
+
+	if( in->bv_len != 36 ) return LDAP_INVALID_SYNTAX;
+
+	out->bv_len = 36;
+	out->bv_val = slap_sl_malloc( out->bv_len + 1, ctx );
+
+	for( i=0; i<36; i++ ) {
+		switch(i) {
+			case 8:
+			case 13:
+			case 18:
+			case 23:
+				if( in->bv_val[i] != '-' ) {
+					goto handle_error;
+				}
+				out->bv_val[i] = '-';
+				break;
+
+			default:
+				if( !ASCII_HEX( in->bv_val[i]) ) {
+					goto handle_error;
+				}
+				out->bv_val[i] = TOLOWER( in->bv_val[i] );
+		}
+	}
+
+	rc = LDAP_SUCCESS;
+	out->bv_val[ out->bv_len ] = '\0';
+
+	if( 0 ) {
+handle_error:
+		slap_sl_free( out->bv_val, ctx );
+		out->bv_val = NULL;
+	}
+
+	return rc;
+}
+
+int
 UUIDNormalize(
 	slap_mask_t usage,
 	Syntax *syntax,
@@ -2371,7 +2439,7 @@ serialNumberAndIssuerValidate(
 	struct berval sn, i;
 	if( in->bv_len < 3 ) return LDAP_INVALID_SYNTAX;
 
-	i.bv_val = strchr( in->bv_val, '$' );
+	i.bv_val = ber_bvchr( in, '$' );
 	if( BER_BVISNULL( &i ) ) return LDAP_INVALID_SYNTAX;
 
 	sn.bv_val = in->bv_val;
@@ -2411,7 +2479,7 @@ serialNumberAndIssuerPretty(
 
 	if( val->bv_len < 3 ) return LDAP_INVALID_SYNTAX;
 
-	i.bv_val = strchr( val->bv_val, '$' );
+	i.bv_val = ber_bvchr( val, '$' );
 	if( BER_BVISNULL( &i ) ) return LDAP_INVALID_SYNTAX;
 
 	sn.bv_val = val->bv_val;
@@ -2486,7 +2554,7 @@ serialNumberAndIssuerNormalize(
 
 	if( val->bv_len < 3 ) return LDAP_INVALID_SYNTAX;
 
-	i.bv_val = strchr( val->bv_val, '$' );
+	i.bv_val = ber_bvchr( val, '$' );
 	if( BER_BVISNULL( &i ) ) return LDAP_INVALID_SYNTAX;
 
 	sn.bv_val = val->bv_val;
@@ -3430,7 +3498,7 @@ static slap_syntax_defs_rec syntax_defs[] = {
 #endif
 
 	{"( 1.3.6.1.1.16.1 DESC 'UUID' )",
-		0, UUIDValidate, NULL},
+		0, UUIDValidate, UUIDPretty},
 
 	{"( 1.3.6.1.4.1.4203.666.11.2.1 DESC 'CSN' )",
 		SLAP_SYNTAX_HIDE, csnValidate, NULL},
@@ -3855,14 +3923,14 @@ static slap_mrule_defs_rec mrule_defs[] = {
 
 	{"( 1.3.6.1.1.16.2 NAME 'UUIDMatch' "
 		"SYNTAX 1.3.6.1.1.16.1 )",
-		SLAP_MR_EQUALITY, NULL,
+		SLAP_MR_EQUALITY | SLAP_MR_MUTATION_NORMALIZER, NULL,
 		NULL, UUIDNormalize, octetStringMatch,
 		octetStringIndexer, octetStringFilter,
 		NULL},
 
 	{"( 1.3.6.1.1.16.3 NAME 'UUIDOrderingMatch' "
 		"SYNTAX 1.3.6.1.1.16.1 )",
-		SLAP_MR_ORDERING, NULL,
+		SLAP_MR_ORDERING | SLAP_MR_MUTATION_NORMALIZER, NULL,
 		NULL, UUIDNormalize, octetStringOrderingMatch,
 		octetStringIndexer, octetStringFilter,
 		"UUIDMatch"},

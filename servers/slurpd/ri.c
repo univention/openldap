@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/ri.c,v 1.32.2.1 2005/01/20 18:04:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/ri.c,v 1.32.2.3 2006/01/03 22:16:26 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -158,7 +158,7 @@ Ri_process(
 	rq->rq_unlock( rq );
 	if ( sglob->slurpd_shutdown ) {
 	    if ( ri->ri_ldp ) {
-	    	ldap_unbind( ri->ri_ldp );
+	    	ldap_unbind_ext( ri->ri_ldp, NULL, NULL );
 		ri->ri_ldp = NULL;
 	    }
 	    return 0;

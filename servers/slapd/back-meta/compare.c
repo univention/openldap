@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/compare.c,v 1.30.2.11 2005/09/28 00:30:33 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/compare.c,v 1.30.2.13 2006/01/03 22:16:20 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -185,7 +185,7 @@ meta_back_compare( Operation *op, SlapReply *rs )
 			}
 
 			lrc = ldap_result( msc->msc_ld, msgid[ i ],
-					0, &tv, &res );
+					LDAP_MSG_ALL, &tv, &res );
 
 			if ( lrc == 0 ) {
 				assert( res == NULL );

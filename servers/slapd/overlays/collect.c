@@ -1,8 +1,8 @@
 /* collect.c - Demonstration of overlay code */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/collect.c,v 1.2.2.1 2005/01/20 18:04:04 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/collect.c,v 1.2.2.3 2006/01/03 22:16:24 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2005 The OpenLDAP Foundation.
+ * Copyright 2003-2006 The OpenLDAP Foundation.
  * Portions Copyright 2003 Howard Chu.
  * All rights reserved.
  *
@@ -153,7 +153,7 @@ static int collect_config(
 
 static slap_overinst collect;
 
-int collect_init() {
+int collect_initialize() {
 	collect.on_bi.bi_type = "collect";
 	collect.on_bi.bi_db_config = collect_config;
 	collect.on_response = collect_response;
@@ -163,7 +163,7 @@ int collect_init() {
 
 #if SLAPD_OVER_COLLECT == SLAPD_MOD_DYNAMIC
 int init_module(int argc, char *argv[]) {
-	return collect_init();
+	return collect_initialize();
 }
 #endif
 

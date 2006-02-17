@@ -1,8 +1,8 @@
 /* dyngroup.c - Demonstration of overlay code */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dyngroup.c,v 1.5.2.2 2005/05/06 16:42:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dyngroup.c,v 1.5.2.5 2006/01/03 22:16:24 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2005 The OpenLDAP Foundation.
+ * Copyright 2003-2006 The OpenLDAP Foundation.
  * Copyright 2003 by Howard Chu.
  * All rights reserved.
  *
@@ -67,8 +67,15 @@ dyngroup_response( Operation *op, SlapReply *rs )
 				rs->sr_err = backend_group( op, NULL, &op->o_req_ndn,
 					&op->oq_compare.rs_ava->aa_value, NULL, ap->ap_uri );
 				op->o_do_not_cache = cache;
-				if ( rs->sr_err == LDAP_SUCCESS )
+				switch ( rs->sr_err ) {
+				case LDAP_SUCCESS:
 					rs->sr_err = LDAP_COMPARE_TRUE;
+					break;
+
+				case LDAP_NO_SUCH_OBJECT:
+					rs->sr_err = LDAP_COMPARE_FALSE;
+					break;
+				}
 				break;
 			}
 		}
@@ -146,7 +153,7 @@ static slap_overinst dyngroup;
  * initialized and registered by some other function inside slapd.
  */
 
-int dyngroup_init() {
+int dyngroup_initialize() {
 	dyngroup.on_bi.bi_type = "dyngroup";
 	dyngroup.on_bi.bi_db_config = dyngroup_config;
 	dyngroup.on_bi.bi_db_close = dyngroup_close;
@@ -156,8 +163,10 @@ int dyngroup_init() {
 }
 
 #if SLAPD_OVER_DYNGROUP == SLAPD_MOD_DYNAMIC
-int init_module(int argc, char *argv[]) {
-	return dyngroup_init();
+int
+init_module( int argc, char *argv[] )
+{
+	return dyngroup_initialize();
 }
 #endif
 

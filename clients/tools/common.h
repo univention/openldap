@@ -1,8 +1,8 @@
 /* common.h - common definitions for the ldap client tools */
-/* $OpenLDAP: pkg/ldap/clients/tools/common.h,v 1.11.2.4 2005/06/03 19:12:00 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/common.h,v 1.11.2.6 2006/01/03 22:16:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -82,6 +82,13 @@ void tool_unbind LDAP_P(( LDAP * ));
 void tool_destroy LDAP_P(( void ));
 void tool_server_controls LDAP_P(( LDAP *, LDAPControl *, int ));
 int tool_check_abandon LDAP_P(( LDAP *ld, int msgid ));
+void tool_perror LDAP_P((
+	char *func,
+	int err,
+	char *extra,
+	char *matched,
+	char *info,
+	char **refs ));
 
 LDAP_END_DECL
 

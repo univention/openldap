@@ -1,8 +1,8 @@
 /* backglue.c - backend glue */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.91.2.3 2005/09/29 19:07:58 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.91.2.8 2006/01/03 22:16:13 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2005 The OpenLDAP Foundation.
+ * Copyright 2001-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -79,7 +79,6 @@ glue_back_select (
 
 typedef struct glue_state {
 	int err;
-	int slimit;
 	int matchlen;
 	char *matched;
 	int nrefs;
@@ -93,13 +92,6 @@ glue_op_response ( Operation *op, SlapReply *rs )
 
 	switch(rs->sr_type) {
 	case REP_SEARCH:
-		if ( gs->slimit != SLAP_NO_LIMIT
-				&& rs->sr_nentries >= gs->slimit )
-		{
-			rs->sr_err = gs->err = LDAP_SIZELIMIT_EXCEEDED;
-			return -1;
-		}
-		/* fallthru */
 	case REP_SEARCHREF:
 		return SLAP_CB_CONTINUE;
 
@@ -157,7 +149,7 @@ glue_op_func ( Operation *op, SlapReply *rs )
 	BackendDB *b0 = op->o_bd;
 	BackendInfo *bi0 = op->o_bd->bd_info;
 	BI_op_modify **func;
-	slap_operation_t which;
+	slap_operation_t which = op_bind;
 	int rc;
 
 	op->o_bd = glue_back_select (b0, &op->o_req_ndn);
@@ -168,6 +160,7 @@ glue_op_func ( Operation *op, SlapReply *rs )
 	case LDAP_REQ_DELETE: which = op_delete; break;
 	case LDAP_REQ_MODIFY: which = op_modify; break;
 	case LDAP_REQ_MODRDN: which = op_modrdn; break;
+	default: assert( 0 ); break;
 	}
 
 	func = &op->o_bd->bd_info->bi_op_bind;
@@ -241,9 +234,9 @@ glue_op_search ( Operation *op, SlapReply *rs )
 	BackendInfo *bi0 = op->o_bd->bd_info;
 	int i;
 	long stoptime = 0;
-	glue_state gs = {0, 0, 0, NULL, 0, NULL};
+	glue_state gs = {0, 0, NULL, 0, NULL};
 	slap_callback cb = { NULL, glue_op_response, NULL, NULL };
-	int scope0, slimit0, tlimit0;
+	int scope0, tlimit0;
 	struct berval dn, ndn, *pdn;
 
 	cb.sc_private = &gs;
@@ -265,9 +258,7 @@ glue_op_search ( Operation *op, SlapReply *rs )
 
 	case LDAP_SCOPE_ONELEVEL:
 	case LDAP_SCOPE_SUBTREE:
-#ifdef LDAP_SCOPE_SUBORDINATE
 	case LDAP_SCOPE_SUBORDINATE: /* FIXME */
-#endif
 
 #if 0
 		if ( op->o_sync ) {
@@ -284,7 +275,6 @@ glue_op_search ( Operation *op, SlapReply *rs )
 		op->o_callback = &cb;
 		rs->sr_err = gs.err = LDAP_UNWILLING_TO_PERFORM;
 		scope0 = op->ors_scope;
-		slimit0 = gs.slimit = op->ors_slimit;
 		tlimit0 = op->ors_tlimit;
 		dn = op->o_req_dn;
 		ndn = op->o_req_ndn;
@@ -312,13 +302,6 @@ glue_op_search ( Operation *op, SlapReply *rs )
 					break;
 				}
 			}
-			if (slimit0 != SLAP_NO_LIMIT) {
-				op->ors_slimit = slimit0 - rs->sr_nentries;
-				if (op->ors_slimit < 0) {
-					rs->sr_err = gs.err = LDAP_SIZELIMIT_EXCEEDED;
-					break;
-				}
-			}
 			rs->sr_err = 0;
 			/*
 			 * check for abandon 
@@ -338,6 +321,9 @@ glue_op_search ( Operation *op, SlapReply *rs )
 				op->o_req_dn = op->o_bd->be_suffix[0];
 				op->o_req_ndn = op->o_bd->be_nsuffix[0];
 				rs->sr_err = op->o_bd->be_search(op, rs);
+				if ( rs->sr_err == LDAP_NO_SUCH_OBJECT ) {
+					gs.err = LDAP_SUCCESS;
+				}
 
 			} else if (scope0 == LDAP_SCOPE_SUBTREE &&
 				dn_match(&op->o_bd->be_nsuffix[0], &ndn))
@@ -353,6 +339,8 @@ glue_op_search ( Operation *op, SlapReply *rs )
 				if ( rs->sr_err == LDAP_NO_SUCH_OBJECT ) {
 					gs.err = LDAP_SUCCESS;
 				}
+				op->o_req_dn = dn;
+				op->o_req_ndn = ndn;
 
 			} else if (dnIsSuffix(&ndn, &op->o_bd->be_nsuffix[0])) {
 				rs->sr_err = op->o_bd->be_search( op, rs );
@@ -369,7 +357,7 @@ glue_op_search ( Operation *op, SlapReply *rs )
 			case LDAP_ADMINLIMIT_EXCEEDED:
 			case LDAP_NO_SUCH_OBJECT:
 #ifdef LDAP_CONTROL_X_CHAINING_BEHAVIOR
-			case LDAP_CANNOT_CHAIN:
+			case LDAP_X_CANNOT_CHAIN:
 #endif /* LDAP_CONTROL_X_CHAINING_BEHAVIOR */
 				goto end_of_loop;
 			
@@ -379,7 +367,6 @@ glue_op_search ( Operation *op, SlapReply *rs )
 		}
 end_of_loop:;
 		op->ors_scope = scope0;
-		op->ors_slimit = slimit0;
 		op->ors_tlimit = tlimit0;
 		op->o_req_dn = dn;
 		op->o_req_ndn = ndn;

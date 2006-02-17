@@ -1,7 +1,7 @@
 /* lastmod.c - returns last modification info */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2005 The OpenLDAP Foundation.
+ * Copyright 2004-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -370,7 +370,9 @@ best_guess( Operation *op,
 		char		csnbuf[ LDAP_LUTIL_CSNSTR_BUFSIZE ];
 		struct berval	entryCSN;
 	
-		slap_get_csn( NULL, csnbuf, sizeof(csnbuf), &entryCSN, 0 );
+		entryCSN.bv_val = csnbuf;
+		entryCSN.bv_len = sizeof( csnbuf );
+		slap_get_csn( NULL, &entryCSN, 0 );
 
 		ber_dupbv( bv_entryCSN, &entryCSN );
 		ber_dupbv( bv_nentryCSN, &entryCSN );
@@ -909,7 +911,9 @@ lastmod_db_open(
 	timestamp.bv_len = sizeof(tmbuf);
 	slap_timestamp( &starttime, &timestamp );
 
-	slap_get_csn( NULL, csnbuf, sizeof(csnbuf), &entryCSN, 0 );
+	entryCSN.bv_val = csnbuf;
+	entryCSN.bv_len = sizeof( csnbuf );
+	slap_get_csn( NULL, &entryCSN, 0 );
 
 	if ( BER_BVISNULL( &lmi->lmi_rdnvalue ) ) {
 		ber_str2bv( "Lastmod", 0, 1, &lmi->lmi_rdnvalue );
@@ -991,7 +995,7 @@ lastmod_db_destroy(
 static slap_overinst 		lastmod;
 
 int
-lastmod_init()
+lastmod_initialize()
 {
 	lastmod.on_bi.bi_type = "lastmod";
 	lastmod.on_bi.bi_db_init = lastmod_db_init;
@@ -1016,7 +1020,7 @@ lastmod_init()
 int
 init_module( int argc, char *argv[] )
 {
-	return lastmod_init();
+	return lastmod_initialize();
 }
 #endif /* SLAPD_OVER_LASTMOD == SLAPD_MOD_DYNAMIC */
 

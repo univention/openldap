@@ -1,8 +1,8 @@
 /* null.c - the null backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-null/null.c,v 1.12.2.3 2005/08/31 17:11:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-null/null.c,v 1.12.2.4 2006/01/03 22:16:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2005 The OpenLDAP Foundation.
+ * Copyright 2002-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

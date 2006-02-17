@@ -1,8 +1,8 @@
 /* nextid.c - keep track of the next id to be given out */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/nextid.c,v 1.36.2.2 2005/01/24 21:28:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/nextid.c,v 1.36.2.3 2006/01/03 22:16:19 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

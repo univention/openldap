@@ -1,8 +1,8 @@
 /* add.c */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/add.c,v 1.23.2.1 2005/01/20 18:03:49 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/add.c,v 1.23.2.3 2006/01/03 22:16:08 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -136,19 +136,22 @@ ldap_add_ext(
 		return ld->ld_errno;
 	}
 
-	/* for each attribute in the entry... */
-	for ( i = 0; attrs[i] != NULL; i++ ) {
-		if ( ( attrs[i]->mod_op & LDAP_MOD_BVALUES) != 0 ) {
-			rc = ber_printf( ber, "{s[V]N}", attrs[i]->mod_type,
-			    attrs[i]->mod_bvalues );
-		} else {
-			rc = ber_printf( ber, "{s[v]N}", attrs[i]->mod_type,
-			    attrs[i]->mod_values );
-		}
-		if ( rc == -1 ) {
-			ld->ld_errno = LDAP_ENCODING_ERROR;
-			ber_free( ber, 1 );
-			return ld->ld_errno;
+	/* allow attrs to be NULL ("touch"; should fail...) */
+	if ( attrs ) {
+		/* for each attribute in the entry... */
+		for ( i = 0; attrs[i] != NULL; i++ ) {
+			if ( ( attrs[i]->mod_op & LDAP_MOD_BVALUES) != 0 ) {
+				rc = ber_printf( ber, "{s[V]N}", attrs[i]->mod_type,
+				    attrs[i]->mod_bvalues );
+			} else {
+				rc = ber_printf( ber, "{s[v]N}", attrs[i]->mod_type,
+				    attrs[i]->mod_values );
+			}
+			if ( rc == -1 ) {
+				ld->ld_errno = LDAP_ENCODING_ERROR;
+				ber_free( ber, 1 );
+				return ld->ld_errno;
+			}
 		}
 	}
 

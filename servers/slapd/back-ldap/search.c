@@ -1,8 +1,8 @@
 /* search.c - ldap backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.148.2.18 2005/09/28 00:30:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.148.2.25 2006/01/16 21:13:40 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -49,7 +49,7 @@ ldap_back_munge_filter(
 	Operation	*op,
 	struct berval	*filter )
 {
-	struct ldapinfo	*li = (struct ldapinfo *) op->o_bd->be_private;
+	ldapinfo_t	*li = (ldapinfo_t *) op->o_bd->be_private;
 
 	char		*ptr;
 	int		gotit = 0;
@@ -75,7 +75,7 @@ ldap_back_munge_filter(
 
 		if ( strncmp( ptr, bv_true.bv_val, bv_true.bv_len ) == 0 ) {
 			oldbv = &bv_true;
-			if ( li->flags & LDAP_BACK_F_SUPPORT_T_F ) {
+			if ( li->li_flags & LDAP_BACK_F_SUPPORT_T_F ) {
 				newbv = &bv_t;
 
 			} else {
@@ -85,7 +85,7 @@ ldap_back_munge_filter(
 		} else if ( strncmp( ptr, bv_false.bv_val, bv_false.bv_len ) == 0 )
 		{
 			oldbv = &bv_false;
-			if ( li->flags & LDAP_BACK_F_SUPPORT_T_F ) {
+			if ( li->li_flags & LDAP_BACK_F_SUPPORT_T_F ) {
 				newbv = &bv_f;
 
 			} else {
@@ -141,9 +141,9 @@ ldap_back_search(
 		Operation	*op,
 		SlapReply	*rs )
 {
-	struct ldapconn *lc;
+	ldapconn_t	*lc;
 	struct timeval	tv;
-	time_t		stoptime;
+	time_t		stoptime = (time_t)-1;
 	LDAPMessage	*res,
 			*e;
 	int		rc = 0,
@@ -153,8 +153,10 @@ ldap_back_search(
 	int		i;
 	char		**attrs = NULL;
 	int		freetext = 0;
-	int		do_retry = 1;
+	int		do_retry = 1, dont_retry = 0;
 	LDAPControl	**ctrls = NULL;
+	/* FIXME: shouldn't this be null? */
+	const char	*save_matched = rs->sr_matched;
 
 	lc = ldap_back_getconn( op, rs, LDAP_BACK_SENDERR );
 	if ( !lc || !ldap_back_dobind( lc, op, rs, LDAP_BACK_SENDERR ) ) {
@@ -214,18 +216,24 @@ retry:
 			op->ors_slimit, &msgid );
 
 	if ( rs->sr_err != LDAP_SUCCESS ) {
-fail:;
 		switch ( rs->sr_err ) {
 		case LDAP_SERVER_DOWN:
 			if ( do_retry ) {
 				do_retry = 0;
-				if ( ldap_back_retry( lc, op, rs, LDAP_BACK_DONTSEND ) ) {
+				if ( ldap_back_retry( &lc, op, rs, LDAP_BACK_DONTSEND ) ) {
 					goto retry;
 				}
 			}
-			rc = ldap_back_op_result( lc, op, rs, msgid, LDAP_BACK_DONTSEND );
-			ldap_back_freeconn( op, lc );
-			lc = NULL;
+			if ( lc == NULL ) {
+				/* reset by ldap_back_retry ... */
+				rs->sr_err = slap_map_api2result( rs );
+
+			} else {
+				rc = ldap_back_op_result( lc, op, rs, msgid, 0, LDAP_BACK_DONTSEND );
+				ldap_back_freeconn( op, lc, 0 );
+				lc = NULL;
+			}
+				
 			goto finish;
 
 		case LDAP_FILTER_ERROR:
@@ -250,7 +258,7 @@ fail:;
 	 * but this is necessary for version matching, and for ACL processing.
 	 */
 
-	for ( rc = 0; rc != -1; rc = ldap_result( lc->lc_ld, msgid, 0, &tv, &res ) )
+	for ( rc = 0; rc != -1; rc = ldap_result( lc->lc_ld, msgid, LDAP_MSG_ONE, &tv, &res ) )
 	{
 		/* check for abandon */
 		if ( op->o_abandon ) {
@@ -274,11 +282,17 @@ fail:;
 				rc = rs->sr_err = LDAP_TIMELIMIT_EXCEEDED;
 				goto finish;
 			}
+			continue;
 
-		} else if ( rc == LDAP_RES_SEARCH_ENTRY ) {
+		} else {
+			/* don't retry any more */
+			dont_retry = 1;
+		}
+
+
+		if ( rc == LDAP_RES_SEARCH_ENTRY ) {
 			Entry		ent = { 0 };
 			struct berval	bdn = BER_BVNULL;
-			int		abort = 0;
 
 			do_retry = 0;
 
@@ -289,21 +303,25 @@ fail:;
 				rs->sr_attrs = op->ors_attrs;
 				rs->sr_operational_attrs = NULL;
 				rs->sr_flags = 0;
-				abort = send_search_entry( op, rs );
+				rc = rs->sr_err = send_search_entry( op, rs );
 				if ( !BER_BVISNULL( &ent.e_name ) ) {
 					assert( ent.e_name.bv_val != bdn.bv_val );
-					free( ent.e_name.bv_val );
+					op->o_tmpfree( ent.e_name.bv_val, op->o_tmpmemctx );
 					BER_BVZERO( &ent.e_name );
 				}
 				if ( !BER_BVISNULL( &ent.e_nname ) ) {
-					free( ent.e_nname.bv_val );
+					op->o_tmpfree( ent.e_nname.bv_val, op->o_tmpmemctx );
 					BER_BVZERO( &ent.e_nname );
 				}
 				entry_clean( &ent );
 			}
 			ldap_msgfree( res );
-			if ( abort ) {
-				ldap_abandon_ext( lc->lc_ld, msgid, NULL, NULL );
+			if ( rc != LDAP_SUCCESS ) {
+				if ( rc == LDAP_UNAVAILABLE ) {
+					rc = rs->sr_err = LDAP_OTHER;
+				} else {
+					ldap_abandon_ext( lc->lc_ld, msgid, NULL, NULL );
+				}
 				goto finish;
 			}
 
@@ -346,7 +364,7 @@ fail:;
 
 			/* cleanup */
 			if ( references ) {
-				ldap_value_free( references );
+				ber_memvfree( (void **)references );
 				ch_free( rs->sr_ref );
 				rs->sr_ref = NULL;
 			}
@@ -394,17 +412,26 @@ fail:;
 			}
 
 			if ( match.bv_val != NULL ) {
+#ifndef LDAP_NULL_IS_NULL
 				if ( match.bv_val[ 0 ] == '\0' ) {
 					LDAP_FREE( match.bv_val );
 					BER_BVZERO( &match );
-				} else {
+				} else
+#endif /* LDAP_NULL_IS_NULL */
+				{
 					match.bv_len = strlen( match.bv_val );
 				}
 			}
+#ifndef LDAP_NULL_IS_NULL
+			if ( rs->sr_text != NULL && rs->sr_text[ 0 ] == '\0' ) {
+				LDAP_FREE( (char *)rs->sr_text );
+				rs->sr_text = NULL;
+			}
+#endif /* LDAP_NULL_IS_NULL */
 
 			/* cleanup */
 			if ( references ) {
-				ldap_value_free( references );
+				ber_memvfree( (void **)references );
 			}
 
 			rc = 0;
@@ -412,15 +439,16 @@ fail:;
 		}
 	}
 
-	if ( rc == -1 ) {
+ 	if ( rc == -1 && dont_retry == 0 ) {
 		if ( do_retry ) {
 			do_retry = 0;
-			if ( ldap_back_retry( lc, op, rs, LDAP_BACK_SENDERR ) ) {
+			if ( ldap_back_retry( &lc, op, rs, LDAP_BACK_DONTSEND ) ) {
 				goto retry;
 			}
 		}
 		rs->sr_err = LDAP_SERVER_DOWN;
-		goto fail;
+		rs->sr_err = slap_map_api2result( rs );
+		goto finish;
 	}
 
 	/*
@@ -431,6 +459,7 @@ fail:;
 
 		if ( dnPretty( NULL, &match, &pmatch, op->o_tmpmemctx ) == LDAP_SUCCESS ) {
 			rs->sr_matched = pmatch.bv_val;
+			LDAP_FREE( match.bv_val );
 
 		} else {
 			rs->sr_matched = match.bv_val;
@@ -453,14 +482,14 @@ finish:;
 		rs->sr_ctrls = NULL;
 	}
 
-	if ( rs->sr_matched != NULL ) {
+	if ( rs->sr_matched != NULL && rs->sr_matched != save_matched ) {
 		if ( rs->sr_matched != match.bv_val ) {
 			ber_memfree_x( (char *)rs->sr_matched, op->o_tmpmemctx );
 
 		} else {
 			LDAP_FREE( match.bv_val );
 		}
-		rs->sr_matched = NULL;
+		rs->sr_matched = save_matched;
 	}
 
 	if ( !BER_BVISNULL( &filter ) && filter.bv_val != op->ors_filterstr.bv_val ) {
@@ -685,7 +714,7 @@ ldap_back_entry_get(
 		Entry			**ent
 )
 {
-	struct ldapconn *lc;
+	ldapconn_t	*lc;
 	int		rc = 1,
 			do_not_cache;
 	struct berval	bdn;
@@ -743,7 +772,7 @@ retry:
 	if ( rc != LDAP_SUCCESS ) {
 		if ( rc == LDAP_SERVER_DOWN && do_retry ) {
 			do_retry = 0;
-			if ( ldap_back_retry( lc, op, &rs, LDAP_BACK_DONTSEND ) ) {
+			if ( ldap_back_retry( &lc, op, &rs, LDAP_BACK_DONTSEND ) ) {
 				goto retry;
 			}
 		}

@@ -1,8 +1,8 @@
 /* bind.c - ldap backend bind function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.85.2.13 2005/09/28 00:30:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.85.2.22 2006/01/16 21:13:40 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -42,21 +42,21 @@ static LDAP_REBIND_PROC	ldap_back_default_rebind;
 LDAP_REBIND_PROC	*ldap_back_rebind_f = ldap_back_default_rebind;
 
 static int
-ldap_back_proxy_authz_bind( struct ldapconn *lc, Operation *op, SlapReply *rs );
+ldap_back_proxy_authz_bind( ldapconn_t *lc, Operation *op, SlapReply *rs, ldap_back_send_t sendok );
 
 static int
-ldap_back_prepare_conn( struct ldapconn **lcp, Operation *op, SlapReply *rs, ldap_back_send_t sendok );
+ldap_back_prepare_conn( ldapconn_t **lcp, Operation *op, SlapReply *rs, ldap_back_send_t sendok );
 
 int
 ldap_back_bind( Operation *op, SlapReply *rs )
 {
-	struct ldapinfo	*li = (struct ldapinfo *) op->o_bd->be_private;
-	struct ldapconn *lc;
+	ldapinfo_t	*li = (ldapinfo_t *) op->o_bd->be_private;
+	ldapconn_t	*lc;
 
 	int rc = 0;
 	ber_int_t msgid;
 
-	lc = ldap_back_getconn( op, rs, LDAP_BACK_SENDERR );
+	lc = ldap_back_getconn( op, rs, LDAP_BACK_BIND_SERR );
 	if ( !lc ) {
 		return rs->sr_err;
 	}
@@ -71,7 +71,7 @@ ldap_back_bind( Operation *op, SlapReply *rs )
 	rs->sr_err = ldap_sasl_bind( lc->lc_ld, op->o_req_dn.bv_val,
 			LDAP_SASL_SIMPLE,
 			&op->orb_cred, op->o_ctrls, NULL, &msgid );
-	rc = ldap_back_op_result( lc, op, rs, msgid, LDAP_BACK_SENDERR );
+	rc = ldap_back_op_result( lc, op, rs, msgid, 0, LDAP_BACK_SENDERR );
 
 	if ( rc == LDAP_SUCCESS ) {
 		/* If defined, proxyAuthz will be used also when
@@ -79,8 +79,8 @@ ldap_back_bind( Operation *op, SlapReply *rs )
 		 * purpose, a successful bind is followed by a
 		 * bind with the configured identity assertion */
 		/* NOTE: use with care */
-		if ( li->idassert_flags & LDAP_BACK_AUTH_OVERRIDE ) {
-			ldap_back_proxy_authz_bind( lc, op, rs );
+		if ( li->li_idassert_flags & LDAP_BACK_AUTH_OVERRIDE ) {
+			ldap_back_proxy_authz_bind( lc, op, rs, LDAP_BACK_SENDERR );
 			if ( !LDAP_BACK_CONN_ISBOUND( lc ) ) {
 				rc = 1;
 				goto done;
@@ -109,22 +109,22 @@ done:;
 
 		/* wait for all other ops to release the connection */
 retry_lock:;
-		ldap_pvt_thread_mutex_lock( &li->conn_mutex );
+		ldap_pvt_thread_mutex_lock( &li->li_conninfo.lai_mutex );
 		if ( lc->lc_refcnt > 1 ) {
-			ldap_pvt_thread_mutex_unlock( &li->conn_mutex );
+			ldap_pvt_thread_mutex_unlock( &li->li_conninfo.lai_mutex );
 			ldap_pvt_thread_yield();
 			goto retry_lock;
 		}
 
 		assert( lc->lc_refcnt == 1 );
-		lc = avl_delete( &li->conntree, (caddr_t)lc,
+		lc = avl_delete( &li->li_conninfo.lai_tree, (caddr_t)lc,
 				ldap_back_conn_cmp );
 		assert( lc != NULL );
 
 		ber_bvreplace( &lc->lc_local_ndn, &op->o_req_ndn );
-		lerr = avl_insert( &li->conntree, (caddr_t)lc,
+		lerr = avl_insert( &li->li_conninfo.lai_tree, (caddr_t)lc,
 			ldap_back_conn_cmp, ldap_back_conn_dup );
-		ldap_pvt_thread_mutex_unlock( &li->conn_mutex );
+		ldap_pvt_thread_mutex_unlock( &li->li_conninfo.lai_mutex );
 		if ( lerr == -1 ) {
 			/* we can do this because lc_refcnt == 1 */
 			ldap_back_conn_free( lc );
@@ -142,14 +142,14 @@ retry_lock:;
 /*
  * ldap_back_conn_cmp
  *
- * compares two struct ldapconn based on the value of the conn pointer;
+ * compares two ldapconn_t based on the value of the conn pointer;
  * used by avl stuff
  */
 int
 ldap_back_conn_cmp( const void *c1, const void *c2 )
 {
-	const struct ldapconn *lc1 = (const struct ldapconn *)c1;
-	const struct ldapconn *lc2 = (const struct ldapconn *)c2;
+	const ldapconn_t	*lc1 = (const ldapconn_t *)c1;
+	const ldapconn_t	*lc2 = (const ldapconn_t *)c2;
 	int rc;
 
 	/* If local DNs don't match, it is definitely not a match */
@@ -167,14 +167,14 @@ ldap_back_conn_cmp( const void *c1, const void *c2 )
 /*
  * ldap_back_conn_dup
  *
- * returns -1 in case a duplicate struct ldapconn has been inserted;
+ * returns -1 in case a duplicate ldapconn_t has been inserted;
  * used by avl stuff
  */
 int
 ldap_back_conn_dup( void *c1, void *c2 )
 {
-	struct ldapconn *lc1 = (struct ldapconn *)c1;
-	struct ldapconn *lc2 = (struct ldapconn *)c2;
+	ldapconn_t	*lc1 = (ldapconn_t *)c1;
+	ldapconn_t	*lc2 = (ldapconn_t *)c2;
 
 	/* Cannot have more than one shared session with same DN */
 	if ( dn_match( &lc1->lc_local_ndn, &lc2->lc_local_ndn ) &&
@@ -190,8 +190,8 @@ ldap_back_conn_dup( void *c1, void *c2 )
 static void
 ravl_print( Avlnode *root, int depth )
 {
-	int     i;
-	struct ldapconn *lc;
+	int		i;
+	ldapconn_t	*lc;
 	
 	if ( root == 0 ) {
 		return;
@@ -227,22 +227,26 @@ myprint( Avlnode *root )
 #endif /* PRINT_CONNTREE */
 
 int
-ldap_back_freeconn( Operation *op, struct ldapconn *lc )
+ldap_back_freeconn( Operation *op, ldapconn_t *lc, int dolock )
 {
-	struct ldapinfo	*li = (struct ldapinfo *) op->o_bd->be_private;
+	ldapinfo_t	*li = (ldapinfo_t *) op->o_bd->be_private;
 
-	ldap_pvt_thread_mutex_lock( &li->conn_mutex );
+	if ( dolock ) {
+		ldap_pvt_thread_mutex_lock( &li->li_conninfo.lai_mutex );
+	}
 
 	assert( lc->lc_refcnt > 0 );
 	if ( --lc->lc_refcnt == 0 ) {
-		lc = avl_delete( &li->conntree, (caddr_t)lc,
+		lc = avl_delete( &li->li_conninfo.lai_tree, (caddr_t)lc,
 				ldap_back_conn_cmp );
 		assert( lc != NULL );
 
 		ldap_back_conn_free( (void *)lc );
 	}
 
-	ldap_pvt_thread_mutex_unlock( &li->conn_mutex );
+	if ( dolock ) {
+		ldap_pvt_thread_mutex_unlock( &li->li_conninfo.lai_mutex );
+	}
 
 	return 0;
 }
@@ -259,10 +263,10 @@ ldap_back_start_tls(
 	const char	**text )
 {
 	int		rc = LDAP_SUCCESS;
-	struct ldapinfo	dummy;
+	ldapinfo_t	dummy;
 
 	/* this is ridiculous... */
-	dummy.flags = flags;
+	dummy.li_flags = flags;
 
 	/* start TLS ("tls-[try-]{start,propagate}" statements) */
 	if ( ( LDAP_BACK_USE_TLS( &dummy ) || ( *is_tls && LDAP_BACK_PROPAGATE_TLS( &dummy ) ) )
@@ -297,7 +301,7 @@ ldap_back_start_tls(
 retry:;
 			rc = ldap_result( ld, msgid, LDAP_MSG_ALL, &tv, &res );
 			if ( rc < 0 ) {
-				rc = LDAP_OTHER;
+				rc = LDAP_UNAVAILABLE;
 
 			} else if ( rc == 0 ) {
 				if ( retries != LDAP_BACK_RETRY_NEVER ) {
@@ -308,7 +312,7 @@ retry:;
 					LDAP_BACK_TV_SET( &tv );
 					goto retry;
 				}
-				rc = LDAP_OTHER;
+				rc = LDAP_UNAVAILABLE;
 
 			} else if ( rc == LDAP_RES_EXTENDED ) {
 				struct berval	*data = NULL;
@@ -316,7 +320,12 @@ retry:;
 				rc = ldap_parse_extended_result( ld, res,
 						NULL, &data, 0 );
 				if ( rc == LDAP_SUCCESS ) {
-					rc = ldap_result2error( ld, res, 1 );
+					int err;
+					rc = ldap_parse_result( ld, res, &err,
+						NULL, NULL, NULL, NULL, 1 );
+					if ( rc == LDAP_SUCCESS ) {
+						rc = err;
+					}
 					res = NULL;
 					
 					/* FIXME: in case a referral 
@@ -327,7 +336,7 @@ retry:;
 						rc = ldap_install_tls( ld );
 
 					} else if ( rc == LDAP_REFERRAL ) {
-						rc = LDAP_OTHER;
+						rc = LDAP_UNWILLING_TO_PERFORM;
 						*text = "unwilling to chase referral returned by Start TLS exop";
 					}
 
@@ -387,9 +396,9 @@ retry:;
 #endif /* HAVE_TLS */
 
 static int
-ldap_back_prepare_conn( struct ldapconn **lcp, Operation *op, SlapReply *rs, ldap_back_send_t sendok )
+ldap_back_prepare_conn( ldapconn_t **lcp, Operation *op, SlapReply *rs, ldap_back_send_t sendok )
 {
-	struct ldapinfo	*li = (struct ldapinfo *)op->o_bd->be_private;
+	ldapinfo_t	*li = (ldapinfo_t *)op->o_bd->be_private;
 	int		vers = op->o_protocol;
 	LDAP		*ld = NULL;
 #ifdef HAVE_TLS
@@ -398,7 +407,7 @@ ldap_back_prepare_conn( struct ldapconn **lcp, Operation *op, SlapReply *rs, lda
 
 	assert( lcp != NULL );
 
-	rs->sr_err = ldap_initialize( &ld, li->url );
+	rs->sr_err = ldap_initialize( &ld, li->li_uri );
 	if ( rs->sr_err != LDAP_SUCCESS ) {
 		goto error_return;
 	}
@@ -406,6 +415,10 @@ ldap_back_prepare_conn( struct ldapconn **lcp, Operation *op, SlapReply *rs, lda
 	/* Set LDAP version. This will always succeed: If the client
 	 * bound with a particular version, then so can we.
 	 */
+	if ( vers == 0 ) {
+		/* assume it's an internal op; set to LDAPv3 */
+		vers = LDAP_VERSION3;
+	}
 	ldap_set_option( ld, LDAP_OPT_PROTOCOL_VERSION, (const void *)&vers );
 
 	/* automatically chase referrals ("[dont-]chase-referrals" statement) */
@@ -415,7 +428,7 @@ ldap_back_prepare_conn( struct ldapconn **lcp, Operation *op, SlapReply *rs, lda
 
 #ifdef HAVE_TLS
 	rs->sr_err = ldap_back_start_tls( ld, op->o_protocol, &is_tls,
-			li->url, li->flags, li->nretries, &rs->sr_text );
+			li->li_uri, li->li_flags, li->li_nretries, &rs->sr_text );
 	if ( rs->sr_err != LDAP_SUCCESS ) {
 		ldap_unbind_ext( ld, NULL, NULL );
 		goto error_return;
@@ -423,8 +436,8 @@ ldap_back_prepare_conn( struct ldapconn **lcp, Operation *op, SlapReply *rs, lda
 #endif /* HAVE_TLS */
 
 	if ( *lcp == NULL ) {
-		*lcp = (struct ldapconn *)ch_calloc( 1, sizeof( struct ldapconn ) );
-		(*lcp)->lc_flags= li->flags;
+		*lcp = (ldapconn_t *)ch_calloc( 1, sizeof( ldapconn_t ) );
+		(*lcp)->lc_flags= li->li_flags;
 	}
 	(*lcp)->lc_ld = ld;
 	(*lcp)->lc_refcnt = 1;
@@ -451,11 +464,11 @@ error_return:;
 	return rs->sr_err;
 }
 
-struct ldapconn *
+ldapconn_t *
 ldap_back_getconn( Operation *op, SlapReply *rs, ldap_back_send_t sendok )
 {
-	struct ldapinfo	*li = (struct ldapinfo *)op->o_bd->be_private;
-	struct ldapconn	*lc,
+	ldapinfo_t	*li = (ldapinfo_t *)op->o_bd->be_private;
+	ldapconn_t	*lc = NULL,
 			lc_curr = { 0 };
 	int		refcnt = 1;
 
@@ -476,38 +489,54 @@ ldap_back_getconn( Operation *op, SlapReply *rs, ldap_back_send_t sendok )
 		}
 	}
 
-	/* Searches for a ldapconn in the avl tree */
-	ldap_pvt_thread_mutex_lock( &li->conn_mutex );
+	/* Explicit Bind requests always get their own conn */
+	if ( !( sendok & LDAP_BACK_BINDING ) ) {
+		/* Searches for a ldapconn in the avl tree */
+retry_lock:
+		ldap_pvt_thread_mutex_lock( &li->li_conninfo.lai_mutex );
 
-	lc = (struct ldapconn *)avl_find( li->conntree, 
-			(caddr_t)&lc_curr, ldap_back_conn_cmp );
-	if ( lc != NULL ) {
-		refcnt = ++lc->lc_refcnt;
+		lc = (ldapconn_t *)avl_find( li->li_conninfo.lai_tree, 
+				(caddr_t)&lc_curr, ldap_back_conn_cmp );
+		if ( lc != NULL ) {
+			/* Don't reuse connections while they're still binding */
+			if ( LDAP_BACK_CONN_BINDING( lc ) ) {
+				ldap_pvt_thread_mutex_unlock( &li->li_conninfo.lai_mutex );
+				ldap_pvt_thread_yield();
+				goto retry_lock;
+			}
+			refcnt = ++lc->lc_refcnt;
+		}
+		ldap_pvt_thread_mutex_unlock( &li->li_conninfo.lai_mutex );
 	}
-	ldap_pvt_thread_mutex_unlock( &li->conn_mutex );
 
 	/* Looks like we didn't get a bind. Open a new session... */
 	if ( lc == NULL ) {
 		if ( ldap_back_prepare_conn( &lc, op, rs, sendok ) != LDAP_SUCCESS ) {
 			return NULL;
 		}
-
+		if ( sendok & LDAP_BACK_BINDING ) {
+			LDAP_BACK_CONN_BINDING_SET( lc );
+		}
 		lc->lc_conn = lc_curr.lc_conn;
 		ber_dupbv( &lc->lc_local_ndn, &lc_curr.lc_local_ndn );
 
 		if ( LDAP_BACK_CONN_ISPRIV( &lc_curr ) ) {
-			ber_dupbv( &lc->lc_cred, &li->acl_passwd );
-			ber_dupbv( &lc->lc_bound_ndn, &li->acl_authcDN );
+			ber_dupbv( &lc->lc_cred, &li->li_acl_passwd );
+			ber_dupbv( &lc->lc_bound_ndn, &li->li_acl_authcDN );
 			LDAP_BACK_CONN_ISPRIV_SET( lc );
 
 		} else {
 			BER_BVZERO( &lc->lc_cred );
 			BER_BVZERO( &lc->lc_bound_ndn );
+#if 0
+			/* FIXME: if we set lc_bound_ndn = o_ndn
+			 * we end up with a bind with DN but no password! */
 			if ( !BER_BVISEMPTY( &op->o_ndn )
 				&& SLAP_IS_AUTHZ_BACKEND( op ) )
 			{
 				ber_dupbv( &lc->lc_bound_ndn, &op->o_ndn );
 			}
+#endif
 		}
 
 #ifdef HAVE_TLS
@@ -518,18 +547,18 @@ ldap_back_getconn( Operation *op, SlapReply *rs, ldap_back_send_t sendok )
 		if ( lc->lc_conn == LDAP_BACK_PCONN_TLS
 				&& !ldap_tls_inplace( lc->lc_ld ) )
 		{
-			struct ldapconn *tmplc;
+			ldapconn_t *tmplc;
 			
 			lc_curr.lc_conn = LDAP_BACK_PCONN;
-			ldap_pvt_thread_mutex_lock( &li->conn_mutex );
-			tmplc = (struct ldapconn *)avl_find( li->conntree, 
+			ldap_pvt_thread_mutex_lock( &li->li_conninfo.lai_mutex );
+			tmplc = (ldapconn_t *)avl_find( li->li_conninfo.lai_tree, 
 					(caddr_t)&lc_curr, ldap_back_conn_cmp );
 			if ( tmplc != NULL ) {
 				refcnt = ++tmplc->lc_refcnt;
 				ldap_back_conn_free( lc );
 				lc = tmplc;
 			}
-			ldap_pvt_thread_mutex_unlock( &li->conn_mutex );
+			ldap_pvt_thread_mutex_unlock( &li->li_conninfo.lai_mutex );
 
 			if ( tmplc != NULL ) {
 				goto done;
@@ -540,17 +569,17 @@ ldap_back_getconn( Operation *op, SlapReply *rs, ldap_back_send_t sendok )
 		LDAP_BACK_CONN_ISBOUND_CLEAR( lc );
 
 		/* Inserts the newly created ldapconn in the avl tree */
-		ldap_pvt_thread_mutex_lock( &li->conn_mutex );
+		ldap_pvt_thread_mutex_lock( &li->li_conninfo.lai_mutex );
 
 		assert( lc->lc_refcnt == 1 );
-		rs->sr_err = avl_insert( &li->conntree, (caddr_t)lc,
+		rs->sr_err = avl_insert( &li->li_conninfo.lai_tree, (caddr_t)lc,
 			ldap_back_conn_cmp, ldap_back_conn_dup );
 
 #if PRINT_CONNTREE > 0
-		myprint( li->conntree );
+		myprint( li->li_conninfo.lai_tree );
 #endif /* PRINT_CONNTREE */
 	
-		ldap_pvt_thread_mutex_unlock( &li->conn_mutex );
+		ldap_pvt_thread_mutex_unlock( &li->li_conninfo.lai_mutex );
 
 		Debug( LDAP_DEBUG_TRACE,
 			"=>ldap_back_getconn: conn %p inserted (refcnt=%u)\n",
@@ -568,9 +597,22 @@ ldap_back_getconn( Operation *op, SlapReply *rs, ldap_back_send_t sendok )
 		}
 
 	} else {
-		Debug( LDAP_DEBUG_TRACE,
-			"=>ldap_back_getconn: conn %p fetched (refcnt=%u)\n",
-			(void *)lc, refcnt, 0 );
+		if ( li->li_idle_timeout != 0 && op->o_time > lc->lc_time + li->li_idle_timeout ) {
+			/* in case of failure, it frees/taints lc and sets it to NULL */
+			if ( ldap_back_retry( &lc, op, rs, sendok ) ) {
+				lc = NULL;
+			}
+		}
+
+		if ( lc ) {
+			Debug( LDAP_DEBUG_TRACE,
+				"=>ldap_back_getconn: conn %p fetched (refcnt=%u)\n",
+				(void *)lc, refcnt, 0 );
+		}
+	}
+
+	if ( li->li_idle_timeout && lc ) {
+		lc->lc_time = op->o_time;
 	}
 
 done:;
@@ -578,17 +620,23 @@ done:;
 }
 
 void
-ldap_back_release_conn(
+ldap_back_release_conn_lock(
 	Operation		*op,
 	SlapReply		*rs,
-	struct ldapconn		*lc )
+	ldapconn_t		*lc,
+	int			dolock )
 {
-	struct ldapinfo	*li = (struct ldapinfo *)op->o_bd->be_private;
+	ldapinfo_t	*li = (ldapinfo_t *)op->o_bd->be_private;
 
-	ldap_pvt_thread_mutex_lock( &li->conn_mutex );
+	if ( dolock ) {
+		ldap_pvt_thread_mutex_lock( &li->li_conninfo.lai_mutex );
+	}
 	assert( lc->lc_refcnt > 0 );
 	lc->lc_refcnt--;
-	ldap_pvt_thread_mutex_unlock( &li->conn_mutex );
+	LDAP_BACK_CONN_BINDING_CLEAR( lc );
+	if ( dolock ) {
+		ldap_pvt_thread_mutex_unlock( &li->li_conninfo.lai_mutex );
+	}
 }
 
 /*
@@ -598,18 +646,18 @@ ldap_back_release_conn(
  * it from all the callers, and I made the function return the flag, so
  * it can be used to simplify the check.
  *
- * Note: dolock indicates whether li->conn_mutex must be locked or not
+ * Note: dolock indicates whether li->li_conninfo.lai_mutex must be locked or not
  */
 static int
 ldap_back_dobind_int(
-	struct ldapconn		*lc,
+	ldapconn_t		*lc,
 	Operation		*op,
 	SlapReply		*rs,
 	ldap_back_send_t	sendok,
 	int			retries,
 	int			dolock )
 {	
-	struct ldapinfo	*li = (struct ldapinfo *)op->o_bd->be_private;
+	ldapinfo_t	*li = (ldapinfo_t *)op->o_bd->be_private;
 
 	int		rc = LDAP_BACK_CONN_ISBOUND( lc );
 	ber_int_t	msgid;
@@ -619,6 +667,22 @@ ldap_back_dobind_int(
 	if ( rc ) {
 		return rc;
 	}
+
+	while ( lc->lc_refcnt > 1 ) {
+		ldap_pvt_thread_yield();
+		rc = LDAP_BACK_CONN_ISBOUND( lc );
+		if ( rc ) {
+			return rc;
+		}
+	}
+
+ 	if ( dolock ) {
+ 		ldap_pvt_thread_mutex_lock( &li->li_conninfo.lai_mutex );
+ 	}
+ 	LDAP_BACK_CONN_BINDING_SET( lc );
+ 	if ( dolock ) {
+ 		ldap_pvt_thread_mutex_unlock( &li->li_conninfo.lai_mutex );
+ 	}
 
 	/*
 	 * FIXME: we need to let clients use proxyAuthz
@@ -645,40 +709,40 @@ ldap_back_dobind_int(
 	if ( op->o_conn != NULL &&
 			!op->o_do_not_cache &&
 			( BER_BVISNULL( &lc->lc_bound_ndn ) ||
-			  ( li->idassert_flags & LDAP_BACK_AUTH_OVERRIDE ) ) )
+			  ( li->li_idassert_flags & LDAP_BACK_AUTH_OVERRIDE ) ) )
 	{
-		(void)ldap_back_proxy_authz_bind( lc, op, rs );
+		(void)ldap_back_proxy_authz_bind( lc, op, rs, sendok );
 		goto done;
 	}
 
 #ifdef HAVE_CYRUS_SASL
 	if ( LDAP_BACK_CONN_ISPRIV( lc )
-		&& li->acl_authmethod == LDAP_AUTH_SASL )
+		&& li->li_acl_authmethod == LDAP_AUTH_SASL )
 	{
 		void		*defaults = NULL;
 
-		if ( li->acl_secprops != NULL ) {
+		if ( li->li_acl_secprops != NULL ) {
 			rc = ldap_set_option( lc->lc_ld,
-				LDAP_OPT_X_SASL_SECPROPS, li->acl_secprops);
+				LDAP_OPT_X_SASL_SECPROPS, li->li_acl_secprops);
 
 			if ( rc != LDAP_OPT_SUCCESS ) {
 				Debug( LDAP_DEBUG_ANY, "Error: ldap_set_option "
 					"(%s,SECPROPS,\"%s\") failed!\n",
-					li->url, li->acl_secprops, 0 );
+					li->li_uri, li->li_acl_secprops, 0 );
 				goto done;
 			}
 		}
 
 		defaults = lutil_sasl_defaults( lc->lc_ld,
-				li->acl_sasl_mech.bv_val,
-				li->acl_sasl_realm.bv_val,
-				li->acl_authcID.bv_val,
-				li->acl_passwd.bv_val,
+				li->li_acl_sasl_mech.bv_val,
+				li->li_acl_sasl_realm.bv_val,
+				li->li_acl_authcID.bv_val,
+				li->li_acl_passwd.bv_val,
 				NULL );
 
 		rs->sr_err = ldap_sasl_interactive_bind_s( lc->lc_ld,
-				li->acl_authcDN.bv_val,
-				li->acl_sasl_mech.bv_val, NULL, NULL,
+				li->li_acl_authcDN.bv_val,
+				li->li_acl_sasl_mech.bv_val, NULL, NULL,
 				LDAP_SASL_QUIET, lutil_sasl_interact,
 				defaults );
 
@@ -705,7 +769,7 @@ retry:;
 	if ( rs->sr_err == LDAP_SERVER_DOWN ) {
 		if ( retries != LDAP_BACK_RETRY_NEVER ) {
 			if ( dolock ) {
-				ldap_pvt_thread_mutex_lock( &li->conn_mutex );
+				ldap_pvt_thread_mutex_lock( &li->li_conninfo.lai_mutex );
 			}
 
 			assert( lc->lc_refcnt > 0 );
@@ -717,7 +781,7 @@ retry:;
 				rs->sr_err = ldap_back_prepare_conn( &lc, op, rs, sendok );
 			}
 			if ( dolock ) {
-				ldap_pvt_thread_mutex_unlock( &li->conn_mutex );
+				ldap_pvt_thread_mutex_unlock( &li->li_conninfo.lai_mutex );
 			}
 			if ( rs->sr_err == LDAP_SUCCESS ) {
 				if ( retries > 0 ) {
@@ -727,32 +791,33 @@ retry:;
 			}
 		}
 
-		ldap_back_freeconn( op, lc );
+		ldap_back_freeconn( op, lc, dolock );
 		rs->sr_err = slap_map_api2result( rs );
 
 		return 0;
 	}
 
-	rc = ldap_back_op_result( lc, op, rs, msgid, sendok );
+	rc = ldap_back_op_result( lc, op, rs, msgid, 0, sendok );
 	if ( rc == LDAP_SUCCESS ) {
 		LDAP_BACK_CONN_ISBOUND_SET( lc );
-
-	} else {
-		ldap_back_release_conn( op, rs, lc );
 	}
 
 done:;
+	LDAP_BACK_CONN_BINDING_CLEAR( lc );
 	rc = LDAP_BACK_CONN_ISBOUND( lc );
+	if ( !rc ) {
+		ldap_back_release_conn_lock( op, rs, lc, dolock );
+	}
 
 	return rc;
 }
 
 int
-ldap_back_dobind( struct ldapconn *lc, Operation *op, SlapReply *rs, ldap_back_send_t sendok )
+ldap_back_dobind( ldapconn_t *lc, Operation *op, SlapReply *rs, ldap_back_send_t sendok )
 {
-	struct ldapinfo	*li = (struct ldapinfo *)op->o_bd->be_private;
+	ldapinfo_t	*li = (ldapinfo_t *)op->o_bd->be_private;
 
-	return ldap_back_dobind_int( lc, op, rs, sendok, li->nretries, 1 );
+	return ldap_back_dobind_int( lc, op, rs, sendok, li->li_nretries, 1 );
 }
 
 /*
@@ -765,7 +830,7 @@ static int
 ldap_back_default_rebind( LDAP *ld, LDAP_CONST char *url, ber_tag_t request,
 	ber_int_t msgid, void *params )
 {
-	struct ldapconn *lc = (struct ldapconn *)params;
+	ldapconn_t	*lc = (ldapconn_t *)params;
 
 #ifdef HAVE_TLS
 	/* ... otherwise we couldn't get here */
@@ -792,10 +857,11 @@ ldap_back_default_rebind( LDAP *ld, LDAP_CONST char *url, ber_tag_t request,
 
 int
 ldap_back_op_result(
-		struct ldapconn		*lc,
+		ldapconn_t		*lc,
 		Operation		*op,
 		SlapReply		*rs,
 		ber_int_t		msgid,
+		time_t			timeout,
 		ldap_back_send_t	sendok )
 {
 	char		*match = NULL;
@@ -814,12 +880,27 @@ ldap_back_op_result(
 		int		rc;
 		struct timeval	tv;
 
-		LDAP_BACK_TV_SET( &tv );
+		if ( timeout ) {
+			tv.tv_sec = timeout;
+			tv.tv_usec = 0;
+
+		} else {
+			LDAP_BACK_TV_SET( &tv );
+		}
 
 retry:;
 		/* if result parsing fails, note the failure reason */
-		switch ( ldap_result( lc->lc_ld, msgid, 1, &tv, &res ) ) {
+		rc = ldap_result( lc->lc_ld, msgid, LDAP_MSG_ALL, &tv, &res );
+		switch ( rc ) {
 		case 0:
+			if ( timeout ) {
+				(void)ldap_abandon_ext( lc->lc_ld, msgid, NULL, NULL );
+				rs->sr_err = op->o_protocol >= LDAP_VERSION3 ?
+					LDAP_ADMINLIMIT_EXCEEDED : LDAP_OPERATIONS_ERROR;
+				rs->sr_text = "Operation timed out";
+				break;
+			}
+
 			LDAP_BACK_TV_SET( &tv );
 			ldap_pvt_thread_yield();
 			goto retry;
@@ -837,6 +918,16 @@ retry:;
 		default:
 			rc = ldap_parse_result( lc->lc_ld, res, &rs->sr_err,
 					&match, &text, NULL, NULL, 1 );
+#ifndef LDAP_NULL_IS_NULL
+			if ( match != NULL && match[ 0 ] == '\0' ) {
+				ldap_memfree( match );
+				match = NULL;
+			}
+			if ( text != NULL && text[ 0 ] == '\0' ) {
+				ldap_memfree( text );
+				text = NULL;
+			}
+#endif /* LDAP_NULL_IS_NULL */
 			rs->sr_text = text;
 			if ( rc != LDAP_SUCCESS ) {
 				rs->sr_err = rc;
@@ -881,39 +972,63 @@ retry:;
 
 /* return true if bound, false if failed */
 int
-ldap_back_retry( struct ldapconn *lc, Operation *op, SlapReply *rs, ldap_back_send_t sendok )
+ldap_back_retry( ldapconn_t **lcp, Operation *op, SlapReply *rs, ldap_back_send_t sendok )
 {
 	int		rc = 0;
-	struct ldapinfo	*li = (struct ldapinfo *)op->o_bd->be_private;
-	
-	ldap_pvt_thread_mutex_lock( &li->conn_mutex );
+	ldapinfo_t	*li = (ldapinfo_t *)op->o_bd->be_private;
 
-	if ( lc->lc_refcnt == 1 ) {
-		ldap_unbind_ext( lc->lc_ld, NULL, NULL );
-		lc->lc_ld = NULL;
-		LDAP_BACK_CONN_ISBOUND_CLEAR( lc );
+	assert( lcp != NULL );
+	assert( *lcp != NULL );
+
+	ldap_pvt_thread_mutex_lock( &li->li_conninfo.lai_mutex );
+
+	if ( (*lcp)->lc_refcnt == 1 ) {
+		Debug( LDAP_DEBUG_ANY,
+			"%s ldap_back_retry: retrying URI=\"%s\" DN=\"%s\"\n",
+			op->o_log_prefix, li->li_uri,
+			BER_BVISNULL( &(*lcp)->lc_bound_ndn ) ?
+				"" : (*lcp)->lc_bound_ndn.bv_val );
+
+		ldap_unbind_ext( (*lcp)->lc_ld, NULL, NULL );
+		(*lcp)->lc_ld = NULL;
+		LDAP_BACK_CONN_ISBOUND_CLEAR( (*lcp) );
 
 		/* lc here must be the regular lc, reset and ready for init */
-		rc = ldap_back_prepare_conn( &lc, op, rs, sendok );
-		if ( rc == LDAP_SUCCESS ) {
-			rc = ldap_back_dobind_int( lc, op, rs, sendok, 0, 0 );
+		rc = ldap_back_prepare_conn( lcp, op, rs, sendok );
+		if ( rc != LDAP_SUCCESS ) {
+			rc = 0;
+			*lcp = NULL;
+
+		} else {
+			rc = ldap_back_dobind_int( *lcp, op, rs, sendok, 0, 0 );
+			if ( rc == 0 ) {
+				*lcp = NULL;
+			}
 		}
 	}
 
-	ldap_pvt_thread_mutex_unlock( &li->conn_mutex );
+	ldap_pvt_thread_mutex_unlock( &li->li_conninfo.lai_mutex );
 
 	return rc;
 }
 
 static int
-ldap_back_proxy_authz_bind( struct ldapconn *lc, Operation *op, SlapReply *rs )
+ldap_back_proxy_authz_bind( ldapconn_t *lc, Operation *op, SlapReply *rs, ldap_back_send_t sendok )
 {
-	struct ldapinfo *li = (struct ldapinfo *)op->o_bd->be_private;
+	ldapinfo_t	*li = (ldapinfo_t *)op->o_bd->be_private;
 	struct berval	binddn = slap_empty_bv;
 	struct berval	bindcred = slap_empty_bv;
+	struct berval	ndn;
 	int		dobind = 0;
 	int		msgid;
 	int		rc;
+
+	if ( !BER_BVISNULL( &op->o_conn->c_ndn ) ) {
+		ndn = op->o_conn->c_ndn;
+
+	} else {
+		ndn = op->o_ndn;
+	}
 
 	/*
 	 * FIXME: we need to let clients use proxyAuthz
@@ -938,13 +1053,13 @@ ldap_back_proxy_authz_bind( struct ldapconn *lc, Operation *op, SlapReply *rs )
 	/* bind as proxyauthzdn only if no idassert mode
 	 * is requested, or if the client's identity
 	 * is authorized */
-	switch ( li->idassert_mode ) {
+	switch ( li->li_idassert_mode ) {
 	case LDAP_BACK_IDASSERT_LEGACY:
-		if ( !BER_BVISNULL( &op->o_conn->c_ndn ) && !BER_BVISEMPTY( &op->o_conn->c_ndn ) ) {
-			if ( !BER_BVISNULL( &li->idassert_authcDN ) && !BER_BVISEMPTY( &li->idassert_authcDN ) )
+		if ( !BER_BVISNULL( &ndn ) && !BER_BVISEMPTY( &ndn ) ) {
+			if ( !BER_BVISNULL( &li->li_idassert_authcDN ) && !BER_BVISEMPTY( &li->li_idassert_authcDN ) )
 			{
-				binddn = li->idassert_authcDN;
-				bindcred = li->idassert_passwd;
+				binddn = li->li_idassert_authcDN;
+				bindcred = li->li_idassert_passwd;
 				dobind = 1;
 			}
 		}
@@ -952,20 +1067,39 @@ ldap_back_proxy_authz_bind( struct ldapconn *lc, Operation *op, SlapReply *rs )
 
 	default:
 		/* NOTE: rootdn can always idassert */
-		if ( li->idassert_authz && !be_isroot( op ) ) {
+		if ( BER_BVISNULL( &ndn ) && li->li_idassert_authz == NULL ) {
+			if ( li->li_idassert_flags & LDAP_BACK_AUTH_PRESCRIPTIVE ) {
+				rs->sr_err = LDAP_INAPPROPRIATE_AUTH;
+				if ( sendok & LDAP_BACK_SENDERR ) {
+					send_ldap_result( op, rs );
+				}
+				LDAP_BACK_CONN_ISBOUND_CLEAR( lc );
+
+			} else {
+				rs->sr_err = LDAP_SUCCESS;
+				binddn = slap_empty_bv;
+				bindcred = slap_empty_bv;
+				break;
+			}
+
+			goto done;
+
+		} else if ( li->li_idassert_authz && !be_isroot( op ) ) {
 			struct berval authcDN;
 
-			if ( BER_BVISNULL( &op->o_conn->c_ndn ) ) {
+			if ( BER_BVISNULL( &ndn ) ) {
 				authcDN = slap_empty_bv;
 
 			} else {
-				authcDN = op->o_conn->c_ndn;
+				authcDN = ndn;
 			}	
-			rs->sr_err = slap_sasl_matches( op, li->idassert_authz,
+			rs->sr_err = slap_sasl_matches( op, li->li_idassert_authz,
 					&authcDN, &authcDN );
 			if ( rs->sr_err != LDAP_SUCCESS ) {
-				if ( li->idassert_flags & LDAP_BACK_AUTH_PRESCRIPTIVE ) {
-					send_ldap_result( op, rs );
+				if ( li->li_idassert_flags & LDAP_BACK_AUTH_PRESCRIPTIVE ) {
+					if ( sendok & LDAP_BACK_SENDERR ) {
+						send_ldap_result( op, rs );
+					}
 					LDAP_BACK_CONN_ISBOUND_CLEAR( lc );
 
 				} else {
@@ -979,13 +1113,13 @@ ldap_back_proxy_authz_bind( struct ldapconn *lc, Operation *op, SlapReply *rs )
 			}
 		}
 
-		binddn = li->idassert_authcDN;
-		bindcred = li->idassert_passwd;
+		binddn = li->li_idassert_authcDN;
+		bindcred = li->li_idassert_passwd;
 		dobind = 1;
 		break;
 	}
 
-	if ( dobind && li->idassert_authmethod == LDAP_AUTH_SASL ) {
+	if ( dobind && li->li_idassert_authmethod == LDAP_AUTH_SASL ) {
 #ifdef HAVE_CYRUS_SASL
 		void		*defaults = NULL;
 		struct berval	authzID = BER_BVNULL;
@@ -993,12 +1127,12 @@ ldap_back_proxy_authz_bind( struct ldapconn *lc, Operation *op, SlapReply *rs )
 
 		/* if SASL supports native authz, prepare for it */
 		if ( ( !op->o_do_not_cache || !op->o_is_auth_check ) &&
-				( li->idassert_flags & LDAP_BACK_AUTH_NATIVE_AUTHZ ) )
+				( li->li_idassert_flags & LDAP_BACK_AUTH_NATIVE_AUTHZ ) )
 		{
-			switch ( li->idassert_mode ) {
+			switch ( li->li_idassert_mode ) {
 			case LDAP_BACK_IDASSERT_OTHERID:
 			case LDAP_BACK_IDASSERT_OTHERDN:
-				authzID = li->idassert_authzID;
+				authzID = li->li_idassert_authzID;
 				break;
 
 			case LDAP_BACK_IDASSERT_ANONYMOUS:
@@ -1006,16 +1140,16 @@ ldap_back_proxy_authz_bind( struct ldapconn *lc, Operation *op, SlapReply *rs )
 				break;
 
 			case LDAP_BACK_IDASSERT_SELF:
-				if ( BER_BVISNULL( &op->o_conn->c_ndn ) ) {
+				if ( BER_BVISNULL( &ndn ) ) {
 					/* connection is not authc'd, so don't idassert */
 					BER_BVSTR( &authzID, "dn:" );
 					break;
 				}
-				authzID.bv_len = STRLENOF( "dn:" ) + op->o_conn->c_ndn.bv_len;
+				authzID.bv_len = STRLENOF( "dn:" ) + ndn.bv_len;
 				authzID.bv_val = slap_sl_malloc( authzID.bv_len + 1, op->o_tmpmemctx );
 				AC_MEMCPY( authzID.bv_val, "dn:", STRLENOF( "dn:" ) );
 				AC_MEMCPY( authzID.bv_val + STRLENOF( "dn:" ),
-						op->o_conn->c_ndn.bv_val, op->o_conn->c_ndn.bv_len + 1 );
+						ndn.bv_val, ndn.bv_len + 1 );
 				freeauthz = 1;
 				break;
 
@@ -1024,34 +1158,39 @@ ldap_back_proxy_authz_bind( struct ldapconn *lc, Operation *op, SlapReply *rs )
 			}
 		}
 
-		if ( li->idassert_secprops != NULL ) {
+		if ( li->li_idassert_secprops != NULL ) {
 			rs->sr_err = ldap_set_option( lc->lc_ld,
 				LDAP_OPT_X_SASL_SECPROPS,
-				(void *)li->idassert_secprops );
+				(void *)li->li_idassert_secprops );
 
 			if ( rs->sr_err != LDAP_OPT_SUCCESS ) {
-				send_ldap_result( op, rs );
+				rs->sr_err = LDAP_OTHER;
+				if ( sendok & LDAP_BACK_SENDERR ) {
+					send_ldap_result( op, rs );
+				}
 				LDAP_BACK_CONN_ISBOUND_CLEAR( lc );
 				goto done;
 			}
 		}
 
 		defaults = lutil_sasl_defaults( lc->lc_ld,
-				li->idassert_sasl_mech.bv_val,
-				li->idassert_sasl_realm.bv_val,
-				li->idassert_authcID.bv_val,
-				li->idassert_passwd.bv_val,
+				li->li_idassert_sasl_mech.bv_val,
+				li->li_idassert_sasl_realm.bv_val,
+				li->li_idassert_authcID.bv_val,
+				li->li_idassert_passwd.bv_val,
 				authzID.bv_val );
 
 		rs->sr_err = ldap_sasl_interactive_bind_s( lc->lc_ld, binddn.bv_val,
-				li->idassert_sasl_mech.bv_val, NULL, NULL,
+				li->li_idassert_sasl_mech.bv_val, NULL, NULL,
 				LDAP_SASL_QUIET, lutil_sasl_interact,
 				defaults );
 
 		rs->sr_err = slap_map_api2result( rs );
 		if ( rs->sr_err != LDAP_SUCCESS ) {
 			LDAP_BACK_CONN_ISBOUND_CLEAR( lc );
-			send_ldap_result( op, rs );
+			if ( sendok & LDAP_BACK_SENDERR ) {
+				send_ldap_result( op, rs );
+			}
 
 		} else {
 			LDAP_BACK_CONN_ISBOUND_SET( lc );
@@ -1066,7 +1205,7 @@ ldap_back_proxy_authz_bind( struct ldapconn *lc, Operation *op, SlapReply *rs )
 #endif /* HAVE_CYRUS_SASL */
 	}
 
-	switch ( li->idassert_authmethod ) {
+	switch ( li->li_idassert_authmethod ) {
 	case LDAP_AUTH_NONE:
 		LDAP_BACK_CONN_ISBOUND_SET( lc );
 		goto done;
@@ -1081,11 +1220,13 @@ ldap_back_proxy_authz_bind( struct ldapconn *lc, Operation *op, SlapReply *rs )
 		/* unsupported! */
 		LDAP_BACK_CONN_ISBOUND_CLEAR( lc );
 		rs->sr_err = LDAP_AUTH_METHOD_NOT_SUPPORTED;
-		send_ldap_result( op, rs );
+		if ( sendok & LDAP_BACK_SENDERR ) {
+			send_ldap_result( op, rs );
+		}
 		goto done;
 	}
 
-	rc = ldap_back_op_result( lc, op, rs, msgid, LDAP_BACK_SENDERR );
+	rc = ldap_back_op_result( lc, op, rs, msgid, 0, sendok );
 	if ( rc == LDAP_SUCCESS ) {
 		LDAP_BACK_CONN_ISBOUND_SET( lc );
 	}
@@ -1121,16 +1262,17 @@ done:;
  */
 int
 ldap_back_proxy_authz_ctrl(
-		struct ldapconn	*lc,
+		ldapconn_t	*lc,
 		Operation	*op,
 		SlapReply	*rs,
 		LDAPControl	***pctrls )
 {
-	struct ldapinfo	*li = (struct ldapinfo *) op->o_bd->be_private;
+	ldapinfo_t	*li = (ldapinfo_t *) op->o_bd->be_private;
 	LDAPControl	**ctrls = NULL;
 	int		i = 0,
 			mode;
-	struct berval	assertedID;
+	struct berval	assertedID,
+			ndn;
 
 	*pctrls = NULL;
 
@@ -1139,8 +1281,8 @@ ldap_back_proxy_authz_ctrl(
 	/* FIXME: SASL/EXTERNAL over ldapi:// doesn't honor the authcID,
 	 * but if it is not set this test fails.  We need a different
 	 * means to detect if idassert is enabled */
-	if ( ( BER_BVISNULL( &li->idassert_authcID ) || BER_BVISEMPTY( &li->idassert_authcID ) )
-			&& ( BER_BVISNULL( &li->idassert_authcDN ) || BER_BVISEMPTY( &li->idassert_authcDN ) ) )
+	if ( ( BER_BVISNULL( &li->li_idassert_authcID ) || BER_BVISEMPTY( &li->li_idassert_authcID ) )
+			&& ( BER_BVISNULL( &li->li_idassert_authcDN ) || BER_BVISEMPTY( &li->li_idassert_authcDN ) ) )
 	{
 		goto done;
 	}
@@ -1149,7 +1291,14 @@ ldap_back_proxy_authz_ctrl(
 		goto done;
 	}
 
-	if ( li->idassert_mode == LDAP_BACK_IDASSERT_LEGACY ) {
+	if ( !BER_BVISNULL( &op->o_conn->c_ndn ) ) {
+		ndn = op->o_conn->c_ndn;
+
+	} else {
+		ndn = op->o_ndn;
+	}
+
+	if ( li->li_idassert_mode == LDAP_BACK_IDASSERT_LEGACY ) {
 		if ( op->o_proxy_authz ) {
 			/*
 			 * FIXME: we do not want to perform proxyAuthz
@@ -1172,41 +1321,41 @@ ldap_back_proxy_authz_ctrl(
 			goto done;
 		}
 
-		if ( BER_BVISNULL( &op->o_conn->c_ndn ) ) {
+		if ( BER_BVISNULL( &ndn ) ) {
 			goto done;
 		}
 
-		if ( BER_BVISNULL( &li->idassert_authcDN ) ) {
+		if ( BER_BVISNULL( &li->li_idassert_authcDN ) ) {
 			goto done;
 		}
 
-	} else if ( li->idassert_authmethod == LDAP_AUTH_SASL ) {
-		if ( ( li->idassert_flags & LDAP_BACK_AUTH_NATIVE_AUTHZ )
-				/* && ( !BER_BVISNULL( &op->o_conn->c_ndn )
+	} else if ( li->li_idassert_authmethod == LDAP_AUTH_SASL ) {
+		if ( ( li->li_idassert_flags & LDAP_BACK_AUTH_NATIVE_AUTHZ )
+				/* && ( !BER_BVISNULL( &ndn )
 					|| LDAP_BACK_CONN_ISBOUND( lc ) ) */ )
 		{
 			/* already asserted in SASL via native authz */
 			/* NOTE: the test on lc->lc_bound is used to trap
 			 * native authorization of anonymous users,
-			 * since in that case op->o_conn->c_ndn is NULL */
+			 * since in that case ndn is NULL */
 			goto done;
 		}
 
-	} else if ( li->idassert_authz && !be_isroot( op ) ) {
+	} else if ( li->li_idassert_authz && !be_isroot( op ) ) {
 		int		rc;
 		struct berval authcDN;
 
-		if ( BER_BVISNULL( &op->o_conn->c_ndn ) ) {
+		if ( BER_BVISNULL( &ndn ) ) {
 			authcDN = slap_empty_bv;
 		} else {
-			authcDN = op->o_conn->c_ndn;
+			authcDN = ndn;
 		}
-		rc = slap_sasl_matches( op, li->idassert_authz,
+		rc = slap_sasl_matches( op, li->li_idassert_authz,
 				&authcDN, & authcDN );
 		if ( rc != LDAP_SUCCESS ) {
-			if ( li->idassert_flags & LDAP_BACK_AUTH_PRESCRIPTIVE )
+			if ( li->li_idassert_flags & LDAP_BACK_AUTH_PRESCRIPTIVE )
 			{
-				/* op->o_conn->c_ndn is not authorized
+				/* ndn is not authorized
 				 * to use idassert */
 				return rc;
 			}
@@ -1236,22 +1385,28 @@ ldap_back_proxy_authz_ctrl(
 		rs->sr_text = "proxyAuthz not allowed within namingContext";
 	}
 
-	if ( op->o_do_not_cache && op->o_is_auth_check ) {
+	if ( op->o_is_auth_check ) {
 		mode = LDAP_BACK_IDASSERT_NOASSERT;
 
 	} else {
-		mode = li->idassert_mode;
+		mode = li->li_idassert_mode;
 	}
 
 	switch ( mode ) {
-	case LDAP_BACK_IDASSERT_LEGACY:
 	case LDAP_BACK_IDASSERT_SELF:
+		if ( BER_BVISNULL( &ndn ) ) {
+			goto done;
+		}
+		assertedID = ndn;
+		break;
+
+	case LDAP_BACK_IDASSERT_LEGACY:
 		/* original behavior:
 		 * assert the client's identity */
-		if ( BER_BVISNULL( &op->o_conn->c_ndn ) ) {
+		if ( BER_BVISNULL( &ndn ) ) {
 			assertedID = slap_empty_bv;
 		} else {
-			assertedID = op->o_conn->c_ndn;
+			assertedID = ndn;
 		}
 		break;
 
@@ -1267,7 +1422,7 @@ ldap_back_proxy_authz_ctrl(
 	case LDAP_BACK_IDASSERT_OTHERID:
 	case LDAP_BACK_IDASSERT_OTHERDN:
 		/* assert idassert DN */
-		assertedID = li->idassert_authzID;
+		assertedID = li->li_idassert_authzID;
 		break;
 
 	default:
@@ -1283,23 +1438,25 @@ ldap_back_proxy_authz_ctrl(
 			/* just count ctrls */ ;
 	}
 
-	ctrls = ch_malloc( sizeof( LDAPControl * ) * (i + 2) );
-	ctrls[ 0 ] = ch_malloc( sizeof( LDAPControl ) );
+	ctrls = op->o_tmpalloc( sizeof( LDAPControl * ) * (i + 2) + sizeof( LDAPControl ),
+			op->o_tmpmemctx );
+	ctrls[ 0 ] = (LDAPControl *)&ctrls[ i + 2 ];
 	
 	ctrls[ 0 ]->ldctl_oid = LDAP_CONTROL_PROXY_AUTHZ;
 	ctrls[ 0 ]->ldctl_iscritical = 1;
 
-	switch ( li->idassert_mode ) {
+	switch ( li->li_idassert_mode ) {
 	/* already in u:ID or dn:DN form */
 	case LDAP_BACK_IDASSERT_OTHERID:
 	case LDAP_BACK_IDASSERT_OTHERDN:
-		ber_dupbv( &ctrls[ 0 ]->ldctl_value, &assertedID );
+		ber_dupbv_x( &ctrls[ 0 ]->ldctl_value, &assertedID, op->o_tmpmemctx );
 		break;
 
 	/* needs the dn: prefix */
 	default:
 		ctrls[ 0 ]->ldctl_value.bv_len = assertedID.bv_len + STRLENOF( "dn:" );
-		ctrls[ 0 ]->ldctl_value.bv_val = ch_malloc( ctrls[ 0 ]->ldctl_value.bv_len + 1 );
+		ctrls[ 0 ]->ldctl_value.bv_val = op->o_tmpalloc( ctrls[ 0 ]->ldctl_value.bv_len + 1,
+				op->o_tmpmemctx );
 		AC_MEMCPY( ctrls[ 0 ]->ldctl_value.bv_val, "dn:", STRLENOF( "dn:" ) );
 		AC_MEMCPY( &ctrls[ 0 ]->ldctl_value.bv_val[ STRLENOF( "dn:" ) ],
 				assertedID.bv_val, assertedID.bv_len + 1 );
@@ -1335,11 +1492,10 @@ ldap_back_proxy_authz_ctrl_free( Operation *op, LDAPControl ***pctrls )
 		assert( ctrls[ 0 ] != NULL );
 
 		if ( !BER_BVISNULL( &ctrls[ 0 ]->ldctl_value ) ) {
-			free( ctrls[ 0 ]->ldctl_value.bv_val );
+			op->o_tmpfree( ctrls[ 0 ]->ldctl_value.bv_val, op->o_tmpmemctx );
 		}
 
-		free( ctrls[ 0 ] );
-		free( ctrls );
+		op->o_tmpfree( ctrls, op->o_tmpmemctx );
 	} 
 
 	*pctrls = NULL;

@@ -1,8 +1,8 @@
 /* time.c - deal with time subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/time.c,v 1.29.2.3 2005/08/09 21:04:05 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/time.c,v 1.29.2.4 2006/01/03 22:16:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2005 The OpenLDAP Foundation.
+ * Copyright 2001-2006 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *

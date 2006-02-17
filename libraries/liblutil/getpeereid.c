@@ -1,8 +1,8 @@
 /* getpeereid.c */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/getpeereid.c,v 1.13.2.5 2005/08/29 18:46:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/getpeereid.c,v 1.13.2.7 2006/01/03 22:16:11 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2005 The OpenLDAP Foundation.
+ * Copyright 2000-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,8 +32,8 @@
 #endif
 
 #if !defined(SO_PEERCRED) && !defined(LOCAL_PEERCRED) && \
-	defined(HAVE_SENDMSG) && (defined(HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS) || \
-				  defined(HAVE_STRUCT_MSGHDR_MSG_CONTROL))
+	defined(HAVE_SENDMSG) && (defined(HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTSLEN) || \
+		defined(HAVE_STRUCT_MSGHDR_MSG_CONTROL))
 #define DO_SENDMSG
 #ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>

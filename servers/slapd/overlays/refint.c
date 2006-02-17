@@ -1,8 +1,8 @@
 /* refint.c - referential integrity module */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/refint.c,v 1.7.2.6 2005/08/19 18:09:05 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/refint.c,v 1.7.2.9 2006/01/03 22:16:25 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2005 The OpenLDAP Foundation.
+ * Copyright 2004-2006 The OpenLDAP Foundation.
  * Portions Copyright 2004 Symas Corporation.
  * All rights reserved.
  *
@@ -621,10 +621,6 @@ refint_response(
 	*/
 
 	for(dp = dd.mods; dp; dp = dp->next) {
-		Modifications **tail, *m;
-
-		for(m = dp->mm; m && m->sml_next; m = m->sml_next);
-		tail = &m->sml_next;
 		nop.o_req_dn	= dp->dn;
 		nop.o_req_ndn	= dp->dn;
 		nop.o_bd = select_backend(&dp->dn, 0, 1);
@@ -637,8 +633,6 @@ refint_response(
 		nop.orm_modlist = dp->mm;	/* callback did all the work */
 		nop.o_dn = refint_dn;
 		nop.o_ndn = refint_dn;
-		rs->sr_err = slap_mods_opattrs( &nop, nop.orm_modlist,
-			tail, &rs->sr_text, NULL, 0, 1 );
 		nop.o_dn = nop.o_bd->be_rootdn;
 		nop.o_ndn = nop.o_bd->be_rootndn;
 		if(rs->sr_err != LDAP_SUCCESS) goto done;
@@ -665,7 +659,7 @@ done:
 ** it expects to be called automagically during dynamic module initialization
 */
 
-int refint_init() {
+int refint_initialize() {
 
 	/* statically declared just after the #includes at top */
 	refint.on_bi.bi_type = "refint";
@@ -680,7 +674,7 @@ int refint_init() {
 
 #if SLAPD_OVER_REFINT == SLAPD_MOD_DYNAMIC && defined(PIC)
 int init_module(int argc, char *argv[]) {
-	return refint_init();
+	return refint_initialize();
 }
 #endif
 

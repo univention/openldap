@@ -1,8 +1,8 @@
 /* ldapsync.c -- LDAP Content Sync Routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ldapsync.c,v 1.21.2.3 2005/10/07 16:53:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ldapsync.c,v 1.21.2.6 2006/01/03 22:16:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2005 The OpenLDAP Foundation.
+ * Copyright 2003-2006 The OpenLDAP Foundation.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
  *
@@ -97,20 +97,25 @@ slap_parse_sync_cookie(
 	int valid = 0;
 	char *rid_ptr;
 	char *cval;
+	char *next;
 
 	if ( cookie == NULL )
 		return -1;
 
+	if ( cookie->octet_str.bv_len <= STRLENOF( "rid=" ) )
+		return -1;
+
 	cookie->rid = -1;
-	if (( rid_ptr = strstr( cookie->octet_str.bv_val, "rid=" )) != NULL ) {
-		if ( (cval = strchr( rid_ptr, ',' )) != NULL ) {
-			*cval = '\0';
-		}
-		cookie->rid = atoi( rid_ptr + sizeof("rid=") - 1 );
-		if ( cval != NULL ) {
-			*cval = ',';
-		}
-	} else {
+	/* FIXME: may read past end of cookie->octet_str.bv_val */
+	rid_ptr = strstr( cookie->octet_str.bv_val, "rid=" );
+	if ( rid_ptr == NULL 
+		|| rid_ptr > &cookie->octet_str.bv_val[ cookie->octet_str.bv_len - STRLENOF( "rid=" ) ] )
+	{
+		return -1;
+	}
+
+	cookie->rid = strtoul( &rid_ptr[ STRLENOF( "rid=" ) ], &next, 10 );
+	if ( next == &rid_ptr[ STRLENOF( "rid=" ) ] || ( next[ 0 ] != ',' && next[ 0 ] != '\0' ) ) {
 		return -1;
 	}
 
@@ -123,16 +128,20 @@ slap_parse_sync_cookie(
 		if ( ad == NULL )
 			break;
 
+		if ( csn_ptr >= &cookie->octet_str.bv_val[ cookie->octet_str.bv_len - STRLENOF( "csn=" ) ] ) {
+			return -1;
+		}
+
 		csn_str = csn_ptr + STRLENOF("csn=");
 		cval = strchr( csn_str, ',' );
-		if ( cval )
+		if ( cval && cval < &cookie->octet_str.bv_val[ cookie->octet_str.bv_len ] )
 			csn_str_len = cval - csn_str;
 		else
 			csn_str_len = 0;
 
 		/* FIXME use csnValidate when it gets implemented */
 		csn_ptr = strchr( csn_str, '#' );
-		if ( !csn_ptr ) break;
+		if ( !csn_ptr || csn_str >= &cookie->octet_str.bv_val[ cookie->octet_str.bv_len ] ) break;
 
 		stamp.bv_val = csn_str;
 		stamp.bv_len = csn_ptr - csn_str;

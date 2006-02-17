@@ -1,8 +1,8 @@
 /* modify.c - bdb backend modify routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modify.c,v 1.124.2.6 2005/09/28 00:30:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modify.c,v 1.124.2.13 2006/01/16 18:59:27 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2005 The OpenLDAP Foundation.
+ * Copyright 2000-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -91,7 +91,9 @@ int bdb_modify_internal(
 
 		switch ( mod->sm_op ) {
 		case LDAP_MOD_ADD:
-			Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: add\n", 0, 0, 0);
+			Debug(LDAP_DEBUG_ARGS,
+				"bdb_modify_internal: add %s\n",
+				mod->sm_desc->ad_cname.bv_val, 0, 0);
 			err = modify_add_values( e, mod, get_permissiveModify(op),
 				text, textbuf, textlen );
 			if( err != LDAP_SUCCESS ) {
@@ -106,7 +108,9 @@ int bdb_modify_internal(
 				break;
 			}
 
-			Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: delete\n", 0, 0, 0);
+			Debug(LDAP_DEBUG_ARGS,
+				"bdb_modify_internal: delete %s\n",
+				mod->sm_desc->ad_cname.bv_val, 0, 0);
 			err = modify_delete_values( e, mod, get_permissiveModify(op),
 				text, textbuf, textlen );
 			assert( err != LDAP_TYPE_OR_VALUE_EXISTS );
@@ -117,7 +121,9 @@ int bdb_modify_internal(
 			break;
 
 		case LDAP_MOD_REPLACE:
-			Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: replace\n", 0, 0, 0);
+			Debug(LDAP_DEBUG_ARGS,
+				"bdb_modify_internal: replace %s\n",
+				mod->sm_desc->ad_cname.bv_val, 0, 0);
 			err = modify_replace_values( e, mod, get_permissiveModify(op),
 				text, textbuf, textlen );
 			if( err != LDAP_SUCCESS ) {
@@ -128,7 +134,8 @@ int bdb_modify_internal(
 
 		case LDAP_MOD_INCREMENT:
 			Debug(LDAP_DEBUG_ARGS,
-				"bdb_modify_internal: increment\n", 0, 0, 0);
+				"bdb_modify_internal: increment %s\n",
+				mod->sm_desc->ad_cname.bv_val, 0, 0);
 			err = modify_increment_values( e, mod, get_permissiveModify(op),
 				text, textbuf, textlen );
 			if( err != LDAP_SUCCESS ) {
@@ -139,7 +146,9 @@ int bdb_modify_internal(
 			break;
 
 		case SLAP_MOD_SOFTADD:
-			Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: softadd\n", 0, 0, 0);
+			Debug(LDAP_DEBUG_ARGS,
+				"bdb_modify_internal: softadd %s\n",
+				mod->sm_desc->ad_cname.bv_val, 0, 0);
  			/* Avoid problems in index_add_mods()
  			 * We need to add index if necessary.
  			 */
@@ -289,6 +298,9 @@ bdb_modify( Operation *op, SlapReply *rs )
 
 	ctrls[num_ctrls] = NULL;
 
+	if ( !SLAP_SHADOW( op->o_bd ))
+		slap_mods_opattrs( op, &op->orm_modlist, 1 );
+
 	if( 0 ) {
 retry:	/* transaction retry */
 		if ( dummy.e_attrs ) {
@@ -315,7 +327,6 @@ retry:	/* transaction retry */
 			rs->sr_err = SLAPD_ABANDON;
 			goto return_results;
 		}
-		ldap_pvt_thread_yield();
 		bdb_trans_backoff( ++num_retries );
 	}
 
@@ -378,7 +389,9 @@ retry:	/* transaction retry */
 		}
 	}
 
-	e = ei->bei_e;
+	if ( !fakeroot ) {
+		e = ei->bei_e;
+	}
 
 	/* acquire and lock entry */
 	/* FIXME: dn2entry() should return non-glue entry */
@@ -524,7 +537,8 @@ retry:	/* transaction retry */
 		if ( ( rs->sr_err = TXN_ABORT( ltid ) ) != 0 ) {
 			rs->sr_text = "txn_abort (no-op) failed";
 		} else {
-			rs->sr_err = LDAP_NO_OPERATION;
+			rs->sr_err = LDAP_X_NO_OPERATION;
+			ltid = NULL;
 			goto return_results;
 		}
 	} else {
@@ -533,6 +547,9 @@ retry:	/* transaction retry */
 		if ( fakeroot ) {
 			e->e_private = NULL;
 			entry_free( e );
+			e = NULL;
+			attrs_free( dummy.e_attrs );
+
 		} else {
 			rc = bdb_cache_modify( e, dummy.e_attrs, bdb->bi_dbenv, locker, &lock );
 			switch( rc ) {
@@ -573,9 +590,10 @@ return_results:
 		attrs_free( dummy.e_attrs );
 	}
 	send_ldap_result( op, rs );
+	if ( !SLAP_SHADOW( op->o_bd ))
+		slap_graduate_commit_csn( op );
 
 	if( rs->sr_err == LDAP_SUCCESS && bdb->bi_txn_cp ) {
-		ldap_pvt_thread_yield();
 		TXN_CHECKPOINT( bdb->bi_dbenv,
 			bdb->bi_txn_cp_kbyte, bdb->bi_txn_cp_min, 0 );
 	}
@@ -583,8 +601,8 @@ return_results:
 done:
 	if( ltid != NULL ) {
 		TXN_ABORT( ltid );
-		op->o_private = NULL;
 	}
+	op->o_private = NULL;
 
 	if( e != NULL ) {
 		bdb_unlocked_cache_return_entry_w (&bdb->bi_cache, e);

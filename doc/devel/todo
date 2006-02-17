@@ -48,17 +48,17 @@ Localize tools
 
 Small projects
 --------------
+Add BSD kqueue(2) support to slapd(8)
 Add DSML capabilities to command line tools
 Add LDIFv2 (XML) support to command line tools
 Implement authPassword (RFC 3112)
-Implement SASLprep
+Implement SASLprep (RFC 4013) for LDAP (draft-ietf-ldapbis-*)
 Implement additional matching rules (RFC 3698)
 Add dumpasn1 logging support
 Add tests to test suite
-Add jail(2) support
 Recode linked-list structs to use <ldap_queue.h> macros
 Convert utfconv.txt into man page(s).
-Update any manual page
+Update manual pages as needed.
 
 
 For additional TODO items, see:
@@ -70,4 +70,4 @@ JLDAP TODO items, see:
   http://www.openldap.org/devel/cvsweb.cgi/~checkout~/design/todo.txt?rev=1&cvsroot=JLDAP
 
 ---
-$OpenLDAP: pkg/ldap/doc/devel/todo,v 1.132.2.1 2005/04/29 21:29:01 kurt Exp $
+$OpenLDAP: pkg/ldap/doc/devel/todo,v 1.132.2.4 2006/01/16 19:06:12 kurt Exp $

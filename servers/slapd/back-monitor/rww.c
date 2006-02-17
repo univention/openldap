@@ -1,8 +1,8 @@
 /* readw.c - deal with read waiters subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/rww.c,v 1.26.2.3 2005/08/09 21:04:05 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/rww.c,v 1.26.2.5 2006/01/03 22:16:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2005 The OpenLDAP Foundation.
+ * Copyright 2001-2006 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -29,6 +29,11 @@
 #include "back-monitor.h"
 
 static int
+monitor_subsys_rww_destroy(
+	BackendDB		*be,
+	monitor_subsys_t	*ms );
+
+static int
 monitor_subsys_rww_update(
 	Operation		*op,
 	SlapReply		*rs,
@@ -41,7 +46,7 @@ enum {
 	MONITOR_RWW_LAST
 };
 
-struct monitor_rww_t {
+static struct monitor_rww_t {
 	struct berval	rdn;
 	struct berval	nrdn;
 } monitor_rww[] = {
@@ -53,8 +58,7 @@ struct monitor_rww_t {
 int
 monitor_subsys_rww_init(
 	BackendDB		*be,
-	monitor_subsys_t	*ms
-)
+	monitor_subsys_t	*ms )
 {
 	monitor_info_t	*mi;
 	
@@ -64,6 +68,7 @@ monitor_subsys_rww_init(
 
 	assert( be != NULL );
 
+	ms->mss_destroy = monitor_subsys_rww_destroy;
 	ms->mss_update = monitor_subsys_rww_update;
 
 	mi = ( monitor_info_t * )be->be_private;
@@ -145,6 +150,20 @@ monitor_subsys_rww_init(
 	monitor_cache_release( mi, e_conn );
 
 	return( 0 );
+}
+
+static int
+monitor_subsys_rww_destroy(
+	BackendDB		*be,
+	monitor_subsys_t	*ms )
+{
+	int		i;
+
+	for ( i = 0; i < MONITOR_RWW_LAST; i++ ) {
+		ber_memfree_x( monitor_rww[ i ].nrdn.bv_val, NULL );
+	}
+
+	return 0;
 }
 
 static int

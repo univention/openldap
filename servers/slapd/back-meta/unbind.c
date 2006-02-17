@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/unbind.c,v 1.11.2.6 2005/09/28 00:30:33 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/unbind.c,v 1.11.2.10 2006/01/03 22:16:20 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -44,15 +44,17 @@ meta_back_conn_destroy(
 
 
 	Debug( LDAP_DEBUG_TRACE,
-		"=>meta_back_conn_destroy: fetching conn %ld\n",
-		conn->c_connid, 0, 0 );
+		"=>meta_back_conn_destroy: fetching conn=%ld DN=\"%s\"\n",
+		conn->c_connid,
+		BER_BVISNULL( &conn->c_ndn ) ? "" : conn->c_ndn.bv_val, 0 );
 	
 	mc_curr.mc_conn = conn;
+	mc_curr.mc_local_ndn = conn->c_ndn;
 	
-	ldap_pvt_thread_mutex_lock( &mi->mi_conn_mutex );
-	mc = avl_delete( &mi->mi_conntree, ( caddr_t )&mc_curr,
+	ldap_pvt_thread_mutex_lock( &mi->mi_conninfo.lai_mutex );
+	mc = avl_delete( &mi->mi_conninfo.lai_tree, ( caddr_t )&mc_curr,
 			meta_back_conn_cmp );
-	ldap_pvt_thread_mutex_unlock( &mi->mi_conn_mutex );
+	ldap_pvt_thread_mutex_unlock( &mi->mi_conninfo.lai_mutex );
 
 	if ( mc ) {
 		Debug( LDAP_DEBUG_TRACE,
@@ -60,12 +62,6 @@ meta_back_conn_destroy(
 			LDAP_BACK_PCONN_ID( mc->mc_conn ), 0, 0 );
 		
 		assert( mc->mc_refcnt == 0 );
-
-		for ( i = 0; i < mi->mi_ntargets; ++i ) {
-			if ( mc->mc_conns[ i ].msc_ld != NULL ) {
-				meta_clear_one_candidate( &mc->mc_conns[ i ] );
-			}
-		}
 
 		meta_back_conn_free( mc );
 	}

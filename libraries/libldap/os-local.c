@@ -1,8 +1,8 @@
 /* os-local.c -- platform-specific domain socket code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.37.2.4 2005/09/28 00:30:28 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.37.2.6 2006/01/03 22:16:08 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -156,8 +156,8 @@ ldap_pvt_is_socket_ready(LDAP *ld, int s)
 
 #if !defined(HAVE_GETPEEREID) && \
 	!defined(SO_PEERCRED) && !defined(LOCAL_PEERCRED) && \
-	defined(HAVE_SENDMSG) && (defined(HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS) || \
-				  defined(HAVE_STRUCT_MSGHDR_MSG_CONTROL))
+	defined(HAVE_SENDMSG) && (defined(HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTSLEN) || \
+		defined(HAVE_STRUCT_MSGHDR_MSG_CONTROL))
 #define DO_SENDMSG
 static const char abandonPDU[] = {LDAP_TAG_MESSAGE, 6,
 	LDAP_TAG_MSGID, 1, 0, LDAP_REQ_ABANDON, 1, 0};

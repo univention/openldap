@@ -1,8 +1,8 @@
 /* operation.c - routines to deal with pending ldap operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.63.2.4 2005/08/09 21:03:59 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.63.2.6 2006/01/03 22:16:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -112,6 +112,21 @@ slap_op_free( Operation *op )
 	ldap_pvt_thread_mutex_unlock( &slap_op_mutex );
 }
 
+void
+slap_op_time(time_t *t, int *nop)
+{
+	*t = slap_get_time();
+	ldap_pvt_thread_mutex_lock( &slap_op_mutex );
+	if ( *t == last_time ) {
+		*nop = ++last_incr;
+	} else {
+		last_time = *t;
+		last_incr = 0;
+		*nop = 0;
+	}
+	ldap_pvt_thread_mutex_unlock( &slap_op_mutex );
+}
+
 Operation *
 slap_op_alloc(
     BerElement		*ber,
@@ -139,13 +154,7 @@ slap_op_alloc(
 	op->o_msgid = msgid;
 	op->o_tag = tag;
 
-	op->o_time = slap_get_time();
-	if ( op->o_time == last_time ) {
-		op->o_tincr = ++last_incr;
-	} else {
-		last_time = op->o_time;
-		last_incr = 0;	/* o_tincr is alredy zero */
-	}
+	slap_op_time( &op->o_time, &op->o_tincr );
 	op->o_opid = id;
 	op->o_res_ber = NULL;
 

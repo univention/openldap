@@ -1,8 +1,8 @@
 /* init.c - initialize various things */
-/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.81.2.9 2005/09/28 00:30:31 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.81.2.11 2006/01/03 22:16:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,6 +67,7 @@ struct berval NoAttrs = BER_BVC( LDAP_NO_ATTRS );
  */
 ldap_pvt_thread_pool_t	connection_pool;
 int			connection_pool_max = SLAP_MAX_WORKER_THREADS;
+int		slap_tool_thread_max = 1;
 #ifndef HAVE_GMTIME_R
 ldap_pvt_thread_mutex_t	gmtime_mutex;
 #endif
@@ -124,8 +125,6 @@ slap_init( int mode, const char *name )
 
 	switch ( slapMode & SLAP_MODE ) {
 	case SLAP_SERVER_MODE:
-		ldap_pvt_thread_pool_init( &connection_pool,
-				connection_pool_max, 0);
 
 		/* FALLTHRU */
 	case SLAP_TOOL_MODE:
@@ -135,6 +134,9 @@ slap_init( int mode, const char *name )
 			0 );
 
 		slap_name = name;
+
+		ldap_pvt_thread_pool_init( &connection_pool,
+				connection_pool_max, 0);
 
 		ldap_pvt_thread_mutex_init( &entry2str_mutex );
 		ldap_pvt_thread_mutex_init( &replog_mutex );

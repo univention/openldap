@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/tests/progs/slapd-addel.c,v 1.27.2.4 2005/08/19 18:09:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/tests/progs/slapd-addel.c,v 1.27.2.8 2006/01/03 22:16:28 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 
 #define LDAP_DEPRECATED 1
 #include <ldap.h>
+#include <lutil.h>
 
 #define LOOPS	100
 #define RETRIES	0
@@ -41,7 +42,8 @@ get_add_entry( char *filename, LDAPMod ***mods );
 
 static void
 do_addel( char *uri, char *host, int port, char *manager, char *passwd,
-	char *dn, LDAPMod **attrs, int maxloop, int maxretries, int delay );
+	char *dn, LDAPMod **attrs, int maxloop, int maxretries, int delay,
+	int friendly );
 
 static void
 usage( char *name )
@@ -54,7 +56,8 @@ usage( char *name )
 		"-f <addfile> "
 		"[-l <loops>] "
 		"[-r <maxretries>] "
-		"[-t <delay>]\n",
+		"[-t <delay>] "
+		"[-F]\n",
 			name );
 	exit( EXIT_FAILURE );
 }
@@ -73,10 +76,15 @@ main( int argc, char **argv )
 	int		loops = LOOPS;
 	int		retries = RETRIES;
 	int		delay = 0;
+	int		friendly = 0;
 	LDAPMod		**attrs = NULL;
 
-	while ( (i = getopt( argc, argv, "H:h:p:D:w:f:l:r:t:" )) != EOF ) {
+	while ( (i = getopt( argc, argv, "FH:h:p:D:w:f:l:r:t:" )) != EOF ) {
 		switch( i ) {
+		case 'F':
+			friendly++;
+			break;
+			
 		case 'H':		/* the server's URI */
 			uri = strdup( optarg );
 			break;
@@ -86,7 +94,9 @@ main( int argc, char **argv )
 			break;
 
 		case 'p':		/* the servers port */
-			port = atoi( optarg );
+			if ( lutil_atoi( &port, optarg ) != 0 ) {
+				usage( argv[0] );
+			}
 			break;
 
 		case 'D':		/* the servers manager */
@@ -102,15 +112,21 @@ main( int argc, char **argv )
 			break;
 
 		case 'l':		/* the number of loops */
-			loops = atoi( optarg );
+			if ( lutil_atoi( &loops, optarg ) != 0 ) {
+				usage( argv[0] );
+			}
 			break;
 
 		case 'r':		/* number of retries */
-			retries = atoi( optarg );
+			if ( lutil_atoi( &retries, optarg ) != 0 ) {
+				usage( argv[0] );
+			}
 			break;
 
 		case 't':		/* delay in seconds */
-			delay = atoi( optarg );
+			if ( lutil_atoi( &delay, optarg ) != 0 ) {
+				usage( argv[0] );
+			}
 			break;
 
 		default:
@@ -141,7 +157,7 @@ main( int argc, char **argv )
 	}
 
 	do_addel( uri, host, port, manager, passwd, entry, attrs,
-			loops, retries, delay );
+			loops, retries, delay, friendly );
 
 	exit( EXIT_SUCCESS );
 }
@@ -272,7 +288,8 @@ do_addel(
 	LDAPMod **attrs,
 	int maxloop,
 	int maxretries,
-	int delay
+	int delay,
+	int friendly
 )
 {
 	LDAP	*ld = NULL;
@@ -328,12 +345,27 @@ retry:;
 		rc = ldap_add_s( ld, entry, attrs );
 		if ( rc != LDAP_SUCCESS ) {
 			ldap_perror( ld, "ldap_add" );
-			if ( rc == LDAP_BUSY && do_retry > 0 ) {
-				do_retry--;
-				goto retry;
-			}
-			break;
+			switch ( rc ) {
+			case LDAP_ALREADY_EXISTS:
+				/* NOTE: this likely means
+				 * the delete failed
+				 * during the previous round... */
+				if ( !friendly ) {
+					goto done;
+				}
+				break;
 
+			case LDAP_BUSY:
+			case LDAP_UNAVAILABLE:
+				if ( do_retry > 0 ) {
+					do_retry--;
+					goto retry;
+				}
+				/* fall thru */
+
+			default:
+				goto done;
+			}
 		}
 
 #if 0
@@ -346,14 +378,31 @@ retry:;
 		rc = ldap_delete_s( ld, entry );
 		if ( rc != LDAP_SUCCESS ) {
 			ldap_perror( ld, "ldap_delete" );
-			if ( rc == LDAP_BUSY && do_retry > 0 ) {
-				do_retry--;
-				goto retry;
+			switch ( rc ) {
+			case LDAP_NO_SUCH_OBJECT:
+				/* NOTE: this likely means
+				 * the add failed
+				 * during the previous round... */
+				if ( !friendly ) {
+					goto done;
+				}
+				break;
+
+			case LDAP_BUSY:
+			case LDAP_UNAVAILABLE:
+				if ( do_retry > 0 ) {
+					do_retry--;
+					goto retry;
+				}
+				/* fall thru */
+
+			default:
+				goto done;
 			}
-			break;
 		}
 	}
 
+done:;
 	fprintf( stderr, " PID=%ld - Add/Delete done (%d).\n", (long) pid, rc );
 
 	ldap_unbind( ld );

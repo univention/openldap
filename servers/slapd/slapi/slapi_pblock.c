@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_pblock.c,v 1.27.2.4 2005/08/17 16:15:37 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_pblock.c,v 1.27.2.6 2006/01/03 22:16:26 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2005 The OpenLDAP Foundation.
+ * Copyright 2002-2006 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002-2003 IBM Corporation.
  * All rights reserved.
  *
@@ -891,7 +891,7 @@ pblock_set( Slapi_PBlock *pb, int param, void *value )
 	case SLAPI_X_CONN_SSF:
 		PBLOCK_ASSERT_CONN( pb );
 		PBLOCK_LOCK_CONN( pb );
-		pb->pb_conn->c_ssf = (slap_ssf_t)value;
+		pb->pb_conn->c_ssf = (slap_ssf_t)(long)value;
 		PBLOCK_UNLOCK_CONN( pb );
 		break;
 	case SLAPI_X_CONN_SASL_CONTEXT:

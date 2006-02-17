@@ -1,8 +1,8 @@
 /* ldappasswd -- a tool for change LDAP passwords */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldappasswd.c,v 1.127.2.2 2005/04/29 21:28:59 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldappasswd.c,v 1.127.2.4 2006/01/03 22:16:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -345,7 +345,6 @@ main( int argc, char *argv[] )
 
 	rc = ldap_parse_result( ld, res,
 		&code, &matcheddn, &text, &refs, NULL, 0 );
-
 	if( rc != LDAP_SUCCESS ) {
 		ldap_perror( ld, "ldap_parse_result" );
 		rc = EXIT_FAILURE;
@@ -353,9 +352,8 @@ main( int argc, char *argv[] )
 	}
 
 	rc = ldap_parse_extended_result( ld, res, &retoid, &retdata, 1 );
-
 	if( rc != LDAP_SUCCESS ) {
-		ldap_perror( ld, "ldap_parse_result" );
+		ldap_perror( ld, "ldap_parse_extended_result" );
 		rc = EXIT_FAILURE;
 		goto done;
 	}

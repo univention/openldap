@@ -1,8 +1,8 @@
 /* filterindex.c - generate the list of candidate entries from a filter */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/filterindex.c,v 1.51.2.5 2005/08/09 21:04:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/filterindex.c,v 1.51.2.9 2006/01/03 22:16:16 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2005 The OpenLDAP Foundation.
+ * Copyright 2000-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -978,7 +978,6 @@ inequality_candidates(
 {
 	struct bdb_info *bdb = (struct bdb_info *) op->o_bd->be_private;
 	DB	*db;
-	int i;
 	int rc;
 	slap_mask_t mask;
 	struct berval prefix = {0, NULL};
@@ -1066,9 +1065,11 @@ inequality_candidates(
 
 		bdb_idl_union( ids, tmp );
 
-		if( BDB_IDL_IS_ZERO( ids ) )
+		if( op->ors_limit && op->ors_limit->lms_s_unchecked != -1 &&
+			BDB_IDL_N( ids ) >= (unsigned) op->ors_limit->lms_s_unchecked ) {
+			cursor->c_close( cursor );
 			break;
-		i++;
+		}
 	}
 	ber_bvarray_free_x( keys, op->o_tmpmemctx );
 

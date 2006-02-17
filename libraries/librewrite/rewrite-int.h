@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/rewrite-int.h,v 1.15.2.3 2005/08/17 16:15:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/rewrite-int.h,v 1.15.2.5 2006/01/03 22:16:11 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2005 The OpenLDAP Foundation.
+ * Copyright 2000-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
 #include <lber.h>
 #include <ldap.h>
 #include "../libldap/ldap-int.h"
-
+#include <lutil.h>
 #include <avl.h>
 
 #include <rewrite.h>

@@ -1,8 +1,8 @@
 /* alock.h - access lock header */
-/* $OpenLDAP: pkg/ldap/servers/slapd/alock.h,v 1.1.2.1 2005/09/28 00:30:30 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/alock.h,v 1.1.2.3 2006/01/23 19:09:56 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005 The OpenLDAP Foundation.
+ * Copyright 2005-2006 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -37,6 +37,11 @@
 #define ALOCK_LOCKED	(1)
 #define ALOCK_UNIQUE	(2)
 #define ALOCK_DIRTY		(3)
+
+#define ALOCK_SMASK		3
+
+/* lock/state where recovery is not available */
+#define	ALOCK_NOSAVE	4
 
 /* constants */
 #define ALOCK_SLOT_SIZE		(1024)

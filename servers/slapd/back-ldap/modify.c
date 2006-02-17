@@ -1,8 +1,8 @@
 /* modify.c - ldap backend modify function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modify.c,v 1.58.2.6 2005/09/28 00:30:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modify.c,v 1.58.2.9 2006/01/03 22:16:18 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -36,7 +36,9 @@ ldap_back_modify(
 		Operation	*op,
 		SlapReply	*rs )
 {
-	struct ldapconn	*lc;
+	ldapinfo_t	*li = (ldapinfo_t *)op->o_bd->be_private;
+
+	ldapconn_t	*lc;
 	LDAPMod		**modv = NULL,
 			*mods = NULL;
 	Modifications	*ml;
@@ -107,10 +109,11 @@ ldap_back_modify(
 retry:
 	rs->sr_err = ldap_modify_ext( lc->lc_ld, op->o_req_ndn.bv_val, modv,
 			ctrls, NULL, &msgid );
-	rc = ldap_back_op_result( lc, op, rs, msgid, LDAP_BACK_SENDRESULT );
+	rc = ldap_back_op_result( lc, op, rs, msgid,
+		li->li_timeout[ LDAP_BACK_OP_MODIFY], LDAP_BACK_SENDRESULT );
 	if ( rs->sr_err == LDAP_UNAVAILABLE && do_retry ) {
 		do_retry = 0;
-		if ( ldap_back_retry( lc, op, rs, LDAP_BACK_SENDERR ) ) {
+		if ( ldap_back_retry( &lc, op, rs, LDAP_BACK_SENDERR ) ) {
 			goto retry;
 		}
 	}

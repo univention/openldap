@@ -1,8 +1,8 @@
 /* config.c - bdb backend configuration file routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/config.c,v 1.43.2.11 2005/10/12 21:33:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/config.c,v 1.43.2.16 2006/01/06 19:03:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2005 The OpenLDAP Foundation.
+ * Copyright 2000-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,6 +55,11 @@ static ConfigTable bdbcfg[] = {
 			"DESC 'Directory for database content' "
 			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "cachefree", "size", 2, 2, 0, ARG_INT|ARG_OFFSET,
+		(void *)offsetof(struct bdb_info, bi_cache.c_minfree),
+		"( OLcfgDbAt:1.11 NAME 'olcDbCacheFree' "
+			"DESC 'Number of extra entries to free when max is reached' "
+			"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
 	{ "cachesize", "size", 2, 2, 0, ARG_INT|ARG_OFFSET,
 		(void *)offsetof(struct bdb_info, bi_cache.c_maxsize),
 		"( OLcfgDbAt:1.1 NAME 'olcDbCacheSize' "
@@ -134,7 +139,8 @@ static ConfigOCs bdbocs[] = {
 		"MAY ( olcDbCacheSize $ olcDbCheckpoint $ olcDbConfig $ "
 		"olcDbNoSync $ olcDbDirtyRead $ olcDbIDLcacheSize $ "
 		"olcDbIndex $ olcDbLinearIndex $ olcDbLockDetect $ "
-		"olcDbMode $ olcDbSearchStack $ olcDbShmKey ) )",
+		"olcDbMode $ olcDbSearchStack $ olcDbShmKey $ "
+		" olcDbCacheFree ) )",
 		 	Cft_Database, bdbcfg },
 	{ NULL, 0, NULL }
 };
@@ -183,6 +189,7 @@ bdb_online_index( void *ctx, void *arg )
 	ID id, nid;
 	EntryInfo *ei;
 	int rc, getnext = 1;
+	int i;
 
 	connection_fake_init( &conn, op, ctx );
 
@@ -262,6 +269,16 @@ bdb_online_index( void *ctx, void *arg )
 		}
 		id++;
 		getnext = 1;
+	}
+
+	for ( i = 0; i < bdb->bi_nattrs; i++ ) {
+		if ( bdb->bi_attrs[ i ]->ai_indexmask & BDB_INDEX_DELETING
+			|| bdb->bi_attrs[ i ]->ai_newmask == 0 )
+		{
+			continue;
+		}
+		bdb->bi_attrs[ i ]->ai_indexmask = bdb->bi_attrs[ i ]->ai_newmask;
+		bdb->bi_attrs[ i ]->ai_newmask = 0;
 	}
 
 	ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
@@ -458,25 +475,58 @@ bdb_cf_gen(ConfigArgs *c)
 		case BDB_NOSYNC:
 			bdb->bi_dbenv->set_flags( bdb->bi_dbenv, DB_TXN_NOSYNC, 0 );
 			break;
-		case BDB_INDEX: {
-			AttributeDescription *ad = NULL;
-			struct berval bv, def = BER_BVC("default");
-			char *ptr;
-			const char *text;
-			for (ptr = c->line; !isspace( *ptr ); ptr++);
-			bv.bv_val = c->line;
-			bv.bv_len = ptr - bv.bv_val;
-			if ( bvmatch( &bv, &def )) {
-				bdb->bi_defaultmask = 0;
-			} else {
-				slap_bv2ad( &bv, &ad, &text );
-				if ( ad ) {
-					AttrInfo *ai = bdb_attr_mask( bdb, ad );
-					ai->ai_indexmask |= BDB_INDEX_DELETING;
-					bdb->bi_flags |= BDB_DEL_INDEX;
-					c->cleanup = bdb_cf_cleanup;
+		case BDB_INDEX:
+			if ( c->valx == -1 ) {
+				int i;
+
+				/* delete all (FIXME) */
+				for ( i = 0; i < bdb->bi_nattrs; i++ ) {
+					bdb->bi_attrs[i]->ai_indexmask |= BDB_INDEX_DELETING;
 				}
-			}
+				bdb->bi_flags |= BDB_DEL_INDEX;
+				c->cleanup = bdb_cf_cleanup;
+
+			} else {
+				struct berval bv, def = BER_BVC("default");
+				char *ptr;
+
+				for (ptr = c->line; !isspace( *ptr ); ptr++);
+
+				bv.bv_val = c->line;
+				bv.bv_len = ptr - bv.bv_val;
+				if ( bvmatch( &bv, &def )) {
+					bdb->bi_defaultmask = 0;
+
+				} else {
+					int i;
+					char **attrs;
+					char sep;
+
+					sep = bv.bv_val[ bv.bv_len ];
+					bv.bv_val[ bv.bv_len ] = '\0';
+					attrs = ldap_str2charray( bv.bv_val, "," );
+
+					for ( i = 0; attrs[ i ]; i++ ) {
+						AttributeDescription *ad = NULL;
+						const char *text;
+						AttrInfo *ai;
+
+						slap_str2ad( attrs[ i ], &ad, &text );
+						/* if we got here... */
+						assert( ad != NULL );
+
+						ai = bdb_attr_mask( bdb, ad );
+						/* if we got here... */
+						assert( ai != NULL );
+
+						ai->ai_indexmask |= BDB_INDEX_DELETING;
+						bdb->bi_flags |= BDB_DEL_INDEX;
+						c->cleanup = bdb_cf_cleanup;
+					}
+
+					bv.bv_val[ bv.bv_len ] = sep;
+					ldap_charray_free( attrs );
+				}
 			}
 			break;
 		}
@@ -484,10 +534,23 @@ bdb_cf_gen(ConfigArgs *c)
 	}
 
 	switch( c->type ) {
-	case BDB_CHKPT:
+	case BDB_CHKPT: {
+		long	l;
 		bdb->bi_txn_cp = 1;
-		bdb->bi_txn_cp_kbyte = strtol( c->argv[1], NULL, 0 );
-		bdb->bi_txn_cp_min = strtol( c->argv[2], NULL, 0 );
+		if ( lutil_atolx( &l, c->argv[1], 0 ) != 0 ) {
+			fprintf( stderr, "%s: "
+				"invalid kbyte \"%s\" in \"checkpoint\".\n",
+				c->log, c->argv[1] );
+			return 1;
+		}
+		bdb->bi_txn_cp_kbyte = l;
+		if ( lutil_atolx( &l, c->argv[2], 0 ) != 0 ) {
+			fprintf( stderr, "%s: "
+				"invalid minutes \"%s\" in \"checkpoint\".\n",
+				c->log, c->argv[2] );
+			return 1;
+		}
+		bdb->bi_txn_cp_min = l;
 		/* If we're in server mode and time-based checkpointing is enabled,
 		 * submit a task to perform periodic checkpoints.
 		 */
@@ -507,7 +570,7 @@ bdb_cf_gen(ConfigArgs *c)
 					LDAP_XSTRING(bdb_checkpoint), c->be->be_suffix[0].bv_val );
 			}
 		}
-		break;
+		} break;
 
 	case BDB_CONFIG: {
 		char *ptr = c->line;

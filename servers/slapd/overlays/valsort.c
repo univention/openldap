@@ -1,8 +1,8 @@
 /* valsort.c - sort attribute values */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/valsort.c,v 1.9.2.2 2005/08/29 18:26:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/valsort.c,v 1.9.2.5 2006/01/03 22:16:25 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005 The OpenLDAP Foundation.
+ * Copyright 2005-2006 The OpenLDAP Foundation.
  * Portions copyright 2005 Symas Corporation.
  * All rights reserved.
  *
@@ -212,7 +212,7 @@ static void
 do_sort( Operation *op, Attribute *a, int beg, int num, slap_mask_t sort )
 {
 	int i, j, gotnvals;
-	struct berval tmp, ntmp, *vals, *nvals;
+	struct berval tmp, ntmp, *vals = NULL, *nvals;
 
 	gotnvals = (a->a_vals != a->a_nvals );
 
@@ -314,7 +314,7 @@ valsort_response( Operation *op, SlapReply *rs )
 			gotnvals = (a->a_vals != a->a_nvals );
 
 			for (i=0; i<n; i++) {
-				char *ptr = strchr( a->a_nvals[i].bv_val, '{' );
+				char *ptr = ber_bvchr( &a->a_nvals[i], '{' );
 				char *end = NULL;
 				if ( !ptr ) {
 					Debug(LDAP_DEBUG_TRACE, "weights missing from attr %s "
@@ -339,7 +339,9 @@ valsort_response( Operation *op, SlapReply *rs )
 
 				if ( a->a_vals != a->a_nvals ) {
 					ptr = a->a_vals[i].bv_val;
-					end = strchr( ptr, '}' ) + 1;
+					end = ber_bvchr( &a->a_vals[i], '}' );
+					assert( end != NULL );
+					end++;
 					for (;*end;)
 						*ptr++ = *end++;
 					*ptr = '\0';
@@ -407,7 +409,7 @@ valsort_add( Operation *op, SlapReply *rs )
 		if ( !a )
 			continue;
 		for (i=0; !BER_BVISNULL( &a->a_vals[i] ); i++) {
-			ptr = strchr(a->a_vals[i].bv_val, '{' );
+			ptr = ber_bvchr(&a->a_vals[i], '{' );
 			if ( !ptr ) {
 				Debug(LDAP_DEBUG_TRACE, "weight missing from attribute %s\n",
 					vi->vi_ad->ad_cname.bv_val, 0, 0);
@@ -451,7 +453,7 @@ valsort_modify( Operation *op, SlapReply *rs )
 		if ( !ml )
 			continue;
 		for (i=0; !BER_BVISNULL( &ml->sml_values[i] ); i++) {
-			ptr = strchr(ml->sml_values[i].bv_val, '{' );
+			ptr = ber_bvchr(&ml->sml_values[i], '{' );
 			if ( !ptr ) {
 				Debug(LDAP_DEBUG_TRACE, "weight missing from attribute %s\n",
 					vi->vi_ad->ad_cname.bv_val, 0, 0);
@@ -529,7 +531,7 @@ valsort_parseCtrl(
 
 static slap_overinst valsort;
 
-int valsort_init()
+int valsort_initialize( void )
 {
 	int rc;
 
@@ -562,7 +564,7 @@ int valsort_init()
 
 #if SLAPD_OVER_VALSORT == SLAPD_MOD_DYNAMIC
 int init_module( int argc, char *argv[]) {
-	return valsort_init();
+	return valsort_initialize();
 }
 #endif
 

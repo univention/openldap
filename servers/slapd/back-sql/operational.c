@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/operational.c,v 1.9.2.2 2005/08/09 21:04:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/operational.c,v 1.9.2.5 2006/01/03 22:16:24 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * All rights reserved.
@@ -83,7 +83,7 @@ backsql_operational_entryCSN( Operation *op )
 	BER_BVZERO( &a->a_vals[ 1 ] );
 
 #ifdef BACKSQL_SYNCPROV
-	if ( op->o_sync && op->o_tag == LDAP_REQ_SEARCH ) {
+	if ( op->o_sync && op->o_tag == LDAP_REQ_SEARCH && op->o_private != NULL ) {
 		assert( op->o_private != NULL );
 
 		entryCSN = *((struct berval *)op->o_private);
@@ -91,7 +91,9 @@ backsql_operational_entryCSN( Operation *op )
 	} else
 #endif /* BACKSQL_SYNCPROV */
 	{
-		slap_get_csn( op, csnbuf, sizeof(csnbuf), &entryCSN, 0 );
+		entryCSN.bv_val = csnbuf;
+		entryCSN.bv_len = sizeof( csnbuf );
+		slap_get_csn( op, &entryCSN, 0 );
 	}
 
 	ber_dupbv( &a->a_vals[ 0 ], &entryCSN );

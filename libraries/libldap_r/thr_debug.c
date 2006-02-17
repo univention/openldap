@@ -1,8 +1,8 @@
 /* thr_debug.c - wrapper around the chosen thread wrapper, for debugging. */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_debug.c,v 1.1.2.1 2005/09/28 00:30:28 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_debug.c,v 1.1.2.2 2006/01/03 22:16:09 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005 The OpenLDAP Foundation.
+ * Copyright 2005-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

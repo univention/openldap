@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/init.c,v 1.93.2.5 2005/10/05 18:41:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/init.c,v 1.93.2.8 2006/01/03 22:16:08 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -110,7 +110,7 @@ static const struct ol_attribute {
 	{0, ATTR_NONE,		NULL,		NULL,	0}
 };
 
-#define MAX_LDAP_ATTR_LEN  sizeof("TLS_CACERTDIR")
+#define MAX_LDAP_ATTR_LEN  sizeof("TLS_CIPHER_SUITE")
 #define MAX_LDAP_ENV_PREFIX_LEN 8
 
 static void openldap_ldap_init_w_conf(
@@ -409,6 +409,14 @@ ldap_int_destroy_global_options(void)
 #if defined(HAVE_WINSOCK) || defined(HAVE_WINSOCK2)
 	WSACleanup( );
 #endif
+
+#if defined(LDAP_API_FEATURE_X_OPENLDAP_V2_KBIND) \
+	|| defined(HAVE_TLS) || defined(HAVE_CYRUS_SASL)
+	if ( ldap_int_hostname ) {
+		LDAP_FREE( ldap_int_hostname );
+		ldap_int_hostname = NULL;
+	}
+#endif
 }
 
 /* 
@@ -529,7 +537,15 @@ void ldap_int_initialize( struct ldapoptions *gopts, int *dbglvl )
 
 #if defined(LDAP_API_FEATURE_X_OPENLDAP_V2_KBIND) \
 	|| defined(HAVE_TLS) || defined(HAVE_CYRUS_SASL)
-	ldap_int_hostname = ldap_pvt_get_fqdn( ldap_int_hostname );
+	{
+		char	*name = ldap_int_hostname;
+
+		ldap_int_hostname = ldap_pvt_get_fqdn( name );
+
+		if ( name != NULL && name != ldap_int_hostname ) {
+			LDAP_FREE( name );
+		}
+	}
 #endif
 
 #ifndef HAVE_POLL

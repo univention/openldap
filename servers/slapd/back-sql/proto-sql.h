@@ -1,6 +1,6 @@
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Mararati.
  * All rights reserved.
@@ -242,8 +242,8 @@ extern char
 extern char 
 	backsql_check_dn_ru_query[];
 
-struct berbuf * backsql_strcat( struct berbuf *dest, ... );
-struct berbuf * backsql_strfcat( struct berbuf *dest, const char *fmt, ... );
+struct berbuf * backsql_strcat_x( struct berbuf *dest, void *memctx, ... );
+struct berbuf * backsql_strfcat_x( struct berbuf *dest, void *memctx, const char *fmt, ... );
 
 int backsql_entry_addattr( Entry *e, AttributeDescription *ad, 
 		struct berval *at_val, void *memctx );

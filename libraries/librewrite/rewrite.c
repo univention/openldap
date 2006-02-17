@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/rewrite.c,v 1.12.2.1 2005/01/20 18:03:53 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/rewrite.c,v 1.12.2.3 2006/01/03 22:16:11 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2005 The OpenLDAP Foundation.
+ * Copyright 2000-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #include <stdio.h>
 
 #include <rewrite.h>
+#include <lutil.h>
 #include <ldap.h>
 
 int ldap_debug;
@@ -127,7 +128,6 @@ main( int argc, char *argv[] )
 	FILE	*fin = NULL;
 	char	*rewriteContext = REWRITE_DEFAULT_CONTEXT;
 	int	debug = 0;
-	char	*next;
 
 	while ( 1 ) {
 		int opt = getopt( argc, argv, "d:f:hr:" );
@@ -138,8 +138,7 @@ main( int argc, char *argv[] )
 
 		switch ( opt ) {
 		case 'd':
-			debug = strtol( optarg, &next, 10 );
-			if ( next == NULL || next[0] != '\0' ) {
+			if ( lutil_atoi( &debug, optarg ) != 0 ) {
 				fprintf( stderr, "illegal log level '%s'\n",
 						optarg );
 				exit( EXIT_FAILURE );

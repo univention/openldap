@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.144.2.8 2005/09/28 00:30:31 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.144.2.13 2006/01/03 22:16:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * Portions Copyright 2000 Mark Adamson, Carnegie Mellon.
  * All rights reserved.
  *
@@ -148,7 +148,7 @@ int slap_parse_user( struct berval *id, struct berval *user,
 	 *		u[.mech[/realm]]:user
 	 */
 	
-	user->bv_val = strchr( id->bv_val, ':' );
+	user->bv_val = ber_bvchr( id, ':' );
 	if ( BER_BVISNULL( user ) ) {
 		return LDAP_PROTOCOL_ERROR;
 	}
@@ -156,20 +156,19 @@ int slap_parse_user( struct berval *id, struct berval *user,
 	user->bv_val++;
 	user->bv_len = id->bv_len - ( user->bv_val - id->bv_val );
 
-	mech->bv_val = strchr( id->bv_val, '.' );
+	mech->bv_val = ber_bvchr( id, '.' );
 	if ( !BER_BVISNULL( mech ) ) {
 		mech->bv_val[ 0 ] = '\0';
 		mech->bv_val++;
+		mech->bv_len = user->bv_val - mech->bv_val - 1;
 
-		realm->bv_val = strchr( mech->bv_val, '/' );
+		realm->bv_val = ber_bvchr( mech, '/' );
 
 		if ( !BER_BVISNULL( realm ) ) {
 			realm->bv_val[ 0 ] = '\0';
 			realm->bv_val++;
 			mech->bv_len = realm->bv_val - mech->bv_val - 1;
 			realm->bv_len = user->bv_val - realm->bv_val - 1;
-		} else {
-			mech->bv_len = user->bv_val - mech->bv_val - 1;
 		}
 
 	} else {
@@ -341,7 +340,8 @@ is_dn:		bv.bv_len = in->bv_len - ( bv.bv_val - in->bv_val );
 				member_at = BER_BVNULL;
 
 		bv.bv_val = in->bv_val + STRLENOF( "group" );
-		group_dn.bv_val = strchr( bv.bv_val, ':' );
+		bv.bv_len = in->bv_len - STRLENOF( "group" );
+		group_dn.bv_val = ber_bvchr( &bv, ':' );
 		if ( group_dn.bv_val == NULL ) {
 			/* last chance: assume it's a(n exact) DN ... */
 			bv.bv_val = in->bv_val;
@@ -355,8 +355,9 @@ is_dn:		bv.bv_len = in->bv_len - ( bv.bv_val - in->bv_val );
 		 */
 		if ( bv.bv_val[ 0 ] == '/' ) {
 			group_oc.bv_val = &bv.bv_val[ 1 ];
+			group_oc.bv_len = group_dn.bv_val - group_oc.bv_val;
 
-			member_at.bv_val = strchr( group_oc.bv_val, '/' );
+			member_at.bv_val = ber_bvchr( &group_oc, '/' );
 			if ( member_at.bv_val ) {
 				AttributeDescription	*ad = NULL;
 				const char		*text = NULL;
@@ -368,13 +369,10 @@ is_dn:		bv.bv_len = in->bv_len - ( bv.bv_val - in->bv_val );
 				if ( rc != LDAP_SUCCESS ) {
 					return rc;
 				}
+			}
 
-			} else {
-				group_oc.bv_len = group_dn.bv_val - group_oc.bv_val;
-
-				if ( oc_bvfind( &group_oc ) == NULL ) {
-					return LDAP_INVALID_SYNTAX;
-				}
+			if ( oc_bvfind( &group_oc ) == NULL ) {
+				return LDAP_INVALID_SYNTAX;
 			}
 		}
 
@@ -668,7 +666,8 @@ is_dn:		bv.bv_len = val->bv_len - ( bv.bv_val - val->bv_val );
 		char		*ptr;
 
 		bv.bv_val = val->bv_val + STRLENOF( "group" );
-		group_dn.bv_val = strchr( bv.bv_val, ':' );
+		bv.bv_len = val->bv_len - STRLENOF( "group" );
+		group_dn.bv_val = ber_bvchr( &bv, ':' );
 		if ( group_dn.bv_val == NULL ) {
 			/* last chance: assume it's a(n exact) DN ... */
 			bv.bv_val = val->bv_val;
@@ -681,9 +680,12 @@ is_dn:		bv.bv_len = val->bv_len - ( bv.bv_val - val->bv_val );
 		 * are present in schema...
 		 */
 		if ( bv.bv_val[ 0 ] == '/' ) {
-			group_oc.bv_val = &bv.bv_val[ 1 ];
+			ObjectClass		*oc = NULL;
 
-			member_at.bv_val = strchr( group_oc.bv_val, '/' );
+			group_oc.bv_val = &bv.bv_val[ 1 ];
+			group_oc.bv_len = group_dn.bv_val - group_oc.bv_val;
+
+			member_at.bv_val = ber_bvchr( &group_oc, '/' );
 			if ( member_at.bv_val ) {
 				AttributeDescription	*ad = NULL;
 				const char		*text = NULL;
@@ -698,18 +700,14 @@ is_dn:		bv.bv_len = val->bv_len - ( bv.bv_val - val->bv_val );
 
 				member_at = ad->ad_cname;
 
-			} else {
-				ObjectClass		*oc = NULL;
-
-				group_oc.bv_len = group_dn.bv_val - group_oc.bv_val;
-
-				oc = oc_bvfind( &group_oc );
-				if ( oc == NULL ) {
-					return LDAP_INVALID_SYNTAX;
-				}
-
-				group_oc = oc->soc_cname;
 			}
+
+			oc = oc_bvfind( &group_oc );
+			if ( oc == NULL ) {
+				return LDAP_INVALID_SYNTAX;
+			}
+
+			group_oc = oc->soc_cname;
 		}
 
 		group_dn.bv_val++;
@@ -959,7 +957,7 @@ slap_parseURI(
 	if ( idx.bv_val[ 0 ] == '{' ) {
 		char	*ptr;
 
-		ptr = strchr( idx.bv_val, '}' ) + 1;
+		ptr = ber_bvchr( &idx, '}' ) + 1;
 
 		assert( ptr != (void *)1 );
 
@@ -1113,7 +1111,8 @@ is_dn:		bv.bv_len = uri->bv_len - (bv.bv_val - uri->bv_val);
 		char		*tmp;
 
 		bv.bv_val = uri->bv_val + STRLENOF( "group" );
-		group_dn.bv_val = strchr( bv.bv_val, ':' );
+		bv.bv_len = uri->bv_len - STRLENOF( "group" );
+		group_dn.bv_val = ber_bvchr( &bv, ':' );
 		if ( group_dn.bv_val == NULL ) {
 			/* last chance: assume it's a(n exact) DN ... */
 			bv.bv_val = uri->bv_val;
@@ -1123,15 +1122,15 @@ is_dn:		bv.bv_len = uri->bv_len - (bv.bv_val - uri->bv_val);
 		
 		if ( bv.bv_val[ 0 ] == '/' ) {
 			group_oc.bv_val = &bv.bv_val[ 1 ];
+			group_oc.bv_len = group_dn.bv_val - group_oc.bv_val;
 
-			member_at.bv_val = strchr( group_oc.bv_val, '/' );
+			member_at.bv_val = ber_bvchr( &group_oc, '/' );
 			if ( member_at.bv_val ) {
 				group_oc.bv_len = member_at.bv_val - group_oc.bv_val;
 				member_at.bv_val++;
 				member_at.bv_len = group_dn.bv_val - member_at.bv_val;
 
 			} else {
-				group_oc.bv_len = group_dn.bv_val - group_oc.bv_val;
 				BER_BVSTR( &member_at, SLAPD_GROUP_ATTR );
 			}
 
@@ -1831,7 +1830,7 @@ exact_match:
 	op.o_tag = LDAP_REQ_SEARCH;
 	op.o_ndn = *authc;
 	op.o_callback = &cb;
-	op.o_time = slap_get_time();
+	slap_op_time( &op.o_time, &op.o_tincr );
 	op.o_do_not_cache = 1;
 	op.o_is_auth_check = 1;
 	/* use req_ndn as req_dn instead of non-pretty base of uri */
@@ -1970,9 +1969,7 @@ slap_sasl2dn(
 	case LDAP_SCOPE_BASE:
 	case LDAP_SCOPE_ONELEVEL:
 	case LDAP_SCOPE_SUBTREE:
-#ifdef LDAP_SCOPE_SUBORDINATE
 	case LDAP_SCOPE_SUBORDINATE:
-#endif
 		/* do a search */
 		break;
 
@@ -1999,7 +1996,7 @@ slap_sasl2dn(
 	op.o_tag = LDAP_REQ_SEARCH;
 	op.o_ndn = opx->o_conn->c_ndn;
 	op.o_callback = &cb;
-	op.o_time = slap_get_time();
+	slap_op_time( &op.o_time, &op.o_tincr );
 	op.o_do_not_cache = 1;
 	op.o_is_auth_check = 1;
 	op.ors_deref = LDAP_DEREF_NEVER;
@@ -2058,7 +2055,8 @@ int slap_sasl_authorized( Operation *op,
 
 	Debug( LDAP_DEBUG_TRACE,
 	   "==>slap_sasl_authorized: can %s become %s?\n",
-		authcDN->bv_val, authzDN->bv_val, 0 );
+		authcDN->bv_len ? authcDN->bv_val : "(null)",
+		authzDN->bv_len ? authzDN->bv_val : "(null)",  0 );
 
 	/* If person is authorizing to self, succeed */
 	if ( dn_match( authcDN, authzDN ) ) {

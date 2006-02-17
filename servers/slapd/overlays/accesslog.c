@@ -1,8 +1,8 @@
 /* accesslog.c - log operations for audit/history purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/accesslog.c,v 1.2.2.8 2005/10/12 21:33:53 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/accesslog.c,v 1.2.2.12 2006/01/03 22:16:24 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005 The OpenLDAP Foundation.
+ * Copyright 2005-2006 The OpenLDAP Foundation.
  * Portions copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -58,6 +58,8 @@ typedef struct log_info {
 	int li_cycle;
 	struct re_s *li_task;
 	int li_success;
+	ldap_pvt_thread_mutex_t li_op_mutex;
+	ldap_pvt_thread_mutex_t li_log_mutex;
 } log_info;
 
 static ConfigDriver log_cf_gen;
@@ -139,7 +141,7 @@ enum {
 	LOG_EN__COUNT
 };
 
-static ObjectClass *log_ocs[LOG_EN__COUNT];
+static ObjectClass *log_ocs[LOG_EN__COUNT], *log_container;
 
 #define LOG_SCHEMA_ROOT	"1.3.6.1.4.1.4203.666.11.5"
 
@@ -152,10 +154,8 @@ static AttributeDescription *ad_reqDN, *ad_reqStart, *ad_reqEnd, *ad_reqType,
 	*ad_reqNewSuperior, *ad_reqDeleteOldRDN, *ad_reqMod,
 	*ad_reqScope, *ad_reqFilter, *ad_reqAttr, *ad_reqEntries,
 	*ad_reqSizeLimit, *ad_reqTimeLimit, *ad_reqAttrsOnly, *ad_reqData,
-	*ad_reqId, *ad_reqMessage;
-#if 0
-static AttributeDescription *ad_oldest;
-#endif
+	*ad_reqId, *ad_reqMessage, *ad_reqVersion, *ad_reqDerefAliases,
+	*ad_reqReferral, *ad_reqOld;
 
 static struct {
 	char *at;
@@ -188,97 +188,127 @@ static struct {
 		"EQUALITY caseIgnoreMatch "
 		"SYNTAX OMsDirectoryString "
 		"SINGLE-VALUE )", &ad_reqSession },
-	{ "( " LOG_SCHEMA_AT ".6 NAME 'reqResult' "
-		"DESC 'Result code of request' "
-		"EQUALITY integerMatch "
-		"SYNTAX OMsInteger "
-		"SINGLE-VALUE )", &ad_reqResult },
-	{ "( " LOG_SCHEMA_AT ".7 NAME 'reqAuthzID' "
+	{ "( " LOG_SCHEMA_AT ".6 NAME 'reqAuthzID' "
 		"DESC 'Authorization ID of requestor' "
 		"EQUALITY distinguishedNameMatch "
 		"SYNTAX OMsDN "
 		"SINGLE-VALUE )", &ad_reqAuthzID },
-	{ "( " LOG_SCHEMA_AT ".8 NAME 'reqControls' "
+	{ "( " LOG_SCHEMA_AT ".7 NAME 'reqResult' "
+		"DESC 'Result code of request' "
+		"EQUALITY integerMatch "
+		"ORDERING integerOrderingMatch "
+		"SYNTAX OMsInteger "
+		"SINGLE-VALUE )", &ad_reqResult },
+	{ "( " LOG_SCHEMA_AT ".8 NAME 'reqMessage' "
+		"DESC 'Error text of request' "
+		"EQUALITY caseIgnoreMatch "
+		"SUBSTR caseIgnoreSubstringsMatch "
+		"SYNTAX OMsDirectoryString "
+		"SINGLE-VALUE )", &ad_reqMessage },
+	{ "( " LOG_SCHEMA_AT ".9 NAME 'reqReferral' "
+		"DESC 'Referrals returned for request' "
+		"SUP labeledURI )", &ad_reqReferral },
+	{ "( " LOG_SCHEMA_AT ".10 NAME 'reqControls' "
 		"DESC 'Request controls' "
 		"SYNTAX OMsOctetString )", &ad_reqControls },
-	{ "( " LOG_SCHEMA_AT ".9 NAME 'reqRespControls' "
+	{ "( " LOG_SCHEMA_AT ".11 NAME 'reqRespControls' "
 		"DESC 'Response controls of request' "
 		"SYNTAX OMsOctetString )", &ad_reqRespControls },
-	{ "( " LOG_SCHEMA_AT ".10 NAME 'reqMethod' "
+	{ "( " LOG_SCHEMA_AT ".12 NAME 'reqId' "
+		"DESC 'ID of Request to Abandon' "
+		"EQUALITY integerMatch "
+		"ORDERING integerOrderingMatch "
+		"SYNTAX OMsInteger "
+		"SINGLE-VALUE )", &ad_reqId },
+	{ "( " LOG_SCHEMA_AT ".13 NAME 'reqVersion' "
+		"DESC 'Protocol version of Bind request' "
+		"EQUALITY integerMatch "
+		"ORDERING integerOrderingMatch "
+		"SYNTAX OMsInteger "
+		"SINGLE-VALUE )", &ad_reqVersion },
+	{ "( " LOG_SCHEMA_AT ".14 NAME 'reqMethod' "
 		"DESC 'Bind method of request' "
 		"EQUALITY caseIgnoreMatch "
 		"SYNTAX OMsDirectoryString "
 		"SINGLE-VALUE )", &ad_reqMethod },
-	{ "( " LOG_SCHEMA_AT ".11 NAME 'reqAssertion' "
+	{ "( " LOG_SCHEMA_AT ".15 NAME 'reqAssertion' "
 		"DESC 'Compare Assertion of request' "
 		"SYNTAX OMsDirectoryString "
 		"SINGLE-VALUE )", &ad_reqAssertion },
-	{ "( " LOG_SCHEMA_AT ".12 NAME 'reqNewRDN' "
+	{ "( " LOG_SCHEMA_AT ".16 NAME 'reqMod' "
+		"DESC 'Modifications of request' "
+		"EQUALITY octetStringMatch "
+		"SUBSTR octetStringSubstringsMatch "
+		"SYNTAX OMsOctetString )", &ad_reqMod },
+	{ "( " LOG_SCHEMA_AT ".17 NAME 'reqOld' "
+		"DESC 'Old values of entry before request completed' "
+		"EQUALITY octetStringMatch "
+		"SUBSTR octetStringSubstringsMatch "
+		"SYNTAX OMsOctetString )", &ad_reqOld },
+	{ "( " LOG_SCHEMA_AT ".18 NAME 'reqNewRDN' "
 		"DESC 'New RDN of request' "
 		"EQUALITY distinguishedNameMatch "
 		"SYNTAX OMsDN "
 		"SINGLE-VALUE )", &ad_reqNewRDN },
-	{ "( " LOG_SCHEMA_AT ".13 NAME 'reqNewSuperior' "
+	{ "( " LOG_SCHEMA_AT ".19 NAME 'reqDeleteOldRDN' "
+		"DESC 'Delete old RDN' "
+		"EQUALITY booleanMatch "
+		"SYNTAX OMsBoolean "
+		"SINGLE-VALUE )", &ad_reqDeleteOldRDN },
+	{ "( " LOG_SCHEMA_AT ".20 NAME 'reqNewSuperior' "
 		"DESC 'New superior DN of request' "
 		"EQUALITY distinguishedNameMatch "
 		"SYNTAX OMsDN "
 		"SINGLE-VALUE )", &ad_reqNewSuperior },
-	{ "( " LOG_SCHEMA_AT ".14 NAME 'reqDeleteOldRDN' "
-		"DESC 'Delete old RDN' "
-		"SYNTAX OMsBoolean "
-		"SINGLE-VALUE )", &ad_reqDeleteOldRDN },
-	{ "( " LOG_SCHEMA_AT ".15 NAME 'reqMod' "
-		"DESC 'Modifications of request' "
-		"SYNTAX OMsDirectoryString "
-		"EQUALITY caseIgnoreMatch "
-		"SUBSTR caseIgnoreSubstringsMatch )", &ad_reqMod },
-	{ "( " LOG_SCHEMA_AT ".16 NAME 'reqScope' "
+	{ "( " LOG_SCHEMA_AT ".21 NAME 'reqScope' "
 		"DESC 'Scope of request' "
+		"EQUALITY caseIgnoreMatch "
 		"SYNTAX OMsDirectoryString "
 		"SINGLE-VALUE )", &ad_reqScope },
-	{ "( " LOG_SCHEMA_AT ".17 NAME 'reqFilter' "
-		"DESC 'Filter of request' "
+	{ "( " LOG_SCHEMA_AT ".22 NAME 'reqDerefAliases' "
+		"DESC 'Disposition of Aliases in request' "
+		"EQUALITY caseIgnoreMatch "
 		"SYNTAX OMsDirectoryString "
-		"SINGLE-VALUE )", &ad_reqFilter },
-	{ "( " LOG_SCHEMA_AT ".18 NAME 'reqAttr' "
-		"DESC 'Attributes of request' "
-		"SYNTAX OMsDirectoryString )", &ad_reqAttr },
-	{ "( " LOG_SCHEMA_AT ".19 NAME 'reqEntries' "
-		"DESC 'Number of entries returned' "
-		"SYNTAX OMsInteger "
-		"SINGLE-VALUE )", &ad_reqEntries },
-	{ "( " LOG_SCHEMA_AT ".20 NAME 'reqSizeLimit' "
-		"DESC 'Size limit of request' "
-		"SYNTAX OMsInteger "
-		"SINGLE-VALUE )", &ad_reqSizeLimit },
-	{ "( " LOG_SCHEMA_AT ".21 NAME 'reqTimeLimit' "
-		"DESC 'Time limit of request' "
-		"SYNTAX OMsInteger "
-		"SINGLE-VALUE )", &ad_reqTimeLimit },
-	{ "( " LOG_SCHEMA_AT ".22 NAME 'reqAttrsOnly' "
+		"SINGLE-VALUE )", &ad_reqDerefAliases },
+	{ "( " LOG_SCHEMA_AT ".23 NAME 'reqAttrsOnly' "
 		"DESC 'Attributes and values of request' "
+		"EQUALITY booleanMatch "
 		"SYNTAX OMsBoolean "
 		"SINGLE-VALUE )", &ad_reqAttrsOnly },
-	{ "( " LOG_SCHEMA_AT ".23 NAME 'reqData' "
+	{ "( " LOG_SCHEMA_AT ".24 NAME 'reqFilter' "
+		"DESC 'Filter of request' "
+		"EQUALITY caseIgnoreMatch "
+		"SUBSTR caseIgnoreSubstringsMatch "
+		"SYNTAX OMsDirectoryString "
+		"SINGLE-VALUE )", &ad_reqFilter },
+	{ "( " LOG_SCHEMA_AT ".25 NAME 'reqAttr' "
+		"DESC 'Attributes of request' "
+		"EQUALITY caseIgnoreMatch "
+		"SYNTAX OMsDirectoryString )", &ad_reqAttr },
+	{ "( " LOG_SCHEMA_AT ".26 NAME 'reqSizeLimit' "
+		"DESC 'Size limit of request' "
+		"EQUALITY integerMatch "
+		"ORDERING integerOrderingMatch "
+		"SYNTAX OMsInteger "
+		"SINGLE-VALUE )", &ad_reqSizeLimit },
+	{ "( " LOG_SCHEMA_AT ".27 NAME 'reqTimeLimit' "
+		"DESC 'Time limit of request' "
+		"EQUALITY integerMatch "
+		"ORDERING integerOrderingMatch "
+		"SYNTAX OMsInteger "
+		"SINGLE-VALUE )", &ad_reqTimeLimit },
+	{ "( " LOG_SCHEMA_AT ".28 NAME 'reqEntries' "
+		"DESC 'Number of entries returned' "
+		"EQUALITY integerMatch "
+		"ORDERING integerOrderingMatch "
+		"SYNTAX OMsInteger "
+		"SINGLE-VALUE )", &ad_reqEntries },
+	{ "( " LOG_SCHEMA_AT ".29 NAME 'reqData' "
 		"DESC 'Data of extended request' "
+		"EQUALITY octetStringMatch "
+		"SUBSTR octetStringSubstringsMatch "
 		"SYNTAX OMsOctetString "
 		"SINGLE-VALUE )", &ad_reqData },
-	{ "( " LOG_SCHEMA_AT ".24 NAME 'reqId' "
-		"DESC 'ID of Request to Abandon' "
-		"SYNTAX OMsInteger "
-		"SINGLE-VALUE )", &ad_reqId },
-	{ "( " LOG_SCHEMA_AT ".25 NAME 'reqMessage' "
-		"DESC 'Error text of request' "
-		"SYNTAX OMsDirectoryString "
-		"SINGLE-VALUE )", &ad_reqMessage },
-#if 0
-	{ "( " LOG_SCHEMA_AT ".26 NAME 'auditOldest' "
-		"DESC 'Oldest record in this branch' "
-		"EQUALITY generalizedTimeMatch "
-		"ORDERING generalizedTimeOrderingMatch "
-		"SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 "
-		"SINGLE-VALUE )", &ad_oldest },
-#endif
 	{ NULL, NULL }
 };
 
@@ -286,24 +316,23 @@ static struct {
 	char *ot;
 	ObjectClass **oc;
 } locs[] = {
-#if 0
 	{ "( " LOG_SCHEMA_OC ".0 NAME 'auditContainer' "
+		"DESC 'AuditLog container' "
 		"SUP top STRUCTURAL "
-		"MUST auditOldest "
-		"MAY cn )", &oc_container },
-#endif
+		"MAY ( cn $ reqStart $ reqEnd ) )", &log_container },
 	{ "( " LOG_SCHEMA_OC ".1 NAME 'auditObject' "
 		"DESC 'OpenLDAP request auditing' "
 		"SUP top STRUCTURAL "
 		"MUST ( reqStart $ reqType $ reqSession ) "
 		"MAY ( reqDN $ reqAuthzID $ reqControls $ reqRespControls $ reqEnd $ "
-			"reqResult $ reqMessage ) )", &log_ocs[LOG_EN_UNBIND] },
+			"reqResult $ reqMessage $ reqReferral ) )",
+				&log_ocs[LOG_EN_UNBIND] },
 	{ "( " LOG_SCHEMA_OC ".2 NAME 'auditReadObject' "
 		"DESC 'OpenLDAP read request record' "
 		"SUP auditObject STRUCTURAL )", NULL },
 	{ "( " LOG_SCHEMA_OC ".3 NAME 'auditWriteObject' "
 		"DESC 'OpenLDAP write request record' "
-		"SUP auditObject STRUCTURAL )", &log_ocs[LOG_EN_DELETE] },
+		"SUP auditObject STRUCTURAL )", NULL },
 	{ "( " LOG_SCHEMA_OC ".4 NAME 'auditAbandon' "
 		"DESC 'Abandon operation' "
 		"SUP auditObject STRUCTURAL "
@@ -315,27 +344,31 @@ static struct {
 	{ "( " LOG_SCHEMA_OC ".6 NAME 'auditBind' "
 		"DESC 'Bind operation' "
 		"SUP auditObject STRUCTURAL "
-		"MUST reqMethod )", &log_ocs[LOG_EN_BIND] },
+		"MUST ( reqVersion $ reqMethod ) )", &log_ocs[LOG_EN_BIND] },
 	{ "( " LOG_SCHEMA_OC ".7 NAME 'auditCompare' "
 		"DESC 'Compare operation' "
 		"SUP auditReadObject STRUCTURAL "
 		"MUST reqAssertion )", &log_ocs[LOG_EN_COMPARE] },
-	{ "( " LOG_SCHEMA_OC ".8 NAME 'auditModify' "
+	{ "( " LOG_SCHEMA_OC ".8 NAME 'auditDelete' "
+		"DESC 'Delete operation' "
+		"SUP auditWriteObject STRUCTURAL "
+		"MAY reqOld )", &log_ocs[LOG_EN_DELETE] },
+	{ "( " LOG_SCHEMA_OC ".9 NAME 'auditModify' "
 		"DESC 'Modify operation' "
 		"SUP auditWriteObject STRUCTURAL "
-		"MUST reqMod )", &log_ocs[LOG_EN_MODIFY] },
-	{ "( " LOG_SCHEMA_OC ".9 NAME 'auditModRDN' "
+		"MAY reqOld MUST reqMod )", &log_ocs[LOG_EN_MODIFY] },
+	{ "( " LOG_SCHEMA_OC ".10 NAME 'auditModRDN' "
 		"DESC 'ModRDN operation' "
 		"SUP auditWriteObject STRUCTURAL "
 		"MUST ( reqNewRDN $ reqDeleteOldRDN ) "
 		"MAY reqNewSuperior )", &log_ocs[LOG_EN_MODRDN] },
-	{ "( " LOG_SCHEMA_OC ".10 NAME 'auditSearch' "
+	{ "( " LOG_SCHEMA_OC ".11 NAME 'auditSearch' "
 		"DESC 'Search operation' "
 		"SUP auditReadObject STRUCTURAL "
-		"MUST ( reqScope $ reqAttrsonly ) "
+		"MUST ( reqScope $ reqDerefAliases $ reqAttrsonly ) "
 		"MAY ( reqFilter $ reqAttr $ reqEntries $ reqSizeLimit $ "
 			"reqTimeLimit ) )", &log_ocs[LOG_EN_SEARCH] },
-	{ "( " LOG_SCHEMA_OC ".11 NAME 'auditExtended' "
+	{ "( " LOG_SCHEMA_OC ".12 NAME 'auditExtended' "
 		"DESC 'Extended operation' "
 		"SUP auditObject STRUCTURAL "
 		"MAY reqData )", &log_ocs[LOG_EN_EXTENDED] },
@@ -344,22 +377,26 @@ static struct {
 
 #define	RDNEQ	"reqStart="
 
-/* Our time intervals are of the form [dd+]hh:mm[:ss]
- * If a field is present, it must be two digits. We assume no one
- * will want to keep log records for longer than 99 days.
+/* Our time intervals are of the form [ddd+]hh:mm[:ss]
+ * If a field is present, it must be two digits. (Except for
+ * days, which can be arbitrary width.)
  */
 static int
 log_age_parse(char *agestr)
 {
 	int t1, t2;
 	int gotdays = 0;
+	char *endptr;
 
-	t1 = atoi( agestr );
+	t1 = strtol( agestr, &endptr, 10 );
 	/* Is there a days delimiter? */
-	if ( agestr[2] == '+' ) {
+	if ( *endptr == '+' ) {
+		/* 32 bit time only covers about 68 years */
+		if ( t1 < 0 || t1 > 25000 )
+			return -1;
 		t1 *= 24;
 		gotdays = 1;
-	} else if ( agestr[2] != ':' ) {
+	} else if ( *endptr != ':' ) {
 	/* No valid delimiter found, fail */
 		return -1;
 	}
@@ -419,7 +456,7 @@ log_age_unparse( int age, struct berval *agebv )
 	ptr = agebv->bv_val;
 
 	if ( dd ) 
-		ptr += sprintf( ptr, "%02d+", dd );
+		ptr += sprintf( ptr, "%d+", dd );
 	ptr += sprintf( ptr, "%02d:%02d", hh, mm );
 	if ( ss )
 		ptr += sprintf( ptr, ":%02d", ss );
@@ -539,7 +576,7 @@ log_cf_gen(ConfigArgs *c)
 	struct log_info *li = on->on_bi.bi_private;
 	int rc = 0;
 	slap_mask_t tmask = 0;
-	char agebuf[2*STRLENOF("dd+hh:mm:ss  ")];
+	char agebuf[2*STRLENOF("ddddd+hh:mm:ss  ")];
 	struct berval agebv, cyclebv;
 
 	switch( c->op ) {
@@ -649,7 +686,8 @@ log_cf_gen(ConfigArgs *c)
 	return rc;
 }
 
-static Entry *accesslog_entry( Operation *op, int logop ) {
+static Entry *accesslog_entry( Operation *op, int logop,
+	Operation *op2 ) {
 	slap_overinst *on = (slap_overinst *)op->o_bd->bd_info;
 	log_info *li = on->on_bi.bi_private;
 
@@ -690,6 +728,15 @@ static Entry *accesslog_entry( Operation *op, int logop ) {
 	attr_merge_one( e, ad_reqStart, &timestamp, &ntimestamp );
 	op->o_tmpfree( ntimestamp.bv_val, op->o_tmpmemctx );
 
+	slap_op_time( &op2->o_time, &op2->o_tincr );
+
+	timestamp.bv_len = sizeof(rdnbuf) - STRLENOF(RDNEQ);
+	slap_timestamp( &op2->o_time, &timestamp );
+	sprintf( timestamp.bv_val + timestamp.bv_len-1, ".%06dZ", op2->o_tincr );
+	timestamp.bv_len += 7;
+
+	attr_merge_normalize_one( e, ad_reqEnd, &timestamp, op->o_tmpmemctx );
+
 	/* Exops have OID appended */
 	if ( logop == LOG_EN_EXTENDED ) {
 		bv.bv_len = lo->word.bv_len + op->ore_reqoid.bv_len + 2;
@@ -721,9 +768,16 @@ static Entry *accesslog_entry( Operation *op, int logop ) {
 
 static struct berval scopes[] = {
 	BER_BVC("base"),
-	BER_BVC("onelevel"),
-	BER_BVC("subtree"),
-	BER_BVC("subordinate")
+	BER_BVC("one"),
+	BER_BVC("sub"),
+	BER_BVC("subord")
+};
+
+static struct berval derefs[] = {
+	BER_BVC("never"),
+	BER_BVC("searching"),
+	BER_BVC("finding"),
+	BER_BVC("always")
 };
 
 static struct berval simple = BER_BVC("SIMPLE");
@@ -734,12 +788,11 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 	Attribute *a, *last_attr;
 	Modifications *m;
 	struct berval *b;
-	time_t endtime;
 	int i;
 	int logop;
 	slap_verbmasks *lo;
 	Entry *e;
-	char timebuf[LDAP_LUTIL_GENTIME_BUFSIZE];
+	char timebuf[LDAP_LUTIL_GENTIME_BUFSIZE+8];
 	struct berval bv;
 	char *ptr;
 	BerVarray vals;
@@ -747,9 +800,6 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 	SlapReply rs2 = {REP_RESULT};
 
 	if ( rs->sr_type != REP_RESULT && rs->sr_type != REP_EXTENDED )
-		return SLAP_CB_CONTINUE;
-
-	if ( li->li_success && rs->sr_err != LDAP_SUCCESS )
 		return SLAP_CB_CONTINUE;
 
 	switch ( op->o_tag ) {
@@ -769,15 +819,15 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 	if ( !( li->li_ops & lo->mask ))
 		return SLAP_CB_CONTINUE;
 
-	endtime = slap_get_time();
+	if ( lo->mask & LOG_OP_WRITES ) {
+		ldap_pvt_thread_mutex_lock( &li->li_log_mutex );
+		ldap_pvt_thread_mutex_unlock( &li->li_op_mutex );
+	}
 
-	e = accesslog_entry( op, logop );
+	if ( li->li_success && rs->sr_err != LDAP_SUCCESS )
+		goto done;
 
-	bv.bv_val = timebuf;
-	bv.bv_len = sizeof(timebuf);
-	slap_timestamp( &endtime, &bv );
-
-	attr_merge_one( e, ad_reqEnd, &bv, NULL );
+	e = accesslog_entry( op, logop, &op2 );
 
 	attr_merge_one( e, ad_reqDN, &op->o_req_dn, &op->o_req_ndn );
 
@@ -915,6 +965,7 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 
 	case LOG_EN_SEARCH:
 		attr_merge_one( e, ad_reqScope, &scopes[op->ors_scope], NULL );
+		attr_merge_one( e, ad_reqDerefAliases, &derefs[op->ors_deref], NULL );
 		attr_merge_one( e, ad_reqAttrsOnly, op->ors_attrsonly ?
 			(struct berval *)&slap_true_bv : (struct berval *)&slap_false_bv,
 			NULL );
@@ -939,10 +990,15 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 
 		bv.bv_len = sprintf( bv.bv_val, "%d", op->ors_tlimit );
 		attr_merge_one( e, ad_reqTimeLimit, &bv, NULL );
-		/* FIXME: slimit was zeroed by the backends */
+
+		bv.bv_len = sprintf( bv.bv_val, "%d", op->ors_slimit );
+		attr_merge_one( e, ad_reqSizeLimit, &bv, NULL );
 		break;
 
 	case LOG_EN_BIND:
+		bv.bv_val = timebuf;
+		bv.bv_len = sprintf( bv.bv_val, "%d", op->o_protocol );
+		attr_merge_one( e, ad_reqVersion, &bv, NULL );
 		if ( op->orb_method == LDAP_AUTH_SIMPLE ) {
 			attr_merge_one( e, ad_reqMethod, &simple, NULL );
 		} else {
@@ -955,6 +1011,7 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 			attr_merge_one( e, ad_reqMethod, &bv, NULL );
 			op->o_tmpfree( bv.bv_val, op->o_tmpmemctx );
 		}
+
 		break;
 
 	case LOG_EN_EXTENDED:
@@ -970,8 +1027,6 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 
 	op2.o_hdr = op->o_hdr;
 	op2.o_tag = LDAP_REQ_ADD;
-	op2.o_time = endtime;
-	op2.o_tincr = 0;
 	op2.o_bd = li->li_db;
 	op2.o_dn = li->li_db->be_rootdn;
 	op2.o_ndn = li->li_db->be_rootndn;
@@ -980,16 +1035,71 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 	op2.ora_e = e;
 	op2.o_callback = &nullsc;
 
-	if ( lo->mask & LOG_OP_WRITES ) {
-		slap_get_commit_csn( op, NULL, &bv );
-		attr_merge_one( e, slap_schema.si_ad_entryCSN, &bv, NULL );
-		slap_queue_csn( &op2, &bv );
+	if (( lo->mask & LOG_OP_WRITES ) && !BER_BVISEMPTY( &op->o_csn )) {
+		slap_queue_csn( &op2, &op->o_csn );
 	}
 
 	op2.o_bd->be_add( &op2, &rs2 );
-	slap_graduate_commit_csn( &op2 );
 	entry_free( e );
 
+done:
+	ldap_pvt_thread_mutex_unlock( &li->li_log_mutex );
+	return SLAP_CB_CONTINUE;
+}
+
+/* Since Bind success is sent by the frontend, it won't normally enter
+ * the overlay response callback. Add another callback to make sure it
+ * gets here.
+ */
+static int
+accesslog_bind_resp( Operation *op, SlapReply *rs )
+{
+	BackendDB *be, db;
+	int rc;
+	slap_callback *sc;
+
+	be = op->o_bd;
+	db = *be;
+	op->o_bd = &db;
+	db.bd_info = op->o_callback->sc_private;
+	rc = accesslog_response( op, rs );
+	op->o_bd = be;
+	sc = op->o_callback;
+	op->o_callback = sc->sc_next;
+	op->o_tmpfree( sc, op->o_tmpmemctx );
+	return rc;
+}
+
+static int
+accesslog_op_bind( Operation *op, SlapReply *rs )
+{
+	slap_callback *sc;
+
+	sc = op->o_tmpcalloc( 1, sizeof(slap_callback), op->o_tmpmemctx );
+	sc->sc_response = accesslog_bind_resp;
+	sc->sc_private = op->o_bd->bd_info;
+
+	if ( op->o_callback ) {
+		sc->sc_next = op->o_callback->sc_next;
+		op->o_callback->sc_next = sc;
+	} else {
+		op->o_callback = sc;
+	}
+	return SLAP_CB_CONTINUE;
+}
+
+static int
+accesslog_op_mod( Operation *op, SlapReply *rs )
+{
+	slap_overinst *on = (slap_overinst *)op->o_bd->bd_info;
+	log_info *li = on->on_bi.bi_private;
+
+	if ( li->li_ops & LOG_OP_WRITES ) {
+		/* FIXME: this needs to be a recursive mutex to allow
+		 * overlays like refint to keep working.
+		 */
+		ldap_pvt_thread_mutex_lock( &li->li_op_mutex );
+	}
 	return SLAP_CB_CONTINUE;
 }
 
@@ -999,21 +1109,20 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 static int
 accesslog_unbind( Operation *op, SlapReply *rs )
 {
-	if ( op->o_conn->c_authz_backend == op->o_bd ) {
-		slap_overinst *on = (slap_overinst *)op->o_bd->bd_info;
+	slap_overinst *on = (slap_overinst *)op->o_bd->bd_info;
+	if ( op->o_conn->c_authz_backend == on->on_info->oi_origdb ) {
 		log_info *li = on->on_bi.bi_private;
 		Operation op2;
+		void *cids[SLAP_MAX_CIDS];
 		SlapReply rs2 = {REP_RESULT};
 		Entry *e;
 
 		if ( !( li->li_ops & LOG_OP_UNBIND ))
 			return SLAP_CB_CONTINUE;
 
-		e = accesslog_entry( op, LOG_EN_UNBIND );
+		e = accesslog_entry( op, LOG_EN_UNBIND, &op2 );
 		op2.o_hdr = op->o_hdr;
 		op2.o_tag = LDAP_REQ_ADD;
-		op2.o_time = op->o_time;
-		op2.o_tincr = 0;
 		op2.o_bd = li->li_db;
 		op2.o_dn = li->li_db->be_rootdn;
 		op2.o_ndn = li->li_db->be_rootndn;
@@ -1021,6 +1130,9 @@ accesslog_unbind( Operation *op, SlapReply *rs )
 		op2.o_req_ndn = e->e_nname;
 		op2.ora_e = e;
 		op2.o_callback = &nullsc;
+		op2.o_controls = cids;
+		memset(cids, 0, sizeof( cids ));
+		memset(op2.o_ctrlflag, 0, sizeof( op2.o_ctrlflag ));
 
 		op2.o_bd->be_add( &op2, &rs2 );
 		entry_free( e );
@@ -1034,6 +1146,7 @@ accesslog_abandon( Operation *op, SlapReply *rs )
 	slap_overinst *on = (slap_overinst *)op->o_bd->bd_info;
 	log_info *li = on->on_bi.bi_private;
 	Operation op2;
+	void *cids[SLAP_MAX_CIDS];
 	SlapReply rs2 = {REP_RESULT};
 	Entry *e;
 	char buf[64];
@@ -1042,15 +1155,13 @@ accesslog_abandon( Operation *op, SlapReply *rs )
 	if ( !op->o_time || !( li->li_ops & LOG_OP_ABANDON ))
 		return SLAP_CB_CONTINUE;
 
-	e = accesslog_entry( op, LOG_EN_ABANDON );
+	e = accesslog_entry( op, LOG_EN_ABANDON, &op2 );
 	bv.bv_val = buf;
 	bv.bv_len = sprintf( buf, "%d", op->orn_msgid );
 	attr_merge_one( e, ad_reqId, &bv, NULL );
 
 	op2.o_hdr = op->o_hdr;
 	op2.o_tag = LDAP_REQ_ADD;
-	op2.o_time = op->o_time;
-	op2.o_tincr = 0;
 	op2.o_bd = li->li_db;
 	op2.o_dn = li->li_db->be_rootdn;
 	op2.o_ndn = li->li_db->be_rootndn;
@@ -1058,6 +1169,9 @@ accesslog_abandon( Operation *op, SlapReply *rs )
 	op2.o_req_ndn = e->e_nname;
 	op2.ora_e = e;
 	op2.o_callback = &nullsc;
+	op2.o_controls = cids;
+	memset(cids, 0, sizeof( cids ));
+	memset(op2.o_ctrlflag, 0, sizeof( op2.o_ctrlflag ));
 
 	op2.o_bd->be_add( &op2, &rs2 );
 	entry_free( e );
@@ -1076,6 +1190,8 @@ accesslog_db_init(
 	log_info *li = ch_calloc(1, sizeof(log_info));
 
 	on->on_bi.bi_private = li;
+	ldap_pvt_thread_mutex_init( &li->li_op_mutex );
+	ldap_pvt_thread_mutex_init( &li->li_log_mutex );
 	return 0;
 }
 
@@ -1086,19 +1202,121 @@ accesslog_db_destroy(
 {
 	slap_overinst *on = (slap_overinst *)be->bd_info;
 	log_info *li = on->on_bi.bi_private;
-	
+
+	ldap_pvt_thread_mutex_destroy( &li->li_log_mutex );
+	ldap_pvt_thread_mutex_destroy( &li->li_op_mutex );
 	free( li );
 	return LDAP_SUCCESS;
 }
 
-int accesslog_init()
+static int
+accesslog_db_open(
+	BackendDB *be
+)
+{
+	slap_overinst *on = (slap_overinst *)be->bd_info;
+	log_info *li = on->on_bi.bi_private;
+
+	Connection conn;
+	OperationBuffer opbuf;
+	Operation *op = (Operation *) &opbuf;
+	Entry *e;
+	int rc;
+	void *thrctx;
+
+	if ( slapMode & SLAP_TOOL_MODE )
+		return 0;
+
+	thrctx = ldap_pvt_thread_pool_context();
+	connection_fake_init( &conn, op, thrctx );
+	op->o_bd = li->li_db;
+	op->o_dn = li->li_db->be_rootdn;
+	op->o_ndn = li->li_db->be_rootndn;
+
+	rc = be_entry_get_rw( op, li->li_db->be_nsuffix, NULL, NULL, 0, &e );
+
+	if ( e ) {
+		be_entry_release_rw( op, e, 0 );
+	} else {
+		SlapReply rs = {REP_RESULT};
+		struct berval rdn, nrdn, attr;
+		char *ptr;
+		AttributeDescription *ad = NULL;
+		const char *text = NULL;
+		Entry *e_ctx;
+
+		e = ch_calloc( 1, sizeof( Entry ));
+		e->e_name = *li->li_db->be_suffix;
+		e->e_nname = *li->li_db->be_nsuffix;
+
+		attr_merge_one( e, slap_schema.si_ad_objectClass,
+			&log_container->soc_cname, NULL );
+
+		dnRdn( &e->e_name, &rdn );
+		dnRdn( &e->e_nname, &nrdn );
+		ptr = ber_bvchr( &rdn, '=' );
+
+		assert( ptr != NULL );
+
+		attr.bv_val = rdn.bv_val;
+		attr.bv_len = ptr - rdn.bv_val;
+
+		slap_bv2ad( &attr, &ad, &text );
+
+		rdn.bv_val = ptr+1;
+		rdn.bv_len -= attr.bv_len + 1;
+		ptr = ber_bvchr( &nrdn, '=' );
+		nrdn.bv_len -= ptr - nrdn.bv_val + 1;
+		nrdn.bv_val = ptr+1;
+		attr_merge_one( e, ad, &rdn, &nrdn );
+
+		/* Get contextCSN from main DB */
+		op->o_bd = be;
+		op->o_bd->bd_info = on->on_info->oi_orig;
+		rc = be_entry_get_rw( op, be->be_nsuffix, NULL,
+			slap_schema.si_ad_contextCSN, 0, &e_ctx );
+
+		if ( e_ctx ) {
+			Attribute *a;
+
+			a = attr_find( e_ctx->e_attrs, slap_schema.si_ad_contextCSN );
+			if ( a ) {
+				attr_merge( e, slap_schema.si_ad_entryCSN, a->a_vals, NULL );
+				attr_merge( e, a->a_desc, a->a_vals, NULL );
+			}
+			be_entry_release_rw( op, e_ctx, 0 );
+		}
+		op->o_bd->bd_info = (BackendInfo *)on;
+		op->o_bd = li->li_db;
+
+		op->ora_e = e;
+		op->o_req_dn = e->e_name;
+		op->o_req_ndn = e->e_nname;
+		op->o_callback = &nullsc;
+		SLAP_DBFLAGS( op->o_bd ) |= SLAP_DBFLAG_NOLASTMOD;
+		rc = op->o_bd->be_add( op, &rs );
+		SLAP_DBFLAGS( op->o_bd ) ^= SLAP_DBFLAG_NOLASTMOD;
+		attrs_free( e->e_attrs );
+		ch_free( e );
+	}
+	ldap_pvt_thread_pool_context_reset( thrctx );
+	return rc;
+}
+
+int accesslog_initialize()
 {
 	int i, rc;
 
 	accesslog.on_bi.bi_type = "accesslog";
 	accesslog.on_bi.bi_db_init = accesslog_db_init;
 	accesslog.on_bi.bi_db_destroy = accesslog_db_destroy;
+	accesslog.on_bi.bi_db_open = accesslog_db_open;
 
+	accesslog.on_bi.bi_op_add = accesslog_op_mod;
+	accesslog.on_bi.bi_op_bind = accesslog_op_bind;
+	accesslog.on_bi.bi_op_delete = accesslog_op_mod;
+	accesslog.on_bi.bi_op_modify = accesslog_op_mod;
+	accesslog.on_bi.bi_op_modrdn = accesslog_op_mod;
 	accesslog.on_bi.bi_op_unbind = accesslog_unbind;
 	accesslog.on_bi.bi_op_abandon = accesslog_abandon;
 	accesslog.on_response = accesslog_response;
@@ -1171,8 +1389,10 @@ int accesslog_init()
 }
 
 #if SLAPD_OVER_ACCESSLOG == SLAPD_MOD_DYNAMIC
-int init_module( int argc, char *argv[]) {
-	return accesslog_init();
+int
+init_module( int argc, char *argv[] )
+{
+	return accesslog_initialize();
 }
 #endif
 

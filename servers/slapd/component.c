@@ -1,8 +1,8 @@
 /* component.c -- Component Filter Match Routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/component.c,v 1.13.2.5 2005/08/09 21:03:58 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/component.c,v 1.13.2.6 2006/01/03 22:16:13 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2005 The OpenLDAP Foundation.
+ * Copyright 2003-2006 The OpenLDAP Foundation.
  * Portions Copyright 2004 by IBM Corporation.
  * All rights reserved.
  *

@@ -1,8 +1,8 @@
 /* cache.c - routines to maintain an in-core cache of entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/cache.c,v 1.66.2.2 2005/08/09 21:04:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/cache.c,v 1.66.2.4 2006/01/03 22:16:19 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,9 @@ typedef struct ldbm_entry_info {
 
 static int	cache_delete_entry_internal(Cache *cache, Entry *e);
 #ifdef LDAP_DEBUG
+#ifdef SLAPD_UNUSED
 static void	lru_print(Cache *cache);
+#endif
 #endif
 
 static int
@@ -652,6 +654,7 @@ cache_release_all( Cache *cache )
 }
 
 #ifdef LDAP_DEBUG
+#ifdef SLAPD_UNUSED
 static void
 lru_print( Cache *cache )
 {
@@ -668,4 +671,5 @@ lru_print( Cache *cache )
 			e->e_dn, e->e_id, LEI(e)->lei_refcnt );
 	}
 }
+#endif
 #endif

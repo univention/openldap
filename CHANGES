@@ -1,5 +1,203 @@
 OpenLDAP 2.3 Change Log
 
+OpenLDAP 2.3.19 Release
+	Fixed libldap disable DH key exchange with DH params (ITS#4354)
+	Fixed libldap_r thread pool destroy hang (ITS#4349,ITS#4368)
+	Fixed slapd slap_daemon destroy issue (ITS#4370)
+	Fixed slapd-hdb livelock issue (ITS#4360)
+	Fixed slapd-bdb/hdb auto-recovery issue (ITS#4361,ITS#4373)
+	Fixed slapd-bdb/hdb BDB 4.4 compatibility issues (ITS#4362)
+	Fixed slapo-ppolicy modify issue (ITS#4355)
+	Fixed slapo-syncprov/pache filter dup issue (ITS#4364)
+	Fixed slapo-syncprov playlog netries reset issue (ITS#4365)
+	Build environment
+		Fixed slaptools when --disable-debug (ITS#4351)
+		Fixed slapd(8) solaris select(2) issue (ITS#4357)
+
+OpenLDAP 2.3.18 Release
+	Fixed slapd syncrepl variable used before set bug (ITS#4331)
+	Updated slapd-meta retry capabilities (ITS#4328)
+	Fixed slapd-bdb slapcat autorecover bug (ITS#4324)
+	Fixed slapo-chain search limits (ITS#4336)
+	Fixed slapo-pcache attrsets issues (ITS#4316)
+	Fixed slapo-translucent connection destroy (ITS#4334)
+	Fixed slapd-config handling of attribute options (ITS#4339)
+	Fixed slapd-ldap idassert resource leak (ITS#4326)
+	Fixed slapd-meta nretries issue (ITS#4059)
+	Fixed slapd wake_listener loses wakes (ITS#4343)
+	Fixed slapd connection manager issue (ITS#4338)
+	Fixed slapd handling of old style configuration directives (ITS#4341)
+	Removed slapd-bdb/hdb extraneous yields (ITS#3950)
+	Build Environment
+		Removed problematic Linux sched_yield(2) workarounds (ITS#3950)
+	Documentation
+		Updated release documents
+		Updated misc. manual pages
+
+OpenLDAP 2.3.17 Release
+	Fixed slapd anonymous proxy authorization issue (ITS#4320)
+	Fixed slapd-ldap/meta session reuse issue (ITS#4315)
+	Fixed slapd-ldap idassert anon-to-anon issue (ITS#4321)
+	Fixed slapd-monitor thread issue (ITS#4318)
+	Build environment
+		Updated Linux sched_yield(2) workaround to use nanosleep(2) (ITS#3950)
+		Fixed configure report-to URL
+
+OpenLDAP 2.3.16 Release
+	Fixed slapd-bdb reindexing via cn=config not noticed issue (ITS#4260)
+	Fixed slapd-monitor connection search crash (ITS#4300)
+	Flapd slapd cn=config bad ACL syntax modify crash (ITS#4306)
+	Fixed slapd ACL/suffix configuration issue (ITS#4307)
+	Fixed slapd-bdb/hdb cache issue (ITS#4308)
+	Fixed slapd-bdb/hdb/ldbm suffix add with default referral issue (ITS#4310)
+	Fixed slapd-ldbm compare cache release issue (ITS#4313)
+	Fixed slapd syncrepl time/size limit parsing
+	Fixed slapi slapi_op_bind_callback fix (ITS#4311)
+	Fixed slapi pluginlog fix (ITS#4291)
+	Fixed ldapsearch response control handling issue
+	Build environment
+		Replace sched_yield(2) on Linux with select(2) (ITS#3950)
+	Documentation
+		Added slapd-bdb(5) cachefree description
+		Updated misc. manual pages
+
+OpenLDAP 2.3.15 Release
+	Fixed slapd strerror logging bug (ITS#4292)
+	Fixed slapd ACL add/delete fraction issue (ITS#4295)
+	Fixed slapd ACL users selfwrite issue (ITS#4299)
+	Fixed slapd attrs/objectclass replog issues (ITS#4298)
+	Fixed slapd-ldap password modify exop password return (ITS#4294)
+	Build environment
+		Disable test030-relay when threads are unavailable (ITS#4297)
+
+OpenLDAP 2.3.14 Release
+	Fixed slapd assertion control restrictions
+	Fixed slapd sc_prev update after free bug (ITS#4237)
+	Fixed slapd pid file creation (ITS#4241,4251)
+	Fixed slapd DEBUG dependency (ITS#4245)
+	Added slapd warning for excessive threads number (ITS#4249)
+	Fixed slapd passwd incomplete mod structure issue (ITS#4278)
+	Fixed slapd ACL exact attrval clause normalization (ITS#4255)
+	Fixed slapd modify/delete by ordered index issue
+	Fixed slapd strerror NULL bug (ITS#4285)
+	Fixed slapd-glue issues (ITS#4084,4133)
+	Fixed slapd-hdb idl Delete bug (ITS#4250)
+	Fixed slapd-hdb cache deadlock (ITS#4254)
+	Fixed slapd-bdb/hdb alock_close bug (ITS#4259)
+	Fixed slapd-bdb dn2id IDL cache bug (ITS#4263)
+	Fixed slapd-bdb/hdb mode argument parsing (ITS#4257)
+	Fixed slapd-bdb/hdb cn=config reindexing (ITS#4260)
+	Fixed slapd-bdb/hdb cn=config olcDbIndex modify/replace (ITS#4262)
+	Fixed slapd-bdb/hdb lockup issue (ITS#4184)
+	Fixed slapd-ldap anonymous identity assertion (ITS#4272)
+	Added slapd-ldap/meta idle-timeout support (ITS#4115)
+	Fixed slapd-meta bind-timeout handling
+	Fixed slapd-sql plug leak
+	Fixed slapo-dynlist/dyngroup nonexistant object return code (ITS#4224)
+	Updated slapo-dynlist (ITS#3756,3781)
+	Fixed slapo-rwm static DN free bug (ITS#4248)
+	Fixed slapo-syncprov unpublished control (ITS#4238)
+	Fixed slapo-syncprov message id issue
+	Fixed slapo-unique extraneous searches (ITS#4267)
+	Build environment
+		Fixed thread dependency of test028 (ITS#4141)
+		Updated test026-dn
+		Updated test033-glue-syncrepl (ITS#4264)
+	Documentation
+		Updated slapd.conf(5) and Admin Guide (ITS#4146,4266)
+		Updated slapo-dynlist(5) (ITS#4197)
+		Updated slapo-pcache(5) (ITS#4232)
+		Updated slapindex(8) (ITS#4242)
+
+OpenLDAP 2.3.13 Release
+	Fixed libldap/liblutil MSG_ACCRIGHTSLEN bug (ITS#4206)
+	Fixed libldap ldap_bv2escaped_filter_value issue (ITS#4212)
+	Fixed liblutil URL value-specs issue (ITS#4221)
+	Fixed slapd sizelimit disclose issue (ITS#4213)
+	Fixed slapd gentlehup write restrict issue (ITS#3717)
+	Fixed slapd gentlehup abnormal issue (ITS#4217)
+	Fixed slapd delta-sync subtree scope issue (ITS#4227)
+	Fixed slapd cn=config OID/name pollution issue (ITS#4185)
+	Fixed slapd cn=config rootdn issue (ITS#4192)
+	Fixed slapd cn=config slaptest -F without -f issue (ITS#4194)
+	Fixed slapd cn=config ACL issue (ITS#4218)
+	Fixed slapd-bdb negative results IDL cache issue (ITS#4223)
+	Fixed slapd-bdb cursor close issue (ITS#4226)
+	Fixed slapd-hdb slapadd -q issue (ITS#4210)
+	Fixed slapd-hdb missing results issue (ITS#4186)
+	Fixed slapd-ldap potential double free issue (ITS#4189)
+	Fixed slapd-meta matched DN issue (ITS#4195)
+	Fixed slapd-meta DN cache issue (ITS#4196)
+	Fixed slapd-monitor shadow issue (ITS#4214)
+	Fixed slapo-accesslog delta-syncrepl issue (ITS#4198)
+	Fixed slapo-accesslog cleanup issue (ITS#4209)
+	Fixed slapo-chain resource leak issue (ITS#4140)
+	Fixed slapo-chain identity assertion issue (ITS#4256)
+	Fixed slapo-pcache attrset check issue (ITS#4199)
+	Fixed slapd-bdb readonly dirty alock issue (ITS#4201)
+	Fixed slapd-pcache non-requested attributes issues (ITS#4203,4204)
+	Fixed slaptest -F -f success with unsupported issue (ITS#4220)
+	Build environment
+		Improved Berkeley DB detection (ITS#3809)
+		Updated DB_CONFIG example (ITS#4229)
+	Documentation
+		Updated ldif(5) to include change record description
+
+OpenLDAP 2.3.12 Release
+	Fixed libldap ldapi:// authdn construction
+	Added libldap ldap_bv2escaped_filter_value (ITS#2535)
+	Added libldap/slapd TLS DSA certificate support (ITS#4017)
+	Fixed libldap SASL bind issue (ITS#4158)
+	Fixed ldapmodrdn empty line handling (ITS#4101)
+	Fixed client tools additional info printing (ITS#4147)
+	Updated slapd ldaps:// not configured fix (ITS#4082,4083)
+	Fixed slapd connection crashes (ITS#4108)
+	Fixed slapd illegal S option bug (ITS#4119)
+	Fixed slapd cn=monitor log level mod issue (ITS#4091)
+	Fixed slapd cn=config bad access issue (ITS#4111)
+	Fixed slapd cn=config access modify issue (ITS#4127)
+	Fixed slapd cn=config init issue (ITS#4128)
+	Fixed slapd non-reentrant libwrap issue (ITS#4099)
+	Fixed slapd thread v. tools_threads settings
+	Fixed slapd spurious defer message (ITS#3850)
+	Fixed slapd attribute SYNTAX OIDM issue (ITS#4116)
+	Fixed slapd modify empty sequence bug (ITS#4183)
+	Fixed slapd-bdb uninitialized condition in tool mode (ITS#4143)
+	Fixed slapd-bdb empty suffix and syncprov issue (ITS#4171)
+	Fixed slapd-hdb syncrepl deadlock issue (ITS#4088)
+	Added slapd-ldap write op timeout support (ITS#4157)
+	Fixed slapd-ldap/slapo-chain matched dn handling (ITS#4176)
+	Fixed slapd-meta invalid DN attrs normalize/pretty issue (ITS#4107)
+	Fixed slapd-meta rootdn erroneous success issue (ITS#4122)
+	Fixed slapd-meta proxying bind result issue (ITS#4129)
+	Fixed slapd-meta/slapo-rwm rwm-mapping issue (ITS#4086)
+	Fixed slapd-meta per-target retry (ITS#4150)
+	Fixed slapd-meta size/time limit handling (ITS#4145)
+	Fixed slapd-sql size limit count (ITS#4181)
+	Fixed slapo-ppolicy pwdFailureTime after bind success issue (ITS#4134)
+	Fixed slapo-ppolicy add passord_hash quality config dependency
+	Fixed slapo-syncprov LDAP response types (ITS#4183)
+	Added slapd delta syncrepl support
+	Added slapadd thread support
+	Updated slapcat subordinate database handling (ITS#4089)
+	Added slapd/slaptest pid/arg file consistency check (ITS#4074)
+	Updated slaptools default debug level to "none" (ITS#4044)
+	Fixed slurpd backwards compat issue (ITS#4151)
+	Added slurpd pid/arg file consistency check (ITS#4152)
+	Updated contrib smbk5pwd module
+	Removed lint
+	Build environment
+		Fixed libldap HSTRERROR issue (ITS#4124)
+		Fixed slapd AIX IFMT issue (ITS#4123)
+		Added slapd-bind test program
+		Added inet_ntoa_b support for VxWorks (ITS#3440)
+		Updated test036 (ITS#4095)
+		Fixed test036 cmp issue (ITS#4142)
+		Dropped SSLeay support
+	Documentation
+		slapd.conf(5) defaultSearchBase issue (ITS#4162)
+		slap tool man pages wll typo (ITS#4169)
+
 OpenLDAP 2.3.11 Release
 	Fixed libldap reentrancy issue (ITS#3988)
 	Fixed libldap ndelay without timeout

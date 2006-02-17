@@ -1,8 +1,8 @@
 /* filter.c - routines for parsing and dealing with filters */
-/* $OpenLDAP: pkg/ldap/servers/slapd/filter.c,v 1.125.2.4 2005/08/26 00:18:02 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/filter.c,v 1.125.2.8 2006/01/23 23:52:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,11 +44,6 @@ static int	get_ssa(
 	BerElement *ber,
 	SubstringsAssertion **s,
 	const char **text );
-
-static int filter_escape_value_x(
-	struct berval *in,
-	struct berval *out,
-	void *ctx );
 
 static void simple_vrFilter2bv(
 	Operation *op,
@@ -574,7 +569,7 @@ filter2bv_x( Operation *op, Filter *f, struct berval *fstr )
 
 		snprintf( fstr->bv_val, fstr->bv_len + 1, "(%s=%s)",
 			f->f_av_desc->ad_cname.bv_val,
-			tmp.bv_val );
+			tmp.bv_len ? tmp.bv_val : "(null)");
 
 		ber_memfree_x( tmp.bv_val, op->o_tmpmemctx );
 		break;
@@ -588,7 +583,7 @@ filter2bv_x( Operation *op, Filter *f, struct berval *fstr )
 
 		snprintf( fstr->bv_val, fstr->bv_len + 1, "(%s>=%s)",
 			f->f_av_desc->ad_cname.bv_val,
-			tmp.bv_val );
+			tmp.bv_len ? tmp.bv_val : "(null)");
 
 		ber_memfree_x( tmp.bv_val, op->o_tmpmemctx );
 		break;
@@ -602,7 +597,7 @@ filter2bv_x( Operation *op, Filter *f, struct berval *fstr )
 
 		snprintf( fstr->bv_val, fstr->bv_len + 1, "(%s<=%s)",
 			f->f_av_desc->ad_cname.bv_val,
-			tmp.bv_val );
+			tmp.bv_len ? tmp.bv_val : "(null)");
 
 		ber_memfree_x( tmp.bv_val, op->o_tmpmemctx );
 		break;
@@ -616,7 +611,7 @@ filter2bv_x( Operation *op, Filter *f, struct berval *fstr )
 
 		snprintf( fstr->bv_val, fstr->bv_len + 1, "(%s~=%s)",
 			f->f_av_desc->ad_cname.bv_val,
-			tmp.bv_val );
+			tmp.bv_len ? tmp.bv_val : "(null)");
 		ber_memfree_x( tmp.bv_val, op->o_tmpmemctx );
 		break;
 
@@ -639,7 +634,7 @@ filter2bv_x( Operation *op, Filter *f, struct berval *fstr )
 
 			snprintf( &fstr->bv_val[len-2], tmp.bv_len+3,
 				/* "(attr=" */ "%s*)",
-				tmp.bv_val );
+				tmp.bv_len ? tmp.bv_val : "(null)");
 
 			ber_memfree_x( tmp.bv_val, op->o_tmpmemctx );
 		}
@@ -656,7 +651,7 @@ filter2bv_x( Operation *op, Filter *f, struct berval *fstr )
 
 				snprintf( &fstr->bv_val[len-1], tmp.bv_len+3,
 					/* "(attr=[init]*[any*]" */ "%s*)",
-					tmp.bv_val );
+					tmp.bv_len ? tmp.bv_val : "(null)");
 				ber_memfree_x( tmp.bv_val, op->o_tmpmemctx );
 			}
 		}
@@ -672,7 +667,7 @@ filter2bv_x( Operation *op, Filter *f, struct berval *fstr )
 
 			snprintf( &fstr->bv_val[len-1], tmp.bv_len+3,
 				/* "(attr=[init*][any*]" */ "%s)",
-				tmp.bv_val );
+				tmp.bv_len ? tmp.bv_val : "(null)");
 
 			ber_memfree_x( tmp.bv_val, op->o_tmpmemctx );
 		}
@@ -737,7 +732,7 @@ filter2bv_x( Operation *op, Filter *f, struct berval *fstr )
 				f->f_mr_dnattrs ? ":dn" : "",
 				f->f_mr_rule_text.bv_len ? ":" : "",
 				f->f_mr_rule_text.bv_len ? f->f_mr_rule_text.bv_val : "",
-				tmp.bv_val );
+				tmp.bv_len ? tmp.bv_val : "(null)");
 			ber_memfree_x( tmp.bv_val, op->o_tmpmemctx );
 		} break;
 
@@ -782,40 +777,79 @@ filter2bv( Filter *f, struct berval *fstr )
 	filter2bv_x( &op, f, fstr );
 }
 
-static int
-filter_escape_value_x(
-	struct berval *in,
-	struct berval *out,
-	void *ctx )
+Filter *
+filter_dup( Filter *f, void *memctx )
 {
-	ber_len_t i;
-	assert( in != NULL );
-	assert( out != NULL );
+	BerMemoryFunctions *mf = &slap_sl_mfuncs;
+	Filter *n;
 
-	i = in->bv_len * 3 + 1;
-	out->bv_val = ctx ? slap_sl_malloc( i, ctx ) : ch_malloc( i );
-	out->bv_len = 0;
+	if ( !f )
+		return NULL;
 
-	for( i=0; i < in->bv_len ; i++ ) {
-		if( FILTER_ESCAPE(in->bv_val[i]) ) {
-			out->bv_val[out->bv_len++] = SLAP_ESCAPE_CHAR;
-			out->bv_val[out->bv_len++] = SLAP_ESCAPE_HI( in->bv_val[i] );
-			out->bv_val[out->bv_len++] = SLAP_ESCAPE_LO( in->bv_val[i] );
-		} else {
-			out->bv_val[out->bv_len++] = in->bv_val[i];
+	n = mf->bmf_malloc( sizeof(Filter), memctx );
+	n->f_choice = f->f_choice;
+	n->f_next = NULL;
+
+	switch( f->f_choice ) {
+	case SLAPD_FILTER_COMPUTED:
+		n->f_result = f->f_result;
+		break;
+	case LDAP_FILTER_PRESENT:
+		n->f_desc = f->f_desc;
+		break;
+	case LDAP_FILTER_EQUALITY:
+	case LDAP_FILTER_GE:
+	case LDAP_FILTER_LE:
+	case LDAP_FILTER_APPROX:
+		/* Should this be ava_dup() ? */
+		n->f_ava = mf->bmf_calloc( 1, sizeof(AttributeAssertion), memctx );
+		*n->f_ava = *f->f_ava;
+		ber_dupbv_x( &n->f_av_value, &f->f_av_value, memctx );
+		break;
+	case LDAP_FILTER_SUBSTRINGS:
+		n->f_sub = mf->bmf_calloc( 1, sizeof(SubstringsAssertion), memctx );
+		n->f_sub_desc = f->f_sub_desc;
+		if ( !BER_BVISNULL( &f->f_sub_initial ))
+			ber_dupbv_x( &n->f_sub_initial, &f->f_sub_initial, memctx );
+		if ( f->f_sub_any ) {
+			int i;
+			for ( i = 0; !BER_BVISNULL( &f->f_sub_any[i] ); i++ );
+			n->f_sub_any = mf->bmf_malloc(( i+1 )*sizeof( struct berval ),
+				memctx );
+			for ( i = 0; !BER_BVISNULL( &f->f_sub_any[i] ); i++ ) {
+				ber_dupbv_x( &n->f_sub_any[i], &f->f_sub_any[i], memctx );
+			}
+			BER_BVZERO( &n->f_sub_any[i] );
 		}
+		if ( !BER_BVISNULL( &f->f_sub_final ))
+			ber_dupbv_x( &n->f_sub_final, &f->f_sub_final, memctx );
+		break;
+	case LDAP_FILTER_EXT: {
+		/* Should this be mra_dup() ? */
+		ber_len_t length;
+		length = sizeof(MatchingRuleAssertion);
+		if ( !BER_BVISNULL( &f->f_mr_rule_text ))
+			length += f->f_mr_rule_text.bv_len + 1;
+		n->f_mra = mf->bmf_calloc( 1, length, memctx );
+		*n->f_mra = *f->f_mra;
+		ber_dupbv_x( &n->f_mr_value, &f->f_mr_value, memctx );
+		if ( !BER_BVISNULL( &f->f_mr_rule_text )) {
+			n->f_mr_rule_text.bv_val = (char *)(n->f_mra+1);
+			AC_MEMCPY(n->f_mr_rule_text.bv_val,
+				f->f_mr_rule_text.bv_val, f->f_mr_rule_text.bv_len );
+		}
+		} break;
+	case LDAP_FILTER_AND:
+	case LDAP_FILTER_OR:
+	case LDAP_FILTER_NOT: {
+		Filter **p;
+		for ( p = &n->f_list, f = f->f_list; f; f = f->f_next ) {
+			*p = filter_dup( f, memctx );
+			p = &(*p)->f_next;
+		}
+		} break;
 	}
-
-	out->bv_val[out->bv_len] = '\0';
-	return LDAP_SUCCESS;
-}
-
-int
-filter_escape_value(
-	struct berval *in,
-	struct berval *out )
-{
-	return filter_escape_value_x( in, out, NULL );
+	return n;
 }
 
 static int

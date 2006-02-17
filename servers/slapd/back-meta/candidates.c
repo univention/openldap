@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/candidates.c,v 1.12.2.7 2005/09/28 00:30:33 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/candidates.c,v 1.12.2.11 2006/01/03 22:16:20 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -70,13 +70,11 @@ meta_back_is_candidate(
 		default:
 			return META_CANDIDATE;
 
-#ifdef LDAP_SCOPE_SUBORDINATE
 		case LDAP_SCOPE_SUBORDINATE:
 			if ( ndn->bv_len > nsuffix->bv_len ) {
 				return META_CANDIDATE;
 			}
 			break;
-#endif /* LDAP_SCOPE_SUBORDINATE */
 
 		/* nearly useless; not allowed by config */
 		case LDAP_SCOPE_ONELEVEL:
@@ -178,18 +176,18 @@ meta_clear_one_candidate(
 	metasingleconn_t	*msc )
 {
 	if ( msc->msc_ld ) {
-		ldap_unbind_ext_s( msc->msc_ld, NULL, NULL );
+		ldap_unbind_ext( msc->msc_ld, NULL, NULL );
 		msc->msc_ld = NULL;
 	}
 
 	if ( !BER_BVISNULL( &msc->msc_bound_ndn ) ) {
-		ber_memfree( msc->msc_bound_ndn.bv_val );
+		ber_memfree_x( msc->msc_bound_ndn.bv_val, NULL );
 		BER_BVZERO( &msc->msc_bound_ndn );
 	}
 
 	if ( !BER_BVISNULL( &msc->msc_cred ) ) {
 		memset( msc->msc_cred.bv_val, 0, msc->msc_cred.bv_len );
-		ber_memfree( msc->msc_cred.bv_val );
+		ber_memfree_x( msc->msc_cred.bv_val, NULL );
 		BER_BVZERO( &msc->msc_cred );
 	}
 

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/config.c,v 1.39.2.2 2005/09/28 00:30:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/config.c,v 1.39.2.5 2006/01/03 22:16:26 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * Portions Copyright 2003 Mark Benson.
  * Portions Copyright 2002 John Morrissey.
  * All rights reserved.
@@ -58,7 +58,7 @@
 static void	add_replica LDAP_P(( char **, int ));
 static int	parse_replica_line LDAP_P(( char **, int, Ri *));
 static void	parse_line LDAP_P(( char * ));
-static char	*getline LDAP_P(( FILE * ));
+static char	*slurpd_getline LDAP_P(( FILE * ));
 static char	*strtok_quote LDAP_P(( char *, char * ));
 
 int	cargc = 0, cargv_size = 0;
@@ -96,7 +96,7 @@ slurpd_read_config(
     }
 
     lineno = 0;
-    while ( (line = getline( fp )) != NULL ) {
+    while ( (line = slurpd_getline( fp )) != NULL ) {
 	/* skip comments and blank lines */
 	if ( line[0] == '#' || line[0] == '\0' ) {
 	    continue;
@@ -193,8 +193,7 @@ slurpd_read_config(
 				return( 1 );
 			}
 
-			c = atoi( cargv[1] );
-			if( c < 1 ) {
+			if ( lutil_atoi( &c, cargv[1] ) != 0 || c < 1 ) {
 				Debug( LDAP_DEBUG_ANY, "%s: line %d: invalid interval "
 					"(%d) in \"replicationinterval <seconds>\" line\n",
 					fname, lineno, c );
@@ -321,7 +320,7 @@ strtok_quote(
  * Get a line of input.
  */
 static char *
-getline(
+slurpd_getline(
     FILE *fp
 )
 {
@@ -456,7 +455,11 @@ parse_replica_line(
 	    if (( hp = strchr( val, ':' )) != NULL ) {
 		*hp = '\0';
 		hp++;
-		ri->ri_port = atoi( hp );
+		if ( lutil_atoi( &ri->ri_port, hp ) != 0 ) {
+		    fprintf( stderr, "unable to parse port \"%s\", line %d\n",
+			    hp, lineno );
+		    return -1;
+		}
 	    }
 	    if ( ri->ri_port <= 0 ) {
 		ri->ri_port = LDAP_PORT;

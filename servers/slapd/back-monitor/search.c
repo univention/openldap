@@ -1,8 +1,8 @@
 /* search.c - monitor backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/search.c,v 1.32.2.3 2005/08/09 21:04:05 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/search.c,v 1.32.2.5 2006/01/03 22:16:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2005 The OpenLDAP Foundation.
+ * Copyright 2001-2006 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -113,7 +113,7 @@ monitor_send_children(
 		if ( rc == LDAP_COMPARE_TRUE ) {
 			rs->sr_entry = e;
 			rs->sr_flags = 0;
-			send_search_entry( op, rs );
+			rc = send_search_entry( op, rs );
 			rs->sr_entry = NULL;
 		}
 

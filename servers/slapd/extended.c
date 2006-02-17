@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/extended.c,v 1.78.2.4 2005/10/10 17:35:27 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/extended.c,v 1.78.2.7 2006/01/03 22:16:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -193,8 +193,8 @@ fe_extended( Operation *op, SlapReply *rs )
 		reqdata = *op->ore_reqdata;
 	}
 
-	if( !(ext = find_extop(supp_ext_list, &op->ore_reqoid )))
-	{
+	ext = find_extop(supp_ext_list, &op->ore_reqoid );
+	if ( ext == NULL ) {
 		Statslog( LDAP_DEBUG_STATS, "%s EXT oid=%s\n",
 		    op->o_log_prefix, op->ore_reqoid.bv_val, 0, 0, 0 );
 		Debug( LDAP_DEBUG_ANY, "do_extended: unsupported operation \"%s\"\n",
@@ -210,6 +210,8 @@ fe_extended( Operation *op, SlapReply *rs )
 		op->ore_reqoid.bv_val, 0 ,0 );
 
 	{ /* start of OpenLDAP extended operation */
+		BackendDB	*bd = op->o_bd;
+
 		rs->sr_err = (ext->ext_main)( op, rs );
 
 		if( rs->sr_err != SLAPD_ABANDON ) {
@@ -224,7 +226,7 @@ fe_extended( Operation *op, SlapReply *rs )
 			}
 
 			if ( op->o_bd == NULL )
-				op->o_bd = frontendDB;
+				op->o_bd = bd;
 			send_ldap_extended( op, rs );
 
 			if ( rs->sr_ref != default_referral ) {
@@ -248,7 +250,7 @@ done:;
 
 int
 load_extop(
-	struct berval *ext_oid,
+	const struct berval *ext_oid,
 	slap_mask_t ext_flags,
 	SLAP_EXTOP_MAIN_FN *ext_main )
 {

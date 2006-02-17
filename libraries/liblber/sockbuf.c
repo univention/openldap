@@ -1,8 +1,8 @@
 /* sockbuf.c - i/o routines with support for adding i/o layers. */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/sockbuf.c,v 1.60.2.3 2005/09/28 16:44:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/sockbuf.c,v 1.60.2.5 2006/01/03 22:16:08 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,8 +56,6 @@ Sockbuf *
 ber_sockbuf_alloc( void )
 {
 	Sockbuf			*sb;
-
-	ber_int_options.lbo_valid = LBER_INITIALIZED;
 
 	sb = LBER_CALLOC( 1, sizeof( Sockbuf ) );
 

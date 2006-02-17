@@ -1,8 +1,8 @@
 /* passwd.c - password extended operation routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.95.2.14 2005/10/07 16:53:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.95.2.19 2006/01/03 22:16:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,8 +54,9 @@ int passwd_extop(
 	slap_callback cb2 = { NULL, slap_replog_cb, NULL, NULL };
 	int i, nhash;
 	char **hashes;
-	int	rc;
+	int rc;
 	BackendDB *op_be;
+	int freenewpw = 0;
 
 	cb2.sc_next = &cb;
 
@@ -84,7 +85,7 @@ int passwd_extop(
 			qpw->rs_old.bv_val ? " old" : "",
 			qpw->rs_new.bv_val ? " new" : "", 0 );
 	} else {
-		Statslog( LDAP_DEBUG_STATS, "%s PASSMOD %s%s\n",
+		Statslog( LDAP_DEBUG_STATS, "%s PASSMOD%s%s\n",
 			op->o_log_prefix,
 			qpw->rs_old.bv_val ? " old" : "",
 			qpw->rs_new.bv_val ? " new" : "", 0, 0 );
@@ -183,6 +184,7 @@ int passwd_extop(
 		slap_passwd_generate( &qpw->rs_new );
 		if ( qpw->rs_new.bv_len ) {
 			rsp = slap_passwd_return( &qpw->rs_new );
+			freenewpw = 1;
 		}
 	}
 	if ( qpw->rs_new.bv_len == 0 ) {
@@ -197,8 +199,13 @@ int passwd_extop(
 	if ( op->o_bd->be_extended ) {
 		rs->sr_err = op->o_bd->be_extended( op, rs );
 		if ( rs->sr_err != LDAP_UNWILLING_TO_PERFORM &&
-			rs->sr_err != SLAP_CB_CONTINUE ) {
+			rs->sr_err != SLAP_CB_CONTINUE )
+		{
 			rc = rs->sr_err;
+			if ( rsp ) {
+				rs->sr_rspdata = rsp;
+				rsp = NULL;
+			}
 			goto error_return;
 		}
 	}
@@ -256,6 +263,7 @@ old_good:
 	ml->sml_values[i].bv_val = NULL;
 	ml->sml_nvalues = NULL;
 	ml->sml_desc = slap_schema.si_ad_userPassword;
+	ml->sml_type = ml->sml_desc->ad_cname;
 	ml->sml_op = LDAP_MOD_REPLACE;
 	ml->sml_flags = 0;
 	ml->sml_next = qpw->rs_mods;
@@ -273,34 +281,34 @@ old_good:
 		cb2.sc_private = qpw;	/* let Modify know this was pwdMod,
 					 * if it cares... */
 
-		rs->sr_err = slap_mods_opattrs( op, ml, qpw->rs_modtail, &rs->sr_text,
-			NULL, 0, 1 );
-		
-		if ( rs->sr_err == LDAP_SUCCESS ) {
-			rs->sr_err = op->o_bd->be_modify( op, rs );
-		}
+		rs->sr_err = op->o_bd->be_modify( op, rs );
 		if ( rs->sr_err == LDAP_SUCCESS ) {
 			rs->sr_rspdata = rsp;
 		} else if ( rsp ) {
 			ber_bvfree( rsp );
+			rsp = NULL;
 		}
 		op->o_tag = LDAP_REQ_EXTENDED;
 		op->o_callback = sc;
-	}
-	slap_mods_free( qpw->rs_mods, 1 );
-	if ( rsp ) {
-		free( qpw->rs_new.bv_val );
 	}
 
 	rc = rs->sr_err;
 	op->oq_extended = qext;
 
 error_return:;
+	if ( qpw->rs_mods ) {
+		slap_mods_free( qpw->rs_mods, 1 );
+	}
+	if ( freenewpw ) {
+		free( qpw->rs_new.bv_val );
+	}
 	if ( !BER_BVISNULL( &op->o_req_dn ) ) {
 		op->o_tmpfree( op->o_req_dn.bv_val, op->o_tmpmemctx );
+		BER_BVZERO( &op->o_req_dn );
 	}
 	if ( !BER_BVISNULL( &op->o_req_ndn ) ) {
 		op->o_tmpfree( op->o_req_ndn.bv_val, op->o_tmpmemctx );
+		BER_BVZERO( &op->o_req_ndn );
 	}
 
 	return rc;

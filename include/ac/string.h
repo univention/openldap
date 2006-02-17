@@ -1,8 +1,8 @@
 /* Generic string.h */
-/* $OpenLDAP: pkg/ldap/include/ac/string.h,v 1.44.2.2 2005/03/14 22:24:57 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ac/string.h,v 1.44.2.6 2006/01/03 22:16:07 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -94,19 +94,26 @@ int (strncasecmp)();
 #define memcmp lutil_memcmp
 #endif
 
+/* GNU extension (glibc >= 2.1.91), only declared when defined(_GNU_SOURCE) */
+#ifndef HAVE_MEMRCHR
+#undef memrchr
+#define memrchr lutil_memrchr
+#endif /* ! HAVE_MEMRCHR */
+void * memrchr(const void *b, int c, size_t len);
+
 #define STRLENOF(s)	(sizeof(s)-1)
 
 #if defined( HAVE_NONPOSIX_STRERROR_R )
 #	define AC_STRERROR_R(e,b,l)		(strerror_r((e), (b), (l)))
 #elif defined( HAVE_STRERROR_R )
-#	define AC_STRERROR_R(e,b,l)		(strerror_r((e), (b), (l)) ? (b) : NULL)
+#	define AC_STRERROR_R(e,b,l)		(strerror_r((e), (b), (l)) == 0 ? (b) : "Unknown error")
 #elif defined( HAVE_SYS_ERRLIST )
 #	define AC_STRERROR_R(e,b,l)		((e) > -1 && (e) < sys_nerr \
-										? sys_errlist[(e)] : NULL )
+							? sys_errlist[(e)] : "Unknown error" )
 #elif defined( HAVE_STRERROR )
-#	define AC_STRERROR_R(e,b,l)		(strerror(e))
+#	define AC_STRERROR_R(e,b,l)		(strerror(e))	/* NOTE: may be NULL */
 #else
-#	define AC_STRERROR_R(e,b,l)		(NULL)
+#	define AC_STRERROR_R(e,b,l)		("Unknown error")
 #endif
 
 #endif /* _AC_STRING_H */

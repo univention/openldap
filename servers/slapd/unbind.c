@@ -1,8 +1,8 @@
 /* unbind.c - decode an ldap unbind operation and pass it to a backend db */
-/* $OpenLDAP: pkg/ldap/servers/slapd/unbind.c,v 1.23.2.2 2005/04/29 21:29:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/unbind.c,v 1.23.2.3 2006/01/03 22:16:16 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

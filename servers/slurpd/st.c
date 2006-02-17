@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/st.c,v 1.18.2.1 2005/01/20 18:04:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/st.c,v 1.18.2.3 2006/01/03 22:16:26 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,7 @@
 
 #include "slurp.h"
 #include "globals.h"
+#include "lutil.h"
 
 /*
  * Add information about replica host specified by Ri to list
@@ -230,11 +231,16 @@ St_read(
 
 	found = 0;
 	for ( i = 0; i < sglob->st->st_nreplicas; i++ ) {
+	    int p;
 	    if ( !strcmp( hostname, sglob->st->st_data[ i ]->hostname ) &&
-		    atoi( port ) == sglob->st->st_data[ i ]->port ) {
+		    lutil_atoi( &p, port ) == 0 && p == sglob->st->st_data[ i ]->port )
+	    {
 		found = 1;
-		sglob->st->st_data[ i ]->last = atol( timestamp );
-		sglob->st->st_data[ i ]->seq = atoi( seq );
+		if ( lutil_atol( &sglob->st->st_data[ i ]->last, timestamp ) != 0
+			|| lutil_atoi( &sglob->st->st_data[ i ]->seq, seq ) != 0 )
+		{
+		    found = 0;
+		}
 		break;
 	    }
 	}

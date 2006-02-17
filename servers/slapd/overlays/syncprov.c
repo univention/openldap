@@ -1,8 +1,8 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/syncprov.c,v 1.56.2.18 2005/10/12 21:33:53 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/syncprov.c,v 1.56.2.27 2006/01/23 23:52:17 kurt Exp $ */
 /* syncprov.c - syncrepl provider */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2005 The OpenLDAP Foundation.
+ * Copyright 2004-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -122,6 +122,7 @@ typedef struct syncprov_info_t {
 	int		si_chktime;
 	int		si_numops;	/* number of ops since last checkpoint */
 	int		si_nopres;	/* Skip present phase */
+	int		si_usehint;	/* use reload hint */
 	time_t	si_chklast;	/* time of last checkpoint */
 	Avlnode	*si_mods;	/* entries being modified */
 	sessionlog	*si_logs;
@@ -382,6 +383,9 @@ findbase_cb( Operation *op, SlapReply *rs )
 	return LDAP_SUCCESS;
 }
 
+static Filter generic_filter = { LDAP_FILTER_PRESENT, { 0 }, NULL };
+static struct berval generic_filterstr = BER_BVC("(objectclass=*)");
+
 static int
 syncprov_findbase( Operation *op, fbase_cookie *fc )
 {
@@ -421,6 +425,8 @@ syncprov_findbase( Operation *op, fbase_cookie *fc )
 		fop.ors_tlimit = SLAP_NO_LIMIT;
 		fop.ors_attrs = slap_anlist_no_attrs;
 		fop.ors_attrsonly = 1;
+		fop.ors_filter = &generic_filter;
+		fop.ors_filterstr = generic_filterstr;
 
 		fop.o_bd->bd_info = on->on_info->oi_orig;
 		rc = fop.o_bd->be_search( &fop, &frs );
@@ -444,12 +450,10 @@ syncprov_findbase( Operation *op, fbase_cookie *fc )
 		case LDAP_SCOPE_SUBTREE:
 			fc->fscope = dnIsSuffix( fc->fdn, &fc->fss->s_base );
 			break;
-#ifdef LDAP_SCOPE_SUBORDINATE
 		case LDAP_SCOPE_SUBORDINATE:
 			fc->fscope = dnIsSuffix( fc->fdn, &fc->fss->s_base ) &&
 				!dn_match( fc->fdn, &fc->fss->s_base );
 			break;
-#endif
 		}
 	}
 
@@ -477,9 +481,11 @@ syncprov_findbase( Operation *op, fbase_cookie *fc )
  * CSN, and generate Present records for them. We always collect this result
  * in SyncID sets, even if there's only one match.
  */
-#define	FIND_MAXCSN	1
-#define	FIND_CSN	2
-#define	FIND_PRESENT	3
+typedef enum find_csn_t {
+	FIND_MAXCSN	= 1,
+	FIND_CSN	= 2,
+	FIND_PRESENT	= 3
+} find_csn_t;
 
 static int
 findmax_cb( Operation *op, SlapReply *rs )
@@ -502,7 +508,11 @@ findcsn_cb( Operation *op, SlapReply *rs )
 {
 	slap_callback *sc = op->o_callback;
 
-	if ( rs->sr_type == REP_SEARCH && rs->sr_err == LDAP_SUCCESS ) {
+	/* We just want to know that at least one exists, so it's OK if
+	 * we exceed the unchecked limit.
+	 */
+	if ( rs->sr_err == LDAP_ADMINLIMIT_EXCEEDED ||
+		(rs->sr_type == REP_SEARCH && rs->sr_err == LDAP_SUCCESS )) {
 		sc->sc_private = (void *)1;
 	}
 	return LDAP_SUCCESS;
@@ -558,7 +568,7 @@ findpres_cb( Operation *op, SlapReply *rs )
 }
 
 static int
-syncprov_findcsn( Operation *op, int mode )
+syncprov_findcsn( Operation *op, find_csn_t mode )
 {
 	slap_overinst		*on = (slap_overinst *)op->o_bd->bd_info;
 	syncprov_info_t		*si = on->on_bi.bi_private;
@@ -575,10 +585,10 @@ syncprov_findcsn( Operation *op, int mode )
 #else
 	AttributeAssertion eq = { NULL, BER_BVNULL };
 #endif
-	int i, rc = LDAP_SUCCESS;
 	fpres_cookie pcookie;
 	sync_control *srs = NULL;
-	int findcsn_retry = 1;
+	struct slap_limits_set fc_limits;
+	int i, rc = LDAP_SUCCESS, findcsn_retry = 1;
 
 	if ( mode != FIND_MAXCSN ) {
 		srs = op->o_controls[slap_cids.sc_LDAPsync];
@@ -629,6 +639,8 @@ again:
 		/* On retry, look for <= */
 		} else {
 			cf.f_choice = LDAP_FILTER_LE;
+			fop.ors_limit = &fc_limits;
+			fc_limits.lms_s_unchecked = 1;
 			fop.ors_filterstr.bv_len = sprintf( buf, "(entryCSN<=%s)",
 				cf.f_av_value.bv_val );
 		}
@@ -728,7 +740,8 @@ syncprov_free_syncop( syncops *so )
 
 /* Send a persistent search response */
 static int
-syncprov_sendresp( Operation *op, opcookie *opc, syncops *so, Entry **e, int mode)
+syncprov_sendresp( Operation *op, opcookie *opc, syncops *so,
+	Entry **e, int mode )
 {
 	slap_overinst *on = opc->son;
 
@@ -1213,9 +1226,9 @@ syncprov_checkpoint( Operation *op, SlapReply *rs, slap_overinst *on )
 	syncprov_info_t		*si = on->on_bi.bi_private;
 	Modifications mod;
 	Operation opm;
+	SlapReply rsm = { 0 };
 	struct berval bv[2];
 	slap_callback cb = {0};
-	int manage = get_manageDSAit(op);
 
 	mod.sml_values = bv;
 	bv[1].bv_val = NULL;
@@ -1235,8 +1248,12 @@ syncprov_checkpoint( Operation *op, SlapReply *rs, slap_overinst *on )
 	opm.o_req_ndn = op->o_bd->be_nsuffix[0];
 	opm.o_bd->bd_info = on->on_info->oi_orig;
 	opm.o_managedsait = SLAP_CONTROL_NONCRITICAL;
-	opm.o_bd->be_modify( &opm, rs );
-	opm.o_managedsait = manage;
+	SLAP_DBFLAGS( opm.o_bd ) |= SLAP_DBFLAG_NOLASTMOD;
+	opm.o_bd->be_modify( &opm, &rsm );
+	SLAP_DBFLAGS( opm.o_bd ) ^= SLAP_DBFLAG_NOLASTMOD;
+	if ( mod.sml_next != NULL ) {
+		slap_mods_free( mod.sml_next, 1 );
+	}
 }
 
 static void
@@ -1412,6 +1429,7 @@ syncprov_playlog( Operation *op, SlapReply *rs, sessionlog *sl,
 			mf.f_av_value = uuids[i];
 			cb.sc_private = NULL;
 			fop.ors_slimit = 1;
+			frs.sr_nentries = 0;
 			rc = fop.o_bd->be_search( &fop, &frs );
 
 			/* If entry was not found, add to delete list */
@@ -1739,7 +1757,7 @@ syncprov_detach_op( Operation *op, syncops *so, slap_overinst *on )
 	op2->ors_filterstr.bv_val = ptr;
 	strcpy( ptr, so->s_filterstr.bv_val );
 	op2->ors_filterstr.bv_len = so->s_filterstr.bv_len;
-	op2->ors_filter = str2filter( ptr );
+	op2->ors_filter = filter_dup( op->ors_filter, NULL );
 	so->s_op = op2;
 
 	/* Copy any cached group ACLs individually */
@@ -1783,6 +1801,9 @@ syncprov_search_response( Operation *op, SlapReply *rs )
 			return SLAP_CB_CONTINUE;
 		}
 		a = attr_find( rs->sr_entry->e_attrs, slap_schema.si_ad_entryCSN );
+		if ( a == NULL && rs->sr_operational_attrs != NULL ) {
+			a = attr_find( rs->sr_operational_attrs, slap_schema.si_ad_entryCSN );
+		}
 		if ( a ) {
 			/* Make sure entry is less than the snaphot'd contextCSN */
 			if ( ber_bvcmp( &a->a_nvals[0], &ss->ss_ctxcsn ) > 0 )
@@ -1943,12 +1964,11 @@ syncprov_op_search( Operation *op, SlapReply *rs )
 		/* Is the CSN still present in the database? */
 		if ( syncprov_findcsn( op, FIND_CSN ) != LDAP_SUCCESS ) {
 			/* No, so a reload is required */
-#if 0		/* the consumer doesn't seem to send this hint */
-			if ( op->o_sync_rhint == 0 ) {
+			/* the 2.2 consumer doesn't send this hint */
+			if ( si->si_usehint && srs->sr_rhint == 0 ) {
 				send_ldap_error( op, rs, LDAP_SYNC_REFRESH_REQUIRED, "sync cookie is stale" );
 				return rs->sr_err;
 			}
-#endif
 		} else {
 			gotstate = 1;
 			/* If changed and doing Present lookup, send Present UUIDs */
@@ -2069,7 +2089,8 @@ syncprov_operational(
 enum {
 	SP_CHKPT = 1,
 	SP_SESSL,
-	SP_NOPRES
+	SP_NOPRES,
+	SP_USEHINT
 };
 
 static ConfigDriver sp_cf_gen;
@@ -2086,6 +2107,10 @@ static ConfigTable spcfg[] = {
 	{ "syncprov-nopresent", NULL, 2, 2, 0, ARG_ON_OFF|ARG_MAGIC|SP_NOPRES,
 		sp_cf_gen, "( OLcfgOvAt:1.3 NAME 'olcSpNoPresent' "
 			"DESC 'Omit Present phase processing' "
+			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
+	{ "syncprov-reloadhint", NULL, 2, 2, 0, ARG_ON_OFF|ARG_MAGIC|SP_USEHINT,
+		sp_cf_gen, "( OLcfgOvAt:1.4 NAME 'olcSpReloadHint' "
+			"DESC 'Observe Reload Hint in Request control' "
 			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
 	{ NULL, NULL, 0, 0, 0, ARG_IGNORED }
 };
@@ -2134,6 +2159,13 @@ sp_cf_gen(ConfigArgs *c)
 				rc = 1;
 			}
 			break;
+		case SP_USEHINT:
+			if ( si->si_usehint ) {
+				c->value_int = 1;
+			} else {
+				rc = 1;
+			}
+			break;
 		}
 		return rc;
 	} else if ( c->op == LDAP_MOD_DELETE ) {
@@ -2154,13 +2186,42 @@ sp_cf_gen(ConfigArgs *c)
 			else
 				rc = LDAP_NO_SUCH_ATTRIBUTE;
 			break;
+		case SP_USEHINT:
+			if ( si->si_usehint )
+				si->si_usehint = 0;
+			else
+				rc = LDAP_NO_SUCH_ATTRIBUTE;
+			break;
 		}
 		return rc;
 	}
 	switch ( c->type ) {
 	case SP_CHKPT:
-		si->si_chkops = atoi( c->argv[1] );
-		si->si_chktime = atoi( c->argv[2] ) * 60;
+		if ( lutil_atoi( &si->si_chkops, c->argv[1] ) != 0 ) {
+			sprintf( c->msg, "%s unable to parse checkpoint ops # \"%s\"",
+				c->argv[0], c->argv[1] );
+			Debug( LDAP_DEBUG_CONFIG, "%s: %s\n", c->log, c->msg, 0 );
+			return ARG_BAD_CONF;
+		}
+		if ( si->si_chkops <= 0 ) {
+			sprintf( c->msg, "%s invalid checkpoint ops # \"%d\"",
+				c->argv[0], si->si_chkops );
+			Debug( LDAP_DEBUG_CONFIG, "%s: %s\n", c->log, c->msg, 0 );
+			return ARG_BAD_CONF;
+		}
+		if ( lutil_atoi( &si->si_chktime, c->argv[2] ) != 0 ) {
+			sprintf( c->msg, "%s unable to parse checkpoint time \"%s\"",
+				c->argv[0], c->argv[1] );
+			Debug( LDAP_DEBUG_CONFIG, "%s: %s\n", c->log, c->msg, 0 );
+			return ARG_BAD_CONF;
+		}
+		if ( si->si_chktime <= 0 ) {
+			sprintf( c->msg, "%s invalid checkpoint time \"%d\"",
+				c->argv[0], si->si_chkops );
+			Debug( LDAP_DEBUG_CONFIG, "%s: %s\n", c->log, c->msg, 0 );
+			return ARG_BAD_CONF;
+		}
+		si->si_chktime *= 60;
 		break;
 	case SP_SESSL: {
 		sessionlog *sl;
@@ -2187,6 +2248,9 @@ sp_cf_gen(ConfigArgs *c)
 		break;
 	case SP_NOPRES:
 		si->si_nopres = c->value_int;
+		break;
+	case SP_USEHINT:
+		si->si_usehint = c->value_int;
 		break;
 	}
 	return rc;
@@ -2216,8 +2280,8 @@ syncprov_db_open(
 	slap_overinst   *on = (slap_overinst *) be->bd_info;
 	syncprov_info_t *si = (syncprov_info_t *)on->on_bi.bi_private;
 
-	Connection conn;
-	OperationBuffer opbuf;
+	Connection conn = { 0 };
+	OperationBuffer opbuf = { 0 };
 	char ctxcsnbuf[LDAP_LUTIL_CSNSTR_BUFSIZE];
 	Operation *op = (Operation *) &opbuf;
 	Entry *e;
@@ -2260,12 +2324,14 @@ syncprov_db_open(
 			strcpy( ctxcsnbuf, si->si_ctxcsnbuf );
 		}
 		be_entry_release_rw( op, e, 0 );
-		op->o_bd->bd_info = (BackendInfo *)on;
-		op->o_req_dn = be->be_suffix[0];
-		op->o_req_ndn = be->be_nsuffix[0];
-		op->ors_scope = LDAP_SCOPE_SUBTREE;
-		ldap_pvt_thread_create( &tid, 0, syncprov_db_otask, op );
-		ldap_pvt_thread_join( tid, NULL );
+		if ( !BER_BVISEMPTY( &si->si_ctxcsn ) ) {
+			op->o_bd->bd_info = (BackendInfo *)on;
+			op->o_req_dn = be->be_suffix[0];
+			op->o_req_ndn = be->be_nsuffix[0];
+			op->ors_scope = LDAP_SCOPE_SUBTREE;
+			ldap_pvt_thread_create( &tid, 0, syncprov_db_otask, op );
+			ldap_pvt_thread_join( tid, NULL );
+		}
 	} else if ( SLAP_SYNC_SHADOW( op->o_bd )) {
 		/* If we're also a consumer, and we didn't find the context entry,
 		 * then don't generate anything, wait for our provider to send it
@@ -2275,8 +2341,8 @@ syncprov_db_open(
 	}
 
 	if ( BER_BVISEMPTY( &si->si_ctxcsn ) ) {
-		slap_get_csn( op, si->si_ctxcsnbuf, sizeof(si->si_ctxcsnbuf),
-				&si->si_ctxcsn, 0 );
+		si->si_ctxcsn.bv_len = sizeof( si->si_ctxcsnbuf );
+		slap_get_csn( op, &si->si_ctxcsn, 0 );
 	}
 
 	/* If our ctxcsn is different from what was read from the root
@@ -2359,6 +2425,9 @@ syncprov_db_destroy(
 	syncprov_info_t	*si = (syncprov_info_t *)on->on_bi.bi_private;
 
 	if ( si ) {
+		if ( si->si_logs ) {
+			ch_free( si->si_logs );
+		}
 		ldap_pvt_thread_mutex_destroy( &si->si_mods_mutex );
 		ldap_pvt_thread_mutex_destroy( &si->si_ops_mutex );
 		ldap_pvt_thread_mutex_destroy( &si->si_csn_mutex );
@@ -2435,6 +2504,7 @@ static int syncprov_parseCtrl (
 			rs->sr_text = "Sync control : cookie decoding error";
 			return LDAP_PROTOCOL_ERROR;
 		}
+		tag = ber_peek_tag( ber, &len );
 	}
 	if ( tag == LDAP_TAG_RELOAD_HINT ) {
 		if (( ber_scanf( ber, /*{*/ "b", &rhint )) == LBER_ERROR ) {
@@ -2476,12 +2546,12 @@ static int syncprov_parseCtrl (
 static slap_overinst 		syncprov;
 
 int
-syncprov_init()
+syncprov_initialize()
 {
 	int rc;
 
 	rc = register_supported_control( LDAP_CONTROL_SYNC,
-		SLAP_CTRL_HIDE|SLAP_CTRL_SEARCH, NULL,
+		SLAP_CTRL_SEARCH, NULL,
 		syncprov_parseCtrl, &slap_cids.sc_LDAPsync );
 	if ( rc != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_ANY,
@@ -2509,6 +2579,8 @@ syncprov_init()
 
 	syncprov.on_bi.bi_cf_ocs = spocs;
 
+	generic_filter.f_desc = slap_schema.si_ad_objectClass;
+
 	rc = config_register_schema( spcfg, spocs );
 	if ( rc ) return rc;
 
@@ -2519,7 +2591,7 @@ syncprov_init()
 int
 init_module( int argc, char *argv[] )
 {
-	return syncprov_init();
+	return syncprov_initialize();
 }
 #endif /* SLAPD_OVER_SYNCPROV == SLAPD_MOD_DYNAMIC */
 

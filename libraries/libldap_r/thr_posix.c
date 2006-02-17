@@ -1,8 +1,8 @@
 /* thr_posix.c - wrapper around posix and posixish thread implementations.  */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_posix.c,v 1.37.2.3 2005/09/28 00:30:29 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_posix.c,v 1.37.2.5 2006/01/06 18:47:59 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,6 +19,13 @@
 #if defined( HAVE_PTHREADS )
 
 #include <ac/errno.h>
+
+#ifdef REPLACE_BROKEN_YIELD
+#ifndef HAVE_NANOSLEEP
+#include <ac/socket.h>
+#endif
+#include <ac/time.h>
+#endif
 
 #include "ldap_pvt_thread.h" /* Get the thread interface */
 #define LDAP_THREAD_IMPLEMENTATION
@@ -207,7 +214,16 @@ ldap_pvt_thread_kill( ldap_pvt_thread_t thread, int signo )
 int 
 ldap_pvt_thread_yield( void )
 {
-#if HAVE_THR_YIELD
+#ifdef REPLACE_BROKEN_YIELD
+#ifdef HAVE_NANOSLEEP
+	struct timespec t = { 0, 0 };
+	nanosleep(&t, NULL);
+#else
+	struct timeval tv = {0,0};
+	select( 0, NULL, NULL, NULL, &tv );
+#endif
+	return 0;
+#elif HAVE_THR_YIELD
 	return thr_yield();
 
 #elif HAVE_PTHREADS == 10

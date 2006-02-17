@@ -1,6 +1,6 @@
 .TH SLAPADD 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man8/slapadd.8,v 1.23.2.5 2005/09/27 22:25:23 kurt Exp $
-.\" Copyright 1998-2005 The OpenLDAP Foundation All Rights Reserved.
+.\" $OpenLDAP: pkg/ldap/doc/man/man8/slapadd.8,v 1.23.2.8 2006/01/03 22:16:06 kurt Exp $
+.\" Copyright 1998-2006 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 slapadd \- Add entries to a SLAPD database
@@ -8,6 +8,7 @@ slapadd \- Add entries to a SLAPD database
 .B SBINDIR/slapadd
 .B [\-v]
 .B [\-c]
+.B [\-g]
 .B [\-u]
 .B [\-q]
 .B [\-w]
@@ -29,7 +30,7 @@ suffix and adds entries corresponding to the provided LDIF to
 the database.
 Databases configured as
 .B subordinate
-of this one are also updated.
+of this one are also updated, unless \fB-g\fP is specified.
 The LDIF input is read from standard input or the specified file.
 .LP
 As
@@ -47,6 +48,10 @@ enable verbose mode.
 .TP
 .B \-c
 enable continue (ignore errors) mode.
+.TP
+.B \-g
+disable subordinate gluing.  Only the specified database will be
+processed, and not its glued subordinates (if any).
 .TP
 .B \-u
 enable dry-run (don't write to backend) mode.
@@ -95,7 +100,7 @@ and
 are specified, the config file will be read and converted to
 config directory format and written to the specified directory.
 If neither option is specified, an attempt to read the
-default config directory wll be made before trying to use the default
+default config directory will be made before trying to use the default
 config file. If a valid config directory exists then the
 default config file is ignored. If dryrun mode is also specified,
 no conversion will occur.

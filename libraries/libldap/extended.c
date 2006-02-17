@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/extended.c,v 1.32.2.3 2005/08/10 21:57:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/extended.c,v 1.32.2.5 2006/01/03 22:16:08 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -210,8 +210,13 @@ ldap_parse_extended_result (
 		return ld->ld_errno;
 	}
 
+#ifdef LDAP_NULL_IS_NULL
+	rc = ber_scanf( ber, "{eAA" /*}*/, &errcode,
+		&ld->ld_matched, &ld->ld_error );
+#else /* ! LDAP_NULL_IS_NULL */
 	rc = ber_scanf( ber, "{eaa" /*}*/, &errcode,
 		&ld->ld_matched, &ld->ld_error );
+#endif /* ! LDAP_NULL_IS_NULL */
 
 	if( rc == LBER_ERROR ) {
 		ld->ld_errno = LDAP_DECODING_ERROR;
@@ -242,6 +247,10 @@ ldap_parse_extended_result (
 			ber_free( ber, 0 );
 			return ld->ld_errno;
 		}
+
+#ifdef LDAP_NULL_IS_NULL
+		assert( resoid[ 0 ] != '\0' );
+#endif /* LDAP_NULL_IS_NULL */
 
 		tag = ber_peek_tag( ber, &len );
 	}
@@ -349,6 +358,10 @@ ldap_parse_intermediate (
 			ber_free( ber, 0 );
 			return ld->ld_errno;
 		}
+
+#ifdef LDAP_NULL_IS_NULL
+		assert( resoid[ 0 ] != '\0' );
+#endif /* LDAP_NULL_IS_NULL */
 
 		tag = ber_peek_tag( ber, &len );
 	}

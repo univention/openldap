@@ -1,8 +1,8 @@
 /* filterentry.c - apply a filter to an entry */
-/* $OpenLDAP: pkg/ldap/servers/slapd/filterentry.c,v 1.91.2.7 2005/08/09 21:03:58 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/filterentry.c,v 1.91.2.9 2006/01/03 22:16:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -158,7 +158,7 @@ static int test_mra_filter(
 	void		*memctx;
 	BER_MEMFREE_FN	*memfree;
 #ifdef LDAP_COMP_MATCH
-	int i, num_attr_vals;
+	int i, num_attr_vals = 0;
 #endif
 
 	if ( op == NULL ) {

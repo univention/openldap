@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.112.2.7 2005/10/05 17:42:19 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.112.2.11 2006/01/03 22:16:08 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -455,6 +455,15 @@ sasl_err2ldap( int saslerr )
 {
 	int rc;
 
+	/* map SASL errors to LDAP API errors returned by:
+	 *	sasl_client_new()
+	 *		SASL_OK, SASL_NOMECH, SASL_NOMEM
+	 *	sasl_client_start()
+	 *		SASL_OK, SASL_NOMECH, SASL_NOMEM, SASL_INTERACT
+	 *	sasl_client_step()
+	 *		SASL_OK, SASL_INTERACT, SASL_BADPROT, SASL_BADSERV
+	 */
+
 	switch (saslerr) {
 		case SASL_CONTINUE:
 			rc = LDAP_MORE_RESULTS_TO_RETURN;
@@ -465,20 +474,28 @@ sasl_err2ldap( int saslerr )
 		case SASL_OK:
 			rc = LDAP_SUCCESS;
 			break;
-		case SASL_FAIL:
-			rc = LDAP_LOCAL_ERROR;
-			break;
 		case SASL_NOMEM:
 			rc = LDAP_NO_MEMORY;
 			break;
 		case SASL_NOMECH:
 			rc = LDAP_AUTH_UNKNOWN;
 			break;
+		case SASL_BADPROT:
+			rc = LDAP_DECODING_ERROR;
+			break;
+		case SASL_BADSERV:
+			rc = LDAP_AUTH_UNKNOWN;
+			break;
+
+		/* other codes */
 		case SASL_BADAUTH:
 			rc = LDAP_AUTH_UNKNOWN;
 			break;
 		case SASL_NOAUTHZ:
 			rc = LDAP_PARAM_ERROR;
+			break;
+		case SASL_FAIL:
+			rc = LDAP_LOCAL_ERROR;
 			break;
 		case SASL_TOOWEAK:
 		case SASL_ENCRYPT:
@@ -594,7 +611,8 @@ ldap_int_sasl_bind(
 		rc = ldap_open_defconn( ld );
 		if( rc < 0 ) return ld->ld_errno;
 
-		ber_sockbuf_ctrl( ld->ld_defconn->lconn_sb, LBER_SB_OPT_GET_FD, &sd );
+		ber_sockbuf_ctrl( ld->ld_defconn->lconn_sb,
+			LBER_SB_OPT_GET_FD, &sd );
 
 		if( sd == AC_SOCKET_INVALID ) {
 			ld->ld_errno = LDAP_LOCAL_ERROR;
@@ -612,9 +630,11 @@ ldap_int_sasl_bind(
 		ld->ld_defconn->lconn_sasl_authctx = NULL;
 	}
 
-	{ char *saslhost = ldap_host_connected_to( ld->ld_defconn->lconn_sb, "localhost" );
-	rc = ldap_int_sasl_open( ld, ld->ld_defconn, saslhost );
-	LDAP_FREE( saslhost );
+	{
+		char *saslhost = ldap_host_connected_to( ld->ld_defconn->lconn_sb,
+			"localhost" );
+		rc = ldap_int_sasl_open( ld, ld->ld_defconn, saslhost );
+		LDAP_FREE( saslhost );
 	}
 
 	if ( rc != LDAP_SUCCESS ) return rc;
@@ -637,13 +657,16 @@ ldap_int_sasl_bind(
 
 #if !defined(_WIN32)
 	/* Check for local */
-	if ( ldap_pvt_url_scheme2proto( ld->ld_defconn->lconn_server->lud_scheme ) == LDAP_PROTO_IPC ) {
-		char authid[sizeof("uidNumber=4294967295+gidNumber=4294967295,"
+	if ( ldap_pvt_url_scheme2proto(
+		ld->ld_defconn->lconn_server->lud_scheme ) == LDAP_PROTO_IPC )
+	{
+		char authid[sizeof("gidNumber=4294967295+uidNumber=4294967295,"
 			"cn=peercred,cn=external,cn=auth")];
-		sprintf( authid, "uidNumber=%d+gidNumber=%d,"
+		sprintf( authid, "gidNumber=%d+uidNumber=%d,"
 			"cn=peercred,cn=external,cn=auth",
-			(int) geteuid(), (int) getegid() );
-		(void) ldap_int_sasl_external( ld, ld->ld_defconn, authid, LDAP_PVT_SASL_LOCAL_SSF );
+			(int) getegid(), (int) geteuid() );
+		(void) ldap_int_sasl_external( ld, ld->ld_defconn, authid,
+			LDAP_PVT_SASL_LOCAL_SSF );
 	}
 #endif
 
@@ -703,7 +726,8 @@ ldap_int_sasl_bind(
 
 		scred = NULL;
 
-		rc = ldap_sasl_bind_s( ld, dn, mech, &ccred, sctrls, cctrls, &scred );
+		rc = ldap_sasl_bind_s( ld, dn, mech, &ccred, sctrls, cctrls,
+			&scred );
 
 		if ( ccred.bv_val != NULL ) {
 #if SASL_VERSION_MAJOR < 2
@@ -714,13 +738,12 @@ ldap_int_sasl_bind(
 
 		if ( rc != LDAP_SUCCESS && rc != LDAP_SASL_BIND_IN_PROGRESS ) {
 			if( scred ) {
-				if ( scred->bv_len ) {
-					/* and server provided us with data? */
-					Debug( LDAP_DEBUG_TRACE,
-						"ldap_int_sasl_bind: rc=%d sasl=%d len=%ld\n",
-						rc, saslrc, scred->bv_len );
-				}
+				/* and server provided us with data? */
+				Debug( LDAP_DEBUG_TRACE,
+					"ldap_int_sasl_bind: rc=%d sasl=%d len=%ld\n",
+					rc, saslrc, scred ? scred->bv_len : -1 );
 				ber_bvfree( scred );
+				scred = NULL;
 			}
 			rc = ld->ld_errno;
 			goto done;
@@ -729,12 +752,11 @@ ldap_int_sasl_bind(
 		if( rc == LDAP_SUCCESS && saslrc == SASL_OK ) {
 			/* we're done, no need to step */
 			if( scred ) {
-				if ( scred->bv_len ) {
-					/* but server provided us with data! */
-					Debug( LDAP_DEBUG_TRACE,
-						"ldap_int_sasl_bind: rc=%d sasl=%d len=%ld\n",
-						rc, saslrc, scred->bv_len );
-				}
+				/* but we got additional data? */
+				Debug( LDAP_DEBUG_TRACE,
+					"ldap_int_sasl_bind: rc=%d sasl=%d len=%ld\n",
+					rc, saslrc, scred ? scred->bv_len : -1 );
+
 				ber_bvfree( scred );
 				rc = ld->ld_errno = LDAP_LOCAL_ERROR;
 				goto done;
@@ -743,6 +765,13 @@ ldap_int_sasl_bind(
 		}
 
 		do {
+			if( ! scred ) {
+				/* no data! */
+				Debug( LDAP_DEBUG_TRACE,
+					"ldap_int_sasl_bind: no data in step!\n",
+					0, 0, 0 );
+			}
+
 			saslrc = sasl_client_step( ctx,
 				(scred == NULL) ? NULL : scred->bv_val,
 				(scred == NULL) ? 0 : scred->bv_len,
@@ -791,13 +820,15 @@ ldap_int_sasl_bind(
 	}
 
 	if( flags != LDAP_SASL_QUIET ) {
-		saslrc = sasl_getprop( ctx, SASL_USERNAME, (SASL_CONST void **) &data );
+		saslrc = sasl_getprop( ctx, SASL_USERNAME,
+			(SASL_CONST void **) &data );
 		if( saslrc == SASL_OK && data && *data ) {
 			fprintf( stderr, "SASL username: %s\n", data );
 		}
 
 #if SASL_VERSION_MAJOR < 2
-		saslrc = sasl_getprop( ctx, SASL_REALM, (SASL_CONST void **) &data );
+		saslrc = sasl_getprop( ctx, SASL_REALM,
+			(SASL_CONST void **) &data );
 		if( saslrc == SASL_OK && data && *data ) {
 			fprintf( stderr, "SASL realm: %s\n", data );
 		}
@@ -995,11 +1026,11 @@ int ldap_pvt_sasl_secprops(
 			if ( strncasecmp( props[i], sprops[j].key.bv_val,
 				sprops[j].key.bv_len )) continue;
 			if ( sprops[j].ival ) {
-				int v;
+				unsigned v;
 				char *next = NULL;
 				if ( !isdigit( props[i][sprops[j].key.bv_len] )) continue;
 				v = strtoul( &props[i][sprops[j].key.bv_len], &next, 10 );
-				if ( next == NULL || next[ 0 ] != '\0' ) continue;
+				if ( next == &props[i][sprops[j].key.bv_len] || next[0] != '\0' ) continue;
 				switch( sprops[j].ival ) {
 				case GOT_MINSSF:
 					min_ssf = v; got_min_ssf++; break;

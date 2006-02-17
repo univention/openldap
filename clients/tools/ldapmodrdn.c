@@ -1,8 +1,8 @@
 /* ldapmodrdn.c - generic program to modify an entry's RDN using LDAP */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodrdn.c,v 1.106.2.3 2005/08/09 16:41:26 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodrdn.c,v 1.106.2.5 2006/01/03 22:16:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -206,7 +206,7 @@ main(int argc, char **argv)
     if (havedn)
 	retval = domodrdn( ld, entrydn, rdn, newSuperior, remove_old_RDN );
     else while ((rc == 0 || contoper) && fgets(buf, sizeof(buf), fp) != NULL) {
-	if ( *buf != '\0' ) {	/* blank lines optional, skip */
+	if ( *buf != '\n' ) {	/* blank lines optional, skip */
 	    buf[ strlen( buf ) - 1 ] = '\0';	/* remove nl */
 
 	    if ( havedn ) {	/* have DN, get RDN */

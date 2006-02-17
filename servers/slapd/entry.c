@@ -1,8 +1,8 @@
 /* entry.c - routines for dealing with entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.129.2.8 2005/08/26 00:18:02 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.129.2.10 2006/01/03 22:16:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -282,7 +282,7 @@ str2entry2( char *s, int checkvals )
 			 	 * validate value per syntax
 			 	 */
 #ifdef SLAP_ORDERED_PRETTYNORM
-				rc = ordered_value_validate( ad, &vals[i] );
+				rc = ordered_value_validate( ad, &vals[i], LDAP_MOD_ADD );
 #else /* ! SLAP_ORDERED_PRETTYNORM */
 				rc = validate( ad->ad_type->sat_syntax, &vals[i] );
 #endif /* ! SLAP_ORDERED_PRETTYNORM */

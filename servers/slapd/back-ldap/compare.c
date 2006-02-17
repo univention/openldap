@@ -1,8 +1,8 @@
 /* compare.c - ldap backend compare function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/compare.c,v 1.52.2.3 2005/07/11 05:55:31 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/compare.c,v 1.52.2.6 2006/01/03 22:16:18 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2005 The OpenLDAP Foundation.
+ * Copyright 2003-2006 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -36,7 +36,7 @@ ldap_back_compare(
 		Operation	*op,
 		SlapReply	*rs )
 {
-	struct ldapconn	*lc;
+	ldapconn_t	*lc;
 	ber_int_t	msgid;
 	int		do_retry = 1;
 	LDAPControl	**ctrls = NULL;
@@ -60,10 +60,10 @@ retry:
 			op->orc_ava->aa_desc->ad_cname.bv_val,
 			&op->orc_ava->aa_value, 
 			ctrls, NULL, &msgid );
-	rc = ldap_back_op_result( lc, op, rs, msgid, LDAP_BACK_SENDRESULT );
+	rc = ldap_back_op_result( lc, op, rs, msgid, 0, LDAP_BACK_SENDRESULT );
 	if ( rc == LDAP_UNAVAILABLE && do_retry ) {
 		do_retry = 0;
-		if ( ldap_back_retry( lc, op, rs, LDAP_BACK_SENDERR ) ) {
+		if ( ldap_back_retry( &lc, op, rs, LDAP_BACK_SENDERR ) ) {
 			goto retry;
 		}
 	}

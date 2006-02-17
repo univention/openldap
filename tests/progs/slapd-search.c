@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/tests/progs/slapd-search.c,v 1.21.2.4 2005/08/19 18:09:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/tests/progs/slapd-search.c,v 1.21.2.6 2006/01/03 22:16:28 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 
 #define LDAP_DEPRECATED 1
 #include <ldap.h>
+#include <lutil.h>
 
 #define LOOPS	100
 #define RETRIES	0
@@ -83,7 +84,9 @@ main( int argc, char **argv )
 			break;
 
 		case 'p':		/* the servers port */
-			port = atoi( optarg );
+			if ( lutil_atoi( &port, optarg ) != 0 ) {
+				usage( argv[0] );
+			}
 			break;
 
 		case 'D':		/* the servers manager */
@@ -103,15 +106,21 @@ main( int argc, char **argv )
 			break;
 
 		case 'l':		/* number of loops */
-			loops = atoi( optarg );
+			if ( lutil_atoi( &loops, optarg ) != 0 ) {
+				usage( argv[0] );
+			}
 			break;
 
 		case 'r':		/* number of retries */
-			retries = atoi( optarg );
+			if ( lutil_atoi( &retries, optarg ) != 0 ) {
+				usage( argv[0] );
+			}
 			break;
 
 		case 't':		/* delay in seconds */
-			delay = atoi( optarg );
+			if ( lutil_atoi( &delay, optarg ) != 0 ) {
+				usage( argv[0] );
+			}
 			break;
 
 		default:

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/entry-id.c,v 1.46.2.6 2005/09/28 00:30:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/entry-id.c,v 1.46.2.10 2006/01/03 22:16:24 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include "ac/string.h"
 
+#include "lutil.h"
 #include "slap.h"
 #include "proto-sql.h"
 
@@ -250,43 +251,52 @@ backsql_dn2id(
 		if ( id != NULL ) {
 			struct berval	dn;
 
+			id->eid_next = NULL;
+
 #ifdef BACKSQL_ARBITRARY_KEY
 			ber_str2bv_x( row.cols[ 0 ], 0, 1, &id->eid_id,
 					op->o_tmpmemctx );
 			ber_str2bv_x( row.cols[ 1 ], 0, 1, &id->eid_keyval,
 					op->o_tmpmemctx );
 #else /* ! BACKSQL_ARBITRARY_KEY */
-			id->eid_id = strtol( row.cols[ 0 ], NULL, 0 );
-			id->eid_keyval = strtol( row.cols[ 1 ], NULL, 0 );
+			if ( lutil_atoulx( &id->eid_id, row.cols[ 0 ], 0 ) != 0 ) {
+				res = LDAP_OTHER;
+				goto done;
+			}
+			if ( lutil_atoulx( &id->eid_keyval, row.cols[ 1 ], 0 ) != 0 ) {
+				res = LDAP_OTHER;
+				goto done;
+			}
 #endif /* ! BACKSQL_ARBITRARY_KEY */
-			id->eid_oc_id = strtol( row.cols[ 2 ], NULL, 0 );
+			if ( lutil_atoulx( &id->eid_oc_id, row.cols[ 2 ], 0 ) != 0 ) {
+				res = LDAP_OTHER;
+				goto done;
+			}
 
 			ber_str2bv( row.cols[ 3 ], 0, 0, &dn );
 
 			if ( backsql_api_odbc2dn( op, rs, &dn ) ) {
 				res = LDAP_OTHER;
+				goto done;
+			}
+			
+			res = dnPrettyNormal( NULL, &dn,
+					&id->eid_dn, &id->eid_ndn,
+					op->o_tmpmemctx );
+			if ( res != LDAP_SUCCESS ) {
+				Debug( LDAP_DEBUG_TRACE,
+					"   backsql_dn2id(\"%s\"): "
+					"dnPrettyNormal failed (%d: %s)\n",
+					realndn.bv_val, res,
+					ldap_err2string( res ) );
 
-			} else {
-				res = dnPrettyNormal( NULL, &dn,
-						&id->eid_dn, &id->eid_ndn,
-						op->o_tmpmemctx );
-				if ( res != LDAP_SUCCESS ) {
-					Debug( LDAP_DEBUG_TRACE,
-						"   backsql_dn2id(\"%s\"): "
-						"dnPrettyNormal failed (%d: %s)\n",
-						realndn.bv_val, res,
-						ldap_err2string( res ) );
-
-					/* cleanup... */
-					(void)backsql_free_entryID( op, id, 0 );
-				}
-
-				if ( dn.bv_val != row.cols[ 3 ] ) {
-					free( dn.bv_val );
-				}
+				/* cleanup... */
+				(void)backsql_free_entryID( op, id, 0 );
 			}
 
-			id->eid_next = NULL;
+			if ( dn.bv_val != row.cols[ 3 ] ) {
+				free( dn.bv_val );
+			}
 		}
 
 	} else {
@@ -408,11 +418,28 @@ backsql_count_children(
 		char *end;
 
 		*nchildren = strtol( row.cols[ 0 ], &end, 0 );
-		if ( end[ 0 ] != '\0' && end[0] != '.' ) {
-			/* FIXME: braindead RDBMSes return
-			 * a fractional number from COUNT!
-			 */
+		if ( end == row.cols[ 0 ] ) {
 			res = LDAP_OTHER;
+
+		} else {
+			switch ( end[ 0 ] ) {
+			case '\0':
+				break;
+
+			case '.': {
+				unsigned long	ul;
+
+				/* FIXME: braindead RDBMSes return
+				 * a fractional number from COUNT!
+				 */
+				if ( lutil_atoul( &ul, end + 1 ) != 0 || ul != 0 ) {
+					res = LDAP_OTHER;
+				}
+				} break;
+
+			default:
+				res = LDAP_OTHER;
+			}
 		}
 
 	} else {
@@ -460,10 +487,10 @@ backsql_get_attr_vals( void *v_at, void *v_bsi )
 				oldcount = 0,
 				res = 0;
 #ifdef BACKSQL_COUNTQUERY
-	unsigned long		count,
-				countsize = sizeof( count ),
+	unsigned 		count,
 				j,
 				append = 0;
+	SQLLEN			countsize = sizeof( count );
 	Attribute		*attr = NULL;
 
 	slap_mr_normalize_func		*normfunc = NULL;
@@ -550,7 +577,7 @@ backsql_get_attr_vals( void *v_at, void *v_bsi )
 	}
 
 	Debug( LDAP_DEBUG_TRACE, "backsql_get_attr_vals(): "
-		"number of values in query: %lu\n", count, 0, 0 );
+		"number of values in query: %u\n", count, 0, 0 );
 	SQLFreeStmt( sth, SQL_DROP );
 	if ( count == 0 ) {
 		return 1;

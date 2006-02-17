@@ -1,8 +1,8 @@
 /* index.c - routines for dealing with attribute indexes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/key.c,v 1.16.2.1 2005/01/20 18:03:58 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/key.c,v 1.16.2.3 2006/01/03 22:16:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2005 The OpenLDAP Foundation.
+ * Copyright 2000-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -84,7 +84,13 @@ bdb_key_change(
 
 	if (op == SLAP_INDEX_ADD_OP) {
 		/* Add values */
-		rc = bdb_idl_insert_key( be, db, txn, &key, id );
+
+#ifdef BDB_TOOL_IDL_CACHING
+		if ( slapMode & SLAP_TOOL_QUICK )
+			rc = bdb_tool_idl_add( be, db, txn, &key, id );
+		else
+#endif
+			rc = bdb_idl_insert_key( be, db, txn, &key, id );
 		if ( rc == DB_KEYEXIST ) rc = 0;
 	} else {
 		/* Delete values */

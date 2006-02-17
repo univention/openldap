@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_ops.c,v 1.70.2.6 2005/08/09 21:04:10 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_ops.c,v 1.70.2.9 2006/01/08 16:50:46 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2005 The OpenLDAP Foundation.
+ * Copyright 2002-2006 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002-2003 IBM Corporation.
  * All rights reserved.
  *
@@ -253,7 +253,7 @@ slapi_int_connection_init_pb( Slapi_PBlock *pb, ber_tag_t tag )
 	conn->c_conn_state  = 0x01;	/* SLAP_C_ACTIVE */
 	conn->c_struct_state = 0x02;	/* SLAP_C_USED */
 
-	conn->c_ssf = conn->c_transport_ssf = 0;
+	conn->c_ssf = conn->c_transport_ssf = local_ssf;
 	conn->c_tls_ssf = 0;
 
 	backend_connection_init( conn );
@@ -409,7 +409,6 @@ slapi_delete_internal_pb( Slapi_PBlock *pb )
 	PBLOCK_ASSERT_INTOP( pb, LDAP_REQ_DELETE );
 
 	slapi_int_func_internal_pb( pb, op_delete );
-	slap_graduate_commit_csn( pb->pb_op );
 
 	return 0;
 }
@@ -492,7 +491,6 @@ slapi_add_internal_pb( Slapi_PBlock *pb )
 	}
 
 cleanup:
-	slap_graduate_commit_csn( pb->pb_op );
 
 	if ( pb->pb_op->ora_e != NULL ) {
 		slapi_entry_free( pb->pb_op->ora_e );
@@ -524,7 +522,6 @@ slapi_modrdn_internal_pb( Slapi_PBlock *pb )
 	slapi_int_func_internal_pb( pb, op_modrdn );
 
 cleanup:
-	slap_graduate_commit_csn( pb->pb_op );
 
 	return 0;
 }
@@ -561,7 +558,6 @@ slapi_modify_internal_pb( Slapi_PBlock *pb )
 	slapi_int_func_internal_pb( pb, op_modify );
 
 cleanup:
-	slap_graduate_commit_csn( pb->pb_op );
 
 	return 0;
 }

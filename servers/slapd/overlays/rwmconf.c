@@ -1,8 +1,8 @@
 /* rwmconf.c - rewrite/map configuration file routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmconf.c,v 1.16.2.5 2005/10/10 17:35:27 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmconf.c,v 1.16.2.7 2006/01/03 22:16:25 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -146,7 +146,7 @@ rwm_map_config(
 			if ( mapping[0].m_dst_oc == NULL ) {
 				fprintf( stderr, "%s: line %d: unable to mimic destination objectClass '%s'\n",
 					fname, lineno, dst );
-				return 1;
+				goto error_return;
 			}
 
 #if 0
@@ -186,7 +186,7 @@ rwm_map_config(
 					fprintf( stderr,
 	"%s: line %d: source attributeType '%s': %d (%s)\n",
 						fname, lineno, src, rc, text ? text : "null" );
-					return 1;
+					goto error_return;
 				}
 
 			}
@@ -207,7 +207,7 @@ rwm_map_config(
 				fprintf( stderr,
 	"%s: line %d: destination attributeType '%s': %d (%s)\n",
 					fname, lineno, dst, rc, text ? text : "null" );
-				return 1;
+				goto error_return;
 			}
 		}
 		mapping[1].m_src_ad = mapping[0].m_dst_ad;

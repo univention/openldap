@@ -1,8 +1,8 @@
 /* oc.c - object class routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/oc.c,v 1.63.2.6 2005/09/28 00:30:31 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/oc.c,v 1.63.2.8 2006/01/03 22:16:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -524,6 +524,30 @@ oc_insert(
 				rc = oc_check_dup( old_soc, soc );
 
 				ldap_memfree( oir );
+
+				while ( names > soc->soc_names ) {
+					struct oindexrec	tmpoir;
+
+					names--;
+					ber_str2bv( *names, 0, 0, &tmpoir.oir_name );
+					tmpoir.oir_oc = soc;
+					oir = (struct oindexrec *)avl_delete( &oc_index,
+						(caddr_t)&tmpoir, oc_index_cmp );
+					assert( oir != NULL );
+					ldap_memfree( oir );
+				}
+
+				if ( soc->soc_oid ) {
+					struct oindexrec	tmpoir;
+
+					ber_str2bv( soc->soc_oid, 0, 0, &tmpoir.oir_name );
+					tmpoir.oir_oc = soc;
+					oir = (struct oindexrec *)avl_delete( &oc_index,
+						(caddr_t)&tmpoir, oc_index_cmp );
+					assert( oir != NULL );
+					ldap_memfree( oir );
+				}
+
 				return rc;
 			}
 

@@ -1,8 +1,8 @@
 /* Generic ctype.h */
-/* $OpenLDAP: pkg/ldap/include/ac/ctype.h,v 1.14.2.1 2005/01/20 18:03:48 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ac/ctype.h,v 1.14.2.2 2006/01/03 22:16:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

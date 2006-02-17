@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/util-int.c,v 1.51.2.2 2005/08/09 21:03:56 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/util-int.c,v 1.51.2.4 2006/01/03 22:16:09 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * Portions Copyright 1998 A. Hartgers.
  * All rights reserved.
  *
@@ -303,7 +303,7 @@ int ldap_pvt_get_hname(
 		rc = 0;
 	} else {
 		rc = h_errno;
-		*err = (char *)hp_strerror( h_errno );
+		*err = (char *)HSTRERROR( h_errno );
 	}
 #if defined( LDAP_R_COMPILE )
 	ldap_pvt_thread_mutex_unlock( &ldap_int_resolv_mutex );

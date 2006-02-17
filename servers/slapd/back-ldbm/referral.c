@@ -1,8 +1,8 @@
 /* referral.c - LDBM backend referral handler */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/referral.c,v 1.24.2.1 2005/01/20 18:04:00 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/referral.c,v 1.24.2.3 2006/01/06 19:46:16 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -63,7 +63,7 @@ ldbm_back_referrals(
 
 			cache_return_entry_r( &li->li_cache, matched );
 
-		} else if ( default_referral != NULL ) {
+		} else if ( !be_issuffix( op->o_bd, &op->o_req_ndn ) && default_referral != NULL ) {
 			rc = rs->sr_err = LDAP_OTHER;
 			rs->sr_ref = referral_rewrite( default_referral,
 				NULL, &op->o_req_dn, LDAP_SCOPE_DEFAULT );

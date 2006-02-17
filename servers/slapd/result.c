@@ -1,8 +1,8 @@
 /* result.c - routines to send ldap results, errors, and referrals */
-/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.244.2.11 2005/08/25 05:01:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.244.2.16 2006/01/03 22:16:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@
 #include <ac/unistd.h>
 
 #include "slap.h"
+#include "lutil.h"
 
 const struct berval slap_dummy_bv = BER_BVNULL;
 
@@ -115,7 +116,8 @@ static char *v2ref( BerVarray ref, const char *text )
 	return v2;
 }
 
-static ber_tag_t req2res( ber_tag_t tag )
+ber_tag_t
+slap_req2res( ber_tag_t tag )
 {
 	switch( tag ) {
 	case LDAP_REQ_ADD:
@@ -300,21 +302,21 @@ send_ldap_response(
 	}
 
 	if ( op->o_callback ) {
-		int		first = 1;
-		slap_callback	*sc = op->o_callback,
-				*sc_next = op->o_callback;
+		slap_callback	*sc = op->o_callback, **sc_prev = &sc, *sc_next;
 
 		rc = SLAP_CB_CONTINUE;
 		for ( sc_next = op->o_callback; sc_next; op->o_callback = sc_next) {
 			sc_next = op->o_callback->sc_next;
 			if ( op->o_callback->sc_response ) {
+				slap_callback *sc2 = op->o_callback;
 				rc = op->o_callback->sc_response( op, rs );
-				if ( first && op->o_callback == NULL ) {
-					sc = NULL;
+				if ( op->o_callback != sc2 ) {
+					*sc_prev = op->o_callback;
 				}
-				if ( rc != SLAP_CB_CONTINUE ) break;
+				if ( rc != SLAP_CB_CONTINUE || !op->o_callback ) break;
+				if ( op->o_callback != sc2 ) continue;
 			}
-			first = 0;
+			sc_prev = &op->o_callback->sc_next;
 		}
 
 		op->o_callback = sc;
@@ -456,18 +458,20 @@ cleanup:;
 
 clean2:;
 	if ( op->o_callback ) {
-		int		first = 1;
-		slap_callback	*sc = op->o_callback, *sc_next;
+		slap_callback	*sc = op->o_callback, **sc_prev = &sc, *sc_next;
 
 		for ( sc_next = op->o_callback; sc_next; op->o_callback = sc_next) {
 			sc_next = op->o_callback->sc_next;
 			if ( op->o_callback->sc_cleanup ) {
+				slap_callback *sc2 = op->o_callback;
 				(void)op->o_callback->sc_cleanup( op, rs );
-				if ( first && op->o_callback != sc ) {
-					sc = op->o_callback;
+				if ( op->o_callback != sc2 ) {
+					*sc_prev = op->o_callback;
 				}
+				if ( !op->o_callback ) break;
+				if ( op->o_callback != sc2 ) continue;
 			}
-			first = 0;
+			sc_prev = &op->o_callback->sc_next;
 		}
 		op->o_callback = sc;
 	}
@@ -505,7 +509,7 @@ send_ldap_disconnect( Operation	*op, SlapReply *rs )
 
 	if ( op->o_protocol < LDAP_VERSION3 ) {
 		rs->sr_rspoid = NULL;
-		rs->sr_tag = req2res( op->o_tag );
+		rs->sr_tag = slap_req2res( op->o_tag );
 		rs->sr_msgid = (rs->sr_tag != LBER_SEQUENCE) ? op->o_msgid : 0;
 
 	} else {
@@ -557,11 +561,8 @@ slap_send_ldap_result( Operation *op, SlapReply *rs )
 	assert( rs->sr_err != LDAP_PARTIAL_RESULTS );
 
 	if ( rs->sr_err == LDAP_REFERRAL ) {
-#ifdef LDAP_CONTROL_X_DOMAIN_SCOPE
-		if( op->o_domain_scope ) {
-			rs->sr_ref = NULL;
-		}
-#endif
+		if( op->o_domain_scope ) rs->sr_ref = NULL;
+
 		if( rs->sr_ref == NULL ) {
 			rs->sr_err = LDAP_NO_SUCH_OBJECT;
 		} else if ( op->o_protocol < LDAP_VERSION3 ) {
@@ -575,7 +576,7 @@ slap_send_ldap_result( Operation *op, SlapReply *rs )
 		rs->sr_ref = NULL;
 	}
 
-	rs->sr_tag = req2res( op->o_tag );
+	rs->sr_tag = slap_req2res( op->o_tag );
 	rs->sr_msgid = (rs->sr_tag != LBER_SEQUENCE) ? op->o_msgid : 0;
 
 abandon:
@@ -610,7 +611,7 @@ send_ldap_sasl( Operation *op, SlapReply *rs )
 		rs->sr_err,
 		rs->sr_sasldata ? (long) rs->sr_sasldata->bv_len : -1, NULL );
 
-	rs->sr_tag = req2res( op->o_tag );
+	rs->sr_tag = slap_req2res( op->o_tag );
 	rs->sr_msgid = (rs->sr_tag != LBER_SEQUENCE) ? op->o_msgid : 0;
 
 	if ( send_ldap_response( op, rs ) == SLAP_CB_CONTINUE ) {
@@ -632,7 +633,7 @@ slap_send_ldap_extended( Operation *op, SlapReply *rs )
 		rs->sr_rspoid ? rs->sr_rspoid : "",
 		rs->sr_rspdata != NULL ? rs->sr_rspdata->bv_len : 0 );
 
-	rs->sr_tag = req2res( op->o_tag );
+	rs->sr_tag = slap_req2res( op->o_tag );
 	rs->sr_msgid = (rs->sr_tag != LBER_SEQUENCE) ? op->o_msgid : 0;
 
 	if ( send_ldap_response( op, rs ) == SLAP_CB_CONTINUE ) {
@@ -662,13 +663,23 @@ slap_send_ldap_intermediate( Operation *op, SlapReply *rs )
 	}
 }
 
+/*
+ * returns:
+ *
+ * LDAP_SUCCESS			entry sent
+ * LDAP_OTHER			entry not sent (other)
+ * LDAP_INSUFFICIENT_ACCESS	entry not sent (ACL)
+ * LDAP_UNAVAILABLE		entry not sent (connection closed)
+ * LDAP_SIZELIMIT_EXCEEDED	entry not sent (caller must send sizelimitExceeded)
+ */
+
 int
 slap_send_search_entry( Operation *op, SlapReply *rs )
 {
 	BerElementBuffer berbuf;
 	BerElement	*ber = (BerElement *) &berbuf;
 	Attribute	*a;
-	int		i, j, rc=-1, bytes;
+	int		i, j, rc = LDAP_UNAVAILABLE, bytes;
 	char		*edn;
 	int		userattrs;
 	AccessControlState acl_state = ACL_STATE_INIT;
@@ -680,7 +691,11 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 	 * e_flags: array of a_flags
 	 */
 	char **e_flags = NULL;
-	
+
+	if ( op->ors_slimit >= 0 && rs->sr_nentries >= op->ors_slimit ) {
+		return LDAP_SIZELIMIT_EXCEEDED;
+	}
+
 	rs->sr_type = REP_SEARCH;
 
 	/* eventually will loop through generated operational attribute types
@@ -700,22 +715,22 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 	}
 
 	if ( op->o_callback ) {
-		int		first = 1;
-		slap_callback	*sc = op->o_callback,
-				*sc_next = op->o_callback;
+		slap_callback	*sc = op->o_callback, **sc_prev = &sc, *sc_next;
 
 		rc = SLAP_CB_CONTINUE;
 		for ( sc_next = op->o_callback; sc_next; op->o_callback = sc_next )
 		{
 			sc_next = op->o_callback->sc_next;
 			if ( op->o_callback->sc_response ) {
+				slap_callback *sc2 = op->o_callback;
 				rc = op->o_callback->sc_response( op, rs );
-				if ( first && op->o_callback == NULL ) {
-					sc = NULL;
+				if ( op->o_callback != sc2 ) {
+					*sc_prev = op->o_callback;
 				}
-				if ( rc != SLAP_CB_CONTINUE ) break;
+				if ( rc != SLAP_CB_CONTINUE || !op->o_callback ) break;
+				if ( op->o_callback != sc2 ) continue;
 			}
-			first = 0;
+			sc_prev = &op->o_callback->sc_next;
 		}
 
 		op->o_callback = sc;
@@ -733,7 +748,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 			"send_search_entry: conn %lu access to entry (%s) not allowed\n", 
 			op->o_connid, rs->sr_entry->e_name.bv_val, 0 );
 
-		rc = 1;
+		rc = LDAP_INSUFFICIENT_ACCESS;
 		goto error_return;
 	}
 
@@ -779,6 +794,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 
 		if ( op->o_res_ber == NULL ) ber_free_buf( ber );
 		send_ldap_error( op, rs, LDAP_OTHER, "encoding DN error" );
+		rc = rs->sr_err;
 		goto error_return;
 	}
 
@@ -826,6 +842,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 				if ( op->o_res_ber == NULL ) ber_free_buf( ber );
 				send_ldap_error( op, rs, LDAP_OTHER,
 					"matched values filtering error" );
+				rc = rs->sr_err;
 				goto error_return;
 			}
 		}
@@ -875,6 +892,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 				if ( op->o_res_ber == NULL ) ber_free_buf( ber );
 				send_ldap_error( op, rs, LDAP_OTHER,
 					"encoding description error");
+				rc = rs->sr_err;
 				goto error_return;
 			}
 			finish = 1;
@@ -908,6 +926,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 						if ( op->o_res_ber == NULL ) ber_free_buf( ber );
 						send_ldap_error( op, rs, LDAP_OTHER,
 							"encoding description error");
+						rc = rs->sr_err;
 						goto error_return;
 					}
 				}
@@ -919,6 +938,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 					if ( op->o_res_ber == NULL ) ber_free_buf( ber );
 					send_ldap_error( op, rs, LDAP_OTHER,
 						"encoding values error" );
+					rc = rs->sr_err;
 					goto error_return;
 				}
 			}
@@ -931,6 +951,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 
 			if ( op->o_res_ber == NULL ) ber_free_buf( ber );
 			send_ldap_error( op, rs, LDAP_OTHER, "encode end error" );
+			rc = rs->sr_err;
 			goto error_return;
 		}
 	}
@@ -984,6 +1005,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 				if ( op->o_res_ber == NULL ) ber_free_buf( ber );
 				send_ldap_error( op, rs, LDAP_OTHER,
 					"matched values filtering error" );
+				rc = rs->sr_err;
 				goto error_return;
 			}
 		}
@@ -1033,6 +1055,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 			if ( op->o_res_ber == NULL ) ber_free_buf( ber );
 			send_ldap_error( op, rs, LDAP_OTHER,
 				"encoding description error" );
+			rc = rs->sr_err;
 			goto error_return;
 		}
 
@@ -1061,6 +1084,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 					if ( op->o_res_ber == NULL ) ber_free_buf( ber );
 					send_ldap_error( op, rs, LDAP_OTHER,
 						"encoding values error" );
+					rc = rs->sr_err;
 					goto error_return;
 				}
 			}
@@ -1073,6 +1097,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 
 			if ( op->o_res_ber == NULL ) ber_free_buf( ber );
 			send_ldap_error( op, rs, LDAP_OTHER, "encode end error" );
+			rc = rs->sr_err;
 			goto error_return;
 		}
 	}
@@ -1107,7 +1132,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 
 		if ( op->o_res_ber == NULL ) ber_free_buf( ber );
 		send_ldap_error( op, rs, LDAP_OTHER, "encode entry end error" );
-		rc = 1;
+		rc = rs->sr_err;
 		goto error_return;
 	}
 
@@ -1126,7 +1151,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 				"send_search_entry: conn %lu  ber write failed.\n", 
 				op->o_connid, 0, 0 );
 
-			rc = -1;
+			rc = LDAP_UNAVAILABLE;
 			goto error_return;
 		}
 		rs->sr_nentries++;
@@ -1144,22 +1169,24 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 	Debug( LDAP_DEBUG_TRACE,
 		"<= send_search_entry: conn %lu exit.\n", op->o_connid, 0, 0 );
 
-	rc = 0;
+	rc = LDAP_SUCCESS;
 
 error_return:;
 	if ( op->o_callback ) {
-		int		first = 1;
-		slap_callback	*sc = op->o_callback, *sc_next;
+		slap_callback	*sc = op->o_callback, **sc_prev = &sc, *sc_next;
 
 		for ( sc_next = op->o_callback; sc_next; op->o_callback = sc_next) {
 			sc_next = op->o_callback->sc_next;
 			if ( op->o_callback->sc_cleanup ) {
+				slap_callback *sc2 = op->o_callback;
 				(void)op->o_callback->sc_cleanup( op, rs );
-				if ( first && op->o_callback != sc ) {
-					sc = op->o_callback;
+				if ( op->o_callback != sc2 ) {
+					*sc_prev = op->o_callback;
 				}
+				if ( !op->o_callback ) break;
+				if ( op->o_callback != sc2 ) continue;
 			}
-			first = 0;
+			sc_prev = &op->o_callback->sc_next;
 		}
 		op->o_callback = sc;
 	}
@@ -1205,21 +1232,21 @@ slap_send_search_reference( Operation *op, SlapReply *rs )
 
 	rs->sr_type = REP_SEARCHREF;
 	if ( op->o_callback ) {
-		int		first = 1;
-		slap_callback	*sc = op->o_callback,
-				*sc_next = op->o_callback;
+		slap_callback	*sc = op->o_callback, **sc_prev = &sc, *sc_next;
 
 		rc = SLAP_CB_CONTINUE;
 		for ( sc_next = op->o_callback; sc_next; op->o_callback = sc_next) {
 			sc_next = op->o_callback->sc_next;
 			if ( op->o_callback->sc_response ) {
+				slap_callback *sc2 = op->o_callback;
 				rc = op->o_callback->sc_response( op, rs );
-				if ( first && op->o_callback == NULL ) {
-					sc = NULL;
+				if ( op->o_callback != sc2 ) {
+					*sc_prev = op->o_callback;
 				}
-				if ( rc != SLAP_CB_CONTINUE ) break;
+				if ( rc != SLAP_CB_CONTINUE || !op->o_callback ) break;
+				if ( op->o_callback != sc2 ) continue;
 			}
-			first = 0;
+			sc_prev = &op->o_callback->sc_next;
 		}
 
 		op->o_callback = sc;
@@ -1251,7 +1278,6 @@ slap_send_search_reference( Operation *op, SlapReply *rs )
 		goto rel;
 	}
 
-#ifdef LDAP_CONTROL_X_DOMAIN_SCOPE
 	if( op->o_domain_scope ) {
 		Debug( LDAP_DEBUG_ANY,
 			"send_search_reference: domainScope control in (%s)\n", 
@@ -1259,7 +1285,6 @@ slap_send_search_reference( Operation *op, SlapReply *rs )
 		rc = 0;
 		goto rel;
 	}
-#endif
 
 	if( rs->sr_ref == NULL ) {
 		Debug( LDAP_DEBUG_ANY,
@@ -1351,18 +1376,20 @@ slap_send_search_reference( Operation *op, SlapReply *rs )
 
 rel:
 	if ( op->o_callback ) {
-		int		first = 1;
-		slap_callback	*sc = op->o_callback, *sc_next;
+		slap_callback	*sc = op->o_callback, **sc_prev = &sc, *sc_next;
 
 		for ( sc_next = op->o_callback; sc_next; op->o_callback = sc_next) {
 			sc_next = op->o_callback->sc_next;
 			if ( op->o_callback->sc_cleanup ) {
+				slap_callback *sc2 = op->o_callback;
 				(void)op->o_callback->sc_cleanup( op, rs );
-				if ( first && op->o_callback != sc ) {
-					sc = op->o_callback;
+				if ( op->o_callback != sc2 ) {
+					*sc_prev = op->o_callback;
 				}
+				if ( rc != SLAP_CB_CONTINUE || !op->o_callback ) break;
+				if ( op->o_callback != sc2 ) continue;
 			}
-			first = 0;
+			sc_prev = &op->o_callback->sc_next;
 		}
 		op->o_callback = sc;
 	}
@@ -1402,8 +1429,8 @@ str2result(
 		}
 
 		if ( strncasecmp( s, "code", STRLENOF( "code" ) ) == 0 ) {
-			if ( c != NULL ) {
-				*code = atoi( c );
+			if ( c != NULL && lutil_atoi( code, c ) != 0 ) {
+				goto bailout;
 			}
 		} else if ( strncasecmp( s, "matched", STRLENOF( "matched" ) ) == 0 ) {
 			if ( c != NULL ) {
@@ -1414,6 +1441,7 @@ str2result(
 				*info = c;
 			}
 		} else {
+bailout:;
 			Debug( LDAP_DEBUG_ANY, "str2result (%s) unknown\n",
 			    s, 0, 0 );
 

@@ -1,8 +1,8 @@
 # Makefile.in for overlays
-# $OpenLDAP: pkg/ldap/servers/slapd/overlays/Makefile.in,v 1.16.2.12 2005/09/01 20:28:11 kurt Exp $
+# $OpenLDAP: pkg/ldap/servers/slapd/overlays/Makefile.in,v 1.16.2.14 2006/01/03 22:16:24 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 2003-2005 The OpenLDAP Foundation.
+## Copyright 2003-2006 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@ SRCS = overlays.c \
 	unique.c \
 	valsort.c
 OBJS = overlays.o \
+	statover.o \
 	@SLAPD_STATIC_OVERLAYS@
 
 # Add here the objs that are needed by overlays, but do not make it
@@ -113,6 +114,8 @@ MKDEPFLAG = -l
 .c.lo:
 	$(LTCOMPILE_MOD) $<
 
+statover.o: statover.c $(srcdir)/../slap.h
+
 $(LIBRARY): $(OBJS) version.lo
 	$(AR) rs $@ $(OBJS)
 
@@ -123,4 +126,7 @@ depend-local:
 	SCR=''; for i in $$OBJ2; do SCR="$$SCR -e s/^$$i.lo:/$$i.o:/"; done; \
 	mv Makefile Makefile.bak; $(SED) $$SCR Makefile.bak > Makefile && \
 	$(RM) Makefile.bak; fi
+
+veryclean-local:
+	$(RM) statover.c
 

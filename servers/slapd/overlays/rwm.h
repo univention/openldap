@@ -1,8 +1,8 @@
 /* rwm.h - dn rewrite/attribute mapping header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwm.h,v 1.9.2.2 2005/05/06 16:42:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwm.h,v 1.9.2.4 2006/01/03 22:16:25 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -138,6 +138,8 @@ rwm_map_attrnames(
 		AttributeName **anp,
 		int remap );
 
+extern void rwm_mapping_dst_free ( void *mapping );
+
 extern void rwm_mapping_free ( void *mapping );
 
 extern int rwm_map_config(
@@ -150,6 +152,7 @@ extern int rwm_map_config(
 
 extern int
 rwm_filter_map_rewrite(
+		Operation		*op,
 		dncookie		*dc,
 		Filter			*f,
 		struct berval		*fstr );

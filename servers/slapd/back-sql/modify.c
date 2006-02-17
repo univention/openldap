@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/modify.c,v 1.31.2.5 2005/08/09 21:04:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/modify.c,v 1.31.2.8 2006/01/03 22:16:24 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * All rights reserved.
@@ -121,6 +121,8 @@ backsql_modify( Operation *op, SlapReply *rs )
 		e = &m;
 		goto done;
 	}
+
+	slap_mods_opattrs( op, &op->orm_modlist, 1 );
 
 	oc = backsql_id2oc( bi, bsi.bsi_base_id.eid_oc_id );
 	assert( oc != NULL );

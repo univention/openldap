@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/proto-ldap.h,v 1.3.2.5 2005/09/28 00:30:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/proto-ldap.h,v 1.3.2.9 2006/01/16 21:13:40 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2005 The OpenLDAP Foundation.
+ * Copyright 2003-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,6 @@ extern BI_destroy		ldap_back_destroy;
 extern BI_db_init		ldap_back_db_init;
 extern BI_db_open		ldap_back_db_open;
 extern BI_db_destroy		ldap_back_db_destroy;
-extern BI_db_config		ldap_back_db_config;
 
 extern BI_op_bind		ldap_back_bind;
 extern BI_op_search		ldap_back_search;
@@ -48,15 +47,15 @@ extern BI_connection_destroy	ldap_back_conn_destroy;
 
 extern BI_entry_get_rw		ldap_back_entry_get;
 
-int ldap_back_freeconn( Operation *op, struct ldapconn *lc );
-struct ldapconn *ldap_back_getconn(struct slap_op *op, struct slap_rep *rs, ldap_back_send_t sendok);
-void ldap_back_release_conn( struct slap_op *op, struct slap_rep *rs, struct ldapconn *lc );
-int ldap_back_dobind(struct ldapconn *lc, Operation *op, SlapReply *rs, ldap_back_send_t sendok);
-int ldap_back_retry(struct ldapconn *lc, Operation *op, SlapReply *rs, ldap_back_send_t sendok);
-int ldap_back_map_result(SlapReply *rs);
-int ldap_back_op_result(struct ldapconn *lc, Operation *op, SlapReply *rs,
-	ber_int_t msgid, ldap_back_send_t sendok);
-int	back_ldap_LTX_init_module(int argc, char *argv[]);
+int ldap_back_freeconn( Operation *op, ldapconn_t *lc, int dolock );
+ldapconn_t *ldap_back_getconn( Operation *op, SlapReply *rs, ldap_back_send_t sendok );
+void ldap_back_release_conn_lock( Operation *op, SlapReply *rs, ldapconn_t *lc, int dolock );
+#define ldap_back_release_conn(op, rs, lc) ldap_back_release_conn_lock((op), (rs), (lc), 1)
+int ldap_back_dobind( ldapconn_t *lc, Operation *op, SlapReply *rs, ldap_back_send_t sendok );
+int ldap_back_retry( ldapconn_t **lcp, Operation *op, SlapReply *rs, ldap_back_send_t sendok );
+int ldap_back_map_result( SlapReply *rs );
+int ldap_back_op_result( ldapconn_t *lc, Operation *op, SlapReply *rs,
+	ber_int_t msgid, time_t timeout, ldap_back_send_t sendok );
 
 int ldap_back_init_cf( BackendInfo *bi );
 
@@ -66,7 +65,7 @@ extern void ldap_back_conn_free( void *c );
 
 extern int
 ldap_back_proxy_authz_ctrl(
-		struct ldapconn	*lc,
+		ldapconn_t	*lc,
 		Operation	*op,
 		SlapReply	*rs,
 		LDAPControl	***pctrls );

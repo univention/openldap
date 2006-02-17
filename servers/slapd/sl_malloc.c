@@ -1,8 +1,8 @@
 /* sl_malloc.c - malloc routines using a per-thread slab */
-/* $OpenLDAP: pkg/ldap/servers/slapd/sl_malloc.c,v 1.24.2.4 2005/08/09 21:04:00 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sl_malloc.c,v 1.24.2.6 2006/01/03 22:16:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2005 The OpenLDAP Foundation.
+ * Copyright 2003-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,9 @@
 #include "slap.h"
 
 static struct slab_object * slap_replenish_sopool(struct slab_heap* sh);
+#ifdef SLAPD_UNUSED
 static void print_slheap(int level, void *ctx);
+#endif
 
 void
 slap_sl_mem_destroy(
@@ -598,6 +600,7 @@ slap_replenish_sopool(
     return so_block;
 }
 
+#ifdef SLAPD_UNUSED
 static void
 print_slheap(int level, void *ctx)
 {
@@ -638,3 +641,4 @@ print_slheap(int level, void *ctx)
 		}
 	}
 }
+#endif

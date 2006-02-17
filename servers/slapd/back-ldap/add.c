@@ -1,8 +1,8 @@
 /* add.c - ldap backend add function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/add.c,v 1.53.2.4 2005/08/17 21:33:45 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/add.c,v 1.53.2.7 2006/01/03 22:16:18 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -36,7 +36,9 @@ ldap_back_add(
 	Operation	*op,
 	SlapReply	*rs )
 {
-	struct ldapconn	*lc;
+	ldapinfo_t	*li = (ldapinfo_t *)op->o_bd->be_private;
+
+	ldapconn_t	*lc;
 	int		i = 0,
 			j = 0;
 	Attribute	*a;
@@ -100,10 +102,11 @@ ldap_back_add(
 retry:
 	rs->sr_err = ldap_add_ext( lc->lc_ld, op->o_req_dn.bv_val, attrs,
 			ctrls, NULL, &msgid );
-	rs->sr_err = ldap_back_op_result( lc, op, rs, msgid, LDAP_BACK_SENDRESULT );
+	rs->sr_err = ldap_back_op_result( lc, op, rs, msgid,
+		li->li_timeout[ LDAP_BACK_OP_ADD ], LDAP_BACK_SENDRESULT );
 	if ( rs->sr_err == LDAP_UNAVAILABLE && do_retry ) {
 		do_retry = 0;
-		if ( ldap_back_retry( lc, op, rs, LDAP_BACK_SENDERR ) ) {
+		if ( ldap_back_retry( &lc, op, rs, LDAP_BACK_SENDERR ) ) {
 			goto retry;
 		}
 	}

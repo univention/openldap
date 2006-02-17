@@ -1,8 +1,8 @@
 /* value.c - routines for dealing with values */
-/* $OpenLDAP: pkg/ldap/servers/slapd/value.c,v 1.79.2.6 2005/08/29 18:26:10 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/value.c,v 1.79.2.10 2006/01/03 22:16:16 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -271,7 +271,9 @@ ordered_value_renumber( Attribute *a, int vals )
 		ibv.bv_len = sprintf(ibv.bv_val, "{%d}", i);
 		vtmp = a->a_vals[i];
 		if ( vtmp.bv_val[0] == '{' ) {
-			ptr = strchr(vtmp.bv_val, '}') + 1;
+			ptr = ber_bvchr(&vtmp, '}');
+			assert( ptr != NULL );
+			++ptr;
 			vtmp.bv_len -= ptr - vtmp.bv_val;
 			vtmp.bv_val = ptr;
 		}
@@ -286,7 +288,9 @@ ordered_value_renumber( Attribute *a, int vals )
 		if ( a->a_nvals && a->a_nvals != a->a_vals ) {
 			vtmp = a->a_nvals[i];
 			if ( vtmp.bv_val[0] == '{' ) {
-				ptr = strchr(vtmp.bv_val, '}') + 1;
+				ptr = ber_bvchr(&vtmp, '}');
+				assert( ptr != NULL );
+				++ptr;
 				vtmp.bv_len -= ptr - vtmp.bv_val;
 				vtmp.bv_val = ptr;
 			}
@@ -321,7 +325,7 @@ ordered_value_sort( Attribute *a, int do_renumber )
 		if ( a->a_vals[i].bv_val[0] == '{' ) {
 			char *ptr;
 			index = 1;
-			ptr = strchr( a->a_vals[i].bv_val, '}' );
+			ptr = ber_bvchr( &a->a_vals[i], '}' );
 			if ( !ptr )
 				return LDAP_INVALID_SYNTAX;
 			if ( noindex )
@@ -345,7 +349,7 @@ ordered_value_sort( Attribute *a, int do_renumber )
 			a->a_nvals = ch_malloc( (vals+1)*sizeof(struct berval));
 			BER_BVZERO(a->a_nvals+vals);
 			for ( i=0; i<vals; i++ ) {
-				ptr = strchr(a->a_vals[i].bv_val, '}') + 1;
+				char *ptr = ber_bvchr(&a->a_vals[i], '}') + 1;
 				a->a_nvals[i].bv_len = a->a_vals[i].bv_len -
 					(ptr - a->a_vals[i].bv_val);
 				a->a_nvals[i].bv_val = ch_malloc( a->a_nvals[i].bv_len + 1);
@@ -353,7 +357,7 @@ ordered_value_sort( Attribute *a, int do_renumber )
 			}
 		} else {
 			for ( i=0; i<vals; i++ ) {
-				ptr = strchr(a->a_nvals[i].bv_val, '}') + 1;
+				char *ptr = ber_bvchr(&a->a_nvals[i], '}') + 1;
 				a->a_nvals[i].bv_len -= ptr - a->a_nvals[i].bv_val;
 				strcpy(a->a_nvals[i].bv_val, ptr);
 			}
@@ -405,12 +409,13 @@ ordered_value_sort( Attribute *a, int do_renumber )
 /*
  * wrapper for validate function
  * uses the validate function of the syntax after removing
- * the index, if allowed an present
+ * the index, if allowed and present
  */
 int
 ordered_value_validate(
 	AttributeDescription *ad,
-	struct berval *in )
+	struct berval *in,
+	int mop )
 {
 	struct berval	bv = *in;
 
@@ -423,7 +428,7 @@ ordered_value_validate(
 		if ( bv.bv_val[0] == '{' ) {
 			char	*ptr;
 
-			ptr = strchr( bv.bv_val, '}' );
+			ptr = ber_bvchr( &bv, '}' );
 			if ( ptr == NULL ) {
 				return LDAP_INVALID_SYNTAX;
 			}
@@ -431,6 +436,9 @@ ordered_value_validate(
 			bv.bv_len -= ptr - bv.bv_val;
 			bv.bv_val = ptr;
 			in = &bv;
+			/* If deleting by index, just succeed */
+			if ( mop == LDAP_MOD_DELETE && BER_BVISEMPTY( &bv ))
+				return LDAP_SUCCESS;
 		}
 	}
 
@@ -465,7 +473,7 @@ ordered_value_pretty(
 		if ( bv.bv_val[0] == '{' ) {
 			char	*ptr;
 
-			ptr = strchr( bv.bv_val, '}' );
+			ptr = ber_bvchr( &bv, '}' );
 			if ( ptr == NULL ) {
 				return LDAP_INVALID_SYNTAX;
 			}
@@ -525,10 +533,10 @@ ordered_value_normalize(
 	if ( ad->ad_type->sat_flags & SLAP_AT_ORDERED ) {
 
 		/* Skip past the assertion index */
-		if ( bv.bv_val[0] == '{' ) {
+		if ( bv.bv_val[ 0 ] == '{' ) {
 			char	*ptr;
 
-			ptr = strchr( bv.bv_val, '}' );
+			ptr = ber_bvchr( &bv, '}' );
 			if ( ptr == NULL ) {
 				return LDAP_INVALID_SYNTAX;
 			}
@@ -540,6 +548,11 @@ ordered_value_normalize(
 			bv.bv_len -= idx.bv_len;
 			bv.bv_val = ptr;
 
+			/* validator will already prevent this for Adds */
+			if ( BER_BVISEMPTY( &bv )) {
+				ber_dupbv_x( normalized, &idx, ctx );
+				return LDAP_SUCCESS;
+			}
 			val = &bv;
 		}
 	}
@@ -600,7 +613,11 @@ ordered_value_match(
 
 		/* Skip past the assertion index */
 		if ( bv2.bv_val[0] == '{' ) {
-			ptr = strchr( bv2.bv_val, '}' ) + 1;
+			ptr = ber_bvchr( &bv2, '}' );
+			if ( ptr == NULL ) {
+				return LDAP_INVALID_SYNTAX;
+			}
+			ptr++;
 			bv2.bv_len -= ptr - bv2.bv_val;
 			bv2.bv_val = ptr;
 			v2 = &bv2;
@@ -627,7 +644,11 @@ ordered_value_match(
 		}
 		/* Skip past the attribute index */
 		if ( bv1.bv_val[0] == '{' ) {
-			ptr = strchr( bv1.bv_val, '}' ) + 1;
+			ptr = ber_bvchr( &bv1, '}' );
+			if ( ptr == NULL ) {
+				return LDAP_INVALID_SYNTAX;
+			}
+			ptr++;
 			bv1.bv_len -= ptr - bv1.bv_val;
 			bv1.bv_val = ptr;
 			v1 = &bv1;
@@ -684,9 +705,17 @@ ordered_value_add(
 	}
 
 	for (i=0; i<vnum; i++) {
+		char	*next;
+
 		k = -1;
 		if ( vals[i].bv_val[0] == '{' ) {
-			k = strtol( vals[i].bv_val+1, NULL, 0 );
+			k = strtol( vals[i].bv_val + 1, &next, 0 );
+			if ( next == vals[i].bv_val + 1 ||
+				next[ 0 ] != '}' ||
+				next - vals[i].bv_val > vals[i].bv_len )
+			{
+				return -1;
+			}
 			if ( k > anum ) k = -1;
 		}
 		/* No index, or index is greater than current number of

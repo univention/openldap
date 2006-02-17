@@ -1,8 +1,8 @@
 /* slapcommon.c - common routine for the slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.c,v 1.23.2.16 2005/09/28 00:30:31 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.c,v 1.23.2.21 2006/01/19 07:42:22 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -62,7 +62,7 @@ usage( int tool, const char *progname )
 		break;
 
 	case SLAPADD:
-		options = " [-c]\n\t[-n databasenumber | -b suffix]\n"
+		options = " [-c]\n\t[-g] [-n databasenumber | -b suffix]\n"
 			"\t[-l ldiffile] [-q] [-u] [-w]\n";
 		break;
 
@@ -71,7 +71,7 @@ usage( int tool, const char *progname )
 		break;
 
 	case SLAPCAT:
-		options = " [-c]\n\t[-n databasenumber | -b suffix]"
+		options = " [-c]\n\t[-g] [-n databasenumber | -b suffix]"
 			" [-l ldiffile] [-a filter]\n";
 		break;
 
@@ -80,7 +80,7 @@ usage( int tool, const char *progname )
 		break;
 
 	case SLAPINDEX:
-		options = " [-c]\n\t[-n databasenumber | -b suffix] [-q]\n";
+		options = " [-c]\n\t[-g] [-n databasenumber | -b suffix] [-q]\n";
 		break;
 
 	case SLAPTEST:
@@ -133,16 +133,28 @@ parse_slapacl( void )
 		ber_str2bv( p, 0, 1, &sock_name );
 
 	} else if ( strncasecmp( optarg, "ssf", len ) == 0 ) {
-		ssf = atoi( p );
+		if ( lutil_atou( &ssf, p ) ) {
+			Debug( LDAP_DEBUG_ANY, "unable to parse ssf=\"%s\".\n", p, 0, 0 );
+			return -1;
+		}
 
 	} else if ( strncasecmp( optarg, "transport_ssf", len ) == 0 ) {
-		transport_ssf = atoi( p );
+		if ( lutil_atou( &transport_ssf, p ) ) {
+			Debug( LDAP_DEBUG_ANY, "unable to parse transport_ssf=\"%s\".\n", p, 0, 0 );
+			return -1;
+		}
 
 	} else if ( strncasecmp( optarg, "tls_ssf", len ) == 0 ) {
-		tls_ssf = atoi( p );
+		if ( lutil_atou( &tls_ssf, p ) ) {
+			Debug( LDAP_DEBUG_ANY, "unable to parse tls_ssf=\"%s\".\n", p, 0, 0 );
+			return -1;
+		}
 
 	} else if ( strncasecmp( optarg, "sasl_ssf", len ) == 0 ) {
-		sasl_ssf = atoi( p );
+		if ( lutil_atou( &sasl_ssf, p ) ) {
+			Debug( LDAP_DEBUG_ANY, "unable to parse sasl_ssf=\"%s\".\n", p, 0, 0 );
+			return -1;
+		}
 
 	} else if ( strncasecmp( optarg, "authzDN", len ) == 0 ) {
 		ber_str2bv( p, 0, 1, &authzDN );
@@ -178,6 +190,13 @@ slap_tool_init(
 	int rc, i, dbnum;
 	int mode = SLAP_TOOL_MODE;
 	int truncatemode = 0;
+	int use_glue = 1;
+
+#ifdef LDAP_DEBUG
+	/* tools default to "none", so that at least LDAP_DEBUG_ANY 
+	 * messages show up; use -d 0 to reset */
+	ldap_debug = LDAP_DEBUG_NONE;
+#endif
 
 #ifdef CSRIMALLOC
 	leakfilename = malloc( strlen( progname ) + STRLENOF( ".leak" ) + 1 );
@@ -190,11 +209,11 @@ slap_tool_init(
 
 	switch( tool ) {
 	case SLAPADD:
-		options = "b:cd:f:F:l:n:qtuvw";
+		options = "b:cd:f:F:gl:n:qtuvw";
 		break;
 
 	case SLAPCAT:
-		options = "a:b:cd:f:F:l:n:s:v";
+		options = "a:b:cd:f:F:gl:n:s:v";
 		mode |= SLAP_TOOL_READMAIN | SLAP_TOOL_READONLY;
 		break;
 
@@ -214,7 +233,7 @@ slap_tool_init(
 		break;
 
 	case SLAPINDEX:
-		options = "b:cd:f:F:n:qv";
+		options = "b:cd:f:F:gn:qv";
 		mode |= SLAP_TOOL_READMAIN;
 		break;
 
@@ -243,9 +262,60 @@ slap_tool_init(
 			continuemode++;
 			break;
 
-		case 'd':	/* turn on debugging */
-			ldap_debug += atoi( optarg );
-			break;
+		case 'd': {	/* turn on debugging */
+			int	level = 0;
+
+#ifdef LDAP_DEBUG
+			if ( optarg != NULL && optarg[ 0 ] != '-' && !isdigit( optarg[ 0 ] ) )
+			{
+				int	i, goterr = 0;
+				char	**levels;
+
+				levels = ldap_str2charray( optarg, "," );
+
+				for ( i = 0; levels[ i ] != NULL; i++ ) {
+					level = 0;
+
+					if ( str2loglevel( levels[ i ], &level ) ) {
+						fprintf( stderr,
+							"unrecognized log level "
+							"\"%s\"\n", levels[ i ] );
+						goterr = 1;
+						/* but keep parsing... */
+
+					} else {
+						if ( level != 0 ) {
+							slap_debug |= level;
+
+						} else {
+							/* allow to reset log level */
+							slap_debug = 0;
+						}
+					}
+				}
+
+			} else {
+				if ( lutil_atoix( &level, optarg, 0 ) != 0 ) {
+					fprintf( stderr,
+						"unrecognized log level "
+						"\"%s\"\n", optarg );
+					exit( EXIT_FAILURE );
+				}
+
+				if ( level != 0 ) {
+					slap_debug |= level;
+
+				} else {
+					/* allow to reset log level */
+					slap_debug = 0;
+				}
+			}
+#else
+			if ( lutil_atoi( &level, optarg ) != 0 || level != 0 )
+				fputs( "must compile with LDAP_DEBUG for debugging\n",
+				       stderr );
+#endif
+			} break;
 
 		case 'D':
 			ber_str2bv( optarg, 0, 1, &authcDN );
@@ -257,6 +327,10 @@ slap_tool_init(
 
 		case 'F':	/* specify a conf dir */
 			confdir = strdup( optarg );
+			break;
+
+		case 'g':	/* disable subordinate glue */
+			use_glue = 0;
 			break;
 
 		case 'l':	/* LDIF file */
@@ -275,7 +349,9 @@ slap_tool_init(
 			break;
 
 		case 'n':	/* which config file db to index */
-			dbnum = atoi( optarg );
+			if ( lutil_atoi( &dbnum, optarg ) ) {
+				usage( tool, progname );
+			}
 			break;
 
 		case 'o':
@@ -424,11 +500,14 @@ slap_tool_init(
 		break;
 	}
 
-	rc = glue_sub_attach();
+	if ( use_glue ) {
+		rc = glue_sub_attach();
 
-	if ( rc != 0 ) {
-		fprintf( stderr, "%s: subordinate configuration error\n", progname );
-		exit( EXIT_FAILURE );
+		if ( rc != 0 ) {
+			fprintf( stderr,
+				"%s: subordinate configuration error\n", progname );
+			exit( EXIT_FAILURE );
+		}
 	}
 
 	rc = slap_schema_check();

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/rule.c,v 1.14.2.4 2005/08/17 16:15:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/rule.c,v 1.14.2.6 2006/01/03 22:16:11 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2005 The OpenLDAP Foundation.
+ * Copyright 2000-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -233,7 +233,7 @@ rewrite_rule_compile(
 			}
 
 			d[ 0 ] = strtol( &p[ 2 ], &next, 0 );
-			if ( next == NULL || next == &p[ 2 ] || next[0] != '}' ) {
+			if ( next == &p[ 2 ] || next[0] != '}' ) {
 				/* XXX Need to free stuff */
 				return REWRITE_ERR;
 			}
@@ -275,7 +275,7 @@ rewrite_rule_compile(
 			}
 
 			max_passes = strtol( &p[ 2 ], &next, 0 );
-			if ( next == NULL || next == &p[ 2 ] || next[0] != '}' ) {
+			if ( next == &p[ 2 ] || next[0] != '}' ) {
 				/* XXX Need to free stuff */
 				return REWRITE_ERR;
 			}

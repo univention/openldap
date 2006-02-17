@@ -1,8 +1,8 @@
 /* modrdn.c - ldap backend modrdn function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modrdn.c,v 1.38.2.4 2005/08/09 21:04:02 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modrdn.c,v 1.38.2.7 2006/01/03 22:16:18 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -36,7 +36,9 @@ ldap_back_modrdn(
 		Operation	*op,
  		SlapReply	*rs )
 {
-	struct ldapconn *lc;
+	ldapinfo_t	*li = (ldapinfo_t *)op->o_bd->be_private;
+
+	ldapconn_t	*lc;
 	ber_int_t	msgid;
 	LDAPControl	**ctrls = NULL;
 	int		do_retry = 1;
@@ -67,10 +69,11 @@ retry:
 	rs->sr_err = ldap_rename( lc->lc_ld, op->o_req_ndn.bv_val,
 			op->orr_newrdn.bv_val, newSup,
 			op->orr_deleteoldrdn, ctrls, NULL, &msgid );
-	rc = ldap_back_op_result( lc, op, rs, msgid, LDAP_BACK_SENDRESULT );
+	rc = ldap_back_op_result( lc, op, rs, msgid,
+		li->li_timeout[ LDAP_BACK_OP_MODRDN ], LDAP_BACK_SENDRESULT );
 	if ( rs->sr_err == LDAP_SERVER_DOWN && do_retry ) {
 		do_retry = 0;
-		if ( ldap_back_retry( lc, op, rs, LDAP_BACK_SENDERR ) ) {
+		if ( ldap_back_retry( &lc, op, rs, LDAP_BACK_SENDERR ) ) {
 			goto retry;
 		}
 	}

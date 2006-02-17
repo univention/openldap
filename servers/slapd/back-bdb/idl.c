@@ -1,8 +1,8 @@
 /* idl.c - ldap id list handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/idl.c,v 1.94.2.8 2005/09/28 00:30:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/idl.c,v 1.94.2.12 2006/01/03 22:16:16 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2005 The OpenLDAP Foundation.
+ * Copyright 2000-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -226,7 +226,7 @@ int bdb_idl_insert( ID *ids, ID id )
 
 static int bdb_idl_delete( ID *ids, ID id )
 {
-	unsigned x = bdb_idl_search( ids, id );
+	unsigned x;
 
 #if IDL_DEBUG > 1
 	Debug( LDAP_DEBUG_ANY, "delete: %04lx at %d\n", (long) id, x, 0 );
@@ -235,6 +235,23 @@ static int bdb_idl_delete( ID *ids, ID id )
 	idl_check( ids );
 #endif
 
+	if (BDB_IDL_IS_RANGE( ids )) {
+		/* If deleting a range boundary, adjust */
+		if ( ids[1] == id )
+			ids[1]++;
+		else if ( ids[2] == id )
+			ids[2]--;
+		/* deleting from inside a range is a no-op */
+
+		/* If the range has collapsed, re-adjust */
+		if ( ids[1] > ids[2] )
+			ids[0] = 0;
+		else if ( ids[1] == ids[2] )
+			ids[1] = 1;
+		return 0;
+	}
+
+	x = bdb_idl_search( ids, id );
 	assert( x > 0 );
 
 	if( x <= 0 ) {
@@ -325,17 +342,17 @@ bdb_idl_cache_put(
 	bdb_idl_cache_entry_t idl_tmp;
 	bdb_idl_cache_entry_t *ee;
 
+	if ( rc == DB_NOTFOUND || BDB_IDL_IS_ZERO( ids ))
+		return;
+
 	DBT2bv( key, &idl_tmp.kstr );
 
 	ee = (bdb_idl_cache_entry_t *) ch_malloc(
 		sizeof( bdb_idl_cache_entry_t ) );
 	ee->db = db;
-	if ( rc == DB_NOTFOUND || BDB_IDL_IS_ZERO( ids )) {
-		ee->idl = NULL;
-	} else {
-		ee->idl = (ID*) ch_malloc( BDB_IDL_SIZEOF ( ids ) );
-		BDB_IDL_CPY( ee->idl, ids );
-	}
+	ee->idl = (ID*) ch_malloc( BDB_IDL_SIZEOF ( ids ) );
+	BDB_IDL_CPY( ee->idl, ids );
+
 	ee->idl_lru_prev = NULL;
 	ee->idl_lru_next = NULL;
 	ber_dupbv( &ee->kstr, &idl_tmp.kstr );
@@ -1311,7 +1328,7 @@ int bdb_idl_append_one( ID *ids, ID id )
  */
 int bdb_idl_append( ID *a, ID *b )
 {
-	ID ida, idb, tmp;
+	ID ida, idb, tmp, swap = 0;
 
 	if ( BDB_IDL_IS_ZERO( b ) ) {
 		return 0;
@@ -1333,6 +1350,7 @@ int bdb_idl_append( ID *a, ID *b )
 	}
 
 	if ( b[0] > 1 && ida > idb ) {
+		swap = idb;
 		a[a[0]] = idb;
 		b[b[0]] = ida;
 	}
@@ -1350,6 +1368,9 @@ int bdb_idl_append( ID *a, ID *b )
 		int i = b[0] - 1;
 		AC_MEMCPY(a+a[0]+1, b+2, i * sizeof(ID));
 		a[0] += i;
+	}
+	if ( swap ) {
+		b[b[0]] = swap;
 	}
 	return 0;
 }

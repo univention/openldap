@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/modrdn.c,v 1.146.2.9 2005/09/28 16:04:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/modrdn.c,v 1.146.2.14 2006/01/17 19:37:20 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -178,8 +178,6 @@ do_modrdn(
 	rs->sr_err = frontendDB->be_modrdn( op, rs );
 
 cleanup:
-	slap_graduate_commit_csn( op );
-
 	op->o_tmpfree( op->o_req_dn.bv_val, op->o_tmpmemctx );
 	op->o_tmpfree( op->o_req_ndn.bv_val, op->o_tmpmemctx );
 
@@ -200,7 +198,7 @@ fe_op_modrdn( Operation *op, SlapReply *rs )
 	Backend		*newSuperior_be = NULL;
 	int		manageDSAit;
 	struct berval	pdn = BER_BVNULL;
-	BackendDB *op_be;
+	BackendDB *op_be, *bd = op->o_bd;
 	
 	if( op->o_req_ndn.bv_len == 0 ) {
 		Debug( LDAP_DEBUG_ANY, "do_modrdn: root dse!\n", 0, 0, 0 );
@@ -230,22 +228,19 @@ fe_op_modrdn( Operation *op, SlapReply *rs )
 	 */
 	op->o_bd = select_backend( &op->o_req_ndn, manageDSAit, 1 );
 	if ( op->o_bd == NULL ) {
+		op->o_bd = bd;
 		rs->sr_ref = referral_rewrite( default_referral,
 			NULL, &op->o_req_dn, LDAP_SCOPE_DEFAULT );
 		if (!rs->sr_ref) rs->sr_ref = default_referral;
 
 		if ( rs->sr_ref != NULL ) {
 			rs->sr_err = LDAP_REFERRAL;
-			op->o_bd = frontendDB;
 			send_ldap_result( op, rs );
-			op->o_bd = NULL;
 
 			if (rs->sr_ref != default_referral) ber_bvarray_free( rs->sr_ref );
 		} else {
-			op->o_bd = frontendDB;
 			send_ldap_error( op, rs, LDAP_UNWILLING_TO_PERFORM,
 				"no global superior knowledge" );
-			op->o_bd = NULL;
 		}
 		goto cleanup;
 	}
@@ -293,7 +288,7 @@ fe_op_modrdn( Operation *op, SlapReply *rs )
 		int repl_user = be_isupdate( op );
 #ifndef SLAPD_MULTIMASTER
 		if ( !SLAP_SHADOW(op->o_bd) || repl_user )
-#endif
+#endif /* ! SLAPD_MULTIMASTER */
 		{
 			slap_callback cb = { NULL, slap_replog_cb, NULL, NULL };
 
@@ -301,7 +296,7 @@ fe_op_modrdn( Operation *op, SlapReply *rs )
 
 #ifdef SLAPD_MULTIMASTER
 			if ( !op->o_bd->be_update_ndn.bv_len || !repl_user )
-#endif
+#endif /* SLAPD_MULTIMASTER */
 			{
 				cb.sc_next = op->o_callback;
 				op->o_callback = &cb;
@@ -365,7 +360,7 @@ fe_op_modrdn( Operation *op, SlapReply *rs )
 				send_ldap_error( op, rs, LDAP_UNWILLING_TO_PERFORM,
 					"shadow context; no update referral" );
 			}
-#endif
+#endif /* ! SLAPD_MULTIMASTER */
 		}
 	} else {
 		send_ldap_error( op, rs, LDAP_UNWILLING_TO_PERFORM,
@@ -373,6 +368,7 @@ fe_op_modrdn( Operation *op, SlapReply *rs )
 	}
 
 cleanup:;
+	op->o_bd = bd;
 	return rs->sr_err;
 }
 
@@ -386,7 +382,6 @@ slap_modrdn2mods(
 	Modifications	**pmod )
 {
 	Modifications	*mod = NULL;
-	Modifications	**modtail = &mod;
 	int		a_cnt, d_cnt;
 	int repl_user;
 
@@ -506,18 +501,7 @@ slap_modrdn2mods(
 done:
 
 	if ( rs->sr_err == LDAP_SUCCESS && !repl_user ) {
-		char textbuf[ SLAP_TEXT_BUFLEN ];
-		size_t textlen = sizeof textbuf;
-
-		for( modtail = &mod;
-			*modtail != NULL;
-			modtail = &(*modtail)->sml_next )
-		{
-			/* empty */
-		}
-
-		rs->sr_err = slap_mods_opattrs( op, mod, modtail,
-						&rs->sr_text, textbuf, textlen, 1 );
+		slap_mods_opattrs( op, &mod, 1 );
 	}
 
 	/* LDAP v2 supporting correct attribute handling. */
@@ -533,3 +517,30 @@ done:
 
 	return rs->sr_err;
 }
+
+void
+slap_modrdn2mods_free( Modifications *mod )
+{
+	Modifications *tmp;
+
+	for ( ; mod; mod = tmp ) {
+		tmp = mod->sml_next;
+		/* slap_modrdn2mods does things one way,
+		 * slap_mods_opattrs does it differently
+		 */
+		if ( mod->sml_op != SLAP_MOD_SOFTADD &&
+			mod->sml_op != LDAP_MOD_DELETE )
+		{
+			break;
+		}
+
+		if ( mod->sml_nvalues ) {
+			free( mod->sml_nvalues[0].bv_val );
+		}
+
+		free( mod );
+	}
+
+	slap_mods_free( mod, 1 );
+}
+

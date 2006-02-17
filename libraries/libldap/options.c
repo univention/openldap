@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/options.c,v 1.67.2.4 2005/08/09 21:03:55 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/options.c,v 1.67.2.6 2006/01/03 22:16:08 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -261,7 +261,7 @@ ldap_get_option(
 		if( ld->ld_matched == NULL ) {
 			* (char **) outvalue = NULL;
 		} else {
-			* (char **) outvalue = LDAP_STRDUP(ld->ld_matched);
+			* (char **) outvalue = LDAP_STRDUP( ld->ld_matched );
 		}
 
 		return LDAP_OPT_SUCCESS;
@@ -615,24 +615,30 @@ ldap_set_option(
 
 			if( ld->ld_error ) {
 				LDAP_FREE(ld->ld_error);
+				ld->ld_error = NULL;
 			}
 
-			ld->ld_error = LDAP_STRDUP(err);
+			if ( err ) {
+				ld->ld_error = LDAP_STRDUP(err);
+			}
 		} return LDAP_OPT_SUCCESS;
 
 	case LDAP_OPT_MATCHED_DN: {
-			const char *err = (const char *) invalue;
+			const char *matched = (const char *) invalue;
 
-			if(ld == NULL) {
+			if (ld == NULL) {
 				/* need a struct ldap */
 				break;
 			}
 
 			if( ld->ld_matched ) {
 				LDAP_FREE(ld->ld_matched);
+				ld->ld_matched = NULL;
 			}
 
-			ld->ld_matched = LDAP_STRDUP(err);
+			if ( matched ) {
+				ld->ld_matched = LDAP_STRDUP( matched );
+			}
 		} return LDAP_OPT_SUCCESS;
 
 	case LDAP_OPT_REFERRAL_URLS: {

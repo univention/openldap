@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/sasl.c,v 1.58.2.2 2005/08/10 21:57:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/sasl.c,v 1.58.2.4 2006/01/03 22:16:09 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -294,8 +294,13 @@ ldap_parse_sasl_bind_result(
 	}
 
 	if ( ld->ld_version < LDAP_VERSION2 ) {
+#ifdef LDAP_NULL_IS_NULL
+		tag = ber_scanf( ber, "{iA}",
+			&errcode, &ld->ld_error );
+#else /* ! LDAP_NULL_IS_NULL */
 		tag = ber_scanf( ber, "{ia}",
 			&errcode, &ld->ld_error );
+#endif /* ! LDAP_NULL_IS_NULL */
 
 		if( tag == LBER_ERROR ) {
 			ber_free( ber, 0 );
@@ -306,8 +311,13 @@ ldap_parse_sasl_bind_result(
 	} else {
 		ber_len_t len;
 
+#ifdef LDAP_NULL_IS_NULL
+		tag = ber_scanf( ber, "{eAA" /*}*/,
+			&errcode, &ld->ld_matched, &ld->ld_error );
+#else /* ! LDAP_NULL_IS_NULL */
 		tag = ber_scanf( ber, "{eaa" /*}*/,
 			&errcode, &ld->ld_matched, &ld->ld_error );
+#endif /* ! LDAP_NULL_IS_NULL */
 
 		if( tag == LBER_ERROR ) {
 			ber_free( ber, 0 );

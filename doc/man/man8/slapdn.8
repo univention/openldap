@@ -1,5 +1,5 @@
 .TH SLAPDN 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2004-2005 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2004-2006 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 slapdn \- Check a list of string-represented DNs based on schema syntax.
@@ -40,6 +40,19 @@ enable debugging messages as defined by the specified
 specify an alternative
 .BR slapd.conf (5)
 file.
+.TP
+.BI \-F " confdir"
+specify a config directory.
+If both
+.B -f
+and
+.B -F
+are specified, the config file will be read and converted to
+config directory format and written to the specified directory.
+If neither option is specified, an attempt to read the
+default config directory will be made before trying to use the default
+config file. If a valid config directory exists then the
+default config file is ignored.
 .TP
 .BI \-N
 only output a normalized form of the DN, suitable to be used

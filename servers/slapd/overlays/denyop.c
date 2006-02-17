@@ -1,7 +1,7 @@
 /* denyop.c - Denies operations */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2005 The OpenLDAP Foundation.
+ * Copyright 2004-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -224,7 +224,7 @@ denyop_destroy(
 static slap_overinst denyop;
 
 int
-denyop_init( void )
+denyop_initialize( void )
 {
 	memset( &denyop, 0, sizeof( slap_overinst ) );
 	denyop.on_bi.bi_type = "denyop";
@@ -251,7 +251,7 @@ denyop_init( void )
 int
 init_module( int argc, char *argv[] )
 {
-	return denyop_init();
+	return denyop_initialize();
 }
 #endif /* SLAPD_OVER_DENYOP == SLAPD_MOD_DYNAMIC */
 

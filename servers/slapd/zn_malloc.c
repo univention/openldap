@@ -1,8 +1,8 @@
 /* zn_malloc.c - zone-based malloc routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/zn_malloc.c,v 1.3.2.3 2005/08/09 21:04:01 kurt Exp $*/
+/* $OpenLDAP: pkg/ldap/servers/slapd/zn_malloc.c,v 1.3.2.5 2006/01/25 18:00:25 kurt Exp $*/
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2005 The OpenLDAP Foundation.
+ * Copyright 2003-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
 /* Copyright 2004 IBM Corporation
  * All rights reserved.
  * Redisribution and use in source and binary forms, with or without
- * modification, are permitted only as  authorizd by the OpenLADP
+ * modification, are permitted only as  authorizd by the OpenLDAP
  * Public License.
  */
 /* ACKNOWLEDGEMENTS

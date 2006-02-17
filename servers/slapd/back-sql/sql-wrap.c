@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/sql-wrap.c,v 1.28.2.3 2005/08/09 21:04:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/sql-wrap.c,v 1.28.2.6 2006/01/03 22:16:24 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -257,9 +257,10 @@ static void
 backsql_close_db_conn( void *v_conn )
 {
 	backsql_db_conn	*conn = 	(backsql_db_conn *)v_conn;
+	unsigned long	cid = conn->ldap_cid;
 
 	Debug( LDAP_DEBUG_TRACE, "==>backsql_close_db_conn(%lu)\n",
-		conn->ldap_cid, 0, 0 );
+		cid, 0, 0 );
 
 	/*
 	 * Default transact is SQL_ROLLBACK; commit is required only
@@ -274,7 +275,7 @@ backsql_close_db_conn( void *v_conn )
 	ch_free( conn );
 
 	Debug( LDAP_DEBUG_TRACE, "<==backsql_close_db_conn(%lu)\n",
-		conn->ldap_cid, 0, 0 );
+		cid, 0, 0 );
 }
 
 int
@@ -433,7 +434,7 @@ backsql_free_db_conn( Operation *op )
 	if ( conn != NULL ) {
 		Debug( LDAP_DEBUG_TRACE, "backsql_free_db_conn(): "
 			"closing db connection %lu (%p)\n",
-			op->o_connid, conn, 0 );
+			op->o_connid, (void *)conn, 0 );
 		backsql_close_db_conn( (void *)conn );
 	}
 

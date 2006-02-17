@@ -1,8 +1,8 @@
 /* schema_prep.c - load builtin schema */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.141.2.12 2005/09/28 00:30:31 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.141.2.14 2006/01/03 22:16:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1207,6 +1207,7 @@ slap_schema_load( void )
 
 			code = at_add( at, 0, NULL, &err );
 			if ( code ) {
+				ldap_attributetype_free( at );
 				fprintf( stderr, "slap_schema_load: AttributeType "
 					"\"%s\": %s: \"%s\"\n",
 					 ad_map[i].ssam_name, scherr2str(code), err );

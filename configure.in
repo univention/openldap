@@ -1,7 +1,7 @@
-dnl $OpenLDAP: pkg/ldap/configure.in,v 1.560.2.15 2005/09/28 00:30:27 kurt Exp $
+dnl $OpenLDAP: pkg/ldap/configure.in,v 1.560.2.25 2006/01/16 19:06:12 kurt Exp $
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
-dnl Copyright 1998-2005 The OpenLDAP Foundation.
+dnl Copyright 1998-2006 The OpenLDAP Foundation.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -23,10 +23,11 @@ define([AC_LIBTOOL_LANG_F77_CONFIG], [:])dnl
 define([AC_LIBTOOL_LANG_GCJ_CONFIG], [:])dnl
 dnl ================================================================
 dnl Configure.in for OpenLDAP
-AC_COPYRIGHT([[Copyright 1998-2005 The OpenLDAP Foundation. All rights reserved.
+AC_COPYRIGHT([[Copyright 1998-2006 The OpenLDAP Foundation. All rights reserved.
 Restrictions apply, see COPYRIGHT and LICENSE files.]])
-AC_REVISION([$OpenLDAP: pkg/ldap/configure.in,v 1.560.2.15 2005/09/28 00:30:27 kurt Exp $])
+AC_REVISION([$OpenLDAP: pkg/ldap/configure.in,v 1.560.2.25 2006/01/16 19:06:12 kurt Exp $])
 AC_INIT([OpenLDAP],,[http://www.openldap.org/its/])
+m4_define([AC_PACKAGE_BUGREPORT],[<http://www.openldap.org/its/>])
 AC_CONFIG_SRCDIR(build/version.sh)dnl
 dnl ----------------------------------------------------------------
 dnl OpenLDAP Autoconf Macros
@@ -92,7 +93,7 @@ AH_TOP([
 /* begin of portable.h.pre */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation
+ * Copyright 1998-2006 The OpenLDAP Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -245,7 +246,7 @@ ol_with_kerberos=${ol_with_kerberos-auto}
 OL_ARG_WITH(threads,[  --with-threads	  with threads],
 	auto, [auto nt posix mach pth lwp yes no manual] )
 OL_ARG_WITH(tls,[  --with-tls		  with TLS/SSL support],
-	auto, [auto ssleay openssl yes no] )
+	auto, [auto openssl yes no] )
 OL_ARG_WITH(yielding_select,[  --with-yielding-select  with implicitly yielding select],
 	auto, [auto yes no manual] )
 OL_ARG_WITH(multiple_precision,[  --with-multiple-precision
@@ -1312,40 +1313,31 @@ dnl TLS/SSL
 	
 ol_link_tls=no
 if test $ol_with_tls != no ; then
-	AC_CHECK_HEADERS(openssl/ssl.h ssl.h)
+	AC_CHECK_HEADERS(openssl/ssl.h)
 
-	if test $ac_cv_header_openssl_ssl_h = yes ||
-	   test $ac_cv_header_ssl_h = yes ; then
-		AC_CHECK_LIB(ssl, SSLeay_add_ssl_algorithms, 
-			[have_ssleay=yes
-			need_rsaref=no],
-			[have_ssleay=no],
+	if test $ac_cv_header_openssl_ssl_h = yes ; then
+		AC_CHECK_LIB(ssl, SSL_library_init,
+			[have_openssl=yes
+			need_rsaref=no], [have_openssl=no],
 			[-lcrypto])
-			
-		if test $have_ssleay = no ; then
-			AC_CHECK_LIB(ssl, SSL_library_init,
-				[have_ssleay=yes
-				need_rsaref=no], [have_ssleay=no],
-				[-lcrypto])
-		fi
 
-		if test $have_ssleay = no ; then
+		if test $have_openssl = no ; then
 			AC_CHECK_LIB(ssl, ssl3_accept, 
-				[have_ssleay=yes
-				need_rsaref=yes], [have_ssleay=no],
+				[have_openssl=yes
+				need_rsaref=yes], [have_openssl=no],
 				[-lcrypto -lRSAglue -lrsaref])
 		fi
 
-		if test $have_ssleay = yes ; then
+		if test $have_openssl = yes ; then
 			ol_with_tls=found
 			ol_link_tls=yes
 
-			AC_DEFINE(HAVE_SSLEAY, 1, 
-				[define if you have SSLeay or OpenSSL])
+			AC_DEFINE(HAVE_OPENSSL, 1, 
+				[define if you have OpenSSL])
 
 			if test $need_rsaref = yes; then
 				AC_DEFINE(HAVE_RSAREF, 1, 
-					[define if you have RSAref])
+					[define if OpenSSL needs RSAref])
 
 				TLS_LIBS="-lssl -lcrypto -lRSAglue -lrsaref"
 			else
@@ -1592,6 +1584,19 @@ dnl			[ol_cv_pthread_lpthread_lexc])
 
 			if test $ol_cv_pthread_create_works = no ; then
 				AC_MSG_ERROR([pthread_create is not usable, check environment settings])
+			fi
+
+			ol_replace_broken_yield=no
+dnl			case "$target" in
+dnl			*-*-linux*) 
+dnl				AC_CHECK_FUNCS(nanosleep)
+dnl				ol_replace_broken_yield=yes
+dnl			;;
+dnl			esac
+
+			if test $ol_replace_broken_yield = yes ; then
+				AC_DEFINE([REPLACE_BROKEN_YIELD],1,
+					[define if sched_yield yields the entire process])
 			fi
 
 			dnl Check if select causes an yield
@@ -1942,6 +1947,9 @@ if test $ol_link_threads = no ; then
 	AC_DEFINE(NO_THREADS,1,
 		[define if you have (or want) no threads])
 	LTHREAD_LIBS=""
+	BUILD_THREAD=no
+else
+	BUILD_THREAD=yes
 fi
 
 if test $ol_link_threads != no ; then
@@ -2408,7 +2416,7 @@ if test "$ol_with_multiple_precision" != "no" ; then
 	case "$ol_mp_support" in
 	bignum)
 		AC_DEFINE(HAVE_BIGNUM, 1,
-			[define if you have SSLeay or OpenSSL's BIGNUM])
+			[define if you have OpenSSL's BIGNUM])
 		;;
 	gmp)
 		AC_DEFINE(HAVE_GMP, 1, [define if you have -lgmp])
@@ -2540,9 +2548,11 @@ AC_CHECK_FUNCS(		\
 	getspnam		\
 	gettimeofday	\
 	initgroups		\
+	inet_ntoa_b		\
 	lockf			\
 	memcpy			\
 	memmove			\
+	memrchr			\
 	mkstemp			\
 	mktemp			\
 	pipe			\
@@ -2568,7 +2578,6 @@ AC_CHECK_FUNCS(		\
 	strtoll			\
 	strspn			\
 	sysconf			\
-	usleep			\
 	waitpid			\
 	wait4			\
 	write			\
@@ -2880,7 +2889,7 @@ if test "$ol_enable_denyop" != no ; then
 		MFLAG=SLAPD_MOD_STATIC
 		SLAPD_STATIC_OVERLAYS="$SLAPD_STATIC_OVERLAYS denyop.o"
 	fi
-	AC_DEFINE_UNQUOTED(SLAPD_OVER_DENYOP,$MFLAG,[define for Dynamic Group overlay])
+	AC_DEFINE_UNQUOTED(SLAPD_OVER_DENYOP,$MFLAG,[define for Deny Operation overlay])
 fi
 
 if test "$ol_enable_dyngroup" != no ; then
@@ -3065,6 +3074,7 @@ AC_SUBST(WITH_SASL)
 AC_SUBST(WITH_TLS)
 AC_SUBST(WITH_MODULES_ENABLED)
 AC_SUBST(WITH_ACI_ENABLED)
+AC_SUBST(BUILD_THREAD)
 AC_SUBST(BUILD_LIBS_DYNAMIC)
 
 AC_SUBST(BUILD_SLAPD)
@@ -3199,7 +3209,7 @@ rm -f $BACKENDSC
 cat > $BACKENDSC << ENDX
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -3244,7 +3254,63 @@ ENDX
 /* end of generated file */
 ENDX
 fi
+OVERLAYSC="servers/slapd/overlays/statover.c"
+echo "Making $OVERLAYSC"
+rm -f $OVERLAYSC
+cat > $OVERLAYSC << ENDX
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 1998-2006 The OpenLDAP Foundation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
+ */
+/* This file is automatically generated by configure; please do not edit. */
+
+#include "portable.h"
+#include "slap.h"
+
+ENDX
+if test "${STATIC_OVERLAYS}"; then
+	for o in ${STATIC_OVERLAYS}; do
+		oo=`echo "${o}" | sed -e 's/.o$//' -e 's/_x$//'`
+		cat >> $OVERLAYSC << ENDX
+extern OV_init ${oo}_initialize;
+ENDX
+	done
+fi
+
+cat >> $OVERLAYSC << ENDX
+
+OverlayInit slap_oinfo[] = {
+ENDX
+
+if test "${STATIC_OVERLAYS}"; then
+	for o in ${STATIC_OVERLAYS}; do
+		oo=`echo "${o}" | sed -e 's/.o$//' -e 's/_x$//'`
+		echo "    Add ${oo} ..."
+		cat >> $OVERLAYSC << ENDX
+	{ "${oo}", ${oo}_initialize },
+ENDX
+	done
+fi
+
+	cat >> $OVERLAYSC << ENDX
+	{ NULL, NULL },
+};
+
+/* end of generated file */
+ENDX
 
 echo Please run \"make depend\" to build dependencies
-]],[[STATIC_BACKENDS="$SLAPD_STATIC_BACKENDS"]])
+]],[[
+STATIC_BACKENDS="$SLAPD_STATIC_BACKENDS"
+STATIC_OVERLAYS="$SLAPD_STATIC_OVERLAYS"
+]])
 AC_OUTPUT

@@ -1,8 +1,8 @@
 /* utf-8.c -- Basic UTF-8 routines */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/utf-8.c,v 1.34.2.1 2005/01/20 18:03:51 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/utf-8.c,v 1.34.2.2 2006/01/03 22:16:09 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

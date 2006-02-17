@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/init.c,v 1.37.2.6 2005/10/05 17:42:20 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/init.c,v 1.37.2.10 2006/01/03 22:16:20 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -77,19 +77,20 @@ meta_back_db_init(
 {
 	metainfo_t	*mi;
 
-	mi = ch_malloc( sizeof( metainfo_t ) );
+	mi = ch_calloc( 1, sizeof( metainfo_t ) );
 	if ( mi == NULL ) {
  		return -1;
  	}
-	memset( mi, 0, sizeof( metainfo_t ) );
 
 	/*
 	 * At present the default is no default target;
 	 * this may change
 	 */
 	mi->mi_defaulttarget = META_DEFAULT_TARGET_NONE;
+	mi->mi_bind_timeout.tv_sec = 0;
+	mi->mi_bind_timeout.tv_usec = META_BIND_TIMEOUT;
 
-	ldap_pvt_thread_mutex_init( &mi->mi_conn_mutex );
+	ldap_pvt_thread_mutex_init( &mi->mi_conninfo.lai_mutex );
 	ldap_pvt_thread_mutex_init( &mi->mi_cache.mutex );
 
 	/* safe default */
@@ -146,21 +147,7 @@ meta_back_conn_free(
 	ntargets = mc->mc_conns[ 0 ].msc_info->mi_ntargets;
 
 	for ( i = 0; i < ntargets; i++ ) {
-		metasingleconn_t	*msc = &mc->mc_conns[ i ];
-
-		if ( msc->msc_ld != NULL ) {
-			ldap_unbind_ext_s( msc->msc_ld, NULL, NULL );
-		}
-
-		if ( !BER_BVISNULL( &msc->msc_bound_ndn ) ) {
-			ber_memfree( msc->msc_bound_ndn.bv_val );
-		}
-
-		if ( !BER_BVISNULL( &msc->msc_cred ) ) {
-			/* destroy sensitive data */
-			memset( msc->msc_cred.bv_val, 0, msc->msc_cred.bv_len );
-			ber_memfree( msc->msc_cred.bv_val );
-		}
+		(void)meta_clear_one_candidate( &mc->mc_conns[ i ] );
 	}
 
 	ldap_pvt_thread_mutex_destroy( &mc->mc_mutex );
@@ -175,6 +162,17 @@ mapping_free(
 	ch_free( mapping->src.bv_val );
 	ch_free( mapping->dst.bv_val );
 	ch_free( mapping );
+}
+
+static void
+mapping_dst_free(
+	void		*v_mapping )
+{
+	struct ldapmapping *mapping = v_mapping;
+
+	if ( BER_BVISEMPTY( &mapping->dst ) ) {
+		mapping_free( &mapping[ -1 ] );
+	}
 }
 
 static void
@@ -205,9 +203,9 @@ target_free(
 	if ( mt->mt_rwmap.rwm_rw ) {
 		rewrite_info_delete( &mt->mt_rwmap.rwm_rw );
 	}
-	avl_free( mt->mt_rwmap.rwm_oc.remap, NULL );
+	avl_free( mt->mt_rwmap.rwm_oc.remap, mapping_dst_free );
 	avl_free( mt->mt_rwmap.rwm_oc.map, mapping_free );
-	avl_free( mt->mt_rwmap.rwm_at.remap, NULL );
+	avl_free( mt->mt_rwmap.rwm_at.remap, mapping_dst_free );
 	avl_free( mt->mt_rwmap.rwm_at.map, mapping_free );
 }
 
@@ -225,21 +223,23 @@ meta_back_db_destroy(
 		/*
 		 * Destroy the connection tree
 		 */
-		ldap_pvt_thread_mutex_lock( &mi->mi_conn_mutex );
+		ldap_pvt_thread_mutex_lock( &mi->mi_conninfo.lai_mutex );
 
-		if ( mi->mi_conntree ) {
-			avl_free( mi->mi_conntree, meta_back_conn_free );
+		if ( mi->mi_conninfo.lai_tree ) {
+			avl_free( mi->mi_conninfo.lai_tree, meta_back_conn_free );
 		}
 
 		/*
 		 * Destroy the per-target stuff (assuming there's at
 		 * least one ...)
 		 */
-		for ( i = 0; i < mi->mi_ntargets; i++ ) {
-			target_free( &mi->mi_targets[ i ] );
-		}
+		if ( mi->mi_targets != NULL ) {
+			for ( i = 0; i < mi->mi_ntargets; i++ ) {
+				target_free( &mi->mi_targets[ i ] );
+			}
 
-		free( mi->mi_targets );
+			free( mi->mi_targets );
+		}
 
 		ldap_pvt_thread_mutex_lock( &mi->mi_cache.mutex );
 		if ( mi->mi_cache.tree ) {
@@ -249,8 +249,8 @@ meta_back_db_destroy(
 		ldap_pvt_thread_mutex_unlock( &mi->mi_cache.mutex );
 		ldap_pvt_thread_mutex_destroy( &mi->mi_cache.mutex );
 
-		ldap_pvt_thread_mutex_unlock( &mi->mi_conn_mutex );
-		ldap_pvt_thread_mutex_destroy( &mi->mi_conn_mutex );
+		ldap_pvt_thread_mutex_unlock( &mi->mi_conninfo.lai_mutex );
+		ldap_pvt_thread_mutex_destroy( &mi->mi_conninfo.lai_mutex );
 
 		if ( mi->mi_candidates != NULL ) {
 			ber_memfree_x( mi->mi_candidates, NULL );

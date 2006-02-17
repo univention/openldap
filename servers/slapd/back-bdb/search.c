@@ -1,8 +1,8 @@
 /* search.c - search operation */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.221.2.10 2005/09/28 00:30:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.221.2.14 2006/01/16 18:59:27 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2005 The OpenLDAP Foundation.
+ * Copyright 2000-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -465,7 +465,7 @@ dn2entry_retry:
 #endif
 			rs->sr_ref = referral_rewrite( default_referral,
 				NULL, &op->o_req_dn, op->oq_search.rs_scope );
-			rs->sr_err = LDAP_REFERRAL;
+			rs->sr_err = rs->sr_ref != NULL ? LDAP_REFERRAL : LDAP_NO_SUCH_OBJECT;
 		}
 
 		send_ldap_result( op, rs );
@@ -726,28 +726,24 @@ fetch_entry_retry:
 
 		rs->sr_entry = e;
 
-#ifdef BDB_SUBENTRIES
-		{
-			if ( is_entry_subentry( e ) ) {
-				if( op->oq_search.rs_scope != LDAP_SCOPE_BASE ) {
-					if(!get_subentries_visibility( op )) {
-						/* only subentries are visible */
-						goto loop_continue;
-					}
-
-				} else if ( get_subentries( op ) &&
-					!get_subentries_visibility( op ))
-				{
+		if ( is_entry_subentry( e ) ) {
+			if( op->oq_search.rs_scope != LDAP_SCOPE_BASE ) {
+				if(!get_subentries_visibility( op )) {
 					/* only subentries are visible */
 					goto loop_continue;
 				}
 
-			} else if ( get_subentries_visibility( op )) {
+			} else if ( get_subentries( op ) &&
+				!get_subentries_visibility( op ))
+			{
 				/* only subentries are visible */
 				goto loop_continue;
 			}
+
+		} else if ( get_subentries_visibility( op )) {
+			/* only subentries are visible */
+			goto loop_continue;
 		}
-#endif /* BDB_SUBENTRIES */
 
 		/* Does this candidate actually satisfy the search scope?
 		 *
@@ -858,21 +854,6 @@ fetch_entry_retry:
 
 		if ( rs->sr_err == LDAP_COMPARE_TRUE ) {
 			/* check size limit */
-			if ( --op->ors_slimit == -1 ) {
-#ifdef SLAP_ZONE_ALLOC
-				slap_zn_runlock(bdb->bi_cache.c_zctx, e);
-#endif
-				bdb_cache_return_entry_r( bdb->bi_dbenv,
-						&bdb->bi_cache, e, &lock );
-				e = NULL;
-				rs->sr_entry = NULL;
-				rs->sr_err = LDAP_SIZELIMIT_EXCEEDED;
-				rs->sr_ref = rs->sr_v2ref;
-				send_ldap_result( op, rs );
-				rs->sr_err = LDAP_SUCCESS;
-				goto done;
-			}
-
 			if ( get_pagedresults(op) > SLAP_CONTROL_IGNORED ) {
 				if ( rs->sr_nentries >= ((PagedResultsState *)op->o_pagedresults_state)->ps_size ) {
 #ifdef SLAP_ZONE_ALLOC
@@ -889,20 +870,20 @@ fetch_entry_retry:
 
 			if (e) {
 				/* safe default */
-				int result = -1;
 				rs->sr_attrs = op->oq_search.rs_attrs;
 				rs->sr_operational_attrs = NULL;
 				rs->sr_ctrls = NULL;
 				rs->sr_flags = 0;
 				rs->sr_err = LDAP_SUCCESS;
-				result = send_search_entry( op, rs );
+				rs->sr_err = send_search_entry( op, rs );
 
-				switch (result) {
-				case 0:		/* entry sent ok */
+				switch ( rs->sr_err ) {
+				case LDAP_SUCCESS:	/* entry sent ok */
 					break;
-				case 1:		/* entry not sent */
+				default:		/* entry not sent */
 					break;
-				case -1:	/* connection closed */
+				case LDAP_UNAVAILABLE:
+				case LDAP_SIZELIMIT_EXCEEDED:
 #ifdef SLAP_ZONE_ALLOC
 					slap_zn_runlock(bdb->bi_cache.c_zctx, e);
 #endif
@@ -910,7 +891,14 @@ fetch_entry_retry:
 						&bdb->bi_cache, e, &lock);
 					e = NULL;
 					rs->sr_entry = NULL;
-					rs->sr_err = LDAP_OTHER;
+					if ( rs->sr_err == LDAP_SIZELIMIT_EXCEEDED ) {
+						rs->sr_ref = rs->sr_v2ref;
+						send_ldap_result( op, rs );
+						rs->sr_err = LDAP_SUCCESS;
+
+					} else {
+						rs->sr_err = LDAP_OTHER;
+					}
 					goto done;
 				}
 			}
@@ -933,8 +921,6 @@ loop_continue:
 			e = NULL;
 			rs->sr_entry = NULL;
 		}
-		
-		ldap_pvt_thread_yield();
 	}
 
 nochange:
@@ -1059,13 +1045,11 @@ static int search_candidates(
 #else
 	AttributeAssertion aa_ref = { NULL, BER_BVNULL };
 #endif
-#ifdef BDB_SUBENTRIES
 	Filter	sf;
 #ifdef LDAP_COMP_MATCH
 	AttributeAssertion aa_subentry = { NULL, BER_BVNULL, NULL };
 #else
 	AttributeAssertion aa_subentry = { NULL, BER_BVNULL };
-#endif
 #endif
 
 	/*
@@ -1112,7 +1096,6 @@ static int search_candidates(
 	/* Filter depth increased again, adding dummy clause */
 	depth++;
 
-#ifdef BDB_SUBENTRIES
 	if( get_subentries_visibility( op ) ) {
 		struct berval bv_subentry = BER_BVC( "subentry" );
 		sf.f_choice = LDAP_FILTER_EQUALITY;
@@ -1122,7 +1105,6 @@ static int search_candidates(
 		sf.f_next = nf.f_next;
 		nf.f_next = &sf;
 	}
-#endif
 
 	/* Allocate IDL stack, plus 1 more for former tmp */
 	if ( depth+1 > bdb->bi_search_stack_depth ) {

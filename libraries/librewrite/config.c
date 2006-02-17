@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/config.c,v 1.10.2.1 2005/01/20 18:03:53 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/config.c,v 1.10.2.3 2006/01/03 22:16:11 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2005 The OpenLDAP Foundation.
+ * Copyright 2000-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -104,19 +104,33 @@ rewrite_parse(
 			return -1;
 		}
 
-		info->li_max_passes = atoi( argv[ 1 ] );
+		if ( lutil_atoi( &info->li_max_passes, argv[ 1 ] ) != 0 ) {
+			Debug( LDAP_DEBUG_ANY,
+					"[%s:%d] unable to parse rewriteMaxPasses=\"%s\"\n",
+					fname, lineno, argv[ 1 ] );
+			return -1;
+		}
+
 		if ( info->li_max_passes <= 0 ) {
 			Debug( LDAP_DEBUG_ANY,
-					"[%s:%d] negative or null rewriteMaxPasses'\n",
+					"[%s:%d] negative or null rewriteMaxPasses\n",
 					fname, lineno, 0 );
+			return -1;
 		}
 
 		if ( argc > 2 ) {
-			info->li_max_passes_per_rule = atoi( argv[ 2 ] );
+			if ( lutil_atoi( &info->li_max_passes_per_rule, argv[ 2 ] ) != 0 ) {
+				Debug( LDAP_DEBUG_ANY,
+						"[%s:%d] unable to parse rewriteMaxPassesPerRule=\"%s\"\n",
+						fname, lineno, argv[ 2 ] );
+				return -1;
+			}
+
 			if ( info->li_max_passes_per_rule <= 0 ) {
 				Debug( LDAP_DEBUG_ANY,
-						"[%s:%d] negative or null rewriteMaxPassesPerRule'\n",
+						"[%s:%d] negative or null rewriteMaxPassesPerRule\n",
 						fname, lineno, 0 );
+				return -1;
 			}
 
 		} else {

@@ -1,8 +1,8 @@
 /* unique.c - attribute uniqueness module */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/unique.c,v 1.8.2.7 2005/10/11 17:42:19 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/unique.c,v 1.8.2.10 2006/01/03 22:16:25 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2005 The OpenLDAP Foundation.
+ * Copyright 2004-2006 The OpenLDAP Foundation.
  * Portions Copyright 2004 Symas Corporation.
  * All rights reserved.
  *
@@ -263,21 +263,35 @@ static int count_filter_len(
 	unique_attrs *up;
 	int i;
 
-	while(!is_at_operational(ad->ad_type)) {
-		if(ud->ignore) {
-			for(up = ud->ignore; up; up = up->next)
-				if(ad == up->attr) break;
-			if(up) break;
+	while ( !is_at_operational( ad->ad_type ) ) {
+		if ( ud->ignore ) {
+			for ( up = ud->ignore; up; up = up->next ) {
+				if (ad == up->attr ) {
+					break;
+				}
+			}
+			if ( up ) {
+				break;
+			}
 		}
-		if(ud->attrs) {
-			for(up = ud->attrs; up; up = up->next)
-				if(ad == up->attr) break;
-			if(!up) break;
+		if ( ud->attrs ) {
+			for ( up = ud->attrs; up; up = up->next ) {
+				if ( ad == up->attr ) {
+					break;
+				}
+			}
+			if ( !up ) {
+				break;
+			}
 		}
-		if(b && b[0].bv_val) for(i = 0; b[i].bv_val; i++)
-			ks += b[i].bv_len + ad->ad_cname.bv_len + STRLENOF( "(=)" );
-		else if(ud->strict)
+		if ( b && b[0].bv_val ) {
+			for (i = 0; b[i].bv_val; i++ ) {
+				/* note: make room for filter escaping... */
+				ks += ( 3 * b[i].bv_len ) + ad->ad_cname.bv_len + STRLENOF( "(=)" );
+			}
+		} else if ( ud->strict ) {
 			ks += ad->ad_cname.bv_len + STRLENOF( "(=*)" );	/* (attr=*) */
+		}
 		break;
 	}
 	return ks;
@@ -287,27 +301,47 @@ static char *build_filter(
 	unique_data *ud,
 	AttributeDescription *ad,
 	BerVarray b,
-	char *kp
+	char *kp,
+	void *ctx
 )
 {
 	unique_attrs *up;
 	int i;
 
-	while(!is_at_operational(ad->ad_type)) {
-		if(ud->ignore) {
-			for(up = ud->ignore; up; up = up->next)
-				if(ad == up->attr) break;
-			if(up) break;
+	while ( !is_at_operational( ad->ad_type ) ) {
+		if ( ud->ignore ) {
+			for ( up = ud->ignore; up; up = up->next ) {
+				if ( ad == up->attr ) {
+					break;
+				}
+			}
+			if ( up ) {
+				break;
+			}
 		}
-		if(ud->attrs) {
-			for(up = ud->attrs; up; up = up->next)
-				if(ad == up->attr) break;
-			if(!up) break;
+		if ( ud->attrs ) {
+			for ( up = ud->attrs; up; up = up->next ) {
+				if ( ad == up->attr ) {
+					break;
+				}
+			}
+			if ( !up ) {
+				break;
+			}
 		}
-		if(b && b[0].bv_val) for(i = 0; b[i].bv_val; i++)
-			kp += sprintf(kp, "(%s=%s)", ad->ad_cname.bv_val, b[i].bv_val);
-		else if(ud->strict)
-			kp += sprintf(kp, "(%s=*)", ad->ad_cname.bv_val);
+		if ( b && b[0].bv_val ) {
+			for ( i = 0; b[i].bv_val; i++ ) {
+				struct berval	bv;
+
+				ldap_bv2escaped_filter_value_x( &b[i], &bv, 1, ctx );
+				kp += sprintf( kp, "(%s=%s)", ad->ad_cname.bv_val, bv.bv_val );
+				if ( bv.bv_val != b[i].bv_val ) {
+					ber_memfree_x( bv.bv_val, ctx );
+				}
+			}
+		} else if ( ud->strict ) {
+			kp += sprintf( kp, "(%s=*)", ad->ad_cname.bv_val );
+		}
 		break;
 	}
 	return kp;
@@ -350,7 +384,7 @@ static int unique_search(
 	nop->o_bd = on->on_info->oi_origdb;
 	rc = nop->o_bd->be_search(nop, &nrs);
 	filter_free_x(nop, nop->ors_filter);
-	ch_free( key );
+	op->o_tmpfree( key, op->o_tmpmemctx );
 
 	if(rc != LDAP_SUCCESS && rc != LDAP_NO_SUCH_OBJECT) {
 		op->o_bd->bd_info = (BackendInfo *) on->on_info;
@@ -370,6 +404,8 @@ static int unique_search(
 	return(SLAP_CB_CONTINUE);
 }
 
+#define ALLOC_EXTRA	16	/* extra slop */
+
 static int unique_add(
 	Operation *op,
 	SlapReply *rs
@@ -381,7 +417,7 @@ static int unique_add(
 
 	Attribute *a;
 	char *key, *kp;
-	int ks = 16;
+	int ks = 0;
 
 	Debug(LDAP_DEBUG_TRACE, "==> unique_add <%s>\n", op->o_req_dn.bv_val, 0, 0);
 
@@ -404,12 +440,16 @@ static int unique_add(
 		ks = count_filter_len(ud, a->a_desc, a->a_vals, ks);
 	}
 
-	key = ch_malloc(ks);
+	if ( !ks )
+		return SLAP_CB_CONTINUE;
+
+	ks += ALLOC_EXTRA;
+	key = op->o_tmpalloc(ks, op->o_tmpmemctx);
 
 	kp = key + sprintf(key, "(|");
 
 	for(a = op->ora_e->e_attrs; a; a = a->a_next) {
-		kp = build_filter(ud, a->a_desc, a->a_vals, kp);
+		kp = build_filter(ud, a->a_desc, a->a_vals, kp, op->o_tmpmemctx);
 	}
 
 	sprintf(kp, ")");
@@ -431,7 +471,7 @@ static int unique_modify(
 
 	Modifications *m;
 	char *key, *kp;
-	int ks = 16;		/* a handful of extra bytes */
+	int ks = 0;
 
 	Debug(LDAP_DEBUG_TRACE, "==> unique_modify <%s>\n", op->o_req_dn.bv_val, 0, 0);
 
@@ -455,13 +495,17 @@ static int unique_modify(
 		ks = count_filter_len(ud, m->sml_desc, m->sml_values, ks);
 	}
 
-	key = ch_malloc(ks);
+	if ( !ks )
+		return SLAP_CB_CONTINUE;
+
+	ks += ALLOC_EXTRA;
+	key = op->o_tmpalloc(ks, op->o_tmpmemctx);
 
 	kp = key + sprintf(key, "(|");
 
 	for(m = op->orm_modlist; m; m = m->sml_next) {
  		if ((m->sml_op & LDAP_MOD_OP) == LDAP_MOD_DELETE) continue;
- 		kp = build_filter(ud, m->sml_desc, m->sml_values, kp);
+ 		kp = build_filter(ud, m->sml_desc, m->sml_values, kp, op->o_tmpmemctx);
 	}
 
 	sprintf(kp, ")");
@@ -482,7 +526,7 @@ static int unique_modrdn(
 	Operation nop = *op;
 
 	char *key, *kp;
-	int i, ks = 16;			/* a handful of extra bytes */
+	int i, ks = 0;
 	LDAPRDN	newrdn;
 	struct berval bv[2];
 
@@ -519,12 +563,16 @@ static int unique_modrdn(
 		ks = count_filter_len(ud, newrdn[i]->la_private, bv, ks);
 	}
 
-	key = ch_malloc(ks);
+	if ( !ks )
+		return SLAP_CB_CONTINUE;
+
+	ks += ALLOC_EXTRA;
+	key = op->o_tmpalloc(ks, op->o_tmpmemctx);
 	kp = key + sprintf(key, "(|");
 
 	for(i = 0; newrdn[i]; i++) {
 		bv[0] = newrdn[i]->la_value;
-		kp = build_filter(ud, newrdn[i]->la_private, bv, kp);
+		kp = build_filter(ud, newrdn[i]->la_private, bv, kp, op->o_tmpmemctx);
 	}
 
 	sprintf(kp, ")");
@@ -539,7 +587,7 @@ static int unique_modrdn(
 ** it expects to be called automagically during dynamic module initialization
 */
 
-int unique_init() {
+int unique_initialize() {
 
 	/* statically declared just after the #includes at top */
 	unique.on_bi.bi_type = "unique";
@@ -557,7 +605,7 @@ int unique_init() {
 
 #if SLAPD_OVER_UNIQUE == SLAPD_MOD_DYNAMIC && defined(PIC)
 int init_module(int argc, char *argv[]) {
-	return unique_init();
+	return unique_initialize();
 }
 #endif
 

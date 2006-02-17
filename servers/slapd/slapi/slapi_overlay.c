@@ -1,8 +1,8 @@
 /* slapi_overlay.c - SLAPI overlay */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_overlay.c,v 1.34.2.2 2005/08/19 18:09:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_overlay.c,v 1.34.2.5 2006/01/08 19:16:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2005 The OpenLDAP Foundation.
+ * Copyright 2001-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -278,7 +278,8 @@ slapi_op_bind_callback( Operation *op, SlapReply *rs, int prc )
 				op->o_log_prefix,
 				BER_BVISNULL( &op->o_conn->c_dn )
 					? "<empty>" : op->o_conn->c_dn.bv_val,
-				op->orb_tmp_mech.bv_val, 0, 0 );
+				BER_BVISNULL( &op->orb_tmp_mech )
+					? "<empty>" : op->orb_tmp_mech.bv_val, 0, 0 );
 
 			return -1;
 		}
@@ -478,7 +479,7 @@ slapi_over_unmerge_controls( Operation *op, SlapReply *rs )
 
 	slapi_pblock_get( pb, SLAPI_X_OLD_RESCONTROLS, (void **)&rs_ctrls );
 
-	if ( rs->sr_ctrls == NULL || rs->sr_ctrls == rs_ctrls ) {
+	if ( rs_ctrls == NULL || rs->sr_ctrls == rs_ctrls ) {
 		/* no copying done */
 		return LDAP_SUCCESS;
 	}
@@ -880,7 +881,8 @@ int slapi_over_config( BackendDB *be )
 		ldap_pvt_thread_mutex_init( &slapi_time_mutex );
 		ldap_pvt_thread_mutex_init( &slapi_printmessage_mutex );
 
-		slapi_log_file = slapi_ch_strdup( LDAP_RUNDIR LDAP_DIRSEP "errors" );
+		if ( slapi_log_file == NULL )
+			slapi_log_file = slapi_ch_strdup( LDAP_RUNDIR LDAP_DIRSEP "errors" );
 
 		rc = slapi_int_init_object_extensions();
 		if ( rc != 0 )

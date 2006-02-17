@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/include/ldap_pvt.h,v 1.82.2.3 2005/06/03 19:12:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap_pvt.h,v 1.82.2.6 2006/01/03 22:16:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -212,6 +212,13 @@ ldap_pvt_find_wildcard LDAP_P((	const char *s ));
 LDAP_F( ber_slen_t )
 ldap_pvt_filter_value_unescape LDAP_P(( char *filter ));
 
+LDAP_F( ber_len_t )
+ldap_bv2escaped_filter_value_len LDAP_P(( struct berval *in ));
+
+LDAP_F( int )
+ldap_bv2escaped_filter_value_x LDAP_P(( struct berval *in, struct berval *out,
+	int inplace, void *ctx ));
+
 /* string.c */
 LDAP_F( char * )
 ldap_pvt_str2upper LDAP_P(( char *str ));
@@ -235,7 +242,7 @@ LDAP_F (int) ldap_pvt_tls_set_option LDAP_P(( struct ldap *ld,
 
 LDAP_F (void) ldap_pvt_tls_destroy LDAP_P(( void ));
 LDAP_F (int) ldap_pvt_tls_init LDAP_P(( void ));
-LDAP_F (int) ldap_pvt_tls_init_def_ctx LDAP_P(( void ));
+LDAP_F (int) ldap_pvt_tls_init_def_ctx LDAP_P(( int is_server ));
 LDAP_F (int) ldap_pvt_tls_accept LDAP_P(( Sockbuf *sb, void *ctx_arg ));
 LDAP_F (int) ldap_pvt_tls_inplace LDAP_P(( Sockbuf *sb ));
 LDAP_F (void *) ldap_pvt_tls_sb_ctx LDAP_P(( Sockbuf *sb ));
@@ -279,6 +286,7 @@ LDAP_END_DECL
 #endif /* HAVE_OPENSSL_BN_H || HAVE_BN_H */
 
 typedef	BIGNUM*		ldap_pvt_mp_t;
+#define	LDAP_PVT_MP_INIT	(NULL)
 
 #define	ldap_pvt_mp_init(mp) \
 	(mp) = BN_new()
@@ -305,6 +313,8 @@ typedef	BIGNUM*		ldap_pvt_mp_t;
 #endif
 
 typedef mpz_t		ldap_pvt_mp_t;
+#define	LDAP_PVT_MP_INIT	{ 0 }
+
 #define ldap_pvt_mp_init(mp) \
 	mpz_init((mp))
 
@@ -327,8 +337,10 @@ typedef mpz_t		ldap_pvt_mp_t;
 
 #ifdef HAVE_LONG_LONG
 typedef	unsigned long long	ldap_pvt_mp_t;
+#define	LDAP_PVT_MP_INIT	(0LL)
 #else /* !HAVE_LONG_LONG */
 typedef	unsigned long		ldap_pvt_mp_t;
+#define	LDAP_PVT_MP_INIT	(0L)
 #endif /* !HAVE_LONG_LONG */
 
 #define ldap_pvt_mp_init(mp) \

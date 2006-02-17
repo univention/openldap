@@ -1,8 +1,8 @@
 /* dn2id.c - routines to deal with the dn2id index */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2id.c,v 1.106.2.9 2005/09/28 00:30:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2id.c,v 1.106.2.14 2006/01/03 22:16:16 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2005 The OpenLDAP Foundation.
+ * Copyright 2000-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -178,7 +178,7 @@ bdb_dn2id_delete(
 #endif
 	{
 		buf[0] = DN_SUBTREE_PREFIX;
-		rc = db->del( db, txn, &key, 0 );
+		rc = bdb_idl_delete_key( op->o_bd, db, txn, &key, e->e_id );
 		if( rc != 0 ) {
 			Debug( LDAP_DEBUG_ANY,
 			"=> bdb_dn2id_delete: subtree (%s) delete failed: %d\n",
@@ -709,6 +709,7 @@ int
 hdb_dn2id_parent(
 	Operation *op,
 	DB_TXN *txn,
+	u_int32_t	locker,
 	EntryInfo *ei,
 	ID *idp )
 {
@@ -733,6 +734,9 @@ hdb_dn2id_parent(
 
 	rc = db->cursor( db, txn, &cursor, bdb->bi_db_opflags );
 	if ( rc ) return rc;
+	if ( !txn && locker ) {
+		cursor->locker = locker;
+	}
 
 	data.ulen = sizeof(diskNode) + (SLAP_LDAPDN_MAXLEN * 2);
 	d = op->o_tmpalloc( data.ulen, op->o_tmpmemctx );
@@ -915,7 +919,8 @@ hdb_dn2idl_internal(
 
 		cx->rc = cx->db->cursor( cx->db, NULL, &cx->dbc,
 			cx->bdb->bi_db_opflags );
-		if ( cx->rc ) return cx->rc;
+		if ( cx->rc )
+			goto done_one;
 
 		cx->data.data = &cx->dbuf;
 		cx->data.ulen = sizeof(ID);
@@ -928,7 +933,7 @@ hdb_dn2idl_internal(
 		cx->rc = cx->dbc->c_get( cx->dbc, &cx->key, &cx->data, DB_SET );
 		if ( cx->rc ) {
 			cx->dbc->c_close( cx->dbc );
-			return cx->rc;
+			goto done_one;
 		}
 
 		/* If the on-disk count is zero we've never checked it.
@@ -943,36 +948,46 @@ hdb_dn2idl_internal(
 		cx->data.ulen = BDB_IDL_UM_SIZE * sizeof(ID);
 		cx->data.flags = DB_DBT_USERMEM;
 
-		/* Fetch the rest of the IDs in a loop... */
-		while ( (cx->rc = cx->dbc->c_get( cx->dbc, &cx->key, &cx->data,
-			DB_MULTIPLE | DB_NEXT_DUP )) == 0 ) {
-			u_int8_t *j;
-			size_t len;
-			void *ptr;
-			DB_MULTIPLE_INIT( ptr, &cx->data );
-			while (ptr) {
-				DB_MULTIPLE_NEXT( ptr, &cx->data, j, len );
-				if (j) {
-					EntryInfo *ei2;
-					diskNode *d = (diskNode *)j;
-					short nrlen;
+		if ( dkids > 1 ) {
+			/* Fetch the rest of the IDs in a loop... */
+			while ( (cx->rc = cx->dbc->c_get( cx->dbc, &cx->key, &cx->data,
+				DB_MULTIPLE | DB_NEXT_DUP )) == 0 ) {
+				u_int8_t *j;
+				size_t len;
+				void *ptr;
+				DB_MULTIPLE_INIT( ptr, &cx->data );
+				while (ptr) {
+					DB_MULTIPLE_NEXT( ptr, &cx->data, j, len );
+					if (j) {
+						EntryInfo *ei2;
+						diskNode *d = (diskNode *)j;
+						short nrlen;
 
-					BDB_DISK2ID( j + len - sizeof(ID), &ei.bei_id );
-					nrlen = ((d->nrdnlen[0] ^ 0x80) << 8) | d->nrdnlen[1];
-					ei.bei_nrdn.bv_len = nrlen;
-					/* nrdn/rdn are set in-place.
-					 * hdb_cache_load will copy them as needed
-					 */
-					ei.bei_nrdn.bv_val = d->nrdn;
-					ei.bei_rdn.bv_len = len - sizeof(diskNode)
-						- ei.bei_nrdn.bv_len;
-					ei.bei_rdn.bv_val = d->nrdn + ei.bei_nrdn.bv_len + 1;
-					bdb_idl_append_one( cx->tmp, ei.bei_id );
-					hdb_cache_load( cx->bdb, &ei, &ei2 );
+						BDB_DISK2ID( j + len - sizeof(ID), &ei.bei_id );
+						nrlen = ((d->nrdnlen[0] ^ 0x80) << 8) | d->nrdnlen[1];
+						ei.bei_nrdn.bv_len = nrlen;
+						/* nrdn/rdn are set in-place.
+						 * hdb_cache_load will copy them as needed
+						 */
+						ei.bei_nrdn.bv_val = d->nrdn;
+						ei.bei_rdn.bv_len = len - sizeof(diskNode)
+							- ei.bei_nrdn.bv_len;
+						ei.bei_rdn.bv_val = d->nrdn + ei.bei_nrdn.bv_len + 1;
+						bdb_idl_append_one( cx->tmp, ei.bei_id );
+						hdb_cache_load( cx->bdb, &ei, &ei2 );
+					}
 				}
 			}
 		}
+
 		cx->rc = cx->dbc->c_close( cx->dbc );
+done_one:
+		bdb_cache_entryinfo_lock( cx->ei );
+		cx->ei->bei_state ^= CACHE_ENTRY_ONELEVEL;
+		bdb_cache_entryinfo_unlock( cx->ei );
+		if ( cx->rc )
+			return cx->rc;
+
 	} else {
 		/* The in-memory cache is in sync with the on-disk data.
 		 * do we have any kids?
@@ -991,7 +1006,7 @@ synced:
 
 	if ( !BDB_IDL_IS_RANGE( cx->tmp ) && cx->tmp[0] > 3 )
 		bdb_idl_sort( cx->tmp, cx->buf );
-	if ( cx->bdb->bi_idl_cache_max_size ) {
+	if ( cx->bdb->bi_idl_cache_max_size && !BDB_IDL_IS_ZERO( cx->tmp )) {
 		char *ptr = ((char *)&cx->id)-1;
 		cx->key.data = ptr;
 		cx->key.size = sizeof(ID)+1;

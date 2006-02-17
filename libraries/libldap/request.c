@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/request.c,v 1.103.2.7 2005/10/12 01:10:47 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/request.c,v 1.103.2.10 2006/01/03 22:16:09 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -604,7 +604,7 @@ ldap_dump_connection( LDAP *ld, LDAPConn *lconns, int all )
 	LDAPConn	*lc;
    	char		timebuf[32];
 
-	fprintf( stderr, "** ld %p Connection%s:\n", ld, all ? "s" : "" );
+	fprintf( stderr, "** ld %p Connection%s:\n", (void *)ld, all ? "s" : "" );
 	for ( lc = lconns; lc != NULL; lc = lc->lconn_next ) {
 		if ( lc->lconn_server != NULL ) {
 			fprintf( stderr, "* host: %s  port: %d%s\n",
@@ -651,7 +651,7 @@ ldap_dump_requests_and_responses( LDAP *ld )
 #ifdef LDAP_R_COMPILE
 	ldap_pvt_thread_mutex_lock( &ld->ld_req_mutex );
 #endif
-	fprintf( stderr, "** ld %p Outstanding Requests:\n", ld );
+	fprintf( stderr, "** ld %p Outstanding Requests:\n", (void *)ld );
 	if (( lr = ld->ld_requests ) == NULL ) {
 		fprintf( stderr, "   Empty\n" );
 	}
@@ -662,14 +662,15 @@ ldap_dump_requests_and_responses( LDAP *ld )
 		( lr->lr_status == LDAP_REQST_CHASINGREFS ) ? "ChasingRefs" :
 		( lr->lr_status == LDAP_REQST_NOTCONNECTED ) ? "NotConnected" :
 		( lr->lr_status == LDAP_REQST_WRITING) ? "Writing" :
-		( lr->lr_status == LDAP_REQST_COMPLETED ? "Request Completed" : "Invalid Status"));
+		( lr->lr_status == LDAP_REQST_COMPLETED ? "RequestCompleted"
+			: "InvalidStatus"));
 	    fprintf( stderr, "   outstanding referrals %d, parent count %d\n",
 		    lr->lr_outrefcnt, lr->lr_parentcnt );
 	}
 #ifdef LDAP_R_COMPILE
 	ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
 #endif
-	fprintf( stderr, "** ld %p Response Queue:\n", ld );
+	fprintf( stderr, "** ld %p Response Queue:\n", (void *)ld );
 	if (( lm = ld->ld_responses ) == NULL ) {
 		fprintf( stderr, "   Empty\n" );
 	}

@@ -4,7 +4,7 @@
 /* begin of portable.h.pre */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation
+ * Copyright 1998-2006 The OpenLDAP Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -102,7 +102,7 @@
 /* define if Berkeley DB has DB_THREAD support */
 #undef HAVE_BERKELEY_DB_THREAD
 
-/* define if you have SSLeay or OpenSSL's BIGNUM */
+/* define if you have OpenSSL's BIGNUM */
 #undef HAVE_BIGNUM
 
 /* Define to 1 if you have the <bits/types.h> header file. */
@@ -277,6 +277,9 @@
 /* define to you inet_aton(3) is available */
 #undef HAVE_INET_ATON
 
+/* Define to 1 if you have the `inet_ntoa_b' function. */
+#undef HAVE_INET_NTOA_B
+
 /* Define to 1 if you have the `inet_ntop' function. */
 #undef HAVE_INET_NTOP
 
@@ -394,6 +397,9 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
+/* Define to 1 if you have the `memrchr' function. */
+#undef HAVE_MEMRCHR
+
 /* Define to 1 if you have the `mkstemp' function. */
 #undef HAVE_MKSTEMP
 
@@ -426,6 +432,9 @@
 
 /* if you have NT Threads */
 #undef HAVE_NT_THREADS
+
+/* define if you have OpenSSL */
+#undef HAVE_OPENSSL
 
 /* Define to 1 if you have the <openssl/bn.h> header file. */
 #undef HAVE_OPENSSL_BN_H
@@ -508,7 +517,7 @@
 /* define if you have res_query() */
 #undef HAVE_RES_QUERY
 
-/* define if you have RSAref */
+/* define if OpenSSL needs RSAref */
 #undef HAVE_RSAREF
 
 /* Define to 1 if you have the <sasl.h> header file. */
@@ -588,12 +597,6 @@
 
 /* Define to 1 if you have the <sql.h> header file. */
 #undef HAVE_SQL_H
-
-/* define if you have SSLeay or OpenSSL */
-#undef HAVE_SSLEAY
-
-/* Define to 1 if you have the <ssl.h> header file. */
-#undef HAVE_SSL_H
 
 /* Define to 1 if you have the <stddef.h> header file. */
 #undef HAVE_STDDEF_H
@@ -774,9 +777,6 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Define to 1 if you have the `usleep' function. */
-#undef HAVE_USLEEP
-
 /* Define to 1 if you have the <utime.h> header file. */
 #undef HAVE_UTIME_H
 
@@ -900,6 +900,9 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* define if sched_yield yields the entire process */
+#undef REPLACE_BROKEN_YIELD
+
 /* Define as the return type of signal handlers (`int' or `void'). */
 #undef RETSIGTYPE
 
@@ -975,7 +978,7 @@
 /* define for In-Directory Access Logging overlay */
 #undef SLAPD_OVER_ACCESSLOG
 
-/* define for Dynamic Group overlay */
+/* define for Deny Operation overlay */
 #undef SLAPD_OVER_DENYOP
 
 /* define for Dynamic Group overlay */

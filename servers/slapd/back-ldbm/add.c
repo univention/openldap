@@ -1,8 +1,8 @@
 /* add.c - ldap ldbm back-end add routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/add.c,v 1.92.2.4 2005/08/09 21:04:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/add.c,v 1.92.2.6 2006/01/03 22:16:18 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,6 +25,16 @@
 #include "back-ldbm.h"
 #include "proto-back-ldbm.h"
 
+static int
+ldbm_csn_cb(
+	Operation *op,
+	SlapReply *rs )
+{
+	op->o_callback = op->o_callback->sc_next;
+	slap_graduate_commit_csn( op );
+	return SLAP_CB_CONTINUE;
+}
+
 int
 ldbm_back_add(
     Operation	*op,
@@ -38,6 +48,7 @@ ldbm_back_add(
 	AttributeDescription *entry = slap_schema.si_ad_entry;
 	char textbuf[SLAP_TEXT_BUFLEN];
 	size_t textlen = sizeof textbuf;
+	slap_callback cb = { NULL };
 #ifdef LDBM_SUBENTRIES
 	int subentry;
 #endif
@@ -45,6 +56,12 @@ ldbm_back_add(
 	Debug(LDAP_DEBUG_ARGS, "==> ldbm_back_add: %s\n",
 		op->o_req_dn.bv_val, 0, 0);
 	
+	slap_add_opattrs( op, &rs->sr_text, textbuf, textlen, 1 );
+
+	cb.sc_cleanup = ldbm_csn_cb;
+	cb.sc_next = op->o_callback;
+	op->o_callback = &cb;
+
 	rs->sr_err = entry_schema_check( op, op->oq_add.rs_e, NULL,
 		get_manageDIT(op), &rs->sr_text, textbuf, textlen );
 

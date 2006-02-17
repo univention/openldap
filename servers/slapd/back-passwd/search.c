@@ -1,8 +1,8 @@
 /* search.c - /etc/passwd backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/search.c,v 1.70.2.4 2005/08/29 18:46:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/search.c,v 1.70.2.6 2006/01/03 22:16:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -59,7 +59,7 @@ passwd_back_search(
     SlapReply	*rs )
 {
 	struct passwd	*pw;
-	time_t		stoptime;
+	time_t		stoptime = (time_t)-1;
 
 	LDAPRDN rdn = NULL;
 	struct berval parent = BER_BVNULL;
@@ -324,10 +324,10 @@ pw2entry( Backend *be, struct passwd *pw, Entry *e )
 		ber_str2bv( pw->pw_gecos, 0, 0, &val );
 		attr_merge_normalize_one( e, ad_desc, &val, NULL );
 
-		s = strchr( val.bv_val, ',' );
+		s = ber_bvchr( &val, ',' );
 		if ( s ) *s = '\0';
 
-		s = strchr( val.bv_val, '&' );
+		s = ber_bvchr( &val, '&' );
 		if ( s ) {
 			char buf[1024];
 

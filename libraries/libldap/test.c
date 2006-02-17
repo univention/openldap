@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/test.c,v 1.50.2.3 2005/08/09 21:03:55 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/test.c,v 1.50.2.5 2006/01/16 19:06:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -169,7 +169,7 @@ get_modlist(
 {
 	static char	buf[256];
 	int		num;
-	LDAPMod		tmp;
+	LDAPMod		tmp = { 0 };
 	LDAPMod		**result;
 	struct berval	**bvals;
 

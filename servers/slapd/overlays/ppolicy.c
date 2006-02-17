@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/ppolicy.c,v 1.31.2.13 2005/09/28 00:30:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/ppolicy.c,v 1.31.2.19 2006/01/23 19:09:56 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2005 The OpenLDAP Foundation.
+ * Copyright 2004-2006 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Howard Chu, Symas Corporation.
  * Portions Copyright 2004 Hewlett-Packard Company.
  * All rights reserved.
@@ -357,30 +357,40 @@ ppolicy_get( Operation *op, Entry *e, PassPolicy *pp )
 	pp->ad = slap_schema.si_ad_userPassword;
 #endif
 
-	if ((a = attr_find( pe->e_attrs, ad_pwdMinAge )))
-		pp->pwdMinAge = atoi(a->a_vals[0].bv_val );
-	if ((a = attr_find( pe->e_attrs, ad_pwdMaxAge )))
-		pp->pwdMaxAge = atoi(a->a_vals[0].bv_val );
-	if ((a = attr_find( pe->e_attrs, ad_pwdInHistory )))
-		pp->pwdInHistory = atoi(a->a_vals[0].bv_val );
-	if ((a = attr_find( pe->e_attrs, ad_pwdCheckQuality )))
-		pp->pwdCheckQuality = atoi(a->a_vals[0].bv_val );
-	if ((a = attr_find( pe->e_attrs, ad_pwdMinLength )))
-		pp->pwdMinLength = atoi(a->a_vals[0].bv_val );
-	if ((a = attr_find( pe->e_attrs, ad_pwdMaxFailure )))
-		pp->pwdMaxFailure = atoi(a->a_vals[0].bv_val );
-	if ((a = attr_find( pe->e_attrs, ad_pwdGraceAuthNLimit )))
-		pp->pwdGraceAuthNLimit = atoi(a->a_vals[0].bv_val );
-	if ((a = attr_find( pe->e_attrs, ad_pwdExpireWarning )))
-		pp->pwdExpireWarning = atoi(a->a_vals[0].bv_val );
-	if ((a = attr_find( pe->e_attrs, ad_pwdFailureCountInterval )))
-		pp->pwdFailureCountInterval = atoi(a->a_vals[0].bv_val );
-	if ((a = attr_find( pe->e_attrs, ad_pwdLockoutDuration )))
-		pp->pwdLockoutDuration = atoi(a->a_vals[0].bv_val );
+	if ( ( a = attr_find( pe->e_attrs, ad_pwdMinAge ) )
+			&& lutil_atoi( &pp->pwdMinAge, a->a_vals[0].bv_val ) != 0 )
+		goto defaultpol;
+	if ( ( a = attr_find( pe->e_attrs, ad_pwdMaxAge ) )
+			&& lutil_atoi( &pp->pwdMaxAge, a->a_vals[0].bv_val ) != 0 )
+		goto defaultpol;
+	if ( ( a = attr_find( pe->e_attrs, ad_pwdInHistory ) )
+			&& lutil_atoi( &pp->pwdInHistory, a->a_vals[0].bv_val ) != 0 )
+		goto defaultpol;
+	if ( ( a = attr_find( pe->e_attrs, ad_pwdCheckQuality ) )
+			&& lutil_atoi( &pp->pwdCheckQuality, a->a_vals[0].bv_val ) != 0 )
+		goto defaultpol;
+	if ( ( a = attr_find( pe->e_attrs, ad_pwdMinLength ) )
+			&& lutil_atoi( &pp->pwdMinLength, a->a_vals[0].bv_val ) != 0 )
+		goto defaultpol;
+	if ( ( a = attr_find( pe->e_attrs, ad_pwdMaxFailure ) )
+			&& lutil_atoi( &pp->pwdMaxFailure, a->a_vals[0].bv_val ) != 0 )
+		goto defaultpol;
+	if ( ( a = attr_find( pe->e_attrs, ad_pwdGraceAuthNLimit ) )
+			&& lutil_atoi( &pp->pwdGraceAuthNLimit, a->a_vals[0].bv_val ) != 0 )
+		goto defaultpol;
+	if ( ( a = attr_find( pe->e_attrs, ad_pwdExpireWarning ) )
+			&& lutil_atoi( &pp->pwdExpireWarning, a->a_vals[0].bv_val ) != 0 )
+		goto defaultpol;
+	if ( ( a = attr_find( pe->e_attrs, ad_pwdFailureCountInterval ) )
+			&& lutil_atoi( &pp->pwdFailureCountInterval, a->a_vals[0].bv_val ) != 0 )
+		goto defaultpol;
+	if ( ( a = attr_find( pe->e_attrs, ad_pwdLockoutDuration ) )
+			&& lutil_atoi( &pp->pwdLockoutDuration, a->a_vals[0].bv_val ) != 0 )
+		goto defaultpol;
 
-	if ((a = attr_find( pe->e_attrs, ad_pwdCheckModule ))) {
-		strncpy(pp->pwdCheckModule, a->a_vals[0].bv_val,
-			sizeof(pp->pwdCheckModule));
+	if ( ( a = attr_find( pe->e_attrs, ad_pwdCheckModule ) ) ) {
+		strncpy( pp->pwdCheckModule, a->a_vals[0].bv_val,
+			sizeof(pp->pwdCheckModule) );
 		pp->pwdCheckModule[sizeof(pp->pwdCheckModule)-1] = '\0';
 	}
 
@@ -721,8 +731,10 @@ ppolicy_bind_resp( Operation *op, SlapReply *rs )
 		m->sml_type = ad_pwdFailureTime->ad_cname;
 		m->sml_desc = ad_pwdFailureTime;
 		m->sml_values = ch_calloc( sizeof(struct berval), 2 );
+		m->sml_nvalues = ch_calloc( sizeof(struct berval), 2 );
 
 		ber_dupbv( &m->sml_values[0], &timestamp );
+		ber_dupbv( &m->sml_nvalues[0], &timestamp );
 		m->sml_next = mod;
 		mod = m;
 
@@ -768,7 +780,9 @@ ppolicy_bind_resp( Operation *op, SlapReply *rs )
 			m->sml_type = ad_pwdAccountLockedTime->ad_cname;
 			m->sml_desc = ad_pwdAccountLockedTime;
 			m->sml_values = ch_calloc( sizeof(struct berval), 2 );
+			m->sml_nvalues = ch_calloc( sizeof(struct berval), 2 );
 			ber_dupbv( &m->sml_values[0], &timestamp );
+			ber_dupbv( &m->sml_nvalues[0], &timestamp );
 			m->sml_next = mod;
 			mod = m;
 		}
@@ -870,7 +884,9 @@ grace:
 		m->sml_type = ad_pwdGraceUseTime->ad_cname;
 		m->sml_desc = ad_pwdGraceUseTime;
 		m->sml_values = ch_calloc( sizeof(struct berval), 2 );
+		m->sml_nvalues = ch_calloc( sizeof(struct berval), 2 );
 		ber_dupbv( &m->sml_values[0], &timestamp );
+		ber_dupbv( &m->sml_nvalues[0], &timestamp );
 		m->sml_next = mod;
 		mod = m;
 
@@ -1102,38 +1118,39 @@ ppolicy_add(
 				send_ldap_error( op, rs, rc, "Password fails quality checking policy" );
 				return rs->sr_err;
 			}
-			    /*
-			     * A controversial bit. We hash cleartext
-			     * passwords provided via add and modify operations
-			     * You're not really supposed to do this, since
-			     * the X.500 model says "store attributes" as they
-			     * get provided. By default, this is what we do
-			     *
-			     * But if the hash_passwords flag is set, we hash
-			     * any cleartext password attribute values via the
-			     * default password hashing scheme.
-			     */
-			if ((pi->hash_passwords) &&
-				(password_scheme( &(pa->a_vals[0]), NULL ) != LDAP_SUCCESS)) {
-				struct berval hpw;
-
-				slap_passwd_hash( &(pa->a_vals[0]), &hpw, &txt );
-				if (hpw.bv_val == NULL) {
-				    /*
-				     * hashing didn't work. Emit an error.
-				     */
-					rs->sr_err = LDAP_OTHER;
-					rs->sr_text = txt;
-					send_ldap_error( op, rs, LDAP_OTHER, "Password hashing failed" );
-					return rs->sr_err;
-				}
-
-				memset( pa->a_vals[0].bv_val, 0, pa->a_vals[0].bv_len);
-				ber_memfree( pa->a_vals[0].bv_val );
-				pa->a_vals[0].bv_val = hpw.bv_val;
-				pa->a_vals[0].bv_len = hpw.bv_len;
-			}
 		}
+			/*
+			 * A controversial bit. We hash cleartext
+			 * passwords provided via add and modify operations
+			 * You're not really supposed to do this, since
+			 * the X.500 model says "store attributes" as they
+			 * get provided. By default, this is what we do
+			 *
+			 * But if the hash_passwords flag is set, we hash
+			 * any cleartext password attribute values via the
+			 * default password hashing scheme.
+			 */
+		if ((pi->hash_passwords) &&
+			(password_scheme( &(pa->a_vals[0]), NULL ) != LDAP_SUCCESS)) {
+			struct berval hpw;
+
+			slap_passwd_hash( &(pa->a_vals[0]), &hpw, &txt );
+			if (hpw.bv_val == NULL) {
+				/*
+				 * hashing didn't work. Emit an error.
+				 */
+				rs->sr_err = LDAP_OTHER;
+				rs->sr_text = txt;
+				send_ldap_error( op, rs, LDAP_OTHER, "Password hashing failed" );
+				return rs->sr_err;
+			}
+
+			memset( pa->a_vals[0].bv_val, 0, pa->a_vals[0].bv_len);
+			ber_memfree( pa->a_vals[0].bv_val );
+			pa->a_vals[0].bv_val = hpw.bv_val;
+			pa->a_vals[0].bv_len = hpw.bv_len;
+		}
+
 		/* If password aging is in effect, set the pwdChangedTime */
 		if ( pp.pwdMaxAge || pp.pwdMinAge ) {
 			struct berval timestamp;
@@ -1144,7 +1161,7 @@ ppolicy_add(
 			timestamp.bv_len = sizeof(timebuf);
 			slap_timestamp( &now, &timestamp );
 
-			attr_merge_one( op->ora_e, ad_pwdChangedTime, &timestamp, NULL );
+			attr_merge_one( op->ora_e, ad_pwdChangedTime, &timestamp, &timestamp );
 		}
 	}
 	return SLAP_CB_CONTINUE;
@@ -1155,10 +1172,11 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 {
 	slap_overinst		*on = (slap_overinst *)op->o_bd->bd_info;
 	pp_info			*pi = on->on_bi.bi_private;
-	int			i, rc, mod_pw_only, pwmod, pwmop, deladd,
+	int			i, rc, mod_pw_only, pwmod, pwmop = -1, deladd,
 				hsize = 0;
 	PassPolicy		pp;
-	Modifications		*mods = NULL, *modtail, *ml, *delmod, *addmod;
+	Modifications		*mods = NULL, *modtail = NULL,
+				*ml, *delmod, *addmod;
 	Attribute		*pa, *ha, at;
 	const char		*txt;
 	pw_hist			*tl = NULL, *p;
@@ -1179,14 +1197,14 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 	 */
 	if ( be_shadow_update( op )) {
 		Modifications **prev;
-		int got_del_grace = 0, got_del_lock = 0, got_pw = 0;
-		Attribute *a_grace, *a_lock;
+		int got_del_grace = 0, got_del_lock = 0, got_pw = 0, got_del_fail = 0;
+		Attribute *a_grace, *a_lock, *a_fail;
 
 		a_grace = attr_find( e->e_attrs, ad_pwdGraceUseTime );
 		a_lock = attr_find( e->e_attrs, ad_pwdAccountLockedTime );
+		a_fail = attr_find( e->e_attrs, ad_pwdFailureTime );
 
-		for( prev = &op->oq_modify.rs_modlist, ml = *prev; ml;
-			prev = &ml->sml_next, ml = *prev ) {
+		for( prev = &op->oq_modify.rs_modlist, ml = *prev; ml; ml = *prev ) {
 
 			if ( ml->sml_desc == slap_schema.si_ad_userPassword )
 				got_pw = 1;
@@ -1206,17 +1224,24 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 					got_del_lock = 1;
 					if ( !a_lock )
 						drop = 1;
+				} else
+				if ( ml->sml_desc == ad_pwdFailureTime ) {
+					got_del_fail = 1;
+					if ( !a_fail )
+						drop = 1;
 				}
 				if ( drop ) {
 					*prev = ml->sml_next;
 					ml->sml_next = NULL;
 					slap_mods_free( ml, 1 );
+					continue;
 				}
 			}
+			prev = &ml->sml_next;
 		}
 
-		/* If we're resetting the password, make sure grace and accountlock
-		 * also get removed.
+		/* If we're resetting the password, make sure grace, accountlock,
+		 * and failure also get removed.
 		 */
 		if ( got_pw ) {
 			if ( a_grace && !got_del_grace ) {
@@ -1237,6 +1262,17 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 				ml->sml_flags = SLAP_MOD_INTERNAL;
 				ml->sml_type.bv_val = NULL;
 				ml->sml_desc = ad_pwdAccountLockedTime;
+				ml->sml_values = NULL;
+				ml->sml_nvalues = NULL;
+				ml->sml_next = NULL;
+				*prev = ml;
+			}
+			if ( a_fail && !got_del_fail ) {
+				ml = (Modifications *) ch_malloc( sizeof( Modifications ) );
+				ml->sml_op = LDAP_MOD_DELETE;
+				ml->sml_flags = SLAP_MOD_INTERNAL;
+				ml->sml_type.bv_val = NULL;
+				ml->sml_desc = ad_pwdFailureTime;
 				ml->sml_values = NULL;
 				ml->sml_nvalues = NULL;
 				ml->sml_next = NULL;
@@ -1272,12 +1308,13 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 
 	ppolicy_get( op, e, &pp );
 
-	for(ml = op->oq_modify.rs_modlist,
+	for ( ml = op->oq_modify.rs_modlist,
 			pwmod = 0, mod_pw_only = 1,
 			deladd = 0, delmod = NULL,
 			addmod = NULL,
 			zapReset = 1;
-		ml != NULL; modtail = ml, ml = ml->sml_next ) {
+		ml != NULL; modtail = ml, ml = ml->sml_next )
+	{
 		if ( ml->sml_desc == pp.ad ) {
 			pwmod = 1;
 			pwmop = ml->sml_op;
@@ -1537,7 +1574,9 @@ do_modify:
 		if (pwmop != LDAP_MOD_DELETE) {
 			mods->sml_op = LDAP_MOD_REPLACE;
 			mods->sml_values = (BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
+			mods->sml_nvalues = (BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
 			ber_dupbv( &mods->sml_values[0], &timestamp );
+			ber_dupbv( &mods->sml_nvalues[0], &timestamp );
 			mods->sml_values[1].bv_len = 0;
 			mods->sml_values[1].bv_val = NULL;
 			assert( mods->sml_values[0].bv_val != NULL );
@@ -1570,6 +1609,19 @@ do_modify:
 			mods->sml_flags = SLAP_MOD_INTERNAL;
 			mods->sml_type.bv_val = NULL;
 			mods->sml_desc = ad_pwdAccountLockedTime;
+			mods->sml_values = NULL;
+			mods->sml_nvalues = NULL;
+			mods->sml_next = NULL;
+			modtail->sml_next = mods;
+			modtail = mods;
+		}
+
+		if (attr_find(e->e_attrs, ad_pwdFailureTime )) {
+			mods = (Modifications *) ch_malloc( sizeof( Modifications ) );
+			mods->sml_op = LDAP_MOD_DELETE;
+			mods->sml_flags = SLAP_MOD_INTERNAL;
+			mods->sml_type.bv_val = NULL;
+			mods->sml_desc = ad_pwdFailureTime;
 			mods->sml_values = NULL;
 			mods->sml_nvalues = NULL;
 			mods->sml_next = NULL;
@@ -1898,7 +1950,7 @@ static char *extops[] = {
 
 static slap_overinst ppolicy;
 
-int ppolicy_init()
+int ppolicy_initialize()
 {
 	LDAPAttributeType *at;
 	const char *err;
@@ -1958,7 +2010,7 @@ int ppolicy_init()
 
 #if SLAPD_OVER_PPOLICY == SLAPD_MOD_DYNAMIC
 int init_module(int argc, char *argv[]) {
-	return ppolicy_init();
+	return ppolicy_initialize();
 }
 #endif
 

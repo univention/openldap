@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.212.2.11 2005/08/19 18:09:04 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.212.2.15 2006/01/03 22:16:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -150,10 +150,10 @@ static const char *slap_propnames[] = {
 static Filter generic_filter = { LDAP_FILTER_PRESENT, { 0 }, NULL };
 static struct berval generic_filterstr = BER_BVC("(objectclass=*)");
 
-#define	PROP_CONN	0
-#define	PROP_AUTHC	1
-#define	PROP_AUTHZ	2
-#define	PROP_COUNT	3	/* Number of properties we used */
+#define	SLAP_SASL_PROP_CONN	0
+#define	SLAP_SASL_PROP_AUTHC	1
+#define	SLAP_SASL_PROP_AUTHZ	2
+#define	SLAP_SASL_PROP_COUNT	3	/* Number of properties we used */
 
 typedef struct lookup_info {
 	int flags;
@@ -185,7 +185,7 @@ sasl_ap_lookup( Operation *op, SlapReply *rs )
 			if ( sl->flags & SASL_AUXPROP_AUTHZID ) continue;
 			/* Skip our private properties */
 			if ( !strcmp( name, slap_propnames[0] )) {
-				i += PROP_COUNT-1;
+				i += SLAP_SASL_PROP_COUNT - 1;
 				continue;
 			}
 			name++;
@@ -275,19 +275,19 @@ slap_auxprop_lookup(
 	/* Find our DN and conn first */
 	for( i = 0; sl.list[i].name; i++ ) {
 		if ( sl.list[i].name[0] == '*' ) {
-			if ( !strcmp( sl.list[i].name, slap_propnames[PROP_CONN] ) ) {
+			if ( !strcmp( sl.list[i].name, slap_propnames[SLAP_SASL_PROP_CONN] ) ) {
 				if ( sl.list[i].values && sl.list[i].values[0] )
 					AC_MEMCPY( &conn, sl.list[i].values[0], sizeof( conn ) );
 				continue;
 			}
 			if ( (flags & SASL_AUXPROP_AUTHZID) &&
-				!strcmp( sl.list[i].name, slap_propnames[PROP_AUTHZ] ) ) {
+				!strcmp( sl.list[i].name, slap_propnames[SLAP_SASL_PROP_AUTHZ] ) ) {
 
 				if ( sl.list[i].values && sl.list[i].values[0] )
 					AC_MEMCPY( &op.o_req_ndn, sl.list[i].values[0], sizeof( struct berval ) );
 				break;
 			}
-			if ( !strcmp( sl.list[i].name, slap_propnames[PROP_AUTHC] ) ) {
+			if ( !strcmp( sl.list[i].name, slap_propnames[SLAP_SASL_PROP_AUTHC] ) ) {
 				if ( sl.list[i].values && sl.list[i].values[0] ) {
 					AC_MEMCPY( &op.o_req_ndn, sl.list[i].values[0], sizeof( struct berval ) );
 					if ( !(flags & SASL_AUXPROP_AUTHZID) )
@@ -305,7 +305,7 @@ slap_auxprop_lookup(
 			if ( flags & SASL_AUXPROP_AUTHZID ) continue;
 			/* Skip our private properties */
 			if ( !strcmp( name, slap_propnames[0] )) {
-				i += PROP_COUNT-1;
+				i += SLAP_SASL_PROP_COUNT - 1;
 				continue;
 			}
 			name++;
@@ -374,7 +374,7 @@ slap_auxprop_lookup(
 				op.o_tag = LDAP_REQ_SEARCH;
 				op.o_ndn = conn->c_ndn;
 				op.o_callback = &cb;
-				op.o_time = slap_get_time();
+				slap_op_time( &op.o_time, &op.o_tincr );
 				op.o_do_not_cache = 1;
 				op.o_is_auth_check = 1;
 				op.o_req_dn = op.o_req_ndn;
@@ -423,12 +423,12 @@ slap_auxprop_store(
 	/* Find our DN and conn first */
 	for( i = 0; pr[i].name; i++ ) {
 		if ( pr[i].name[0] == '*' ) {
-			if ( !strcmp( pr[i].name, slap_propnames[PROP_CONN] ) ) {
+			if ( !strcmp( pr[i].name, slap_propnames[SLAP_SASL_PROP_CONN] ) ) {
 				if ( pr[i].values && pr[i].values[0] )
 					AC_MEMCPY( &conn, pr[i].values[0], sizeof( conn ) );
 				continue;
 			}
-			if ( !strcmp( pr[i].name, slap_propnames[PROP_AUTHC] ) ) {
+			if ( !strcmp( pr[i].name, slap_propnames[SLAP_SASL_PROP_AUTHC] ) ) {
 				if ( pr[i].values && pr[i].values[0] ) {
 					AC_MEMCPY( &op.o_req_ndn, pr[i].values[0], sizeof( struct berval ) );
 				}
@@ -472,22 +472,17 @@ slap_auxprop_store(
 			&text, textbuf, textlen );
 
 		if ( rc == LDAP_SUCCESS ) {
-			rc = slap_mods_opattrs( &op, modlist, modtail,
-					&text, textbuf, textlen, 1 );
+			op.o_hdr = conn->c_sasl_bindop->o_hdr;
+			op.o_tag = LDAP_REQ_MODIFY;
+			op.o_ndn = op.o_req_ndn;
+			op.o_callback = &cb;
+			slap_op_time( &op.o_time, &op.o_tincr );
+			op.o_do_not_cache = 1;
+			op.o_is_auth_check = 1;
+			op.o_req_dn = op.o_req_ndn;
+			op.orm_modlist = modlist;
 
-			if ( rc == LDAP_SUCCESS ) {
-				op.o_hdr = conn->c_sasl_bindop->o_hdr;
-				op.o_tag = LDAP_REQ_MODIFY;
-				op.o_ndn = op.o_req_ndn;
-				op.o_callback = &cb;
-				op.o_time = slap_get_time();
-				op.o_do_not_cache = 1;
-				op.o_is_auth_check = 1;
-				op.o_req_dn = op.o_req_ndn;
-				op.orm_modlist = modlist;
-
-				rc = op.o_bd->be_modify( &op, &rs );
-			}
+			rc = op.o_bd->be_modify( &op, &rs );
 		}
 	}
 	slap_mods_free( modlist, 1 );
@@ -547,7 +542,7 @@ slap_sasl_canonicalize(
 {
 	Connection *conn = (Connection *)context;
 	struct propctx *props = sasl_auxprop_getctx( sconn );
-	struct propval auxvals[3];
+	struct propval auxvals[ SLAP_SASL_PROP_COUNT ] = { { 0 } };
 	struct berval dn;
 	int rc, which;
 	const char *names[2];
@@ -580,13 +575,13 @@ slap_sasl_canonicalize(
 		prop_request( props, slap_propnames );
 
 	if ( flags & SASL_CU_AUTHID )
-		which = PROP_AUTHC;
+		which = SLAP_SASL_PROP_AUTHC;
 	else
-		which = PROP_AUTHZ;
+		which = SLAP_SASL_PROP_AUTHZ;
 
 	/* Need to store the Connection for auxprop_lookup */
-	if ( !auxvals[PROP_CONN].values ) {
-		names[0] = slap_propnames[PROP_CONN];
+	if ( !auxvals[SLAP_SASL_PROP_CONN].values ) {
+		names[0] = slap_propnames[SLAP_SASL_PROP_CONN];
 		names[1] = NULL;
 		prop_set( props, names[0], (char *)&conn, sizeof( conn ) );
 	}
@@ -610,7 +605,7 @@ slap_sasl_canonicalize(
 	 * it does authzID before the authcID. If we see that authzID
 	 * has already been done, don't do anything special with authcID.
 	 */
-	if ( flags == SASL_CU_AUTHID && !auxvals[PROP_AUTHZ].values ) {
+	if ( flags == SASL_CU_AUTHID && !auxvals[SLAP_SASL_PROP_AUTHZ].values ) {
 		conn->c_sasl_dn.bv_val = (char *) in;
 	} else if ( flags == SASL_CU_AUTHZID && conn->c_sasl_dn.bv_val ) {
 		rc = strcmp( in, conn->c_sasl_dn.bv_val );
@@ -659,7 +654,11 @@ slap_sasl_authorize(
 	struct propctx *props)
 {
 	Connection *conn = (Connection *)context;
-	struct propval auxvals[3];
+	/* actually:
+	 *	(SLAP_SASL_PROP_COUNT - 1)	because we skip "conn",
+	 *	+ 1				for NULL termination?
+	 */
+	struct propval auxvals[ SLAP_SASL_PROP_COUNT ] = { { 0 } };
 	struct berval authcDN, authzDN = BER_BVNULL;
 	int rc;
 
@@ -675,7 +674,7 @@ slap_sasl_authorize(
 		BER_BVZERO( &conn->c_sasl_dn );
 	}
 
-	/* Skip PROP_CONN */
+	/* Skip SLAP_SASL_PROP_CONN */
 	prop_getnames( props, slap_propnames+1, auxvals );
 	
 	/* Should not happen */
@@ -838,6 +837,18 @@ slap_sasl_err2ldap( int saslerr )
 {
 	int rc;
 
+	/* map SASL errors to LDAP resultCode returned by:
+	 *	sasl_server_new()
+	 *		SASL_OK, SASL_NOMEM
+	 *	sasl_server_step()
+	 *		SASL_OK, SASL_CONTINUE, SASL_TRANS, SASL_BADPARAM, SASL_BADPROT,
+	 *      ...
+	 *	sasl_server_start()
+	 *      + SASL_NOMECH
+	 *	sasl_setprop()
+	 *		SASL_OK, SASL_BADPARAM
+	 */
+
 	switch (saslerr) {
 		case SASL_OK:
 			rc = LDAP_SUCCESS;
@@ -846,8 +857,6 @@ slap_sasl_err2ldap( int saslerr )
 			rc = LDAP_SASL_BIND_IN_PROGRESS;
 			break;
 		case SASL_FAIL:
-			rc = LDAP_OTHER;
-			break;
 		case SASL_NOMEM:
 			rc = LDAP_OTHER;
 			break;
@@ -855,6 +864,9 @@ slap_sasl_err2ldap( int saslerr )
 			rc = LDAP_AUTH_METHOD_NOT_SUPPORTED;
 			break;
 		case SASL_BADAUTH:
+		case SASL_NOUSER:
+		case SASL_TRANS:
+		case SASL_EXPIRED:
 			rc = LDAP_INVALID_CREDENTIALS;
 			break;
 		case SASL_NOAUTHZ:
@@ -863,6 +875,13 @@ slap_sasl_err2ldap( int saslerr )
 		case SASL_TOOWEAK:
 		case SASL_ENCRYPT:
 			rc = LDAP_INAPPROPRIATE_AUTH;
+			break;
+		case SASL_UNAVAIL:
+		case SASL_TRYAGAIN:
+			rc = LDAP_UNAVAILABLE;
+			break;
+		case SASL_DISABLED:
+			rc = LDAP_UNWILLING_TO_PERFORM;
 			break;
 		default:
 			rc = LDAP_OTHER;

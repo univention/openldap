@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/include/slapi-plugin.h,v 1.37.2.4 2005/08/17 16:15:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/slapi-plugin.h,v 1.37.2.5 2006/01/03 22:16:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002,2003 IBM Corporation.
  * All rights reserved.
  *

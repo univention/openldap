@@ -1,8 +1,8 @@
 /* rwmdn.c - massages dns */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmdn.c,v 1.11.2.4 2005/08/09 21:04:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmdn.c,v 1.11.2.7 2006/01/03 22:16:25 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -200,6 +200,10 @@ rwm_dn_massage(
 
 	if ( mdn.bv_val == dmy ) {
 		BER_BVZERO( &mdn );
+	}
+
+	if ( dn->bv_val == dmy ) {
+		BER_BVZERO( dn );
 	}
 
 	return rc;

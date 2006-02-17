@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblber/lber-int.h,v 1.65.2.1 2005/01/20 18:03:49 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/lber-int.h,v 1.65.2.3 2006/01/03 22:16:07 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,11 +38,20 @@ typedef void (*BER_LOG_FN)(FILE *file,
 
 LBER_V (BER_ERRNO_FN) ber_int_errno_fn;
 
+#ifdef LDAP_MEMORY_TRACE
+# ifndef LDAP_MEMORY_DEBUG
+#  define LDAP_MEMORY_DEBUG 1
+# endif
+#endif
+
+#ifdef LDAP_MEMORY_DEBUG
+LBER_V (long)	ber_int_meminuse;
+#endif
+
 struct lber_options {
 	short lbo_valid;
 	unsigned short		lbo_options;
 	int			lbo_debug;
-	long		lbo_meminuse;
 };
 
 LBER_F( int ) ber_pvt_log_output(

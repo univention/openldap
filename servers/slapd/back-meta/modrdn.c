@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/modrdn.c,v 1.19.2.8 2005/08/09 21:04:04 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/modrdn.c,v 1.19.2.11 2006/01/03 22:16:20 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -117,15 +117,15 @@ retry:;
 		LDAPMessage	*res = NULL;
 		int		rc;
 
-		if ( mi->mi_targets[ candidate ].mt_timeout[ META_OP_MODRDN ] != 0 ) {
-			tv.tv_sec = mi->mi_targets[ candidate ].mt_timeout[ META_OP_MODRDN ];
+		if ( mi->mi_targets[ candidate ].mt_timeout[ LDAP_BACK_OP_MODRDN ] != 0 ) {
+			tv.tv_sec = mi->mi_targets[ candidate ].mt_timeout[ LDAP_BACK_OP_MODRDN ];
 			tv.tv_usec = 0;
 			tvp = &tv;
 		}
 
 		rs->sr_err = LDAP_OTHER;
 		rc = ldap_result( mc->mc_conns[ candidate ].msc_ld,
-			msgid, LDAP_MSG_ONE, tvp, &res );
+			msgid, LDAP_MSG_ALL, tvp, &res );
 		switch ( rc ) {
 		case -1:
 			break;

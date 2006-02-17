@@ -1,8 +1,8 @@
 /* config.h - configuration abstraction structure */
-/* $OpenLDAP: pkg/ldap/servers/slapd/config.h,v 1.2.2.9 2005/08/09 21:03:58 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/config.h,v 1.2.2.12 2006/01/03 22:16:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,6 +13,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
+
+#ifndef CONFIG_H
+#define CONFIG_H
 
 typedef struct ConfigTable {
 	char *name;
@@ -169,3 +172,15 @@ int read_config_file(const char *fname, int depth, ConfigArgs *cf,
 ConfigTable * config_find_keyword(ConfigTable *ct, ConfigArgs *c);
 Entry * config_build_entry( Operation *op, SlapReply *rs, CfEntryInfo *parent,
 	ConfigArgs *c, struct berval *rdn, ConfigOCs *main, ConfigOCs *extra );
+
+int config_shadow( ConfigArgs *c, int flag );
+#define	config_slurp_shadow(c)	config_shadow((c), SLAP_DBFLAG_SLURP_SHADOW)
+#define	config_sync_shadow(c)	config_shadow((c), SLAP_DBFLAG_SYNC_SHADOW)
+
+	/* Make sure we don't exceed the bits reserved for userland */
+#define	config_check_userland(last) \
+	assert( ( ( (last) - 1 ) & ARGS_USERLAND ) == ( (last) - 1 ) );
+
+#define	SLAP_X_ORDERED_FMT	"{%d}"
+
+#endif /* CONFIG_H */

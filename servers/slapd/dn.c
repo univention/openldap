@@ -1,8 +1,8 @@
 /* dn.c - routines for dealing with distinguished names */
-/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.170.2.5 2005/09/28 00:30:31 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.170.2.8 2006/01/03 22:16:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -386,7 +386,9 @@ LDAPRDN_rewrite( LDAPRDN rdn, unsigned flags, void *ctx )
 		} else { /* normalization */
 			validf = ad->ad_type->sat_syntax->ssyn_validate;
 			mr = ad->ad_type->sat_equality;
-			if( mr ) normf = mr->smr_normalize;
+			if( mr && (!( mr->smr_usage & SLAP_MR_MUTATION_NORMALIZER ))) {
+				normf = mr->smr_normalize;
+			}
 		}
 
 		if ( validf ) {
@@ -516,7 +518,9 @@ LDAPDN_rewrite( LDAPDN dn, unsigned flags, void *ctx )
 			} else { /* normalization */
 				validf = ad->ad_type->sat_syntax->ssyn_validate;
 				mr = ad->ad_type->sat_equality;
-				if( mr ) normf = mr->smr_normalize;
+				if( mr && (!( mr->smr_usage & SLAP_MR_MUTATION_NORMALIZER ))) {
+					normf = mr->smr_normalize;
+				}
 			}
 
 			if ( validf ) {
@@ -1129,7 +1133,7 @@ dnParent(
 {
 	char	*p;
 
-	p = strchr( dn->bv_val, ',' );
+	p = ber_bvchr( dn, ',' );
 
 	/* one-level dn */
 	if ( p == NULL ) {
@@ -1161,7 +1165,7 @@ dnRdn(
 	char	*p;
 
 	*rdn = *dn;
-	p = strchr( dn->bv_val, ',' );
+	p = ber_bvchr( dn, ',' );
 
 	/* one-level dn */
 	if ( p == NULL ) {
@@ -1228,7 +1232,7 @@ dn_rdnlen(
 		return 0;
 	}
 
-	p = strchr( dn_in->bv_val, ',' );
+	p = ber_bvchr( dn_in, ',' );
 
 	return p ? p - dn_in->bv_val : dn_in->bv_len;
 }
@@ -1252,7 +1256,7 @@ rdn_validate( struct berval *rdn )
 	{
 		return LDAP_INVALID_SYNTAX;
 	}
-	return strchr( rdn->bv_val, ',' ) == NULL
+	return ber_bvchr( rdn, ',' ) == NULL
 		? LDAP_SUCCESS : LDAP_INVALID_SYNTAX;
 
 #else

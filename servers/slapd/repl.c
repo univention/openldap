@@ -1,8 +1,8 @@
 /* repl.c - log modifications for replication purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/repl.c,v 1.65.2.4 2005/08/09 21:03:59 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/repl.c,v 1.65.2.8 2006/01/04 15:43:33 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -59,7 +59,7 @@ add_replica_info(
 
 	be->be_replica[ i ] 
 		= ch_calloc( sizeof( struct slap_replica_info ), 1 );
-	be->be_replica[ i ]->ri_uri = uri;
+	ber_str2bv( uri, 0, 0, &be->be_replica[ i ]->ri_bindconf.sb_uri );
 	be->be_replica[ i ]->ri_host = host;
 	be->be_replica[ i ]->ri_nsuffix = NULL;
 	be->be_replica[ i ]->ri_attrs = NULL;
@@ -81,9 +81,6 @@ destroy_replica_info(
 	}
 
 	for ( ; be->be_replica[ i ] != NULL; i++ ) {
-
-		ch_free( (char *)be->be_replica[ i ]->ri_uri );
-
 		ber_bvarray_free( be->be_replica[ i ]->ri_nsuffix );
 
 		if ( be->be_replica[ i ]->ri_attrs ) {
@@ -331,11 +328,22 @@ replog1(
 			if ( ri && ri->ri_attrs ) {
 				int is_in = ad_inlist( ml->sml_desc, ri->ri_attrs );
 
+				/* skip if:
+				 *   1) the attribute is not in the list,
+				 *      and it's not an exclusion list
+				 *   2) the attribute is in the list
+				 *      and it's an exclusion list,
+				 *      and either the objectClass attribute
+				 *      has already been dealt with or
+				 *      this is not the objectClass attr
+				 */
 				if ( ( !is_in && !ri->ri_exclude )
-					|| ( is_in && ri->ri_exclude ) )
+					|| ( ( is_in && ri->ri_exclude )
+						&& ( !ocs || ml->sml_desc != slap_schema.si_ad_objectClass ) ) )
 				{
 					continue;
 				}
+
 				/* If this is objectClass, see if the value is included
 				 * in any subset, otherwise drop it.
 				 */
@@ -350,11 +358,24 @@ replog1(
 						int match = 0;
 						for ( an = ri->ri_attrs; an->an_name.bv_val; an++ ) {
 							if ( an->an_oc ) {
+								struct berval	bv = an->an_name;
+
 								ocs = 1;
 								match |= an->an_oc_exclude;
-								if ( ml->sml_values[i].bv_len == an->an_name.bv_len
+
+								switch ( bv.bv_val[ 0 ] ) {
+								case '@':
+								case '+':
+								case '!':
+									bv.bv_val++;
+									bv.bv_len--;
+									break;
+								}
+
+								if ( ml->sml_values[i].bv_len == bv.bv_len
 									&& !strcasecmp(ml->sml_values[i].bv_val,
-										an->an_name.bv_val ) ) {
+										bv.bv_val ) )
+								{
 									match = !an->an_oc_exclude;
 									break;
 								}
@@ -377,7 +398,7 @@ replog1(
 								fprintf( fp, "%s: %s\n", did, type );
 								first = 0;
 							}
-							vals[0] = an->an_name;
+							vals[0] = a->a_nvals[i];
 							print_vals( fp, &ml->sml_desc->ad_cname, vals );
 							ocs = 2;
 						}
@@ -409,7 +430,20 @@ replog1(
 		for ( a = op->ora_e->e_attrs ; a != NULL; a=a->a_next ) {
 			if ( ri && ri->ri_attrs ) {
 				int is_in = ad_inlist( a->a_desc, ri->ri_attrs );
-				if ( ( !is_in && !ri->ri_exclude ) || ( is_in && ri->ri_exclude ) ) {
+
+				/* skip if:
+				 *   1) the attribute is not in the list,
+				 *      and it's not an exclusion list
+				 *   2) the attribute is in the list
+				 *      and it's an exclusion list,
+				 *      and either the objectClass attribute
+				 *      has already been dealt with or
+				 *      this is not the objectClass attr
+				 */
+				if ( ( !is_in && !ri->ri_exclude )
+					|| ( ( is_in && ri->ri_exclude )
+						&& ( !ocs || a->a_desc != slap_schema.si_ad_objectClass ) ) )
+				{
 					continue;
 				}
 
@@ -426,11 +460,24 @@ replog1(
 						int match = 0;
 						for ( an = ri->ri_attrs; an->an_name.bv_val; an++ ) {
 							if ( an->an_oc ) {
+								struct berval	bv = an->an_name;
+
 								ocs = 1;
 								match |= an->an_oc_exclude;
-								if ( a->a_vals[i].bv_len == an->an_name.bv_len
+
+								switch ( bv.bv_val[ 0 ] ) {
+								case '@':
+								case '+':
+								case '!':
+									bv.bv_val++;
+									bv.bv_len--;
+									break;
+								}
+
+								if ( a->a_vals[i].bv_len == bv.bv_len
 									&& !strcasecmp(a->a_vals[i].bv_val,
-										an->an_name.bv_val ) ) {
+										bv.bv_val ) )
+								{
 									match = !an->an_oc_exclude;
 									break;
 								}
@@ -445,7 +492,7 @@ replog1(
 								fprintf( fp, "changetype: add\n" );
 								dohdr = 0;
 							}
-							vals[0] = an->an_name;
+							vals[0] = a->a_nvals[i];
 							print_vals( fp, &a->a_desc->ad_cname, vals );
 						}
 					}

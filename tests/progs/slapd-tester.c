@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/tests/progs/slapd-tester.c,v 1.27.2.4 2005/08/19 18:09:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/tests/progs/slapd-tester.c,v 1.27.2.8 2006/01/03 22:16:28 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 
 
 #include "ldap_defaults.h"
+#include "lutil.h"
 
 
 #define SEARCHCMD		"slapd-search"
@@ -80,8 +81,9 @@ usage( char *name )
 		"[-j <maxchild>] "
 		"[-l <loops>] "
 		"-P <progdir> "
-		"[-r <maxretries>]"
-		"[-t <delay>]\n",
+		"[-r <maxretries>] "
+		"[-t <delay>] "
+		"[-F]\n",
 		name );
 	exit( EXIT_FAILURE );
 }
@@ -133,8 +135,9 @@ main( int argc, char **argv )
 	char		*modreqs[MAXREQS];
 	char		*moddn[MAXREQS];
 	int		modnum = 0;
+	int		friendly = 0;
 
-	while ( (i = getopt( argc, argv, "D:d:H:h:j:l:P:p:r:t:w:" )) != EOF ) {
+	while ( (i = getopt( argc, argv, "D:d:FH:h:j:l:P:p:r:t:w:" )) != EOF ) {
 		switch( i ) {
 		case 'D':		/* slapd manager */
 			manager = ArgDup( optarg );
@@ -142,6 +145,10 @@ main( int argc, char **argv )
 
 		case 'd':		/* data directory */
 			dirname = strdup( optarg );
+			break;
+
+		case 'F':
+			friendly++;
 			break;
 
 		case 'H':		/* slapd uri */
@@ -153,7 +160,9 @@ main( int argc, char **argv )
 			break;
 
 		case 'j':		/* the number of parallel clients */
-			maxkids = atoi( optarg );
+			if ( lutil_atoi( &maxkids, optarg ) != 0 ) {
+				usage( argv[0] );
+			}
 			break;
 
 		case 'l':		/* the number of loops per client */
@@ -332,6 +341,9 @@ main( int argc, char **argv )
 	margs[manum++] = retries;
 	margs[manum++] = "-t";
 	margs[manum++] = delay;
+	if ( friendly ) {
+		margs[manum++] = "-F";
+	}
 	margs[manum++] = "-e";
 	margs[manum++] = NULL;		/* will hold the modrdn entry */
 	margs[manum++] = NULL;
@@ -363,6 +375,9 @@ main( int argc, char **argv )
 	modargs[modanum++] = retries;
 	modargs[modanum++] = "-t";
 	modargs[modanum++] = delay;
+	if ( friendly ) {
+		modargs[modanum++] = "-F";
+	}
 	modargs[modanum++] = "-e";
 	modargs[modanum++] = NULL;		/* will hold the modify entry */
 	modargs[modanum++] = "-a";;
@@ -396,6 +411,9 @@ main( int argc, char **argv )
 	aargs[aanum++] = retries;
 	aargs[aanum++] = "-t";
 	aargs[aanum++] = delay;
+	if ( friendly ) {
+		aargs[aanum++] = "-F";
+	}
 	aargs[aanum++] = "-f";
 	aargs[aanum++] = NULL;		/* will hold the add data file */
 	aargs[aanum++] = NULL;

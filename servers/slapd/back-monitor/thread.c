@@ -1,8 +1,8 @@
 /* thread.c - deal with thread subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/thread.c,v 1.29.2.3 2005/08/09 21:04:05 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/thread.c,v 1.29.2.5 2006/01/10 01:07:32 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2005 The OpenLDAP Foundation.
+ * Copyright 2001-2006 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -271,9 +271,9 @@ monitor_subsys_thread_update(
 		break;
 
 	case 2:
-		for ( i = 0; !BER_BVISNULL( a->a_vals + i ); i++) {
+		for ( i = 0; !BER_BVISNULL( &a->a_vals[ i ] ); i++ ) {
 			ch_free( a->a_vals[i].bv_val );
-			BER_BVZERO( a->a_vals + i );
+			BER_BVZERO( &a->a_vals[ i ] );
 		}
 		bv.bv_val = buf;
 		ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
@@ -283,6 +283,12 @@ monitor_subsys_thread_update(
 			value_add_one( &a->a_vals, &bv );
 		}
 		ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
+
+		/* don't leave 'round attributes with no values */
+		if ( BER_BVISNULL( &a->a_vals[ 0 ] ) ) {
+			BER_BVSTR( &bv, "()" );
+			value_add_one( &a->a_vals, &bv );
+		}
 		break;
 	}
 

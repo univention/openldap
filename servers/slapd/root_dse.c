@@ -1,8 +1,8 @@
 /* root_dse.c - Provides the Root DSA-Specific Entry */
-/* $OpenLDAP: pkg/ldap/servers/slapd/root_dse.c,v 1.95.2.9 2005/08/12 19:25:37 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/root_dse.c,v 1.95.2.10 2006/01/03 22:16:15 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

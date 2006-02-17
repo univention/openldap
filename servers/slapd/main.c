@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.198.2.14 2005/10/10 17:35:27 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.198.2.19 2006/01/03 22:16:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -247,22 +247,24 @@ int main( int argc, char **argv )
 	char *sandbox = NULL;
 #endif
 #ifdef LOG_LOCAL4
-    int	    syslogUser = DEFAULT_SYSLOG_USER;
+	int syslogUser = DEFAULT_SYSLOG_USER;
 #endif
 	
 	int g_argc = argc;
 	char **g_argv = argv;
 
-	char		*configfile = NULL;
-	char		*configdir = NULL;
-	char	    *serverName;
-	int	    serverMode = SLAP_SERVER_MODE;
+	char *configfile = NULL;
+	char *configdir = NULL;
+	char *serverName;
+	int serverMode = SLAP_SERVER_MODE;
 
 	struct sync_cookie *scp = NULL;
 	struct sync_cookie *scp_entry = NULL;
 
-	char	*serverNamePrefix = "";
+	char *serverNamePrefix = "";
 	size_t	l;
+
+	int slapd_pid_file_unlink = 0, slapd_args_file_unlink = 0;
 
 #ifdef CSRIMALLOC
 	FILE *leakfile;
@@ -332,7 +334,7 @@ int main( int argc, char **argv )
 #endif
 
 	while ( (i = getopt( argc, argv,
-			     "c:d:f:F:h:n:o:s:StT:V"
+			     "c:d:f:F:h:n:o:s:tT:V"
 #if LDAP_PF_INET6
 				"46"
 #endif
@@ -389,27 +391,41 @@ int main( int argc, char **argv )
 			LDAP_STAILQ_INSERT_TAIL( &slap_sync_cookie, scp, sc_next );
 			break;
 
-		case 'd':	/* set debug level and 'do not detach' flag */
+		case 'd': {	/* set debug level and 'do not detach' flag */
+			int	level = 0;
+
 			no_detach = 1;
 #ifdef LDAP_DEBUG
 			if ( optarg != NULL && optarg[ 0 ] != '-' && !isdigit( optarg[ 0 ] ) )
 			{
-				int	level;
+				int	i, goterr = 0;
+				char	**levels;
 
-				if ( str2loglevel( optarg, &level ) ) {
-					fprintf( stderr,
-						"unrecognized log level "
-						"\"%s\"\n", optarg );
+				levels = ldap_str2charray( optarg, "," );
+
+				for ( i = 0; levels[ i ] != NULL; i++ ) {
+					level = 0;
+
+					if ( str2loglevel( levels[ i ], &level ) ) {
+						fprintf( stderr,
+							"unrecognized log level "
+							"\"%s\"\n", levels[ i ] );
+						goterr = 1;
+						/* but keep parsing... */
+
+					} else {
+						slap_debug |= level;
+					}
+				}
+
+				ldap_charray_free( levels );
+
+				if ( goterr ) {
 					goto destroy;
 				}
 
-				slap_debug |= level;
 			} else {
-				int	level;
-				char	*next = NULL;
-
-				level = strtol( optarg, &next, 0 );
-				if ( next == NULL || next[ 0 ] != '\0' ) {
+				if ( lutil_atoix( &level, optarg, 0 ) != 0 ) {
 					fprintf( stderr,
 						"unrecognized log level "
 						"\"%s\"\n", optarg );
@@ -418,11 +434,11 @@ int main( int argc, char **argv )
 				slap_debug |= level;
 			}
 #else
-			if ( atoi( optarg ) != 0 )
+			if ( lutil_atoi( &level, optarg ) != 0 || level != 0 )
 				fputs( "must compile with LDAP_DEBUG for debugging\n",
 				       stderr );
 #endif
-			break;
+			} break;
 
 		case 'f':	/* read config file */
 			configfile = ch_strdup( optarg );
@@ -467,7 +483,10 @@ int main( int argc, char **argv )
 		}
 
 		case 's':	/* set syslog level */
-			ldap_syslog = atoi( optarg );
+			if ( lutil_atoi( &ldap_syslog, optarg ) != 0 ) {
+				fprintf( stderr, "unable to parse syslog level \"%s\"", optarg );
+				goto destroy;
+			}
 			break;
 
 #ifdef LOG_LOCAL4
@@ -668,8 +687,8 @@ unhandled_option:;
 		/* Force new ctx to be created */
 		ldap_pvt_tls_set_option( NULL, LDAP_OPT_X_TLS_CTX, NULL );
 
-		rc = ldap_pvt_tls_init_def_ctx();
-		if( rc == 0) {
+		rc = ldap_pvt_tls_init_def_ctx( 1 );
+		if( rc == 0 ) {
 			ldap_pvt_tls_get_option( NULL, LDAP_OPT_X_TLS_CTX, &slap_tls_ctx );
 			/* Restore previous ctx */
 			ldap_pvt_tls_set_option( NULL, LDAP_OPT_X_TLS_CTX, def_ctx );
@@ -715,48 +734,67 @@ unhandled_option:;
 	mal_leaktrace(1);
 #endif
 
+	if ( slapd_pid_file != NULL ) {
+		FILE *fp = fopen( slapd_pid_file, "w" );
+
+		if ( fp == NULL ) {
+			int save_errno = errno;
+
+			Debug( LDAP_DEBUG_ANY, "unable to open pid file "
+				"\"%s\": %d (%s)\n",
+				slapd_pid_file,
+				save_errno, strerror( save_errno ) );
+
+			free( slapd_pid_file );
+			slapd_pid_file = NULL;
+
+			rc = 1;
+			goto destroy;
+		}
+		fprintf( fp, "%d\n", (int) getpid() );
+		fclose( fp );
+		slapd_pid_file_unlink = 1;
+	}
+
+	if ( slapd_args_file != NULL ) {
+		FILE *fp = fopen( slapd_args_file, "w" );
+
+		if ( fp == NULL ) {
+			int save_errno = errno;
+
+			Debug( LDAP_DEBUG_ANY, "unable to open args file "
+				"\"%s\": %d (%s)\n",
+				slapd_args_file,
+				save_errno, strerror( save_errno ) );
+
+			free( slapd_args_file );
+			slapd_args_file = NULL;
+
+			rc = 1;
+			goto destroy;
+		}
+
+		for ( i = 0; i < g_argc; i++ ) {
+			fprintf( fp, "%s ", g_argv[i] );
+		}
+		fprintf( fp, "\n" );
+		fclose( fp );
+		slapd_args_file_unlink = 1;
+	}
+
 	/*
 	 * FIXME: moved here from slapd_daemon_task()
 	 * because back-monitor db_open() needs it
 	 */
 	time( &starttime );
 
-	if ( slap_startup( NULL )  != 0 ) {
+	if ( slap_startup( NULL ) != 0 ) {
 		rc = 1;
 		SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 21 );
 		goto shutdown;
 	}
 
 	Debug( LDAP_DEBUG_ANY, "slapd starting\n", 0, 0, 0 );
-
-
-	if ( slapd_pid_file != NULL ) {
-		FILE *fp = fopen( slapd_pid_file, "w" );
-
-		if( fp != NULL ) {
-			fprintf( fp, "%d\n", (int) getpid() );
-			fclose( fp );
-
-		} else {
-			free(slapd_pid_file);
-			slapd_pid_file = NULL;
-		}
-	}
-
-	if ( slapd_args_file != NULL ) {
-		FILE *fp = fopen( slapd_args_file, "w" );
-
-		if( fp != NULL ) {
-			for ( i = 0; i < g_argc; i++ ) {
-				fprintf( fp, "%s ", g_argv[i] );
-			}
-			fprintf( fp, "\n" );
-			fclose( fp );
-		} else {
-			free(slapd_args_file);
-			slapd_args_file = NULL;
-		}
-	}
 
 #ifdef HAVE_NT_EVENT_LOG
 	if (is_NT_Service)
@@ -822,10 +860,10 @@ stop:
 	ldap_pvt_tls_destroy();
 #endif
 
-	if ( slapd_pid_file != NULL ) {
+	if ( slapd_pid_file_unlink ) {
 		unlink( slapd_pid_file );
 	}
-	if ( slapd_args_file != NULL ) {
+	if ( slapd_args_file_unlink ) {
 		unlink( slapd_args_file );
 	}
 

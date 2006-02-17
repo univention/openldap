@@ -1,7 +1,7 @@
 /* seqmod.c - sequenced modifies */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2005 The OpenLDAP Foundation.
+ * Copyright 2004-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -178,7 +178,7 @@ seqmod_db_close(
 static slap_overinst 		seqmod;
 
 int
-seqmod_init()
+seqmod_initialize()
 {
 	seqmod.on_bi.bi_type = "seqmod";
 	seqmod.on_bi.bi_db_open = seqmod_db_open;
@@ -195,7 +195,7 @@ seqmod_init()
 int
 init_module( int argc, char *argv[] )
 {
-	return seqmod_init();
+	return seqmod_initialize();
 }
 #endif /* SLAPD_OVER_SEQMOD == SLAPD_MOD_DYNAMIC */
 

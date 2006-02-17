@@ -1,8 +1,8 @@
 /* unbind.c - ldap backend unbind function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/unbind.c,v 1.24.2.4 2005/09/28 00:30:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/unbind.c,v 1.24.2.6 2006/01/03 22:16:18 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -38,8 +38,8 @@ ldap_back_conn_destroy(
 		Connection	*conn
 )
 {
-	struct ldapinfo	*li = (struct ldapinfo *) be->be_private;
-	struct ldapconn *lc = NULL, lc_curr;
+	ldapinfo_t	*li = (ldapinfo_t *) be->be_private;
+	ldapconn_t	*lc = NULL, lc_curr;
 
 	Debug( LDAP_DEBUG_TRACE,
 		"=>ldap_back_conn_destroy: fetching conn %ld\n",
@@ -48,9 +48,9 @@ ldap_back_conn_destroy(
 	lc_curr.lc_conn = conn;
 	lc_curr.lc_local_ndn = conn->c_ndn;
 	
-	ldap_pvt_thread_mutex_lock( &li->conn_mutex );
-	lc = avl_delete( &li->conntree, (caddr_t)&lc_curr, ldap_back_conn_cmp );
-	ldap_pvt_thread_mutex_unlock( &li->conn_mutex );
+	ldap_pvt_thread_mutex_lock( &li->li_conninfo.lai_mutex );
+	lc = avl_delete( &li->li_conninfo.lai_tree, (caddr_t)&lc_curr, ldap_back_conn_cmp );
+	ldap_pvt_thread_mutex_unlock( &li->li_conninfo.lai_mutex );
 
 	if ( lc ) {
 		Debug( LDAP_DEBUG_TRACE,

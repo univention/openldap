@@ -1,8 +1,8 @@
 /* ad.c - routines for dealing with attribute descriptions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.74.2.9 2005/10/07 16:53:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.74.2.12 2006/01/17 19:09:51 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -177,7 +177,7 @@ int slap_bv2ad(
 	memset( &desc, 0, sizeof( desc ) );
 	desc.ad_cname = *bv;
 	name = bv->bv_val;
-	options = strchr( name, ';' );
+	options = ber_bvchr( bv, ';' );
 	if ( options != NULL && (unsigned) ( options - name ) < bv->bv_len ) {
 		/* don't go past the end of the berval! */
 		desc.ad_cname.bv_len = options - name;
@@ -1175,6 +1175,13 @@ ad_define_option( const char *name, const char *fname, int lineno )
 
 	option_count++;
 	return 0;
+}
+
+void ad_unparse_options( BerVarray *res ){
+	int i;
+    for ( i=0; i < option_count; i++ ) {
+    	ber_bvarray_add( res, ber_bvdup( &(options[i].name) ));
+    }
 }
 
 /* Find the definition of the option name or prefix matching the arguments */

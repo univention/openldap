@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/release/copyright.sdf,v 1.20.2.1 2005/08/12 17:31:18 kurt Exp $
-# Copyright 1999-2005, The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP: pkg/openldap-guide/release/copyright.sdf,v 1.20.2.2 2006/01/03 22:16:04 kurt Exp $
+# Copyright 1999-2006 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 !if OPT_PP_HTML

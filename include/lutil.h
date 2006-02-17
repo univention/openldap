@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/include/lutil.h,v 1.57.2.3 2005/04/29 21:29:02 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/lutil.h,v 1.57.2.5 2006/01/03 22:16:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -272,6 +272,29 @@ lutil_LogStoppedEvent( char *svc );
 #define putchar(c)     putc((c), stdout)
 #define putc(c,fp)     do { char x=(c); __atoe_l(&x,1); putc(x,fp); } while(0)
 #endif
+
+LDAP_LUTIL_F (int)
+lutil_atoix( int *v, const char *s, int x );
+
+LDAP_LUTIL_F (int)
+lutil_atoux( unsigned *v, const char *s, int x );
+
+LDAP_LUTIL_F (int)
+lutil_atolx( long *v, const char *s, int x );
+
+LDAP_LUTIL_F (int)
+lutil_atoulx( unsigned long *v, const char *s, int x );
+
+#define lutil_atoi(v, s)	lutil_atoix((v), (s), 10)
+#define lutil_atou(v, s)	lutil_atoux((v), (s), 10)
+#define lutil_atol(v, s)	lutil_atolx((v), (s), 10)
+#define lutil_atoul(v, s)	lutil_atoulx((v), (s), 10)
+
+LDAP_LUTIL_F (int)
+lutil_parse_time( const char *in, unsigned long *tp );
+
+LDAP_LUTIL_F (int)
+lutil_unparse_time( char *buf, size_t buflen, unsigned long t );
 
 LDAP_END_DECL
 

@@ -1,8 +1,8 @@
 /* init.c - initialize monitor backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/init.c,v 1.89.2.10 2005/10/12 21:33:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/init.c,v 1.89.2.16 2006/01/03 22:16:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2005 The OpenLDAP Foundation.
+ * Copyright 2001-2006 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -970,14 +970,25 @@ int
 monitor_back_initialize(
 	BackendInfo	*bi )
 {
-	monitor_subsys_t	*ms;
 	static char		*controls[] = {
 		LDAP_CONTROL_MANAGEDSAIT,
 		NULL
 	};
-	monitor_info_t		*mi = &monitor_info;
-	int			i;
-	const char		*text;
+
+	static ConfigTable monitorcfg[] = {
+		{ NULL, NULL, 0, 0, 0, ARG_IGNORED,
+			NULL, NULL, NULL, NULL }
+	};
+
+	static ConfigOCs monitorocs[] = {
+		{ "( OLcfgDbOc:4.1 "
+			"NAME 'olcMonitorConfig' "
+			"DESC 'Monitor backend configuration' "
+			"SUP olcDatabaseConfig "
+			")",
+			 	Cft_Database, monitorcfg },
+		{ NULL, 0, NULL }
+	};
 
 	struct m_s {
 		char	*name;
@@ -1252,87 +1263,10 @@ monitor_back_initialize(
 			offsetof(monitor_info_t, mi_ad_monitorRuntimeConfig) },
 		{ NULL, NULL, 0, -1 }
 	};
-	static ConfigTable monitorcfg[] = {
-		{ NULL, NULL, 0, 0, 0, ARG_IGNORED,
-			NULL, NULL, NULL, NULL }
-	};
-	static ConfigOCs monitorocs[] = {
-		{ "( OLcfgDbOc:4.1 "
-			"NAME 'olcMonitorConfig' "
-			"DESC 'Monitor backend configuration' "
-			"SUP olcDatabaseConfig "
-			")",
-			 	Cft_Database, monitorcfg },
-		{ NULL, 0, NULL }
-	};
-	int		rc;
 
-	bi->bi_controls = controls;
-
-	bi->bi_init = 0;
-	bi->bi_open = 0;
-	bi->bi_config = monitor_back_config;
-	bi->bi_close = 0;
-	bi->bi_destroy = 0;
-
-	bi->bi_db_init = monitor_back_db_init;
-	bi->bi_db_config = monitor_back_db_config;
-	bi->bi_db_open = monitor_back_db_open;
-	bi->bi_db_close = 0;
-	bi->bi_db_destroy = monitor_back_db_destroy;
-
-	bi->bi_op_bind = monitor_back_bind;
-	bi->bi_op_unbind = 0;
-	bi->bi_op_search = monitor_back_search;
-	bi->bi_op_compare = monitor_back_compare;
-	bi->bi_op_modify = monitor_back_modify;
-	bi->bi_op_modrdn = 0;
-	bi->bi_op_add = 0;
-	bi->bi_op_delete = 0;
-	bi->bi_op_abandon = 0;
-
-	bi->bi_extended = 0;
-
-	bi->bi_entry_release_rw = 0;
-	bi->bi_chk_referrals = 0;
-	bi->bi_operational = monitor_back_operational;
-
-	/*
-	 * hooks for slap tools
-	 */
-	bi->bi_tool_entry_open = 0;
-	bi->bi_tool_entry_close = 0;
-	bi->bi_tool_entry_first = 0;
-	bi->bi_tool_entry_next = 0;
-	bi->bi_tool_entry_get = 0;
-	bi->bi_tool_entry_put = 0;
-	bi->bi_tool_entry_reindex = 0;
-	bi->bi_tool_sync = 0;
-	bi->bi_tool_dn2id_get = 0;
-	bi->bi_tool_id2entry_get = 0;
-	bi->bi_tool_entry_modify = 0;
-
-	bi->bi_connection_init = 0;
-	bi->bi_connection_destroy = 0;
-
-	/*
-	 * configuration objectClasses (fake)
-	 */
-	bi->bi_cf_ocs = monitorocs;
-
-	rc = config_register_schema( monitorcfg, monitorocs );
-	if ( rc ) {
-		return rc;
-	}
-
-	/*
-	 * register subsys
-	 */
-	for ( ms = known_monitor_subsys; ms->mss_name != NULL; ms++ ) {
-		if ( monitor_back_register_subsys( ms ) ) {
-			return -1;
-		}
-	}
+	int			i, rc;
+	const char		*text;
+	monitor_info_t		*mi = &monitor_info;
 
 	/* schema integration */
 	for ( i = 0; mat[ i ].name; i++ ) {
@@ -1423,6 +1357,66 @@ monitor_back_initialize(
 		((ObjectClass **)&(((char *)mi)[ moc[ i ].offset ]))[ 0 ] = Oc;
 	}
 
+	bi->bi_controls = controls;
+
+	bi->bi_init = 0;
+	bi->bi_open = 0;
+	bi->bi_config = monitor_back_config;
+	bi->bi_close = 0;
+	bi->bi_destroy = 0;
+
+	bi->bi_db_init = monitor_back_db_init;
+#if 0
+	bi->bi_db_config = monitor_back_db_config;
+#endif
+	bi->bi_db_open = monitor_back_db_open;
+	bi->bi_db_close = 0;
+	bi->bi_db_destroy = monitor_back_db_destroy;
+
+	bi->bi_op_bind = monitor_back_bind;
+	bi->bi_op_unbind = 0;
+	bi->bi_op_search = monitor_back_search;
+	bi->bi_op_compare = monitor_back_compare;
+	bi->bi_op_modify = monitor_back_modify;
+	bi->bi_op_modrdn = 0;
+	bi->bi_op_add = 0;
+	bi->bi_op_delete = 0;
+	bi->bi_op_abandon = 0;
+
+	bi->bi_extended = 0;
+
+	bi->bi_entry_release_rw = 0;
+	bi->bi_chk_referrals = 0;
+	bi->bi_operational = monitor_back_operational;
+
+	/*
+	 * hooks for slap tools
+	 */
+	bi->bi_tool_entry_open = 0;
+	bi->bi_tool_entry_close = 0;
+	bi->bi_tool_entry_first = 0;
+	bi->bi_tool_entry_next = 0;
+	bi->bi_tool_entry_get = 0;
+	bi->bi_tool_entry_put = 0;
+	bi->bi_tool_entry_reindex = 0;
+	bi->bi_tool_sync = 0;
+	bi->bi_tool_dn2id_get = 0;
+	bi->bi_tool_id2entry_get = 0;
+	bi->bi_tool_entry_modify = 0;
+
+	bi->bi_connection_init = 0;
+	bi->bi_connection_destroy = 0;
+
+	/*
+	 * configuration objectClasses (fake)
+	 */
+	bi->bi_cf_ocs = monitorocs;
+
+	rc = config_register_schema( monitorcfg, monitorocs );
+	if ( rc ) {
+		return rc;
+	}
+
 	return 0;
 }
 
@@ -1430,11 +1424,22 @@ int
 monitor_back_db_init(
 	BackendDB	*be )
 {
-	int		rc;
-	struct berval	dn = BER_BVC( SLAPD_MONITOR_DN ),
-			pdn,
-			ndn;
-	BackendDB	*be2;
+	int			rc;
+	struct berval		dn = BER_BVC( SLAPD_MONITOR_DN ),
+				pdn,
+				ndn;
+	BackendDB		*be2;
+
+	monitor_subsys_t	*ms;
+
+	/*
+	 * register subsys
+	 */
+	for ( ms = known_monitor_subsys; ms->mss_name != NULL; ms++ ) {
+		if ( monitor_back_register_subsys( ms ) ) {
+			return -1;
+		}
+	}
 
 	/*
 	 * database monitor can be defined once only
@@ -1552,7 +1557,7 @@ monitor_back_db_open(
 		"description: This subtree contains monitoring/managing objects.\n"
 		"description: This object contains information about this server.\n"
 		"description: Most of the information is held in operational"
-		" attributeTypes, which must be explicitly requested.\n"
+		" attributes, which must be explicitly requested.\n"
 		"creatorsName: %s\n"
 		"modifiersName: %s\n"
 		"createTimestamp: %s\n"
@@ -1809,6 +1814,7 @@ monitor_back_config(
 	return SLAP_CONF_UNKNOWN;
 }
 
+#if 0
 int
 monitor_back_db_config(
 	Backend     *be,
@@ -1817,15 +1823,14 @@ monitor_back_db_config(
 	int         argc,
 	char        **argv )
 {
-#if 0
 	monitor_info_t	*mi = ( monitor_info_t * )be->be_private;
-#endif
 
 	/*
 	 * eventually, will hold database specific configuration parameters
 	 */
 	return SLAP_CONF_UNKNOWN;
 }
+#endif
 
 int
 monitor_back_db_destroy(
@@ -1854,6 +1859,14 @@ monitor_back_db_destroy(
 
 			if ( !BER_BVISNULL( &monitor_subsys[ i ]->mss_rdn ) ) {
 				ch_free( monitor_subsys[ i ]->mss_rdn.bv_val );
+			}
+
+			if ( !BER_BVISNULL( &monitor_subsys[ i ]->mss_dn ) ) {
+				ch_free( monitor_subsys[ i ]->mss_dn.bv_val );
+			}
+
+			if ( !BER_BVISNULL( &monitor_subsys[ i ]->mss_ndn ) ) {
+				ch_free( monitor_subsys[ i ]->mss_ndn.bv_val );
 			}
 		}
 

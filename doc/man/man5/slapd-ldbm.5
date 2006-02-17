@@ -1,7 +1,7 @@
 .TH SLAPD-LDBM 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2005 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2006 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-ldbm.5,v 1.8.2.3 2005/07/10 04:36:40 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-ldbm.5,v 1.8.2.5 2006/01/17 19:14:24 kurt Exp $
 .SH NAME
 slapd-ldbm \- LDBM backend to slapd
 .SH SYNOPSIS
@@ -9,11 +9,12 @@ ETCDIR/slapd.conf
 .SH DESCRIPTION
 The LDBM backend to
 .BR slapd (8)
-is the database backend which is easiest to configure.
-However, it does not offer the data durability features of the BDB
-backend.
-It uses Berkeley DB or GDBM to store data.
-It makes extensive use of indexing and caching to speed data access.
+is an easy\-to\-configure but obsolete database backend.  It does not
+offer the data durability features of the BDB and HDB backends and
+hence is considered deprecated in favor of these robust backends.
+LDBM uses lightweight non\-transactional data interfaces, such as those
+provided by GDBM or Berkeley DB, to store data.  It makes extensive
+use of indexing and caching to speed data access.
 .SH CONFIGURATION
 These
 .B slapd.conf

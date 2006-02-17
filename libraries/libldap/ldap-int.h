@@ -1,8 +1,8 @@
 /*  ldap-int.h - defines & prototypes internal to the LDAP library */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.160.2.5 2005/10/12 01:10:47 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.160.2.8 2006/01/03 22:16:08 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -151,6 +151,7 @@ struct ldapoptions {
 #define LDAP_UNINITIALIZED	0x0
 #define LDAP_INITIALIZED	0x1
 #define LDAP_VALID_SESSION	0x2
+#define LDAP_TRASHED_SESSION	0xFF
 	int   ldo_debug;
 #ifdef LDAP_CONNECTIONLESS
 #define	LDAP_IS_UDP(ld)		((ld)->ld_options.ldo_is_udp)
@@ -169,6 +170,8 @@ struct ldapoptions {
 	ber_int_t		ldo_sizelimit;
 
 #ifdef HAVE_TLS
+   	/* tls context */
+   	void		*ldo_tls_ctx;
    	int			ldo_tls_mode;
 	LDAP_TLS_CONNECT_CB	*ldo_tls_connect_cb;
 	void*			ldo_tls_connect_arg;
@@ -210,10 +213,6 @@ struct ldapoptions {
  */
 typedef struct ldap_conn {
 	Sockbuf		*lconn_sb;
-#ifdef HAVE_TLS
-   	/* tls context */
-   	void		*lconn_tls_ctx;
-#endif
 #ifdef HAVE_CYRUS_SASL
 	void		*lconn_sasl_authctx;	/* context for bind */
 	void		*lconn_sasl_sockctx;	/* for security layer */
@@ -349,7 +348,9 @@ struct ldap {
 	LDAPConn	*ld_conns;	/* list of server connections */
 	void		*ld_selectinfo;	/* platform specifics for select */
 };
-#define LDAP_VALID(ld)	( (ld)->ld_valid == LDAP_VALID_SESSION )
+#define LDAP_VALID(ld)		( (ld)->ld_valid == LDAP_VALID_SESSION )
+#define LDAP_TRASHED(ld)	( (ld)->ld_valid == LDAP_TRASHED_SESSION )
+#define LDAP_TRASH(ld)		( (ld)->ld_valid = LDAP_TRASHED_SESSION )
 
 #ifdef LDAP_R_COMPILE
 LDAP_V ( ldap_pvt_thread_mutex_t ) ldap_int_resolv_mutex;

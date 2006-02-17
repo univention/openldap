@@ -1,8 +1,8 @@
 /* modify.c - monitor backend modify routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/modify.c,v 1.17.2.2 2005/04/29 21:29:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/modify.c,v 1.17.2.5 2006/01/03 22:16:21 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2005 The OpenLDAP Foundation.
+ * Copyright 2001-2006 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -69,6 +69,9 @@ monitor_back_modify( Operation *op, SlapReply *rs )
 		rc = LDAP_INSUFFICIENT_ACCESS;
 
 	} else {
+		assert( !SLAP_SHADOW( op->o_bd ) );
+		slap_mods_opattrs( op, &op->orm_modlist, 0 );
+
 		rc = monitor_entry_modify( op, rs, e );
 	}
 

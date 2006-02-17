@@ -1,8 +1,8 @@
 /* back-bdb.h - bdb back-end header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/back-bdb.h,v 1.117.2.6 2005/09/28 00:30:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/back-bdb.h,v 1.117.2.10 2006/01/06 19:17:13 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2005 The OpenLDAP Foundation.
+ * Copyright 2000-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,8 +25,6 @@
 LDAP_BEGIN_DECL
 
 #define DB_VERSION_FULL ((DB_VERSION_MAJOR << 24) | (DB_VERSION_MINOR << 16) | DB_VERSION_PATCH)
-
-#define BDB_SUBENTRIES 1
 
 #define DN_BASE_PREFIX		SLAP_INDEX_EQUALITY_PREFIX
 #define DN_ONE_PREFIX	 	'%'
@@ -125,6 +123,7 @@ typedef struct bdb_entry_info {
 typedef struct bdb_cache {
 	int             c_maxsize;
 	int             c_cursize;
+	int		c_minfree;
 	int		c_eiused;	/* EntryInfo's in use */
 	int		c_leaves;	/* EntryInfo leaf nodes */
 	EntryInfo	c_dntree;
@@ -133,7 +132,8 @@ typedef struct bdb_cache {
 	EntryInfo	*c_lruhead;	/* lru - add accessed entries here */
 	EntryInfo	*c_lrutail;	/* lru - rem lru entries from here */
 	ldap_pvt_thread_rdwr_t c_rwlock;
-	ldap_pvt_thread_mutex_t lru_mutex;
+	ldap_pvt_thread_mutex_t lru_head_mutex;
+	ldap_pvt_thread_mutex_t lru_tail_mutex;
 	u_int32_t	c_locker;	/* used by lru cleaner */
 #ifdef SLAP_ZONE_ALLOC
 	void *c_zctx;
@@ -149,6 +149,9 @@ struct bdb_db_info {
 	char		*bdi_name;
 	DB			*bdi_db;
 };
+
+/* From ldap_rq.h */
+struct re_s;
 
 struct bdb_info {
 	DB_ENV		*bi_dbenv;
@@ -166,7 +169,8 @@ struct bdb_info {
 
 	slap_mask_t	bi_defaultmask;
 	Cache		bi_cache;
-	Avlnode		*bi_attrs;
+	struct bdb_attrinfo		**bi_attrs;
+	int			bi_nattrs;
 	void		*bi_search_stack;
 	int		bi_search_stack_depth;
 	int		bi_linear_index;
@@ -174,8 +178,9 @@ struct bdb_info {
 	int			bi_txn_cp;
 	u_int32_t	bi_txn_cp_min;
 	u_int32_t	bi_txn_cp_kbyte;
-	void		*bi_txn_cp_task;
-	void		*bi_index_task;
+	struct re_s		*bi_txn_cp_task;
+	struct re_s		*bi_index_task;
+ 	struct re_s		*bi_cache_task;
 
 	int			bi_lock_detect;
 	long		bi_shm_key;
@@ -298,6 +303,19 @@ typedef struct bdb_attrinfo {
 /* These flags must not clash with SLAP_INDEX flags or ops in slap.h! */
 #define	BDB_INDEX_DELETING	0x8000U	/* index is being modified */
 #define	BDB_INDEX_UPDATE_OP	0x03	/* performing an index update */
+
+/* For slapindex to record which attrs in an entry belong to which
+ * index database 
+ */
+typedef struct AttrList {
+	struct AttrList *next;
+	Attribute *attr;
+} AttrList;
+
+typedef struct IndexRec {
+	AttrInfo *ai;
+	AttrList *attrs;
+} IndexRec;
 
 #include "proto-bdb.h"
 

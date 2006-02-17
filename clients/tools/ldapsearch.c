@@ -1,8 +1,8 @@
 /* ldapsearch -- a tool for searching LDAP directories */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapsearch.c,v 1.207.2.6 2005/08/09 16:41:26 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapsearch.c,v 1.207.2.9 2006/01/07 18:59:16 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -794,7 +794,7 @@ getNextPage:
 			filtpattern );
 
 		if ( attrs == NULL ) {
-			fprintf( stderr, _("ALL") );
+			fprintf( stderr, _("All userApplication attributes") );
 		} else {
 			for ( i = 0; attrs[ i ] != NULL; ++i ) {
 				fprintf( stderr, "%s ", attrs[ i ] );
@@ -1552,7 +1552,12 @@ parse_page_control(
 		fprintf( stderr, "%s (%d)\n", ldap_err2string(err), err );
 	}
 
-	if( ctrl ) {
+	if ( ctrl ) {
+		/* There might be others, e.g. ppolicy... */
+		ctrlp = ldap_find_control( LDAP_CONTROL_PAGEDRESULTS, ctrl );
+	}
+
+	if ( ctrlp ) {
 		/* Parse the control value
 		 * searchResult ::= SEQUENCE {
 		 *		size	INTEGER (0..maxInt),

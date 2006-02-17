@@ -1,8 +1,8 @@
 /* modrdn.c - bdb backend modrdn routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modrdn.c,v 1.160.2.5 2005/09/28 00:30:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modrdn.c,v 1.160.2.9 2006/01/16 18:59:27 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2005 The OpenLDAP Foundation.
+ * Copyright 2000-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -108,7 +108,6 @@ retry:	/* transaction retry */
 		}
 		parent_is_glue = 0;
 		parent_is_leaf = 0;
-		ldap_pvt_thread_yield();
 		bdb_trans_backoff( ++num_retries );
 	}
 
@@ -728,7 +727,8 @@ retry:	/* transaction retry */
 		if(( rs->sr_err=TXN_ABORT( ltid )) != 0 ) {
 			rs->sr_text = "txn_abort (no-op) failed";
 		} else {
-			rs->sr_err = LDAP_SUCCESS;
+			rs->sr_err = LDAP_X_NO_OPERATION;
+			ltid = NULL;
 			goto return_results;
 		}
 
@@ -778,7 +778,6 @@ return_results:
 	send_ldap_result( op, rs );
 
 	if( rs->sr_err == LDAP_SUCCESS && bdb->bi_txn_cp ) {
-		ldap_pvt_thread_yield();
 		TXN_CHECKPOINT( bdb->bi_dbenv,
 			bdb->bi_txn_cp_kbyte, bdb->bi_txn_cp_min, 0 );
 	}
@@ -795,22 +794,13 @@ done:
 	if ( new_rdn != NULL ) {
 		ldap_rdnfree_x( new_rdn, op->o_tmpmemctx );
 	}
+
 	if ( old_rdn != NULL ) {
 		ldap_rdnfree_x( old_rdn, op->o_tmpmemctx );
 	}
+
 	if( mod != NULL ) {
-		Modifications *tmp;
-		for (; mod; mod=tmp ) {
-			tmp = mod->sml_next;
-			/* slap_modrdn2mods does things one way,
-			 * slap_mods_opattrs does it differently
-			 */
-			if ( mod->sml_op != SLAP_MOD_SOFTADD &&
-				mod->sml_op != LDAP_MOD_DELETE ) break;
-			if ( mod->sml_nvalues ) free( mod->sml_nvalues[0].bv_val );
-			free( mod );
-		}
-		slap_mods_free( mod, 1 );
+		slap_modrdn2mods_free( mod );
 	}
 
 	/* LDAP v3 Support */
@@ -831,8 +821,8 @@ done:
 
 	if( ltid != NULL ) {
 		TXN_ABORT( ltid );
-		op->o_private = NULL;
 	}
+	op->o_private = NULL;
 
 	if( preread_ctrl != NULL ) {
 		slap_sl_free( (*preread_ctrl)->ldctl_value.bv_val, op->o_tmpmemctx );

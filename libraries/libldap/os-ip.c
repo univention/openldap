@@ -1,8 +1,8 @@
 /* os-ip.c -- platform-specific TCP & UDP related code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.108.2.8 2005/10/11 17:42:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.108.2.10 2006/01/03 22:16:08 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * Portions Copyright 1999 Lars Uffmann.
  * All rights reserved.
  *
@@ -529,8 +529,18 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
 				sizeof(sin.sin_addr) );
 		}
 
+#ifdef HAVE_INET_NTOA_B
+		{
+			/* for VxWorks */
+			char address[INET_ADDR_LEN];
+			inet_ntoa_b(sin.sin_address, address);
+			osip_debug(ld, "ldap_connect_to_host: Trying %s:%d\n", 
+				address, port, 0);
+		}
+#else
 		osip_debug(ld, "ldap_connect_to_host: Trying %s:%d\n", 
 			inet_ntoa(sin.sin_addr), port, 0);
+#endif
 
 		rc = ldap_pvt_connect(ld, s,
 			(struct sockaddr *)&sin, sizeof(sin),

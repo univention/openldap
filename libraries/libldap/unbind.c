@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/unbind.c,v 1.48.2.4 2005/10/05 17:42:19 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/unbind.c,v 1.48.2.6 2006/01/03 22:16:09 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -194,6 +194,9 @@ ldap_ld_free(
 #ifdef LDAP_R_COMPILE
 	ldap_pvt_thread_mutex_destroy( &ld->ld_req_mutex );
 	ldap_pvt_thread_mutex_destroy( &ld->ld_res_mutex );
+#endif
+#ifndef NDEBUG
+	LDAP_TRASH(ld);
 #endif
 	LDAP_FREE( (char *) ld );
    

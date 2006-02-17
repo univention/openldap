@@ -1,8 +1,8 @@
 /* search.c - DNS SRV backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/search.c,v 1.35.2.4 2005/04/29 21:29:07 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/search.c,v 1.35.2.5 2006/01/03 22:16:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2005 The OpenLDAP Foundation.
+ * Copyright 2000-2006 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/back-meta.h,v 1.23.2.11 2005/10/05 17:42:20 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/back-meta.h,v 1.23.2.16 2006/01/16 21:13:40 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2005 The OpenLDAP Foundation.
+ * Copyright 1999-2006 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -81,9 +81,6 @@ typedef struct dncookie {
 	int			tofrom;
 #endif
 } dncookie;
-
-/* TODO: allow to define it on a per-target basis */
-#define META_BIND_TIMEOUT	10000
 
 int ldap_back_dn_massage(dncookie *dc, struct berval *dn,
 	struct berval *res);
@@ -177,6 +174,8 @@ typedef struct metasingleconn_t {
 #define META_ANONYMOUS		2
 #endif
 
+	time_t			msc_time;
+
 	struct metainfo_t	*msc_info;
 } metasingleconn_t;
 
@@ -184,6 +183,7 @@ typedef struct metaconn_t {
 	struct slap_conn	*mc_conn;
 	ldap_pvt_thread_mutex_t	mc_mutex;
 	unsigned		mc_refcnt;
+	int			mc_tainted;
 	
 	struct berval          	mc_local_ndn;
 	/* NOTE: msc_mscflags is used to recycle the #define
@@ -203,14 +203,6 @@ typedef struct metaconn_t {
 	 * the required number of conns is malloc'ed
 	 * in one block with the metaconn_t structure */
 } metaconn_t;
-
-enum {
-	META_OP_ADD = 0,
-	META_OP_DELETE,
-	META_OP_MODIFY,
-	META_OP_MODRDN,
-	META_OP_LAST
-};
 
 typedef struct metatarget_t {
 	char			*mt_uri;
@@ -235,7 +227,11 @@ typedef struct metatarget_t {
 
 	unsigned		mt_flags;
 	int			mt_version;
-	time_t			mt_timeout[ META_OP_LAST ];
+	time_t			mt_network_timeout;
+	time_t			mt_idle_timeout;
+	struct timeval		mt_bind_timeout;
+#define META_BIND_TIMEOUT	LDAP_BACK_RESULT_UTIMEOUT
+	time_t			mt_timeout[ LDAP_BACK_OP_LAST ];
 } metatarget_t;
 
 typedef struct metadncache_t {
@@ -243,8 +239,8 @@ typedef struct metadncache_t {
 	Avlnode			*tree;
 
 #define META_DNCACHE_DISABLED   (0)
-#define META_DNCACHE_FOREVER    (-1)
-	long int		ttl;  /* seconds; 0: no cache, -1: no expiry */
+#define META_DNCACHE_FOREVER    ((time_t)(-1))
+	time_t			ttl;  /* seconds; 0: no cache, -1: no expiry */
 } metadncache_t;
 
 typedef struct metacandidates_t {
@@ -255,7 +251,6 @@ typedef struct metacandidates_t {
 typedef struct metainfo_t {
 	int			mi_ntargets;
 	int			mi_defaulttarget;
-	int			mi_network_timeout;
 #define META_DEFAULT_TARGET_NONE	(-1)
 	int			mi_nretries;
 
@@ -264,21 +259,24 @@ typedef struct metainfo_t {
 
 	metadncache_t		mi_cache;
 	
-	ldap_pvt_thread_mutex_t	mi_conn_mutex;
-	Avlnode			*mi_conntree;
+	ldap_avl_info_t		mi_conninfo;
 
-	unsigned		flags;
+	unsigned		mi_flags;
+#define	li_flags		mi_flags
 /* uses flags as defined in <back-ldap/back-ldap.h> */
 #define	META_BACK_F_ONERR_STOP		0x00010000U
 #define	META_BACK_F_DEFER_ROOTDN_BIND	0x00020000U
 
-#define	META_BACK_ONERR_STOP(mi)	( (mi)->flags & META_BACK_F_ONERR_STOP )
+#define	META_BACK_ONERR_STOP(mi)	( (mi)->mi_flags & META_BACK_F_ONERR_STOP )
 #define	META_BACK_ONERR_CONTINUE(mi)	( !META_BACK_ONERR_CONTINUE( (mi) ) )
 
-#define META_BACK_DEFER_ROOTDN_BIND(mi)	( (mi)->flags & META_BACK_F_DEFER_ROOTDN_BIND )
+#define META_BACK_DEFER_ROOTDN_BIND(mi)	( (mi)->mi_flags & META_BACK_F_DEFER_ROOTDN_BIND )
 
 	int			mi_version;
-	time_t			mi_timeout[ META_OP_LAST ];
+	time_t			mi_network_timeout;
+	time_t			mi_idle_timeout;
+	struct timeval		mi_bind_timeout;
+	time_t			mi_timeout[ LDAP_BACK_OP_LAST ];
 } metainfo_t;
 
 typedef enum meta_op_type {
@@ -303,12 +301,15 @@ meta_back_release_conn(
 	metaconn_t		*mc );
 
 extern int
-meta_back_retry(
+meta_back_retry_lock(
 	Operation		*op,
 	SlapReply		*rs,
 	metaconn_t		*mc,
 	int			candidate,
-	ldap_back_send_t	sendok );
+	ldap_back_send_t	sendok,
+	int			dolock );
+#define meta_back_retry(op, rs, mc, candidate, sendok) \
+	meta_back_retry_lock((op), (rs), (mc), (candidate), (sendok), 1)
 
 extern void
 meta_back_conn_free(
@@ -320,10 +321,17 @@ meta_back_init_one_conn(
 	SlapReply		*rs,
 	metatarget_t		*mt, 
 	metaconn_t		*mc,
-	metasingleconn_t	*msc,
+	int			candidate,
 	int			ispriv,
-	int			isauthz,
 	ldap_back_send_t	sendok );
+
+extern int
+meta_back_single_bind(
+	Operation		*op,
+	SlapReply		*rs,
+	metaconn_t		*mc,
+	int			candidate,
+	int			massage );
 
 extern int
 meta_back_dobind(
@@ -332,7 +340,7 @@ meta_back_dobind(
 	metaconn_t		*mc,
 	ldap_back_send_t	sendok );
 
-int
+extern int
 meta_back_single_dobind(
 	Operation		*op,
 	SlapReply		*rs,

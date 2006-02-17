@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/ldap_op.c,v 1.53.2.2 2005/08/09 21:04:10 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/ldap_op.c,v 1.53.2.4 2006/01/03 22:16:26 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2005 The OpenLDAP Foundation.
+ * Copyright 1998-2006 The OpenLDAP Foundation.
  * Portions Copyright 2003 Mark Benson.
  * All rights reserved.
  *
@@ -61,7 +61,9 @@ static LDAPMod *alloc_ldapmod LDAP_P(( void ));
 static void free_ldapmod LDAP_P(( LDAPMod * ));
 static void free_ldmarr LDAP_P(( LDAPMod ** ));
 static int getmodtype LDAP_P(( char * ));
+#ifdef SLAPD_UNUSED
 static void dump_ldm_array LDAP_P(( LDAPMod ** ));
+#endif
 static int do_bind LDAP_P(( Ri *, int * ));
 static int do_unbind LDAP_P(( Ri * ));
 
@@ -877,6 +879,7 @@ retry:
 /*
  * For debugging.  Print the contents of an ldmarr array.
  */
+#ifdef SLAPD_UNUSED
 static void
 dump_ldm_array(
     LDAPMod **ldmarr
@@ -910,3 +913,4 @@ dump_ldm_array(
 	}
     }
 }
+#endif

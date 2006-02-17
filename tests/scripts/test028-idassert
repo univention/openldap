@@ -1,8 +1,8 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test028-idassert,v 1.7.2.2 2005/10/05 17:41:32 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test028-idassert,v 1.7.2.4 2006/01/03 22:16:29 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2005 The OpenLDAP Foundation.
+## Copyright 1998-2006 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
 echo "running defines.sh"
 . $SRCDIR/scripts/defines.sh
 
-echo "### This test requires the ldap backend."
+echo "### This test requires the LDAP backend and the rwm overlay."
 echo "### If available, and explicitly requested, it can use SASL bind;"
 echo "### note that SASL must be properly set up, and the requested"
 echo "### mechanism must be available.  Define SLAPD_USE_SASL={yes|<mech>},"
@@ -27,8 +27,13 @@ if test $BACKLDAP = "ldapno" ; then
 	exit 0
 fi 
 
-if test $RWM = rwmno ; then 
+if test $RWM = "rwmno" ; then 
 	echo "Rewrite/remap overlay not available, test skipped"
+	exit 0
+fi 
+
+if test $THREADS = "threadsno" ; then
+	echo "Need threads support, test skipped"
 	exit 0
 fi 
 
