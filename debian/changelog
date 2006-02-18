@@ -1,7 +1,6 @@
-openldap2.3 (2.3.11-1) UNRELEASED; urgency=low
+openldap2.3 (2.3.19-1) experimental; urgency=low
 
   [ Matthijs Mohlmann ]
-  Matthijs Mohlmann <matthijs@cacholong.nl>
   * New upstream release. (Closes: #308906, #310282)
   * OpenLDAP checks database before starting up.
     (Closes: #190165, #195079, #294701, #308416)
@@ -9,13 +8,15 @@ openldap2.3 (2.3.11-1) UNRELEASED; urgency=low
     kill debconf interaction) (Closes: #299100)
   * BDB_CONFIG file will be installed on new installations (Closes: #301292)
   * Move to dh_install.
-  * Move to dpatch patch system.
+  * Move to quilt patch system.
+  * Fix manpage.
+  * Make ldiftopasswd and fix_ldif executable. (fixes lintian warnings)
 
   [ Steve Langasek ]
   * debian/slapd.templates: Fix typo durin -> during; re-run
     debconf-updatepo, fixing up the fuzzies (closes: #319596).
 
- -- Debian OpenLDAP Maintainers <pkg-openldap-devel@lists.alioth.debian.org>  Sat, 24 Dec 2005 13:23:25 +0100
+ -- Debian OpenLDAP Maintainers <pkg-openldap-devel@lists.alioth.debian.org>  Sat, 18 Feb 2006 16:46:10 +0100
 
 openldap2.2 (2.2.26-4) unstable; urgency=low
 

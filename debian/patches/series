@@ -5,3 +5,4 @@ ntlm-ldap_h-hack
 ntlm_c
 libldap-makefile_in
 add-autogen-sh
+fixmanpages -p0

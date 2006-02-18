@@ -80,9 +80,9 @@ binary-indep:
 	dh_compress -i
 	dh_gencontrol -i
 	dh_md5sums -i
-	# Don't build the libslapd2.2-dev package so nobody builds against
+	# Don't build the libslapd2.3-dev package so nobody builds against
 	# it. We'll support it after sarge release...
-	#dh_builddeb -i -Nlibslapd2.2-dev
+	#dh_builddeb -i -Nlibslapd2.3-dev
 	dh_builddeb -i
 
 binary-arch: install-stamp
@@ -114,9 +114,9 @@ binary-arch: install-stamp
 	dh_shlibdeps -a -l$(installdir)/usr/lib
 	dh_gencontrol -a
 	dh_md5sums -a
-	# Don't build the libldap2.2-dev package until after sarge release
+	# Don't build the libldap2.3-dev package until after sarge release
 	# so nobody can build against it.
-	dh_builddeb -a -Nlibldap2.2-dev
+	dh_builddeb -a -Nlibldap2.3-dev
 
 clean: clean1 unpatch
 clean1:
@@ -135,7 +135,7 @@ clean1:
 	rm -rf $(builddir) $(builddir_notls) $(installdir)
 	
 	dh_clean
-	# XXX: remove after libldap2.2-dev is officially built
-	rm -Rf debian/libldap2.2-dev
+	# XXX: remove after libldap2.3-dev is officially built
+	rm -Rf debian/libldap2.3-dev
 
 .PHONY: binary binary-arch binary-indep build clean
