@@ -1,4 +1,4 @@
-openldap2.3 (2.3.19-1) experimental; urgency=low
+openldap2.3 (2.3.19-1) unstable; urgency=low
 
   [ Matthijs Mohlmann ]
   * New upstream release. (Closes: #308906, #310282)
@@ -21,7 +21,7 @@ openldap2.3 (2.3.19-1) experimental; urgency=low
   * debian/slapd.templates: Fix typo durin -> during; re-run
     debconf-updatepo, fixing up the fuzzies (closes: #319596).
 
- -- Debian OpenLDAP Maintainers <pkg-openldap-devel@lists.alioth.debian.org>  Sat, 18 Feb 2006 18:04:25 +0100
+ -- Debian OpenLDAP Maintainers <pkg-openldap-devel@lists.alioth.debian.org>  Sat, 18 Feb 2006 19:56:54 +0100
 
 openldap2.2 (2.2.26-4) unstable; urgency=low
 
