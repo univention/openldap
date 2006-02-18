@@ -527,6 +527,9 @@ create_new_configuration() {						# {{{
 	fi
 	create_new_slapd_conf "$basedn" "$backend"
 	create_new_directory "$basedn" "$dc"
+  # Now that we created the new directory we don't need the passwords in the
+  # debconf database anymore. So wipe them.
+  wipe_admin_pass
 	copy_example_DB_CONFIG /var/lib/ldap
 }
 # }}}
@@ -948,7 +951,17 @@ crypt_admin_pass() {							# {{{
 # XXX: This is the standard unix crypt. Maybe we can get something stronger?
 
   	db_get slapd/password1
-  	db_set slapd/internal/adminpw `create_password_hash "$RET"`
+    if [ -z "$RET" ]; then
+      db_set slapd/internal/adminpw `create_password_hash "$RET"`
+    fi
+}
+
+wipe_admin_pass() {
+# Remove passwords after creating the initial ldap database.
+# Usage: wipe_admin_pass
+    db_set slapd/password1 ""
+    db_set slapd/password2 ""
+    db_set slapd/internal/adminpw ""
 }
 
 # }}}

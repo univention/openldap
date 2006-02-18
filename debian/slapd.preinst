@@ -16,4 +16,8 @@ if [ "$MODE" = upgrade ]; then
 	dump_databases
 fi
 
+#DEBHELPER#
+
+exit 0
+
 # vim: set sw=8 foldmethod=marker: 
