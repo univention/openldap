@@ -102,47 +102,34 @@
 #
 #SLAPD Backend Options:
 #--enable-backends	  enable all available backends no|yes|mod
+--enable-backends=mod
 #--enable-bdb	  enable Berkeley DB backend no|yes|mod [yes]
---enable-bdb=mod
 #--enable-dnssrv	  enable dnssrv backend no|yes|mod [no]
---enable-dnssrv=mod
 #--enable-hdb	  enable Hierarchical DB backend no|yes|mod [yes]
---enable-hdb=mod
 #--enable-ldap	  enable ldap backend no|yes|mod [no]
---enable-ldap=yes
 #--enable-ldbm	  enable ldbm backend no|yes|mod [no]
---enable-ldbm=mod
 #--enable-ldbm-api   use LDBM API auto|berkeley|bcompat|mdbm|gdbm [auto]
 --enable-ldbm-api=berkeley
 #--enable-ldbm-type  use LDBM type auto|btree|hash [auto]
 #--enable-meta	  enable metadirectory backend no|yes|mod [no]
---enable-meta=mod
 #--enable-monitor	  enable monitor backend no|yes|mod [yes]
---enable-monitor=mod
 #--enable-null	  enable null backend no|yes|mod [no]
---enable-null=mod
 #--enable-passwd	  enable passwd backend no|yes|mod [no]
---enable-passwd=mod
 #--enable-perl	  enable perl backend no|yes|mod [no]
---enable-perl=mod
 #--enable-relay  	  enable relay backend no|yes|mod [yes]
---enable-relay=mod
 #--enable-shell	  enable shell backend no|yes|mod [no]
---enable-shell=mod
 #--enable-sql	  enable sql backend no|yes|mod [no]
---enable-sql=mod
 #
 #SLAPD Overlay Options:
 #--enable-overlays	  enable all available overlays no|yes|mod
+--enable-overlays=mod
 #--enable-accesslog	  In-Directory Access Logging overlay no|yes|mod [no]
 #--enable-denyop  	  Deny Operation overlay no|yes|mod [no]
 #--enable-dyngroup	  Dynamic Group overlay no|yes|mod [no]
---enable-dyngroup=mod
 #--enable-dynlist	  Dynamic List overlay no|yes|mod [no]
 #--enable-lastmod	  Last Modification overlay no|yes|mod [no]
 #--enable-ppolicy	  Password Policy overlay no|yes|mod [no]
 #--enable-proxycache	  Proxy Cache overlay no|yes|mod [no]
---enable-proxycache=mod
 #--enable-refint	  Referential Integrity overlay no|yes|mod [no]
 #--enable-retcode	  Return Code testing overlay no|yes|mod [no]
 #--enable-rwm       	  Rewrite/Remap overlay no|yes|mod [no]

@@ -90,7 +90,7 @@ database_format_changed() {						# {{{
 
 	db_get slapd/migrate_ldbm_to_bdb
 	if [ "$RET" = "true" ] || dpkg --compare-versions \
-			"$OLD_VERSION" lt-nl "2.2.23"; then
+			"$OLD_VERSION" lt-nl "2.3.19"; then
 		return 0
 	else
 		return 1
@@ -951,7 +951,7 @@ crypt_admin_pass() {							# {{{
 # XXX: This is the standard unix crypt. Maybe we can get something stronger?
 
   	db_get slapd/password1
-    if [ -z "$RET" ]; then
+    if [ ! -z "$RET" ]; then
       db_set slapd/internal/adminpw `create_password_hash "$RET"`
     fi
 }

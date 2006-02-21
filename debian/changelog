@@ -16,12 +16,18 @@ openldap2.3 (2.3.19-1) unstable; urgency=low
     slapd/internal/adminpw to be empty. This fixes the issue with having an
     empty password in the ldap database. (Closes: #343113, #347725)
   * Added #DEBHELPER# token to fix a lintian warning.
+  * bdb has changed between major versions, so dump the database and import it
+    again for versions before 2.3.19.
+  * Remove comments from debian/control (The out commented control information
+    is actually in debian/control.dev)
+  * Enable all backends and overlays with: --enable-backends=mod and
+    --enable-overlays=mod
 
   [ Steve Langasek ]
   * debian/slapd.templates: Fix typo durin -> during; re-run
     debconf-updatepo, fixing up the fuzzies (closes: #319596).
 
- -- Debian OpenLDAP Maintainers <pkg-openldap-devel@lists.alioth.debian.org>  Sat, 18 Feb 2006 19:56:54 +0100
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Mon, 20 Feb 2006 23:07:03 +0100
 
 openldap2.2 (2.2.26-4) unstable; urgency=low
 

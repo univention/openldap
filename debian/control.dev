@@ -1,4 +1,4 @@
-Package: libldap2.2-dev
+Package: libldap2.3-dev
 Section: libdevel
 Priority: extra
 Architecture: any
@@ -11,7 +11,7 @@ Description: OpenLDAP development libraries
  libraries. It includes headers, libraries and links to allow static and
  dynamic linking.
 
-Package: libslapd2.2-dev
+Package: libslapd2.3-dev
 Section: libdevel
 Priority: extra
 Architecture: all
