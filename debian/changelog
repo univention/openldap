@@ -1,7 +1,8 @@
 openldap2.3 (2.3.19-1) unstable; urgency=low
 
   [ Matthijs Mohlmann ]
-  * New upstream release. (Closes: #308906, #310282)
+  * New upstream release. (Closes: #308906, #310282, #353877, #335618, #315158)
+    (Closes: #310282)
   * OpenLDAP checks database before starting up.
     (Closes: #190165, #195079, #294701, #308416)
   * move_old_database_away isn't called in a while loop anymore (which would
@@ -22,12 +23,14 @@ openldap2.3 (2.3.19-1) unstable; urgency=low
     is actually in debian/control.dev)
   * Enable all backends and overlays with: --enable-backends=mod and
     --enable-overlays=mod
+  * Add | debconf-2.0 to unblock cdebconf transition (Closes: #332053)
+  * Added Danish debconf translation (Closes: #353897)
 
   [ Steve Langasek ]
   * debian/slapd.templates: Fix typo durin -> during; re-run
     debconf-updatepo, fixing up the fuzzies (closes: #319596).
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Mon, 20 Feb 2006 23:07:03 +0100
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Tue, 21 Feb 2006 21:45:13 +0100
 
 openldap2.2 (2.2.26-4) unstable; urgency=low
 
