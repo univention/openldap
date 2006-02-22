@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/controls.c,v 1.125.2.19 2006/01/10 01:27:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/controls.c,v 1.125.2.20 2006/02/15 21:32:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -117,6 +117,12 @@ static struct slap_control control_defs[] = {
  		(int)offsetof(struct slap_control_ids, sc_valuesReturnFilter),
  		SLAP_CTRL_GLOBAL|SLAP_CTRL_SEARCH, NULL,
 		parseValuesReturnFilter, LDAP_SLIST_ENTRY_INITIALIZER(next) },
+#ifdef LDAP_CONTROL_X_VALUESRETURNFILTER
+ 	{ LDAP_CONTROL_X_VALUESRETURNFILTER,
+ 		(int)offsetof(struct slap_control_ids, sc_valuesReturnFilter),
+ 		SLAP_CTRL_GLOBAL|SLAP_CTRL_SEARCH, NULL,
+		parseValuesReturnFilter, LDAP_SLIST_ENTRY_INITIALIZER(next) },
+#endif
 	{ LDAP_CONTROL_PAGEDRESULTS,
  		(int)offsetof(struct slap_control_ids, sc_pagedResults),
 		SLAP_CTRL_SEARCH, NULL,

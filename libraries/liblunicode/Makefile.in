@@ -1,5 +1,5 @@
 # Makefile.in for LDAP -llunicode
-# $OpenLDAP: pkg/ldap/libraries/liblunicode/Makefile.in,v 1.26.2.3 2006/01/03 22:16:10 kurt Exp $
+# $OpenLDAP: pkg/ldap/libraries/liblunicode/Makefile.in,v 1.26.2.4 2006/02/13 17:48:24 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2006 The OpenLDAP Foundation.
@@ -29,7 +29,9 @@ XLIBS = $(LDAP_LIBLBER_LA) $(LDAP_LIBLUTIL_A)
 LDAP_INCDIR= ../../include       
 LDAP_LIBDIR= ../../libraries
 
-uctable.h: ucgendat.c $(srcdir)/UnicodeData.txt $(srcdir)/CompositionExclusions.txt
+uctable.h: $(XXDIR)/uctable.h
+
+$(XXDIR)/uctable.h: $(XXDIR)/ucgendat.c $(srcdir)/UnicodeData.txt $(srcdir)/CompositionExclusions.txt
 	$(MAKE) ucgendat
 	./ucgendat $(srcdir)/UnicodeData.txt -x $(srcdir)/CompositionExclusions.txt
 

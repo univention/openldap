@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_pblock.c,v 1.27.2.6 2006/01/03 22:16:26 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_pblock.c,v 1.27.2.7 2006/02/13 17:28:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2002-2006 The OpenLDAP Foundation.
@@ -293,13 +293,13 @@ pblock_get_param_class( int param )
 static void
 pblock_lock( Slapi_PBlock *pb )
 {
-	ldap_pvt_thread_mutex_lock(&pb->pb_mutex);
+	ldap_pvt_thread_mutex_lock( &pb->pb_mutex );
 }
 
 static void
 pblock_unlock( Slapi_PBlock *pb )
 {
-	ldap_pvt_thread_mutex_unlock(&pb->pb_mutex);
+	ldap_pvt_thread_mutex_unlock( &pb->pb_mutex );
 }
 
 static int 

@@ -1,5 +1,5 @@
 /* modify.c - bdb backend modify routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modify.c,v 1.124.2.13 2006/01/16 18:59:27 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modify.c,v 1.124.2.14 2006/02/13 19:50:35 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2006 The OpenLDAP Foundation.
@@ -298,8 +298,7 @@ bdb_modify( Operation *op, SlapReply *rs )
 
 	ctrls[num_ctrls] = NULL;
 
-	if ( !SLAP_SHADOW( op->o_bd ))
-		slap_mods_opattrs( op, &op->orm_modlist, 1 );
+	slap_mods_opattrs( op, &op->orm_modlist, 1 );
 
 	if( 0 ) {
 retry:	/* transaction retry */
@@ -590,8 +589,6 @@ return_results:
 		attrs_free( dummy.e_attrs );
 	}
 	send_ldap_result( op, rs );
-	if ( !SLAP_SHADOW( op->o_bd ))
-		slap_graduate_commit_csn( op );
 
 	if( rs->sr_err == LDAP_SUCCESS && bdb->bi_txn_cp ) {
 		TXN_CHECKPOINT( bdb->bi_dbenv,
@@ -599,6 +596,8 @@ return_results:
 	}
 
 done:
+	slap_graduate_commit_csn( op );
+
 	if( ltid != NULL ) {
 		TXN_ABORT( ltid );
 	}

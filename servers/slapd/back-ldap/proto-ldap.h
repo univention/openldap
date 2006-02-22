@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/proto-ldap.h,v 1.3.2.9 2006/01/16 21:13:40 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/proto-ldap.h,v 1.3.2.10 2006/02/16 22:21:27 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2006 The OpenLDAP Foundation.
@@ -59,8 +59,9 @@ int ldap_back_op_result( ldapconn_t *lc, Operation *op, SlapReply *rs,
 
 int ldap_back_init_cf( BackendInfo *bi );
 
+extern int ldap_back_conndn_cmp( const void *c1, const void *c2);
 extern int ldap_back_conn_cmp( const void *c1, const void *c2);
-extern int ldap_back_conn_dup( void *c1, void *c2 );
+extern int ldap_back_conndn_dup( void *c1, void *c2 );
 extern void ldap_back_conn_free( void *c );
 
 extern int

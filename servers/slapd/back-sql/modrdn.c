@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/modrdn.c,v 1.14.2.7 2006/01/03 22:16:24 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/modrdn.c,v 1.14.2.8 2006/02/13 19:50:36 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -520,8 +520,6 @@ done:;
 	}
 #endif /* SLAP_ACL_HONOR_DISCLOSE */
 
-	send_ldap_result( op, rs );
-
 	/*
 	 * Commit only if all operations succeed
 	 */
@@ -534,6 +532,9 @@ done:;
 
 		SQLTransact( SQL_NULL_HENV, dbh, CompletionType );
 	}
+
+	send_ldap_result( op, rs );
+	slap_graduate_commit_csn( op );
 
 	if ( !BER_BVISNULL( &realnew_dn ) && realnew_dn.bv_val != new_dn.bv_val ) {
 		ch_free( realnew_dn.bv_val );

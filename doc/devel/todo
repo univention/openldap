@@ -70,4 +70,4 @@ JLDAP TODO items, see:
   http://www.openldap.org/devel/cvsweb.cgi/~checkout~/design/todo.txt?rev=1&cvsroot=JLDAP
 
 ---
-$OpenLDAP: pkg/ldap/doc/devel/todo,v 1.132.2.4 2006/01/16 19:06:12 kurt Exp $
+$OpenLDAP: pkg/ldap/doc/devel/todo,v 1.132.2.5 2006/02/12 03:19:48 kurt Exp $

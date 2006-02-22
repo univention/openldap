@@ -1,5 +1,5 @@
 /* config.c - configuration file handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.341.2.20 2006/01/03 22:16:13 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.341.2.21 2006/02/13 17:28:42 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -1497,6 +1497,8 @@ int config_generic_wrapper( Backend *be, const char *fname, int lineno,
 	c.argc = argc;
 	c.argv = argv;
 	c.valx = -1;
+	c.line = line;
+	c.op = SLAP_CONFIG_ADD;
 	snprintf( c.log, sizeof( c.log ), "%s: line %d", fname, lineno );
 
 	rc = SLAP_CONF_UNKNOWN;

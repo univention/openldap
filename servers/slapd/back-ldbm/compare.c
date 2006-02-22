@@ -1,5 +1,5 @@
 /* compare.c - ldbm backend compare routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/compare.c,v 1.49.2.3 2006/01/07 19:03:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/compare.c,v 1.49.2.5 2006/02/13 20:38:34 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -46,10 +46,7 @@ ldbm_back_compare(
 	e = dn2entry_r( op->o_bd, &op->o_req_ndn, &matched );
 	if ( e == NULL ) {
 		if ( matched != NULL ) {
-			struct berval	bv;
-
-			ber_str2bv_x( matched, 0, 1, &bv, op->o_tmpmemctx );
-			rs->sr_matched = bv.bv_val;
+			rs->sr_matched = ch_strdup( matched->e_dn );
 			rs->sr_ref = is_entry_referral( matched )
 				? get_entry_referrals( op, matched )
 				: NULL;

@@ -1,5 +1,5 @@
 /* cache.c - routines to maintain an in-core cache of entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.88.2.14 2006/01/07 18:51:55 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.88.2.15 2006/02/13 17:28:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2006 The OpenLDAP Foundation.
@@ -642,6 +642,7 @@ bdb_cache_lru_add(
 			rtask.arg = bdb;
 			bdb_cache_lru_purge( NULL, &rtask );
 		} else {
+			int wake = 0;
 			ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
 			if ( bdb->bi_cache_task ) {
 				if ( !ldap_pvt_runqueue_isrunning( &slapd_rq,
@@ -652,13 +653,18 @@ bdb_cache_lru_add(
 						0 );
 					/* But don't try to reschedule it while it's running */
 					bdb->bi_cache_task->interval.tv_sec = 3600;
+					wake = 1;
 				}
 			} else {
 				bdb->bi_cache_task = ldap_pvt_runqueue_insert( &slapd_rq, 3600,
 					bdb_cache_lru_purge, bdb, "bdb_cache_lru_purge",
 					bdb->bi_dbenv_home );
+				wake = 1;
 			}
 			ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
+			/* Don't bother waking if the purge task is already running */
+			if ( wake )
+				slap_wake_listener();
 		}
 	}
 }

@@ -1,5 +1,5 @@
 /* delete.c - bdb backend delete routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/delete.c,v 1.132.2.7 2006/01/16 18:59:27 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/delete.c,v 1.132.2.8 2006/02/13 19:50:35 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2006 The OpenLDAP Foundation.
@@ -58,7 +58,7 @@ bdb_delete( Operation *op, SlapReply *rs )
 		op->o_req_dn.bv_val, 0, 0 );
 
 	/* allocate CSN */
-	if ( !SLAP_SHADOW( op->o_bd )) {
+	if ( BER_BVISEMPTY( &op->o_csn )) {
 		struct berval csn;
 		char csnbuf[LDAP_LUTIL_CSNSTR_BUFSIZE];
 
@@ -525,8 +525,7 @@ return_results:
 	op->o_private = NULL;
 
 	send_ldap_result( op, rs );
-	if ( !SLAP_SHADOW( op->o_bd ))
-		slap_graduate_commit_csn( op );
+	slap_graduate_commit_csn( op );
 
 	if( preread_ctrl != NULL ) {
 		slap_sl_free( (*preread_ctrl)->ldctl_value.bv_val, op->o_tmpmemctx );

@@ -1,5 +1,5 @@
 /* slap.h - stand alone ldap server include file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.612.2.37 2006/01/03 22:16:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.612.2.38 2006/02/13 20:37:39 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -1538,6 +1538,7 @@ LDAP_SLAPD_V (int) slapMode;
 #define	SLAP_TOOL_READMAIN	0x0200
 #define	SLAP_TOOL_READONLY	0x0400
 #define	SLAP_TOOL_QUICK		0x0800
+#define SLAP_TOOL_NO_SCHEMA_CHECK	0x1000
 
 #define SB_TLS_DEFAULT		(-1)
 #define SB_TLS_OFF		0

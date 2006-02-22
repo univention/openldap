@@ -1,5 +1,5 @@
 /* delete.c - ldbm backend delete routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/delete.c,v 1.80.2.4 2006/01/03 22:16:19 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/delete.c,v 1.80.2.5 2006/02/13 19:50:35 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -46,7 +46,7 @@ ldbm_back_delete(
 	ldap_pvt_thread_rdwr_wlock(&li->li_giant_rwlock);
 
 	/* allocate CSN */
-	if ( !SLAP_SHADOW( op->o_bd )) {
+	if ( BER_BVISEMPTY( &op->o_csn )) {
 		struct berval csn;
 		char csnbuf[LDAP_LUTIL_CSNSTR_BUFSIZE];
 
@@ -217,8 +217,7 @@ return_results:;
 	ldap_pvt_thread_rdwr_wunlock(&li->li_giant_rwlock);
 
 	send_ldap_result( op, rs );
-	if ( !SLAP_SHADOW( op->o_bd ))
-		slap_graduate_commit_csn( op );
+	slap_graduate_commit_csn( op );
 
 	return rc;
 }

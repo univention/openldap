@@ -1,5 +1,5 @@
 /* ldif.c - the ldif backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldif/ldif.c,v 1.1.2.14 2006/01/03 22:16:20 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldif/ldif.c,v 1.1.2.17 2006/02/15 21:32:26 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2006 The OpenLDAP Foundation.
@@ -174,6 +174,8 @@ static int spew_entry(Entry * e, struct berval * path) {
 			rs = LDAP_NO_SUCH_OBJECT;
 		else
 			rs = LDAP_UNWILLING_TO_PERFORM;
+		Debug( LDAP_DEBUG_ANY, "could not open \"%s\": %s\n",
+			path->bv_val, strerror( errno ), 0 );
 	}
 	else {
 		struct berval rdn;
@@ -296,9 +298,9 @@ static int r_enum_tree(enumCookie *ck, struct berval *path,
 
 	fd = open( path->bv_val, O_RDONLY );
 	if ( fd < 0 ) {
-		Debug( LDAP_DEBUG_TRACE,
-			"=> ldif_enum_tree: failed to open %s\n",
-			path->bv_val, 0, 0 );
+		Debug( LDAP_DEBUG_ANY,
+			"=> ldif_enum_tree: failed to open %s: %s\n",
+			path->bv_val, strerror(errno), 0 );
 		return LDAP_NO_SUCH_OBJECT;
 	}
 
@@ -767,6 +769,7 @@ static int ldif_back_add(Operation *op, SlapReply *rs) {
 	int statres;
 	char textbuf[SLAP_TEXT_BUFLEN];
 
+	Debug( LDAP_DEBUG_TRACE, "ldif_back_add: \"%s\"\n", dn.bv_val, 0, 0);
 	slap_add_opattrs( op, &rs->sr_text, textbuf, sizeof( textbuf ), 1 );
 
 	rs->sr_err = entry_schema_check(op, e, NULL, 0,
@@ -789,11 +792,15 @@ static int ldif_back_add(Operation *op, SlapReply *rs) {
 			base.bv_val[base.bv_len] = '\0';
 			if(statres == -1 && errno == ENOENT) {
 				rs->sr_err = LDAP_NO_SUCH_OBJECT; /* parent doesn't exist */
+				rs->sr_text = "Parent does not exist";
 			}
 			else if(statres != -1) { /* create parent */
 				int mkdirres = mkdir(base.bv_val, 0750);
 				if(mkdirres == -1) {
 					rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
+					rs->sr_text = "Could not create parent folder";
+					Debug( LDAP_DEBUG_ANY, "could not create folder \"%s\": %s\n",
+						base.bv_val, strerror( errno ), 0 );
 				}
 			}
 			else
@@ -806,6 +813,11 @@ static int ldif_back_add(Operation *op, SlapReply *rs) {
 				rs->sr_err = (int) spew_entry(e, &leaf_path);
 				ldap_pvt_thread_mutex_unlock(&entry2str_mutex);
 			}
+			else if ( statres == -1 ) {
+				rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
+				Debug( LDAP_DEBUG_ANY, "could not stat file \"%s\": %s\n",
+					leaf_path.bv_val, strerror( errno ), 0 );
+			}
 			else /* it already exists */
 				rs->sr_err = LDAP_ALREADY_EXISTS;
 		}
@@ -816,9 +828,10 @@ static int ldif_back_add(Operation *op, SlapReply *rs) {
 	ldap_pvt_thread_mutex_unlock(&ni->li_mutex);
 
 send_res:
+	Debug( LDAP_DEBUG_TRACE, 
+			"ldif_back_add: err: %d text: %s\n", rs->sr_err, rs->sr_text, 0);
 	send_ldap_result(op, rs);
-	if ( !SLAP_SHADOW( op->o_bd ))
-		slap_graduate_commit_csn( op );
+	slap_graduate_commit_csn( op );
 	return 0;
 }
 
@@ -829,8 +842,7 @@ static int ldif_back_modify(Operation *op, SlapReply *rs) {
 	Entry * entry = NULL;
 	int spew_res;
 
-	if ( !SLAP_SHADOW( op->o_bd ))
-		slap_mods_opattrs( op, &op->orm_modlist, 1 );
+	slap_mods_opattrs( op, &op->orm_modlist, 1 );
 
 	ldap_pvt_thread_mutex_lock(&ni->li_mutex);
 	dn2path(&op->o_req_ndn, &op->o_bd->be_nsuffix[0], &ni->li_base_path,
@@ -860,8 +872,7 @@ static int ldif_back_modify(Operation *op, SlapReply *rs) {
 	rs->sr_text = NULL;
 	ldap_pvt_thread_mutex_unlock(&ni->li_mutex);
 	send_ldap_result(op, rs);
-	if ( !SLAP_SHADOW( op->o_bd ))
-		slap_graduate_commit_csn( op );
+	slap_graduate_commit_csn( op );
 	return 0;
 }
 
@@ -870,7 +881,7 @@ static int ldif_back_delete(Operation *op, SlapReply *rs) {
 	struct berval path = BER_BVNULL;
 	int res = 0;
 
-	if ( !SLAP_SHADOW( op->o_bd )) {
+	if ( BER_BVISEMPTY( &op->o_csn )) {
 		struct berval csn;
 		char csnbuf[LDAP_LUTIL_CSNSTR_BUFSIZE];
 
@@ -903,8 +914,7 @@ static int ldif_back_delete(Operation *op, SlapReply *rs) {
 	SLAP_FREE(path.bv_val);
 	ldap_pvt_thread_mutex_unlock(&ni->li_mutex);
 	send_ldap_result(op, rs);
-	if ( !SLAP_SHADOW( op->o_bd ))
-		slap_graduate_commit_csn( op );
+	slap_graduate_commit_csn( op );
 	return 0;
 }
 
@@ -1026,6 +1036,7 @@ static int ldif_back_modrdn(Operation *op, SlapReply *rs) {
 	ldap_pvt_thread_mutex_unlock(&ni->li_mutex);
 	ldap_pvt_thread_mutex_unlock(&entry2str_mutex);
 	send_ldap_result(op, rs);
+	slap_graduate_commit_csn( op );
 	return 0;
 }
 

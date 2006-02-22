@@ -1,5 +1,38 @@
 OpenLDAP 2.3 Change Log
 
+OpenLDAP 2.3.20 Release
+	Added libldap SASL workaround for broken LDAP servers (ITS#4391)
+	Fixed libldap/slapd valuesReturnFilter OID (ITS#4404)
+	Fixed slapd config_generic_wrapper missing parameter bug (ITS#4376)
+	Fixed slapd extensible filter value normalization bug (ITS#4380)
+	Fixed slapd context CSN not updating issue (ITS#4384)
+	Fixed slapd non-read/write epoll event handling (ITS#4395)
+	Fixed slapd syncrepl de-normalize UUID issue
+	Fixed slapd syncrepl dynamic reconfig issue (ITS#4401)
+	Added slapd syncrepl log messages (ITS#4369)
+	Added slapd permissive modify/increment support
+	Added slapd dynamically registered debug level support
+	Fixed slapd connectionless LDAP support
+	Fixed slapd cn=config error on create failure issue (ITS#4407)
+	Fixed slapd-bdb/hdb wake listener on runqueue submit (ITS#4385)
+	Fixed slapd-ldap/meta resources leaks on multiple binds (ITS#4387)
+	Fixed slapd-ldap/meta assert on connection shutdown (ITS#4390)
+	Added slapd-meta subtree-exclude feature
+	Fixed slapo-syncprov update latency issue (ITS#4385)
+	Fixed slapo-auditlog crash (ITS#4394)
+	Fixed slapo-accesslog unbind crash (ITS#4386)
+	Fixed slurpd reject error formating (ITS#4382)
+	Fixed ldappasswd unbind issue (ITS#4403)
+	Fixed slapo-pcache assert on attrsonly search (ITS#4406)
+	Added slapo-pcache max_queries enhancement (ITS#4225)
+	Added slapo-pcache negative caching enhancement
+	Build Environment
+		Fixed liblunicode cross compiling problem (ITS#4363)
+		Updated <netinet/tcp.h> detection for AIX (ITS#4312)
+		Updated multi-precision library detection
+	Documentation
+		Updated misc. manual pages
+
 OpenLDAP 2.3.19 Release
 	Fixed libldap disable DH key exchange with DH params (ITS#4354)
 	Fixed libldap_r thread pool destroy hang (ITS#4349,ITS#4368)
@@ -8,8 +41,8 @@ OpenLDAP 2.3.19 Release
 	Fixed slapd-bdb/hdb auto-recovery issue (ITS#4361,ITS#4373)
 	Fixed slapd-bdb/hdb BDB 4.4 compatibility issues (ITS#4362)
 	Fixed slapo-ppolicy modify issue (ITS#4355)
-	Fixed slapo-syncprov/pache filter dup issue (ITS#4364)
-	Fixed slapo-syncprov playlog netries reset issue (ITS#4365)
+	Fixed slapo-syncprov/pcache filter dup issue (ITS#4364)
+	Fixed slapo-syncprov playlog nentries reset issue (ITS#4365)
 	Build environment
 		Fixed slaptools when --disable-debug (ITS#4351)
 		Fixed slapd(8) solaris select(2) issue (ITS#4357)

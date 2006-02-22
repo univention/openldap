@@ -49,6 +49,8 @@ rfc3876.txt Returning Matched Values with LDAP (PS)
 rfc3909.txt LDAP Cancel Operation (PS)
 rfc3928.txt LDAP Client Update Protocol (PS)
 rfc4013.txt SASLprep (PS)
+rfc4370.txt LDAP Proxied Authorization Control (PS)
+rfc4373.txt LBURP (I)
 
 Legend:
 STD	Standard
@@ -61,4 +63,4 @@ BCP	Best Common Practice
 
 Please see http://www.rfc-editor.org/ for up-to-date status information.
 
-$OpenLDAP: pkg/ldap/doc/rfc/INDEX,v 1.38.2.2 2005/04/29 21:29:02 kurt Exp $
+$OpenLDAP: pkg/ldap/doc/rfc/INDEX,v 1.38.2.3 2006/02/12 03:19:48 kurt Exp $

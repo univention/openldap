@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.112.2.11 2006/01/03 22:16:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.112.2.12 2006/02/12 03:28:09 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -753,13 +753,31 @@ ldap_int_sasl_bind(
 			/* we're done, no need to step */
 			if( scred ) {
 				/* but we got additional data? */
-				Debug( LDAP_DEBUG_TRACE,
-					"ldap_int_sasl_bind: rc=%d sasl=%d len=%ld\n",
-					rc, saslrc, scred ? scred->bv_len : -1 );
-
-				ber_bvfree( scred );
-				rc = ld->ld_errno = LDAP_LOCAL_ERROR;
-				goto done;
+#define KLUDGE_FOR_MSAD
+#ifdef 	KLUDGE_FOR_MSAD
+				/*
+				 * MSAD provides empty additional data in violation of LDAP
+				 * technical specifications.  As no existing SASL mechanism
+				 * allows empty data with an outcome message, just ignore it
+				 * for now.  Hopefully MS will fix their bug before someone
+				 * defines a mechanism with possibly empty additional data.
+				 */
+				if( scred->bv_len == 0 ) {
+					Debug( LDAP_DEBUG_ANY,
+						"ldap_int_sasl_bind: ignoring "
+							" bogus empty data provided with SASL outcome message.\n",
+						rc, saslrc, scred->bv_len );
+					ber_bvfree( scred );
+				} else
+#endif
+				{
+					Debug( LDAP_DEBUG_TRACE,
+						"ldap_int_sasl_bind: rc=%d sasl=%d len=%ld\n",
+						rc, saslrc, scred->bv_len );
+					rc = ld->ld_errno = LDAP_LOCAL_ERROR;
+					ber_bvfree( scred );
+					goto done;
+				}
 			}
 			break;
 		}

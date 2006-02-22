@@ -1,5 +1,5 @@
 /* back-ldap.h - ldap backend header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.63.2.16 2006/01/10 01:07:31 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.63.2.17 2006/02/16 22:21:27 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -83,6 +83,7 @@ typedef struct ldapconn_t {
 
 	unsigned		lc_refcnt;
 	unsigned		lc_flags;
+	time_t			lc_create_time;
 	time_t			lc_time;
 } ldapconn_t;
 
@@ -189,6 +190,7 @@ typedef struct ldapinfo_t {
 	ldap_avl_info_t	li_conninfo;
 
 	time_t		li_network_timeout;
+	time_t		li_conn_ttl;
 	time_t		li_idle_timeout;
 	time_t		li_timeout[ LDAP_BACK_OP_LAST ];
 } ldapinfo_t;

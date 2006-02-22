@@ -1,5 +1,5 @@
 /* ldappasswd -- a tool for change LDAP passwords */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldappasswd.c,v 1.127.2.4 2006/01/03 22:16:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldappasswd.c,v 1.127.2.5 2006/02/16 20:06:03 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -411,7 +411,8 @@ main( int argc, char *argv[] )
 
 done:
 	/* disconnect from server */
-	tool_unbind( ld ); 
+	if ( ld )
+		tool_unbind( ld ); 
 	tool_destroy();
 	return rc;
 }

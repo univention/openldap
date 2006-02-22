@@ -1,4 +1,4 @@
-openldap2.3 (2.3.19-1) unstable; urgency=low
+openldap2.3 (2.3.20-1) unstable; urgency=low
 
   [ Matthijs Mohlmann ]
   * New upstream release. (Closes: #308906, #310282, #353877, #335618, #315158)
@@ -30,7 +30,7 @@ openldap2.3 (2.3.19-1) unstable; urgency=low
   * debian/slapd.templates: Fix typo durin -> during; re-run
     debconf-updatepo, fixing up the fuzzies (closes: #319596).
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Tue, 21 Feb 2006 21:45:13 +0100
+ -- Russ Allbery <rra@debian.org>  Tue, 21 Feb 2006 15:43:46 -0800
 
 openldap2.2 (2.2.26-4) unstable; urgency=low
 

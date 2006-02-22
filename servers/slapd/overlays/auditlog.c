@@ -1,5 +1,5 @@
 /* auditlog.c - log modifications for audit/history purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/auditlog.c,v 1.1.2.3 2006/01/03 22:16:24 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/auditlog.c,v 1.1.2.4 2006/02/13 17:28:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2006 The OpenLDAP Foundation.
@@ -36,7 +36,7 @@ typedef struct auditlog_data {
 	char *ad_logfile;
 } auditlog_data;
 
-int fprint_ldif(FILE *f, char *name, char *val, ber_len_t len) {
+static int fprint_ldif(FILE *f, char *name, char *val, ber_len_t len) {
 	char *s;
 	if((s = ldif_put(LDIF_PUT_VALUE, name, val, len)) == NULL)
 		return(-1);
@@ -45,7 +45,7 @@ int fprint_ldif(FILE *f, char *name, char *val, ber_len_t len) {
 	return(0);
 }
 
-int auditlog_response(Operation *op, SlapReply *rs) {
+static int auditlog_response(Operation *op, SlapReply *rs) {
 	slap_overinst *on = (slap_overinst *)op->o_bd->bd_info;
 	auditlog_data *ad = on->on_bi.bi_private;
 	FILE *f;
@@ -78,7 +78,9 @@ int auditlog_response(Operation *op, SlapReply *rs) {
 		case LDAP_REQ_MODIFY:
 			what = "modify";
 			for(m = op->orm_modlist; m; m = m->sml_next)
-				if( m->sml_desc == slap_schema.si_ad_modifiersName ) {
+				if( m->sml_desc == slap_schema.si_ad_modifiersName &&
+					( m->sml_op == LDAP_MOD_ADD ||
+					m->sml_op == LDAP_MOD_REPLACE )) {
 					who = m->sml_values[0].bv_val;
 					break;
 				}

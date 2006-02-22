@@ -1,5 +1,5 @@
 /* value.c - routines for dealing with values */
-/* $OpenLDAP: pkg/ldap/servers/slapd/value.c,v 1.79.2.10 2006/01/03 22:16:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/value.c,v 1.79.2.11 2006/02/13 17:28:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -153,8 +153,12 @@ int asserted_value_validate_normalize(
 		rc = (mr->smr_syntax->ssyn_pretty)( mr->smr_syntax, in, &pval, ctx );
 		in = &pval;
 
-	} else {
+	} else if ( mr->smr_syntax->ssyn_validate ) {
 		rc = (mr->smr_syntax->ssyn_validate)( mr->smr_syntax, in );
+
+	} else {
+		*text = "inappropriate matching request";
+		return LDAP_INAPPROPRIATE_MATCHING;
 	}
 
 	if( rc != LDAP_SUCCESS ) {

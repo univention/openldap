@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/unbind.c,v 1.11.2.10 2006/01/03 22:16:20 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/unbind.c,v 1.11.2.11 2006/02/16 22:21:27 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -49,14 +49,10 @@ meta_back_conn_destroy(
 		BER_BVISNULL( &conn->c_ndn ) ? "" : conn->c_ndn.bv_val, 0 );
 	
 	mc_curr.mc_conn = conn;
-	mc_curr.mc_local_ndn = conn->c_ndn;
 	
 	ldap_pvt_thread_mutex_lock( &mi->mi_conninfo.lai_mutex );
-	mc = avl_delete( &mi->mi_conninfo.lai_tree, ( caddr_t )&mc_curr,
-			meta_back_conn_cmp );
-	ldap_pvt_thread_mutex_unlock( &mi->mi_conninfo.lai_mutex );
-
-	if ( mc ) {
+	while ( ( mc = avl_delete( &mi->mi_conninfo.lai_tree, ( caddr_t )&mc_curr, meta_back_conn_cmp ) ) != NULL )
+	{
 		Debug( LDAP_DEBUG_TRACE,
 			"=>meta_back_conn_destroy: destroying conn %ld\n",
 			LDAP_BACK_PCONN_ID( mc->mc_conn ), 0, 0 );
@@ -65,6 +61,7 @@ meta_back_conn_destroy(
 
 		meta_back_conn_free( mc );
 	}
+	ldap_pvt_thread_mutex_unlock( &mi->mi_conninfo.lai_mutex );
 
 	/*
 	 * Cleanup rewrite session

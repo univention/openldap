@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.263.2.21 2006/01/03 22:16:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.263.2.23 2006/02/15 21:32:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -205,10 +205,12 @@ typedef struct ldapcontrol {
 /* LDAP Controls */
 /*	standard track controls */
 #define LDAP_CONTROL_MANAGEDSAIT	"2.16.840.1.113730.3.4.2"  /* RFC 3296 */
-#define LDAP_CONTROL_PROXY_AUTHZ	"2.16.840.1.113730.3.4.18" /* RFC TBD  */
+#define LDAP_CONTROL_PROXY_AUTHZ	"2.16.840.1.113730.3.4.18" /* RFC 4370 */
 #define LDAP_CONTROL_SUBENTRIES		"1.3.6.1.4.1.4203.1.10.1"  /* RFC 3672 */
 
-#define LDAP_CONTROL_VALUESRETURNFILTER	"1.2.826.0.1.334810.2.3"/* RFC 3876 */
+#define LDAP_CONTROL_VALUESRETURNFILTER "1.2.826.0.1.3344810.2.3"/* RFC 3876 */
+#define LDAP_CONTROL_X_VALUESRETURNFILTER "1.2.826.0.1.334810.2.3"/* bad OID */
+
 #define LDAP_CONTROL_ASSERT				"1.3.6.1.1.12"			/* RFC TBD */
 #define LDAP_CONTROL_PRE_READ			"1.3.6.1.1.13.1"		/* RFC TBD */
 #define LDAP_CONTROL_POST_READ			"1.3.6.1.1.13.2"		/* RFC TBD */

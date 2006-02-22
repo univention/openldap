@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test020-proxycache,v 1.11.2.10 2006/01/17 19:09:52 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test020-proxycache,v 1.11.2.12 2006/02/17 07:39:06 hyc Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2006 The OpenLDAP Foundation.
@@ -81,7 +81,7 @@ fi
 
 echo "Starting proxy cache on TCP/IP port $PORT2..."
 . $CONFFILTER < $PROXYCACHECONF > $CONF2
-$SLAPD -f $CONF2 -h $URI2 -d $LVL -d trace > $LOG2 2>&1 &
+$SLAPD -f $CONF2 -h $URI2 -d $LVL -d pcache > $LOG2 2>&1 &
 CACHEPID=$!
 if test $WAIT != 0 ; then
 	echo CACHEPID $CACHEPID

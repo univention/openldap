@@ -1,7 +1,7 @@
 .TH SLAPD-LDAP 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" Copyright 1998-2006 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-ldap.5,v 1.24.2.12 2006/01/03 22:16:05 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-ldap.5,v 1.24.2.13 2006/02/16 22:21:28 ando Exp $
 .SH NAME
 slapd-ldap \- LDAP backend to slapd
 .SH SYNOPSIS
@@ -345,6 +345,11 @@ so the client will not know if the operation eventually succeeded or not.
 .B idle-timeout <time>
 This directive causes a cached connection to be dropped an recreated
 after it has been idle for the specified time.
+
+.TP
+.B conn-ttl <time>
+This directive causes a cached connection to be dropped an recreated
+after a given ttl, regardless of being idle or not.
 
 .SH BACKWARD COMPATIBILITY
 The LDAP backend has been heavily reworked between releases 2.2 and 2.3;

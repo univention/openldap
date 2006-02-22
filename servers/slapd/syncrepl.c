@@ -1,5 +1,5 @@
 /* syncrepl.c -- Replication Engine which uses the LDAP Sync protocol */
-/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.168.2.27 2006/01/16 21:02:39 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.168.2.30 2006/02/16 05:48:14 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2006 The OpenLDAP Foundation.
@@ -1363,11 +1363,17 @@ syncrepl_message_to_op(
 					text, 0, 0 );
 			} else {
 				rc = op->o_bd->be_add( op, &rs );
+				Debug( LDAP_DEBUG_SYNC,
+					"syncrepl_message_to_op: be_add %s (%d)\n", 
+					op->o_req_dn.bv_val, rc, 0 );
 			}
 			be_entry_release_w( op, op->ora_e );
 		} else {
 			op->orm_modlist = modlist;
 			rc = op->o_bd->be_modify( op, &rs );
+			Debug( LDAP_DEBUG_SYNC,
+				"syncrepl_message_to_op: be_modify %s (%d)\n", 
+				op->o_req_dn.bv_val, rc, 0 );
 		}
 		break;
 	case LDAP_REQ_MODRDN:
@@ -1387,9 +1393,15 @@ syncrepl_message_to_op(
 		op->orr_nnewrdn = nrdn;
 		op->orr_deleteoldrdn = deleteOldRdn;
 		rc = op->o_bd->be_modrdn( op, &rs );
+		Debug( LDAP_DEBUG_SYNC,
+			"syncrepl_message_to_op: be_modrdn %s (%d)\n", 
+			op->o_req_dn.bv_val, rc, 0 );
 		break;
 	case LDAP_REQ_DELETE:
 		rc = op->o_bd->be_delete( op, &rs );
+		Debug( LDAP_DEBUG_SYNC,
+			"syncrepl_message_to_op: be_delete %s (%d)\n", 
+			op->o_req_dn.bv_val, rc, 0 );
 		break;
 	}
 done:
@@ -2030,8 +2042,12 @@ syncrepl_del_nonpresent(
 
 		for (i=0; uuids[i].bv_val; i++) {
 			op->ors_slimit = 1;
+			slap_uuidstr_from_normalized( &uf.f_av_value, &uuids[i],
+				op->o_tmpmemctx );
+			filter2bv_x( op, op->ors_filter, &op->ors_filterstr );
 			uf.f_av_value = uuids[i];
 			rc = be->be_search( op, &rs_search );
+			op->o_tmpfree( op->ors_filterstr.bv_val, op->o_tmpmemctx );
 		}
 		si->si_refreshDelete ^= NP_DELETE_ONE;
 	} else {
@@ -2069,6 +2085,9 @@ syncrepl_del_nonpresent(
 			op->o_req_dn = *np_prev->npe_name;
 			op->o_req_ndn = *np_prev->npe_nname;
 			rc = op->o_bd->be_delete( op, &rs_delete );
+			Debug( LDAP_DEBUG_SYNC,
+				"syncrepl_del_nonpresent: be_delete %s (%d)\n", 
+				op->o_req_dn.bv_val, rc, 0 );
 
 			if ( rs_delete.sr_err == LDAP_NOT_ALLOWED_ON_NONLEAF ) {
 				Modifications mod1, mod2;
@@ -2563,6 +2582,16 @@ avl_ber_bvfree( void *v_bv )
 void
 syncinfo_free( syncinfo_t *sie )
 {
+ 	if ( sie->si_ld ) {
+ 		if ( sie->si_conn_setup ) {
+ 			ber_socket_t s;
+ 			ldap_get_option( sie->si_ld, LDAP_OPT_DESC, &s );
+ 			connection_client_stop( s );
+ 			sie->si_conn_setup = 0;
+ 		}
+ 		ldap_unbind_ext( sie->si_ld, NULL, NULL );
+ 	}
+
  	ldap_pvt_thread_mutex_destroy( &sie->si_mutex );
 
 	bindconf_free( &sie->si_bindconf );
@@ -2617,9 +2646,6 @@ syncinfo_free( syncinfo_t *sie )
 	slap_sync_cookie_free( &sie->si_syncCookie, 0 );
 	if ( sie->si_presentlist ) {
 	    avl_free( sie->si_presentlist, avl_ber_bvfree );
-	}
-	if ( sie->si_ld ) {
-		ldap_unbind_ext( sie->si_ld, NULL, NULL );
 	}
 	while ( !LDAP_LIST_EMPTY( &sie->si_nonpresentlist )) {
 		struct nonpresent_entry* npe;

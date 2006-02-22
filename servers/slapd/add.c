@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/add.c,v 1.208.2.15 2006/01/17 19:37:19 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/add.c,v 1.208.2.16 2006/02/13 19:50:35 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -656,13 +656,23 @@ int slap_add_opattrs(
 
 	if ( SLAP_LASTMOD( op->o_bd ) ) {
 		char *ptr;
+		int gotcsn = 0;
 		timestamp.bv_val = timebuf;
+
+		a = attr_find( op->ora_e->e_attrs, slap_schema.si_ad_entryCSN );
+		if ( a ) {
+			gotcsn = 1;
+			csn = a->a_vals[0];
+		}
 		if ( BER_BVISEMPTY( &op->o_csn )) {
-			if ( SLAP_SHADOW( op->o_bd ))
-				manage_ctxcsn = 0;
-			csn.bv_val = csnbuf;
-			csn.bv_len = sizeof(csnbuf);
-			slap_get_csn( op, &csn, manage_ctxcsn );
+			if ( !gotcsn ) {
+				csn.bv_val = csnbuf;
+				csn.bv_len = sizeof(csnbuf);
+				slap_get_csn( op, &csn, manage_ctxcsn );
+			} else {
+				if ( manage_ctxcsn )
+					slap_queue_csn( op, &csn );
+			}
 		} else {
 			csn = op->o_csn;
 		}
@@ -715,9 +725,7 @@ int slap_add_opattrs(
 				slap_schema.si_ad_createTimestamp, &timestamp, NULL );
 		}
 
-		a = attr_find( op->ora_e->e_attrs,
-			slap_schema.si_ad_entryCSN );
-		if ( !a ) {
+		if ( !gotcsn ) {
 			attr_merge_one( op->ora_e,
 				slap_schema.si_ad_entryCSN, &csn, NULL );
 		}
