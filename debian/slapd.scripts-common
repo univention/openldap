@@ -575,6 +575,17 @@ noisy_slapadd() {							# {{{
 	fi
 	rm "$ldif_tmp"
 } # }}}
+encode_utf8() { #{{{
+# Make the value utf8 encoded. Takes one argument and utf8 encode it.
+# Usage: val=`encode_utf8 <value>`
+  perl -e 'use Encode; print encode_utf8($ARGV[0]);' "$1"
+} #}}}
+encode_base64() { #{{{
+# Make the value base64 encoded. Takes one argument and base64 encode it.
+# Usage: val=`encode_base64 <value>`
+  perl -e 'use MIME::Base64; print encode_base64($ARGV[0]);' "$1"
+}
+#}}}
 create_new_directory() {						# {{{
 # Create a new directory. Takes the basedn and the dc value of that entry.
 # Other information is extracted from debconf.
@@ -584,8 +595,9 @@ create_new_directory() {						# {{{
 	basedn="$1"
 	dc="$2"
 	
+  # Encode to utf8 and base64 encode the organization.
 	db_get shared/organization
-	organization="$RET"
+	organization=`encode_base64 `encode_utf8 "$RET"``
 	db_get slapd/internal/adminpw
 	adminpass="$RET"
  

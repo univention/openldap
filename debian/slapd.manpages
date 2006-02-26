@@ -10,7 +10,6 @@ debian/tmp/usr/share/man/man5/slapd-monitor.5
 debian/tmp/usr/share/man/man5/slapd.plugin.5
 debian/tmp/usr/share/man/man5/slapd-sql.5
 debian/tmp/usr/share/man/man5/slapd.conf.5
-debian/tmp/usr/share/man/man5/slapd-ldbm.5
 debian/tmp/usr/share/man/man5/slapd-null.5
 debian/tmp/usr/share/man/man5/slapd-relay.5
 debian/tmp/usr/share/man/man5/slapd-tcl.5

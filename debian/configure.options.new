@@ -108,8 +108,8 @@
 #--enable-hdb	  enable Hierarchical DB backend no|yes|mod [yes]
 #--enable-ldap	  enable ldap backend no|yes|mod [no]
 #--enable-ldbm	  enable ldbm backend no|yes|mod [no]
+--enable-ldbm=no
 #--enable-ldbm-api   use LDBM API auto|berkeley|bcompat|mdbm|gdbm [auto]
---enable-ldbm-api=berkeley
 #--enable-ldbm-type  use LDBM type auto|btree|hash [auto]
 #--enable-meta	  enable metadirectory backend no|yes|mod [no]
 #--enable-monitor	  enable monitor backend no|yes|mod [yes]
