@@ -27,14 +27,14 @@ openldap2.3 (2.3.20-1) unstable; urgency=low
   * Added Danish debconf translation (Closes: #353897)
   * Updated French debconf translation (Closes: #320739)
   * Updated Vietnamese debconf translation (Closes: #319706)
-  * Encode the organization utf8 and base64 encoded (Closes: #236097)
+  * Encode the organization to utf8 (Closes: #236097)
   * Disabled the LDBM backend.
 
   [ Steve Langasek ]
   * debian/slapd.templates: Fix typo durin -> during; re-run
     debconf-updatepo, fixing up the fuzzies (closes: #319596).
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Fri, 24 Feb 2006 22:45:55 +0100
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 26 Feb 2006 20:05:44 +0100
 
 openldap2.2 (2.2.26-4) unstable; urgency=low
 

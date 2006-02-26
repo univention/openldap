@@ -580,12 +580,6 @@ encode_utf8() { #{{{
 # Usage: val=`encode_utf8 <value>`
   perl -e 'use Encode; print encode_utf8($ARGV[0]);' "$1"
 } #}}}
-encode_base64() { #{{{
-# Make the value base64 encoded. Takes one argument and base64 encode it.
-# Usage: val=`encode_base64 <value>`
-  perl -e 'use MIME::Base64; print encode_base64($ARGV[0]);' "$1"
-}
-#}}}
 create_new_directory() {						# {{{
 # Create a new directory. Takes the basedn and the dc value of that entry.
 # Other information is extracted from debconf.
