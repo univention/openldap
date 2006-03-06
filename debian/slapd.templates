@@ -193,12 +193,12 @@ _Description: Change backend type from LDBM to BDB?
 
 Template: slapd/backend
 Type: select
-Choices: BDB, HDB, LDBM
+Choices: BDB, HDB
 Default: BDB
 _Description: Database backend to use:
- The BDB backend is the recommended choice of the OpenLDAP developers while
- support of the old LDBM backend is phasing out. When using the BDB backend
- make sure that you configure the underlying database for your requirements.
+ The BDB backend is the recommended choice of the OpenLDAP developers. When
+ When using the BDB backend make sure that you configure the underlying
+ database for your requirements. 
  Look into /usr/share/doc/slapd/README.DB_CONFIG.gz
  .
  HDB is the next generation of BDB which might replace it sometime in 

@@ -60,4 +60,6 @@ fi
 
 #DEBHELPER#
 
+exit 0
+
 # vim: set foldmethod=marker:

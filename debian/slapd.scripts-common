@@ -46,7 +46,6 @@ configure_ldbm_to_bdb_migration() {					# {{{
 # to the more stable and better maintained BDB backend.
 # Usage: configure_ldbm_to_bdb_migration
 
-
 	if [ -e "$SLAPD_CONF" ] && grep -qE \
 			-e '^moduleload[[:space:]]+back_ldbm' \
 			-e '^(database|backend)[[:space:]]+ldbm' \
@@ -59,6 +58,20 @@ configure_ldbm_to_bdb_migration() {					# {{{
 	fi
 }
 # }}}
+break_on_ldbm_to_bdb_migration_disagree() { # {{{
+  if [ -e "$SLAPD_CONF" ] && grep -qE \
+      -e '^moduleload[[:space:]]+back_ldbm' \
+      -e '^(database|backend)[[:space:]]+ldbm' \
+      "$SLAPD_CONF"; then
+    db_get slapd/migrate_ldbm_to_bdb
+    if [ "$RET" = "false" ]; then
+      db_fset slapd/migrate_ldbm_to_bdb seen false
+      return 1
+    fi
+    return 0
+  fi
+  return 0
+} # }}}
 database_dumping_enabled() {						# {{{
 # Check if the user has enabled database dumping for the current situation.
 # Return success if yes.
@@ -530,14 +543,13 @@ create_new_configuration() {						# {{{
   # Now that we created the new directory we don't need the passwords in the
   # debconf database anymore. So wipe them.
   wipe_admin_pass
-	copy_example_DB_CONFIG /var/lib/ldap
 }
 # }}}
 create_new_slapd_conf() {						# {{{
 # Creates a new slapd.conf for the suffix given
 # Usage: create_new_slapd_conf <basedn> <backend>
 
-	local basedn backend checkpoint conf_new conf_template
+	local basedn backend backendoptions checkpoint conf_new conf_template
 
 	basedn="$1"
 	backend="$2"
@@ -545,8 +557,9 @@ create_new_slapd_conf() {						# {{{
 	conf_template="/usr/share/slapd/slapd.conf"
 
 	# Checkpoint if using the BDB backend
-	if [ "$backend" = "bdb" -o "$backend" = "hdb" ]; then
+	if [ "$backend" = "bdb" ] || [ "$backend" = "hdb" ]; then
 		checkpoint="checkpoint 512 30"
+    backendoptions="# For the Debian package we use 2MB as default but be sure to update this\n# value if you have plenty of RAM\ndbconfig set_cachesize 0 2097152 0\n\n# Sven Hartge reported that he had to set this value incredibly high\n# to get slapd running at all. See http:\/\/bugs.debian.org\/303057\n# for more information.\n\n# Number of objects that can be locked at the same time.\ndbconfig set_lk_max_objects 1500\n# Number of locks (both requested and granted)\ndbconfig set_lk_max_locks 1500\n# Number of lockers\ndbconfig set_lk_max_lockers 1500"
 	fi
 
 	conf_new=`mktemp -q ${SLAPD_CONF}.XXXXXX`
@@ -555,7 +568,8 @@ create_new_slapd_conf() {						# {{{
 		-e "s/@SUFFIX@/$basedn/g" \
 		-e "s/@ADMIN@/cn=admin,$basedn/g" \
 		-e "s/@CHECKPOINT@/$checkpoint/g" \
-		-e "s/@BACKEND@/$backend/g" 
+		-e "s/@BACKEND@/$backend/g" \
+    -e "s/@BACKENDOPTIONS@/$backendoptions/g"
 	install_new_slapd_conf "$conf_new"
 	echo "done." >&2
 } 
@@ -591,7 +605,7 @@ create_new_directory() {						# {{{
 	
   # Encode to utf8 and base64 encode the organization.
 	db_get shared/organization
-	organization=`encode_base64 `encode_utf8 "$RET"``
+	organization=`encode_utf8 "$RET"`
 	db_get slapd/internal/adminpw
 	adminpass="$RET"
  
@@ -819,7 +833,11 @@ install_new_slapd_conf() {						# {{{
 	local conf_new
 	conf_new="$1"
 
-	backup_config_once
+  # On install and remove we don't have to backup the configuration file. Only
+  # on upgrade.
+  if [ "$MODE" = "upgrade" ]; then
+    backup_config_once
+  fi
 
 	# Make sure we keep the permissions of an old slapd.conf
 	if [ -e "$SLAPD_CONF" ]; then
@@ -848,7 +866,7 @@ backup_config_once() {							# {{{
 
 # Set up the defaults for our templates
 set_defaults_for_unseen_entries() {
-  DOMAIN=`hostname -d` || true
+  DOMAIN=`hostname -d 2>/dev/null` || true
   if [ -z "$DOMAIN" ]; then DOMAIN='nodomain'; fi
 
   db_fget slapd/domain seen
@@ -863,7 +881,7 @@ set_defaults_for_unseen_entries() {
 }
 
 # Check if the user wants to configure slapd manually
-manual_configuration_wanted() {
+want_manual_configuration() {
   db_input low slapd/no_configuration || true
   db_go || true
   db_get slapd/no_configuration
@@ -1060,7 +1078,7 @@ supported_backend() {							# {{{
 # our scripts.
 # Usage: if supported_backend "backend"; then ... fi
 
-	case "$1" in ldbm|bdb|hdb) return 0; esac
+	case "$1" in bdb|hdb) return 0; esac
 	return 1
 }
 

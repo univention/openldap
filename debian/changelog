@@ -28,13 +28,24 @@ openldap2.3 (2.3.20-1) unstable; urgency=low
   * Updated French debconf translation (Closes: #320739)
   * Updated Vietnamese debconf translation (Closes: #319706)
   * Encode the organization to utf8 (Closes: #236097)
-  * Disabled the LDBM backend.
+  * Disabled the LDBM backend. Break in preinstallation if user doesn't want
+    to migrate to BDB backend.
+  * Removed choice for LDBM backend from slapd templates. And some explanation
+    in that question about the LDBM backend.
+  * Add sizelimit and tool-threads and some documentation to slapd.conf
+    (Closes: #327808)
+  * slapd.scripts-common had two functions with the same name.
+  * Don't return a error message if hostname fails.
+  * Backup the config only once on upgrade.
+  * For new installations do not install a DB_CONFIG file but use the
+    slapd.conf as file for BDB/HDB configuration parameters. See: slapd-bdb(5)
+  * Added various "exit 0" to the installation scripts.
 
   [ Steve Langasek ]
   * debian/slapd.templates: Fix typo durin -> during; re-run
     debconf-updatepo, fixing up the fuzzies (closes: #319596).
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 26 Feb 2006 20:05:44 +0100
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Wed,  1 Mar 2006 00:33:24 +0100
 
 openldap2.2 (2.2.26-4) unstable; urgency=low
 

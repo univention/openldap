@@ -63,4 +63,6 @@ db_stop || true
 
 #DEBHELPER#
 
+exit 0
+
 # vim: set sw=8 foldmethod=marker: 
