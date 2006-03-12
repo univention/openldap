@@ -16,7 +16,7 @@ msgstr ""
 "Project-Id-Version: openldap2.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-07-23 02:50-0700\n"
-"PO-Revision-Date: 2005-06-05 10:51+0200\n"
+"PO-Revision-Date: 2006-03-12 19:05+0100\n"
 "Last-Translator: Miroslav Kure <kurem@debian.cz>\n"
 "Language-Team: Czech <debian-l10n-czech@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -282,7 +282,7 @@ msgstr ""
 "Daemon slapd nyní implicitně zakazuje starý protokol LDAPv2, protože se "
 "předpokládá, že programy i uživatelé již přešli na LDAPv3. Máte-li staré "
 "programy, které nezvládají LDAPv3, povolte tuto možnost, což do souboru "
-"slapd.conf přidá řádek 'allow bind_v2'. Tím daemondu slapd řeknete, že má "
+"slapd.conf přidá řádek 'allow bind_v2'. Tím daemonu slapd řeknete, že má "
 "přijímat také spojení LDAPv2."
 
 #. Type: boolean
@@ -419,7 +419,7 @@ msgstr ""
 "Ve vašem konfiguračním souboru je minimálně jedna databáze nastavena jako "
 "podřízená a přitom nemá nastavenu volbu updateref. Volba updateref definuje "
 "poukázky, které předává zpět, kdykoliv slapd požádá o změnu v replikované "
-"lokální databázi. Podrovnosti naleznete v manuálové stránce slapd.conf(5)."
+"lokální databázi. Podrobnosti naleznete v manuálové stránce slapd.conf(5)."
 
 #. Type: note
 #. Description
@@ -436,7 +436,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:184
 msgid "Change backend type from LDBM to BDB?"
-msgstr ""
+msgstr "Změnit typ backendu z LDBM na BDB?"
 
 #. Type: boolean
 #. Description
@@ -445,6 +445,8 @@ msgid ""
 "The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown to "
 "not work well. BDB is the recommended choice of the OpenLDAP developers."
 msgstr ""
+"Backend LDBM se ukázal jako nevyhovující a byl v OpenLDAPu 2.2 překonán. "
+"Vývojáři OpenLDAPu nyní doporučují backend BDB."
 
 #. Type: boolean
 #. Description
@@ -453,6 +455,9 @@ msgid ""
 "When using the BDB backend make sure you configure BDB properly. For "
 "information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
 msgstr ""
+"Při použití backendu BDB se ujistěte, že jste jej nastavili správně. Více "
+"informací o správném nastavení naleznete v souboru /usr/share/doc/slapd/"
+"README.DB_CONFIG.gz."
 
 #. Type: boolean
 #. Description
@@ -461,6 +466,8 @@ msgid ""
 "If you enable this option an attempt will be made to update your  "
 "configuration to use BDB instead of LDBM and convert your databases."
 msgstr ""
+"Povolíte-li tuto možnost, systém se pokusí změnit konfiguraci, aby místo "
+"LDBM používala BDB a příslušně také převést databáze."
 
 #. Type: select
 #. Description
@@ -477,6 +484,10 @@ msgid ""
 "make sure that you configure the underlying database for your requirements. "
 "Look into /usr/share/doc/slapd/README.DB_CONFIG.gz"
 msgstr ""
+"Backend BDB je doporučenou volbou vývojářů OpenLDAPu, podpora pro starý "
+"backend LDBM se vytrácí. Při použití backendu BDB se ujistěte, že jste jej "
+"nastavili správně. Více informací o správném nastavení naleznete v souboru "
+"/usr/share/doc/slapd/README.DB_CONFIG.gz."
 
 #. Type: select
 #. Description
@@ -493,7 +504,6 @@ msgstr ""
 #. Type: select
 #. Description
 #: ../slapd.templates:198
-#, fuzzy
 msgid ""
 "The BDB backend (back-bdb) and LDBM backend (back-ldbm) are comparable in "
 "purpose and back-bdb evolved from experience gained from back-ldbm, but the "
@@ -524,19 +534,5 @@ msgstr ""
 "bohatší API, které je mocnější, ale také komplexnější. back-dbd je napsán "
 "speciálně pro podporu plného BDB rozhraní a používá pokročilé vlastnosti "
 "BDB, aby zajistil transakční zpracování, jemnější zamykání a další "
-"vymoženosti, jež poskutují zvýšenou spolehlivost a rychlost. Více informací "
-"naleznete v http://www.openldap.org/faq/data/cache/756.html."
-
-#~ msgid ""
-#~ "While the BDB backend is the recommended choice of the OpenLDAP "
-#~ "developers, the LDBM backend has proven to be more reliable for some "
-#~ "Debian users, especially when the BDB database wasn't properly "
-#~ "configured. When using the BDB backend, make sure to do so. For "
-#~ "information on how to tune BDB, see http://www.openldap.org/faq/data/"
-#~ "cache/893.html."
-#~ msgstr ""
-#~ "Přestože je BDB backend doporučován samotnými vývojáři OpenLDAPu, "
-#~ "některým uživatelům Debianu fungoval spolehlivěji backend LDBM (obzvláště "
-#~ "v případech kdy nebyla BDB nastavena úplně správně). Při nastavování BDB "
-#~ "na to prosím pamatujte. Informace o ladění BDB naleznete na stránce "
-#~ "http://www.openldap.org/faq/data/cache/893.html."
+"vymoženosti, jež poskytují zvýšenou spolehlivost a rychlost. Více informací "
+"naleznete v souboru /usr/share/doc/slapd/README.DB_CONFIG.gz."
