@@ -1,4 +1,3 @@
-# translation of fr-new.po to French
 # translation of fr.po to French
 #
 #    Translators, if you are not familiar with the PO format, gettext
@@ -13,18 +12,19 @@
 #
 #    Developers do not need to manually edit POT or PO files.
 #
+# Christian Perrier <bubulle@debian.org>, 2006.
 msgid ""
 msgstr ""
-"Project-Id-Version: openldap2\n"
+"Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-07-19 20:52+0200\n"
-"PO-Revision-Date: 2005-07-23 09:35+0200\n"
+"POT-Creation-Date: 2005-07-23 02:50-0700\n"
+"PO-Revision-Date: 2006-05-03 18:37+0200\n"
 "Last-Translator: Christian Perrier <bubulle@debian.org>\n"
 "Language-Team: French <debian-l10n-french@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.9.1\n"
+"X-Generator: KBabel 1.11.2\n"
 
 #. Type: boolean
 #. Description
@@ -271,10 +271,10 @@ msgid ""
 msgstr ""
 "Si vous choisissez cette option, une tentative d'adaptation de la "
 "configuration aura lieu. Dans le cas contraire, vous devrez corriger le "
-"fichier de configuration vous-même sinon slapd et slapcat (ce dernier, dans "
-"le cas d'une mise à niveau depuis une nouvelle version) ne fonctionneront "
-"pas et le paquet ne sera pas installé. Veuillez consulter le fichier /usr/"
-"share/doc/slapd/README.Debian pour plus d'informations."
+"fichier de configuration vous-même sinon slapd (et slapcat dans le cas d'une "
+"mise à niveau depuis une nouvelle version) ne fonctionneront pas et le "
+"paquet ne sera pas installé. Veuillez consulter le fichier /usr/share/doc/"
+"slapd/README.Debian pour plus d'informations."
 
 #. Type: boolean
 #. Description
@@ -293,11 +293,11 @@ msgid ""
 "slapd.conf to tell slapd to accept LDAPv2 connections."
 msgstr ""
 "Désormais slapd n'utilise plus par défaut l'ancien protocole LDAPv2. Il est "
-"conseillé de passer à la version LDAPv3 les programmes et les utilisateurs. "
-"Si vous utilisez d'anciens programmes qui ne gèrent pas encore LDAPv3, vous "
-"pouvez choisir cette option. Cela ajoutera l'option « allow bind_v2 » au "
-"fichier slapd.conf pour indiquer au démon slapd qu'il doit accepter les "
-"connexions LDAPv2."
+"conseillé de migrer les programmes et les utilisateurs vers la version "
+"LDAPv3 . Si vous utilisez d'anciens programmes qui ne gèrent pas encore "
+"LDAPv3, vous pouvez choisir cette option malgré tout. Cela ajoutera l'option "
+"« allow bind_v2 » au fichier slapd.conf pour indiquer au démon slapd qu'il "
+"doit accepter les connexions LDAPv2."
 
 #. Type: boolean
 #. Description
@@ -316,8 +316,8 @@ msgid ""
 msgstr ""
 "Les scripts d'installation des anciens paquet d'OpenLDAP 2.0 créaient un "
 "annuaire qui n'était pas conforme avec le schéma LDAP. La nouvelle version "
-"est plus stricte et l'annuaire ne pourra pas être utilisé tant qu'il n'aura "
-"pas été corrigé."
+"est plus rigoureuse et l'annuaire ne pourra pas être utilisé tant qu'il "
+"n'aura pas été corrigé."
 
 #. Type: boolean
 #. Description
@@ -347,7 +347,7 @@ msgstr ""
 "celui qui est actuellement mentionné dans /etc/ldap/slapd.conf. Le "
 "changement du suffixe d'annuaire nécessite de déplacer la base de données "
 "actuelle et d'en créer une nouvelle. Veuillez confirmer si vous voulez "
-"abandonner la base de données actuelle (une sauvegarde sera effectuée)."
+"délaisser la base de données actuelle (une sauvegarde sera effectuée)."
 
 #. Type: note
 #. Description
@@ -359,7 +359,7 @@ msgstr "Échec de slapcat durant la mise à niveau"
 #. Description
 #: ../slapd.templates:140
 msgid ""
-"An error occurred durin the attempt to upgrade your LDAP directory. This "
+"An error occurred during the attempt to upgrade your LDAP directory. This "
 "error occurred when performing the 'slapcat' which attempts to extract your "
 "LDAP directory.  This failure could be because of an incorrect config file.  "
 "For example, if the appropriate moduleload lines for your backend database "
@@ -372,12 +372,13 @@ msgstr ""
 "Une erreur s'est produite lors de la mise à niveau de l'annuaire LDAP. La "
 "commande « slapcat » utilisée pour l'extraction de l'annuaire LDAP a échoué. "
 "Cet échec peut être dû à un fichier de configuration incorrect, par exemple "
-"si les instructions de chargement de modules de bases de données manquent. "
-"Cette erreur peut provoquer l'échec de « slapadd ». Les anciens fichiers de "
-"bases de données vont être déplacés dans /var/backups. Si vous souhaitez "
-"recommencer la mise à niveau, vous devrez remettre les anciens fichiers en "
-"place, corriger ce qui a provoqué l'échec, puis utiliser la commande "
-"« slapcat | /usr/share/slapd/fix_ldif -w -o \"$organization\" > $location »."
+"si les instructions de chargement de modules de bases de données (lignes "
+"« moduleload ») manquent. Cette erreur provoquera un dysfonctionnement de "
+"« slapadd » par la suite. Les anciens fichiers de bases de données vont être "
+"déplacés dans /var/backups. Si vous souhaitez recommencer la mise à niveau, "
+"vous devrez remettre les anciens fichiers en place, corriger ce qui a "
+"provoqué l'échec, puis utiliser la commande :\n"
+"slapcat | /usr/share/slapd/fix_ldif -w -o \"$organization\" > $location"
 
 #. Type: note
 #. Description
@@ -435,10 +436,10 @@ msgid ""
 "local database. See slapd.conf(5) for more details."
 msgstr ""
 "Votre fichier de configuration de slapd indique qu'au moins une base de "
-"données est une base de données esclave. Cependant, l'option « updateref » "
-"n'a pas été spécifiée. Elle indique à quel référent d'éventuelles "
-"modifications locales effectuées par slapd doivent être transmises. Veuillez "
-"consulter la page de manuel slapd.conf(5) pour plus d'informations."
+"données est configurée comme esclave. Cependant, l'option « updateref » n'a "
+"pas été utilisée. Elle indique à quel référent d'éventuelles modifications "
+"locales effectuées par slapd doivent être transmises. Veuillez consulter la "
+"page de manuel slapd.conf(5) pour plus d'informations."
 
 #. Type: note
 #. Description
@@ -448,8 +449,8 @@ msgid ""
 "on slaves. You should make sure to fix your slapd.conf configuration file."
 msgstr ""
 "À partir de la version 2.1.23, splad a besoin de cette option sur les "
-"serveurs esclaves. Veuillez faire le nécessaire pour corriger votre fichier "
-"de configuration."
+"serveurs esclaves. Veuillez adapter en conséquence votre fichier de "
+"configuration."
 
 #. Type: boolean
 #. Description
@@ -486,9 +487,9 @@ msgid ""
 "If you enable this option an attempt will be made to update your  "
 "configuration to use BDB instead of LDBM and convert your databases."
 msgstr ""
-"Si vous choisissez cette option, les scripts d'installation mettront à jour "
-"votre configuration et convertiront vos bases de données pour qu'elles "
-"utilisent BDB à la place de LDBM."
+"Si vous choisissez cette option, les scripts d'installation tenteront de "
+"mettre à jour votre configuration et de convertir vos bases de données pour "
+"qu'elles utilisent BDB à la place de LDBM."
 
 #. Type: select
 #. Description
@@ -506,10 +507,11 @@ msgid ""
 "Look into /usr/share/doc/slapd/README.DB_CONFIG.gz"
 msgstr ""
 "Le module de bases de données BDB est le module recommandé par les "
-"développeurs d'OpenLDAP alors que la gestion des bases LDBM est en voie "
-"d'abandon. Lorsque vous utilisez le module BDB, veuillez prendre soin de la "
-"configuration de la base de données. Pour plus d'informations, veuillez "
-"consulter le fichier /usr/share/doc/slapd/README.DB_CONFIG.gz."
+"développeurs d'OpenLDAP alors que la gestion des bases LDBM est "
+"progressivement délaissée. Lorsque vous utilisez le module BDB, veuillez "
+"prendre soin de la configuration de la base de données. Pour plus "
+"d'informations, veuillez consulter le fichier /usr/share/doc/slapd/README."
+"DB_CONFIG.gz."
 
 #. Type: select
 #. Description
@@ -545,236 +547,22 @@ msgid ""
 msgstr ""
 "Les modules BDB (back-bdb) et LDBM (back-ldbm) ont des buts analogues. Back-"
 "bdb a été développé en profitant de l'expérience acquise avec back-ldbm mais "
-"les deux sont désormais distincts. Tous deux stockent les enregistrements "
-"avec une clé unique d'identification (« ID key ») sur 32 bits en utilisant "
-"dn2id pour établir les correspondances entre noms distinctifs (DN) et clés "
-"uniques d'identification. Tous deux effectuent l'indexation des attributs "
-"avec le même code et conservent les données d'indexation sous forme de "
-"listes de clés d'identification. En conséquence, leurs fonctionnalités pour "
-"LDAP sont presque identiques. Les différences résident dans les interfaces "
-"de programmation d'applications (API : « Application Programming "
-"Interfaces ») utilisées pour la mise en oeuvre des bases de données. Back-"
-"ldbm utilise une API générique qui peut ensuite être interfacée avec "
-"plusieurs types de serveurs de bases de données. La version Debian est "
-"construite avec BerkeleyDB (BDB). Or, BerkeleyDB, bien qu'il gère cette "
-"interface générique, comporte une API bien plus riche et complexe. Back-bdb "
-"est construit pour exploiter pleinement cette API et utilise certaines "
-"fonctionnalités avancées de BDB pour le traitement des transactions, un "
-"verrouillage plus fin et d'autres fonctionnalités qui améliorent le "
-"fonctionnement en parallèle et la fiabilité. Pour plus d'informations, "
-"veuillez consulter le fichier /usr/share/doc/slapd/README.DB_CONFIG.gz."
-
-#~ msgid "Do you want to omit the configuration of slapd?"
-#~ msgstr "Voulez-vous omettre la configuration de slapd ?"
-
-#~ msgid "Admin entry"
-#~ msgstr "Entrée d'administration :"
-
-#~ msgid ""
-#~ "The admin entry is the entry in the directory which has full read and "
-#~ "write access."
-#~ msgstr ""
-#~ "Veuillez indiquer l'identifiant de l'administrateur qui possède les "
-#~ "droits de lire et d'écrire dans le répertoire."
-
-#~ msgid "Verify password"
-#~ msgstr "Confirmation du mot de passe :"
-
-#~ msgid "Fix LDAP directory on upgrade"
-#~ msgstr "Faut-il corriger l'annuaire LDAP lors de la mise à niveau ?"
-
-#~ msgid ""
-#~ "The installation scripts of the old OpenLDAP 2.0 packages create a "
-#~ "directory that does not conform to the ldap schema. The new version is "
-#~ "more strict about this and you won't be able to access your directory "
-#~ "after the upgrade without fixing it. If you select this option I'll try "
-#~ "to fix it for you automagically."
-#~ msgstr ""
-#~ "Les scripts d'installation des anciens paquet d'OpenLDAP 2.0 créaient un "
-#~ "annuaire qui n'était pas conforme avec le schéma LDAP. La nouvelle "
-#~ "version est plus stricte et l'annuaire ne pourra pas être utilisé tant "
-#~ "qu'il n'aura pas été corrigé. Si vous choisissez cette option, une "
-#~ "tentative de correction automagique sera effectuée."
-
-#~ msgid ""
-#~ "You can specify into which directory the LDAP databases are to be  "
-#~ "exported. The string VERSION is replaced with the server version you  are "
-#~ "upgrading from."
-#~ msgstr ""
-#~ "Veuillez indiquer le répertoire dans lequel les bases de données LDAP "
-#~ "seront exportées. Si le nom comporte « VERSION », cette chaîne de "
-#~ "caractère sera remplacée par la version du serveur utilisée avant la mise "
-#~ "à niveau."
-
-#~ msgid "domain or host, location, custom"
-#~ msgstr "hôte ou domaine, emplacement, personnalisé"
-
-#~ msgid "Directory suffix style:"
-#~ msgstr "Suffixe du répertoire :"
-
-#~ msgid ""
-#~ "The LDAP directory suffix is the root of your LDAP database. You can "
-#~ "select one of three possible suffix styles:"
-#~ msgstr ""
-#~ "Le suffixe du répertoire LDAP est la racine de votre base LDAP. Trois "
-#~ "choix sont possibles."
-
-#~ msgid ""
-#~ "Domain or host style uses the fully qualified hostname of your machine as "
-#~ "the basis."
-#~ msgstr ""
-#~ "« hôte ou domaine » se sert du nom d'hôte complètement qualifié de votre "
-#~ "machine comme base."
-
-#~ msgid "Location uses country and organization name."
-#~ msgstr ""
-#~ "« emplacement » se sert des noms de votre pays et de votre organisation."
-
-#~ msgid ""
-#~ "Custom allows you to speficy your own root root using whatever suffix you "
-#~ "want."
-#~ msgstr ""
-#~ "« personnalisé » vous permet d'indiquer une racine personnalisée en "
-#~ "utilisant un suffixe quelconque."
-
-#~ msgid "Enter your suffix:"
-#~ msgstr "Saisissez votre suffixe."
-
-#~ msgid ""
-#~ "Please enter the desired directory suffix for your directory using "
-#~ "standard LDAP DN syntax."
-#~ msgstr ""
-#~ "Veuillez donner le suffixe pour le répertoire en utilisant la syntaxe "
-#~ "standard du DN (« distinguished name ») de LDAP."
-
-#~ msgid "Enter your country's two digit code:"
-#~ msgstr "Saisissez le code à deux lettres de votre pays :"
-
-#~ msgid "Path to ldif file:"
-#~ msgstr "Chemin du fichier ldif :"
-
-#~ msgid ""
-#~ "You need to give the full path of the file containing the ldif formatted "
-#~ "entries to be entered into the database."
-#~ msgstr ""
-#~ "Vous devez donner le chemin entier du fichier contenant les entrées ldif "
-#~ "formatées qui doivent être mises dans la base de données."
-
-#~ msgid "${ldif} does not exist"
-#~ msgstr "${ldif} n'existe pas."
-
-#~ msgid ""
-#~ "Please supply an exiting file in ldif format is needed to initialize the "
-#~ "directory."
-#~ msgstr ""
-#~ "Veuillez donner un fichier existant au format ldif ; c'est nécessaire "
-#~ "pour initialiser le répertoire."
-
-#~ msgid "slapd is already configured"
-#~ msgstr "slapd est déjà configuré."
-
-#~ msgid ""
-#~ "You can use this configure system only once for the slapd daemon. Please "
-#~ "either manually change the configuration in ${conf} or remove both it and "
-#~ "your databases and rerun this configuration."
-#~ msgstr ""
-#~ "Vous ne pouvez utiliser qu'une seule fois ce système de configuration "
-#~ "pour le démon slapd. Vous pouvez soit modifier manuellement la "
-#~ "configuration dans ${conf}, soit supprimer le démon et les bases de "
-#~ "données et refaire cette configuration."
-
-#~ msgid "Unknown object class used"
-#~ msgstr "Classe d'objet inconnue."
-
-#~ msgid ""
-#~ "The root DN for your directory uses an unknown object class so the "
-#~ "directory can not be initialized. Valid object classes are:"
-#~ msgstr ""
-#~ "Le DN root de votre répertoire utilise une classe d'objet inconnue et le "
-#~ "répertoire n'a pas pu être initialisé. Les classes valides sont :"
-
-#~ msgid ""
-#~ " dcObject (dc)\n"
-#~ " organizationalUnit (ou)\n"
-#~ " country (c)\n"
-#~ " organization (o)"
-#~ msgstr ""
-#~ " dcObject (dc)\n"
-#~ " organizationalUnit (ou)\n"
-#~ " country (c)\n"
-#~ " organization (o)"
-
-#~ msgid "auto, ldif"
-#~ msgstr "auto, ldif"
-
-#~ msgid "Directory initialization method:"
-#~ msgstr "Méthode d'initialisation du répertoire :"
-
-#~ msgid ""
-#~ "The LDAP directory can be initialized either via an existing LDIF "
-#~ "datafile, or automatically using information you supply."
-#~ msgstr ""
-#~ "Le répertoire LDAP peut être initialisé soit grâce à un fichier de "
-#~ "données LDIF existant, soit automatiquement avec les informations que "
-#~ "vous donnez."
-
-#~ msgid "Directory DN"
-#~ msgstr "DN du répertoire"
-
-#~ msgid "LDAP admin password"
-#~ msgstr "Mot de passe de l'administrateur LDAP"
-
-#~ msgid ""
-#~ "The slapd package generated a random password to the admin entry in your "
-#~ "new LDAP directory. The password is: ${password}."
-#~ msgstr ""
-#~ "Le paquet slapd a créé un mot de passe pour l'entrée d'administration de "
-#~ "votre nouveau répertoire LDAP. Le mot de passe est : ${password}."
-
-#~ msgid "Replicate to another LDAP server:"
-#~ msgstr "Reproduire cette configuration pour un autre serveur LDAP :"
-
-#~ msgid ""
-#~ "It is possible to replicate changes made in this LDAP server to another "
-#~ "server."
-#~ msgstr ""
-#~ "On peut reproduire la configuration de ce serveur sur un autre serveur."
-
-#~ msgid "LDAP server:"
-#~ msgstr "Serveur LDAP :"
-
-#~ msgid ""
-#~ "The fully qualified hostname of the remote LDAP server to replicate data "
-#~ "to."
-#~ msgstr ""
-#~ "Le nom de domaine pleinement qualifié du serveur LDAP sur lequel "
-#~ "appliquer la configuration."
-
-#~ msgid "389"
-#~ msgstr "389"
-
-#~ msgid "Port on remote server:"
-#~ msgstr "Port du serveur distant :"
-
-#~ msgid ""
-#~ "The port on which the LDAP server runs on the remote server. This is "
-#~ "almost always the default LDAP port (389)."
-#~ msgstr ""
-#~ "Le port utilisé par le serveur LDAP sur la machine distante. C'est "
-#~ "presque toujours le port LDAP par défaut : 389."
-
-#~ msgid "bind DN:"
-#~ msgstr "DN pour se lier :"
-
-#~ msgid ""
-#~ "This is the DN used to bind to the remote LDAP server. It needs to have "
-#~ "full write access to the data being replicated."
-#~ msgstr ""
-#~ "C'est le DN utilisé pour se lier au serveur LDAP distant. Il doit pouvoir "
-#~ "modifier les données à reproduire."
-
-#~ msgid "Password:"
-#~ msgstr "Mot de passe :"
-
-#~ msgid "This the password used to bind to the remote LDAP server."
-#~ msgstr "Ce mot de passe est utilisé pour se lier au serveur LDAP distant."
+"les deux sont sensiblement différents. Tous deux stockent les "
+"enregistrements avec une clé unique d'identification (« ID key ») sur "
+"32 bits en utilisant dn2id pour établir les correspondances entre noms "
+"distinctifs (DN) et clés uniques d'identification. Tous deux effectuent "
+"l'indexation des attributs avec le même code et conservent les données "
+"d'indexation sous forme de listes de clés d'identification. En conséquence, "
+"leurs fonctionnalités pour LDAP sont presque identiques. Les différences "
+"résident dans les interfaces de programmation d'applications (API : "
+"« Application Programming Interfaces ») utilisées pour la mise en oeuvre des "
+"bases de données. Back-ldbm utilise une API générique qui peut ensuite être "
+"interfacée avec plusieurs types de serveurs de bases de données. La version "
+"Debian est construite avec BerkeleyDB (BDB). Or, BerkeleyDB, bien qu'il gère "
+"cette interface générique, comporte une API bien plus riche et complexe. "
+"Back-bdb est construit pour exploiter pleinement cette API et utilise "
+"certaines fonctionnalités avancées de BDB pour le traitement des "
+"transactions, un verrouillage plus fin et d'autres fonctionnalités qui "
+"améliorent le fonctionnement en parallèle et la fiabilité. Pour plus "
+"d'informations, veuillez consulter le fichier /usr/share/doc/slapd/README."
+"DB_CONFIG.gz."
