@@ -2,6 +2,8 @@
 
 set -e
 
+. /usr/share/debconf/confmodule
+
 # Work around bug introduced in 2.1.x, fixed in 2.1.22-2      		{{{
 
 # The slapd 2.1.x packages before 2.1.17-3 had a problem in the init.d
@@ -57,6 +59,10 @@ if [ "$1" = "failed-upgrade"  ] \
 	exit
 fi
 # }}}
+
+# Set seen flag of this question to false to get it asked if someone disagrees
+# with the upgrade from ldbm to bdb backend.
+db_fset slapd/migrate_ldbm_to_bdb seen false
 
 #DEBHELPER#
 

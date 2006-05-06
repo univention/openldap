@@ -20,6 +20,11 @@ configure_dumping() {							# {{{
 # Ask the user for the configuration of the dumping component
 # Usage: configure_dumping
 
+  # Look if the user wants to migrate to the BDB backend
+  if ! database_dumping_enabled; then
+    return 0
+  fi
+
 	# Configure if and where to dump the LDAP databases
 	db_input medium slapd/dump_database || true
 	db_go || true
@@ -58,20 +63,6 @@ configure_ldbm_to_bdb_migration() {					# {{{
 	fi
 }
 # }}}
-break_on_ldbm_to_bdb_migration_disagree() { # {{{
-  if [ -e "$SLAPD_CONF" ] && grep -qE \
-      -e '^moduleload[[:space:]]+back_ldbm' \
-      -e '^(database|backend)[[:space:]]+ldbm' \
-      "$SLAPD_CONF"; then
-    db_get slapd/migrate_ldbm_to_bdb
-    if [ "$RET" = "false" ]; then
-      db_fset slapd/migrate_ldbm_to_bdb seen false
-      return 1
-    fi
-    return 0
-  fi
-  return 0
-} # }}}
 database_dumping_enabled() {						# {{{
 # Check if the user has enabled database dumping for the current situation.
 # Return success if yes.
@@ -263,7 +254,7 @@ EOF
 		fi
 		echo "done." >&2
 
-		if [ -n "$SLAPD_USER" -o -n "$SLAPD_GROUP" ]; then
+		if [ -n "$SLAPD_USER" ] || [ -n "$SLAPD_GROUP" ]; then
 			echo -n "  - chowning database directory ($SLAPD_USER:$SLAPD_GROUP)... "
 			[ -z "$SLAPD_USER" ] || \
 				chown -R "$SLAPD_USER" "$dbdir"
@@ -1078,7 +1069,7 @@ supported_backend() {							# {{{
 # our scripts.
 # Usage: if supported_backend "backend"; then ... fi
 
-	case "$1" in bdb|hdb) return 0; esac
+	case "$1" in ldbm|bdb|hdb) return 0; esac
 	return 1
 }
 
