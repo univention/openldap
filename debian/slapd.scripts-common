@@ -319,7 +319,7 @@ write_database_info() {							# {{{
 	suffix=$2
 	directory=$3
 
-	if supported_backend "$backend"; then
+	if upgrade_supported_from_backend "$backend"; then
     		# If no directory was given use the compiled in value
       		# TODO: This should be somewhere in /var - needs tweaking of 
       		# configure.options
@@ -1064,10 +1064,10 @@ previous_version_newer() {						# {{{
 		return 1
 	fi
 } # }}}
-supported_backend() {							# {{{
+upgrade_supported_from_backend() {					# {{{
 # Check if upgrading a database in the named backend is supported by
 # our scripts.
-# Usage: if supported_backend "backend"; then ... fi
+# Usage: if upgrade_supported_from_backend "backend"; then ... fi
 
 	case "$1" in ldbm|bdb|hdb) return 0; esac
 	return 1
