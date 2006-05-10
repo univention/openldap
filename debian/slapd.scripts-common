@@ -873,7 +873,7 @@ set_defaults_for_unseen_entries() {
 
 # Check if the user wants to configure slapd manually
 want_manual_configuration() {
-  db_input low slapd/no_configuration || true
+  db_input medium slapd/no_configuration || true
   db_go || true
   db_get slapd/no_configuration
   no_configuration="$RET"
