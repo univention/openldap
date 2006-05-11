@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: openldap2.2 2.2.26-4\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-07-19 20:52+0200\n"
+"Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
+"POT-Creation-Date: 2006-05-06 23:04+0200\n"
 "PO-Revision-Date: 2005-07-24 17:54+0930\n"
 "Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
 "Language-Team: Vietnamese <gnomevi-list@lists.sourceforge.net>\n"
@@ -334,8 +334,9 @@ msgstr "Trình slapcat bị lỗi trong khi nâng cấp"
 #. Type: note
 #. Description
 #: ../slapd.templates:140
+#, fuzzy
 msgid ""
-"An error occurred durin the attempt to upgrade your LDAP directory. This "
+"An error occurred during the attempt to upgrade your LDAP directory. This "
 "error occurred when performing the 'slapcat' which attempts to extract your "
 "LDAP directory.  This failure could be because of an incorrect config file.  "
 "For example, if the appropriate moduleload lines for your backend database "
@@ -347,12 +348,12 @@ msgid ""
 msgstr ""
 "Gặp lỗi trong khi cố nâng cấp thư mục LDAP của bạn. Lỗi này xảy ra khi thực "
 "hiện « slapcat » mà cố rút thư mục LDAP của bạn. Lỗi này có lẽ vì có một tập "
-"tin cấu hình không đúng. Lấy thí dụ, nếu thiếu những dòng « moduleload » (tải "
-"mô-đun) thích hợp cho cơ sở dữ liệu hậu phương. Lỗi này sẽ cũng gây ra trình "
-"« slapadd » bị lỗi. Sắp di chuyển những tập tin cơ sở dữ liệu cũ sang « /var/"
-"backups ». Nếu bạn muốn thử lại nâng cấp, thì hãy di chuyển những tập tin cơ "
-"sở dữ liệu cũ về vị trí trước, sửa lỗi ấy, rồi chạy lệnh « slapcat | /usr/"
-"share/slapd/fix_ldif -w -o \"$organization\" > $location »."
+"tin cấu hình không đúng. Lấy thí dụ, nếu thiếu những dòng « moduleload "
+"» (tải mô-đun) thích hợp cho cơ sở dữ liệu hậu phương. Lỗi này sẽ cũng gây "
+"ra trình « slapadd » bị lỗi. Sắp di chuyển những tập tin cơ sở dữ liệu cũ "
+"sang « /var/backups ». Nếu bạn muốn thử lại nâng cấp, thì hãy di chuyển "
+"những tập tin cơ sở dữ liệu cũ về vị trí trước, sửa lỗi ấy, rồi chạy lệnh « "
+"slapcat | /usr/share/slapd/fix_ldif -w -o \"$organization\" > $location »."
 
 #. Type: note
 #. Description
@@ -385,12 +386,12 @@ msgid ""
 "the slapadd again."
 msgstr ""
 "Gặp lỗi trong khi cố nâng cấp danh bạ LDAP bạn. Lỗi này xảy ra khi thực hiện "
-"« slapadd » mà cố tạo điều trong một danh bạ LDAP mới, dùng thông tin từ danh "
-"bạ LDAP gốc của bạn. Những tập tin danh bạ LDAP gốc của bạn đã được lưu vào "
-"« /var/backups ». Kết quả của việc nâng cấp đã cố là tập tin .ldif trong « /var/"
-"backups ». Trình slapadd có lẽ gặp lỗi cấu hình (trong trường hợp ấy, trình "
-"slapcat cũng bị lỗi), hoặc vì gặp lỗi trong tập tin LDIF. Nếu gặp lỗi trong "
-"tập tin LDIF thì có lẽ bạn có thể sửa nó, rồi cố lại slapadd."
+"« slapadd » mà cố tạo điều trong một danh bạ LDAP mới, dùng thông tin từ "
+"danh bạ LDAP gốc của bạn. Những tập tin danh bạ LDAP gốc của bạn đã được lưu "
+"vào « /var/backups ». Kết quả của việc nâng cấp đã cố là tập tin .ldif trong "
+"« /var/backups ». Trình slapadd có lẽ gặp lỗi cấu hình (trong trường hợp ấy, "
+"trình slapcat cũng bị lỗi), hoặc vì gặp lỗi trong tập tin LDIF. Nếu gặp lỗi "
+"trong tập tin LDIF thì có lẽ bạn có thể sửa nó, rồi cố lại slapadd."
 
 #. Type: note
 #. Description
@@ -469,11 +470,12 @@ msgstr "Hậu phương cơ sở dữ liệu cần dùng:"
 #. Type: select
 #. Description
 #: ../slapd.templates:198
+#, fuzzy
 msgid ""
-"The BDB backend is the recommended choice of the OpenLDAP developers while "
-"support of the old LDBM backend is phasing out. When using the BDB backend "
-"make sure that you configure the underlying database for your requirements. "
-"Look into /usr/share/doc/slapd/README.DB_CONFIG.gz"
+"The BDB backend is the recommended choice of the OpenLDAP developers. When "
+"When using the BDB backend make sure that you configure the underlying "
+"database for your requirements.  Look into /usr/share/doc/slapd/README."
+"DB_CONFIG.gz"
 msgstr ""
 "Trong khi thôi dần dần không hỗ trợ hậu phương LDBM cũ, lập trình viên "
 "OpenLDAP khuyến khích bạn sử dụng hậu phương loại BDB. Khi sử dụng hậu "

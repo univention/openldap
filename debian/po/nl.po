@@ -14,8 +14,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: openldap2\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-07-23 02:50-0700\n"
+"Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
+"POT-Creation-Date: 2006-05-06 23:04+0200\n"
 "PO-Revision-Date: 2003-09-27 12:45+0100\n"
 "Last-Translator: Bart Cornelis <cobaco@linux.be>\n"
 "Language-Team: debian-l10n-dutch <debian-l10n-dutch@lists.debian.org>\n"
@@ -425,10 +425,10 @@ msgstr ""
 #. Description
 #: ../slapd.templates:198
 msgid ""
-"The BDB backend is the recommended choice of the OpenLDAP developers while "
-"support of the old LDBM backend is phasing out. When using the BDB backend "
-"make sure that you configure the underlying database for your requirements. "
-"Look into /usr/share/doc/slapd/README.DB_CONFIG.gz"
+"The BDB backend is the recommended choice of the OpenLDAP developers. When "
+"When using the BDB backend make sure that you configure the underlying "
+"database for your requirements.  Look into /usr/share/doc/slapd/README."
+"DB_CONFIG.gz"
 msgstr ""
 
 #. Type: select

@@ -14,8 +14,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: openldap2 debconf\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-07-23 02:50-0700\n"
+"Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
+"POT-Creation-Date: 2006-05-06 23:04+0200\n"
 "PO-Revision-Date: 2006-02-21 20:26+0100\n"
 "Last-Translator: Claus Hindsgaul <claus.hindsgaul@gmail.com>\n"
 "Language-Team: Danish <dansk@klid.dk>\n"
@@ -55,9 +55,9 @@ msgid ""
 "standardized description of that data (LDIF stands for LDAP Data Interchange "
 "Format)."
 msgstr ""
-"Inden du opgraderer til en ny version af OpenLDAP-serveren, kan dine "
-"LDAP-bøgers data blive lagt som rene tekstfiler (LDIF-format), som er "
-"en standardiseret beskrivelse af disse data (LDIF står for LDAP Data "
+"Inden du opgraderer til en ny version af OpenLDAP-serveren, kan dine LDAP-"
+"bøgers data blive lagt som rene tekstfiler (LDIF-format), som er en "
+"standardiseret beskrivelse af disse data (LDIF står for LDAP Data "
 "Interchange Format)."
 
 #. Type: select
@@ -72,8 +72,8 @@ msgid ""
 msgstr ""
 "Hvis du vælger \"altid\", vil vedligeholdelsesscripterne uanset hvad lægger "
 "dine databaser i en ren tekstfil forud for opgraderinger. Hvis du vælger "
-"\"når nødvendigt\", vil det kun ske, hvis den nye version er inkompatibel med "
-"det gamle databaseformat, og databasen derfor skal importeres påny. Med "
+"\"når nødvendigt\", vil det kun ske, hvis den nye version er inkompatibel "
+"med det gamle databaseformat, og databasen derfor skal importeres påny. Med "
 "indstillingen \"aldrig\" fortsættes der altid uden at lægge databasen i en "
 "tekstfil."
 
@@ -98,7 +98,8 @@ msgstr ""
 "blive oprettet adskillige LDIF-filer, som svarer til den søgedatabase, der "
 "ligger på serveren. Sørg for at du har nok fri plads på den partitionen, "
 "mappen ligger på. Første forekomst af strengen \"VERSION\" erstattes med den "
-"serverversion, du opgraderer fra. Standardvalget er /var/backups/slapd-VERSION"
+"serverversion, du opgraderer fra. Standardvalget er /var/backups/slapd-"
+"VERSION"
 
 #. Type: boolean
 #. Description
@@ -117,8 +118,8 @@ msgid ""
 msgstr ""
 "Der er stadig filer i /var/lib/ldap, som sikkert vil forstyrre "
 "opsætningsprocessen. Hvis du aktiverer denne indstilling, vil "
-"vedligeholderscripterne flytte de gamle filer, før de opretter en "
-"ny database."
+"vedligeholderscripterne flytte de gamle filer, før de opretter en ny "
+"database."
 
 #. Type: boolean
 #. Description
@@ -137,10 +138,10 @@ msgid ""
 "later."
 msgstr ""
 "Den opsætning, du har angivet, er ikke gyldig. Sørg for at DNS-domænenavnet "
-"har en gyldig syntaks, at organisationen er udfyldt, og at "
-"administrator-adgangskoderne er ens. Hvis du vælger ikke at gentage opsætningen "
-"af LDAP-serveren, vil den ikke blive sat op. Kør \"dpkg-reconfigure\", hvis "
-"du vil prøve igen senere."
+"har en gyldig syntaks, at organisationen er udfyldt, og at administrator-"
+"adgangskoderne er ens. Hvis du vælger ikke at gentage opsætningen af LDAP-"
+"serveren, vil den ikke blive sat op. Kør \"dpkg-reconfigure\", hvis du vil "
+"prøve igen senere."
 
 #. Type: string
 #. Description
@@ -195,7 +196,8 @@ msgstr "Bekræft administratoradgangskode:"
 #. Type: password
 #. Description
 #: ../slapd.templates:72
-msgid "Please reenter the admin password for your LDAP directory for verification."
+msgid ""
+"Please reenter the admin password for your LDAP directory for verification."
 msgstr "Gentag administratoradgangskoden til din LDAP-bog for verifikation."
 
 #. Type: note
@@ -211,8 +213,8 @@ msgid ""
 "The admin password and its confirmation must match. Please note that "
 "differences such as uppercase/lowercase and added whitespace matter."
 msgstr ""
-"Du skal skrive samme administratoradgangskode to gange. Bemærk at forskelle i "
-"f.eks. valg af store eller små bogstaver og mellemrum har betydning."
+"Du skal skrive samme administratoradgangskode to gange. Bemærk at forskelle "
+"i f.eks. valg af store eller små bogstaver og mellemrum har betydning."
 
 #. Type: boolean
 #. Description
@@ -256,10 +258,10 @@ msgid ""
 "doc/slapd/README.Debian."
 msgstr ""
 " Hvis du vælger denne indstilling, der blive gjort et forsøg på at korrigere "
-"opsætningen for dig. Hvis du ikke vælger den, *skal* du selv rette din opsætningsfil. "
-"Ellers vil slapd (og slapcat, hvis du opgraderer fra en ældre version) ikke virke, "
-"og pakken ikke blive installeret. Du kan læse flere oplysninger om dette i "
-"/usr/share/doc/slapd/README.Debian."
+"opsætningen for dig. Hvis du ikke vælger den, *skal* du selv rette din "
+"opsætningsfil. Ellers vil slapd (og slapcat, hvis du opgraderer fra en ældre "
+"version) ikke virke, og pakken ikke blive installeret. Du kan læse flere "
+"oplysninger om dette i /usr/share/doc/slapd/README.Debian."
 
 #. Type: boolean
 #. Description
@@ -278,11 +280,11 @@ msgid ""
 "slapd.conf to tell slapd to accept LDAPv2 connections."
 msgstr ""
 "slapd-dæmonen deaktiverer nu som udgangspunkt den gamle LDAPv2-protokol. "
-"Programmer og brugere forventes generelt at have opgraderet til LDAPv3. "
-"Hvis du har gamle programmer, der ikke er overgået til at benytte LDAPv3 "
-"og stadig har brug for LDAPv2-understøttelsen, så vælg denne indstilling. "
-"Så vil 'allow bind_v2' blive føjet til din slapd.conf, hvilket instruerer "
-"slapd i at acceptere LDAPv2-forbindelser."
+"Programmer og brugere forventes generelt at have opgraderet til LDAPv3. Hvis "
+"du har gamle programmer, der ikke er overgået til at benytte LDAPv3 og "
+"stadig har brug for LDAPv2-understøttelsen, så vælg denne indstilling. Så "
+"vil 'allow bind_v2' blive føjet til din slapd.conf, hvilket instruerer slapd "
+"i at acceptere LDAPv2-forbindelser."
 
 #. Type: boolean
 #. Description
@@ -329,9 +331,9 @@ msgid ""
 "made)."
 msgstr ""
 "Du har angivet en bog-endelse (domæne), som ikke svarer til en af dem, der "
-"er angivet i /etc/ldap/slapd.conf. Hvis du vil ændre en bog-endelse, skal "
-"du flytte den aktuelle LDAP-database og oprette en ny. Bekræft venligst, om "
-"du vil opgive den aktuelle database (der vil blive lavet en sikkerhedskopi)."
+"er angivet i /etc/ldap/slapd.conf. Hvis du vil ændre en bog-endelse, skal du "
+"flytte den aktuelle LDAP-database og oprette en ny. Bekræft venligst, om du "
+"vil opgive den aktuelle database (der vil blive lavet en sikkerhedskopi)."
 
 #. Type: note
 #. Description
@@ -353,13 +355,14 @@ msgid ""
 "whatever caused slapcat to fail, and run:\n"
 " slapcat | /usr/share/slapd/fix_ldif -w -o \"$organization\" > $location"
 msgstr ""
-"Der opstod en fejl under forsøget på at opgradere din LDAP-bog. Fejlen opstod "
-"under kørslen af 'slapcat', som forsøger at ekstrahere din LDAP-bog. Fejlen kan "
-"skyldes en fejlbehæftet opsætningsfil. F.eks. kan de korrekte moduleload-linjer "
-"for din bagendes databasetype mangle. Denne fejl vil også senere få 'slapadd' "
-"til at fejle. De gamle databasefiler er ved at blive flyttet til /var/backups. Hvis "
-"du vil forsøge denne opgradering igen, så flyt de gamle databasefiler tilbage, "
-"ret den fejl, der fik slapcat til at fejle, og kør:\n"
+"Der opstod en fejl under forsøget på at opgradere din LDAP-bog. Fejlen "
+"opstod under kørslen af 'slapcat', som forsøger at ekstrahere din LDAP-bog. "
+"Fejlen kan skyldes en fejlbehæftet opsætningsfil. F.eks. kan de korrekte "
+"moduleload-linjer for din bagendes databasetype mangle. Denne fejl vil også "
+"senere få 'slapadd' til at fejle. De gamle databasefiler er ved at blive "
+"flyttet til /var/backups. Hvis du vil forsøge denne opgradering igen, så "
+"flyt de gamle databasefiler tilbage, ret den fejl, der fik slapcat til at "
+"fejle, og kør:\n"
 " slapcat | /usr/share/slapd/fix_ldif -w -o \"$organization\" > $location"
 
 #. Type: note
@@ -369,8 +372,8 @@ msgid ""
 "Then move the database files back to a backup area and then try running "
 "slapadd from $location."
 msgstr ""
-"Flyt derefter databasefilerne tilbage til et sikkerhedskopi-område, og "
-"prøv at køre slapadd fra $location."
+"Flyt derefter databasefilerne tilbage til et sikkerhedskopi-område, og prøv "
+"at køre slapadd fra $location."
 
 #. Type: note
 #. Description
@@ -398,8 +401,8 @@ msgstr ""
 "er blevet gemt i /var/backups. Resultatet af opgraderingsforsøget ligger i "
 "ldif-filen i /var/backups. Grunden til at slapadd fejlede, kan være en fejl "
 "i opsætningen (i så tilfælde vil slapcat også have fejlet) eller et problem "
-"i LDIF-filen. Hvis problemet var i LDIF-filen, kan du måske rette det og prøve "
-"at køre slapadd igen."
+"i LDIF-filen. Hvis problemet var i LDIF-filen, kan du måske rette det og "
+"prøve at køre slapadd igen."
 
 #. Type: note
 #. Description
@@ -418,8 +421,8 @@ msgid ""
 msgstr ""
 "Der er mindst sat én database op som slave i din slapd-opsætningsfil, og "
 "updateref-indstillingen er ikke sat. updatedref-indstillingen angiver, hvem "
-"der skal refereres til, når slapd bliver bedt om at ændre en replikeret lokal "
-"database. Se slapd.conf(5) for flere detaljer."
+"der skal refereres til, når slapd bliver bedt om at ændre en replikeret "
+"lokal database. Se slapd.conf(5) for flere detaljer."
 
 #. Type: note
 #. Description
@@ -428,8 +431,8 @@ msgid ""
 "Starting with version 2.1.23, slapd requires the updateref option to be set "
 "on slaves. You should make sure to fix your slapd.conf configuration file."
 msgstr ""
-"Fra og med version 2.1.23 kræver slapd at updateref-indstillingen er sat "
-"på slaver. Du må sørge for at rette din slapd.conf-opsætningsfil."
+"Fra og med version 2.1.23 kræver slapd at updateref-indstillingen er sat på "
+"slaver. Du må sørge for at rette din slapd.conf-opsætningsfil."
 
 #. Type: boolean
 #. Description
@@ -444,8 +447,8 @@ msgid ""
 "The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown to "
 "not work well. BDB is the recommended choice of the OpenLDAP developers."
 msgstr ""
-"Bagendetypen LDBM anbefales ikke længere i OpenLDAP 2.2, og har vist sig ikke "
-"at fungere så godt. BDB anbefales i stedet af OpenLDAP-udviklerne."
+"Bagendetypen LDBM anbefales ikke længere i OpenLDAP 2.2, og har vist sig "
+"ikke at fungere så godt. BDB anbefales i stedet af OpenLDAP-udviklerne."
 
 #. Type: boolean
 #. Description
@@ -454,9 +457,9 @@ msgid ""
 "When using the BDB backend make sure you configure BDB properly. For "
 "information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
 msgstr ""
-"Når du benytter BDB-bagenden, skal du sørge for at sætte BDB korrekt op. "
-"Du finder oplysninger om, hvordan du gør dette, i "
-"/usr/share/doc/slapd/README.DB_CONFIG.gz"
+"Når du benytter BDB-bagenden, skal du sørge for at sætte BDB korrekt op. Du "
+"finder oplysninger om, hvordan du gør dette, i /usr/share/doc/slapd/README."
+"DB_CONFIG.gz"
 
 #. Type: boolean
 #. Description
@@ -465,9 +468,9 @@ msgid ""
 "If you enable this option an attempt will be made to update your  "
 "configuration to use BDB instead of LDBM and convert your databases."
 msgstr ""
-"Hvis du aktiverer denne indstilling, vil der blive gjort et forsøg "
-"på at opdatere din opsætning til at benytte BDB i stedet for LDBM, "
-"og konvertere dine databaser."
+"Hvis du aktiverer denne indstilling, vil der blive gjort et forsøg på at "
+"opdatere din opsætning til at benytte BDB i stedet for LDBM, og konvertere "
+"dine databaser."
 
 #. Type: select
 #. Description
@@ -478,16 +481,17 @@ msgstr "Database-bagende, der skal benyttes:"
 #. Type: select
 #. Description
 #: ../slapd.templates:198
+#, fuzzy
 msgid ""
-"The BDB backend is the recommended choice of the OpenLDAP developers while "
-"support of the old LDBM backend is phasing out. When using the BDB backend "
-"make sure that you configure the underlying database for your requirements. "
-"Look into /usr/share/doc/slapd/README.DB_CONFIG.gz"
+"The BDB backend is the recommended choice of the OpenLDAP developers. When "
+"When using the BDB backend make sure that you configure the underlying "
+"database for your requirements.  Look into /usr/share/doc/slapd/README."
+"DB_CONFIG.gz"
 msgstr ""
 "OpenLDAP-udviklerne anbefaler at vælge BDB-bagenden, og understøttelsen af "
 "den gamle LDBM-bagende udfases. Når du bruger BDB-bagenden, skal du sørge "
-"for at du sætter den underliggende database op efter dine behov. "
-"Se i /usr/share/doc/slapd/README.DB_CONFIG.gz"
+"for at du sætter den underliggende database op efter dine behov. Se i /usr/"
+"share/doc/slapd/README.DB_CONFIG.gz"
 
 #. Type: select
 #. Description
@@ -498,8 +502,8 @@ msgid ""
 "OpenLDAP so you should probably stick to BDB until version 2.3."
 msgstr ""
 "HDB er den næste generation af BDB, som muligvis vil erstatte BDB en gang i "
-"fremtiden. Der er stadig nogle problemer med  HDB i OpenLDAP 2.2, så du "
-"bør nok holde dig til BDB indtil version 2.3."
+"fremtiden. Der er stadig nogle problemer med  HDB i OpenLDAP 2.2, så du bør "
+"nok holde dig til BDB indtil version 2.3."
 
 #. Type: select
 #. Description
@@ -523,20 +527,20 @@ msgid ""
 msgstr ""
 "BDB-bagenden (back-bdb) og LDBM-bagenden (back-ldbm) tjener samme formål, og "
 "back-bdb er udviklet ud fra de erfaringer, back-ldbm har givet, men de er "
-"efterhånden ret forskellige. Bege gemmer deres poster ud fra en 32-bit "
-"ID-nøgle, og benytter en dn2id-tabel til at oversætte DN'er til ID'er. "
-"De udfører begge egenskabs-indeksering med samme kode, og gemmer indeksdata "
-"som lister af ID'er. Sådan set er de LDAP-specifikke funktioner, de tilbyder, "
+"efterhånden ret forskellige. Bege gemmer deres poster ud fra en 32-bit ID-"
+"nøgle, og benytter en dn2id-tabel til at oversætte DN'er til ID'er. De "
+"udfører begge egenskabs-indeksering med samme kode, og gemmer indeksdata som "
+"lister af ID'er. Sådan set er de LDAP-specifikke funktioner, de tilbyder, "
 "næsten identiske. Forskellen ligger i de API'er, der benyttes til at "
 "implementere databaserne. back-ldbm benytter en generel database-API, der "
 "kan forbindes til flere forskellige databasepakker. I Debian er den bygget "
 "sammen med BerkeleyDB (BDB). Mens BerkeleyDB understøtter denne generelle "
 "grænseflade, har den også en meget mere omfangsrig API, der besidder mange "
-"flere kræfter og langt mere kompleksitet. back-bdb er skrevet specielt "
-"til den fulde BDB-API, og benytter nogle af BDBs mere avancerede funktioner "
-"til at tilbyde håndtering af transaktioner, finkornet låsning og andre "
-"funktioner, der giver forbedret samtidighed og stabilitet. Se "
-"/usr/share/doc/slapd/README.DB_CONFIG.gz for yderligere oplysninger."
+"flere kræfter og langt mere kompleksitet. back-bdb er skrevet specielt til "
+"den fulde BDB-API, og benytter nogle af BDBs mere avancerede funktioner til "
+"at tilbyde håndtering af transaktioner, finkornet låsning og andre "
+"funktioner, der giver forbedret samtidighed og stabilitet. Se /usr/share/doc/"
+"slapd/README.DB_CONFIG.gz for yderligere oplysninger."
 
 #~ msgid "Admin entry"
 #~ msgstr "Administratoropslaget"
@@ -550,4 +554,3 @@ msgstr ""
 
 #~ msgid "Verify password"
 #~ msgstr "Gentag adgangskode"
-
