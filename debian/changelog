@@ -42,6 +42,8 @@ openldap2.3 (2.3.20-1) unstable; urgency=low
     slapd.conf as file for BDB/HDB configuration parameters. See: slapd-bdb(5)
   * Added various "exit 0" to the installation scripts.
   * Add configure.in patch to fix C comparison what should be bash (ITS#4416)
+  * Raise debconf configuration level from low to medium for
+    slapd/no_configuration.
 
   [ Steve Langasek ]
   * debian/slapd.templates: Fix typo durin -> during; re-run
