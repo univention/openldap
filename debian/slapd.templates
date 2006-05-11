@@ -196,7 +196,7 @@ Type: select
 Choices: BDB, HDB
 Default: BDB
 _Description: Database backend to use:
- The BDB backend is the recommended choice of the OpenLDAP developers. When
+ The BDB backend is the recommended choice of the OpenLDAP developers.
  When using the BDB backend make sure that you configure the underlying
  database for your requirements. 
  Look into /usr/share/doc/slapd/README.DB_CONFIG.gz
