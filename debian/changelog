@@ -44,6 +44,11 @@ openldap2.3 (2.3.20-1) unstable; urgency=low
   * Add configure.in patch to fix C comparison what should be bash (ITS#4416)
   * Raise debconf configuration level from low to medium for
     slapd/no_configuration.
+  * Updated Standards-Version to 3.7.2.0
+  * Added build-dependency on perl which is used in the debian/rules file.
+    Considered by lintian.
+  * Added lintian override for too-long-extended-description-in-templates, it
+    is an explanation about the backends.
 
   [ Steve Langasek ]
   * debian/slapd.templates: Fix typo durin -> during; re-run

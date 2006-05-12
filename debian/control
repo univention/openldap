@@ -3,9 +3,9 @@ Section: net
 Priority: optional
 Maintainer: Debian OpenLDAP Maintainers <pkg-openldap-devel@lists.alioth.debian.org>
 Uploaders: Roland Bauerschmidt <rb@debian.org>, Stephen Frost <sfrost@debian.org>, Steve Langasek <vorlon@debian.org>, Torsten Landschoff <torsten@debian.org>, Matthijs Mohlmann <matthijs@cacholong.nl>, Russ Allbery <rra@debian.org>
-Build-Depends: libdb4.2-dev, libwrap0-dev, libiodbc2-dev, libsasl2-dev (>= 2.1.18-1), dpkg-dev (>= 1.7.1), libncurses5-dev, debconf-utils, debhelper (>= 4.1.16), libltdl3-dev (>= 1.4.3), libslp-dev, po-debconf, libssl-dev (>= 0.9.7), libperl-dev (>= 5.8.0), quilt (>= 0.40)
+Build-Depends: libdb4.2-dev, libwrap0-dev, libiodbc2-dev, libsasl2-dev (>= 2.1.18-1), dpkg-dev (>= 1.7.1), libncurses5-dev, debconf-utils, debhelper (>= 4.1.16), libltdl3-dev (>= 1.4.3), libslp-dev, po-debconf, libssl-dev (>= 0.9.7), libperl-dev (>= 5.8.0), perl, quilt (>= 0.40)
 Build-Conflicts: libbind-dev, bind-dev
-Standards-Version: 3.6.2.1
+Standards-Version: 3.7.2.0
 
 Package: slapd
 Section: net
