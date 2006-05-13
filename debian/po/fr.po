@@ -18,7 +18,7 @@ msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
 "POT-Creation-Date: 2006-05-11 20:04+0200\n"
-"PO-Revision-Date: 2006-05-03 18:37+0200\n"
+"PO-Revision-Date: 2006-05-12 22:28+0200\n"
 "Last-Translator: Christian Perrier <bubulle@debian.org>\n"
 "Language-Team: French <debian-l10n-french@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -46,8 +46,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:12
 msgid "Dump databases to file on upgrade:"
-msgstr ""
-"Sauvegarde des bases de données dans un fichier pour la mise à niveau :"
+msgstr "Sauvegarde des bases de données dans un fichier pour la mise à niveau :"
 
 #. Type: select
 #. Description
@@ -192,8 +191,7 @@ msgstr "Mot de passe de l'administrateur :"
 #. Description
 #: ../slapd.templates:67
 msgid " Please enter the password for the admin entry in your LDAP directory."
-msgstr ""
-"Veuillez indiquer le mot de passe de l'administrateur de l'annuaire LDAP."
+msgstr "Veuillez indiquer le mot de passe de l'administrateur de l'annuaire LDAP."
 
 #. Type: password
 #. Description
@@ -204,10 +202,8 @@ msgstr "Mot de passe de l'administrateur :"
 #. Type: password
 #. Description
 #: ../slapd.templates:72
-msgid ""
-"Please reenter the admin password for your LDAP directory for verification."
-msgstr ""
-"Veuillez confirmer le mot de passe de l'administrateur de l'annuaire LDAP."
+msgid "Please reenter the admin password for your LDAP directory for verification."
+msgstr "Veuillez confirmer le mot de passe de l'administrateur de l'annuaire LDAP."
 
 #. Type: note
 #. Description
@@ -500,16 +496,13 @@ msgstr "Module de base de données à utiliser :"
 #. Type: select
 #. Description
 #: ../slapd.templates:198
-#, fuzzy
 msgid ""
 "The BDB backend is the recommended choice of the OpenLDAP developers. When "
 "using the BDB backend make sure that you configure the underlying database "
 "for your requirements.  Look into /usr/share/doc/slapd/README.DB_CONFIG.gz"
 msgstr ""
 "Le module de bases de données BDB est le module recommandé par les "
-"développeurs d'OpenLDAP alors que la gestion des bases LDBM est "
-"progressivement délaissée. Lorsque vous utilisez le module BDB, veuillez "
-"prendre soin de la configuration de la base de données. Pour plus "
+"développeurs d'OpenLDAP. Pour plus "
 "d'informations, veuillez consulter le fichier /usr/share/doc/slapd/README."
 "DB_CONFIG.gz."
 
@@ -566,3 +559,4 @@ msgstr ""
 "améliorent le fonctionnement en parallèle et la fiabilité. Pour plus "
 "d'informations, veuillez consulter le fichier /usr/share/doc/slapd/README."
 "DB_CONFIG.gz."
+

@@ -53,12 +53,12 @@ openldap2.3 (2.3.20-1) unstable; urgency=low
   [ Steve Langasek ]
   * debian/slapd.templates: Fix typo durin -> during; re-run
     debconf-updatepo, fixing up the fuzzies (closes: #319596).
-  
+
   [ Torsten Landschoff ]
-  * debian/slapd.scripts-common: Rename backend_supported to 
+  * debian/slapd.scripts-common: Rename backend_supported to
     upgrade_supported_from_backend for more clarity.
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 12 Mar 2006 19:22:03 +0100
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat, 13 May 2006 00:28:11 +0200
 
 openldap2.2 (2.2.26-4) unstable; urgency=low
 

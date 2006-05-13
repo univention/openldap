@@ -16,9 +16,9 @@ msgstr ""
 "Project-Id-Version: openldap2 debconf\n"
 "Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
 "POT-Creation-Date: 2006-05-11 20:04+0200\n"
-"PO-Revision-Date: 2006-02-21 20:26+0100\n"
+"PO-Revision-Date: 2006-05-13 10:30+0200\n"
 "Last-Translator: Claus Hindsgaul <claus.hindsgaul@gmail.com>\n"
-"Language-Team: Danish <dansk@klid.dk>\n"
+"Language-Team: Danish\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -196,8 +196,7 @@ msgstr "Bekræft administratoradgangskode:"
 #. Type: password
 #. Description
 #: ../slapd.templates:72
-msgid ""
-"Please reenter the admin password for your LDAP directory for verification."
+msgid "Please reenter the admin password for your LDAP directory for verification."
 msgstr "Gentag administratoradgangskoden til din LDAP-bog for verifikation."
 
 #. Type: note
@@ -481,16 +480,14 @@ msgstr "Database-bagende, der skal benyttes:"
 #. Type: select
 #. Description
 #: ../slapd.templates:198
-#, fuzzy
 msgid ""
 "The BDB backend is the recommended choice of the OpenLDAP developers. When "
 "using the BDB backend make sure that you configure the underlying database "
 "for your requirements.  Look into /usr/share/doc/slapd/README.DB_CONFIG.gz"
 msgstr ""
-"OpenLDAP-udviklerne anbefaler at vælge BDB-bagenden, og understøttelsen af "
-"den gamle LDBM-bagende udfases. Når du bruger BDB-bagenden, skal du sørge "
-"for at du sætter den underliggende database op efter dine behov. Se i /usr/"
-"share/doc/slapd/README.DB_CONFIG.gz"
+"OpenLDAP-udviklerne anbefaler at vælge BDB-bagenden. Når du bruger BDB-bagenden, "
+"skal du sørge for at du sætter den underliggende database op efter dine behov. "
+"Se i /usr/share/doc/slapd/README.DB_CONFIG.gz"
 
 #. Type: select
 #. Description
@@ -553,3 +550,4 @@ msgstr ""
 
 #~ msgid "Verify password"
 #~ msgstr "Gentag adgangskode"
+
