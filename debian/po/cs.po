@@ -13,10 +13,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: openldap2.2\n"
+"Project-Id-Version: openldap2.3\n"
 "Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
 "POT-Creation-Date: 2006-05-11 20:04+0200\n"
-"PO-Revision-Date: 2006-03-12 19:05+0100\n"
+"PO-Revision-Date: 2006-05-14 07:01+0200\n"
 "Last-Translator: Miroslav Kure <kurem@debian.cz>\n"
 "Language-Team: Czech <debian-l10n-czech@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -478,16 +478,15 @@ msgstr "Databázový backend:"
 #. Type: select
 #. Description
 #: ../slapd.templates:198
-#, fuzzy
 msgid ""
 "The BDB backend is the recommended choice of the OpenLDAP developers. When "
 "using the BDB backend make sure that you configure the underlying database "
 "for your requirements.  Look into /usr/share/doc/slapd/README.DB_CONFIG.gz"
 msgstr ""
-"Backend BDB je doporučenou volbou vývojářů OpenLDAPu, podpora pro starý "
-"backend LDBM se vytrácí. Při použití backendu BDB se ujistěte, že jste jej "
-"nastavili správně. Více informací o správném nastavení naleznete v souboru /"
-"usr/share/doc/slapd/README.DB_CONFIG.gz."
+"Backend BDB je doporučenou volbou vývojářů OpenLDAPu. Při použití tohoto "
+"backendu se ujistěte, že jste nastavili databázi podle svých potřeb. Více "
+"informací o nastavení BDB naleznete v souboru /usr/share/doc/slapd/"
+"README.DB_CONFIG.gz."
 
 #. Type: select
 #. Description
