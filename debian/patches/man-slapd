@@ -1,11 +1,12 @@
-diff -urNad openldap2.3-2.3.11~/doc/man/man8/slapd.8 openldap2.3-2.3.11/doc/man/man8/slapd.8
---- openldap2.3-2.3.11~/doc/man/man8/slapd.8	2005-12-01 13:48:49.000000000 +0100
-+++ openldap2.3-2.3.11/doc/man/man8/slapd.8	2005-12-01 15:49:26.415888750 +0100
+Index: doc/man/man8/slapd.8
+===================================================================
+--- doc/man/man8/slapd.8.orig
++++ doc/man/man8/slapd.8
 @@ -85,7 +85,9 @@
  will not fork or disassociate from the invoking terminal.  Some general
  operation and status messages are printed for any value of \fIdebug\-level\fP.
  \fIdebug\-level\fP is taken as a bit string, with each bit corresponding to a
--different kind of debugging information.  See <ldap.h> for details.
+-different kind of debugging information.  See <ldap_log.h> for details.
 +different kind of debugging information. The meaning is the same as for
 +the \fBloglevel\fP configuration option documented in
 +.BR slapd.conf (5).

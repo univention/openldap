@@ -1,6 +1,6 @@
 debian/tmp/usr/lib/liblber-2.3.so.0 usr/lib
-debian/tmp/usr/lib/liblber-2.3.so.0.2.8 usr/lib
+debian/tmp/usr/lib/liblber-2.3.so.0.2.11 usr/lib
 debian/tmp/usr/lib/libldap-2.3.so.0 usr/lib
-debian/tmp/usr/lib/libldap-2.3.so.0.2.8 usr/lib
+debian/tmp/usr/lib/libldap-2.3.so.0.2.11 usr/lib
 debian/tmp/usr/lib/libldap_r-2.3.so.0 usr/lib
-debian/tmp/usr/lib/libldap_r-2.3.so.0.2.8 usr/lib
+debian/tmp/usr/lib/libldap_r-2.3.so.0.2.11 usr/lib
