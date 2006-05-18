@@ -1,5 +1,5 @@
 /* compare.c - ldbm backend compare routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/compare.c,v 1.49.2.5 2006/02/13 20:38:34 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/compare.c,v 1.49.2.6 2006/04/04 20:29:34 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -107,7 +107,7 @@ ldbm_back_compare(
 	}
 
 return_results:;
-	cache_return_entry_r( &li->li_cache, e );
+	if ( e ) cache_return_entry_r( &li->li_cache, e );
 	ldap_pvt_thread_rdwr_runlock(&li->li_giant_rwlock);
 
 	send_ldap_result( op, rs );

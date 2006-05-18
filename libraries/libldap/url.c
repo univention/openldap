@@ -1,5 +1,5 @@
 /* LIBLDAP url.c -- LDAP URL (RFC 2255) related routines */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/url.c,v 1.84.2.6 2006/01/03 22:16:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/url.c,v 1.84.2.7 2006/04/03 19:49:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -348,7 +348,7 @@ hex_escape_len( const char *s, unsigned list )
 			
 		/* RFC 2396: unreserved alphanum */
 		default:
-			if ( !isalnum( s[0] ) ) {
+			if ( !isalnum( (unsigned char) s[0] ) ) {
 				len += 3;
 			} else {
 				len++;
@@ -413,7 +413,7 @@ hex_escape( char *buf, int len, const char *s, unsigned list )
 			
 		/* RFC 2396: unreserved alphanum */
 		default:
-			if ( !isalnum( s[i] ) ) {
+			if ( !isalnum( (unsigned char) s[i] ) ) {
 				escape = 1;
 			}
 			break;
@@ -1320,12 +1320,18 @@ ldap_url_parsehosts(
 					specs[i] = ludp->lud_host;
 					ludp->lud_host = p;
 					p = strchr( ludp->lud_host, ']' );
-					if ( p == NULL )
+					if ( p == NULL ) {
+						LDAP_FREE(ludp);
+						ldap_charray_free(specs);
 						return LDAP_PARAM_ERROR;
+					}
 					*p++ = '\0';
 					if ( *p != ':' ) {
-						if ( *p != '\0' )
+						if ( *p != '\0' ) {
+							LDAP_FREE(ludp);
+							ldap_charray_free(specs);
 							return LDAP_PARAM_ERROR;
+						}
 						p = NULL;
 					}
 				} else {
@@ -1339,6 +1345,8 @@ ldap_url_parsehosts(
 				ldap_pvt_hex_unescape(p);
 				ludp->lud_port = strtol( p, &next, 10 );
 				if ( next == p || next[0] != '\0' ) {
+					LDAP_FREE(ludp);
+					ldap_charray_free(specs);
 					return LDAP_PARAM_ERROR;
 				}
 			}

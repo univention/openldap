@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/test.c,v 1.50.2.5 2006/01/16 19:06:12 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/test.c,v 1.50.2.6 2006/04/03 19:49:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -205,6 +205,10 @@ get_modlist(
 				    6 ) == 0 ) {
 					if ( file_read( tmp.mod_values[i] + 6,
 					    bvals[i] ) < 0 ) {
+						free( bvals );
+						for ( i = 0; i<num; i++ )
+							free( result[ i ] );
+						free( result );
 						return( NULL );
 					}
 				} else {

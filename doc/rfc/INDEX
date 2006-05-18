@@ -51,6 +51,7 @@ rfc3928.txt LDAP Client Update Protocol (PS)
 rfc4013.txt SASLprep (PS)
 rfc4370.txt LDAP Proxied Authorization Control (PS)
 rfc4373.txt LBURP (I)
+rfc4404.txt LDAP Schema for UDDI (I)
 
 Legend:
 STD	Standard
@@ -63,4 +64,4 @@ BCP	Best Common Practice
 
 Please see http://www.rfc-editor.org/ for up-to-date status information.
 
-$OpenLDAP: pkg/ldap/doc/rfc/INDEX,v 1.38.2.3 2006/02/12 03:19:48 kurt Exp $
+$OpenLDAP: pkg/ldap/doc/rfc/INDEX,v 1.38.2.4 2006/04/04 01:12:38 kurt Exp $

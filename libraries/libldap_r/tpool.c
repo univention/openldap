@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/tpool.c,v 1.30.2.13 2006/01/25 02:25:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/tpool.c,v 1.30.2.15 2006/05/09 17:47:14 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -111,7 +111,6 @@ ldap_int_thread_pool_shutdown ( void )
 	struct ldap_int_thread_pool_s *pool;
 
 	while ((pool = LDAP_STAILQ_FIRST(&ldap_int_thread_pool_list)) != NULL) {
-		LDAP_STAILQ_REMOVE_HEAD(&ldap_int_thread_pool_list, ltp_next);
 		(ldap_pvt_thread_pool_destroy)(&pool, 0); /* ignore thr_debug macro */
 	}
 	ldap_pvt_thread_mutex_destroy(&ldap_pvt_thread_pool_mutex);
@@ -353,7 +352,6 @@ int
 ldap_pvt_thread_pool_destroy ( ldap_pvt_thread_pool_t *tpool, int run_pending )
 {
 	struct ldap_int_thread_pool_s *pool, *pptr;
-	long waiting;
 	ldap_int_thread_ctx_t *ctx;
 
 	if (tpool == NULL)

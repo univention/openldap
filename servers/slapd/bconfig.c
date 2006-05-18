@@ -1,5 +1,5 @@
 /* bconfig.c - the config backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/bconfig.c,v 1.17.2.42 2006/02/17 07:38:40 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/bconfig.c,v 1.17.2.45 2006/05/09 19:26:26 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2006 The OpenLDAP Foundation.
@@ -332,6 +332,7 @@ static ConfigTable config_back_cf_table[] = {
 			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
 	{ "limits", "limits", 2, 0, 0, ARG_DB|ARG_MAGIC|CFG_LIMITS,
 		&config_generic, "( OLcfgDbAt:0.5 NAME 'olcLimits' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString X-ORDERED 'VALUES' )", NULL, NULL },
 	{ "localSSF", "ssf", 2, 2, 0, ARG_INT,
 		&local_ssf, "( OLcfgGlAt:26 NAME 'olcLocalSSF' "
@@ -341,6 +342,7 @@ static ConfigTable config_back_cf_table[] = {
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "loglevel", "level", 2, 0, 0, ARG_MAGIC,
 		&config_loglevel, "( OLcfgGlAt:28 NAME 'olcLogLevel' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString )", NULL, NULL },
 	{ "maxDerefDepth", "depth", 2, 2, 0, ARG_DB|ARG_INT|ARG_MAGIC|CFG_DEPTH,
 		&config_generic, "( OLcfgDbAt:0.6 NAME 'olcMaxDerefDepth' "
@@ -352,6 +354,7 @@ static ConfigTable config_back_cf_table[] = {
 		ARG_IGNORED, NULL,
 #endif
 		"( OLcfgGlAt:30 NAME 'olcModuleLoad' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString X-ORDERED 'VALUES' )", NULL, NULL },
 	{ "modulepath", "path", 2, 2, 0,
 #ifdef SLAPD_MODULES
@@ -369,6 +372,7 @@ static ConfigTable config_back_cf_table[] = {
 			NULL, NULL },
 	{ "objectidentifier", NULL,	0, 0, 0, ARG_MAGIC|CFG_OID,
 		&config_generic, "( OLcfgGlAt:33 NAME 'olcObjectIdentifier' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString X-ORDERED 'VALUES' )", NULL, NULL },
 	{ "overlay", "overlay", 2, 2, 0, ARG_MAGIC,
 		&config_overlay, "( OLcfgGlAt:34 NAME 'olcOverlay' "
@@ -378,6 +382,7 @@ static ConfigTable config_back_cf_table[] = {
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "password-hash", "hash", 2, 2, 0, ARG_MAGIC,
 		&config_passwd_hash, "( OLcfgGlAt:36 NAME 'olcPasswordHash' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString )", NULL, NULL },
 	{ "pidfile", "file", 2, 2, 0, ARG_STRING,
 		&slapd_pid_file, "( OLcfgGlAt:37 NAME 'olcPidFile' "
@@ -389,6 +394,7 @@ static ConfigTable config_back_cf_table[] = {
 		ARG_IGNORED, NULL,
 #endif
 		"( OLcfgGlAt:38 NAME 'olcPlugin' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString )", NULL, NULL },
 	{ "pluginlog", "filename", 2, 2, 0,
 #ifdef LDAP_SLAPI
@@ -406,6 +412,7 @@ static ConfigTable config_back_cf_table[] = {
 			"SUP labeledURI SINGLE-VALUE )", NULL, NULL },
 	{ "replica", "host or uri", 2, 0, 0, ARG_DB|ARG_MAGIC,
 		&config_replica, "( OLcfgDbAt:0.7 NAME 'olcReplica' "
+			"EQUALITY caseIgnoreMatch "
 			"SUP labeledURI X-ORDERED 'VALUES' )", NULL, NULL },
 	{ "replica-argsfile", NULL, 0, 0, 0, ARG_STRING,
 		&replica_argsFile, "( OLcfgGlAt:43 NAME 'olcReplicaArgsFile' "
@@ -421,9 +428,11 @@ static ConfigTable config_back_cf_table[] = {
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "require", "features", 2, 0, 7, ARG_MAY_DB|ARG_MAGIC,
 		&config_requires, "( OLcfgGlAt:47 NAME 'olcRequires' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString )", NULL, NULL },
 	{ "restrict", "op_list", 2, 0, 0, ARG_MAY_DB|ARG_MAGIC,
 		&config_restrict, "( OLcfgGlAt:48 NAME 'olcRestrict' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString )", NULL, NULL },
 	{ "reverse-lookup", "on|off", 2, 2, 0,
 #ifdef SLAPD_RLOOKUPS
@@ -438,6 +447,7 @@ static ConfigTable config_back_cf_table[] = {
 			"SYNTAX OMsDN SINGLE-VALUE )", NULL, NULL },
 	{ "rootDSE", "file", 2, 2, 0, ARG_MAGIC|CFG_ROOTDSE,
 		&config_generic, "( OLcfgGlAt:51 NAME 'olcRootDSE' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString )", NULL, NULL },
 	{ "rootpw", "password", 2, 2, 0, ARG_BERVAL|ARG_DB|ARG_MAGIC,
 		&config_rootpw, "( OLcfgDbAt:0.9 NAME 'olcRootPW' "
@@ -477,6 +487,7 @@ static ConfigTable config_back_cf_table[] = {
 			"SYNTAX OMsDN SINGLE-VALUE )", NULL, NULL },
 	{ "security", "factors", 2, 0, 0, ARG_MAY_DB|ARG_MAGIC,
 		&config_security, "( OLcfgGlAt:59 NAME 'olcSecurity' "
+			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString )", NULL, NULL },
 	{ "sizelimit", "limit",	2, 0, 0, ARG_MAY_DB|ARG_MAGIC,
 		&config_sizelimit, "( OLcfgGlAt:60 NAME 'olcSizeLimit' "
@@ -497,15 +508,21 @@ static ConfigTable config_back_cf_table[] = {
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "subordinate", "[advertise]", 1, 2, 0, ARG_DB|ARG_MAGIC,
 		&config_subordinate, "( OLcfgDbAt:0.15 NAME 'olcSubordinate' "
-			"SYNTAX OMsDirectoryString )", NULL, NULL },
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "suffix",	"suffix", 2, 2, 0, ARG_DB|ARG_DN|ARG_QUOTE|ARG_MAGIC,
 		&config_suffix, "( OLcfgDbAt:0.10 NAME 'olcSuffix' "
+			"EQUALITY distinguishedNameMatch "
 			"SYNTAX OMsDN )", NULL, NULL },
 	{ "syncrepl", NULL, 0, 0, 0, ARG_DB|ARG_MAGIC,
 		&syncrepl_config, "( OLcfgDbAt:0.11 NAME 'olcSyncrepl' "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
-	{ "threads", "count", 2, 2, 0, ARG_INT|ARG_MAGIC|CFG_THREADS,
-		&config_generic, "( OLcfgGlAt:66 NAME 'olcThreads' "
+	{ "threads", "count", 2, 2, 0,
+#ifdef NO_THREADS
+		ARG_IGNORED, NULL,
+#else
+		ARG_INT|ARG_MAGIC|CFG_THREADS, &config_generic,
+#endif
+		"( OLcfgGlAt:66 NAME 'olcThreads' "
 			"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
 	{ "timelimit", "limit", 2, 0, 0, ARG_MAY_DB|ARG_MAGIC,
 		&config_timelimit, "( OLcfgGlAt:67 NAME 'olcTimeLimit' "
@@ -592,6 +609,7 @@ static ConfigTable config_back_cf_table[] = {
 			"SYNTAX OMsDN SINGLE-VALUE )", NULL, NULL },
 	{ "updateref", "url", 2, 2, 0, ARG_DB|ARG_MAGIC,
 		&config_updateref, "( OLcfgDbAt:0.13 NAME 'olcUpdateRef' "
+			"EQUALITY caseIgnoreMatch "
 			"SUP labeledURI )", NULL, NULL },
 	{ NULL,	NULL, 0, 0, 0, ARG_IGNORED,
 		NULL, NULL, NULL, NULL }
@@ -1068,7 +1086,15 @@ config_generic(ConfigArgs *c) {
 			break;
 
 		case CFG_THREADS:
-			if ( c->value_int > 2 * SLAP_MAX_WORKER_THREADS ) {
+			if ( c->value_int < 2 ) {
+				snprintf( c->msg, sizeof( c->msg ),
+					"threads=%d smaller than minimum value 2",
+					c->value_int );
+				Debug(LDAP_DEBUG_ANY, "%s: %s.\n",
+					c->log, c->msg, 0 );
+				return 1;
+
+			} else if ( c->value_int > 2 * SLAP_MAX_WORKER_THREADS ) {
 				snprintf( c->msg, sizeof( c->msg ),
 					"warning, threads=%d larger than twice the default (2*%d=%d); YMMV",
 					c->value_int, SLAP_MAX_WORKER_THREADS, 2 * SLAP_MAX_WORKER_THREADS );
@@ -1182,7 +1208,16 @@ config_generic(ConfigArgs *c) {
 			break;
 
 		case CFG_ACL:
-			if ( parse_acl(c->be, c->fname, c->lineno, c->argc, c->argv, c->valx) ) {
+			/* Don't append to the global ACL if we're on a specific DB */
+			i = c->valx;
+			if ( c->be != frontendDB && frontendDB->be_acl && c->valx == -1 ) {
+				AccessControl *a;
+				i = 0;
+				for ( a=c->be->be_acl; a && a != frontendDB->be_acl;
+					a = a->acl_next )
+					i++;
+			}
+			if ( parse_acl(c->be, c->fname, c->lineno, c->argc, c->argv, i ) ) {
 				return 1;
 			}
 			break;
@@ -2465,6 +2500,11 @@ config_replica(ConfigArgs *c) {
 				/* dealt with separately; don't let it get to bindconf */
 				;
 
+			} else if(!strncasecmp(c->argv[i], "host=", STRLENOF("host="))) {
+				/* dealt with separately; don't let it get to bindconf */
+				;
+
+
 			} else if(!strncasecmp(c->argv[i], "suffix=", STRLENOF( "suffix="))) {
 				switch(add_replica_suffix(c->be, nr, c->argv[i] + STRLENOF("suffix="))) {
 					case 1:
@@ -2975,10 +3015,18 @@ read_config(const char *fname, const char *dir) {
 			if ( rc != LDAP_NO_SUCH_OBJECT )
 				return 1;
 			/* ITS#4194: But if dir was specified and no fname,
-			 * then we were supposed to read the dir.
+			 * then we were supposed to read the dir. Unless we're
+			 * trying to slapadd the dir...
 			 */
-			if ( dir && !fname )
-				return 1;
+			if ( dir && !fname ) {
+				if ( slapMode & (SLAP_SERVER_MODE|SLAP_TOOL_READMAIN|SLAP_TOOL_READONLY))
+					return 1;
+				/* Assume it's slapadd with a config dir, let it continue */
+				rc = 0;
+				cfb->cb_got_ldif = 1;
+				cfb->cb_use_ldif = 1;
+				goto done;
+			}
 		}
 
 		/* If we read the config from back-ldif, nothing to do here */
@@ -2997,25 +3045,6 @@ read_config(const char *fname, const char *dir) {
 
 	if ( rc == 0 )
 		ber_str2bv( cfname, 0, 1, &cfb->cb_config->c_file );
-
-	/* If we got this far and failed, it may be a serious problem. In server
-	 * mode, we should never come to this. However, it may be alright if we're
-	 * using slapadd to create the conf dir.
-	 */
-	while ( rc ) {
-		if ( slapMode & (SLAP_SERVER_MODE|SLAP_TOOL_READMAIN|SLAP_TOOL_READONLY))
-			break;
-		/* If a config file was explicitly given, fail */
-		if ( fname )
-			break;
-		
-		/* Seems to be slapadd with a config dir, let it continue */
-		if ( cfb->cb_use_ldif ) {
-			rc = 0;
-			cfb->cb_got_ldif = 1;
-		}
-		break;
-	}
 
 done:
 	if ( rc == 0 && BER_BVISNULL( &frontendDB->be_schemadn ) ) {

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/request.c,v 1.103.2.10 2006/01/03 22:16:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/request.c,v 1.103.2.13 2006/05/15 15:26:46 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -93,32 +93,29 @@ ldap_send_initial_request(
 	BerElement *ber,
 	ber_int_t msgid)
 {
-	LDAPURLDesc	*servers;
-	int rc;
+	int rc = 1;
 
 	Debug( LDAP_DEBUG_TRACE, "ldap_send_initial_request\n", 0, 0, 0 );
 
+#ifdef LDAP_R_COMPILE
+	ldap_pvt_thread_mutex_lock( &ld->ld_req_mutex );
+#endif
 	if ( ber_sockbuf_ctrl( ld->ld_sb, LBER_SB_OPT_GET_FD, NULL ) == -1 ) {
 		/* not connected yet */
-		int rc = ldap_open_defconn( ld );
+		rc = ldap_open_defconn( ld );
 
-		if( rc < 0 ) {
-			ber_free( ber, 1 );
-			return( -1 );
-		}
-
+	}
+#ifdef LDAP_R_COMPILE
+	ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
+#endif
+	if( rc < 0 ) {
+		ber_free( ber, 1 );
+		return( -1 );
+	} else if ( rc == 0 ) {
 		Debug( LDAP_DEBUG_TRACE,
 			"ldap_open_defconn: successful\n",
 			0, 0, 0 );
 	}
-
-	{
-		/*
-		 * use of DNS is turned off or this is an X.500 DN...
-		 * use our default connection
-		 */
-		servers = NULL;
-	}	
 
 #ifdef LDAP_CONNECTIONLESS
 	if (LDAP_IS_UDP(ld)) {
@@ -136,12 +133,10 @@ ldap_send_initial_request(
 	ldap_pvt_thread_mutex_lock( &ld->ld_req_mutex );
 #endif
 	rc = ldap_send_server_request( ld, ber, msgid, NULL,
-		servers, NULL, NULL );
+		NULL, NULL, NULL );
 #ifdef LDAP_R_COMPILE
 	ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
 #endif
-	if (servers)
-		ldap_free_urllist(servers);
 	return(rc);
 }
 
@@ -422,6 +417,9 @@ ldap_new_connection( LDAP *ld, LDAPURLDesc *srvlist, int use_ldsb,
 				ldap_free_urldesc( srvfunc );
 			}
 		} else {
+			int		msgid, rc;
+			struct berval	passwd = BER_BVNULL;
+
 			savedefconn = ld->ld_defconn;
 			++lc->lconn_refcnt;	/* avoid premature free */
 			ld->ld_defconn = lc;
@@ -431,8 +429,42 @@ ldap_new_connection( LDAP *ld, LDAPURLDesc *srvlist, int use_ldsb,
 			ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
 			ldap_pvt_thread_mutex_unlock( &ld->ld_res_mutex );
 #endif
-			if ( ldap_bind_s( ld, "", "", LDAP_AUTH_SIMPLE ) != LDAP_SUCCESS ) {
+			rc = ldap_sasl_bind( ld, "", LDAP_SASL_SIMPLE, &passwd,
+				NULL, NULL, &msgid );
+			if ( rc != LDAP_SUCCESS ) {
 				err = -1;
+
+			} else {
+				for ( err = 1; err > 0; ) {
+					struct timeval	tv = { 0, 100000 };
+					LDAPMessage	*res = NULL;
+
+					switch ( ldap_result( ld, msgid, LDAP_MSG_ALL, &tv, &res ) ) {
+					case -1:
+						err = -1;
+						break;
+
+					case 0:
+#ifdef LDAP_R_COMPILE
+						ldap_pvt_thread_yield();
+#endif
+						break;
+
+					case LDAP_RES_BIND:
+						rc = ldap_parse_result( ld, res, &err, NULL, NULL, NULL, NULL, 1 );
+						if ( rc != LDAP_SUCCESS ) {
+							err = -1;
+
+						} else if ( err != LDAP_SUCCESS ) {
+							err = -1;
+						}
+						/* else err == LDAP_SUCCESS == 0 */
+						break;
+
+					default:
+						assert( 0 );
+					}
+				}
 			}
 #ifdef LDAP_R_COMPILE
 			ldap_pvt_thread_mutex_lock( &ld->ld_res_mutex );
@@ -871,20 +903,21 @@ ldap_chase_v3referrals( LDAP *ld, LDAPRequest *lr, char **refs, int sref, char *
 			LDAPRequest *lp;
 			int looped = 0;
 			int len = srv->lud_dn ? strlen( srv->lud_dn ) : 0;
-			for (lp = origreq; lp; ) {
+			for ( lp = origreq; lp; ) {
 				if ( lp->lr_conn == lc ) {
-					if ( len == lp->lr_dn.bv_len ) {
-						if ( len && strncmp( srv->lud_dn, lp->lr_dn.bv_val,
-							len ))
-							continue;
+					if ( len == lp->lr_dn.bv_len
+						&& len
+						&& strncmp( srv->lud_dn, lp->lr_dn.bv_val, len ) == 0 )
+					{
 						looped = 1;
 						break;
 					}
 				}
-				if ( lp == origreq )
+				if ( lp == origreq ) {
 					lp = lp->lr_child;
-				else
+				} else {
 					lp = lr->lr_refnext;
+				}
 			}
 			if ( looped ) {
 				ldap_free_urllist( srv );
@@ -894,7 +927,7 @@ ldap_chase_v3referrals( LDAP *ld, LDAPRequest *lr, char **refs, int sref, char *
 				continue;
 			}
 
-			if( lc->lconn_rebind_inprogress) {
+			if ( lc->lconn_rebind_inprogress ) {
 				/* We are already chasing a referral or search reference and a
 				 * bind on that connection is in progress.  We must queue
 				 * referrals on that connection, so we don't get a request
@@ -1247,8 +1280,7 @@ re_encode_request( LDAP *ld,
 	ber_int_t	scope;
 	int		rc;
 	BerElement	tmpber, *ber;
-	struct berval		orig_dn;
-	char		*dn;
+	struct berval		dn;
 
 	Debug( LDAP_DEBUG_TRACE,
 	    "re_encode_request: new msgid %ld, new dn <%s>\n",
@@ -1273,15 +1305,15 @@ re_encode_request( LDAP *ld,
 	assert( tag != 0);
 	if ( tag == LDAP_REQ_BIND ) {
 		/* bind requests have a version number before the DN & other stuff */
-		rtag = ber_scanf( &tmpber, "{im" /*}*/, &ver, &orig_dn );
+		rtag = ber_scanf( &tmpber, "{im" /*}*/, &ver, &dn );
 
 	} else if ( tag == LDAP_REQ_DELETE ) {
 		/* delete requests don't have a DN wrapping sequence */
-		rtag = ber_scanf( &tmpber, "m", &orig_dn );
+		rtag = ber_scanf( &tmpber, "m", &dn );
 
 	} else if ( tag == LDAP_REQ_SEARCH ) {
 		/* search requests need to be re-scope-ed */
-		rtag = ber_scanf( &tmpber, "{me" /*"}"*/, &orig_dn, &scope );
+		rtag = ber_scanf( &tmpber, "{me" /*"}"*/, &dn, &scope );
 
 		if( srv->lud_scope != LDAP_SCOPE_DEFAULT ) {
 			/* use the scope provided in reference */
@@ -1310,7 +1342,7 @@ re_encode_request( LDAP *ld,
 		}
 
 	} else {
-		rtag = ber_scanf( &tmpber, "{m" /*}*/, &orig_dn );
+		rtag = ber_scanf( &tmpber, "{m" /*}*/, &dn );
 	}
 
 	if( rtag == LBER_ERROR ) {
@@ -1318,24 +1350,25 @@ re_encode_request( LDAP *ld,
 		return NULL;
 	}
 
+	/* restore character zero'd out by ber_scanf*/
+	dn.bv_val[dn.bv_len] = tmpber.ber_tag;
+
 	if (( ber = ldap_alloc_ber_with_options( ld )) == NULL ) {
 		return NULL;
 	}
 
-	if ( srv->lud_dn == NULL ) {
-		dn = orig_dn.bv_val;
-	} else {
-		dn = srv->lud_dn;
+	if ( srv->lud_dn ) {
+		ber_str2bv( srv->lud_dn, 0, 0, &dn );
 	}
 
 	if ( tag == LDAP_REQ_BIND ) {
-		rc = ber_printf( ber, "{it{is" /*}}*/, msgid, tag, ver, dn );
+		rc = ber_printf( ber, "{it{iO" /*}}*/, msgid, tag, ver, &dn );
 	} else if ( tag == LDAP_REQ_DELETE ) {
-		rc = ber_printf( ber, "{itsN}", msgid, tag, dn );
+		rc = ber_printf( ber, "{itON}", msgid, tag, &dn );
 	} else if ( tag == LDAP_REQ_SEARCH ) {
-		rc = ber_printf( ber, "{it{se" /*}}*/, msgid, tag, dn, scope );
+		rc = ber_printf( ber, "{it{Oe" /*}}*/, msgid, tag, &dn, scope );
 	} else {
-		rc = ber_printf( ber, "{it{s" /*}}*/, msgid, tag, dn );
+		rc = ber_printf( ber, "{it{O" /*}}*/, msgid, tag, &dn );
 	}
 
 	if ( rc == -1 ) {

@@ -1,5 +1,5 @@
 /* acl.c - routines to parse and check acl's */
-/* $OpenLDAP: pkg/ldap/servers/slapd/acl.c,v 1.250.2.22 2006/01/04 18:09:37 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/acl.c,v 1.250.2.23 2006/05/09 19:26:26 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -1961,15 +1961,15 @@ slap_acl_mask(
 			}
 
 			/* start out with nothing granted, nothing denied */
-			ACL_INIT(tgrant);
-			ACL_INIT(tdeny);
+			ACL_INVALIDATE(tgrant);
+			ACL_INVALIDATE(tdeny);
 
 			for ( da = b->a_dynacl; da; da = da->da_next ) {
 				slap_access_t	grant,
 						deny;
 
-				ACL_INIT(grant);
-				ACL_INIT(deny);
+				ACL_INVALIDATE(grant);
+				ACL_INVALIDATE(deny);
 
 				Debug( LDAP_DEBUG_ACL, "    <= check a_dynacl: %s\n",
 					da->da_name, 0, 0 );

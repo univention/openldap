@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/rq.c,v 1.17.2.3 2006/01/03 22:16:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/rq.c,v 1.17.2.4 2006/05/09 17:29:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2006 The OpenLDAP Foundation.
@@ -99,20 +99,16 @@ ldap_pvt_runqueue_remove(
 struct re_s*
 ldap_pvt_runqueue_next_sched(
 	struct runqueue_s* rq,
-	struct timeval** next_run
+	struct timeval* next_run
 )
 {
 	struct re_s* entry;
 
 	entry = LDAP_STAILQ_FIRST( &rq->task_list );
-	if ( entry == NULL ) {
-		*next_run = NULL;
-		return NULL;
-	} else if ( entry->next_sched.tv_sec == 0 ) {
-		*next_run = NULL;
+	if ( entry == NULL || entry->next_sched.tv_sec == 0 ) {
 		return NULL;
 	} else {
-		*next_run = &entry->next_sched;
+		*next_run = entry->next_sched;
 		return entry;
 	}
 }

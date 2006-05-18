@@ -1,5 +1,5 @@
 /* ldapsync.c -- LDAP Content Sync Routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ldapsync.c,v 1.21.2.6 2006/01/03 22:16:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ldapsync.c,v 1.21.2.7 2006/05/09 17:29:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2006 The OpenLDAP Foundation.
@@ -111,6 +111,10 @@ slap_parse_sync_cookie(
 	if ( rid_ptr == NULL 
 		|| rid_ptr > &cookie->octet_str.bv_val[ cookie->octet_str.bv_len - STRLENOF( "rid=" ) ] )
 	{
+		return -1;
+	}
+
+	if ( rid_ptr[ STRLENOF( "rid=" ) ] == '-' ) {
 		return -1;
 	}
 

@@ -1,4 +1,4 @@
-.\" $OpenLDAP: pkg/ldap/doc/man/man8/slapd.8,v 1.53.2.7 2006/01/03 22:16:06 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man8/slapd.8,v 1.53.2.8 2006/05/13 03:55:00 kurt Exp $
 .\" Copyright 1998-2006 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .TH SLAPD 8C "RELEASEDATE" "OpenLDAP LDVERSION"
@@ -85,7 +85,7 @@ If this option is specified, even with a zero argument,
 will not fork or disassociate from the invoking terminal.  Some general
 operation and status messages are printed for any value of \fIdebug\-level\fP.
 \fIdebug\-level\fP is taken as a bit string, with each bit corresponding to a
-different kind of debugging information.  See <ldap.h> for details.
+different kind of debugging information.  See <ldap_log.h> for details.
 Remember that if you turn on packet logging, packets containing bind passwords
 will be output, so if you redirect the log to a logfile, that file should
 be read-protected.

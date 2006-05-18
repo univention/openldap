@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/modrdn.c,v 1.19.2.11 2006/01/03 22:16:20 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/modrdn.c,v 1.19.2.13 2006/05/09 20:00:37 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -42,6 +42,7 @@ meta_back_modrdn( Operation *op, SlapReply *rs )
 	dncookie	dc;
 	int		msgid;
 	int		do_retry = 1;
+	int		maperr = 1;
 
 	mc = meta_back_getconn( op, rs, &candidate, LDAP_BACK_SENDERR );
 	if ( !mc || !meta_back_dobind( op, rs, mc, LDAP_BACK_SENDERR ) ) {
@@ -54,7 +55,6 @@ meta_back_modrdn( Operation *op, SlapReply *rs )
 	dc.rs = rs;
 
 	if ( op->orr_newSup ) {
-		int	version = LDAP_VERSION3;
 
 		/*
 		 * NOTE: the newParent, if defined, must be on the 
@@ -75,11 +75,25 @@ meta_back_modrdn( Operation *op, SlapReply *rs )
 		 * feature from back-ldap
 		 */
 
-		/* newSuperior needs LDAPv3; if we got here, we can safely
-		 * enforce it */
-		ldap_set_option( mc->mc_conns[ candidate ].msc_ld,
-				LDAP_OPT_PROTOCOL_VERSION, &version );
+		/* needs LDAPv3 */
+		switch ( mi->mi_targets[ candidate ].mt_version ) {
+		case LDAP_VERSION3:
+			break;
 
+		case 0:
+			if ( op->o_protocol == 0 || op->o_protocol == LDAP_VERSION3 ) {
+				break;
+			}
+			/* fall thru */
+
+		default:
+			/* op->o_protocol cannot be anything but LDAPv3,
+			 * otherwise wouldn't be here */
+			rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
+			maperr = 0;
+			goto cleanup;
+		}
+		
 		/*
 		 * Rewrite the new superior, if defined and required
 	 	 */
@@ -87,6 +101,7 @@ meta_back_modrdn( Operation *op, SlapReply *rs )
 		dc.ctx = "newSuperiorDN";
 		if ( ldap_back_dn_massage( &dc, op->orr_newSup, &mnewSuperior ) ) {
 			rs->sr_err = LDAP_OTHER;
+			maperr = 0;
 			goto cleanup;
 		}
 	}
@@ -98,6 +113,7 @@ meta_back_modrdn( Operation *op, SlapReply *rs )
 	dc.ctx = "modrDN";
 	if ( ldap_back_dn_massage( &dc, &op->o_req_dn, &mdn ) ) {
 		rs->sr_err = LDAP_OTHER;
+		maperr = 0;
 		goto cleanup;
 	}
 
@@ -108,9 +124,10 @@ retry:;
 			op->o_ctrls, NULL, &msgid );
 	if ( rs->sr_err == LDAP_UNAVAILABLE && do_retry ) {
 		do_retry = 0;
-		if ( meta_back_retry( op, rs, mc, candidate, LDAP_BACK_SENDERR ) ) {
+		if ( meta_back_retry( op, rs, &mc, candidate, LDAP_BACK_SENDERR ) ) {
 			goto retry;
 		}
+		goto done;
 
 	} else if ( rs->sr_err == LDAP_SUCCESS ) {
 		struct timeval	tv, *tvp = NULL;
@@ -126,6 +143,7 @@ retry:;
 		rs->sr_err = LDAP_OTHER;
 		rc = ldap_result( mc->mc_conns[ candidate ].msc_ld,
 			msgid, LDAP_MSG_ALL, tvp, &res );
+		maperr = 0;
 		switch ( rc ) {
 		case -1:
 			break;
@@ -143,6 +161,7 @@ retry:;
 			if ( rc != LDAP_SUCCESS ) {
 				rs->sr_err = rc;
 			}
+			maperr = 1;
 			break;
 
 		default:
@@ -152,6 +171,14 @@ retry:;
 	}
 
 cleanup:;
+	if ( maperr ) {
+		meta_back_op_result( mc, op, rs, candidate );
+
+	} else {
+		send_ldap_result( op, rs );
+	}
+
+done:;
 	if ( mdn.bv_val != op->o_req_dn.bv_val ) {
 		free( mdn.bv_val );
 		BER_BVZERO( &mdn );
@@ -164,13 +191,9 @@ cleanup:;
 		BER_BVZERO( &mnewSuperior );
 	}
 
-	if ( rs->sr_err == LDAP_SUCCESS ) {
-		meta_back_op_result( mc, op, rs, candidate );
-	} else {
-		send_ldap_result( op, rs );
+	if ( mc ) {
+		meta_back_release_conn( op, mc );
 	}
-
-	meta_back_release_conn( op, mc );
 
 	return rs->sr_err;
 }

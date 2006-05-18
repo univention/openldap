@@ -1,5 +1,5 @@
 /* compare.c - ldap backend compare function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/compare.c,v 1.52.2.6 2006/01/03 22:16:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/compare.c,v 1.52.2.7 2006/04/05 21:53:26 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2006 The OpenLDAP Foundation.
@@ -56,7 +56,7 @@ ldap_back_compare(
 	}
 
 retry:
-	rs->sr_err = ldap_compare_ext( lc->lc_ld, op->o_req_ndn.bv_val,
+	rs->sr_err = ldap_compare_ext( lc->lc_ld, op->o_req_dn.bv_val,
 			op->orc_ava->aa_desc->ad_cname.bv_val,
 			&op->orc_ava->aa_value, 
 			ctrls, NULL, &msgid );

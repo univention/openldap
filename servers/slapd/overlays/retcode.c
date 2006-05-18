@@ -1,5 +1,5 @@
 /* retcode.c - customizable response for client testing purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/retcode.c,v 1.4.2.5 2006/01/03 22:16:25 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/retcode.c,v 1.4.2.7 2006/05/09 17:29:13 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2006 The OpenLDAP Foundation.
@@ -76,6 +76,8 @@ typedef struct retcode_item_t {
 typedef struct retcode_t {
 	struct berval		rd_pdn;
 	struct berval		rd_npdn;
+
+	int			rd_sleep;
 
 	retcode_item_t		*rd_item;
 
@@ -202,7 +204,6 @@ retcode_op_internal( Operation *op, SlapReply *rs )
 	slap_overinst	*on = (slap_overinst *)op->o_bd->bd_info;
 
 	Operation	op2 = *op;
-	SlapReply	rs2 = { 0 };
 	BackendDB	db = *op->o_bd;
 	slap_callback	sc = { 0 };
 	retcode_cb_t	rdc;
@@ -236,7 +237,8 @@ retcode_op_internal( Operation *op, SlapReply *rs )
 	sc.sc_private = &rdc;
 	op2.o_callback = &sc;
 
-	rc = op2.o_bd->be_search( &op2, &rs2 );
+	rc = op2.o_bd->be_search( &op2, rs );
+	op->o_abandon = op2.o_abandon;
 
 	filter_free_x( &op2, op2.ors_filter );
 	ber_memfree_x( op2.ors_filterstr.bv_val, op2.o_tmpmemctx );
@@ -259,6 +261,14 @@ retcode_op_func( Operation *op, SlapReply *rs )
 
 	slap_callback		*cb = NULL;
 
+	/* sleep as required */
+	if ( rd->rd_sleep < 0 ) {
+		sleep( rand() % ( - rd->rd_sleep ) );
+
+	} else if ( rd->rd_sleep > 0 ) {
+		sleep( rd->rd_sleep );
+	}
+
 	if ( !dnIsSuffix( &op->o_req_ndn, &rd->rd_npdn ) ) {
 		if ( RETCODE_INDIR( rd ) ) {
 			switch ( op->o_tag ) {
@@ -275,10 +285,18 @@ retcode_op_func( Operation *op, SlapReply *rs )
 			case LDAP_REQ_SEARCH:
 				if ( op->ors_scope == LDAP_SCOPE_BASE ) {
 					rs->sr_err = retcode_op_internal( op, rs );
-					if ( rs->sr_err == SLAP_CB_CONTINUE ) {
+					switch ( rs->sr_err ) {
+					case SLAP_CB_CONTINUE:
+						if ( rs->sr_nentries == 0 ) {
+							break;
+						}
 						rs->sr_err = LDAP_SUCCESS;
+						/* fallthru */
+
+					default:
+						send_ldap_result( op, rs );
+						break;
 					}
-					send_ldap_result( op, rs );
 					return rs->sr_err;
 				}
 				break;
@@ -513,7 +531,7 @@ retcode_entry_response( Operation *op, SlapReply *rs, BackendInfo *bi, Entry *e 
 
 	/* sleep time */
 	a = attr_find( e->e_attrs, ad_errSleepTime );
-	if ( a != NULL ) {
+	if ( a != NULL & a->a_nvals[ 0 ].bv_val[ 0 ] != '-' ) {
 		int	sleepTime;
 
 		sleepTime = strtoul( a->a_nvals[ 0 ].bv_val, &next, 0 );
@@ -873,6 +891,31 @@ retcode_db_config(
 
 	} else if ( strcasecmp( argv0, "indir" ) == 0 ) {
 		rd->rd_flags |= RETCODE_FINDIR;
+
+	} else if ( strcasecmp( argv0, "sleep" ) == 0 ) {
+		switch ( argc ) {
+		case 1:
+			fprintf( stderr, "%s: line %d: retcode: "
+				"\"retcode-sleep <time>\": missing <time>\n",
+				fname, lineno );
+			return 1;
+
+		case 2:
+			break;
+
+		default:
+			fprintf( stderr, "%s: line %d: retcode: "
+				"\"retcode-sleep <time>\": extra cruft after <time>\n",
+				fname, lineno );
+			return 1;
+		}
+
+		if ( lutil_atoi( &rd->rd_sleep, argv[ 1 ] ) != 0 ) {
+			fprintf( stderr, "%s: line %d: retcode: "
+				"\"retcode-sleep <time>\": unable to parse <time>\n",
+				fname, lineno );
+			return 1;
+		}
 
 	} else {
 		return SLAP_CONF_UNKNOWN;

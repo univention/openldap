@@ -1,7 +1,7 @@
 .TH SLAPD-SHELL 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" Copyright 1998-2006 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-shell.5,v 1.13.2.4 2006/01/03 22:16:05 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-shell.5,v 1.13.2.5 2006/05/15 15:51:58 kurt Exp $
 .SH NAME
 slapd-shell \- Shell backend to slapd
 .SH SYNOPSIS
@@ -121,7 +121,10 @@ want the backend to handle.
 Operations for which a command is not supplied will be refused with an
 "unwilling to perform" error.
 .LP
-The commands - except \fBunbind\fP - should output:
+The \fBsearch\fP command should output the entries in LDIF format,
+each entry followed by a blank line, and after these the RESULT below.
+.LP
+All commands except \fBunbind\fP should then output:
 .RS
 .nf
 RESULT
@@ -130,9 +133,7 @@ matched: <matched DN>
 info: <text>
 .fi
 .RE
-where only RESULT is mandatory.
-The \fBsearch\fP RESULT should be preceded by the entries in LDIF
-format, each entry followed by a blank line.
+where only the RESULT line is mandatory.
 Lines starting with `#' or `DEBUG:' are ignored.
 .SH ACCESS CONTROL
 The

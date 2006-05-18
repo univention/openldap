@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/add.c,v 1.27.2.12 2006/01/03 22:16:20 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/add.c,v 1.27.2.14 2006/04/05 21:27:52 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -45,6 +45,7 @@ meta_back_add( Operation *op, SlapReply *rs )
 	dncookie	dc;
 	int		msgid;
 	int		do_retry = 1;
+	int		maperr = 1;
 
 	Debug(LDAP_DEBUG_ARGS, "==> meta_back_add: %s\n",
 			op->o_req_dn.bv_val, 0, 0 );
@@ -169,9 +170,10 @@ retry:;
 			      attrs, op->o_ctrls, NULL, &msgid );
 	if ( rs->sr_err == LDAP_UNAVAILABLE && do_retry ) {
 		do_retry = 0;
-		if ( meta_back_retry( op, rs, mc, candidate, LDAP_BACK_SENDERR ) ) {
+		if ( meta_back_retry( op, rs, &mc, candidate, LDAP_BACK_SENDERR ) ) {
 			goto retry;
 		}
+		goto cleanup;
 
 	} else if ( rs->sr_err == LDAP_SUCCESS ) {
 		struct timeval	tv, *tvp = NULL;
@@ -185,20 +187,19 @@ retry:;
 		}
 
 		rs->sr_err = LDAP_OTHER;
+		maperr = 0;
 		rc = ldap_result( mc->mc_conns[ candidate ].msc_ld,
 			msgid, LDAP_MSG_ALL, tvp, &res );
 		switch ( rc ) {
 		case -1:
-			send_ldap_result( op, rs );
-			goto cleanup;
+			break;
 
 		case 0:
 			ldap_abandon_ext( mc->mc_conns[ candidate ].msc_ld,
 				msgid, NULL, NULL );
 			rs->sr_err = op->o_protocol >= LDAP_VERSION3 ?
 				LDAP_ADMINLIMIT_EXCEEDED : LDAP_OPERATIONS_ERROR;
-			send_ldap_result( op, rs );
-			goto cleanup;
+			break;
 
 		case LDAP_RES_ADD:
 			rc = ldap_parse_result( mc->mc_conns[ candidate ].msc_ld,
@@ -206,6 +207,7 @@ retry:;
 			if ( rc != LDAP_SUCCESS ) {
 				rs->sr_err = rc;
 			}
+			maperr = 1;
 			break;
 
 		default:
@@ -214,7 +216,12 @@ retry:;
 		}
 	}
 
-	(void)meta_back_op_result( mc, op, rs, candidate );
+	if ( maperr ) {
+		rs->sr_err = meta_back_op_result( mc, op, rs, candidate );
+
+	} else {
+		send_ldap_result( op, rs );
+	}
 
 cleanup:;
 	for ( --i; i >= 0; --i ) {
@@ -228,7 +235,9 @@ cleanup:;
 	}
 
 done:;
-	meta_back_release_conn( op, mc );
+	if ( mc ) {
+		meta_back_release_conn( op, mc );
+	}
 
 	return rs->sr_err;
 }

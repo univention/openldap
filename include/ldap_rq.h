@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/ldap_rq.h,v 1.9.2.3 2006/01/03 22:16:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap_rq.h,v 1.9.2.4 2006/05/09 17:29:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -63,7 +63,7 @@ ldap_pvt_runqueue_remove(
 LDAP_F( struct re_s* )
 ldap_pvt_runqueue_next_sched(
 	struct runqueue_s* rq,
-	struct timeval** next_run
+	struct timeval* next_run
 );
 
 LDAP_F( void )

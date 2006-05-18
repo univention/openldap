@@ -1,5 +1,5 @@
 /* aclparse.c - routines to parse and check acl's */
-/* $OpenLDAP: pkg/ldap/servers/slapd/aclparse.c,v 1.145.2.18 2006/01/06 19:03:00 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/aclparse.c,v 1.145.2.19 2006/04/05 20:07:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -664,6 +664,7 @@ parse_acl(
 
 							snprintf( buf, sizeof( buf ), "%s: line %d: "
 								" attr \"%s\" normalization failed (%d: %s)",
+								fname, lineno,
 								a->acl_attrs[ 0 ].an_name.bv_val, rc, text );
 							Debug( LDAP_DEBUG_ANY, "%s: line %d: %s.\n",
 								fname, lineno, buf );

@@ -1,5 +1,5 @@
 /* extended.c - ldap backend extended routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/extended.c,v 1.22.2.11 2006/01/03 22:16:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/extended.c,v 1.22.2.13 2006/05/16 20:38:16 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2006 The OpenLDAP Foundation.
@@ -112,6 +112,7 @@ ldap_back_exop_passwd(
 	ber_int_t	msgid;
 	int		rc, isproxy;
 	int		do_retry = 1;
+	char *text = NULL;
 
 	lc = ldap_back_getconn( op, rs, LDAP_BACK_SENDERR );
 	if ( !lc || !ldap_back_dobind( lc, op, rs, LDAP_BACK_SENDERR ) ) {
@@ -132,8 +133,7 @@ retry:
 	if ( rc == LDAP_SUCCESS ) {
 		if ( ldap_result( lc->lc_ld, msgid, LDAP_MSG_ALL, NULL, &res ) == -1 ) {
 			ldap_get_option( lc->lc_ld, LDAP_OPT_ERROR_NUMBER, &rc );
-			ldap_back_freeconn( op, lc, 0 );
-			lc = NULL;
+			rs->sr_err = rc;
 
 		} else {
 			/* sigh. parse twice, because parse_passwd
@@ -141,7 +141,7 @@ retry:
 			 */
 			rc = ldap_parse_result( lc->lc_ld, res, &rs->sr_err,
 					(char **)&rs->sr_matched,
-					(char **)&rs->sr_text,
+					&text,
 					NULL, NULL, 0 );
 #ifndef LDAP_NULL_IS_NULL
 			if ( rs->sr_matched && rs->sr_matched[ 0 ] == '\0' ) {
@@ -182,6 +182,7 @@ retry:
 			ldap_msgfree( res );
 		}
 	}
+
 	if ( rc != LDAP_SUCCESS ) {
 		rs->sr_err = slap_map_api2result( rs );
 		if ( rs->sr_err == LDAP_UNAVAILABLE && do_retry ) {
@@ -190,6 +191,7 @@ retry:
 				goto retry;
 			}
 		}
+		if ( text ) rs->sr_text = text;
 		send_ldap_extended( op, rs );
 		/* otherwise frontend resends result */
 		rc = rs->sr_err = SLAPD_ABANDON;
@@ -200,8 +202,9 @@ retry:
 		free( (char *)rs->sr_matched );
 		rs->sr_matched = NULL;
 	}
-	if ( rs->sr_text ) {
-		free( (char *)rs->sr_text );
+
+	if ( text ) {
+		free( text );
 		rs->sr_text = NULL;
 	}
 
@@ -222,6 +225,7 @@ ldap_back_exop_generic(
 	ber_int_t	msgid;
 	int		rc;
 	int		do_retry = 1;
+	char *text = NULL;
 
 	lc = ldap_back_getconn( op, rs, LDAP_BACK_SENDERR );
 	if ( !lc || !ldap_back_dobind( lc, op, rs, LDAP_BACK_SENDERR ) ) {
@@ -239,8 +243,7 @@ retry:
 	if ( rc == LDAP_SUCCESS ) {
 		if ( ldap_result( lc->lc_ld, msgid, LDAP_MSG_ALL, NULL, &res ) == -1 ) {
 			ldap_get_option( lc->lc_ld, LDAP_OPT_ERROR_NUMBER, &rc );
-			ldap_back_freeconn( op, lc, 0 );
-			lc = NULL;
+			rs->sr_err = rc;
 
 		} else {
 			/* sigh. parse twice, because parse_passwd
@@ -248,7 +251,7 @@ retry:
 			 */
 			rc = ldap_parse_result( lc->lc_ld, res, &rs->sr_err,
 					(char **)&rs->sr_matched,
-					(char **)&rs->sr_text,
+					text,
 					NULL, NULL, 0 );
 #ifndef LDAP_NULL_IS_NULL
 			if ( rs->sr_matched && rs->sr_matched[ 0 ] == '\0' ) {
@@ -275,6 +278,7 @@ retry:
 			ldap_msgfree( res );
 		}
 	}
+
 	if ( rc != LDAP_SUCCESS ) {
 		rs->sr_err = slap_map_api2result( rs );
 		if ( rs->sr_err == LDAP_UNAVAILABLE && do_retry ) {
@@ -283,6 +287,7 @@ retry:
 				goto retry;
 			}
 		}
+		if ( text ) rs->sr_text = text;
 		send_ldap_extended( op, rs );
 		/* otherwise frontend resends result */
 		rc = rs->sr_err = SLAPD_ABANDON;
@@ -293,8 +298,9 @@ retry:
 		free( (char *)rs->sr_matched );
 		rs->sr_matched = NULL;
 	}
-	if ( rs->sr_text ) {
-		free( (char *)rs->sr_text );
+
+	if ( text ) {
+		free( text );
 		rs->sr_text = NULL;
 	}
 

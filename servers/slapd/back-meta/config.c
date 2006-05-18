@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.35.2.19 2006/02/16 22:21:27 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.35.2.21 2006/05/09 20:00:37 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -158,8 +158,6 @@ meta_back_db_config(
 		mi->mi_targets[ i ].mt_flags = mi->mi_flags;
 		mi->mi_targets[ i ].mt_version = mi->mi_version;
 		mi->mi_targets[ i ].mt_network_timeout = mi->mi_network_timeout;
-		mi->mi_targets[ i ].mt_conn_ttl = mi->mi_conn_ttl;
-		mi->mi_targets[ i ].mt_idle_timeout = mi->mi_idle_timeout;
 		mi->mi_targets[ i ].mt_bind_timeout = mi->mi_bind_timeout;
 		for ( c = 0; c < LDAP_BACK_OP_LAST; c++ ) {
 			mi->mi_targets[ i ].mt_timeout[ c ] = mi->mi_timeout[ c ];
@@ -448,9 +446,6 @@ meta_back_db_config(
 	/* idle timeout when connecting to ldap servers */
 	} else if ( strcasecmp( argv[ 0 ], "idle-timeout" ) == 0 ) {
 		unsigned long	t;
-		time_t		*tp = mi->mi_ntargets ?
-				&mi->mi_targets[ mi->mi_ntargets - 1 ].mt_idle_timeout
-				: &mi->mi_idle_timeout;
 
 		switch ( argc ) {
 		case 1:
@@ -475,14 +470,11 @@ meta_back_db_config(
 
 		}
 
-		*tp = (time_t)t;
+		mi->mi_idle_timeout = (time_t)t;
 
 	/* conn ttl */
 	} else if ( strcasecmp( argv[ 0 ], "conn-ttl" ) == 0 ) {
 		unsigned long	t;
-		time_t		*tp = mi->mi_ntargets ?
-				&mi->mi_targets[ mi->mi_ntargets - 1 ].mt_conn_ttl
-				: &mi->mi_conn_ttl;
 
 		switch ( argc ) {
 		case 1:
@@ -507,7 +499,7 @@ meta_back_db_config(
 
 		}
 
-		*tp = (time_t)t;
+		mi->mi_conn_ttl = (time_t)t;
 
 	/* bind timeout when connecting to ldap servers */
 	} else if ( strcasecmp( argv[ 0 ], "bind-timeout" ) == 0 ) {
@@ -1056,6 +1048,32 @@ meta_back_db_config(
 
 		} else {
 			mi->mi_targets[ i ].mt_nretries = nretries;
+		}
+
+	} else if ( strcasecmp( argv[ 0 ], "protocol-version" ) == 0 ) {
+		int	*version = mi->mi_ntargets ?
+				&mi->mi_targets[ mi->mi_ntargets - 1 ].mt_version
+				: &mi->mi_version;
+
+		if ( argc != 2 ) {
+			Debug( LDAP_DEBUG_ANY,
+	"%s: line %d: need value in \"protocol-version <version>\"\n",
+				fname, lineno, 0 );
+			return 1;
+		}
+
+		if ( lutil_atoi( version, argv[ 1 ] ) != 0 ) {
+			Debug( LDAP_DEBUG_ANY,
+	"%s: line %d: unable to parse version \"%s\" in \"protocol-version <version>\"\n",
+				fname, lineno, argv[ 1 ] );
+			return 1;
+		}
+
+		if ( *version != 0 && ( *version < LDAP_VERSION_MIN || *version > LDAP_VERSION_MAX ) ) {
+			Debug( LDAP_DEBUG_ANY,
+	"%s: line %d: unsupported version \"%s\" in \"protocol-version <version>\"\n",
+				fname, lineno, argv[ 1 ] );
+			return 1;
 		}
 
 	/* anything else */

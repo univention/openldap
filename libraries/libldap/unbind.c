@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/unbind.c,v 1.48.2.6 2006/01/03 22:16:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/unbind.c,v 1.48.2.7 2006/04/03 19:49:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -106,6 +106,11 @@ ldap_ld_free(
 		next = lm->lm_next;
 		ldap_msgfree( lm );
 	}
+
+	if ( ld->ld_abandoned != NULL ) {
+		LDAP_FREE( ld->ld_abandoned );
+		ld->ld_abandoned = NULL;
+	}
 #ifdef LDAP_R_COMPILE
 	ldap_pvt_thread_mutex_unlock( &ld->ld_res_mutex );
 #endif
@@ -125,11 +130,6 @@ ldap_ld_free(
 		ld->ld_referrals = NULL;
 	}  
     
-	if ( ld->ld_abandoned != NULL ) {
-		LDAP_FREE( ld->ld_abandoned );
-		ld->ld_abandoned = NULL;
-	}
-
 	if ( ld->ld_selectinfo != NULL ) {
 		ldap_free_select_info( ld->ld_selectinfo );
 		ld->ld_selectinfo = NULL;
@@ -194,6 +194,7 @@ ldap_ld_free(
 #ifdef LDAP_R_COMPILE
 	ldap_pvt_thread_mutex_destroy( &ld->ld_req_mutex );
 	ldap_pvt_thread_mutex_destroy( &ld->ld_res_mutex );
+	ldap_pvt_thread_mutex_destroy( &ld->ld_conn_mutex );
 #endif
 #ifndef NDEBUG
 	LDAP_TRASH(ld);

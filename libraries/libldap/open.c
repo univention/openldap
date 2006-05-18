@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/open.c,v 1.105.2.5 2006/01/03 22:16:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/open.c,v 1.105.2.6 2006/05/15 15:26:46 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -35,6 +35,7 @@
 #include "ldap-int.h"
 #include "ldap_log.h"
 
+/* Caller should hold the req_mutex if simultaneous accesses are possible */
 int ldap_open_defconn( LDAP *ld )
 {
 	ld->ld_defconn = ldap_new_connection( ld,

@@ -1,5 +1,5 @@
 /* config.c - ldap backend configuration file routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/config.c,v 1.73.2.15 2006/02/16 22:21:27 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/config.c,v 1.73.2.20 2006/05/09 20:54:19 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2006 The OpenLDAP Foundation.
@@ -62,6 +62,8 @@ enum {
 	LDAP_BACK_CFG_TIMEOUT,
 	LDAP_BACK_CFG_IDLE_TIMEOUT,
 	LDAP_BACK_CFG_CONN_TTL,
+	LDAP_BACK_CFG_NETWORK_TIMEOUT,
+	LDAP_BACK_CFG_VERSION,
 	LDAP_BACK_CFG_REWRITE,
 
 	LDAP_BACK_CFG_LAST
@@ -232,6 +234,22 @@ static ConfigTable ldapcfg[] = {
 			"SYNTAX OMsDirectoryString "
 			"SINGLE-VALUE )",
 		NULL, NULL },
+	{ "network-timeout", "timeout", 2, 0, 0,
+		ARG_MAGIC|LDAP_BACK_CFG_NETWORK_TIMEOUT,
+		ldap_back_cf_gen, "( OLcfgDbAt:3.17 "
+			"NAME 'olcDbNetworkTimeout' "
+			"DESC 'connection network timeout' "
+			"SYNTAX OMsDirectoryString "
+			"SINGLE-VALUE )",
+		NULL, NULL },
+	{ "protocol-version", "version", 2, 0, 0,
+		ARG_MAGIC|ARG_INT|LDAP_BACK_CFG_VERSION,
+		ldap_back_cf_gen, "( OLcfgDbAt:3.18 "
+			"NAME 'olcDbProtocolVersion' "
+			"DESC 'protocol version' "
+			"SYNTAX OMsInteger "
+			"SINGLE-VALUE )",
+		NULL, NULL },
 	{ "suffixmassage", "[virtual]> <real", 2, 3, 0,
 		ARG_STRING|ARG_MAGIC|LDAP_BACK_CFG_REWRITE,
 		ldap_back_cf_gen, NULL, NULL, NULL },
@@ -314,6 +332,10 @@ ldap_back_cf_gen( ConfigArgs *c )
 		struct berval	bv = BER_BVNULL;
 		rc = 0;
 
+		if ( li == NULL ) {
+			return 1;
+		}
+
 		switch( c->type ) {
 		case LDAP_BACK_CFG_URI:
 			if ( li->li_uri != NULL ) {
@@ -349,7 +371,7 @@ ldap_back_cf_gen( ConfigArgs *c )
 
 			bindconf_unparse( &li->li_acl, &bv );
 
-			for ( i = 0; isspace( bv.bv_val[ i ] ); i++ )
+			for ( i = 0; isspace( (unsigned char) bv.bv_val[ i ] ); i++ )
 				/* count spaces */ ;
 
 			if ( i ) {
@@ -484,7 +506,7 @@ ldap_back_cf_gen( ConfigArgs *c )
 				bv.bv_len = ptr - bv.bv_val;
 
 			} else {
-				for ( i = 0; isspace( bc.bv_val[ i ] ); i++ )
+				for ( i = 0; isspace( (unsigned char) bc.bv_val[ i ] ); i++ )
 					/* count spaces */ ;
 
 				if ( i ) {
@@ -543,7 +565,7 @@ ldap_back_cf_gen( ConfigArgs *c )
 				return 1;
 			}
 
-			for ( i = 0; isspace( bv.bv_val[ i ] ); i++ )
+			for ( i = 0; isspace( (unsigned char) bv.bv_val[ i ] ); i++ )
 				/* count spaces */ ;
 
 			if ( i ) {
@@ -578,6 +600,27 @@ ldap_back_cf_gen( ConfigArgs *c )
 			ber_str2bv( buf, 0, 0, &bv );
 			value_add_one( &c->rvalue_vals, &bv );
 			} break;
+
+		case LDAP_BACK_CFG_NETWORK_TIMEOUT: {
+			char	buf[ SLAP_TEXT_BUFLEN ];
+
+			if ( li->li_network_timeout == 0 ) {
+				return 1;
+			}
+
+			snprintf( buf, sizeof( buf ), "%ld",
+				(long)li->li_network_timeout );
+			ber_str2bv( buf, 0, 0, &bv );
+			value_add_one( &c->rvalue_vals, &bv );
+			} break;
+
+		case LDAP_BACK_CFG_VERSION:
+			if ( li->li_version == 0 ) {
+				return 1;
+			}
+
+			c->value_int = li->li_version;
+			break;
 
 		default:
 			/* FIXME: we need to handle all... */
@@ -662,6 +705,14 @@ ldap_back_cf_gen( ConfigArgs *c )
 
 		case LDAP_BACK_CFG_CONN_TTL:
 			li->li_conn_ttl = 0;
+			break;
+
+		case LDAP_BACK_CFG_NETWORK_TIMEOUT:
+			li->li_network_timeout = 0;
+			break;
+
+		case LDAP_BACK_CFG_VERSION:
+			li->li_version = 0;
 			break;
 
 		default:
@@ -753,7 +804,7 @@ ldap_back_cf_gen( ConfigArgs *c )
 						"host and port allowed "
 						"in \"uri <uri>\" statement "
 						"for uri #%d of \"%s\"",
-						i, c->value_string );
+						i, c->argv[ 1 ] );
 				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->msg, 0 );
 			}
 		}
@@ -1101,6 +1152,7 @@ done_url:;
 							"unknown flag \"%s\"",
 							flags[ j ] );
 						Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->msg, 0 );
+						ldap_charray_free( flags );
 						return 1;
 					}
 				}
@@ -1153,7 +1205,7 @@ done_url:;
 
 	case LDAP_BACK_CFG_TIMEOUT:
 		for ( i = 1; i < c->argc; i++ ) {
-			if ( isdigit( c->argv[ i ][ 0 ] ) ) {
+			if ( isdigit( (unsigned char) c->argv[ i ][ 0 ] ) ) {
 				int		j;
 				unsigned	u;
 
@@ -1199,6 +1251,32 @@ done_url:;
 		}
 		li->li_conn_ttl = (time_t)t;
 		} break;
+
+	case LDAP_BACK_CFG_NETWORK_TIMEOUT: {
+		unsigned long	t;
+
+		if ( lutil_parse_time( c->argv[ 1 ], &t ) != 0 ) {
+			snprintf( c->msg, sizeof( c->msg),
+				"unable to parse network timeout \"%s\"",
+				c->argv[ 1 ] );
+			Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->msg, 0 );
+			return 1;
+		}
+		li->li_network_timeout = (time_t)t;
+		} break;
+
+	case LDAP_BACK_CFG_VERSION:
+		switch ( c->value_int ) {
+		case 0:
+		case LDAP_VERSION2:
+		case LDAP_VERSION3:
+			li->li_version = c->value_int;
+			break;
+
+		default:
+			return 1;
+		}
+		break;
 
 	case LDAP_BACK_CFG_REWRITE:
 		snprintf( c->msg, sizeof( c->msg ),

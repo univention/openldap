@@ -1,5 +1,5 @@
 /* idl.c - ldap id list handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/idl.c,v 1.86.2.2 2006/01/03 22:16:19 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/idl.c,v 1.86.2.3 2006/04/04 20:29:34 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -112,6 +112,7 @@ idl_allids( Backend *be )
 	idl = idl_alloc( 0 );
 	ID_BLOCK_NMAX(idl) = ID_BLOCK_ALLIDS_VALUE;
 	if ( next_id_get( be, &id ) ) {
+		idl_free( idl );
 		return NULL;
 	}
 	ID_BLOCK_NIDS(idl) = id;

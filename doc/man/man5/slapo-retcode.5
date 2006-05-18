@@ -2,7 +2,7 @@
 .\" Copyright 1998-2006 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-retcode.5,v 1.2.2.5 2006/01/03 22:16:05 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-retcode.5,v 1.2.2.6 2006/04/05 18:06:15 kurt Exp $
 .SH NAME
 slapo-retcode \- return code overlay
 .SH SYNOPSIS
@@ -73,6 +73,12 @@ response code.
 .B retcode\-indir
 Enables exploitation of in-directory stored errAbsObject.
 May result in a lot of unnecessary overhead.
+.TP
+.B retcode\-sleep [-]<n>
+Defines a sleep time in seconds that is spent before actually handling
+any operation.
+If negative, a random time between 0 and the absolute value of the argument
+is used.
 
 .SH SCHEMA
 The

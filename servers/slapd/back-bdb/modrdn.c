@@ -1,5 +1,5 @@
 /* modrdn.c - bdb backend modrdn routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modrdn.c,v 1.160.2.10 2006/02/13 19:50:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modrdn.c,v 1.160.2.11 2006/05/10 14:53:20 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2006 The OpenLDAP Foundation.
@@ -826,11 +826,11 @@ done:
 	}
 	op->o_private = NULL;
 
-	if( preread_ctrl != NULL ) {
+	if( preread_ctrl != NULL && (*preread_ctrl) != NULL ) {
 		slap_sl_free( (*preread_ctrl)->ldctl_value.bv_val, op->o_tmpmemctx );
 		slap_sl_free( *preread_ctrl, op->o_tmpmemctx );
 	}
-	if( postread_ctrl != NULL ) {
+	if( postread_ctrl != NULL && (*postread_ctrl) != NULL ) {
 		slap_sl_free( (*postread_ctrl)->ldctl_value.bv_val, op->o_tmpmemctx );
 		slap_sl_free( *postread_ctrl, op->o_tmpmemctx );
 	}

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/turn.c,v 1.1.2.2 2006/01/03 22:16:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/turn.c,v 1.1.2.3 2006/04/03 19:49:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2006 The OpenLDAP Foundation.
@@ -42,6 +42,7 @@ ldap_turn(
 	LDAPControl **cctrls,
 	int *msgidp )
 {
+#ifdef LDAP_EXOP_X_TURN
 	BerElement *turnvalber = NULL;
 	struct berval *turnvalp = NULL;
 	int rc;
@@ -58,6 +59,9 @@ ldap_turn(
 			turnvalp, sctrls, cctrls, msgidp );
 	ber_free( turnvalber, 1 );
 	return rc;
+#else
+	return LDAP_CONTROL_NOT_FOUND;
+#endif
 }
 
 int
@@ -68,6 +72,7 @@ ldap_turn_s(
 	LDAPControl **sctrls,
 	LDAPControl **cctrls )
 {
+#ifdef LDAP_EXOP_X_TURN
 	BerElement *turnvalber = NULL;
 	struct berval *turnvalp = NULL;
 	int rc;
@@ -84,5 +89,8 @@ ldap_turn_s(
 			turnvalp, sctrls, cctrls, NULL, NULL );
 	ber_free( turnvalber, 1 );
 	return rc;
+#else
+	return LDAP_CONTROL_NOT_FOUND;
+#endif
 }
 

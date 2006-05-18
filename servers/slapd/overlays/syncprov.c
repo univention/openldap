@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/syncprov.c,v 1.56.2.28 2006/02/13 18:33:45 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/syncprov.c,v 1.56.2.32 2006/05/15 15:51:59 kurt Exp $ */
 /* syncprov.c - syncrepl provider */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
@@ -1302,9 +1302,6 @@ syncprov_add_slog( Operation *op, struct berval *csn )
 			sl->sl_mincsn.bv_len = se->se_csn.bv_len;
 			ch_free( se );
 			sl->sl_num--;
-			if ( !sl->sl_head ) {
-				sl->sl_tail = NULL;
-			}
 		}
 		ldap_pvt_thread_mutex_unlock( &sl->sl_mutex );
 	}
@@ -1323,12 +1320,14 @@ playlog_cb( Operation *op, SlapReply *rs )
 /* enter with sl->sl_mutex locked, release before returning */
 static void
 syncprov_playlog( Operation *op, SlapReply *rs, sessionlog *sl,
-	struct berval *oldcsn, struct berval *ctxcsn )
+	sync_control *srs, struct berval *ctxcsn )
 {
 	slap_overinst		*on = (slap_overinst *)op->o_bd->bd_info;
 	slog_entry *se;
 	int i, j, ndel, num, nmods, mmods;
+	char cbuf[LDAP_LUTIL_CSNSTR_BUFSIZE];
 	BerVarray uuids;
+	struct berval delcsn;
 
 	if ( !sl->sl_num ) {
 		ldap_pvt_thread_mutex_unlock( &sl->sl_mutex );
@@ -1341,19 +1340,23 @@ syncprov_playlog( Operation *op, SlapReply *rs, sessionlog *sl,
 
 	uuids = op->o_tmpalloc( (num+1) * sizeof( struct berval ) +
 		num * UUID_LEN, op->o_tmpmemctx );
-
 	uuids[0].bv_val = (char *)(uuids + num + 1);
+
+	delcsn.bv_len = 0;
+	delcsn.bv_val = cbuf;
 
 	/* Make a copy of the relevant UUIDs. Put the Deletes up front
 	 * and everything else at the end. Do this first so we can
 	 * unlock the list mutex.
 	 */
 	for ( se=sl->sl_head; se; se=se->se_next ) {
-		if ( ber_bvcmp( &se->se_csn, oldcsn ) < 0 ) continue;
+		if ( ber_bvcmp( &se->se_csn, &srs->sr_state.ctxcsn ) <= 0 ) continue;
 		if ( ber_bvcmp( &se->se_csn, ctxcsn ) > 0 ) break;
 		if ( se->se_tag == LDAP_REQ_DELETE ) {
 			j = i;
 			i++;
+			AC_MEMCPY( cbuf, se->se_csn.bv_val, se->se_csn.bv_len );
+			delcsn.bv_len = se->se_csn.bv_len;
 		} else {
 			nmods++;
 			j = num - nmods;
@@ -1445,9 +1448,14 @@ syncprov_playlog( Operation *op, SlapReply *rs, sessionlog *sl,
 		fop.o_bd->bd_info = (BackendInfo *)on;
 	}
 	if ( ndel ) {
+		struct berval cookie;
+
+		slap_compose_sync_cookie( op, &cookie, &delcsn, srs->sr_state.rid );
 		uuids[ndel].bv_val = NULL;
-		syncprov_sendinfo( op, rs, LDAP_TAG_SYNC_ID_SET, NULL, 0, uuids, 1 );
+		syncprov_sendinfo( op, rs, LDAP_TAG_SYNC_ID_SET, &cookie, 0, uuids, 1 );
+		op->o_tmpfree( cookie.bv_val, op->o_tmpmemctx );
 	}
+	op->o_tmpfree( uuids, op->o_tmpmemctx );
 }
 
 static int
@@ -1784,6 +1792,9 @@ syncprov_detach_op( Operation *op, syncops *so, slap_overinst *on )
 	LDAP_STAILQ_INSERT_TAIL( &op->o_conn->c_ops, op2, o_next );
 	so->s_flags |= PS_IS_DETACHED;
 	ldap_pvt_thread_mutex_unlock( &op->o_conn->c_mutex );
+
+	/* Prevent anyone else from trying to send a result for this op */
+	op->o_abandon = 1;
 }
 
 static int
@@ -1811,13 +1822,23 @@ syncprov_search_response( Operation *op, SlapReply *rs )
 		}
 		if ( a ) {
 			/* Make sure entry is less than the snapshot'd contextCSN */
-			if ( ber_bvcmp( &a->a_nvals[0], &ss->ss_ctxcsn ) > 0 )
+			if ( ber_bvcmp( &a->a_nvals[0], &ss->ss_ctxcsn ) > 0 ) {
+				Debug( LDAP_DEBUG_SYNC, "Entry %s CSN %s greater than snapshot %s\n",
+					rs->sr_entry->e_name.bv_val,
+					a->a_nvals[0].bv_val,
+					ss->ss_ctxcsn.bv_val );
 				return LDAP_SUCCESS;
+			}
 
 			/* Don't send the ctx entry twice */
 			if ( !BER_BVISNULL( &srs->sr_state.ctxcsn ) &&
-				bvmatch( &a->a_nvals[0], &srs->sr_state.ctxcsn ) )
+				bvmatch( &a->a_nvals[0], &srs->sr_state.ctxcsn ) ) {
+				Debug( LDAP_DEBUG_SYNC, "Entry %s CSN %s matches ctx %s\n",
+					rs->sr_entry->e_name.bv_val,
+					a->a_nvals[0].bv_val,
+					srs->sr_state.ctxcsn.bv_val );
 				return LDAP_SUCCESS;
+			}
 		}
 		rs->sr_ctrls = op->o_tmpalloc( sizeof(LDAPControl *)*2,
 			op->o_tmpmemctx );
@@ -1902,10 +1923,12 @@ syncprov_op_search( Operation *op, SlapReply *rs )
 		/* syncprov_findbase expects to be called as a callback... */
 		sc.sc_private = &opc;
 		opc.son = on;
+		ldap_pvt_thread_mutex_init( &so.s_mutex );
 		cb = op->o_callback;
 		op->o_callback = &sc;
 		rs->sr_err = syncprov_findbase( op, &fc );
 		op->o_callback = cb;
+		ldap_pvt_thread_mutex_destroy( &so.s_mutex );
 
 		if ( rs->sr_err != LDAP_SUCCESS ) {
 			send_ldap_result( op, rs );
@@ -1961,7 +1984,7 @@ syncprov_op_search( Operation *op, SlapReply *rs )
 			if ( ber_bvcmp( &srs->sr_state.ctxcsn, &sl->sl_mincsn ) >= 0 ) {
 				do_present = 0;
 				/* mutex is unlocked in playlog */
-				syncprov_playlog( op, rs, sl, &srs->sr_state.ctxcsn, &ctxcsn );
+				syncprov_playlog( op, rs, sl, srs, &ctxcsn );
 			} else {
 				ldap_pvt_thread_mutex_unlock( &sl->sl_mutex );
 			}

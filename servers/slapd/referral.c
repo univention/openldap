@@ -1,5 +1,5 @@
 /* referral.c - muck with referrals */
-/* $OpenLDAP: pkg/ldap/servers/slapd/referral.c,v 1.23.2.2 2006/01/03 22:16:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/referral.c,v 1.23.2.3 2006/04/06 19:46:57 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -108,12 +108,7 @@ static char * referral_dn_muck(
 			}
 
 			muck.bv_len = ntargetDN.bv_len + nrefDN.bv_len - nbaseDN.bv_len;
-			muck.bv_val = SLAP_MALLOC( muck.bv_len + 1 );
-			if( muck.bv_val == NULL ) {
-				Debug( LDAP_DEBUG_ANY,
-					"referral_dn_muck: SLAP_MALLOC failed\n", 0, 0, 0 );
-				return NULL;
-			}
+			muck.bv_val = ch_malloc( muck.bv_len + 1 );
 
 			strncpy( muck.bv_val, ntargetDN.bv_val,
 				ntargetDN.bv_len-nbaseDN.bv_len );
@@ -216,12 +211,7 @@ BerVarray referral_rewrite(
 		return NULL;
 	}
 
-	refs = SLAP_MALLOC( ( i + 1 ) * sizeof( struct berval ) );
-	if ( refs == NULL ) {
-		Debug( LDAP_DEBUG_ANY,
-			"referral_rewrite: SLAP_MALLOC failed\n", 0, 0, 0 );
-		return NULL;
-	}
+	refs = ch_malloc( ( i + 1 ) * sizeof( struct berval ) );
 
 	for ( iv = in, jv = refs; !BER_BVISNULL( iv ); iv++ ) {
 		LDAPURLDesc	*url;
@@ -291,12 +281,7 @@ BerVarray get_entry_referrals(
 
 	if( i < 1 ) return NULL;
 
-	refs = SLAP_MALLOC( (i + 1) * sizeof(struct berval));
-	if( refs == NULL ) {
-		Debug( LDAP_DEBUG_ANY,
-			"get_entry_referrals: SLAP_MALLOC failed\n", 0, 0, 0 );
-		return NULL;
-	}
+	refs = ch_malloc( (i + 1) * sizeof(struct berval));
 
 	for( iv=attr->a_vals, jv=refs; iv->bv_val != NULL; iv++ ) {
 		unsigned k;

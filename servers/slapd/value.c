@@ -1,5 +1,5 @@
 /* value.c - routines for dealing with values */
-/* $OpenLDAP: pkg/ldap/servers/slapd/value.c,v 1.79.2.11 2006/02/13 17:28:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/value.c,v 1.79.2.13 2006/04/07 00:16:31 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -65,7 +65,7 @@ value_add(
 		for ( n = 0; !BER_BVISNULL( &(*vals)[n] ); n++ ) {
 			;	/* Empty */
 		}
-		*vals = (BerVarray) SLAP_REALLOC( (char *) *vals,
+		*vals = (BerVarray) ch_realloc( (char *) *vals,
 		    (n + nn + 1) * sizeof(struct berval) );
 		if( *vals == NULL ) {
 			Debug(LDAP_DEBUG_TRACE,
@@ -105,7 +105,7 @@ value_add_one(
 		for ( n = 0; !BER_BVISNULL( &(*vals)[n] ); n++ ) {
 			;	/* Empty */
 		}
-		*vals = (BerVarray) SLAP_REALLOC( (char *) *vals,
+		*vals = (BerVarray) ch_realloc( (char *) *vals,
 		    (n + 2) * sizeof(struct berval) );
 		if( *vals == NULL ) {
 			Debug(LDAP_DEBUG_TRACE,

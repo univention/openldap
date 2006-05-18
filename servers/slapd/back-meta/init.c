@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/init.c,v 1.37.2.10 2006/01/03 22:16:20 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/init.c,v 1.37.2.12 2006/04/05 21:27:29 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -150,7 +150,6 @@ meta_back_conn_free(
 		(void)meta_clear_one_candidate( &mc->mc_conns[ i ] );
 	}
 
-	ldap_pvt_thread_mutex_destroy( &mc->mc_mutex );
 	free( mc );
 }
 
@@ -181,6 +180,9 @@ target_free(
 {
 	if ( mt->mt_uri ) {
 		free( mt->mt_uri );
+	}
+	if ( mt->mt_subtree_exclude ) {
+		ber_bvarray_free( mt->mt_subtree_exclude );
 	}
 	if ( !BER_BVISNULL( &mt->mt_psuffix ) ) {
 		free( mt->mt_psuffix.bv_val );

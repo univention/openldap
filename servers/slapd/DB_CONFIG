@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/servers/slapd/DB_CONFIG,v 1.1.2.1 2005/11/29 19:26:45 kurt Exp $
+# $OpenLDAP: pkg/ldap/servers/slapd/DB_CONFIG,v 1.1.2.2 2006/04/04 16:17:25 kurt Exp $
 # Example DB_CONFIG file for use with slapd(8) BDB/HDB databases.
 #
 # See Sleepycat Berkeley DB documentation
@@ -7,6 +7,8 @@
 #
 # Hints can also be found in the OpenLDAP Software FAQ
 #	<http://www.openldap.org/faq/index.cgi?file=2>
+# in particular:
+#   <http://www.openldap.org/faq/index.cgi?file=1075>
 
 # one 0.25 GB cache
 set_cachesize 0 268435456 1

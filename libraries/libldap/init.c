@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/init.c,v 1.93.2.8 2006/01/03 22:16:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/init.c,v 1.93.2.9 2006/04/03 19:49:54 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -417,6 +417,12 @@ ldap_int_destroy_global_options(void)
 		ldap_int_hostname = NULL;
 	}
 #endif
+#ifdef HAVE_CYRUS_SASL
+	if ( gopts->ldo_def_sasl_authcid ) {
+		LDAP_FREE( gopts->ldo_def_sasl_authcid );
+		gopts->ldo_def_sasl_authcid = NULL;
+	}
+#endif
 }
 
 /* 
@@ -567,7 +573,7 @@ void ldap_int_initialize( struct ldapoptions *gopts, int *dbglvl )
 		if( user == NULL ) user = getenv("LOGNAME");
 
 		if( user != NULL ) {
-			gopts->ldo_def_sasl_authcid = user;
+			gopts->ldo_def_sasl_authcid = LDAP_STRDUP( user );
 		}
     }
 #endif

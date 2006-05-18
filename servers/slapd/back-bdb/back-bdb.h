@@ -1,5 +1,5 @@
 /* back-bdb.h - bdb back-end header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/back-bdb.h,v 1.117.2.10 2006/01/06 19:17:13 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/back-bdb.h,v 1.117.2.11 2006/04/07 16:12:33 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2006 The OpenLDAP Foundation.
@@ -180,7 +180,6 @@ struct bdb_info {
 	u_int32_t	bi_txn_cp_kbyte;
 	struct re_s		*bi_txn_cp_task;
 	struct re_s		*bi_index_task;
- 	struct re_s		*bi_cache_task;
 
 	int			bi_lock_detect;
 	long		bi_shm_key;

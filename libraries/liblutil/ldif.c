@@ -1,5 +1,5 @@
 /* ldif.c - routines for dealing with LDIF files */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/ldif.c,v 1.2.2.7 2006/01/03 22:16:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/ldif.c,v 1.2.2.8 2006/04/03 19:49:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -734,7 +734,7 @@ int ldif_is_not_printable(
 		ber_len_t i;
 
 		for ( i = 0; val[i]; i++ ) {
-			if ( !isascii( val[i] ) || !isprint( val[i] ) ) {
+			if ( !isascii( val[i] ) || !isprint( (unsigned char) val[i] ) ) {
 				return 1;
 			}
 		}
@@ -858,7 +858,7 @@ ldif_read_record(
 						}
 
 						ptr = line + STRLENOF("include:");
-						while (isspace(*ptr)) ptr++;
+						while (isspace((unsigned char) *ptr)) ptr++;
 						fp2 = ldif_open_url( ptr );
 						if ( fp2 ) {
 							LDIFFP *lnew = ber_memalloc( sizeof( LDIFFP ));

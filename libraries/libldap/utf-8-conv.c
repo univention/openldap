@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/utf-8-conv.c,v 1.11.2.3 2006/01/03 22:16:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/utf-8-conv.c,v 1.11.2.4 2006/04/03 19:49:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -129,8 +129,12 @@ ldap_x_utf8s_to_wcs ( wchar_t *wcstr, const char *utf8str, size_t count )
 	wchar_t ch;
 
 
-	/* If input ptr is NULL, treat it as empty string. */
-	if (utf8str == NULL) utf8str = "";
+	/* If input ptr is NULL or empty... */
+	if (utf8str == NULL || !*utf8str) {
+		if ( wcstr )
+			*wcstr = 0;
+		return 0;
+	}
 
 	/* Examine next UTF-8 character.  If output buffer is NULL, ignore count */
 	while ( *utf8str && (wcstr==NULL || wclen<count) ) {

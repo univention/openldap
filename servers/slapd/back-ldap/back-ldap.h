@@ -1,5 +1,5 @@
 /* back-ldap.h - ldap backend header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.63.2.17 2006/02/16 22:21:27 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.63.2.19 2006/04/11 21:26:27 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -60,6 +60,7 @@ typedef struct ldapconn_t {
 #define	LDAP_BACK_FCONN_ISPRIV	(0x04)
 #define	LDAP_BACK_FCONN_ISTLS	(0x08)
 #define	LDAP_BACK_FCONN_BINDING	(0x10)
+#define	LDAP_BACK_FCONN_TAINTED	(0x20)
 
 #define	LDAP_BACK_CONN_ISBOUND(lc)		LDAP_BACK_CONN_ISSET((lc), LDAP_BACK_FCONN_ISBOUND)
 #define	LDAP_BACK_CONN_ISBOUND_SET(lc)		LDAP_BACK_CONN_SET((lc), LDAP_BACK_FCONN_ISBOUND)
@@ -80,8 +81,12 @@ typedef struct ldapconn_t {
 #define	LDAP_BACK_CONN_BINDING(lc)		LDAP_BACK_CONN_ISSET((lc), LDAP_BACK_FCONN_BINDING)
 #define	LDAP_BACK_CONN_BINDING_SET(lc)		LDAP_BACK_CONN_SET((lc), LDAP_BACK_FCONN_BINDING)
 #define	LDAP_BACK_CONN_BINDING_CLEAR(lc)	LDAP_BACK_CONN_CLEAR((lc), LDAP_BACK_FCONN_BINDING)
+#define	LDAP_BACK_CONN_TAINTED(lc)		LDAP_BACK_CONN_ISSET((lc), LDAP_BACK_FCONN_TAINTED)
+#define	LDAP_BACK_CONN_TAINTED_SET(lc)		LDAP_BACK_CONN_SET((lc), LDAP_BACK_FCONN_TAINTED)
+#define	LDAP_BACK_CONN_TAINTED_CLEAR(lc)	LDAP_BACK_CONN_CLEAR((lc), LDAP_BACK_FCONN_TAINTED)
 
 	unsigned		lc_refcnt;
+	unsigned		lc_binding;
 	unsigned		lc_flags;
 	time_t			lc_create_time;
 	time_t			lc_time;

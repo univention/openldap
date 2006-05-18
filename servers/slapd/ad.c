@@ -1,5 +1,5 @@
 /* ad.c - routines for dealing with attribute descriptions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.74.2.12 2006/01/17 19:09:51 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.74.2.14 2006/05/09 19:26:26 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -124,20 +124,21 @@ int slap_str2ad(
 }
 
 static char *strchrlen(
-	const char *p, 
+	const char *beg, 
+	const char *end,
 	const char ch, 
 	int *len )
 {
-	int i;
+	const char *p;
 
-	for( i=0; p[i]; i++ ) {
-		if( p[i] == ch ) {
-			*len = i;
-			return (char *) &p[i];
+	for( p=beg; *p && p < end; p++ ) {
+		if( *p == ch ) {
+			*len = p - beg;
+			return (char *) p;
 		}
 	}
 
-	*len = i;
+	*len = p - beg;
 	return NULL;
 }
 
@@ -148,7 +149,7 @@ int slap_bv2ad(
 {
 	int rtn = LDAP_UNDEFINED_TYPE;
 	AttributeDescription desc, *d2;
-	char *name, *options;
+	char *name, *options, *optn;
 	char *opt, *next;
 	int ntags;
 	int tagslen;
@@ -201,11 +202,12 @@ int slap_bv2ad(
 	ntags = 0;
 	memset( tags, 0, sizeof( tags ));
 	tagslen = 0;
+	optn = bv->bv_val + bv->bv_len;
 
 	for( opt=options; opt != NULL; opt=next ) {
 		int optlen;
 		opt++; 
-		next = strchrlen( opt, ';', &optlen );
+		next = strchrlen( opt, optn, ';', &optlen );
 
 		if( optlen == 0 ) {
 			*text = "zero length option is invalid";
@@ -443,19 +445,21 @@ static int is_ad_subtags(
 	struct berval *subtagsbv, 
 	struct berval *suptagsbv )
 {
-	const char *suptags, *supp, *supdelimp;
-	const char *subtags, *subp, *subdelimp;
+	const char *suptags, *supp, *supdelimp, *supn;
+	const char *subtags, *subp, *subdelimp, *subn;
 	int  suplen, sublen;
 
 	subtags =subtagsbv->bv_val;
 	suptags =suptagsbv->bv_val;
+	subn = subtags + subtagsbv->bv_len;
+	supn = suptags + suptagsbv->bv_len;
 
 	for( supp=suptags ; supp; supp=supdelimp ) {
-		supdelimp = strchrlen( supp, ';', &suplen );
+		supdelimp = strchrlen( supp, supn, ';', &suplen );
 		if( supdelimp ) supdelimp++;
 
 		for( subp=subtags ; subp; subp=subdelimp ) {
-			subdelimp = strchrlen( subp, ';', &sublen );
+			subdelimp = strchrlen( subp, subn, ';', &sublen );
 			if( subdelimp ) subdelimp++;
 
 			if ( suplen > sublen
@@ -1177,11 +1181,13 @@ ad_define_option( const char *name, const char *fname, int lineno )
 	return 0;
 }
 
-void ad_unparse_options( BerVarray *res ){
+void
+ad_unparse_options( BerVarray *res )
+{
 	int i;
-    for ( i=0; i < option_count; i++ ) {
-    	ber_bvarray_add( res, ber_bvdup( &(options[i].name) ));
-    }
+	for ( i = 0; i < option_count; i++ ) {
+		value_add_one( res, &options[i].name );
+	}
 }
 
 /* Find the definition of the option name or prefix matching the arguments */

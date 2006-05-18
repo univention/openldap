@@ -1,5 +1,5 @@
 /* init.c - initialize various things */
-/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.81.2.11 2006/01/03 22:16:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.81.2.13 2006/05/09 17:29:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -137,7 +137,6 @@ slap_init( int mode, const char *name )
 
 		ldap_pvt_thread_pool_init( &connection_pool,
 				connection_pool_max, 0);
-
 		ldap_pvt_thread_mutex_init( &entry2str_mutex );
 		ldap_pvt_thread_mutex_init( &replog_mutex );
 

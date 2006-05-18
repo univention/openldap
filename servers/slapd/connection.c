@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.296.2.14 2006/01/08 19:20:27 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.296.2.16 2006/04/05 18:08:48 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -1043,7 +1043,7 @@ Connection* connection_next( Connection *c, ber_socket_t *index )
 
 	assert( connections != NULL );
 	assert( index != NULL );
-	assert( *index >= 0 && *index < MCA_ARRAY_SIZE );
+	assert( *index >= 0 && *index <= dtblsize );
 
 	if( c != NULL ) ldap_pvt_thread_mutex_unlock( &c->c_mutex );
 
@@ -1995,6 +1995,13 @@ connection_init_log_prefix( Operation *op )
 	}
 }
 
+static int connection_bind_cleanup_cb( Operation *op, SlapReply *rs )
+{
+	op->o_conn->c_sasl_bindop = NULL;
+
+	return SLAP_CB_CONTINUE;
+}
+
 static int connection_bind_cb( Operation *op, SlapReply *rs )
 {
 	slap_callback *cb = op->o_callback;
@@ -2065,6 +2072,7 @@ static void connection_op_queue( Operation *op )
 	if (tag == LDAP_REQ_BIND) {
 		slap_callback *sc = ch_calloc( 1, sizeof( slap_callback ));
 		sc->sc_response = connection_bind_cb;
+		sc->sc_cleanup = connection_bind_cleanup_cb;
 		sc->sc_next = op->o_callback;
 		op->o_callback = sc;
 		op->o_conn->c_conn_state = SLAP_C_BINDING;

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/config.c,v 1.10.2.3 2006/01/03 22:16:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/config.c,v 1.10.2.4 2006/04/03 19:49:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2006 The OpenLDAP Foundation.
@@ -431,6 +431,7 @@ rewrite_parse_builtin_map(
 	 * Error
 	 */	
 	} else {
+		free( map );
 		Debug( LDAP_DEBUG_ANY, "[%s:%d] unknown map type\n%s",
 				fname, lineno, "" );
 		return -1;

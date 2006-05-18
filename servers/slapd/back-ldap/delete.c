@@ -1,5 +1,5 @@
 /* delete.c - ldap backend delete function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/delete.c,v 1.37.2.7 2006/01/03 22:16:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/delete.c,v 1.37.2.8 2006/04/05 21:53:26 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2006 The OpenLDAP Foundation.
@@ -59,7 +59,7 @@ ldap_back_delete(
 	}
 
 retry:
-	rs->sr_err = ldap_delete_ext( lc->lc_ld, op->o_req_ndn.bv_val,
+	rs->sr_err = ldap_delete_ext( lc->lc_ld, op->o_req_dn.bv_val,
 			ctrls, NULL, &msgid );
 	rc = ldap_back_op_result( lc, op, rs, msgid,
 		li->li_timeout[ LDAP_BACK_OP_DELETE], LDAP_BACK_SENDRESULT );

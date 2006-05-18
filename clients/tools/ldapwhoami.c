@@ -1,5 +1,5 @@
 /* ldapwhoami.c -- a tool for asking the directory "Who Am I?" */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapwhoami.c,v 1.33.2.3 2006/01/03 22:16:02 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapwhoami.c,v 1.33.2.4 2006/04/04 03:23:28 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -116,7 +116,7 @@ main( int argc, char *argv[] )
 	char		*matcheddn = NULL, *text = NULL, **refs = NULL;
 	char		*retoid = NULL;
 	struct berval	*retdata = NULL;
-	int		id, code;
+	int		id, code=0;
 	LDAPMessage	*res;
 
 	tool_init();

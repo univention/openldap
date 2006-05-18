@@ -1,5 +1,5 @@
 /* id2entry.c - routines to deal with the id2entry database */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/id2entry.c,v 1.62.2.7 2006/01/03 22:16:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/id2entry.c,v 1.62.2.8 2006/04/07 16:12:33 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2006 The OpenLDAP Foundation.
@@ -258,9 +258,8 @@ int bdb_entry_release(
 #endif
 		}
 		/* free entry and reader or writer lock */
-		if ( op ) {
-			boi = (struct bdb_op_info *)op->o_private;
-		}
+		boi = (struct bdb_op_info *)op->o_private;
+
 		/* lock is freed with txn */
 		if ( !boi || boi->boi_txn ) {
 			bdb_unlocked_cache_return_entry_rw( &bdb->bi_cache, e, rw );

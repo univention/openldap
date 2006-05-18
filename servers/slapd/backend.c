@@ -1,5 +1,5 @@
 /* backend.c - routines for dealing with back-end databases */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.288.2.22 2006/01/03 22:16:13 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.288.2.23 2006/04/04 22:34:42 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -1680,15 +1680,17 @@ fe_aux_operational(
 	 * and the backend supports specific operational attributes, 
 	 * add them to the attribute list
 	 */
-	if ( SLAP_OPATTRS( rs->sr_attr_flags ) || ( rs->sr_attrs &&
-		ad_inlist( slap_schema.si_ad_entryDN, rs->sr_attrs ) ) )
+	if ( !( rs->sr_flags & REP_NO_ENTRYDN )
+		&& ( SLAP_OPATTRS( rs->sr_attr_flags ) || ( rs->sr_attrs &&
+		ad_inlist( slap_schema.si_ad_entryDN, rs->sr_attrs ) ) ) )
 	{
 		*ap = slap_operational_entryDN( rs->sr_entry );
 		ap = &(*ap)->a_next;
 	}
 
-	if ( SLAP_OPATTRS( rs->sr_attr_flags ) || ( rs->sr_attrs &&
-		ad_inlist( slap_schema.si_ad_subschemaSubentry, rs->sr_attrs ) ) )
+	if ( !( rs->sr_flags & REP_NO_SUBSCHEMA)
+		&& ( SLAP_OPATTRS( rs->sr_attr_flags ) || ( rs->sr_attrs &&
+		ad_inlist( slap_schema.si_ad_subschemaSubentry, rs->sr_attrs ) ) ) )
 	{
 		*ap = slap_operational_subschemaSubentry( op->o_bd );
 		ap = &(*ap)->a_next;

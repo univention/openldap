@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.112.2.12 2006/02/12 03:28:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.112.2.14 2006/05/15 15:26:46 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -602,23 +602,31 @@ ldap_int_sasl_bind(
 		return ld->ld_errno;
 	}
 
+	rc = 0;
+#ifdef LDAP_R_COMPILE
+	ldap_pvt_thread_mutex_lock( &ld->ld_req_mutex );
+#endif
 	ber_sockbuf_ctrl( ld->ld_sb, LBER_SB_OPT_GET_FD, &sd );
 
 	if ( sd == AC_SOCKET_INVALID ) {
  		/* not connected yet */
- 		int rc;
 
 		rc = ldap_open_defconn( ld );
-		if( rc < 0 ) return ld->ld_errno;
 
-		ber_sockbuf_ctrl( ld->ld_defconn->lconn_sb,
-			LBER_SB_OPT_GET_FD, &sd );
+		if ( rc == 0 ) {
+			ber_sockbuf_ctrl( ld->ld_defconn->lconn_sb,
+				LBER_SB_OPT_GET_FD, &sd );
 
-		if( sd == AC_SOCKET_INVALID ) {
-			ld->ld_errno = LDAP_LOCAL_ERROR;
-			return ld->ld_errno;
+			if( sd == AC_SOCKET_INVALID ) {
+				ld->ld_errno = LDAP_LOCAL_ERROR;
+				rc = ld->ld_errno;
+			}
 		}
 	}   
+#ifdef LDAP_R_COMPILE
+	ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
+#endif
+	if( rc != 0 ) return ld->ld_errno;
 
 	oldctx = ld->ld_defconn->lconn_sasl_authctx;
 
@@ -1023,7 +1031,7 @@ int ldap_pvt_sasl_secprops(
 	sasl_security_properties_t *secprops )
 {
 	int i, j, l;
-	char **props = ldap_str2charray( in, "," );
+	char **props;
 	unsigned sflags = 0;
 	int got_sflags = 0;
 	sasl_ssf_t max_ssf = 0;
@@ -1033,7 +1041,11 @@ int ldap_pvt_sasl_secprops(
 	unsigned maxbufsize = 0;
 	int got_maxbufsize = 0;
 
-	if( props == NULL || secprops == NULL ) {
+	if( secprops == NULL ) {
+		return LDAP_PARAM_ERROR;
+	}
+	props = ldap_str2charray( in, "," );
+	if( props == NULL ) {
 		return LDAP_PARAM_ERROR;
 	}
 
@@ -1046,7 +1058,8 @@ int ldap_pvt_sasl_secprops(
 			if ( sprops[j].ival ) {
 				unsigned v;
 				char *next = NULL;
-				if ( !isdigit( props[i][sprops[j].key.bv_len] )) continue;
+				if ( !isdigit( (unsigned char)props[i][sprops[j].key.bv_len] ))
+					continue;
 				v = strtoul( &props[i][sprops[j].key.bv_len], &next, 10 );
 				if ( next == &props[i][sprops[j].key.bv_len] || next[0] != '\0' ) continue;
 				switch( sprops[j].ival ) {
@@ -1068,6 +1081,7 @@ int ldap_pvt_sasl_secprops(
 			break;
 		}
 		if ( BER_BVISNULL( &sprops[j].key )) {
+			ldap_charray_free( props );
 			return LDAP_NOT_SUPPORTED;
 		}
 	}

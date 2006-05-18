@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.144.2.13 2006/01/03 22:16:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.144.2.14 2006/05/09 17:29:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -1576,24 +1576,25 @@ static int slap_authz_regexp( struct berval *in, struct berval *out,
 }
 
 /* This callback actually does some work...*/
-static int sasl_sc_sasl2dn( Operation *o, SlapReply *rs )
+static int sasl_sc_sasl2dn( Operation *op, SlapReply *rs )
 {
-	struct berval *ndn = o->o_callback->sc_private;
+	struct berval *ndn = op->o_callback->sc_private;
 
-	if (rs->sr_type != REP_SEARCH) return 0;
+	if ( rs->sr_type != REP_SEARCH ) return LDAP_SUCCESS;
 
 	/* We only want to be called once */
 	if ( !BER_BVISNULL( ndn ) ) {
-		o->o_tmpfree(ndn->bv_val, o->o_tmpmemctx);
+		op->o_tmpfree( ndn->bv_val, op->o_tmpmemctx );
 		BER_BVZERO( ndn );
 
 		Debug( LDAP_DEBUG_TRACE,
-			"slap_sc_sasl2dn: search DN returned more than 1 entry\n", 0, 0, 0 );
-		return -1;
+			"%s: slap_sc_sasl2dn: search DN returned more than 1 entry\n",
+			op->o_log_prefix, 0, 0 );
+		return LDAP_OTHER;
 	}
 
-	ber_dupbv_x(ndn, &rs->sr_entry->e_nname, o->o_tmpmemctx);
-	return 0;
+	ber_dupbv_x( ndn, &rs->sr_entry->e_nname, op->o_tmpmemctx );
+	return LDAP_SUCCESS;
 }
 
 

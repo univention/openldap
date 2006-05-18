@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/candidates.c,v 1.12.2.12 2006/02/16 22:21:27 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/candidates.c,v 1.12.2.13 2006/04/04 22:34:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -206,3 +206,22 @@ meta_clear_one_candidate(
 	return 0;
 }
 
+/*
+ * meta_clear_candidates
+ *
+ * clears all candidates
+ */
+int
+meta_clear_candidates( Operation *op, metaconn_t *mc )
+{
+	metainfo_t	*mi = ( metainfo_t * )op->o_bd->be_private;
+	int		c;
+
+	for ( c = 0; c < mi->mi_ntargets; c++ ) {
+		if ( mc->mc_conns[ c ].msc_ld != NULL ) {
+			meta_clear_one_candidate( &mc->mc_conns[ c ] );
+		}
+	}
+
+	return 0;
+}

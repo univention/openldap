@@ -1,5 +1,5 @@
 /* search.c - ldap backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.148.2.26 2006/02/16 22:21:27 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.148.2.30 2006/05/16 20:38:16 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -209,7 +209,7 @@ ldap_back_search(
 	/* deal with <draft-zeilenga-ldap-t-f> filters */
 	filter = op->ors_filterstr;
 retry:
-	rs->sr_err = ldap_search_ext( lc->lc_ld, op->o_req_ndn.bv_val,
+	rs->sr_err = ldap_search_ext( lc->lc_ld, op->o_req_dn.bv_val,
 			op->ors_scope, filter.bv_val,
 			attrs, op->ors_attrsonly, ctrls, NULL,
 			tv.tv_sec ? &tv : NULL,
@@ -224,14 +224,13 @@ retry:
 					goto retry;
 				}
 			}
+
 			if ( lc == NULL ) {
 				/* reset by ldap_back_retry ... */
 				rs->sr_err = slap_map_api2result( rs );
 
 			} else {
 				rc = ldap_back_op_result( lc, op, rs, msgid, 0, LDAP_BACK_DONTSEND );
-				ldap_back_freeconn( op, lc, 0 );
-				lc = NULL;
 			}
 				
 			goto finish;
@@ -303,6 +302,7 @@ retry:
 				rs->sr_attrs = op->ors_attrs;
 				rs->sr_operational_attrs = NULL;
 				rs->sr_flags = 0;
+				rs->sr_err = LDAP_SUCCESS;
 				rc = rs->sr_err = send_search_entry( op, rs );
 				if ( !BER_BVISNULL( &ent.e_name ) ) {
 					assert( ent.e_name.bv_val != bdn.bv_val );
@@ -375,16 +375,19 @@ retry:
 			}
 
 		} else {
-			char		**references = NULL;
+			char		**references = NULL, *err = NULL;
 
 			rc = ldap_parse_result( lc->lc_ld, res, &rs->sr_err,
-					&match.bv_val, (char **)&rs->sr_text,
+					&match.bv_val, &err,
 					&references, &rs->sr_ctrls, 1 );
-			freetext = 1;
 			if ( rc != LDAP_SUCCESS ) {
 				rs->sr_err = rc;
 			}
 			rs->sr_err = slap_map_api2result( rs );
+			if ( err ) {
+				rs->sr_text = err;
+				freetext = 1;
+			}
 
 			if ( references && references[ 0 ] && references[ 0 ][ 0 ] ) {
 				int	cnt;

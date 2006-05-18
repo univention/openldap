@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/rdwr.c,v 1.23.2.3 2006/01/03 22:16:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/rdwr.c,v 1.23.2.4 2006/04/03 19:49:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -78,6 +78,8 @@ ldap_pvt_thread_rdwr_init( ldap_pvt_thread_rdwr_t *rwlock )
 
 	rw = (struct ldap_int_thread_rdwr_s *) LDAP_CALLOC( 1,
 		sizeof( struct ldap_int_thread_rdwr_s ) );
+	if ( !rw )
+		return LDAP_NO_MEMORY;
 
 	/* we should check return results */
 	ldap_pvt_thread_mutex_init( &rw->ltrw_mutex );

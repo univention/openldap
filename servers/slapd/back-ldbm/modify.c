@@ -1,5 +1,5 @@
 /* modify.c - ldbm backend modify routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/modify.c,v 1.115.2.7 2006/02/13 19:50:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/modify.c,v 1.115.2.8 2006/04/04 20:29:34 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -259,7 +259,7 @@ ldbm_back_modify(
 			cache_return_entry_r( &li->li_cache, matched );
 		} else {
 			rs->sr_ref = referral_rewrite( default_referral, NULL,
-						&op->o_req_dn, LDAP_SCOPE_DEFAULT );
+				&op->o_req_dn, LDAP_SCOPE_DEFAULT );
 		}
 
 		rs->sr_err = LDAP_REFERRAL;
@@ -267,8 +267,7 @@ ldbm_back_modify(
 		goto return_results;
 	}
 
-	if ( !manageDSAit && is_entry_referral( e ) )
-	{
+	if ( !manageDSAit && is_entry_referral( e ) ) {
 		/* parent is a referral, don't allow add */
 		/* parent is an alias, don't allow add */
 		rs->sr_ref = get_entry_referrals( op, e );
@@ -295,7 +294,7 @@ ldbm_back_modify(
 	}
 
 return_results:;
-	cache_return_entry_w( &li->li_cache, e );
+	if( e != NULL ) cache_return_entry_w( &li->li_cache, e );
 	ldap_pvt_thread_rdwr_wunlock(&li->li_giant_rwlock);
 
 	send_ldap_result( op, rs );

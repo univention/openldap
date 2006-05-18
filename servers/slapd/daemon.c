@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.318.2.23 2006/02/13 20:02:53 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.318.2.25 2006/05/11 18:33:31 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -807,7 +807,8 @@ static int slap_get_listener_addresses(
 			sap[i]->sa_family = AF_INET;
 			((struct sockaddr_in *)sap[i])->sin_port = htons(port);
 			AC_MEMCPY( &((struct sockaddr_in *)sap[i])->sin_addr,
-				he ? he->h_addr_list[i] : &in, sizeof(struct in_addr) );
+				he ? (struct in_addr *)he->h_addr_list[i] : &in,
+				sizeof(struct in_addr) );
 		}
 		sap[i] = NULL;
 #endif
@@ -1703,7 +1704,7 @@ slapd_daemon_task(
 		struct timeval		tv;
 		struct timeval		*tvp;
 
-		struct timeval		*cat;
+		struct timeval		cat;
 		time_t				tdelta = 1;
 		struct re_s*		rtask;
 		now = slap_get_time();
@@ -1784,7 +1785,7 @@ slapd_daemon_task(
 
 		ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
 		rtask = ldap_pvt_runqueue_next_sched( &slapd_rq, &cat );
-		while ( cat && cat->tv_sec && cat->tv_sec <= now ) {
+		while ( rtask && cat.tv_sec && cat.tv_sec <= now ) {
 			if ( ldap_pvt_runqueue_isrunning( &slapd_rq, rtask )) {
 				ldap_pvt_runqueue_resched( &slapd_rq, rtask, 0 );
 			} else {
@@ -1799,8 +1800,8 @@ slapd_daemon_task(
 		}
 		ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
 
-		if ( cat && cat->tv_sec ) {
-			time_t diff = difftime( cat->tv_sec, now );
+		if ( rtask && cat.tv_sec ) {
+			time_t diff = difftime( cat.tv_sec, now );
 			if ( diff == 0 ) diff = tdelta;
 			if ( tvp == NULL || diff < tv.tv_sec ) {
 				tv.tv_sec = diff;

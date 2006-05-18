@@ -1,7 +1,7 @@
 .TH SLAPD.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" Copyright 1998-2006 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.191.2.19 2006/02/16 01:59:53 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.191.2.21 2006/05/16 17:15:30 kurt Exp $
 .SH NAME
 slapd.conf \- configuration file for slapd, the stand-alone LDAP daemon
 .SH SYNOPSIS
@@ -407,7 +407,8 @@ Base scoped search requests with an empty base DN are not affected.
 Specify a set of features (separated by white space) to
 disallow (default none).
 .B bind_anon
-disables acceptance of anonymous bind requests.
+disables acceptance of anonymous bind requests.  Note that this setting
+does not prohibit anonymous directory access (See "require authc").
 .B bind_simple
 disables simple (bind) authentication.
 .B tls_2_anon
@@ -875,7 +876,7 @@ The default is 4194303.
 .TP
 .B threads <integer>
 Specify the maximum size of the primary thread pool.
-The default is 16.
+The default is 16; the minimum value is 2.
 .TP
 .B timelimit {<integer>|unlimited}
 .TP

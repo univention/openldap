@@ -1,5 +1,5 @@
 /* entry.c - monitor backend entry handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/entry.c,v 1.14.2.3 2006/01/03 22:16:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/entry.c,v 1.14.2.4 2006/04/04 22:34:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2006 The OpenLDAP Foundation.
@@ -162,6 +162,8 @@ monitor_entrypriv_create( void )
 	mp->mp_info = NULL;
 	mp->mp_flags = MONITOR_F_NONE;
 	mp->mp_cb = NULL;
+
+	ldap_pvt_thread_mutex_init( &mp->mp_mutex );
 
 	return mp;
 }

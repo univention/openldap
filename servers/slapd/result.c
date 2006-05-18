@@ -1,5 +1,5 @@
 /* result.c - routines to send ldap results, errors, and referrals */
-/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.244.2.16 2006/01/03 22:16:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.244.2.20 2006/05/15 15:51:59 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -36,7 +36,6 @@
 #include <ac/unistd.h>
 
 #include "slap.h"
-#include "lutil.h"
 
 const struct berval slap_dummy_bv = BER_BVNULL;
 
@@ -83,11 +82,7 @@ static char *v2ref( BerVarray ref, const char *text )
 		}
 	}
 
-	v2 = SLAP_MALLOC( len+i+sizeof("Referral:") );
-	if( v2 == NULL ) {
-		Debug( LDAP_DEBUG_ANY, "v2ref: SLAP_MALLOC failed", 0, 0, 0 );
-		return NULL;
-	}
+	v2 = ch_malloc( len+i+sizeof("Referral:") );
 
 	if( text != NULL ) {
 		strcpy(v2, text);
@@ -99,11 +94,7 @@ static char *v2ref( BerVarray ref, const char *text )
 	len += sizeof("Referral:");
 
 	for( i=0; ref[i].bv_val != NULL; i++ ) {
-		v2 = SLAP_REALLOC( v2, len + ref[i].bv_len + 1 );
-		if( v2 == NULL ) {
-			Debug( LDAP_DEBUG_ANY, "v2ref: SLAP_MALLOC failed", 0, 0, 0 );
-			return NULL;
-		}
+		v2 = ch_realloc( v2, len + ref[i].bv_len + 1 );
 		v2[len-1] = '\n';
 		AC_MEMCPY(&v2[len], ref[i].bv_val, ref[i].bv_len );
 		len += ref[i].bv_len;
@@ -1429,9 +1420,43 @@ str2result(
 		}
 
 		if ( strncasecmp( s, "code", STRLENOF( "code" ) ) == 0 ) {
-			if ( c != NULL && lutil_atoi( code, c ) != 0 ) {
-				goto bailout;
+			char	*next = NULL;
+			long	retcode;
+
+			if ( c == NULL ) {
+				Debug( LDAP_DEBUG_ANY, "str2result (%s) missing value\n",
+				    s, 0, 0 );
+				rc = -1;
+				continue;
 			}
+
+			while ( isspace( (unsigned char) c[ 0 ] ) ) c++;
+			if ( c[ 0 ] == '\0' ) {
+				Debug( LDAP_DEBUG_ANY, "str2result (%s) missing or empty value\n",
+				    s, 0, 0 );
+				rc = -1;
+				continue;
+			}
+
+			retcode = strtol( c, &next, 10 );
+			if ( next == NULL || next == c ) {
+				Debug( LDAP_DEBUG_ANY, "str2result (%s) unable to parse value\n",
+				    s, 0, 0 );
+				rc = -1;
+				continue;
+			}
+
+			while ( isspace( (unsigned char) next[ 0 ] ) ) next++;
+			if ( next[ 0 ] != '\0' ) {
+				Debug( LDAP_DEBUG_ANY, "str2result (%s) extra cruft after value\n",
+				    s, 0, 0 );
+				rc = -1;
+				continue;
+			}
+
+			/* FIXME: what if it's larger that max int? */
+			*code = (int)retcode;
+
 		} else if ( strncasecmp( s, "matched", STRLENOF( "matched" ) ) == 0 ) {
 			if ( c != NULL ) {
 				*matched = c;
@@ -1441,7 +1466,6 @@ str2result(
 				*info = c;
 			}
 		} else {
-bailout:;
 			Debug( LDAP_DEBUG_ANY, "str2result (%s) unknown\n",
 			    s, 0, 0 );
 
@@ -1484,6 +1508,7 @@ int slap_read_controls(
 	myop.o_bd = NULL;
 	myop.o_res_ber = ber;
 	myop.o_callback = NULL;
+	myop.ors_slimit = 1;
 
 	rc = slap_send_search_entry( &myop, rs );
 	if( rc ) return rc;

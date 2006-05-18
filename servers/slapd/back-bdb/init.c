@@ -1,5 +1,5 @@
 /* init.c - initialize bdb backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.177.2.24 2006/01/25 18:18:31 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.177.2.25 2006/05/11 16:56:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2006 The OpenLDAP Foundation.
@@ -553,6 +553,8 @@ bdb_back_initialize(
 		LDAP_CONTROL_MANAGEDSAIT,
 		LDAP_CONTROL_NOOP,
 		LDAP_CONTROL_PAGEDRESULTS,
+		LDAP_CONTROL_PRE_READ,
+		LDAP_CONTROL_POST_READ,
 		LDAP_CONTROL_SUBENTRIES,
 		LDAP_CONTROL_X_PERMISSIVE_MODIFY,
 		NULL

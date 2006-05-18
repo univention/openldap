@@ -1,5 +1,5 @@
 /* slap.h - stand alone ldap server include file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.612.2.38 2006/02/13 20:37:39 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.612.2.39 2006/04/04 22:34:42 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -1992,7 +1992,11 @@ typedef struct slap_rep {
 #define REP_ENTRY_MUSTBEFREED	0x0002U
 #define REP_ENTRY_MUSTRELEASE	0x0004U
 #define REP_MATCHED_MUSTBEFREED	0x0010U
-#define REP_REF_MUSTBEFREED		0x0020U
+#define REP_REF_MUSTBEFREED	0x0020U
+
+#define	REP_NO_ENTRYDN		0x1000U
+#define	REP_NO_SUBSCHEMA	0x2000U
+#define	REP_NO_OPERATIONALS	(REP_NO_ENTRYDN|REP_NO_SUBSCHEMA)
 } SlapReply;
 
 /* short hands for response members */

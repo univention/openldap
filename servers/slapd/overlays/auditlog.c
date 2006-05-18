@@ -1,5 +1,5 @@
 /* auditlog.c - log modifications for audit/history purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/auditlog.c,v 1.1.2.4 2006/02/13 17:28:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/auditlog.c,v 1.1.2.5 2006/05/09 17:43:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2006 The OpenLDAP Foundation.
@@ -177,6 +177,7 @@ auditlog_db_close(
 
 	free( ad->ad_logfile );
 	ad->ad_logfile = NULL;
+	return 0;
 }
 
 static int
@@ -189,6 +190,7 @@ auditlog_db_destroy(
 
 	ldap_pvt_thread_mutex_destroy( &ad->ad_mutex );
 	free( ad );
+	return 0;
 }
 
 static int
