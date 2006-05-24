@@ -1,3 +1,9 @@
+openldap2.3 (2.3.23-2) unstable; urgency=low
+
+  * Update patch slurpd-in-spool. (Closes: #368586, #368709)
+
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Mon, 22 May 2006 19:25:19 +0200
+
 openldap2.3 (2.3.23-1) unstable; urgency=low
 
   [ Matthijs Mohlmann ]
