@@ -19,7 +19,7 @@ ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 INSTALL_PROGRAM += -s
 endif
 
-CONFIG	      = $(shell grep -v "^\#" debian/configure.options.new)
+CONFIG	      = $(shell grep -v "^\#" debian/configure.options)
 
 installdir	:= $(CURDIR)/debian/install
 tmpdir		:= $(CURDIR)/debian/tmp

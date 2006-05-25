@@ -1,13 +1,15 @@
 openldap2.3 (2.3.23-2) unstable; urgency=low
 
   [ Matthijs Mohlmann ]
-  * Update patch slurpd-in-spool. (Closes: #368586, #368709)
+  * Update patch slurpd-in-spool. (Closes: #368586, #368709, #368889)
+  * Removed patch configure.in-fix, incorporated upstream.
+  * Move debian/configure.options.new to debian/configure.options.
 
   [ Torsten Landschoff ]
-  * Include man pages for accesslog and auditlog overlays, patch by 
+  * Include man pages for accesslog and auditlog overlays, patch by
     Peter Marschall (closes: #368888).
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Mon, 22 May 2006 19:25:19 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Thu, 25 May 2006 22:54:10 +0200
 
 openldap2.3 (2.3.23-1) unstable; urgency=low
 

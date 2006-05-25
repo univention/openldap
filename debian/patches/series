@@ -6,3 +6,4 @@ ntlm_c
 libldap-makefile_in
 add-autogen-sh
 fixmanpages -p0
+slapi-errorlog-file -p0
