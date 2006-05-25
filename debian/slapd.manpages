@@ -17,6 +17,8 @@ debian/tmp/usr/share/man/man5/slapd-dnssrv.5
 debian/tmp/usr/share/man/man5/slapd-ldif.5
 debian/tmp/usr/share/man/man5/slapd-passwd.5
 debian/tmp/usr/share/man/man5/slapd.replog.5
+debian/tmp/usr/share/man/man5/slapo-accesslog.5
+debian/tmp/usr/share/man/man5/slapo-auditlog.5
 debian/tmp/usr/share/man/man5/slapo-chain.5
 debian/tmp/usr/share/man/man5/slapo-dynlist.5
 debian/tmp/usr/share/man/man5/slapo-lastmod.5
