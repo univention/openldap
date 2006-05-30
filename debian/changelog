@@ -5,6 +5,7 @@ openldap2.3 (2.3.23-2) unstable; urgency=low
   * Added slapi-errorlog-file to be into /var/log (Closes: #368895)
   * Removed patch configure.in-fix, incorporated upstream.
   * Move debian/configure.options.new to debian/configure.options.
+  * Added patch to put ldapi socket in /var/run/slapd.
 
   [ Torsten Landschoff ]
   * Include man pages for accesslog and auditlog overlays, patch by
