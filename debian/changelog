@@ -1,4 +1,4 @@
-openldap2.3 (2.3.23-2) unstable; urgency=low
+openldap2.3 (2.3.24-1) unstable; urgency=low
 
   [ Matthijs Mohlmann ]
   * Update patch slurpd-in-spool. (Closes: #368586, #368709, #368889)
@@ -14,7 +14,7 @@ openldap2.3 (2.3.23-2) unstable; urgency=low
   * Include man pages for accesslog and auditlog overlays, patch by
     Peter Marschall (closes: #368888).
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Tue, 30 May 2006 18:37:51 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Tue, 30 May 2006 21:48:40 +0200
 
 openldap2.3 (2.3.23-1) unstable; urgency=low
 
