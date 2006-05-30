@@ -1,5 +1,5 @@
 /* extended.c - ldap backend extended routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/extended.c,v 1.22.2.13 2006/05/16 20:38:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/extended.c,v 1.22.2.14 2006/05/20 09:17:02 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2006 The OpenLDAP Foundation.
@@ -251,7 +251,7 @@ retry:
 			 */
 			rc = ldap_parse_result( lc->lc_ld, res, &rs->sr_err,
 					(char **)&rs->sr_matched,
-					text,
+					&text,
 					NULL, NULL, 0 );
 #ifndef LDAP_NULL_IS_NULL
 			if ( rs->sr_matched && rs->sr_matched[ 0 ] == '\0' ) {
