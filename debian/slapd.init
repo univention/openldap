@@ -6,9 +6,6 @@ set -e
 # Stop processing if slapd is not there
 [ -x /usr/sbin/slapd ] || exit 0
 
-# Set default values
-DB_RECOVER_CMD=db4.2_recover
-
 # Source the init script configuration
 if [ -f "/etc/default/slapd" ]; then
 	. /etc/default/slapd
@@ -109,82 +106,6 @@ EOF
 	fi
 }
 
-# Try to recover slapd database
-try_fix_db() {
-	local dbdir failed bdb_envs
-
-	# db4.2-util is just recommended by slapd, so make sure it is
-	# available before trying to use it
-	if ! command -v $DB_RECOVER_CMD >/dev/null 2>&1; then
-		echo -n " ($DB_RECOVER_CMD not found), "
-		return 0
-	fi
-
-	bdb_envs=`find_bdb_envs`
-
-	# We care only about BDB environments
-	if [ -z "$bdb_envs" ]; then
-		return 0
-	fi
-
-	# Make sure there is no slapcat and no slapd running as we might
-	# break the DB in that case
-	if pidof /usr/lib/slapd >/dev/null; then
-		echo -n " (slapd running, no recovery), "
-		return 0
-	fi
-
-	echo -n " running BDB recovery"
-	for dbdir in $bdb_envs; do
-		do_db_recover $dbdir
-	done
-	echo -n ","
-}
-
-# Run db_recover for the BDB environment in given directory and set $reason
-# on error
-do_db_recover() {
-	local dbdir
-	dbdir="$1"
-	if [  "$SLAPD_USER" ]; then
-		reason=`su "$SLAPD_USER" -s /bin/sh -c \
-			"$DB_RECOVER_CMD -eh $dbdir" 2>&1` || \
-			db_recover_failed $dbdir
-	else
-		reason=`$DB_RECOVER_CMD -eh $dbdir 2>&1` || \
-			db_recover_failed $dbdir
-	fi
-}
-
-# Find bdb environment dirs
-find_bdb_envs() {
-	local d
-	for d in `sed -ne 's/^directory[[:space:]]\+"*\([^"]\+\).*/\1/p' \
-			< "$SLAPD_CONF"`; do
-		if [ -d "$d" -a -f "$d/objectClass.bdb" ]; then
-			echo $d
-		fi
-	done
-}
-
-# Inform the user that BDB recovery failed
-db_recover_failed() {
-	local dbdir
-	dbdir="$1"
-
-	reason="`cat <<EOF
-Automatic recovery of the OpenLDAP directory database in
-
-	$dbdir
-
-failed. You will need to perform a manual recovery, possibly from backup.
-The failed command was $DB_RECOVER_CMD -eh $dbdir. Output:
-
-$reason
-EOF`"
-	exit 1
-}
-
 # Start the slapd daemon and capture the error message if any to 
 # $reason.
 start_slapd() {
@@ -235,9 +156,6 @@ stop_slurpd() {
 start() {
 	echo -n "Starting OpenLDAP:"
 	trap 'report_failure' 0
-	if [ "$TRY_BDB_RECOVERY" = "yes" ]; then
-		try_fix_db
-	fi
 	start_slapd
 	start_slurpd
 	trap "-" 0

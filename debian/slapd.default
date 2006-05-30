@@ -13,9 +13,6 @@ SLAPD_GROUP=
 # will try to figure it out from $SLAPD_CONF (/etc/ldap/slapd.conf)
 SLAPD_PIDFILE=
 
-# Configure if db_recover should be called before starting slapd
-TRY_BDB_RECOVERY=yes
-
 # Configure if the slurpd daemon should be started. Possible values: 
 # - yes:   Always start slurpd
 # - no:    Never start slurpd
