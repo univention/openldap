@@ -1,6 +1,7 @@
 openldap2.3 (2.3.24-1) unstable; urgency=low
 
   [ Matthijs Mohlmann ]
+  * New upstream version. (Closes: #369544)
   * Update patch slurpd-in-spool. (Closes: #368586, #368709, #368889)
   * Added slapi-errorlog-file to be into /var/log (Closes: #368895)
   * Removed patch configure.in-fix, incorporated upstream.
@@ -9,12 +10,13 @@ openldap2.3 (2.3.24-1) unstable; urgency=low
   * Removed bdb recovery from the init.d script. This was introduced to fix
     bug #255276. Now that slapd has the ability to check and recover from bdb
     failures, this function is not needed anymore. (Closes: #369484, #369093)
+  * Updated the lintian overrides.
 
   [ Torsten Landschoff ]
   * Include man pages for accesslog and auditlog overlays, patch by
     Peter Marschall (closes: #368888).
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Tue, 30 May 2006 21:48:40 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Thu,  1 Jun 2006 08:16:02 +0200
 
 openldap2.3 (2.3.23-1) unstable; urgency=low
 
