@@ -131,8 +131,37 @@ configure_ldbm_to_bdb_transition() {					# {{{
 }
 
 # }}}
-
-
+create_new_user() { # {{{
+	if [ "$MODE" = "configure" ]; then
+		if [ -z "`getent group openldap`" ]; then
+			addgroup --quiet --system openldap
+		fi
+		if [ -z "`getent passwd openldap`" ]; then
+			echo -n "  Creating new user openldap " >&2
+			adduser --quiet --system --home /var/lib/ldap --shell /bin/false --ingroup openldap --disabled-password --disabled-login --gecos "OpenLDAP" openldap
+			echo "done." >&2
+		fi
+	fi
+}
+# }}}
+create_ldap_directories() {	# {{{
+	if [ ! -d /var/lib/ldap && ! -z $SLAPD_USER && ! -z $SLAPD_GROUP ]; then
+		mkdir /var/lib/ldap
+	fi
+	if [ ! -d /var/spool/slurpd && ! -z $SLAPD_USER && ! -z $SLAPD_GROUP ]; then
+		mkdir /var/spool/slurpd
+	fi
+}
+# }}}
+update_permissions() {	# {{{
+	if [ -d /var/lib/ldap && ! -z $SLAPD_USER && ! -z $SLAPD_GROUP ]; then
+		chown -R $SLAPD_USER:$SLAPD_GROUP /var/lib/ldap
+	fi
+	if [ -d /var/spool/slurpd && ! -z $SLAPD_USER && ! -z $SLAPD_GROUP ]; then
+		chown -R $SLAPD_USER:$SLAPD_GROUP /var/spool/slurpd
+	fi
+}
+# }}}
 # }}}
 # ----- Dumping and loading the data ------------------------------------ {{{
 

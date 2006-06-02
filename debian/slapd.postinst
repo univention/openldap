@@ -53,6 +53,10 @@ postinst_upgrade_configuration() {					# {{{
 
 # }}}
 
+# Create a new user
+create_new_user
+
+# Configuration.
 if is_initial_configuration "$@"; then
 	postinst_initial_configuration
 else
