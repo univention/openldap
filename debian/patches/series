@@ -8,3 +8,5 @@ add-autogen-sh
 fixmanpages -p0
 slapi-errorlog-file -p0
 ldapi-socket-place -p0
+back-bdb-fix-lock-virtual-root-entry -p0
+fix-boolean-logic -p0
