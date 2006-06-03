@@ -132,33 +132,38 @@ configure_ldbm_to_bdb_transition() {					# {{{
 
 # }}}
 create_new_user() { # {{{
-	if [ "$MODE" = "configure" ]; then
-		if [ -z "`getent group openldap`" ]; then
-			addgroup --quiet --system openldap
-		fi
-		if [ -z "`getent passwd openldap`" ]; then
-			echo -n "  Creating new user openldap " >&2
-			adduser --quiet --system --home /var/lib/ldap --shell /bin/false --ingroup openldap --disabled-password --disabled-login --gecos "OpenLDAP" openldap
-			echo "done." >&2
-		fi
+	if [ -z "`getent group openldap`" ]; then
+		addgroup --quiet --system openldap
+	fi
+	if [ -z "`getent passwd openldap`" ]; then
+		echo -n "  Creating new user openldap " >&2
+		adduser --quiet --system --home /var/lib/ldap --shell /bin/false \
+        --ingroup openldap --disabled-password --disabled-login \
+        --gecos "OpenLDAP Server Account" openldap
+		echo "done." >&2
 	fi
 }
 # }}}
 create_ldap_directories() {	# {{{
-	if [ ! -d /var/lib/ldap && ! -z $SLAPD_USER && ! -z $SLAPD_GROUP ]; then
-		mkdir /var/lib/ldap
+	if [ ! -d /var/lib/ldap ]; then
+		mkdir -m 0700 /var/lib/ldap
 	fi
-	if [ ! -d /var/spool/slurpd && ! -z $SLAPD_USER && ! -z $SLAPD_GROUP ]; then
-		mkdir /var/spool/slurpd
+	if [ ! -d /var/spool/slurpd ]; then
+		mkdir -m 0700 /var/spool/slurpd
 	fi
+	if [ ! -d /var/run/slapd ]; then
+		mkdir -m 0755 /var/run/slapd
+	fi
+	update_permissions /var/lib/ldap
+	update_permissions /var/spool/slurpd
+	update_permissions /var/run/slapd
 }
 # }}}
 update_permissions() {	# {{{
-	if [ -d /var/lib/ldap && ! -z $SLAPD_USER && ! -z $SLAPD_GROUP ]; then
-		chown -R $SLAPD_USER:$SLAPD_GROUP /var/lib/ldap
-	fi
-	if [ -d /var/spool/slurpd && ! -z $SLAPD_USER && ! -z $SLAPD_GROUP ]; then
-		chown -R $SLAPD_USER:$SLAPD_GROUP /var/spool/slurpd
+	dir="$1"
+	if [ -d "$dir" ]; then
+		[ -z "$SLAPD_USER" ] || chown -R "$SLAPD_USER" "$dir"
+		[ -z "$SLAPD_GROUP" ] || chgrp -R "$SLAPD_GROUP" "$dir"
 	fi
 }
 # }}}
@@ -546,20 +551,19 @@ create_new_configuration() {						# {{{
 	backend="`echo $RET|tr A-Z a-z`"
 
 	# Looks like the following code is not needed as slapd is unconfigured
-	# first and stopped at that time.
-	# Make sure the daemon is shut down when doing a reconfigure.  No
-	# daemon should be running during an initial install.
-	# XXX: Shouldn't we stop and start slapd at the outer level?
-	#if [ "$1" = reconfigure ] || [ "$DEBCONF_RECONFIGURE" ]; then
-	#	invoke-rc.d slapd stop
-	#fi
+	# first and stopped at that time. So no need to stop slapd at all here.
 
 	if [ -e "/var/lib/ldap" ] && ! is_empty_dir /var/lib/ldap; then
 		echo >&2 "  Moving old database directory to /var/backups:"
 		move_old_database_away /var/lib/ldap
 	fi
 	create_new_slapd_conf "$basedn" "$backend"
+	create_ldap_directories
 	create_new_directory "$basedn" "$dc"
+
+	# Put the right permissions on this directory.
+	update_permissions /var/lib/ldap
+
   # Now that we created the new directory we don't need the passwords in the
   # debconf database anymore. So wipe them.
   wipe_admin_pass
@@ -862,6 +866,9 @@ install_new_slapd_conf() {						# {{{
 	# Make sure we keep the permissions of an old slapd.conf
 	if [ -e "$SLAPD_CONF" ]; then
 		assign_permissions "$SLAPD_CONF" "$conf_new"
+	else
+		[ -z "$SLAPD_USER" ] || chown "$SLAPD_USER" "$conf_new"
+		[ -z "$SLAPD_GROUP" ] || chgrp "$SLAPD_GROUP" "$conf_new"
 	fi
 	mv "$conf_new" "$SLAPD_CONF"
 }
