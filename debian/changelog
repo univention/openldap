@@ -1,12 +1,13 @@
-openldap2.3 (2.3.24-2) UNRELEASED; urgency=low
+openldap2.3 (2.3.24-2) unstable; urgency=low
 
   * Switch slapd from running as root to running as user.
   * Patches by Quanah Gibson-Mount
     - Patch to fix a lock bug with a virtual root entry in the BDB backend.
     - Patch to fix boolean logic in the overlays.
   * Add dependency on adduser.
+  * Specify the PATH variable in the init script. (Closes: #367981)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat,  3 Jun 2006 18:05:38 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun,  4 Jun 2006 20:15:10 +0200
 
 openldap2.3 (2.3.24-1) unstable; urgency=low
 

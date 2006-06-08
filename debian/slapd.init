@@ -1,5 +1,8 @@
 #! /bin/sh
 
+# Specify path variable
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+
 # Kill me on all errors
 set -e
 
