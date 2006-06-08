@@ -6,8 +6,9 @@ openldap2.3 (2.3.24-2) unstable; urgency=low
     - Patch to fix boolean logic in the overlays.
   * Add dependency on adduser.
   * Specify the PATH variable in the init script. (Closes: #367981)
+  * Added patch to read config before dropping privileges.
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun,  4 Jun 2006 20:15:10 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Thu,  8 Jun 2006 21:56:10 +0200
 
 openldap2.3 (2.3.24-1) unstable; urgency=low
 
