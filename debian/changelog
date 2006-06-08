@@ -7,8 +7,11 @@ openldap2.3 (2.3.24-2) unstable; urgency=low
   * Add dependency on adduser.
   * Specify the PATH variable in the init script. (Closes: #367981)
   * Added patch to read config before dropping privileges.
+  * epoll(4) system call is missing on kernels <2.6, this causes slapd to
+    not work on 2.4 kernels. Added patch that remove the #define in
+    portable.in (Closes: #369352, #372194)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Thu,  8 Jun 2006 21:56:10 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Thu,  8 Jun 2006 22:56:05 +0200
 
 openldap2.3 (2.3.24-1) unstable; urgency=low
 

@@ -1,0 +1,14 @@
+Index: include/portable.hin
+===================================================================
+--- include/portable.hin.orig
++++ include/portable.hin
+@@ -163,9 +163,6 @@
+ /* Define to 1 if you have the `endpwent' function. */
+ #undef HAVE_ENDPWENT
+ 
+-/* define if your system supports epoll */
+-#undef HAVE_EPOLL
+-
+ /* Define to 1 if you have the <errno.h> header file. */
+ #undef HAVE_ERRNO_H
+ 

@@ -11,3 +11,4 @@ ldapi-socket-place -p0
 back-bdb-fix-lock-virtual-root-entry -p0
 fix-boolean-logic -p0
 read-config-before-dropping-privileges -p0
+disable-epoll-system-call -p0
