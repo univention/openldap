@@ -12,3 +12,8 @@ back-bdb-fix-lock-virtual-root-entry -p0
 fix-boolean-logic -p0
 read-config-before-dropping-privileges -p0
 disable-epoll-system-call -p0
+exop-pass-change-does-not-reset-pwdMustChange -p0
+slurpd-with-ldaps-does-not-work -p0
+syncrepl-fails-when-rootdn-not-defined -p0
+tls-concurrency-issues -p0
+auditlog-db-init -p0

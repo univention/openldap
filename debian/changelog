@@ -1,9 +1,14 @@
 openldap2.3 (2.3.24-2) unstable; urgency=low
 
   * Switch slapd from running as root to running as user.
-  * Patches by Quanah Gibson-Mount
-    - Patch to fix a lock bug with a virtual root entry in the BDB backend.
-    - Patch to fix boolean logic in the overlays.
+  * Patches by Quanah Gibson-Mount <quanah@stanford.edu>
+    - fix a lock bug with a virtual root entry in the BDB backend.
+    - fix boolean logic in the overlays.
+    - fix that slurpd can use ldaps.
+    - fix initialization of auditdb.
+    - fix TLS concurrency issues.
+    - fix exop password change that didn't reset pwdMustChange.
+    - fix syncrepl that fails when no rootdn is defined.
   * Add dependency on adduser.
   * Specify the PATH variable in the init script. (Closes: #367981)
   * Added patch to read config before dropping privileges.
@@ -11,7 +16,7 @@ openldap2.3 (2.3.24-2) unstable; urgency=low
     not work on 2.4 kernels. Added patch that remove the #define in
     portable.in (Closes: #369352, #372194)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Thu,  8 Jun 2006 22:56:05 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 11 Jun 2006 14:21:30 +0200
 
 openldap2.3 (2.3.24-1) unstable; urgency=low
 
