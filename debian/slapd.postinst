@@ -49,6 +49,16 @@ postinst_upgrade_configuration() {					# {{{
 		fi
 		load_databases
 	fi
+
+	if previous_version_older 2.3.24-2; then
+		update_path_argsfile
+	fi
+
+	# Update permissions of all database directories and /var/run/slapd,
+	# /var/spool/slurpd
+	update_databases_permissions
+	update_permissions /var/run/slapd
+	update_permissions /var/spool/slurpd
 }
 
 # }}}

@@ -167,6 +167,14 @@ update_permissions() {	# {{{
 	fi
 }
 # }}}
+update_databases_permissions() {	# {{{
+	parse_configuration_file
+	for db in `get_database_list`; do
+		dbdir=`get_directory $db`
+		update_permissions "$dbdir"
+	done
+}
+# }}}
 # }}}
 # ----- Dumping and loading the data ------------------------------------ {{{
 
@@ -343,6 +351,45 @@ read_slapd_conf() {							# {{{
 	done
 }
 
+# }}}
+write_slapd_conf() {            # {{{
+# change a configuration setting in a configuration file, follow includes.
+# FIXME: circular loops will cause this to block forever
+# usage: write_slapd_conf configuration_file command new_data
+	local conf=$1
+	local modcommand=$2
+	local newarg=$3
+	local newconf=`mktemp`
+
+	cat $conf | merge_logical_lines | while read command data; do
+		if [ "$command" = "include" ]; then
+			file=`eval echo $data`
+			write_slapd_conf $file $modcommand $newarg
+		else
+			if [ "$command" = "$modcommand" ]; then
+				script='
+					$modcommand = shift;
+					$data = shift;
+					$newarg = shift;
+					$done = 0;
+					while (<>) {
+						$done = 1 if s|^($modcommand\s+)$data|$1$newarg|;
+						print;
+					}
+					exit ! $done;'
+				perl -e "$script" $modcommand $data $newarg < $conf > $newconf
+			fi
+		fi
+	done
+
+	# See if $newconf and $conf are the same.
+	if ! `diff $conf $newconf >/dev/null`; then
+		install_new_configuration $conf $newconf
+	fi
+
+	# Cleanup the files created in /tmp
+	rm -f $newconf
+}
 # }}}
 write_database_info() {							# {{{
 # Print out the information about one database
@@ -708,6 +755,10 @@ autoconfigure_modules() {						# {{{
 	echo done. >&2
 }
 # }}}
+update_path_argsfile() {	# {{{
+	write_slapd_conf "$SLAPD_CONF" "argsfile" "/var/run/slapd/slapd.args"
+}
+# }}}
 configure_v2_protocol_support() {					# {{{
 # Adds the "allow bind_v2" directive to the configuration if the user decided
 # he wants to have ldap v2 enabled.
@@ -866,11 +917,25 @@ install_new_slapd_conf() {						# {{{
 	# Make sure we keep the permissions of an old slapd.conf
 	if [ -e "$SLAPD_CONF" ]; then
 		assign_permissions "$SLAPD_CONF" "$conf_new"
-	else
-		[ -z "$SLAPD_USER" ] || chown "$SLAPD_USER" "$conf_new"
-		[ -z "$SLAPD_GROUP" ] || chgrp "$SLAPD_GROUP" "$conf_new"
 	fi
 	mv "$conf_new" "$SLAPD_CONF"
+}
+# }}}
+install_new_configuration() {       # {{{
+# Installs a given $2 (new) as new $1 (old) configuration file
+# Usage: install_new_configuration oldconf newconf
+	local conf_old="$1"
+	local conf_new="$2"
+
+	# Make sure we keep the permissions of an old configuration file, this is not
+	# really needed anymore because slapd reads it configuration before it drops
+	# the privileges.
+	if [ -e "$conf_old" ]; then
+		assign_permissions "$conf_old" "$conf_new"
+	fi
+
+	# Move configuration file in place.
+	mv "$conf_new" "$conf_old"
 }
 # }}}
 backup_config_once() {							# {{{

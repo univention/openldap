@@ -1,6 +1,6 @@
 openldap2.3 (2.3.24-2) unstable; urgency=low
 
-  * Switch slapd from running as root to running as user.
+  * Switch slapd from running as root to running as user. (Closes: #292845)
   * Patches by Quanah Gibson-Mount <quanah@stanford.edu>
     - fix a lock bug with a virtual root entry in the BDB backend.
     - fix boolean logic in the overlays.
@@ -14,9 +14,9 @@ openldap2.3 (2.3.24-2) unstable; urgency=low
   * Added patch to read config before dropping privileges.
   * epoll(4) system call is missing on kernels <2.6, this causes slapd to
     not work on 2.4 kernels. Added patch that remove the #define in
-    portable.in (Closes: #369352, #372194)
+    portable.in (Closes: #369352, #372194, #373233)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 11 Jun 2006 14:21:30 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Thu, 15 Jun 2006 18:53:37 +0200
 
 openldap2.3 (2.3.24-1) unstable; urgency=low
 
