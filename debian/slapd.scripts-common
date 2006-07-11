@@ -353,42 +353,59 @@ read_slapd_conf() {							# {{{
 
 # }}}
 write_slapd_conf() {            # {{{
-# change a configuration setting in a configuration file, follow includes.
+# Change a configuration setting in a configuration file, follow includes.
+# Usage: write_slapd_conf configuration_file regexpression
 # FIXME: circular loops will cause this to block forever
-# usage: write_slapd_conf configuration_file command new_data
-	local conf=$1
-	local modcommand=$2
-	local newarg=$3
-	local newconf=`mktemp`
 
-	cat $conf | merge_logical_lines | while read command data; do
-		if [ "$command" = "include" ]; then
-			file=`eval echo $data`
-			write_slapd_conf $file $modcommand $newarg
-		else
-			if [ "$command" = "$modcommand" ]; then
-				script='
-					$modcommand = shift;
-					$data = shift;
-					$newarg = shift;
-					$done = 0;
-					while (<>) {
-						$done = 1 if s|^($modcommand\s+)$data|$1$newarg|;
-						print;
-					}
-					exit ! $done;'
-				perl -e "$script" $modcommand $data $newarg < $conf > $newconf
-			fi
-		fi
-	done
+	conf=$1
+	reg=$2
 
-	# See if $newconf and $conf are the same.
-	if ! `diff $conf $newconf >/dev/null`; then
-		install_new_configuration $conf $newconf
-	fi
+	# Perl script to change configuration files.
+	script='
+		use File::Temp;
+		use File::Compare;
+		use File::Copy;
 
-	# Cleanup the files created in /tmp
-	rm -f $newconf
+		sub changeConfig {
+			my ($conf, $regexp) = @_;
+			my $template = "/tmp/tmp.XXXXXX";
+			my ($fh, $name) = mkstemp($template);
+
+			open(HANDLE, "<". $conf) || return;
+			@data = <HANDLE>;
+			close(HANDLE);
+
+			foreach $line (@data) {
+
+				# Parse includes, but forget the schema files.
+				if ($line =~ /^include/ && $line !~ /\/etc\/ldap\/schema\//) {
+					my @file = split(/\s+/, $line);
+					changeConfig($file[1], $regexp);
+				}
+
+				# Modify the config with the given regexpression.
+				$doit = "\$line =~ $regexp";
+				eval $doit;
+				print $fh $line;
+			}
+
+			# Close the tempfile handle opened by mkstemp.
+			close($fh);
+
+			# If file is changed by the regexp replace the original file.
+			if (compare($conf, $name) != 0) {
+				move($name, $conf);
+			} else {
+				unlink($name);
+			}
+		}
+
+		$config = shift;
+		$regexp = shift;
+		changeConfig($config, $regexp);'
+
+	# Use perl to execute the function above.
+	perl -e "$script" $conf $reg
 }
 # }}}
 write_database_info() {							# {{{
@@ -756,7 +773,7 @@ autoconfigure_modules() {						# {{{
 }
 # }}}
 update_path_argsfile() {	# {{{
-	write_slapd_conf "$SLAPD_CONF" "argsfile" "/var/run/slapd/slapd.args"
+	write_slapd_conf "$SLAPD_CONF" 's|^(argsfile\s+).*|$1/var/run/slapd/slapd.args|'
 }
 # }}}
 configure_v2_protocol_support() {					# {{{

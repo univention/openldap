@@ -52,6 +52,12 @@ postinst_upgrade_configuration() {					# {{{
 
 	if previous_version_older 2.3.24-2; then
 		update_path_argsfile
+
+		# Directory /var/run/slapd is suddenly gone, dpkg removes it because it's
+		# now generated from the postinst scripts. See create_ldap_directories.
+		if [ ! -d "/var/run/slapd" ]; then
+			mkdir -m 0755 /var/run/slapd
+		fi
 	fi
 
 	# Update permissions of all database directories and /var/run/slapd,
