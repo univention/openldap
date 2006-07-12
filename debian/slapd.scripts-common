@@ -372,7 +372,7 @@ write_slapd_conf() {            # {{{
 			my ($fh, $name) = mkstemp($template);
 
 			open(HANDLE, "<". $conf) || return;
-			@data = <HANDLE>;
+			my @data = <HANDLE>;
 			close(HANDLE);
 
 			foreach $line (@data) {
@@ -728,10 +728,9 @@ config_migrate_backend() {						# {{{
 	old="$1"
 	new="$2"
 
-	sed -i \
-	  -e "s/^moduleload[[:space:]]\+back_$old/moduleload back_$new/g" \
-	  -e "s/^database[[:space:]]\+$old/database $new/g" \
-	  -e "s/^backend[[:space:]]\+$old/backend $new/g" "$SLAPD_CONF"
+	write_slapd_conf "$SLAPD_CONF" "s|^(moduleload\s+)back_$old|\$1back_$new|"
+	write_slapd_conf "$SLAPD_CONF" "s|^(database\s+)$old|\$1$new|"
+	write_slapd_conf "$SLAPD_CONF" "s|^(backend\s+)$old|\$1$new|"
 } 
 
 # }}}
@@ -862,11 +861,6 @@ update_access_config_directives() {					# {{{
 # access to attribute=<attr> becomes access to attrs=<attr>
 # access to dn=".*,..." becomes access to dn.regex=".*,..."
 
-# For now only the main configuration file is fixed, includes are not 
-# handled.
-
-	local new_conf
-
 	# Check if we have to apply these changes
 	# First changed in Debian release 2.2.23, better update if we are
 	# upgrading something older.
@@ -882,15 +876,11 @@ update_access_config_directives() {					# {{{
 	fi
 
 	echo -n "  Updating config access directives... " >&2
-	new_conf="`mktemp -q ${SLAPD_CONF}.XXXXXX`"
 
-	perl -p \
-		-e 'm/^\S/ && ($acl=0);' \
-		-e 'm/^access\s+to/ && ($acl=1);' \
-		-e 'if ($acl) { s/dn=/dn.regex=/g; s/attribute=/attrs=/g; }' \
-		< "$SLAPD_CONF" >"$new_conf"
-	install_new_slapd_conf "$new_conf"
-	echo done. >&2
+	write_slapd_conf "$SLAPD_CONF" 's/^(access\s+to\s+)dn=/$1dn.regex=/g'
+	write_slapd_conf "$SLAPD_CONF" 's/^(access\s+to\s+)(attribute=|attr=)/$1attrs=/g'
+
+	echo "done." >&2
 
 } # }}}
 stop_slapd() {								# {{{
@@ -1160,7 +1150,7 @@ previous_version_older() {						# {{{
 # Check if the previous version is newer than the reference version passed.
 # If we are not upgrading the previous version is assumed to be newer than
 # any reference version.
-# Usage: previous_version_newer <package version>
+# Usage: previous_version_older <package version>
 	
 	if dpkg --compare-versions "$OLD_VERSION" lt-nl "$1"; then
 		return 0

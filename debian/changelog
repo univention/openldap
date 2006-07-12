@@ -1,6 +1,8 @@
 openldap2.3 (2.3.24-2) unstable; urgency=low
 
   * Switch slapd from running as root to running as user. (Closes: #292845)
+  * Changing configuration in slapd.conf by the postinst will now also follow
+    includes. (Closes: #304488)
   * Patches by Quanah Gibson-Mount <quanah@stanford.edu>
     - fix a lock bug with a virtual root entry in the BDB backend.
     - fix boolean logic in the overlays.
