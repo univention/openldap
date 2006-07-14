@@ -17,8 +17,14 @@ openldap2.3 (2.3.24-2) unstable; urgency=low
   * epoll(4) system call is missing on kernels <2.6, this causes slapd to
     not work on 2.4 kernels. Added patch that remove the #define in
     portable.in (Closes: #369352, #372194, #373233)
+  * In 2.3.24 slapd won't segfault if the moduleload directive appears
+    somewhere else. (Closes: #349011)
+  * Removed fileutils dependency, it's superseeded in Sarge already.
+    (Closes: #370013)
+  * Use find in combination with mv to move an old directory away.
+    (Closes: #306435)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Thu, 15 Jun 2006 18:53:37 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Fri, 14 Jul 2006 08:54:52 +0200
 
 openldap2.3 (2.3.24-1) unstable; urgency=low
 
