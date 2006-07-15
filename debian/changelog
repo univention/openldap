@@ -25,8 +25,9 @@ openldap2.3 (2.3.24-2) unstable; urgency=low
   * Use find in combination with mv to move an old directory away.
     (Closes: #306435)
   * Updated Dutch debconf translation (Closes: #365172)
+  * Added an example backup script that can be put into cron (Closes: #319477)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat, 15 Jul 2006 20:13:14 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat, 15 Jul 2006 21:36:22 +0200
 
 openldap2.3 (2.3.24-1) unstable; urgency=low
 

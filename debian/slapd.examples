@@ -1,2 +1,3 @@
 debian/DB_CONFIG
 debian/slapd.conf
+debian/slapd.backup
