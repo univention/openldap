@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
-"POT-Creation-Date: 2006-05-11 20:04+0200\n"
+"POT-Creation-Date: 2006-07-15 17:06+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,13 +18,13 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:4
+#: ../slapd.templates:1001
 msgid "Omit OpenLDAP server configuration?"
 msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:4
+#: ../slapd.templates:1001
 msgid ""
 "If you enable this option, no initial configuration or database will be "
 "created for you."
@@ -32,13 +32,13 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:12
+#: ../slapd.templates:2001
 msgid "Dump databases to file on upgrade:"
 msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:12
+#: ../slapd.templates:2001
 msgid ""
 "Before upgrading to a new version of the OpenLDAP server the data of  your "
 "LDAP directories can be dumped to plain text files (LDIF format) which is a "
@@ -48,7 +48,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:12
+#: ../slapd.templates:2001
 msgid ""
 "Selecting \"always\" will make the maintainer scripts dump your databases "
 "before upgrading unconditionally. Selecting \"when needed\" will only dump "
@@ -59,13 +59,13 @@ msgstr ""
 
 #. Type: string
 #. Description
-#: ../slapd.templates:27
+#: ../slapd.templates:3001
 msgid "Directory to dump databases:"
 msgstr ""
 
 #. Type: string
 #. Description
-#: ../slapd.templates:27
+#: ../slapd.templates:3001
 msgid ""
 "Please specify the directory where the LDAP databases will be exported. "
 "Within this directory several LDIF files are created which correspond to the "
@@ -77,13 +77,13 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:38
+#: ../slapd.templates:4001
 msgid "Move old database?"
 msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:38
+#: ../slapd.templates:4001
 msgid ""
 "There are still files in /var/lib/ldap which will probably break the "
 "configuration process. If you enable this option, the maintainer scripts "
@@ -93,13 +93,13 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:47
+#: ../slapd.templates:5001
 msgid "Invalid configuration. Retry configuration?"
 msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:47
+#: ../slapd.templates:5001
 msgid ""
 "The configuration you entered is invalid. Make sure that the DNS domain name "
 "has a valid syntax, the organization is not left empty and that the admin "
@@ -110,13 +110,13 @@ msgstr ""
 
 #. Type: string
 #. Description
-#: ../slapd.templates:55
+#: ../slapd.templates:6001
 msgid "DNS domain name:"
 msgstr ""
 
 #. Type: string
 #. Description
-#: ../slapd.templates:55
+#: ../slapd.templates:6001
 msgid ""
 "The DNS domain name is used to construct the base DN of your LDAP directory. "
 "Entering foo.bar.org will give you the base DN dc=foo, dc=bar, dc=org."
@@ -124,13 +124,13 @@ msgstr ""
 
 #. Type: string
 #. Description
-#: ../slapd.templates:61
+#: ../slapd.templates:7001
 msgid "Name of your organization:"
 msgstr ""
 
 #. Type: string
 #. Description
-#: ../slapd.templates:61
+#: ../slapd.templates:7001
 msgid ""
 "Whatever you enter here will be stored as the name of your organization in "
 "the base DN of your LDAP directory."
@@ -138,38 +138,38 @@ msgstr ""
 
 #. Type: password
 #. Description
-#: ../slapd.templates:67
+#: ../slapd.templates:8001
 msgid "Admin password:"
 msgstr ""
 
 #. Type: password
 #. Description
-#: ../slapd.templates:67
+#: ../slapd.templates:8001
 msgid " Please enter the password for the admin entry in your LDAP directory."
 msgstr ""
 
 #. Type: password
 #. Description
-#: ../slapd.templates:72
+#: ../slapd.templates:9001
 msgid "Confirm password:"
 msgstr ""
 
 #. Type: password
 #. Description
-#: ../slapd.templates:72
+#: ../slapd.templates:9001
 msgid ""
 "Please reenter the admin password for your LDAP directory for verification."
 msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:78
+#: ../slapd.templates:10001
 msgid "Password mismatch"
 msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:78
+#: ../slapd.templates:10001
 msgid ""
 "The admin password and its confirmation must match. Please note that "
 "differences such as uppercase/lowercase and added whitespace matter."
@@ -177,25 +177,25 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:85
+#: ../slapd.templates:11001
 msgid "Do you want your database to be removed when slapd is purged?"
 msgstr ""
 
 #. Type: password
 #. Description
-#: ../slapd.templates:89
+#: ../slapd.templates:12001
 msgid "Encrypted admin password:"
 msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:94
+#: ../slapd.templates:13001
 msgid "Change configuration to load backend modules?"
 msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:94
+#: ../slapd.templates:13001
 msgid ""
 "Starting with OpenLDAP 2.1 backends are not longer built into the server but "
 "are instead dynamically loaded at startup. This means that the slapd "
@@ -205,7 +205,7 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:94
+#: ../slapd.templates:13001
 msgid ""
 "If you choose this option, an attempt to fix the configuration will be made. "
 "If you don't select this, you *must* fix your configuration file yourself or "
@@ -216,13 +216,13 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:109
+#: ../slapd.templates:14001
 msgid "Allow LDAPv2 protocol?"
 msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:109
+#: ../slapd.templates:14001
 msgid ""
 "The slapd daemon now disables the old LDAPv2 protocol by default. Programs "
 "and users are generally expected to be upgraded to LDAPv3. If you have old "
@@ -233,13 +233,13 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:120
+#: ../slapd.templates:15001
 msgid "Fix LDAP directory on upgrade?"
 msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:120
+#: ../slapd.templates:15001
 msgid ""
 "The installation scripts of the old OpenLDAP 2.0 packages create a directory "
 "that does not conform to the ldap schema. The new version is more strict "
@@ -249,19 +249,19 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:120
+#: ../slapd.templates:15001
 msgid "If you choose this option, an attempt to fix it for you will occur."
 msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:131
+#: ../slapd.templates:16001
 msgid "Move aside current database and create a new one?"
 msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:131
+#: ../slapd.templates:16001
 msgid ""
 "You have specified a directory suffix (domain) that doesn't match the one "
 "currently in /etc/ldap/slapd.conf.  Changing the directory suffix requires "
@@ -272,13 +272,13 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:140
+#: ../slapd.templates:17001
 msgid "slapcat failed during upgrade"
 msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:140
+#: ../slapd.templates:17001
 msgid ""
 "An error occurred during the attempt to upgrade your LDAP directory. This "
 "error occurred when performing the 'slapcat' which attempts to extract your "
@@ -293,7 +293,7 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:140
+#: ../slapd.templates:17001
 msgid ""
 "Then move the database files back to a backup area and then try running "
 "slapadd from $location."
@@ -301,13 +301,13 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:157
+#: ../slapd.templates:18001
 msgid "slapadd failed during upgrade"
 msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:157
+#: ../slapd.templates:18001
 msgid ""
 "An error occurred during the attempt to upgrade your LDAP directory. This "
 "error occurred when performing the 'slapadd' which attempts to populate an "
@@ -322,13 +322,13 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:170
+#: ../slapd.templates:19001
 msgid "Slave databases require updateref option"
 msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:170
+#: ../slapd.templates:19001
 msgid ""
 "In your slapd configuration file at least one database is configured as "
 "slave, and the updateref option is not set. The updateref option specifies "
@@ -338,7 +338,7 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:170
+#: ../slapd.templates:19001
 msgid ""
 "Starting with version 2.1.23, slapd requires the updateref option to be set "
 "on slaves. You should make sure to fix your slapd.conf configuration file."
@@ -346,13 +346,13 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:184
+#: ../slapd.templates:20001
 msgid "Change backend type from LDBM to BDB?"
 msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:184
+#: ../slapd.templates:20001
 msgid ""
 "The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown to "
 "not work well. BDB is the recommended choice of the OpenLDAP developers."
@@ -360,7 +360,7 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:184
+#: ../slapd.templates:20001
 msgid ""
 "When using the BDB backend make sure you configure BDB properly. For "
 "information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
@@ -368,7 +368,7 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:184
+#: ../slapd.templates:20001
 msgid ""
 "If you enable this option an attempt will be made to update your  "
 "configuration to use BDB instead of LDBM and convert your databases."
@@ -376,13 +376,13 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:198
+#: ../slapd.templates:21001
 msgid "Database backend to use:"
 msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:198
+#: ../slapd.templates:21001
 msgid ""
 "The BDB backend is the recommended choice of the OpenLDAP developers. When "
 "using the BDB backend make sure that you configure the underlying database "
@@ -391,7 +391,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:198
+#: ../slapd.templates:21001
 msgid ""
 "HDB is the next generation of BDB which might replace it sometime in  the "
 "future. There are some problems still in the HDB code of the 2.2 series of "
@@ -400,7 +400,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:198
+#: ../slapd.templates:21001
 msgid ""
 "The BDB backend (back-bdb) and LDBM backend (back-ldbm) are comparable in "
 "purpose and back-bdb evolved from experience gained from back-ldbm, but the "
