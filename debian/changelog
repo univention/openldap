@@ -24,8 +24,9 @@ openldap2.3 (2.3.24-2) unstable; urgency=low
     (Closes: #370013)
   * Use find in combination with mv to move an old directory away.
     (Closes: #306435)
+  * Updated Dutch debconf translation (Closes: #365172)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat, 15 Jul 2006 16:57:46 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat, 15 Jul 2006 20:13:14 +0200
 
 openldap2.3 (2.3.24-1) unstable; urgency=low
 
