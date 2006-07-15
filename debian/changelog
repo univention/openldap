@@ -26,8 +26,10 @@ openldap2.3 (2.3.24-2) unstable; urgency=low
     (Closes: #306435)
   * Updated Dutch debconf translation (Closes: #365172)
   * Added an example backup script that can be put into cron (Closes: #319477)
+  * Make the db directories 0700. On new installations this is the default.
+    (Closes: #354450)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat, 15 Jul 2006 21:36:22 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat, 15 Jul 2006 22:13:47 +0200
 
 openldap2.3 (2.3.24-1) unstable; urgency=low
 

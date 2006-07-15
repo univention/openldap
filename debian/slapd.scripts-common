@@ -172,6 +172,7 @@ update_databases_permissions() {	# {{{
 	for db in `get_database_list`; do
 		dbdir=`get_directory $db`
 		update_permissions "$dbdir"
+		chmod 0700 "$dbdir"
 	done
 }
 # }}}
