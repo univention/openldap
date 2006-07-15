@@ -369,8 +369,7 @@ write_slapd_conf() {            # {{{
 
 		sub changeConfig {
 			my ($conf, $regexp) = @_;
-			my $template = "/tmp/tmp.XXXXXX";
-			my ($fh, $name) = mkstemp($template);
+			my ($fh, $name) = mkstemp("/tmp/tmp.XXXXXX");
 
 			open(HANDLE, "<". $conf) || return;
 			my @data = <HANDLE>;
