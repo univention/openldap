@@ -563,7 +563,7 @@ move_old_database_away() {						# {{{
 		backupdir=`compute_backup_path "$databasedir" "$suffix"`
 		echo -n "  - directory $suffix... " >&2
 		mkdir -p "$backupdir"
-		find "$databasedir" -depth -exec mv {} "$backupdir" \;
+		find "$databasedir"/* -depth -exec mv {} "$backupdir" \;
 		echo done. >&2
 	else
 		cat >&2 <<EOF
@@ -862,9 +862,9 @@ update_access_config_directives() {					# {{{
 # access to dn=".*,..." becomes access to dn.regex=".*,..."
 
 	# Check if we have to apply these changes
-	# First changed in Debian release 2.2.23, better update if we are
-	# upgrading something older.
-	if previous_version_newer 2.2.23; then
+	# Users can have it in the config file. 2.2.26 allowed to have attr in the
+	# config files due to a bug in the config parser.
+	if previous_version_newer 2.3.24; then
 		return 0
 	fi
 

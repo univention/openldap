@@ -36,6 +36,16 @@ postinst_upgrade_configuration() {					# {{{
 	fi
 	update_access_config_directives
 
+	if previous_version_older 2.3.24-2; then
+		update_path_argsfile
+
+		# Directory /var/run/slapd is suddenly gone, dpkg removes it because it's
+		# now generated from the postinst scripts. See create_ldap_directories.
+		if [ ! -d "/var/run/slapd" ]; then
+			mkdir -m 0755 /var/run/slapd
+		fi
+	fi
+
 	if database_format_changed; then
 		# During upgrading we have to load the old data
 		move_incompatible_databases_away
@@ -48,16 +58,6 @@ postinst_upgrade_configuration() {					# {{{
 			db_set slapd/migrate_ldbm_to_bdb false
 		fi
 		load_databases
-	fi
-
-	if previous_version_older 2.3.24-2; then
-		update_path_argsfile
-
-		# Directory /var/run/slapd is suddenly gone, dpkg removes it because it's
-		# now generated from the postinst scripts. See create_ldap_directories.
-		if [ ! -d "/var/run/slapd" ]; then
-			mkdir -m 0755 /var/run/slapd
-		fi
 	fi
 
 	# Update permissions of all database directories and /var/run/slapd,
