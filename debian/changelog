@@ -1,6 +1,7 @@
 openldap2.3 (2.3.24-2) unstable; urgency=low
 
-  * Switch slapd from running as root to running as user. (Closes: #292845)
+  * Switch slapd from running as root to running as user.
+   (Closes: #292845, #261696)
   * Changing configuration in slapd.conf by the postinst will now also follow
     includes. (Closes: #304488)
   * Patches by Quanah Gibson-Mount <quanah@stanford.edu>
@@ -24,7 +25,7 @@ openldap2.3 (2.3.24-2) unstable; urgency=low
   * Use find in combination with mv to move an old directory away.
     (Closes: #306435)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Fri, 14 Jul 2006 08:54:52 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat, 15 Jul 2006 16:57:46 +0200
 
 openldap2.3 (2.3.24-1) unstable; urgency=low
 
