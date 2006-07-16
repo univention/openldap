@@ -563,7 +563,8 @@ move_old_database_away() {						# {{{
 		backupdir=`compute_backup_path "$databasedir" "$suffix"`
 		echo -n "  - directory $suffix... " >&2
 		mkdir -p "$backupdir"
-		find "$databasedir"/* -depth -exec mv {} "$backupdir" \;
+		find "$databasedir" -mindepth 1 -maxdepth 1	\
+			-exec mv {} "$backupdir" \;
 		echo done. >&2
 	else
 		cat >&2 <<EOF
