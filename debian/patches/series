@@ -17,3 +17,8 @@ slurpd-with-ldaps-does-not-work -p0
 syncrepl-fails-when-rootdn-not-defined -p0
 tls-concurrency-issues -p0
 auditlog-db-init -p0
+bv-replace-fix -p0
+passwd-length-fix -p0
+import-ldif-width-ppolicy-clear-text-fix -p0
+syncrepl-dont-replicate-fix -p0
+accesslog-purge-bug -p0

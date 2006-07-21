@@ -1,3 +1,15 @@
+openldap2.3 (2.3.24-3) unstable; urgency=low
+
+  * Patches by Quanah Gibson-Mount <quanah@stanford.edu>
+    - fix sometimes syncrepl DELs don't propagate (ITS#4589)
+    - fix accesslog purge bug with cn=config (ITS#4595)
+    - fix for having Ppolicy_hash_cleartext and ldapadd which imports hashes
+      to unverifiable passwords. (ITS#4575)
+    - fix for a bv replace
+    - fix for password length
+
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Fri, 21 Jul 2006 18:13:11 +0200
+
 openldap2.3 (2.3.24-2) unstable; urgency=low
 
   * Switch slapd from running as root to running as user.
