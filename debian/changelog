@@ -7,8 +7,10 @@ openldap2.3 (2.3.24-3) unstable; urgency=low
       to unverifiable passwords. (ITS#4575)
     - fix for a bv replace
     - fix for password length
+  * Added commented out rootdn parameter in slapd.conf. (Closes: #303245)
+  * Make the scripts output a bit more consistent.
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Fri, 21 Jul 2006 18:13:11 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat, 22 Jul 2006 13:38:36 +0200
 
 openldap2.3 (2.3.24-2) unstable; urgency=low
 

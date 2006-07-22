@@ -136,7 +136,7 @@ create_new_user() { # {{{
 		addgroup --quiet --system openldap
 	fi
 	if [ -z "`getent passwd openldap`" ]; then
-		echo -n "  Creating new user openldap " >&2
+		echo -n "  Creating new user openldap... " >&2
 		adduser --quiet --system --home /var/lib/ldap --shell /bin/false \
         --ingroup openldap --disabled-password --disabled-login \
         --gecos "OpenLDAP Server Account" openldap
