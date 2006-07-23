@@ -419,10 +419,8 @@ write_database_info() {							# {{{
 
 	if upgrade_supported_from_backend "$backend"; then
     		# If no directory was given use the compiled in value
-      		# TODO: This should be somewhere in /var - needs tweaking of 
-      		# configure.options
     		if [ -z "$directory" ]; then
-      			directory=/usr/share/ldap/openldap-data
+      			directory=/var/lib/ldap
 		fi
 		echo "$backend"
 		echo "$suffix"
