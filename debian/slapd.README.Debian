@@ -1,6 +1,12 @@
 Notes about Debian's slapd package
 ----------------------------------
 
+++ TCP Wrappers
+
+   The Debian slapd package is compiled with TCP wrappers. This means that you
+   are able to restrict access to the LDAP server using /etc/hosts.deny or
+   /etc/hosts.allow.
+
 ++ No LDBM backend support
 
    The Debian slapd package no longer includes support for the LDBM backend.
