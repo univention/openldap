@@ -23,3 +23,4 @@ import-ldif-width-ppolicy-clear-text-fix -p0
 syncrepl-dont-replicate-fix -p0
 accesslog-purge-bug -p0
 wrong-database-location -p0
+ldapsearch-to-bold -p0

@@ -12,8 +12,10 @@ openldap2.3 (2.3.24-3) unstable; urgency=low
   * Fix a regression in the slapd packages. Data directory is /var/lib/ldap
     and not /var/openldap-data, also adjust the manpages to reflect these
     change. Thanks to Peter Marschall. (Closes: #368891)
+  * Added patch to fix a bold issue in the manpage ldapsearch. Thanks to
+    Matt Kraai. (Closes: #355670)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 23 Jul 2006 10:31:00 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 23 Jul 2006 10:46:43 +0200
 
 openldap2.3 (2.3.24-2) unstable; urgency=low
 
