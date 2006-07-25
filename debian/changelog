@@ -20,6 +20,8 @@ openldap2.3 (2.3.24-3) unstable; urgency=low
   * Create a new user before slapd is stopped. It is possible that libnss-ldap
     is using slapd on localhost which causes a hang in the upgrade procedure.
     (Closes: #379728)
+  * dpkg-reconfigure slapd now just reinstalls slapd and moves old databases
+    to /var/backups. Already done in previous version (Closes: #230366, #208056)
 
  -- Matthijs Mohlmann <matthijs@cacholong.nl>  Tue, 25 Jul 2006 21:41:19 +0200
 
