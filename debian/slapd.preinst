@@ -1,4 +1,4 @@
-#!/bin/sh
+#! /bin/sh
 
 set -e
 
@@ -8,17 +8,10 @@ set -e
 # various helper functions and $OLD_VERSION and $SLAPD_CONF
 #SCRIPTSCOMMON#
 
-# When slapd is down we can't retrieve data from slapd (how obvious) somehow
-# libnss-ldap is doing weird. It doesn't listen that a connection is refused and
-# tries again. (My understanding of it)
-if [ "$MODE" = "install" ] || [ "$MODE" = "upgrade" ]; then
-	create_new_user
-fi
-
 # If we are upgrading from an old version then stop slapd and attempt to
 # slapcat out the data so we can use it in postinst to do the upgrade
 
-if [ "$MODE" = "upgrade" ]; then
+if [ "$MODE" = upgrade ]; then
 	stop_slapd
 	dump_databases
 fi

@@ -69,6 +69,11 @@ postinst_upgrade_configuration() {					# {{{
 
 # }}}
 
+# Create a new user
+if [ "$MODE" = "configure" ]; then
+	create_new_user
+fi
+
 # Configuration.
 if is_initial_configuration "$@"; then
 	postinst_initial_configuration

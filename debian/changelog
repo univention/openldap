@@ -17,13 +17,10 @@ openldap2.3 (2.3.24-3) unstable; urgency=low
   * Removed script move_files, dh_install is used instead. (Closes: #368896)
   * Dutch translation already updated. Closes: #375101)
   * Documented that slapd is compiled with TCP wrappers (Closes: #351428)
-  * Create a new user before slapd is stopped. It is possible that libnss-ldap
-    is using slapd on localhost which causes a hang in the upgrade procedure.
-    (Closes: #379728)
   * dpkg-reconfigure slapd now just reinstalls slapd and moves old databases
     to /var/backups. Already done in previous version (Closes: #230366, #208056)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Tue, 25 Jul 2006 21:41:19 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Wed, 26 Jul 2006 18:05:40 +0200
 
 openldap2.3 (2.3.24-2) unstable; urgency=low
 
