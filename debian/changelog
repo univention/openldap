@@ -1,5 +1,6 @@
 openldap2.3 (2.3.25-1) unstable; urgency=low
 
+  [ Matthijs Mohlmann ]
   * New upstream release:
     - Accepts 'require none' in slapd.conf (closes: #370023).
     - Added patch to fix a bold issue in the manpage ldapsearch. Thanks to
@@ -14,6 +15,11 @@ openldap2.3 (2.3.25-1) unstable; urgency=low
   * Documented that slapd is compiled with TCP wrappers (Closes: #351428)
   * dpkg-reconfigure slapd now just reinstalls slapd and moves old databases
     to /var/backups. Already done in previous version (Closes: #230366, #208056)
+
+  [ Torsten Landschoff ]
+  * debian/libldap-2.3-0.install: Ignore version information when installing
+    libraries. This way it does not need updating for each new upstream 
+    release.
 
  -- Matthijs Mohlmann <matthijs@cacholong.nl>  Wed, 26 Jul 2006 18:05:40 +0200
 
