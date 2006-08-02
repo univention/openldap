@@ -1,5 +1,40 @@
 OpenLDAP 2.3 Change Log
 
+OpenLDAP 2.3.25 Release
+	Fixed liblber ber_bvreplace_x argument checks
+	Add libldap_r TLS concurrency workaround (ITS#4583)
+	Fixed liblutil password length bug
+	Add slapd glue/subordinate conflict check (ITS#4614)
+	Fixed slapd acl selfwrite bug (ITS#4587)
+	Fixed slapd bconfig "require" inheritance and handling of "none" (ITS#4574)
+	Fixed slapd bconfig segfault when ldapadding new schema entries
+	Fixed slapd syncrepl no rootdn bug (ITS#4582)
+	Fixed slapd syncrepl contextCSN issue (ITS#4622)
+	Fixed slapd-bdb/hdb lock bug with virtual root (ITS#4572)
+	Fixed slapd-bdb/hdb modrdn new entry disappearing bug (ITS#4616)
+	Fixed slapd-bdb/hdb cache job issue
+	Fixed slapo-syncprov need new CSN with delete syncID sets (ITS#4534)
+	Fixed slapo-syncprov startup when lastmod is off (ITS#4613)
+	Fixed slapo-accesslog cn=config purge bug (ITS#4595)
+	Fixes slapo-auditlog DB initialization
+	Fixed slapo-ppolicy password hashing bug (ITS#4575)
+	Fixed slapo-ppolicy password modify pwdMustChange reset bug (ITS#4576)
+	Fixed slapo-ppolicy control can be critical (ITS#4596)
+	Fixed slapo-retcode logical and bug
+	Fixed slapo-syncprov DEL propagation bug (ITS#4589)
+	Fixed slurpd ldaps:// default port bug (ITS#4580)
+	Build environment
+		Fix configure winsock.h detection for Cygwin (ITS#4621)
+		Fix configure GMP detection (ITS#4608)
+		Updated test006-acls to test selfwrite access (ITS#4587)
+	Documentation
+		Fixed ldapsearch(1) formatting (ITS#4619)
+		Updated slapd.conf(5) RFC references
+		Updated slapd.conf(5) lastmod discussion (ITS#4613)
+		Updated slapd.conf(5) "require" inheritance and handling of "none" (ITS#4574)
+		Added slapd.conf(5) access control note to authz-regexp discussion
+		Updated slapo-syncprov(5) to clarify differences between Sync Provider and syncrepl
+
 OpenLDAP 2.3.24 Release
 	Fixed slapd syncrepl timestamp bug (delta-sync/cascade) (ITS#4567)
 	Fixed slapd-bdb/hdb non-root users adding suffix/root entries (ITS#4552)

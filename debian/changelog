@@ -1,5 +1,7 @@
-openldap2.3 (2.3.24-3) unstable; urgency=low
+openldap2.3 (2.3.25-1) unstable; urgency=low
 
+  * New upstream release:
+    - Accepts 'require none' in slapd.conf (closes: #370023).
   * Patches by Quanah Gibson-Mount <quanah@stanford.edu>
     - fix sometimes syncrepl DELs don't propagate (ITS#4589)
     - fix accesslog purge bug with cn=config (ITS#4595)

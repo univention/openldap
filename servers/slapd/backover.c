@@ -1,5 +1,5 @@
 /* backover.c - backend overlay routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backover.c,v 1.31.2.17 2006/01/03 22:16:13 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backover.c,v 1.31.2.18 2006/07/28 14:31:18 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2006 The OpenLDAP Foundation.
@@ -958,7 +958,11 @@ overlay_config( BackendDB *be, const char *ov )
 		be->bd_info = (BackendInfo *)on2;
 		rc = on2->on_bi.bi_db_init( be );
 		be->bd_info = (BackendInfo *)oi;
-		if ( rc ) return rc;
+		if ( rc ) {
+			oi->oi_list = on2->on_next;
+			ch_free( on2 );
+			return rc;
+		}
 	}
 
 	return 0;

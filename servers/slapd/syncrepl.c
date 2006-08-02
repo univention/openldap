@@ -1,5 +1,5 @@
 /* syncrepl.c -- Replication Engine which uses the LDAP Sync protocol */
-/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.168.2.34 2006/05/27 08:45:32 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.168.2.36 2006/07/28 22:35:50 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2006 The OpenLDAP Foundation.
@@ -797,11 +797,6 @@ do_syncrep2(
 						&syncCookie_req.ctxcsn, &syncCookie.ctxcsn,
 						&text );
 				}
-				if ( !BER_BVISNULL( &syncCookie.ctxcsn ) &&
-					match < 0 && err == LDAP_SUCCESS )
-				{
-					syncrepl_updateCookie( si, op, psub, &syncCookie );
-				}
 				if ( rctrls ) {
 					ldap_controls_free( rctrls );
 				}
@@ -813,11 +808,16 @@ do_syncrep2(
 					if ( refreshDeletes == 0 && match < 0 &&
 						err == LDAP_SUCCESS )
 					{
-						syncrepl_del_nonpresent( op, si, NULL, NULL );
+						syncrepl_del_nonpresent( op, si, NULL, &syncCookie.ctxcsn );
 					} else {
 						avl_free( si->si_presentlist, avl_ber_bvfree );
 						si->si_presentlist = NULL;
 					}
+				}
+				if ( !BER_BVISNULL( &syncCookie.ctxcsn ) &&
+					match < 0 && err == LDAP_SUCCESS )
+				{
+					syncrepl_updateCookie( si, op, psub, &syncCookie );
 				}
 				if ( err == LDAP_SUCCESS
 					&& si->si_logstate == SYNCLOG_FALLBACK ) {
@@ -919,6 +919,7 @@ do_syncrep2(
 							}
 							slap_sl_free( syncUUIDs, op->o_tmpmemctx );
 						}
+						slap_sync_cookie_free( &syncCookie, 0 );
 						break;
 					default:
 						Debug( LDAP_DEBUG_ANY,
@@ -941,15 +942,13 @@ do_syncrep2(
 							&syncCookie.ctxcsn, &text );
 					}
 
-					if ( !BER_BVISNULL( &syncCookie.ctxcsn ) &&
-						match < 0 )
-					{
-						syncrepl_updateCookie( si, op, psub, &syncCookie);
-					}
-
-					if ( si->si_refreshPresent == 1 ) {
-						if ( match < 0 ) {
-							syncrepl_del_nonpresent( op, si, NULL, NULL );
+					if ( match < 0 ) {
+						if ( si->si_refreshPresent == 1 ) {
+							syncrepl_del_nonpresent( op, si, NULL, &syncCookie.ctxcsn );
+						}
+						if ( !BER_BVISNULL( &syncCookie.ctxcsn ))
+						{
+							syncrepl_updateCookie( si, op, psub, &syncCookie);
 						}
 					} 
 
@@ -1749,6 +1748,22 @@ syncrepl_entry(
 			}
 			ber_memfree( a->a_vals[0].bv_val );
 			ber_dupbv( &a->a_vals[0], &syncUUID_strrep );
+		}
+		/* Don't save the contextCSN on the inooming context entry,
+		 * we'll write it when syncrepl_updateCookie eventually
+		 * gets called. (ITS#4622)
+		 */
+		if ( syncstate == LDAP_SYNC_ADD && dn_match( &entry->e_nname,
+			&be->be_nsuffix[0] )) {
+			Attribute **ap;
+			for ( ap = &entry->e_attrs; *ap; ap=&(*ap)->a_next ) {
+				a = *ap;
+				if ( a->a_desc == slap_schema.si_ad_contextCSN ) {
+					*ap = a->a_next;
+					attr_free( a );
+					break;
+				}
+			}
 		}
 	}
 
@@ -3161,8 +3176,14 @@ add_syncrepl(
 	int	rc = 0;
 
 	if ( !( c->be->be_search && c->be->be_add && c->be->be_modify && c->be->be_delete ) ) {
-		Debug( LDAP_DEBUG_ANY, "%s: database %s does not support operations "
-			"required for syncrepl\n", c->log, c->be->be_type, 0 );
+		snprintf( c->msg, sizeof(c->msg), "database %s does not support "
+			"operations required for syncrepl", c->be->be_type );
+		Debug( LDAP_DEBUG_ANY, "%s: %s\n", c->log, c->msg, 0 );
+		return 1;
+	}
+	if ( BER_BVISEMPTY( &c->be->be_rootdn )) {
+		strcpy( c->msg, "rootDN must be defined before syncrepl may be used" );
+		Debug( LDAP_DEBUG_ANY, "%s: %s\n", c->log, c->msg, 0 );
 		return 1;
 	}
 	si = (syncinfo_t *) ch_calloc( 1, sizeof( syncinfo_t ) );

@@ -1,5 +1,5 @@
 .TH LDAPSEARCH 1 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man1/ldapsearch.1,v 1.49.2.6 2006/01/03 22:16:04 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man1/ldapsearch.1,v 1.49.2.7 2006/07/31 18:22:07 quanah Exp $
 .\" Copyright 1998-2006 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
@@ -84,7 +84,8 @@ the string representation for search filters as defined in RFC 2254.
 If not provided, the default filter, (objectClass=*), is used.
 .LP
 If
-.B ldapsearch finds one or more entries, the attributes specified by
+.B ldapsearch
+finds one or more entries, the attributes specified by
 \fIattrs\fP are returned.  If * is listed, all user attributes are
 returned.  If + is listed, all operational attributes are returned.
 If no \fIattrs\fP are listed, all user attributes are returned.  If only

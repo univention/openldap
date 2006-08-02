@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/syncprov.c,v 1.56.2.33 2006/05/27 09:01:06 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/syncprov.c,v 1.56.2.35 2006/07/31 18:27:42 quanah Exp $ */
 /* syncprov.c - syncrepl provider */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
@@ -1244,9 +1244,14 @@ syncprov_checkpoint( Operation *op, SlapReply *rs, slap_overinst *on )
 	struct berval bv[2];
 	slap_callback cb = {0};
 
-	mod.sml_values = bv;
-	bv[1].bv_val = NULL;
-	bv[0] = si->si_ctxcsn;
+	/* If ctxcsn is empty, delete it */
+	if ( BER_BVISEMPTY( &si->si_ctxcsn )) {
+		mod.sml_values = NULL;
+	} else {
+		mod.sml_values = bv;
+		bv[1].bv_val = NULL;
+		bv[0] = si->si_ctxcsn;
+	}
 	mod.sml_nvalues = NULL;
 	mod.sml_desc = slap_schema.si_ad_contextCSN;
 	mod.sml_op = LDAP_MOD_REPLACE;
@@ -1271,7 +1276,7 @@ syncprov_checkpoint( Operation *op, SlapReply *rs, slap_overinst *on )
 }
 
 static void
-syncprov_add_slog( Operation *op, struct berval *csn )
+syncprov_add_slog( Operation *op )
 {
 	opcookie *opc = op->o_callback->sc_private;
 	slap_overinst *on = opc->son;
@@ -1283,7 +1288,7 @@ syncprov_add_slog( Operation *op, struct berval *csn )
 	{
 		/* Allocate a record. UUIDs are not NUL-terminated. */
 		se = ch_malloc( sizeof( slog_entry ) + opc->suuid.bv_len + 
-			csn->bv_len + 1 );
+			op->o_csn.bv_len + 1 );
 		se->se_next = NULL;
 		se->se_tag = op->o_tag;
 
@@ -1292,9 +1297,9 @@ syncprov_add_slog( Operation *op, struct berval *csn )
 		se->se_uuid.bv_len = opc->suuid.bv_len;
 
 		se->se_csn.bv_val = se->se_uuid.bv_val + opc->suuid.bv_len;
-		AC_MEMCPY( se->se_csn.bv_val, csn->bv_val, csn->bv_len );
-		se->se_csn.bv_val[csn->bv_len] = '\0';
-		se->se_csn.bv_len = csn->bv_len;
+		AC_MEMCPY( se->se_csn.bv_val, op->o_csn.bv_val, op->o_csn.bv_len );
+		se->se_csn.bv_val[op->o_csn.bv_len] = '\0';
+		se->se_csn.bv_len = op->o_csn.bv_len;
 
 		ldap_pvt_thread_mutex_lock( &sl->sl_mutex );
 		if ( sl->sl_head ) {
@@ -1366,6 +1371,7 @@ syncprov_playlog( Operation *op, SlapReply *rs, sessionlog *sl,
 			i++;
 			AC_MEMCPY( cbuf, se->se_csn.bv_val, se->se_csn.bv_len );
 			delcsn.bv_len = se->se_csn.bv_len;
+			delcsn.bv_val[delcsn.bv_len] = '\0';
 		} else {
 			nmods++;
 			j = num - nmods;
@@ -1477,13 +1483,13 @@ syncprov_op_response( Operation *op, SlapReply *rs )
 
 	if ( rs->sr_err == LDAP_SUCCESS )
 	{
-		struct berval maxcsn = BER_BVNULL, curcsn = BER_BVNULL;
+		struct berval maxcsn = BER_BVNULL;
 		char cbuf[LDAP_LUTIL_CSNSTR_BUFSIZE];
 
 		/* Update our context CSN */
 		cbuf[0] = '\0';
 		ldap_pvt_thread_mutex_lock( &si->si_csn_mutex );
-		slap_get_commit_csn( op, &maxcsn, &curcsn );
+		slap_get_commit_csn( op, &maxcsn, NULL );
 		if ( !BER_BVISNULL( &maxcsn ) ) {
 			strcpy( cbuf, maxcsn.bv_val );
 			if ( ber_bvcmp( &maxcsn, &si->si_ctxcsn ) > 0 ) {
@@ -1544,7 +1550,7 @@ syncprov_op_response( Operation *op, SlapReply *rs )
 
 		/* Add any log records */
 		if ( si->si_logs && op->o_tag != LDAP_REQ_ADD ) {
-			syncprov_add_slog( op, &curcsn );
+			syncprov_add_slog( op );
 		}
 
 	}
@@ -2326,6 +2332,12 @@ syncprov_db_open(
 	int rc;
 	void *thrctx = NULL;
 
+	if ( !SLAP_LASTMOD( be )) {
+		Debug( LDAP_DEBUG_ANY,
+			"syncprov_db_open: invalid config, lastmod must be enabled\n", 0, 0, 0 );
+		return -1;
+	}
+
 	if ( slapMode & SLAP_TOOL_MODE ) {
 		return 0;
 	}
@@ -2369,15 +2381,16 @@ syncprov_db_open(
 			ldap_pvt_thread_create( &tid, 0, syncprov_db_otask, op );
 			ldap_pvt_thread_join( tid, NULL );
 		}
-	} else if ( SLAP_SYNC_SHADOW( op->o_bd )) {
-		/* If we're also a consumer, and we didn't find the context entry,
-		 * then don't generate anything, wait for our provider to send it
-		 * to us.
-		 */
-		goto out;
 	}
 
 	if ( BER_BVISEMPTY( &si->si_ctxcsn ) ) {
+		if ( SLAP_SYNC_SHADOW( op->o_bd )) {
+		/* If we're also a consumer, and we didn't get a contextCSN,
+		 * then don't generate anything, wait for our provider to send it
+		 * to us.
+		 */
+			goto out;
+		}
 		si->si_ctxcsn.bv_len = sizeof( si->si_ctxcsnbuf );
 		slap_get_csn( op, &si->si_ctxcsn, 0 );
 	}

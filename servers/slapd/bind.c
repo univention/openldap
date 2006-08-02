@@ -1,5 +1,5 @@
 /* bind.c - decode an ldap bind operation and pass it to a backend db */
-/* $OpenLDAP: pkg/ldap/servers/slapd/bind.c,v 1.189.2.8 2006/01/17 19:37:20 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/bind.c,v 1.189.2.9 2006/07/28 13:01:36 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -380,8 +380,7 @@ fe_op_bind( Operation *op, SlapReply *rs )
 
 	/*
 	 * We could be serving multiple database backends.  Select the
-	 * appropriate one, or send a referral to our "referral server"
-	 * if we don't hold it.
+	 * appropriate one.  If none, return invalid cred, not a referral.
 	 */
 
 	if ( (op->o_bd = select_backend( &op->o_req_ndn, 0, 0 )) == NULL ) {
