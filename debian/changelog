@@ -2,20 +2,13 @@ openldap2.3 (2.3.25-1) unstable; urgency=low
 
   * New upstream release:
     - Accepts 'require none' in slapd.conf (closes: #370023).
-  * Patches by Quanah Gibson-Mount <quanah@stanford.edu>
-    - fix sometimes syncrepl DELs don't propagate (ITS#4589)
-    - fix accesslog purge bug with cn=config (ITS#4595)
-    - fix for having Ppolicy_hash_cleartext and ldapadd which imports hashes
-      to unverifiable passwords. (ITS#4575)
-    - fix for a bv replace
-    - fix for password length
+    - Added patch to fix a bold issue in the manpage ldapsearch. Thanks to
+      Matt Kraai. (Closes: #355670)
   * Added commented out rootdn parameter in slapd.conf. (Closes: #303245)
   * Make the scripts output a bit more consistent.
   * Fix a regression in the slapd packages. Data directory is /var/lib/ldap
     and not /var/openldap-data, also adjust the manpages to reflect these
     change. Thanks to Peter Marschall. (Closes: #368891)
-  * Added patch to fix a bold issue in the manpage ldapsearch. Thanks to
-    Matt Kraai. (Closes: #355670)
   * Removed script move_files, dh_install is used instead. (Closes: #368896)
   * Dutch translation already updated. Closes: #375101)
   * Documented that slapd is compiled with TCP wrappers (Closes: #351428)
