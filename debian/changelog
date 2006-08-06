@@ -1,3 +1,11 @@
+openldap2.3 (2.3.25-2) unstable; urgency=low
+
+  * pidfile location is changed 3 years ago, when people are upgrading from
+    back then they have a broken slapd because the openldap user is not able
+    to write to /var/run. (Closes: #380687)
+
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun,  6 Aug 2006 14:55:16 +0200
+
 openldap2.3 (2.3.25-1) unstable; urgency=low
 
   [ Matthijs Mohlmann ]

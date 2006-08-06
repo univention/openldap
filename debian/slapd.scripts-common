@@ -770,8 +770,9 @@ autoconfigure_modules() {						# {{{
 	echo done. >&2
 }
 # }}}
-update_path_argsfile() {	# {{{
+update_path_argsfile_pidfile() {	# {{{
 	write_slapd_conf "$SLAPD_CONF" 's|^(argsfile\s+).*|$1/var/run/slapd/slapd.args|'
+	write_slapd_conf "$SLAPD_CONF" 's|^(pidfile\s+).*|$1/var/run/slapd/slapd.args|'
 }
 # }}}
 configure_v2_protocol_support() {					# {{{
