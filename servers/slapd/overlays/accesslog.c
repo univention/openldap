@@ -1,5 +1,5 @@
 /* accesslog.c - log operations for audit/history purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/accesslog.c,v 1.2.2.15 2006/07/28 13:01:37 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/accesslog.c,v 1.2.2.16 2006/08/15 05:20:54 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2006 The OpenLDAP Foundation.
@@ -493,6 +493,8 @@ log_old_lookup( Operation *op, SlapReply *rs )
 
 	if ( rs->sr_type != REP_SEARCH) return 0;
 
+	if ( slapd_shutdown ) return 0;
+
 	if ( pd->used >= pd->slots ) {
 		pd->slots += PURGE_INCREMENT;
 		pd->dn = ch_realloc( pd->dn, pd->slots * sizeof( struct berval ));
@@ -565,7 +567,8 @@ accesslog_purge( void *ctx, void *arg )
 		for (i=0; i<pd.used; i++) {
 			op->o_req_dn = pd.dn[i];
 			op->o_req_ndn = pd.ndn[i];
-			op->o_bd->be_delete( op, &rs );
+			if ( !slapd_shutdown )
+				op->o_bd->be_delete( op, &rs );
 			ch_free( pd.ndn[i].bv_val );
 			ch_free( pd.dn[i].bv_val );
 		}

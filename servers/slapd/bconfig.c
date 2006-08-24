@@ -1,5 +1,5 @@
 /* bconfig.c - the config backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/bconfig.c,v 1.17.2.47 2006/07/31 23:15:36 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/bconfig.c,v 1.17.2.48 2006/08/06 10:36:24 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2006 The OpenLDAP Foundation.
@@ -2507,7 +2507,7 @@ config_replica(ConfigArgs *c) {
 			}
 			replicauri = ch_malloc( len );
 			replicahost = lutil_strcopy( replicauri, ludp->lud_scheme );
-			replicahost = lutil_strcopy( replicauri, "://" );
+			replicahost = lutil_strcopy( replicahost, "://" );
 			if (ludp->lud_port == LDAP_PORT) {
 				strcpy( replicahost, ludp->lud_host );
 			} else {

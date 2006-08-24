@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/ppolicy.c,v 1.31.2.23 2006/07/31 21:00:10 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/ppolicy.c,v 1.31.2.24 2006/08/09 01:53:48 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2006 The OpenLDAP Foundation.
@@ -326,6 +326,8 @@ ppolicy_get( Operation *op, Entry *e, PassPolicy *pp )
 
 	memset( pp, 0, sizeof(PassPolicy) );
 
+	pp->ad = slap_schema.si_ad_userPassword;
+
 	/* Users can change their own password by default */
     	pp->pwdAllowUserChange = 1;
 
@@ -354,8 +356,6 @@ ppolicy_get( Operation *op, Entry *e, PassPolicy *pp )
 #if 0	/* Only worry about userPassword for now */
 	if ((a = attr_find( pe->e_attrs, ad_pwdAttribute )))
 		slap_bv2ad( &a->a_vals[0], &pp->ad, &text );
-#else
-	pp->ad = slap_schema.si_ad_userPassword;
 #endif
 
 	if ( ( a = attr_find( pe->e_attrs, ad_pwdMinAge ) )
@@ -411,7 +411,7 @@ ppolicy_get( Operation *op, Entry *e, PassPolicy *pp )
 	return;
 
 defaultpol:
-	Debug( LDAP_DEBUG_ANY,
+	Debug( LDAP_DEBUG_TRACE,
 		"ppolicy_get: using default policy\n", 0, 0, 0 );
 	return;
 }

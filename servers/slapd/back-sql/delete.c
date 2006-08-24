@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/delete.c,v 1.15.2.7 2006/01/03 22:16:24 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/delete.c,v 1.15.2.8 2006/08/17 17:53:17 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -441,6 +441,7 @@ backsql_delete( Operation *op, SlapReply *rs )
 		SQLUSMALLINT	CompletionType = SQL_ROLLBACK;
 	
 		if ( rs->sr_err == LDAP_SUCCESS && !op->o_noop ) {
+			assert( e == NULL );
 			CompletionType = SQL_COMMIT;
 		}
 
@@ -463,6 +464,10 @@ done:;
 		}
 	}
 #endif /* SLAP_ACL_HONOR_DISCLOSE */
+
+	if ( op->o_noop && rs->sr_err == LDAP_SUCCESS ) {
+		rs->sr_err = LDAP_X_NO_OPERATION;
+	}
 
 	send_ldap_result( op, rs );
 

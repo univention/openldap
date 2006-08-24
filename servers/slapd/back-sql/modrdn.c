@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/modrdn.c,v 1.14.2.8 2006/02/13 19:50:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/modrdn.c,v 1.14.2.9 2006/08/17 17:53:17 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -533,6 +533,10 @@ done:;
 		SQLTransact( SQL_NULL_HENV, dbh, CompletionType );
 	}
 
+	if ( op->o_noop && rs->sr_err == LDAP_SUCCESS ) {
+		rs->sr_err = LDAP_X_NO_OPERATION;
+	}
+
 	send_ldap_result( op, rs );
 	slap_graduate_commit_csn( op );
 
@@ -581,6 +585,11 @@ done:;
 
 	if ( !BER_BVISNULL( &n.e_nname ) ) {
 		backsql_entry_clean( op, &n );
+	}
+
+	if ( rs->sr_ref ) {
+		ber_bvarray_free( rs->sr_ref );
+		rs->sr_ref = NULL;
 	}
 
 	Debug( LDAP_DEBUG_TRACE, "<==backsql_modrdn()\n", 0, 0, 0 );

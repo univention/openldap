@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/modify.c,v 1.31.2.9 2006/02/13 19:50:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/modify.c,v 1.31.2.10 2006/08/17 17:53:17 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -168,6 +168,7 @@ do_transact:;
 	 * Commit only if all operations succeed
 	 */
 	if ( rs->sr_err == LDAP_SUCCESS && !op->o_noop ) {
+		assert( e == NULL );
 		CompletionType = SQL_COMMIT;
 	}
 
@@ -190,6 +191,10 @@ done:;
 	}
 #endif /* SLAP_ACL_HONOR_DISCLOSE */
 
+	if ( op->o_noop && rs->sr_err == LDAP_SUCCESS ) {
+		rs->sr_err = LDAP_X_NO_OPERATION;
+	}
+
 	send_ldap_result( op, rs );
 	slap_graduate_commit_csn( op );
 
@@ -203,6 +208,11 @@ done:;
 
 	if ( bsi.bsi_attrs != NULL ) {
 		op->o_tmpfree( bsi.bsi_attrs, op->o_tmpmemctx );
+	}
+
+	if ( rs->sr_ref ) {
+		ber_bvarray_free( rs->sr_ref );
+		rs->sr_ref = NULL;
 	}
 
 	Debug( LDAP_DEBUG_TRACE, "<==backsql_modify()\n", 0, 0, 0 );
