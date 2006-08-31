@@ -1,5 +1,6 @@
 openldap2.3 (2.3.27-1) unstable; urgency=low
 
+  [ Matthijs Mohlmann ]
   * New upstream release.
   * pidfile location is changed 3 years ago, when people are upgrading from
     back then they have a broken slapd because the openldap user is not able
@@ -7,7 +8,11 @@ openldap2.3 (2.3.27-1) unstable; urgency=low
   * Patches by Quanah Gibson-Mount <quanah@stanford.edu>
     - Fix one time memleak on startup in the accesslog db.
 
+  [ Torsten Landschoff ]
+  * Remove RFC documents as they do not meet the DFSG.
+
  -- Matthijs Mohlmann <matthijs@cacholong.nl>  Fri, 25 Aug 2006 20:04:43 +0200
+
 
 openldap2.3 (2.3.25-1) unstable; urgency=low
 
