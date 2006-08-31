@@ -31,6 +31,13 @@ MAKEVARS	:= DESTDIR=$(installdir)
 include /usr/share/quilt/quilt.make
 
 $(builddir)/Makefile:
+	# Check if we include the RFCs (which are non DFSG-free)
+	# You can safely remove this check to build the packages from 
+	# the unchanged upstream sources but Debian can not ship the 
+	# RFCs in main so this test is here to make sure it does not 
+	# get in by accident again.  -- Torsten
+	[ -e doc/rfc ] && exit 1
+
 	mkdir -p $(builddir)
 	chmod 755 $(CURDIR)/autogen.sh
 	./autogen.sh

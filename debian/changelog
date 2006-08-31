@@ -10,6 +10,8 @@ openldap2.3 (2.3.27-1) unstable; urgency=low
 
   [ Torsten Landschoff ]
   * Remove RFC documents as they do not meet the DFSG.
+    + debian/rules: Check that the RFCs are gone to make sure it does not 
+      get included again by accident.
 
  -- Matthijs Mohlmann <matthijs@cacholong.nl>  Fri, 25 Aug 2006 20:04:43 +0200
 
