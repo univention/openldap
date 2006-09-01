@@ -39,7 +39,7 @@ Description: OpenLDAP utilities
 
 Package: libldap-2.3-0
 Section: libs
-Priority: important
+Priority: optional
 Architecture: any
 Conflicts: ldap-utils (<= 2.1.23-1)
 Depends: ${shlibs:Depends}, libldap2

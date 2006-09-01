@@ -7,14 +7,14 @@ openldap2.3 (2.3.27-1) unstable; urgency=low
     to write to /var/run. (Closes: #380687)
   * Patches by Quanah Gibson-Mount <quanah@stanford.edu>
     - Fix one time memleak on startup in the accesslog db.
+  * Changed priority of libldap-2.3-0 to optional as it is only used by slapd.
 
   [ Torsten Landschoff ]
   * Remove RFC documents as they do not meet the DFSG.
-    + debian/rules: Check that the RFCs are gone to make sure it does not 
+    + debian/rules: Check that the RFCs are gone to make sure it does not
       get included again by accident.
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Fri, 25 Aug 2006 20:04:43 +0200
-
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat,  2 Sep 2006 00:33:44 +0200
 
 openldap2.3 (2.3.25-1) unstable; urgency=low
 
