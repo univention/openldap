@@ -1,5 +1,5 @@
 /* Generic stdlib.h */
-/* $OpenLDAP: pkg/ldap/include/ac/stdlib.h,v 1.17.2.2 2006/01/03 22:16:07 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ac/stdlib.h,v 1.17.2.3 2006/10/20 16:52:46 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -33,6 +33,16 @@
 #ifndef EXIT_SUCCESS
 #	define EXIT_SUCCESS 0
 #	define EXIT_FAILURE 1
+#endif
+
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
+
+#if defined(LINE_MAX) 
+#	define AC_LINE_MAX LINE_MAX
+#else
+#	define AC_LINE_MAX 2048 /* POSIX MIN */
 #endif
 
 #endif /* _AC_STDLIB_H */

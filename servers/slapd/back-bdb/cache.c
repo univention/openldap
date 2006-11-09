@@ -1,5 +1,5 @@
 /* cache.c - routines to maintain an in-core cache of entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.88.2.17 2006/07/28 13:01:37 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.88.2.18 2006/08/26 21:11:48 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2006 The OpenLDAP Foundation.
@@ -707,6 +707,7 @@ again:	ldap_pvt_thread_rdwr_rlock( &bdb->bi_cache.c_rwlock );
 				&ep->e_nname, eip );
 			if ( *eip ) islocked = 1;
 			if ( rc ) {
+				ep->e_private = NULL;
 #ifdef SLAP_ZONE_ALLOC
 				bdb_entry_return( bdb, ep, (*eip)->bei_zseq );
 #else
@@ -811,6 +812,7 @@ load1:
 		bdb_cache_entryinfo_unlock( *eip );
 	}
 	if ( ep ) {
+		ep->e_private = NULL;
 #ifdef SLAP_ZONE_ALLOC
 		bdb_entry_return( bdb, ep, (*eip)->bei_zseq );
 #else

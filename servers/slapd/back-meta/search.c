@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/search.c,v 1.84.2.24 2006/04/04 22:55:21 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/search.c,v 1.84.2.25 2006/10/14 07:31:09 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -154,16 +154,16 @@ meta_back_search_start(
 	 */
 	dc->ctx = "searchBase";
 	switch ( ldap_back_dn_massage( dc, &realbase, &mbase ) ) {
-	default:
+	case LDAP_SUCCESS:
 		break;
 
-	case REWRITE_REGEXEC_UNWILLING:
+	case LDAP_UNWILLING_TO_PERFORM:
 		rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
 		rs->sr_text = "Operation not allowed";
 		send_ldap_result( op, rs );
 		return META_SEARCH_ERR;
 
-	case REWRITE_REGEXEC_ERR:
+	default:
 
 		/*
 		 * this target is no longer candidate

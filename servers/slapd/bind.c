@@ -1,5 +1,5 @@
 /* bind.c - decode an ldap bind operation and pass it to a backend db */
-/* $OpenLDAP: pkg/ldap/servers/slapd/bind.c,v 1.189.2.9 2006/07/28 13:01:36 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/bind.c,v 1.189.2.10 2006/09/20 17:21:41 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -233,9 +233,6 @@ fe_op_bind( Operation *op, SlapReply *rs )
 		goto cleanup;
 	}
 
-	/* Set the bindop for the benefit of in-directory SASL lookups */
-	op->o_conn->c_sasl_bindop = op;
-
 	if ( op->orb_method == LDAP_AUTH_SASL ) {
 		if ( op->o_protocol < LDAP_VERSION3 ) {
 			Debug( LDAP_DEBUG_ANY, "do_bind: sasl with LDAPv%ld\n",
@@ -270,6 +267,10 @@ fe_op_bind( Operation *op, SlapReply *rs )
 		} else {
 			ber_dupbv(&op->o_conn->c_sasl_bind_mech, &mech);
 		}
+	
+		/* Set the bindop for the benefit of in-directory SASL lookups */
+		op->o_conn->c_sasl_bindop = op;
+
 		ldap_pvt_thread_mutex_unlock( &op->o_conn->c_mutex );
 
 		rs->sr_err = slap_sasl_bind( op, rs );

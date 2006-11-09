@@ -1,13 +1,14 @@
-openldap2.3 (2.3.27-2) unstable; urgency=low
+openldap2.3 (2.3.28-1) unstable; urgency=low
 
   [ Matthijs Mohlmann ]
+  * New upstream release.
   * LSB section added to the init script.
   * Added patch to fix a Denial of Service through a certain combination of
     LDAP BIND requests. (Fixes CVE-2006-5779) (Closes: #397673)
   * Updated README.Debian about running as non-root user (Closes: #389369)
   * Updated de translation (Closes: #396096)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Thu,  9 Nov 2006 21:10:01 +0100
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Thu,  9 Nov 2006 21:57:37 +0100
 
 openldap2.3 (2.3.27-1) unstable; urgency=low
 

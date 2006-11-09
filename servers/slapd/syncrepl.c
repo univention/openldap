@@ -1,5 +1,5 @@
 /* syncrepl.c -- Replication Engine which uses the LDAP Sync protocol */
-/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.168.2.36 2006/07/28 22:35:50 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.168.2.37 2006/10/06 00:01:06 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2006 The OpenLDAP Foundation.
@@ -1389,6 +1389,9 @@ syncrepl_message_to_op(
 				goto done;
 			op->orr_newSup = &psup;
 			op->orr_nnewSup = &nsup;
+		} else {
+			op->orr_newSup = NULL;
+			op->orr_nnewSup = NULL;
 		}
 		op->orr_newrdn = prdn;
 		op->orr_nnewrdn = nrdn;
@@ -1868,6 +1871,9 @@ retry_add:;
 				dnParent( &entry->e_name, &newp );
 				op->orr_newSup = &newp;
 				op->orr_nnewSup = &nnewp;
+			} else {
+				op->orr_newSup = NULL;
+				op->orr_nnewSup = NULL;
 			}
 			op->orr_deleteoldrdn = 0;
 			rc = be->be_modrdn( op, &rs_modify );

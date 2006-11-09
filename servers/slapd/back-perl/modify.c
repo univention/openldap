@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/modify.c,v 1.21.2.2 2006/01/03 22:16:22 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/modify.c,v 1.21.2.3 2006/09/20 17:43:25 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -62,6 +62,11 @@ perl_back_modify(
 				i++ )
 			{
 				XPUSHs(sv_2mortal(newSVpv( mods->sm_values[i].bv_val, 0 )));
+			}
+
+			/* Fix delete attrib without value. */
+			if ( i == 0) {
+				XPUSHs(sv_newmortal());
 			}
 		}
 

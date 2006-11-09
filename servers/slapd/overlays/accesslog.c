@@ -1,5 +1,5 @@
 /* accesslog.c - log operations for audit/history purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/accesslog.c,v 1.2.2.16 2006/08/15 05:20:54 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/accesslog.c,v 1.2.2.18 2006/10/07 19:45:08 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2006 The OpenLDAP Foundation.
@@ -597,6 +597,14 @@ log_cf_gen(ConfigArgs *c)
 	case SLAP_CONFIG_EMIT:
 		switch( c->type ) {
 		case LOG_DB:
+			if ( li->li_db == NULL ) {
+				snprintf( c->msg, sizeof( c->msg ),
+					"accesslog: \"logdb <suffix>\" must be specified" );
+				Debug( LDAP_DEBUG_ANY, "%s: %s \"%s\"\n",
+					c->log, c->msg, c->value_dn.bv_val );
+				rc = 1;
+				break;
+			}
 			value_add( &c->rvalue_vals, li->li_db->be_suffix );
 			value_add( &c->rvalue_nvals, li->li_db->be_nsuffix );
 			break;
@@ -626,7 +634,7 @@ log_cf_gen(ConfigArgs *c)
 		case LOG_OLD:
 			if ( li->li_oldf ) {
 				filter2bv( li->li_oldf, &agebv );
-				value_add_one( &c->rvalue_vals, &agebv );
+				ber_bvarray_add( &c->rvalue_vals, &agebv );
 			}
 			else
 				rc = 1;
@@ -674,7 +682,8 @@ log_cf_gen(ConfigArgs *c)
 		case LOG_DB:
 			li->li_db = select_backend( &c->value_ndn, 0, 0 );
 			if ( !li->li_db ) {
-				sprintf( c->msg, "<%s> no matching backend found for suffix",
+				snprintf( c->msg, sizeof( c->msg ),
+					"<%s> no matching backend found for suffix",
 					c->argv[0] );
 				Debug( LDAP_DEBUG_ANY, "%s: %s \"%s\"\n",
 					c->log, c->msg, c->value_dn.bv_val );
@@ -1318,6 +1327,8 @@ accesslog_db_destroy(
 	slap_overinst *on = (slap_overinst *)be->bd_info;
 	log_info *li = on->on_bi.bi_private;
 
+	if ( li->li_oldf )
+		filter_free( li->li_oldf );
 	ldap_pvt_thread_mutex_destroy( &li->li_log_mutex );
 	ldap_pvt_thread_mutex_destroy( &li->li_op_mutex );
 	free( li );
@@ -1338,6 +1349,13 @@ accesslog_db_open(
 	Entry *e;
 	int rc;
 	void *thrctx;
+
+	if ( li->li_db == NULL ) {
+		Debug( LDAP_DEBUG_ANY,
+			"accesslog: \"logdb <suffix>\" must be specified.\n",
+			0, 0, 0 );
+		return 1;
+	}
 
 	if ( slapMode & SLAP_TOOL_MODE )
 		return 0;

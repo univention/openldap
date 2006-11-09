@@ -1,5 +1,5 @@
 /* init.c - initialize various things */
-/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.81.2.13 2006/05/09 17:29:12 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.81.2.14 2006/10/05 23:31:19 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -171,6 +171,8 @@ slap_init( int mode, const char *name )
 		if( rc == 0 ) {
 			rc = backend_init( );
 		}
+		if ( rc )
+			return rc;
 
 		break;
 

@@ -1,7 +1,7 @@
 .TH SLAPD.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" Copyright 1998-2006 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.191.2.22 2006/07/31 23:09:53 quanah Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.191.2.23 2006/10/06 00:01:45 quanah Exp $
 .SH NAME
 slapd.conf \- configuration file for slapd, the stand-alone LDAP daemon
 .SH SYNOPSIS
@@ -213,7 +213,7 @@ and
 .I authzTo
 describes an 
 .B identity 
-or a set of identities; it can take three forms:
+or a set of identities; it can take five forms:
 .RS
 .TP
 .B ldap:///<base>??[<scope>]?<filter>

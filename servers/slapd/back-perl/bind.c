@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/bind.c,v 1.22.2.2 2006/01/03 22:16:22 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/bind.c,v 1.22.2.3 2006/09/20 17:47:46 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2006 The OpenLDAP Foundation.
@@ -32,7 +32,7 @@ perl_back_bind(
 
 	PerlBackend *perl_back = (PerlBackend *) op->o_bd->be_private;
 
-#ifdef HAVE_WIN32_ASPERL
+#if defined(HAVE_WIN32_ASPERL) || defined(USE_ITHREADS)
 	PERL_SET_CONTEXT( PERL_INTERPRETER );
 #endif
 

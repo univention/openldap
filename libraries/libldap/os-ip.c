@@ -1,5 +1,5 @@
 /* os-ip.c -- platform-specific TCP & UDP related code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.108.2.10 2006/01/03 22:16:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.108.2.11 2006/10/21 04:56:53 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -123,20 +123,31 @@ ldap_pvt_close_socket(LDAP *ld, int s)
 static int
 ldap_int_prepare_socket(LDAP *ld, int s, int proto )
 {
-	osip_debug(ld, "ldap_prepare_socket: %d\n", s,0,0);
+	osip_debug( ld, "ldap_prepare_socket: %d\n", s, 0, 0 );
 
-#ifdef TCP_NODELAY
-	if( proto == LDAP_PROTO_TCP ) {
+#if defined( SO_KEEPALIVE ) || defined( TCP_NODELAY )
+	if ( proto == LDAP_PROTO_TCP ) {
 		int dummy = 1;
+#ifdef SO_KEEPALIVE
+		if ( setsockopt( s, SOL_SOCKET, SO_KEEPALIVE,
+			(char*) &dummy, sizeof(dummy) ) == AC_SOCKET_ERROR )
+		{
+			osip_debug( ld, "ldap_prepare_socket: "
+				"setsockopt(%d, SO_KEEPALIVE) failed (ignored).\n",
+				s, 0, 0 );
+		}
+#endif /* SO_KEEPALIVE */
+#ifdef TCP_NODELAY
 		if ( setsockopt( s, IPPROTO_TCP, TCP_NODELAY,
 			(char*) &dummy, sizeof(dummy) ) == AC_SOCKET_ERROR )
 		{
-			osip_debug(ld, "ldap_prepare_socket: "
+			osip_debug( ld, "ldap_prepare_socket: "
 				"setsockopt(%d, TCP_NODELAY) failed (ignored).\n",
-				s, 0, 0);
+				s, 0, 0 );
 		}
+#endif /* TCP_NODELAY */
 	}
-#endif
+#endif /* SO_KEEPALIVE || TCP_NODELAY */
 
 	return 0;
 }
