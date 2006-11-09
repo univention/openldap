@@ -1,4 +1,11 @@
-#! /bin/sh
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:       slapd
+# Required-Start: networking syslog
+# Required-Stop:  networking syslog
+# Default-Start:  2 3 4 5
+# Default-Stop:   0 6
+### END INIT INFO
 
 # Specify path variable
 PATH=/sbin:/usr/sbin:/bin:/usr/bin

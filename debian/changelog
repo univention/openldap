@@ -1,3 +1,10 @@
+openldap2.3 (2.3.27-2) unstable; urgency=low
+
+  [ Matthijs Mohlmann ]
+  * LSB section added to the init script.
+
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Thu,  9 Nov 2006 20:18:20 +0100
+
 openldap2.3 (2.3.27-1) unstable; urgency=low
 
   [ Matthijs Mohlmann ]
