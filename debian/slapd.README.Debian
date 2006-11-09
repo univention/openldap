@@ -46,6 +46,11 @@ Notes about Debian's slapd package
 	- tell linux slapd can access configuration files -- usually:
 		chgrp ldap /etc/ldap/slapd.conf
 		chmod 0640 /etc/ldap/slapd.conf
+	- tell linux slapd can access /var/run/slapd and writes his pid file
+		chgrp ldap /var/run/slapd
+		chmod 0770 /var/run/slapd
+	- edit /etc/init.d/slapd and run the db_recover command as the non root
+	  user
 	- start slapd -- /etc/init.d/slapd start
 
    Once you have done so, if you are using a bdb o hdb backend,
