@@ -7,10 +7,9 @@ openldap2.3 (2.3.28-1) unstable; urgency=low
     LDAP BIND requests. (Fixes CVE-2006-5779) (Closes: #397673)
   * Updated README.Debian about running as non-root user (Closes: #389369)
   * Updated de translation (Closes: #396096)
-  * Added some documentation / warnings when running as non privileged user
-    and creating indexes.
+  * Added some documentation / warning when running slapindex as root.
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Thu,  9 Nov 2006 21:57:37 +0100
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Thu,  9 Nov 2006 23:17:12 +0100
 
 openldap2.3 (2.3.27-1) unstable; urgency=low
 
