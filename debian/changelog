@@ -8,6 +8,7 @@ openldap2.3 (2.3.28-1) unstable; urgency=medium
   * Updated README.Debian about running as non-root user (Closes: #389369)
   * Updated de translation (Closes: #396096)
   * Added some documentation / warning when running slapindex as root.
+  * Remove drafts and rfc from the tarball. (Closes: #393404)
 
  -- Matthijs Mohlmann <matthijs@cacholong.nl>  Thu,  9 Nov 2006 23:17:12 +0100
 
