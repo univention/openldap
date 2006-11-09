@@ -1,4 +1,4 @@
-openldap2.3 (2.3.28-1) unstable; urgency=low
+openldap2.3 (2.3.28-1) unstable; urgency=medium
 
   [ Matthijs Mohlmann ]
   * New upstream release.
