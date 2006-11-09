@@ -11,5 +11,4 @@ ldapi-socket-place -p0
 read-config-before-dropping-privileges -p0
 disable-epoll-system-call -p0
 wrong-database-location -p0
-startup-memleak-fix -p0
 CVE-2006-5779 -p0
