@@ -1,5 +1,5 @@
 /* os-ip.c -- platform-specific TCP & UDP related code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.108.2.11 2006/10/21 04:56:53 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.108.2.12 2006/11/07 04:06:21 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -63,7 +63,7 @@ do { \
 static void
 ldap_pvt_set_errno(int err)
 {
-	errno = err;
+	sock_errset(err);
 }
 
 int
@@ -219,7 +219,7 @@ ldap_pvt_connect(LDAP *ld, ber_socket_t s,
 	struct sockaddr *sin, socklen_t addrlen,
 	int async)
 {
-	int rc;
+	int rc, err;
 	struct timeval	tv = { 0 },
 			*opt_tv = NULL;
 
@@ -252,11 +252,8 @@ ldap_pvt_connect(LDAP *ld, ber_socket_t s,
 		return ( 0 );
 	}
 
-#ifdef HAVE_WINSOCK
-	ldap_pvt_set_errno( WSAGetLastError() );
-#endif
-
-	if ( errno != EINPROGRESS && errno != EWOULDBLOCK ) {
+	err = sock_errno();
+	if ( err != EINPROGRESS && err != EWOULDBLOCK ) {
 		return ( -1 );
 	}
 	

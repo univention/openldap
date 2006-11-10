@@ -1,5 +1,5 @@
 /* tls.c - Handle tls/ssl using SSLeay or OpenSSL. */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/tls.c,v 1.118.2.13 2006/07/28 13:01:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/tls.c,v 1.118.2.14 2006/11/07 04:06:22 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -590,7 +590,7 @@ sb_tls_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 	err = SSL_get_error( p->ssl, ret );
 	if (err == SSL_ERROR_WANT_READ ) {
 		sbiod->sbiod_sb->sb_trans_needs_read = 1;
-		errno = EWOULDBLOCK;
+		sock_errset(EWOULDBLOCK);
 	}
 	else
 		sbiod->sbiod_sb->sb_trans_needs_read = 0;
@@ -616,7 +616,7 @@ sb_tls_write( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 	err = SSL_get_error( p->ssl, ret );
 	if (err == SSL_ERROR_WANT_WRITE ) {
 		sbiod->sbiod_sb->sb_trans_needs_write = 1;
-		errno = EWOULDBLOCK;
+		sock_errset(EWOULDBLOCK);
 
 	} else {
 		sbiod->sbiod_sb->sb_trans_needs_write = 0;
@@ -672,7 +672,7 @@ sb_tls_bio_read( BIO *b, char *buf, int len )
 
 	BIO_clear_retry_flags( b );
 	if ( ret < 0 ) {
-		int err = errno;
+		int err = sock_errno();
 		if ( err == EAGAIN || err == EWOULDBLOCK ) {
 			BIO_set_retry_read( b );
 		}
@@ -699,7 +699,7 @@ sb_tls_bio_write( BIO *b, const char *buf, int len )
 
 	BIO_clear_retry_flags( b );
 	if ( ret < 0 ) {
-		int err = errno;
+		int err = sock_errno();
 		if ( err == EAGAIN || err == EWOULDBLOCK ) {
 			BIO_set_retry_write( b );
 		}

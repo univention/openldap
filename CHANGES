@@ -1,5 +1,22 @@
 OpenLDAP 2.3 Change Log
 
+OpenLDAP 2.3.29 Release
+	Fixed liblber/libldap error codes on Windows (ITS#4606)
+	Fixed libldap string length assert (ITS#4740)
+	Fixed liblunicode case mapping (ITS#4724)
+	Fixed slapd ldapi:// socket permissions (ITS#4709)
+	Fixed slapd c_writewaiters assert (ITS#4696, #4736)
+	Fixed slapo-accesslog purge contextCSN bug (ITS#4704)
+	Fixed slapo-accesslog modify/replace bug (ITS#4728)
+	Fixed slapo-dynlist leaks (ITS#4664)
+	Fixed slapo-ppolicy leaks (ITS#4665)
+	Fixed slapo-syncprov deadlock (ITS#4720)
+	Build environment
+		Added selection of ODBC (ITS#4735)
+	Documentation
+		Fixed slapd-ldap/meta(5) rebind-as-user usage (ITS#4715)
+		Fixed slapd-ldap/meta(5) missing network-timeout (ITS#4718)
+
 OpenLDAP 2.3.28 Release
 	Fixed libldap ldap.conf max line length (ITS#4669)
 	Fixed libldap use keepalive for syncrepl (ITS#4708)
