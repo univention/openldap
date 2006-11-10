@@ -1,10 +1,11 @@
 #!/bin/sh
 ### BEGIN INIT INFO
-# Provides:       slapd
-# Required-Start: networking syslog
-# Required-Stop:  networking syslog
-# Default-Start:  2 3 4 5
-# Default-Stop:   0 6
+# Provides:          slapd
+# Required-Start:    networking syslog
+# Required-Stop:     networking syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 6
+# Short-Description: OpenLDAP standalone server (Lightweight Directory Access Protocol)
 ### END INIT INFO
 
 # Specify path variable

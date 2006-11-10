@@ -13,3 +13,4 @@ disable-epoll-system-call -p0
 wrong-database-location -p0
 CVE-2006-5779 -p0
 index-files-created-as-root -p0
+fix-manpage-ldapsearch -p0
