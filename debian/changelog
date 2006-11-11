@@ -2,15 +2,15 @@ openldap2.3 (2.3.29-1) unstable; urgency=medium
 
   [ Matthijs Mohlmann ]
   * New upstream release.
+    - Fixes Denial of Service through a certain combination of LDAP BIND
+      requests (CVE-2006-5779) (Closes: #397673)
   * LSB section added to the init script.
-  * Added patch to fix a Denial of Service through a certain combination of
-    LDAP BIND requests. (Fixes CVE-2006-5779) (Closes: #397673)
   * Updated README.Debian about running as non-root user (Closes: #389369)
   * Updated de translation (Closes: #396096)
   * Added some documentation / warning when running slapindex as root.
   * Remove drafts and rfc from the tarball. (Closes: #393404)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Thu,  9 Nov 2006 23:17:12 +0100
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat, 11 Nov 2006 11:24:42 +0100
 
 openldap2.3 (2.3.27-1) unstable; urgency=low
 
