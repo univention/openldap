@@ -1,3 +1,10 @@
+openldap2.3 (2.3.29-2) unstable; urgency=low
+
+  * Added patch to make sure that the pidfile directory exists.
+    (Closes: #390337)
+
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 12 Nov 2006 11:06:36 +0100
+
 openldap2.3 (2.3.29-1) unstable; urgency=medium
 
   [ Matthijs Mohlmann ]
