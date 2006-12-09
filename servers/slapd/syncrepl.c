@@ -1,5 +1,5 @@
 /* syncrepl.c -- Replication Engine which uses the LDAP Sync protocol */
-/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.168.2.37 2006/10/06 00:01:06 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.168.2.39 2006/11/13 01:57:20 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2006 The OpenLDAP Foundation.
@@ -1265,7 +1265,7 @@ syncrepl_message_to_op(
 	struct berval	rdn = BER_BVNULL, sup = BER_BVNULL,
 		prdn = BER_BVNULL, nrdn = BER_BVNULL,
 		psup = BER_BVNULL, nsup = BER_BVNULL;
-	int		rc, deleteOldRdn = 0;
+	int		rc, deleteOldRdn = 0, freeReqDn = 0;
 
 	if ( ldap_msgtype( msg ) != LDAP_RES_SEARCH_ENTRY ) {
 		Debug( LDAP_DEBUG_ANY,
@@ -1300,6 +1300,7 @@ syncrepl_message_to_op(
 			ber_dupbv( &op->o_req_ndn, &ndn );
 			slap_sl_free( ndn.bv_val, op->o_tmpmemctx );
 			slap_sl_free( dn.bv_val, op->o_tmpmemctx );
+			freeReqDn = 1;
 		} else if ( !ber_bvstrcasecmp( &bv, &ls->ls_req )) {
 			int i = verb_to_mask( bvals[0].bv_val, modops );
 			if ( i < 0 ) {
@@ -1358,6 +1359,7 @@ syncrepl_message_to_op(
 			op->ora_e = ( Entry * ) ch_calloc( 1, sizeof( Entry ) );
 			op->ora_e->e_name = op->o_req_dn;
 			op->ora_e->e_nname = op->o_req_ndn;
+			freeReqDn = 0;
 			rc = slap_mods2entry( modlist, &op->ora_e, 1, 0, &text, txtbuf, textlen);
 			if( rc != LDAP_SUCCESS ) {
 				Debug( LDAP_DEBUG_ANY, "syncrepl_message_to_op: mods2entry (%s)\n",
@@ -1410,6 +1412,8 @@ syncrepl_message_to_op(
 	}
 done:
 	slap_graduate_commit_csn( op );
+	op->o_tmpfree( op->o_csn.bv_val, op->o_tmpmemctx );
+	BER_BVZERO( &op->o_csn );
 	if ( modlist )
 		slap_mods_free( modlist, op->o_tag != LDAP_REQ_ADD );
 	if ( !BER_BVISNULL( &rdn )) {
@@ -1421,6 +1425,10 @@ done:
 			ch_free( nrdn.bv_val );
 		if ( !BER_BVISNULL( &prdn ))
 			ch_free( prdn.bv_val );
+	}
+	if ( freeReqDn ) {
+		ch_free( op->o_req_ndn.bv_val );
+		ch_free( op->o_req_dn.bv_val );
 	}
 	ber_free ( ber, 0 );
 	return rc;
@@ -2074,6 +2082,7 @@ syncrepl_del_nonpresent(
 			slap_uuidstr_from_normalized( &uf.f_av_value, &uuids[i],
 				op->o_tmpmemctx );
 			filter2bv_x( op, op->ors_filter, &op->ors_filterstr );
+			op->o_tmpfree( uf.f_av_value.bv_val, op->o_tmpmemctx );
 			uf.f_av_value = uuids[i];
 			rc = be->be_search( op, &rs_search );
 			op->o_tmpfree( op->ors_filterstr.bv_val, op->o_tmpmemctx );
@@ -2145,6 +2154,7 @@ syncrepl_del_nonpresent(
 				op->orm_modlist = &mod1;
 
 				rc = be->be_modify( op, &rs_modify );
+				if ( mod2.sml_next ) slap_mods_free( mod2.sml_next, 1 );
 			}
 
 			while ( rs_delete.sr_err == LDAP_SUCCESS &&
@@ -2172,6 +2182,8 @@ syncrepl_del_nonpresent(
 		}
 
 		slap_graduate_commit_csn( op );
+		op->o_tmpfree( op->o_csn.bv_val, op->o_tmpmemctx );
+		BER_BVZERO( &op->o_csn );
 	}
 
 	return;
@@ -2372,6 +2384,9 @@ syncrepl_updateCookie(
 	}
 
 	slap_graduate_commit_csn( op );
+	op->o_tmpfree( op->o_csn.bv_val, op->o_tmpmemctx );
+	BER_BVZERO( &op->o_csn );
+	if ( mod.sml_next ) slap_mods_free( mod.sml_next, 1 );
 
 	return;
 }
