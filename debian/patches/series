@@ -12,3 +12,4 @@ read-config-before-dropping-privileges -p0
 disable-epoll-system-call -p0
 wrong-database-location -p0
 index-files-created-as-root -p0
+sasl-default-path -p0
