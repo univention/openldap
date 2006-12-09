@@ -8,6 +8,8 @@ openldap2.3 (2.3.30-1) unstable; urgency=low
     - Fixed ldapsearch(1) man page acknowledgement.
   * Added patch to make sure that the pidfile directory exists.
     (Closes: #390337)
+  * Do not ask the question allow ldap v2 logins when omit configuration is
+    true. (Closes: #401003)
 
  -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat,  9 Dec 2006 15:16:12 +0100
 
