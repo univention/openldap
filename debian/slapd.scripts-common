@@ -63,6 +63,14 @@ configure_ldbm_to_bdb_migration() {					# {{{
 	fi
 }
 # }}}
+configure_allow_v2_binds() {                        # {{{
+# Ask if the user would like their package to support LDAPv2..
+# This was the default in older versions but we want to ask
+# for new installs too in case the user needs it..
+
+    db_input medium slapd/allow_ldap_v2 || true
+}
+# }}}
 database_dumping_enabled() {						# {{{
 # Check if the user has enabled database dumping for the current situation.
 # Return success if yes.
