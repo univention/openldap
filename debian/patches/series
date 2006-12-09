@@ -13,3 +13,4 @@ disable-epoll-system-call -p0
 wrong-database-location -p0
 index-files-created-as-root -p0
 sasl-default-path -p0
+man-slurpd -p0
