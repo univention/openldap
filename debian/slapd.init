@@ -69,12 +69,6 @@ EOF
 	exit 1
 fi
 
-# Make sure the pidfile directory exists with correct permissions
-piddir=`dirname "$SLAPD_PIDFILE"`
-[ -d "$piddir" ] || mkdir -p "$piddir"
-[ -z "$SLAPD_USER" ] || chown -R "$SLAPD_USER" "$piddir"
-[ -z "$SLAPD_GROUP" ] || chgrp -R "$SLAPD_GROUP" "$piddir"
-
 # Pass the user and group to run under to slapd
 if [ "$SLAPD_USER" ]; then
 	SLAPD_OPTIONS="-u $SLAPD_USER $SLAPD_OPTIONS"
