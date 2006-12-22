@@ -1,3 +1,9 @@
+openldap2.3 (2.3.30-3) unstable; urgency=low
+
+  * Added spanish translation. (Closes: #404250)
+
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Fri, 22 Dec 2006 21:43:59 +0100
+
 openldap2.3 (2.3.30-2) unstable; urgency=low
 
   * Make sure that the pidfile directory doesn't exist in the init script.
