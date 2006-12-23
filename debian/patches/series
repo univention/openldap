@@ -15,3 +15,4 @@ index-files-created-as-root -p0
 sasl-default-path -p0
 man-slurpd -p0
 adminguide-docfixes -p0
+kbind-security-fix -p0
