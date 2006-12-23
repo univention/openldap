@@ -1,8 +1,9 @@
 openldap2.3 (2.3.30-3) unstable; urgency=low
 
   * Added spanish translation. (Closes: #404250)
+  * Documentation updates backported from upstream.
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Fri, 22 Dec 2006 21:43:59 +0100
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat, 23 Dec 2006 10:20:27 +0100
 
 openldap2.3 (2.3.30-2) unstable; urgency=low
 
