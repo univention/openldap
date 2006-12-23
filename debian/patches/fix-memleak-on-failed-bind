@@ -1,0 +1,14 @@
+Index: servers/slapd/connection.c
+===================================================================
+--- servers/slapd/connection.c.orig
++++ servers/slapd/connection.c
+@@ -1753,6 +1753,9 @@
+ {
+ 	op->o_conn->c_sasl_bindop = NULL;
+ 
++	ch_free( op->o_callback );
++	op->o_callback = NULL;
++
+ 	return SLAP_CB_CONTINUE;
+ }
+ 

@@ -4,8 +4,9 @@ openldap2.3 (2.3.30-3) unstable; urgency=low
   * Documentation updates backported from upstream.
   * Fix a security bug in kerberos kbind code. (Only used when enabling with
     --enable-kbind option) But better safe then sorry.
+  * Backported a mem leak fix on failed binds.
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat, 23 Dec 2006 13:05:52 +0100
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat, 23 Dec 2006 13:23:18 +0100
 
 openldap2.3 (2.3.30-2) unstable; urgency=low
 
