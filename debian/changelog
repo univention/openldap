@@ -1,5 +1,6 @@
 openldap2.3 (2.3.30-3) unstable; urgency=medium
 
+  [ Matthijs Mohlmann ]
   * Added spanish translation. (Closes: #404250)
   * Documentation updates backported from upstream.
   * Fix a security bug in kerberos kbind code. (Only used when enabling with
@@ -7,7 +8,11 @@ openldap2.3 (2.3.30-3) unstable; urgency=medium
   * Backported a mem leak fix on failed binds.
   * Added patch from upstream that fixes a memory leak in ACLs that use sets.
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat, 23 Dec 2006 22:37:45 +0100
+  [ Steve Langasek ]
+  * *Really* abort in preinst if the user doesn't accept the upgrade
+    from ldbm to bdb.  Closes: #392747.
+
+ -- Steve Langasek <vorlon@debian.org>  Fri, 16 Feb 2007 20:32:57 -0800
 
 openldap2.3 (2.3.30-2) unstable; urgency=low
 
