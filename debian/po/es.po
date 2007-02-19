@@ -332,7 +332,6 @@ msgstr ""
 #. Type: boolean
 #. Description
 #: ../slapd.templates:15001
-#, fuzzy
 msgid "If you choose this option, an attempt to fix it for you will occur."
 msgstr ""
 "Se intentará arreglar el directorio de forma automática si elige esta opción."
@@ -409,7 +408,6 @@ msgstr "slapadd falló durante la actualización"
 #. Type: note
 #. Description
 #: ../slapd.templates:18001
-#, fuzzy
 msgid ""
 "An error occurred during the attempt to upgrade your LDAP directory. This "
 "error occurred when performing the 'slapadd' which attempts to populate an "
@@ -570,4 +568,4 @@ msgstr ""
 "utiliza algunas de las funciones más avanzadas de BDB para poder ofrecer "
 "procesado de transacciones, bloqueo de grano fino y otras funcionalidades "
 "que permiten tener una concurrencia y fiabilidad mayores. Consulte /usr/"
-"share/doc/slapd/README.DB_CONFIG..gz si desea más información."
+"share/doc/slapd/README.DB_CONFIG.gz si desea más información."
