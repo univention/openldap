@@ -13,8 +13,10 @@ openldap2.3 (2.3.30-3) unstable; urgency=medium
     from ldbm to bdb.  Closes: #392747.
   * Set the name of debian/slapd.NEWS right so that it gets
     installed in the binary package.  Closes: #409923.
+  * Add Russian debconf translation; thanks to Yuri Kozlov.
+    Closes: #405706.
 
- -- Steve Langasek <vorlon@debian.org>  Fri, 16 Feb 2007 20:52:31 -0800
+ -- Steve Langasek <vorlon@debian.org>  Sun, 18 Feb 2007 16:45:03 -0800
 
 openldap2.3 (2.3.30-2) unstable; urgency=low
 
