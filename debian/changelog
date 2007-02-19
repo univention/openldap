@@ -1,3 +1,12 @@
+openldap2.3 (2.3.30-4) unstable; urgency=low
+
+  * Ok, argh, it helps to check that the function being re-added to the
+    preinst hasn't been removed again from the common include.  Re-add 
+    break_on_ldbm_to_bdb_migration_disagree, because by all appearances
+    we /should/ be using this in the preinst.  Closes: #411474.
+
+ -- Steve Langasek <vorlon@debian.org>  Mon, 19 Feb 2007 03:55:22 -0800
+
 openldap2.3 (2.3.30-3) unstable; urgency=medium
 
   [ Matthijs Mohlmann ]
