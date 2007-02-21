@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: openldap2.3 2.3.30-2\n"
 "Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
 "POT-Creation-Date: 2006-07-15 17:06+0200\n"
-"PO-Revision-Date: 2007-02-03 19:27-0000\n"
+"PO-Revision-Date: 2007-02-19 15:27+0000\n"
 "Last-Translator: Tiago Fernandes <tjg.fernandes@gmail.com>\n"
 "Language-Team: Portuguese <traduz@debianpt.org>\n"
 "MIME-Version: 1.0\n"
@@ -180,7 +180,7 @@ msgstr "Por favor, re-insira a password de admin do seu directório LDAP, para "
 #. Description
 #: ../slapd.templates:10001
 msgid "Password mismatch"
-msgstr "As passwords não coincidem"
+msgstr "A password não coincide"
 
 #. Type: note
 #. Description
@@ -272,7 +272,7 @@ msgid "The installation scripts of the old OpenLDAP 2.0 packages create a "
 msgstr "Os scripts de instalação do antigo pacote OpenLDAP 2.0, criam um "
 "directório que não está em conformidade com o esquema ldap. A nova versão "
 "é mais restrita sobre isto e não permitirá o acesso ao seu directório após a "
-"actualização, sem antes concertar."
+"actualização, sem antes consertar."
 
 #. Type: boolean
 #. Description
@@ -436,9 +436,10 @@ msgid "The BDB backend is the recommended choice of the OpenLDAP "
 "developers. When using the BDB backend make sure that you configure the "
 "underlying database for your requirements.  Look into "
 "/usr/share/doc/slapd/README.DB_CONFIG.gz"
-msgstr "O backend BDB é a escolha recomendada dos developers do OpenLDAP. Quando utilizar o backend BDB assegure-se que configurou a base dados que estão "
-"por baixo de acordo com os seus requisitos.  Veja em usr/share/doc/slapd/"
-"README.DB_CONFIG.gz"
+msgstr "O backend BDB é a escolha recomendada dos developers do OpenLDAP."
+" Quando utilizar o backend BDB assegure-se que configurou a base de dados "
+"que está subjacente de acordo com os seus requisitos.  Veja em "
+"usr/share/doc/slapd/README.DB_CONFIG.gz"
 
 #. Type: select
 #. Description
