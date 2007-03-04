@@ -18,3 +18,4 @@ adminguide-docfixes -p0
 kbind-security-fix -p0
 fix-memleak-on-failed-bind -p0
 fix-memleak-acls-uses-sets -p0
+connection-race -p0
