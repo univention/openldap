@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 2.1.30-13.2\n"
 "Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
-"POT-Creation-Date: 2006-07-15 17:06+0200\n"
+"POT-Creation-Date: 2007-03-07 18:25-0800\n"
 "PO-Revision-Date: 2007-01-05 20:38+0300\n"
 "Last-Translator: Yuri Kozlov <kozlov.y@gmail.com>\n"
 "Language-Team: Russian <debian-l10n-russian@lists.debian.org>\n"
@@ -23,7 +23,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms:  nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms:  nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
+"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #. Type: boolean
 #. Description
@@ -51,15 +52,15 @@ msgstr "При обновлении сбросить данные из базы 
 #. Description
 #: ../slapd.templates:2001
 msgid ""
-"Before upgrading to a new version of the OpenLDAP server the data of  your "
+"Before upgrading to a new version of the OpenLDAP server the data of your "
 "LDAP directories can be dumped to plain text files (LDIF format) which is a "
 "standardized description of that data (LDIF stands for LDAP Data Interchange "
 "Format)."
 msgstr ""
-"Перед обновлением до новой версии сервера OpenLDAP данные "
-"из вашего каталога LDAP могут быть сохранены в текстовые файлы (в формате "
-"LDIF) в стандартизованном формате (LDIF расшифровывается как "
-"формат обмена данных LDAP)."
+"Перед обновлением до новой версии сервера OpenLDAP данные из вашего каталога "
+"LDAP могут быть сохранены в текстовые файлы (в формате LDIF) в "
+"стандартизованном формате (LDIF расшифровывается как формат обмена данных "
+"LDAP)."
 
 #. Type: select
 #. Description
@@ -71,12 +72,11 @@ msgid ""
 "and it has to be reimported. The \"never\" choice will just go ahead without "
 "ever dumping your database."
 msgstr ""
-"Если выбрать \"всегда\", то сопровождающие сценарии обязательно "
-"сохранят ваши базы данных перед обновлением. Если выбрать \"только при "
-"необходимости\", то база данных будет сохранена, только если новая "
-"версия несовместима со старым форматом базы данных и должна"
-"быть реимпортирована повторно. Если выбрать \"никогда\", то шаг сохранения "
-"базы всегда будет просто пропускаться."
+"Если выбрать \"всегда\", то сопровождающие сценарии обязательно сохранят "
+"ваши базы данных перед обновлением. Если выбрать \"только при необходимости"
+"\", то база данных будет сохранена, только если новая версия несовместима со "
+"старым форматом базы данных и должнабыть реимпортирована повторно. Если "
+"выбрать \"никогда\", то шаг сохранения базы всегда будет просто пропускаться."
 
 #. Type: string
 #. Description
@@ -95,13 +95,12 @@ msgid ""
 "\"VERSION\" is replaced with the server version you are upgrading from. The "
 "default is /var/backups/slapd-VERSION"
 msgstr ""
-"Укажите каталог, куда будут экспортированы базы данных LDAP. "
-"В этом каталоге будет создано несколько файлов LDIF, которые "
-"соответствуют поисковым базам, расположенным на сервере. "
-"Убедитесь, что у вас достаточно места на разделе, где расположен "
-"каталог. Первое появление в строке слова \"VERSION\" заменяется на "
-"на версию сервера, с которой производится обновление. Значение по "
-"умолчанию равно /var/backups/slapd-VERSION"
+"Укажите каталог, куда будут экспортированы базы данных LDAP. В этом каталоге "
+"будет создано несколько файлов LDIF, которые соответствуют поисковым базам, "
+"расположенным на сервере. Убедитесь, что у вас достаточно места на разделе, "
+"где расположен каталог. Первое появление в строке слова \"VERSION\" "
+"заменяется на на версию сервера, с которой производится обновление. Значение "
+"по умолчанию равно /var/backups/slapd-VERSION"
 
 #. Type: boolean
 #. Description
@@ -198,7 +197,8 @@ msgstr "Подтвердите пароль:"
 #. Type: password
 #. Description
 #: ../slapd.templates:9001
-msgid "Please reenter the admin password for your LDAP directory for verification."
+msgid ""
+"Please reenter the admin password for your LDAP directory for verification."
 msgstr "Введите пароль для admin в каталоге LDAP для проверки ещё раз."
 
 #. Type: note
@@ -214,8 +214,8 @@ msgid ""
 "The admin password and its confirmation must match. Please note that "
 "differences such as uppercase/lowercase and added whitespace matter."
 msgstr ""
-"Значения пароля для admin и его подтверждение должны совпадать. "
-"Заметим, что в пароле важен регистр символов и пробелы."
+"Значения пароля для admin и его подтверждение должны совпадать. Заметим, что "
+"в пароле важен регистр символов и пробелы."
 
 #. Type: boolean
 #. Description
@@ -244,9 +244,9 @@ msgid ""
 "configuration has to be changed to load the modules for the backends you are "
 "using."
 msgstr ""
-"Начиная с OpenLDAP 2.1 серверные модули больше не встроены в сервер, "
-"а загружаются динамически при старте. Это значит, что конфигурация slapd "
-"была изменена в части загрузки модулей серверов, которые вы используете."
+"Начиная с OpenLDAP 2.1 серверные модули больше не встроены в сервер, а "
+"загружаются динамически при старте. Это значит, что конфигурация slapd была "
+"изменена в части загрузки модулей серверов, которые вы используете."
 
 #. Type: boolean
 #. Description
@@ -255,15 +255,14 @@ msgid ""
 "If you choose this option, an attempt to fix the configuration will be made. "
 "If you don't select this, you *must* fix your configuration file yourself or "
 "slapd (and slapcat if you are upgrading from an older version) will fail and "
-"the package will not be installed. For more information,  read /usr/share/"
-"doc/slapd/README.Debian."
+"the package will not be installed. For more information, read /usr/share/doc/"
+"slapd/README.Debian."
 msgstr ""
 "Если вы ответите утвердительно, то будет предпринята попытка исправить "
-"конфигурацию. Если вы "
-"ответите отрицательно, то вы *должны* исправить свой конфигурационный файл "
-"самостоятельно, или slapd (и slapcat, если вы производите обновление с "
-"предыдущей версии) не сработает и пакет установлен не будет. Подробней "
-"читайте в /usr/share/doc/slapd/README.Debian."
+"конфигурацию. Если вы ответите отрицательно, то вы *должны* исправить свой "
+"конфигурационный файл самостоятельно, или slapd (и slapcat, если вы "
+"производите обновление с предыдущей версии) не сработает и пакет установлен "
+"не будет. Подробней читайте в /usr/share/doc/slapd/README.Debian."
 
 #. Type: boolean
 #. Description
@@ -281,8 +280,8 @@ msgid ""
 "support then select this option and 'allow bind_v2' will be added to your "
 "slapd.conf to tell slapd to accept LDAPv2 connections."
 msgstr ""
-"Теперь по умолчанию в slapd старый протокол LDAPv2 выключен. Ожидается, "
-"что в клиентских программах будет включён LDAPv3. Если у вас есть старые "
+"Теперь по умолчанию в slapd старый протокол LDAPv2 выключен. Ожидается, что "
+"в клиентских программах будет включён LDAPv3. Если у вас есть старые "
 "программы, в которых нет поддержки LDAPv3 и вам всё ещё нужна поддержка "
 "LDAPv2, то вы должны ответить утвердительно, и запись 'allow bind_v2' будет "
 "добавлена в slapd.conf, чтобы указать slapd принимать соединения по LDAPv2."
@@ -311,8 +310,7 @@ msgstr ""
 #: ../slapd.templates:15001
 msgid "If you choose this option, an attempt to fix it for you will occur."
 msgstr ""
-"Если вы ответите утвердительно, будет выполнена попытка исправления "
-"каталога."
+"Если вы ответите утвердительно, будет выполнена попытка исправления каталога."
 
 #. Type: boolean
 #. Description
@@ -357,9 +355,9 @@ msgid ""
 msgstr ""
 "Произошла ошибка при попытке обновления каталога LDAP. Ошибка возникла при "
 "выполнении 'slapcat', которая пыталась распаковать ваш каталог LDAP. Это "
-"могло произойти из-за некорректного файла конфигурации, например, в "
-"случае отсутствия соответствующей строки moduleload для вашего типа сервера "
-"базы данных. В дальнейшем, это также вызовет отказ в работе 'slapadd'. Старые "
+"могло произойти из-за некорректного файла конфигурации, например, в случае "
+"отсутствия соответствующей строки moduleload для вашего типа сервера базы "
+"данных. В дальнейшем, это также вызовет отказ в работе 'slapadd'. Старые "
 "файлы базы данных были перенесены в /var/backups. Если вы хотите попытаться "
 "выполнить обновление ещё раз, переместите старые файлы базы данных обратно, "
 "исправьте ошибку, вызывающую отказ работы slapcat и выполните:\n"
@@ -372,9 +370,8 @@ msgid ""
 "Then move the database files back to a backup area and then try running "
 "slapadd from $location."
 msgstr ""
-"Затем переместите "
-"файлы базы данных обратно в место хранения резервной копии, и затем "
-"попытайтесь выполнить slapadd из $location ещё раз."
+"Затем переместите файлы базы данных обратно в место хранения резервной "
+"копии, и затем попытайтесь выполнить slapadd из $location ещё раз."
 
 #. Type: note
 #. Description
@@ -401,9 +398,9 @@ msgstr ""
 "информацией из имеющего каталога LDAP. Файлы имеющегося каталога LDAP были "
 "сохранены в /var/backups. Результат попытки обновления сохранён в ldif файл "
 "в /var/backups. slapadd могла не сработать из-за проблем с конфигурацией (в "
-"этом случае slapcat тоже бы не сработал) или из-за проблем в файле LDIF. Если "
-"проблема была с файлом LDIF, то вы можете попробовать с ней разобраться и "
-"попытаться выполнить slapadd ещё раз."
+"этом случае slapcat тоже бы не сработал) или из-за проблем в файле LDIF. "
+"Если проблема была с файлом LDIF, то вы можете попробовать с ней разобраться "
+"и попытаться выполнить slapadd ещё раз."
 
 #. Type: note
 #. Description
@@ -450,9 +447,8 @@ msgid ""
 "The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown to "
 "not work well. BDB is the recommended choice of the OpenLDAP developers."
 msgstr ""
-"Тип сервера LDBM плохо поддерживается в OpenLDAP 2.2 и иногда "
-"не работает совсем. Разработчики OpenLDAP рекомендуют использовать "
-"BDB."
+"Тип сервера LDBM плохо поддерживается в OpenLDAP 2.2 и иногда не работает "
+"совсем. Разработчики OpenLDAP рекомендуют использовать BDB."
 
 #. Type: boolean
 #. Description
@@ -461,20 +457,18 @@ msgid ""
 "When using the BDB backend make sure you configure BDB properly. For "
 "information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
 msgstr ""
-"При использовании сервера BDB, убедитесь, что он правильно "
-"настроен. Подробней о настройке BDB "
-"смотрите /usr/share/doc/slapd/README.DB_CONFIG.gz"
+"При использовании сервера BDB, убедитесь, что он правильно настроен. "
+"Подробней о настройке BDB смотрите /usr/share/doc/slapd/README.DB_CONFIG.gz"
 
 #. Type: boolean
 #. Description
 #: ../slapd.templates:20001
 msgid ""
-"If you enable this option an attempt will be made to update your  "
+"If you enable this option an attempt will be made to update your "
 "configuration to use BDB instead of LDBM and convert your databases."
 msgstr ""
-"Если вы ответите утвердительно, то будет сделана попытка "
-"обновления вашей конфигурации для использования BDB вместо LDBM и "
-"преобразование баз данных."
+"Если вы ответите утвердительно, то будет сделана попытка обновления вашей "
+"конфигурации для использования BDB вместо LDBM и преобразование баз данных."
 
 #. Type: select
 #. Description
@@ -488,24 +482,23 @@ msgstr "Используемые серверы баз данных:"
 msgid ""
 "The BDB backend is the recommended choice of the OpenLDAP developers. When "
 "using the BDB backend make sure that you configure the underlying database "
-"for your requirements.  Look into /usr/share/doc/slapd/README.DB_CONFIG.gz"
+"for your requirements. Look into /usr/share/doc/slapd/README.DB_CONFIG.gz"
 msgstr ""
-"Разработчики OpenLDAP рекомендуют использовать "
-"BDB. При использовании сервера BDB, убедитесь, что он правильно "
-"настроен под ваши требования. Подробней о настройке BDB "
-"смотрите /usr/share/doc/slapd/README.DB_CONFIG.gz"
+"Разработчики OpenLDAP рекомендуют использовать BDB. При использовании "
+"сервера BDB, убедитесь, что он правильно настроен под ваши требования. "
+"Подробней о настройке BDB смотрите /usr/share/doc/slapd/README.DB_CONFIG.gz"
 
 #. Type: select
 #. Description
 #: ../slapd.templates:21001
 msgid ""
-"HDB is the next generation of BDB which might replace it sometime in  the "
+"HDB is the next generation of BDB which might replace it sometime in the "
 "future. There are some problems still in the HDB code of the 2.2 series of "
 "OpenLDAP so you should probably stick to BDB until version 2.3."
 msgstr ""
-"HDB является следующим поколением BDB, который однажды заменит "
-"его. С кодом HDB есть некоторые проблемы в ветке 2.2 OpenLDAP, поэтому, "
-"вероятно, лучше остаться на BDB до версии 2.3."
+"HDB является следующим поколением BDB, который однажды заменит его. С кодом "
+"HDB есть некоторые проблемы в ветке 2.2 OpenLDAP, поэтому, вероятно, лучше "
+"остаться на BDB до версии 2.3."
 
 #. Type: select
 #. Description
@@ -541,6 +534,5 @@ msgstr ""
 "который даёт большие возможности и более гибок. back-bdb написан специально "
 "для полного BDB API, и использует некоторые более передовые возможности BDB, "
 "предлагая обработку транзакций, дифференцированный механизм блокировок, а "
-"также улучшение конкурентного доступа и надёжности. Подробней смотрите "
-"/usr/share/doc/slapd/README.DB_CONFIG.gz."
-
+"также улучшение конкурентного доступа и надёжности. Подробней смотрите /usr/"
+"share/doc/slapd/README.DB_CONFIG.gz."

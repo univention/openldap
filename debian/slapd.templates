@@ -10,7 +10,7 @@ Type: select
 Choices: always, when needed, never
 Default: when needed
 _Description: Dump databases to file on upgrade:
- Before upgrading to a new version of the OpenLDAP server the data of 
+ Before upgrading to a new version of the OpenLDAP server the data of
  your LDAP directories can be dumped to plain text files (LDIF format)
  which is a standardized description of that data (LDIF stands for
  LDAP Data Interchange Format).
@@ -100,7 +100,7 @@ _Description: Change configuration to load backend modules?
  If you choose this option, an attempt to fix the configuration will be
  made. If you don't select this, you *must* fix your configuration file
  yourself or slapd (and slapcat if you are upgrading from an older version)
- will fail and the package will not be installed. For more information, 
+ will fail and the package will not be installed. For more information,
  read /usr/share/doc/slapd/README.Debian.
 
 Template: slapd/allow_ldap_v2
@@ -188,7 +188,7 @@ _Description: Change backend type from LDBM to BDB?
  When using the BDB backend make sure you configure BDB properly. For
  information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz
  .
- If you enable this option an attempt will be made to update your 
+ If you enable this option an attempt will be made to update your
  configuration to use BDB instead of LDBM and convert your databases.
 
 Template: slapd/backend
@@ -198,10 +198,10 @@ Default: BDB
 _Description: Database backend to use:
  The BDB backend is the recommended choice of the OpenLDAP developers.
  When using the BDB backend make sure that you configure the underlying
- database for your requirements. 
+ database for your requirements.
  Look into /usr/share/doc/slapd/README.DB_CONFIG.gz
  .
- HDB is the next generation of BDB which might replace it sometime in 
+ HDB is the next generation of BDB which might replace it sometime in
  the future. There are some problems still in the HDB code of the 2.2
  series of OpenLDAP so you should probably stick to BDB until version 2.3.
  .
