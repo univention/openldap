@@ -471,7 +471,7 @@ msgstr ""
 #. Type: boolean
 #. Description
 #: ../slapd.templates:20001
-#, fuzzy
+msgid ""
 "If you enable this option an attempt will be made to update your "
 "configuration to use BDB instead of LDBM and convert your databases."
 msgstr ""
