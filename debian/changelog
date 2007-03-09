@@ -12,8 +12,10 @@ openldap2.3 (2.3.30-5) UNRELEASED; urgency=low
     Closes: #385809.
   * Apply upstream patch to prevent a race condition in slapd when
     shutting down connections.
+  * Update the Brazilian Portuguese debconf translation; thanks to Felipe
+    Augusto van de Wiel.
 
- -- Russ Allbery <rra@debian.org>  Sat,  3 Mar 2007 22:55:11 -0800
+ -- Russ Allbery <rra@debian.org>  Thu,  8 Mar 2007 18:21:02 -0800
 
 openldap2.3 (2.3.30-4) unstable; urgency=low
 
