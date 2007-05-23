@@ -7,8 +7,10 @@ openldap2.3 (2.3.35-1) UNRELEASED; urgency=low
   * Re-enable use of the epoll system call since Debian no longer supports
     2.4 kernels.  This means that the OpenLDAP packages will not work on
     pre-2.6 kernels.
+  * Added commentary and upstream ITS numbers for several patches
+    applicable upstream.
 
- -- Russ Allbery <rra@debian.org>  Wed, 23 May 2007 15:25:59 -0700
+ -- Russ Allbery <rra@debian.org>  Wed, 23 May 2007 15:46:55 -0700
 
 openldap2.3 (2.3.30-5) unstable; urgency=low
 
