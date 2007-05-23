@@ -1,0 +1,16 @@
+Trying a modify operation with the NOOP control set on an entry stored
+in a BDB backend crashed slapd.
+
+ITS#4925
+
+--- openldap-2.3.35/servers/slapd/back-bdb/modify.c	2007/01/02 21:44:00	1.124.2.16
++++ openldap-2.3.35/servers/slapd/back-bdb/modify.c	2007/04/11 18:32:24	1.124.2.17
+@@ -538,6 +538,8 @@ retry:	/* transaction retry */
+ 		} else {
+ 			rs->sr_err = LDAP_X_NO_OPERATION;
+ 			ltid = NULL;
++			/* Only free attrs if they were dup'd.  */
++			if ( dummy.e_attrs == e->e_attrs ) dummy.e_attrs = NULL;
+ 			goto return_results;
+ 		}
+ 	} else {

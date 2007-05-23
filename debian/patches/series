@@ -15,3 +15,5 @@ sasl-default-path -p0
 man-slurpd -p0
 kbind-security-fix -p0
 fix-memleak-on-failed-bind -p0
+ITS4924
+ITS4925
