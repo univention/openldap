@@ -1,8 +1,8 @@
 /* config.c - shell backend configuration file routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/config.c,v 1.16.2.2 2006/01/03 22:16:23 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/config.c,v 1.16.2.3 2007/01/02 21:44:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

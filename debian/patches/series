@@ -5,7 +5,6 @@ ntlm-ldap_h-hack -p0
 ntlm_c
 libldap-makefile_in
 add-autogen-sh
-fixmanpages -p0
 slapi-errorlog-file -p0
 ldapi-socket-place -p0
 read-config-before-dropping-privileges -p0
@@ -14,8 +13,5 @@ wrong-database-location -p0
 index-files-created-as-root -p0
 sasl-default-path -p0
 man-slurpd -p0
-adminguide-docfixes -p0
 kbind-security-fix -p0
 fix-memleak-on-failed-bind -p0
-fix-memleak-acls-uses-sets -p0
-connection-race -p0

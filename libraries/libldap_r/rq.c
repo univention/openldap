@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/rq.c,v 1.17.2.4 2006/05/09 17:29:12 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/rq.c,v 1.17.2.5 2007/01/02 21:43:50 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2006 The OpenLDAP Foundation.
+ * Copyright 2003-2007 The OpenLDAP Foundation.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
  *

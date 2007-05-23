@@ -1,8 +1,8 @@
 /* init.c - initialize monitor backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/init.c,v 1.89.2.16 2006/01/03 22:16:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/init.c,v 1.89.2.18 2007/01/25 12:42:38 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2006 The OpenLDAP Foundation.
+ * Copyright 2001-2007 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -644,6 +644,7 @@ monitor_filter2ndn(
 	Connection	conn = { 0 };
 	OperationBuffer	opbuf;
 	Operation	*op;
+	void	*thrctx;
 	SlapReply	rs = { 0 };
 	slap_callback	cb = { NULL, monitor_filter2ndn_cb, NULL, NULL };
 	int		rc;
@@ -655,17 +656,10 @@ monitor_filter2ndn(
 	}
 
 	op = (Operation *) &opbuf;
-	connection_fake_init( &conn, op, &conn );
+	thrctx = ldap_pvt_thread_pool_context();
+	connection_fake_init( &conn, op, thrctx );
 
 	op->o_tag = LDAP_REQ_SEARCH;
-
-	/* use global malloc for now */
-	if ( op->o_tmpmemctx ) {
-		/* FIXME: connection_fake_init() calls slap_sl_mem_create, so we destroy it for now */
-		slap_sl_mem_destroy( NULL, op->o_tmpmemctx );
-		op->o_tmpmemctx = NULL;
-	}
-	op->o_tmpmfuncs = &ch_mfuncs;
 
 	op->o_bd = be_monitor;
 	if ( base == NULL || BER_BVISNULL( base ) ) {
@@ -704,8 +698,8 @@ monitor_filter2ndn(
 
 	filter_free_x( op, op->ors_filter );
 	op->o_tmpfree( op->ors_filterstr.bv_val, op->o_tmpmemctx );
-	op->o_tmpfree( op->o_req_dn.bv_val, op->o_tmpmemctx );
 	op->o_tmpfree( op->o_req_ndn.bv_val, op->o_tmpmemctx );
+	op->o_tmpfree( op->o_req_dn.bv_val, op->o_tmpmemctx );
 
 	if ( rc != 0 ) {
 		return rc;

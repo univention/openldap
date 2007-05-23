@@ -1,8 +1,8 @@
 /* slap.h - stand alone ldap server include file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.612.2.40 2006/11/07 04:25:02 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.612.2.45 2007/01/03 08:55:03 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1576,7 +1576,7 @@ typedef struct slap_cf_aux_table {
 	int off;
 	char type;
 	char quote;
-	slap_verbmasks *aux;
+	void *aux;
 } slap_cf_aux_table;
 
 #define SLAP_LIMIT_TIME	1
@@ -1746,6 +1746,7 @@ struct slap_backend_db {
 #define SLAP_NOLASTMOD(be)			(SLAP_DBFLAGS(be) & SLAP_DBFLAG_NOLASTMOD)
 #define SLAP_LASTMOD(be)			(!SLAP_NOLASTMOD(be))
 #define SLAP_ISOVERLAY(be)			(SLAP_DBFLAGS(be) & SLAP_DBFLAG_OVERLAY)
+#define SLAP_ISGLOBALOVERLAY(be)	(SLAP_DBFLAGS(be) & SLAP_DBFLAG_GLOBAL_OVERLAY)
 #define SLAP_NO_SCHEMA_CHECK(be)	\
 	(SLAP_DBFLAGS(be) & SLAP_DBFLAG_NO_SCHEMA_CHECK)
 #define	SLAP_GLUE_INSTANCE(be)		\
@@ -1941,7 +1942,8 @@ typedef enum slap_reply_e {
 	REP_EXTENDED,
 	REP_SEARCH,
 	REP_SEARCHREF,
-	REP_INTERMEDIATE
+	REP_INTERMEDIATE,
+	REP_GLUE_RESULT
 } slap_reply_t;
 
 typedef struct rep_sasl_s {
@@ -2260,6 +2262,7 @@ typedef struct slap_overinfo {
 
 /* Should successive callbacks in a chain be processed? */
 #define	SLAP_CB_FREEME		0x04000
+#define	SLAP_CB_BYPASS		0x08800
 #define	SLAP_CB_CONTINUE	0x08000
 
 /*
@@ -2343,6 +2346,19 @@ typedef struct slap_op_header {
 #endif
 } Opheader;
 
+typedef union slap_op_request {
+	req_add_s oq_add;
+	req_bind_s oq_bind;
+	req_compare_s oq_compare;
+	req_modify_s oq_modify;
+	req_modrdn_s oq_modrdn;
+	req_search_s oq_search;
+	req_abandon_s oq_abandon;
+	req_abandon_s oq_cancel;
+	req_extended_s oq_extended;
+	req_pwdexop_s oq_pwdexop;
+} OpRequest;
+
 typedef struct slap_op {
 	Opheader *o_hdr;
 
@@ -2371,18 +2387,7 @@ typedef struct slap_op {
 	struct berval	o_req_dn;	/* DN of target of request */
 	struct berval	o_req_ndn;
 
-	union o_req_u {
-		req_add_s oq_add;
-		req_bind_s oq_bind;
-		req_compare_s oq_compare;
-		req_modify_s oq_modify;
-		req_modrdn_s oq_modrdn;
-		req_search_s oq_search;
-		req_abandon_s oq_abandon;
-		req_abandon_s oq_cancel;
-		req_extended_s oq_extended;
-		req_pwdexop_s oq_pwdexop;
-	} o_request;
+	OpRequest o_request;
 
 /* short hands for union members */
 #define oq_add o_request.oq_add

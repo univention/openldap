@@ -1,8 +1,8 @@
 /* filter.c - routines for parsing and dealing with filters */
-/* $OpenLDAP: pkg/ldap/servers/slapd/filter.c,v 1.125.2.8 2006/01/23 23:52:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/filter.c,v 1.125.2.10 2007/01/02 21:43:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -978,7 +978,7 @@ get_simple_vrFilter(
 	}
 
 	if ( err == LDAP_SUCCESS ) {
-		*filt = ch_malloc( sizeof vrf );
+		*filt = op->o_tmpalloc( sizeof vrf, op->o_tmpmemctx );
 		**filt = vrf;
 	}
 

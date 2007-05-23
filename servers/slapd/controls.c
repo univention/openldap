@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/controls.c,v 1.125.2.20 2006/02/15 21:32:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/controls.c,v 1.125.2.24 2007/01/02 21:43:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -919,7 +919,6 @@ static int parseProxyAuthz (
 	op->o_ndn = dn;
 	ber_dupbv( &op->o_dn, &dn );
 
-
 	Statslog( LDAP_DEBUG_STATS, "%s PROXYAUTHZ dn=\"%s\"\n",
 	    op->o_log_prefix, dn.bv_val, 0, 0, 0 );
 
@@ -1254,6 +1253,8 @@ static int parseValuesReturnFilter (
 	
 	rs->sr_err = get_vrFilter( op, ber,
 		(ValuesReturnFilter **)&(op->o_vrFilter), &rs->sr_text);
+
+	(void) ber_free( ber, 1 );
 
 	if( rs->sr_err != LDAP_SUCCESS ) {
 		if( rs->sr_err == SLAPD_DISCONNECT ) {

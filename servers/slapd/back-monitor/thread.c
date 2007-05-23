@@ -1,8 +1,8 @@
 /* thread.c - deal with thread subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/thread.c,v 1.29.2.5 2006/01/10 01:07:32 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/thread.c,v 1.29.2.6 2007/01/02 21:44:05 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2006 The OpenLDAP Foundation.
+ * Copyright 2001-2007 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *

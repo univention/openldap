@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/close.c,v 1.14.2.3 2006/01/03 22:16:22 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/close.c,v 1.14.2.4 2007/01/02 21:44:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2006 The OpenLDAP Foundation.
+ * Copyright 1999-2007 The OpenLDAP Foundation.
  * Portions Copyright 1999 John C. Quillan.
  * Portions Copyright 2002 myinternet Limited.
  * All rights reserved.

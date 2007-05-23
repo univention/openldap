@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.318.2.26 2006/11/07 04:25:01 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.318.2.30 2007/04/01 21:30:02 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -494,6 +494,7 @@ static struct slap_daemon {
 
 # define SLAP_SOCK_INIT			do { \
 	SLAP_SELECT_CHK_SETSIZE; \
+	FD_ZERO(&slap_daemon.sd_actives); \
 	FD_ZERO(&slap_daemon.sd_readers); \
 	FD_ZERO(&slap_daemon.sd_writers); \
 } while (0)
@@ -1600,7 +1601,7 @@ slap_listener(
 #endif /* LDAP_PF_LOCAL */
 
 	Debug( LDAP_DEBUG_TRACE,
-		">>> slap_listener(%s)",
+		">>> slap_listener(%s)\n",
 		sl->sl_url.bv_val, 0, 0 );
 
 	peername[0] = '\0';
@@ -2123,8 +2124,14 @@ slapd_daemon_task(
 		ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
 
 		if ( rtask && cat.tv_sec ) {
-			time_t diff = difftime( cat.tv_sec, now );
-			if ( diff == 0 ) diff = tdelta;
+			/* NOTE: diff __should__ always be >= 0,
+			 * AFAI understand; however (ITS#4872),
+			 * time_t might be unsigned in some systems,
+			 * while difftime() returns a double */
+			double diff = difftime( cat.tv_sec, now );
+			if ( diff <= 0 ) {
+				diff = tdelta;
+			}
 			if ( tvp == NULL || diff < tv.tv_sec ) {
 				tv.tv_sec = diff;
 				tv.tv_usec = 0;

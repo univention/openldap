@@ -1,10 +1,10 @@
 Index: servers/slapd/kerberos.c
 ===================================================================
---- servers/slapd/kerberos.c.orig
-+++ servers/slapd/kerberos.c
-@@ -41,6 +41,10 @@
- 
- 	Debug( LDAP_DEBUG_TRACE, "=> kerberosv4_ldap_auth\n", 0, 0, 0 );
+--- servers/slapd/kerberos.c.orig	2007-05-23 13:05:50.000000000 -0700
++++ servers/slapd/kerberos.c	2007-05-23 13:05:54.000000000 -0700
+@@ -45,6 +45,10 @@ krbv4_ldap_auth(
+ 		return LDAP_OTHER;
+ 	}
  
 +	if( cred->len > sizeof(ktxt->dat) ) {
 +		return LDAP_OTHER;

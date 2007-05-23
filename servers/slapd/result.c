@@ -1,8 +1,8 @@
 /* result.c - routines to send ldap results, errors, and referrals */
-/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.244.2.20 2006/05/15 15:51:59 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.244.2.22 2007/01/02 21:43:57 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1341,11 +1341,15 @@ slap_send_search_reference( Operation *op, SlapReply *rs )
 	bytes = send_ldap_ber( op->o_conn, ber );
 	ber_free_buf( ber );
 
-	ldap_pvt_thread_mutex_lock( &slap_counters.sc_sent_mutex );
-	ldap_pvt_mp_add_ulong( slap_counters.sc_bytes, (unsigned long)bytes );
-	ldap_pvt_mp_add_ulong( slap_counters.sc_refs, 1 );
-	ldap_pvt_mp_add_ulong( slap_counters.sc_pdu, 1 );
-	ldap_pvt_thread_mutex_unlock( &slap_counters.sc_sent_mutex );
+	if ( bytes < 0 ) {
+		rc = LDAP_UNAVAILABLE;
+	} else {
+		ldap_pvt_thread_mutex_lock( &slap_counters.sc_sent_mutex );
+		ldap_pvt_mp_add_ulong( slap_counters.sc_bytes, (unsigned long)bytes );
+		ldap_pvt_mp_add_ulong( slap_counters.sc_refs, 1 );
+		ldap_pvt_mp_add_ulong( slap_counters.sc_pdu, 1 );
+		ldap_pvt_thread_mutex_unlock( &slap_counters.sc_sent_mutex );
+	}
 #ifdef LDAP_CONNECTIONLESS
 	}
 #endif

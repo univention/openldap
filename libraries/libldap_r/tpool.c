@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/tpool.c,v 1.30.2.15 2006/05/09 17:47:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/tpool.c,v 1.30.2.19 2007/04/01 09:53:06 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -491,12 +491,7 @@ ldap_int_thread_pool_wrapper (
 		}
 	}
 
-	for ( i=0; i<MAXKEYS && ltc_key[i].ltk_key; i++ ) {
-		if (ltc_key[i].ltk_free)
-			ltc_key[i].ltk_free(
-				ltc_key[i].ltk_key,
-				ltc_key[i].ltk_data );
-	}
+	ldap_pvt_thread_pool_context_reset( ltc_key );
 
 	thread_keys[keyslot].ctx = NULL;
 	thread_keys[keyslot].id = tid_zero;
@@ -601,10 +596,25 @@ int ldap_pvt_thread_pool_setkey(
 	if ( !ctx || !key ) return EINVAL;
 
 	for ( i=0; i<MAXKEYS; i++ ) {
-		if ( !ctx[i].ltk_key || ctx[i].ltk_key == key ) {
-			ctx[i].ltk_key = key;
-			ctx[i].ltk_data = data;
-			ctx[i].ltk_free = kfree;
+		if (( data && !ctx[i].ltk_key ) || ctx[i].ltk_key == key ) {
+			if ( data || kfree ) {
+				ctx[i].ltk_key = key;
+				ctx[i].ltk_data = data;
+				ctx[i].ltk_free = kfree;
+			} else {
+				int j;
+				for ( j=i+1; j<MAXKEYS; j++ )
+					if ( !ctx[j].ltk_key ) break;
+				j--;
+				if ( j != i ) {
+					ctx[i].ltk_key = ctx[j].ltk_key;
+					ctx[i].ltk_data = ctx[j].ltk_data;
+					ctx[i].ltk_free = ctx[j].ltk_free;
+				}
+				ctx[j].ltk_key = NULL;
+				ctx[j].ltk_data = NULL;
+				ctx[j].ltk_free = NULL;
+			}
 			return 0;
 		}
 	}
@@ -665,7 +675,9 @@ void ldap_pvt_thread_pool_context_reset( void *vctx )
 	ldap_int_thread_key_t *ctx = vctx;
 	int i;
 
-	for ( i=0; i<MAXKEYS && ctx[i].ltk_key; i++) {
+	for ( i=MAXKEYS-1; i>=0; i--) {
+		if ( ctx[i].ltk_key == NULL )
+			continue;
 		if ( ctx[i].ltk_free )
 			ctx[i].ltk_free( ctx[i].ltk_key, ctx[i].ltk_data );
 		ctx[i].ltk_key = NULL;

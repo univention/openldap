@@ -1,8 +1,8 @@
 /* result.c - wait for an ldap result */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/result.c,v 1.99.2.18 2006/11/07 04:06:22 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/result.c,v 1.99.2.23 2007/03/13 08:53:15 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -369,13 +369,18 @@ wait4msg(
 		}
 
 		if ( rc == LDAP_MSG_X_KEEP_LOOKING && tvp != NULL ) {
+			time_t	delta_time;
+
 			tmp_time = time( NULL );
-			tv0.tv_sec -= ( tmp_time - start_time );
-			if ( tv0.tv_sec <= 0 ) {
+			delta_time = tmp_time - start_time;
+
+			/* do not assume time_t is signed */
+			if ( tv0.tv_sec <= delta_time ) {
 				rc = 0;	/* timed out */
 				ld->ld_errno = LDAP_TIMEOUT;
 				break;
 			}
+			tv0.tv_sec -= delta_time;
 			tv.tv_sec = tv0.tv_sec;
 
 			Debug( LDAP_DEBUG_TRACE, "wait4msg ld %p %ld secs to go\n",
@@ -566,7 +571,7 @@ nextresp2:
 								lr->lr_msgid, 0, 0);
 						}
 
-						/* We sucessfully chased the reference */
+						/* We successfully chased the reference */
 						v3ref = V3REF_SUCCESS;
 					}
 				}
@@ -612,9 +617,6 @@ nextresp2:
 					if( LDAP_BOOL_GET(&ld->ld_options, LDAP_BOOL_REFERRALS)
 							 || (lr->lr_parent != NULL) )
 					{
-						/* Assume referral not chased and return it to app */
-						v3ref = V3REF_TOAPP;
-
 						/* Get the referral list */
 						if( ber_scanf( &tmpber, "{v}", &refs) == LBER_ERROR) {
 							rc = LDAP_DECODING_ERROR;
@@ -630,11 +632,15 @@ nextresp2:
 							    0, &lr->lr_res_error, &hadref );
 							lr->lr_status = LDAP_REQST_COMPLETED;
 							Debug( LDAP_DEBUG_TRACE,
-								"read1msg: referral chased, mark request completed, ld %p msgid %d\n",
-								(void *)ld, lr->lr_msgid, 0);
+								"read1msg: referral %s chased, "
+								"mark request completed, ld %p msgid %d\n",
+								hadref ? "" : "not",
+								(void *)ld, lr->lr_msgid);
 							if( refer_cnt > 0) {
 								/* Referral successfully chased */
 								v3ref = V3REF_SUCCESS;
+							} else {
+								refer_cnt = 0;
 							}
 						}
 					}
@@ -656,11 +662,13 @@ nextresp2:
 	 * go through the following code.  This code also chases V2 referrals
 	 * and checks if all referrals have been chased.
 	 */
-	if ( (tag != LDAP_RES_SEARCH_ENTRY) && (v3ref != V3REF_TOAPP) &&
-		(tag != LDAP_RES_INTERMEDIATE ))
+	if ( tag != LDAP_RES_SEARCH_ENTRY &&
+		tag != LDAP_RES_SEARCH_REFERENCE &&
+		tag != LDAP_RES_INTERMEDIATE )
 	{
 		/* For a v3 search referral/reference, only come here if already chased it */
 		if ( ld->ld_version >= LDAP_VERSION2 &&
+			v3ref != V3REF_TOAPP &&
 			( lr->lr_parent != NULL ||
 			LDAP_BOOL_GET(&ld->ld_options, LDAP_BOOL_REFERRALS) ) )
 		{

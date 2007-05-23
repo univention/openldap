@@ -1,8 +1,8 @@
-Index: openldap2.3-2.3.25/configure.in
+Index: openldap2.3/configure.in
 ===================================================================
---- openldap2.3-2.3.25.orig/configure.in	2006-08-02 22:45:12.332314072 +0200
-+++ openldap2.3-2.3.25/configure.in	2006-08-02 22:46:36.054586352 +0200
-@@ -1486,6 +1486,7 @@
+--- openldap2.3.orig/configure.in	2007-05-23 13:06:38.000000000 -0700
++++ openldap2.3/configure.in	2007-05-23 13:06:40.000000000 -0700
+@@ -1489,6 +1489,7 @@ case $ol_with_threads in auto | yes | po
  		
  dnl		OL_PTHREAD_TRY([-mt],		[ol_cv_pthread_mt])
  		OL_PTHREAD_TRY([-kthread],	[ol_cv_pthread_kthread])

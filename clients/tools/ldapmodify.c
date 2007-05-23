@@ -1,8 +1,8 @@
 /* ldapmodify.c - generic program to modify or add entries using LDAP */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodify.c,v 1.158.2.9 2006/04/04 03:23:28 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodify.c,v 1.158.2.12 2007/04/01 22:44:23 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -389,8 +389,8 @@ main( int argc, char **argv )
 			fprintf( rejfp, "\n%s\n", rejbuf );
 		}
 
-		if (rejfp) free( rejbuf );
-		free( rbuf );
+		if (rejfp) ber_memfree( rejbuf );
+		ber_memfree( rbuf );
 	}
 
 #ifdef LDAP_GROUP_TRANSACTION
@@ -519,7 +519,7 @@ process_ldif_rec( char *rbuf, int count )
 				printf(_("%s: skipping change record for entry: %s\n"),
 					prog, dn);
 				printf(_("\t(LDAP host/port does not match replica: lines)\n"));
-				free( dn );
+				ber_memfree( dn );
 				ber_memfree( type );
 				ber_memfree( val.bv_val );
 				return( 0 );
@@ -727,13 +727,13 @@ end_line:
 	}
 
 	if ( dn != NULL ) {
-		free( dn );
+		ber_memfree( dn );
 	}
 	if ( newrdn != NULL ) {
-		free( newrdn );
+		ber_memfree( newrdn );
 	}
 	if ( newsup != NULL ) {
-		free( newsup );
+		ber_memfree( newsup );
 	}
 	if ( pmods != NULL ) {
 		ldap_mods_free( pmods, 1 );
@@ -1155,6 +1155,7 @@ static int process_response(
 
 		if ( rc == -1 ) {
 			ldap_get_option( ld, LDAP_OPT_ERROR_NUMBER, &rc );
+			tool_perror( "ldap_result", rc, NULL, NULL, NULL, NULL );
 			return rc;
 		}
 

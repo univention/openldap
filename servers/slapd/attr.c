@@ -1,8 +1,8 @@
 /* attr.c - routines for dealing with attributes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/attr.c,v 1.100.2.10 2006/01/03 22:16:13 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/attr.c,v 1.100.2.12 2007/02/21 21:32:21 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -208,7 +208,9 @@ attr_merge(
 		 * of nvals and the value of (*a)->a_nvals must be consistent
 		 */
 		assert( ( nvals == NULL && (*a)->a_nvals == (*a)->a_vals )
-				|| ( nvals != NULL && (*a)->a_nvals != (*a)->a_vals ) );
+				|| ( nvals != NULL && (
+					( (*a)->a_vals == NULL && (*a)->a_nvals == NULL )
+					|| ( (*a)->a_nvals != (*a)->a_vals ) ) ) );
 	}
 
 	rc = value_add( &(*a)->a_vals, vals );

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.144.2.16 2006/11/12 01:58:18 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.144.2.19 2007/01/02 21:43:57 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * Portions Copyright 2000 Mark Adamson, Carnegie Mellon.
  * All rights reserved.
  *
@@ -1136,6 +1136,7 @@ is_dn:		bv.bv_len = uri->bv_len - (bv.bv_val - uri->bv_val);
 
 		} else {
 			BER_BVSTR( &group_oc, SLAPD_GROUP_CLASS );
+			BER_BVSTR( &member_at, SLAPD_GROUP_ATTR );
 		}
 		group_dn.bv_val++;
 		group_dn.bv_len = uri->bv_len - ( group_dn.bv_val - uri->bv_val );
@@ -1871,14 +1872,18 @@ slap_sasl_check_authz( Operation *op,
 	AttributeDescription *ad,
 	struct berval *authc )
 {
-	int rc;
-	BerVarray vals = NULL;
+	int		rc,
+			do_not_cache = op->o_do_not_cache;
+	BerVarray	vals = NULL;
 
 	Debug( LDAP_DEBUG_TRACE,
 	   "==>slap_sasl_check_authz: does %s match %s rule in %s?\n",
 	   assertDN->bv_val, ad->ad_cname.bv_val, searchDN->bv_val);
 
+	/* ITS#4760: don't cache group access */
+	op->o_do_not_cache = 1;
 	rc = backend_attribute( op, NULL, searchDN, ad, &vals, ACL_AUTH );
+	op->o_do_not_cache = do_not_cache;
 	if( rc != LDAP_SUCCESS ) goto COMPLETE;
 
 	/* Check if the *assertDN matches any *vals */

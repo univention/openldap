@@ -1,8 +1,8 @@
 .TH SLAPD-META 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2006 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2007 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-meta.5,v 1.29.2.14 2006/10/24 18:02:38 ando Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-meta.5,v 1.29.2.16 2007/04/06 03:57:19 quanah Exp $
 .\"
 .\" Portions of this document should probably be moved to slapd-ldap(5)
 .\" and maybe manual pages for librewrite.
@@ -488,7 +488,7 @@ The rule
 .LP
 .RS
 .nf
-access to dn="<dn>" attr=<attr>
+access to dn="<dn>" attrs=<attr>
        by dnattr=<dnattr> read
        by * none
 .fi

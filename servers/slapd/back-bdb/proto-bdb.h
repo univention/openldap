@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.111.2.9 2006/01/03 22:16:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.111.2.11 2007/01/25 12:42:38 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2006 The OpenLDAP Foundation.
+ * Copyright 2000-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -574,7 +574,9 @@ int bdb_cache_entry_db_unlock(
 #ifdef BDB_REUSE_LOCKERS
 
 #define bdb_locker_id				BDB_SYMBOL(locker_id)
+#define bdb_locker_flush			BDB_SYMBOL(locker_flush)
 int bdb_locker_id( Operation *op, DB_ENV *env, u_int32_t *locker );
+void bdb_locker_flush( DB_ENV *env );
 
 #define	LOCK_ID_FREE(env, locker)	((void)0)
 #define	LOCK_ID(env, locker)	bdb_locker_id(op, env, locker)

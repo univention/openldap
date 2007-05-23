@@ -1,8 +1,8 @@
 /* accesslog.c - log operations for audit/history purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/accesslog.c,v 1.2.2.21 2006/11/07 03:03:12 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/accesslog.c,v 1.2.2.23 2007/01/25 12:42:01 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2006 The OpenLDAP Foundation.
+ * Copyright 2005-2007 The OpenLDAP Foundation.
  * Portions copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -1455,7 +1455,6 @@ accesslog_db_open(
 		attrs_free( e->e_attrs );
 		ch_free( e );
 	}
-	ldap_pvt_thread_pool_context_reset( thrctx );
 	return rc;
 }
 

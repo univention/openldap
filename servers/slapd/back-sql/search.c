@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/search.c,v 1.81.2.11 2006/08/17 17:53:17 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/search.c,v 1.81.2.13 2007/03/05 18:39:51 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2006 The OpenLDAP Foundation.
+ * Copyright 1999-2007 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -2183,7 +2183,6 @@ backsql_search( Operation *op, SlapReply *rs )
 		case LDAP_SCOPE_SUBTREE:
 			/* FIXME: this should never fail... */
 			if ( !dnIsSuffix( &eid->eid_ndn, &op->o_req_ndn ) ) {
-				assert( 0 );
 				goto next_entry2;
 			}
 			break;

@@ -1,8 +1,8 @@
 /* conn.c - deal with connection subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/conn.c,v 1.56.2.5 2006/01/06 19:03:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/conn.c,v 1.56.2.7 2007/01/23 00:34:13 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2006 The OpenLDAP Foundation.
+ * Copyright 2001-2007 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -401,8 +401,10 @@ conn_create(
 			c->c_dn.bv_len ? c->c_dn.bv_val : SLAPD_ANONYMOUS,
 			
 			c->c_listener_url.bv_val,
-			c->c_peer_domain.bv_val,
-			c->c_peer_name.bv_val,
+			BER_BVISNULL( &c->c_peer_domain )
+				? "" : c->c_peer_domain.bv_val,
+			BER_BVISNULL( &c->c_peer_name )
+				? "" : c->c_peer_name.bv_val,
 			c->c_sock_name.bv_val,
 			
 			buf2,

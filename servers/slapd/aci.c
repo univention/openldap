@@ -1,8 +1,8 @@
 /* aci.c - routines to parse and check acl's */
-/* $OpenLDAP: pkg/ldap/servers/slapd/aci.c,v 1.1.2.7 2006/01/03 22:16:12 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/aci.c,v 1.1.2.9 2007/02/13 22:41:20 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -291,10 +291,8 @@ aci_list_get_rights(
 	slap_access_t	*mask;
 	int		i, found;
 
-	if ( attr == NULL || BER_BVISEMPTY( attr )
-			|| ber_bvstrcasecmp( attr, &aci_bv[ ACI_BV_ENTRY ] ) == 0 )
-	{
-		attr = &aci_bv[ ACI_BV_BR_ENTRY ];
+	if ( attr == NULL || BER_BVISEMPTY( attr ) ) {
+		attr = &aci_bv[ ACI_BV_ENTRY ];
 	}
 
 	found = 0;
@@ -433,7 +431,7 @@ aci_mask(
 	   This routine now supports scope={ENTRY,CHILDREN}
 	   with the semantics:
 	     - ENTRY applies to "entry" and "subtree";
-	     - CHILDREN aplies to "children" and "subtree"
+	     - CHILDREN applies to "children" and "subtree"
 	 */
 
 	/* check that the aci has all 5 components */
@@ -1027,7 +1025,7 @@ bv_get_tail(
  *    action    := perms;attr[[;perms;attr]...]
  *    perms     := perm[[,perm]...]
  *    perm      := c|s|r|w|x
- *    attr      := attributeType|[all]
+ *    attr      := attributeType|"[all]"
  *    type      :=  public|users|self|dnattr|group|role|set|set-ref|
  *                  access_id|subtree|onelevel|children
  */
@@ -1110,6 +1108,11 @@ OpenLDAPaciValidateRight(
 				continue;
 			}
 
+			/* "[entry]" is tolerated for backward compatibility */
+			if ( ber_bvstrcasecmp( &bv, &aci_bv[ ACI_BV_BR_ENTRY ] ) == 0 ) {
+				continue;
+			}
+
 			if ( slap_bv2ad( &bv, &ad, &text ) != LDAP_SUCCESS ) {
 				return LDAP_INVALID_SYNTAX;
 			}
@@ -1166,6 +1169,10 @@ OpenLDAPaciNormalizeRight(
 			/* could be "[all]" or an attribute description */
 			if ( ber_bvstrcasecmp( &bv, &aci_bv[ ACI_BV_BR_ALL ] ) == 0 ) {
 				bv = aci_bv[ ACI_BV_BR_ALL ];
+
+			/* "[entry]" is tolerated for backward compatibility */
+			} else if ( ber_bvstrcasecmp( &bv, &aci_bv[ ACI_BV_BR_ENTRY ] ) == 0 ) {
+				bv = aci_bv[ ACI_BV_ENTRY ];
 
 			} else {
 				AttributeDescription	*ad = NULL;
@@ -1456,6 +1463,8 @@ OpenLDAPaciPrettyNormal(
 			freetype = 0;
 	char		*ptr;
 
+	BER_BVZERO( out );
+
 	if ( BER_BVISEMPTY( val ) ) {
 		return LDAP_INVALID_SYNTAX;
 	}
@@ -1626,7 +1635,7 @@ OpenLDAPaciPrettyNormal(
 	out->bv_len = 
 		oid.bv_len + STRLENOF( "#" )
 		+ scope.bv_len + STRLENOF( "#" )
-		+ rights.bv_len + STRLENOF( "#" )
+		+ nrights.bv_len + STRLENOF( "#" )
 		+ ntype.bv_len + STRLENOF( "#" )
 		+ nsubject.bv_len;
 

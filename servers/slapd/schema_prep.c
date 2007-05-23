@@ -1,8 +1,8 @@
 /* schema_prep.c - load builtin schema */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.141.2.14 2006/01/03 22:16:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.141.2.16 2007/01/02 21:43:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -367,7 +367,7 @@ static struct slap_schema_oc_map {
 	{ "subschema", "( 2.5.20.1 NAME 'subschema' "
 		"DESC 'RFC2252: controlling subschema (sub)entry' "
 		"AUXILIARY "
-		"MAY ( dITStructureRules $ nameForms $ ditContentRules $ "
+		"MAY ( dITStructureRules $ nameForms $ dITContentRules $ "
 			"objectClasses $ attributeTypes $ matchingRules $ "
 			"matchingRuleUse ) )",
 		subentryObjectClass, SLAP_OC_OPERATIONAL,
@@ -744,7 +744,7 @@ static struct slap_schema_ad_map {
 		offsetof(struct slap_internal_schema, si_ad_subtreeSpecification) },
 
 	/* subschema subentry attributes */
-	{ "ditStructureRules", "( 2.5.21.1 NAME 'dITStructureRules' "
+	{ "dITStructureRules", "( 2.5.21.1 NAME 'dITStructureRules' "
 			"DESC 'RFC2252: DIT structure rules' "
 			"EQUALITY integerFirstComponentMatch "
 			"SYNTAX 1.3.6.1.4.1.1466.115.121.1.17 "
@@ -753,7 +753,7 @@ static struct slap_schema_ad_map {
 		NULL, NULL,
 		NULL, NULL, NULL, NULL, NULL,
 		offsetof(struct slap_internal_schema, si_ad_ditStructureRules) },
-	{ "ditContentRules", "( 2.5.21.2 NAME 'dITContentRules' "
+	{ "dITContentRules", "( 2.5.21.2 NAME 'dITContentRules' "
 			"DESC 'RFC2252: DIT content rules' "
 			"EQUALITY objectIdentifierFirstComponentMatch "
 			"SYNTAX 1.3.6.1.4.1.1466.115.121.1.16 USAGE directoryOperation )",

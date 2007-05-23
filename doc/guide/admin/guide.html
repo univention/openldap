@@ -23,7 +23,7 @@
 <DIV CLASS="title">
 <H1 CLASS="doc-title">OpenLDAP Software 2.3 Administrator's Guide</H1>
 <ADDRESS CLASS="doc-author">The OpenLDAP Project &lt;<A HREF="http://www.openldap.org/">http://www.openldap.org/</A>&gt;</ADDRESS>
-<ADDRESS CLASS="doc-modified">3 January 2006</ADDRESS>
+<ADDRESS CLASS="doc-modified">9 April 2007</ADDRESS>
 <BR CLEAR="All">
 </DIV>
 <DIV CLASS="contents">
@@ -1256,10 +1256,11 @@ SQL Programmable backend
 <PRE>
         olcSyncrepl: rid=&lt;replica ID&gt;
                 provider=ldap[s]://&lt;hostname&gt;[:port]
+                [starttls=yes|critical]
                 [type=refreshOnly|refreshAndPersist]
                 [interval=dd:hh:mm:ss]
                 [retry=[&lt;retry interval&gt; &lt;# of retries&gt;]+]
-                [searchbase=&lt;base DN&gt;]
+                searchbase=&lt;base DN&gt;
                 [filter=&lt;filter str&gt;]
                 [scope=sub|one|base]
                 [attrs=&lt;attr list&gt;]
@@ -1279,6 +1280,7 @@ SQL Programmable backend
 <P>This directive specifies the current database as a replica of the master content by establishing the current <EM>slapd</EM>(8) as a replication consumer site running a syncrepl replication engine. The master database is located at the replication provider site specified by the <TT>provider</TT> parameter. The replica database is kept up-to-date with the master content using the LDAP Content Synchronization protocol. See <TT>draft-zeilenga-ldup-sync-xx.txt</TT> (<EM>a work in progress</EM>) for more information on the protocol.</P>
 <P>The <TT>rid</TT> parameter is used for identification of the current <TT>syncrepl</TT> directive within the replication consumer server, where <TT>&lt;replica ID&gt;</TT> uniquely identifies the syncrepl specification described by the current <TT>syncrepl</TT> directive. <TT>&lt;replica ID&gt;</TT> is non-negative and is no more than three decimal digits in length.</P>
 <P>The <TT>provider</TT> parameter specifies the replication provider site containing the master content as an LDAP URI. The <TT>provider</TT> parameter specifies a scheme, a host and optionally a port where the provider slapd instance can be found. Either a domain name or IP address may be used for &lt;hostname&gt;. Examples are <TT>ldap://provider.example.com:389</TT> or <TT>ldaps://192.168.1.1:636</TT>. If &lt;port&gt; is not given, the standard LDAP port number (389 or 636) is used. Note that the syncrepl uses a consumer-initiated protocol, and hence its specification is located at the consumer site, whereas the <TT>replica</TT> specification is located at the provider site. <TT>syncrepl</TT> and <TT>replica</TT> directives define two independent replication mechanisms. They do not represent the replication peers of each other.</P>
+<P>The <TT>starttls</TT> parameter specifies use of the StartTLS extended operation to establish a TLS session before Binding to the provider. If the StartTLS request fails and the <TT>critical</TT> argument was used, the session will be aborted. Otherwise the syncrepl session continues without TLS.</P>
 <P>The content of the syncrepl replica is defined using a search specification as its result set. The consumer slapd will send search requests to the provider slapd according to the search specification. The search specification includes <TT>searchbase</TT>, <TT>scope</TT>, <TT>filter</TT>, <TT>attrs</TT>, <TT>attrsonly</TT>, <TT>sizelimit</TT>, and <TT>timelimit</TT> parameters as in the normal search specification. The <TT>searchbase</TT> parameter has no default value and must always be specified. The <TT>scope</TT> defaults to <TT>sub</TT>, the <TT>filter</TT> defaults to <TT>(objectclass=*)</TT>, <TT>attrs</TT> defaults to <TT>&quot;*,+&quot;</TT> to replicate all user and operational attributes, and <TT>attrsonly</TT> is unset by default. Both <TT>sizelimit</TT> and <TT>timelimit</TT> default to &quot;unlimited&quot;, and only positive integers or &quot;unlimited&quot; may be specified.</P>
 <P>The LDAP Content Synchronization protocol has two operation types: <TT>refreshOnly</TT> and <TT>refreshAndPersist</TT>. The operation type is specified by the <TT>type</TT> parameter. In the <TT>refreshOnly</TT> operation, the next synchronization search operation is periodically rescheduled at an interval time after each synchronization operation finishes. The interval is specified by the <TT>interval</TT> parameter. It is set to one day by default. In the <TT>refreshAndPersist</TT> operation, a synchronization search remains persistent in the provider slapd. Further updates to the master replica will generate <TT>searchResultEntry</TT> to the consumer slapd as the search responses to the persistent synchronization search.</P>
 <P>If an error occurs during replication, the consumer will attempt to reconnect according to the retry parameter which is a list of the &lt;retry interval&gt; and &lt;# of retries&gt; pairs. For example, retry=&quot;60 10 300 3&quot; lets the consumer retry every 60 seconds for the first 10 times and then retry every 300 seconds for the next three times before stop retrying. + in &lt;#  of retries&gt; means indefinite number of retries until success.</P>
@@ -1689,7 +1691,7 @@ needed to modify/rename
 <P>Also note that if no <TT>olcAccess: to</TT> directive matches or no <TT>by &lt;who&gt;</TT> clause, <B>access is denied</B>.  That is, every <TT>olcAccess: to</TT> directive ends with an implicit <TT>by * none</TT> clause and every access list ends with an implicit <TT>olcAccess: to * by * none</TT> directive.</P>
 <P>The next example again shows the importance of ordering, both of the access directives and the <TT>by &lt;who&gt;</TT> clauses.  It also shows the use of an attribute selector to grant access to a specific attribute and various <TT>&lt;who&gt;</TT> selectors.</P>
 <PRE>
-        olcAccess: to dn.subtree=&quot;dc=example,dc=com&quot; attr=homePhone
+        olcAccess: to dn.subtree=&quot;dc=example,dc=com&quot; attrs=homePhone
                 by self write
                 by dn.children=dc=example,dc=com&quot; search
                 by peername.regex=IP:10\..+ read
@@ -1701,14 +1703,14 @@ needed to modify/rename
 <P>This example applies to entries in the &quot;<TT>dc=example,dc=com</TT>&quot; subtree. To all attributes except <TT>homePhone</TT>, an entry can write to itself, entries under <TT>example.com</TT> entries can search by them, anybody else has no access (implicit <TT>by * none</TT>) excepting for authentication/authorization (which is always done anonymously).  The <TT>homePhone</TT> attribute is writable by the entry, searchable by entries under <TT>example.com</TT>, readable by clients connecting from network 10, and otherwise not readable (implicit <TT>by * none</TT>).  All other access is denied by the implicit <TT>access to * by * none</TT>.</P>
 <P>Sometimes it is useful to permit a particular DN to add or remove itself from an attribute. For example, if you would like to create a group and allow people to add and remove only their own DN from the member attribute, you could accomplish it with an access directive like this:</P>
 <PRE>
-        olcAccess: to attr=member,entry
+        olcAccess: to attrs=member,entry
                 by dnattr=member selfwrite
 </PRE>
 <P>The dnattr <TT>&lt;who&gt;</TT> selector says that the access applies to entries listed in the <TT>member</TT> attribute. The <TT>selfwrite</TT> access selector says that such members can only add or delete their own DN from the attribute, not other values. The addition of the entry attribute is required because access to the entry is required to access any of the entry's attributes.</P>
 <H3><A NAME="Access Control Ordering">5.3.6. Access Control Ordering</A></H3>
 <P>Since the ordering of <TT>olcAccess</TT> directives is essential to their proper evaluation, but LDAP attributes normally do not preserve the ordering of their values, OpenLDAP uses a custom schema extension to maintain a fixed ordering of these values. This ordering is maintained by prepending a <TT>&quot;{X}&quot;</TT> numeric index to each value, similarly to the approach used for ordering the configuration entries. These index tags are maintained automatically by slapd and do not need to be specified when originally defining the values. For example, when you create the settings</P>
 <PRE>
-        olcAccess: to attr=member,entry
+        olcAccess: to attrs=member,entry
                 by dnattr=member selfwrite
         olcAccess: to dn.children=&quot;dc=example,dc=com&quot;
                 by * search
@@ -1717,7 +1719,7 @@ needed to modify/rename
 </PRE>
 <P>when you read them back using slapcat or ldapsearch they will contain</P>
 <PRE>
-        olcAccess: {0}to attr=member,entry
+        olcAccess: {0}to attrs=member,entry
                 by dnattr=member selfwrite
         olcAccess: {1}to dn.children=&quot;dc=example,dc=com&quot;
                 by * search
@@ -1747,7 +1749,7 @@ needed to modify/rename
 </PRE>
 <P>This example deletes whatever rule is in value #1 of the <TT>olcAccess</TT> attribute (regardless of its value) and adds a new value that is explicitly inserted as value #1. The result will be</P>
 <PRE>
-        olcAccess: {0}to attr=member,entry
+        olcAccess: {0}to attrs=member,entry
                 by dnattr=member selfwrite
         olcAccess: {1}to dn.children=&quot;dc=example,dc=com&quot;
                 by * write
@@ -1804,7 +1806,7 @@ needed to modify/rename
  30.    olcDbIndex: uid pres,eq
  31.    olcDbIndex: cn,sn,uid pres,eq,approx,sub
  32.    olcDbIndex: objectClass eq
- 33.    olcAccess: to attr=userPassword
+ 33.    olcAccess: to attrs=userPassword
  34.      by self write
  35.      by anonymous auth
  36.      by dn.base=&quot;cn=Admin,dc=example,dc=com&quot; write
@@ -2594,7 +2596,7 @@ needed to modify/rename
 <P>Also note that if no <TT>access to</TT> directive matches or no <TT>by &lt;who&gt;</TT> clause, <B>access is denied</B>.  That is, every <TT>access to</TT> directive ends with an implicit <TT>by * none</TT> clause and every access list ends with an implicit <TT>access to * by * none</TT> directive.</P>
 <P>The next example again shows the importance of ordering, both of the access directives and the <TT>by &lt;who&gt;</TT> clauses.  It also shows the use of an attribute selector to grant access to a specific attribute and various <TT>&lt;who&gt;</TT> selectors.</P>
 <PRE>
-        access to dn.subtree=&quot;dc=example,dc=com&quot; attr=homePhone
+        access to dn.subtree=&quot;dc=example,dc=com&quot; attrs=homePhone
                 by self write
                 by dn.children=&quot;dc=example,dc=com&quot; search
                 by peername.regex=IP:10\..+ read
@@ -2606,7 +2608,7 @@ needed to modify/rename
 <P>This example applies to entries in the &quot;<TT>dc=example,dc=com</TT>&quot; subtree. To all attributes except <TT>homePhone</TT>, an entry can write to itself, entries under <TT>example.com</TT> entries can search by them, anybody else has no access (implicit <TT>by * none</TT>) excepting for authentication/authorization (which is always done anonymously).  The <TT>homePhone</TT> attribute is writable by the entry, searchable by entries under <TT>example.com</TT>, readable by clients connecting from network 10, and otherwise not readable (implicit <TT>by * none</TT>).  All other access is denied by the implicit <TT>access to * by * none</TT>.</P>
 <P>Sometimes it is useful to permit a particular DN to add or remove itself from an attribute. For example, if you would like to create a group and allow people to add and remove only their own DN from the member attribute, you could accomplish it with an access directive like this:</P>
 <PRE>
-        access to attr=member,entry
+        access to attrs=member,entry
                 by dnattr=member selfwrite
 </PRE>
 <P>The dnattr <TT>&lt;who&gt;</TT> selector says that the access applies to entries listed in the <TT>member</TT> attribute. The <TT>selfwrite</TT> access selector says that such members can only add or delete their own DN from the attribute, not other values. The addition of the entry attribute is required because access to the entry is required to access any of the entry's attributes.</P>
@@ -2641,7 +2643,7 @@ needed to modify/rename
  21.    index cn,sn,uid pres,eq,approx,sub
  22.    index objectClass eq
  23.    # database access control definitions
- 24.    access to attr=userPassword
+ 24.    access to attrs=userPassword
  25.            by self write
  26.            by anonymous auth
  27.            by dn.base=&quot;cn=Admin,dc=example,dc=com&quot; write
@@ -3709,7 +3711,7 @@ object identifier
 <P>Anonymous access is requested by providing no name and no password to the &quot;simple&quot; bind operation.  Unauthenticated access is requested by providing a name but no password.  Authenticated access is requested by providing a valid name and password.</P>
 <P>An anonymous bind results in an <EM>anonymous</EM> authorization association.  Anonymous bind mechanism is enabled by default, but can be disabled by specifying &quot;<TT>disallow bind_anon</TT>&quot; in <EM>slapd.conf</EM>(5).  Note that disabling the anonymous bind mechanism does not prevent anonymous access to the directory.  To require authentication to access the directory, one should instead specify &quot;<TT>require authc</TT>&quot;.</P>
 <P>An unauthenticated bind also results in an <EM>anonymous</EM> authorization association.  Unauthenticated bind mechanism is disabled by default, but can be enabled by specifying &quot;<TT>allow bind_anon_cred</TT>&quot; in <EM>slapd.conf</EM>(5).  As a number of LDAP applications mistakenly generate unauthenticated bind request when authenticated access was intended (that is, they do not ensure a password was provided), this mechanism should generally remain disabled.</P>
-<P>A successful user/password authenticated bind results in a user authorization identity, the provided name, being associated with the session.  User/password authenticated bind is enabled by default. However, as this mechanism itself offers no evesdropping protection (e.g., the password is set in the clear), it is recommended that it be used only in tightly controlled systems or when the LDAP session is protected by other means (e.g., TLS, <TERM>IPSEC</TERM>). Where the administrator relies on TLS to protect the password, it is recommended that unprotected authentication be disabled.  This is done by setting &quot;<TT>disallow bind_simple_unprotected</TT>&quot; in <EM>slapd.conf</EM>(5).  The <TT>security</TT> directive's <TT>simple_bind</TT> option provides fine grain control over the level of confidential protection to require for <EM>simple</EM> user/password authentication.</P>
+<P>A successful user/password authenticated bind results in a user authorization identity, the provided name, being associated with the session.  User/password authenticated bind is enabled by default. However, as this mechanism itself offers no evesdropping protection (e.g., the password is set in the clear), it is recommended that it be used only in tightly controlled systems or when the LDAP session is protected by other means (e.g., TLS, <TERM>IPSEC</TERM>). Where the administrator relies on TLS to protect the password, it is recommended that unprotected authentication be disabled.  This is done using the <TT>security</TT> directive's <TT>simple_bind</TT> option, which provides fine grain control over the level of confidential protection to require for <EM>simple</EM> user/password authentication. E.g., using <TT>security simple_bind=56</TT> would require <EM>simple</EM> binds to use encryption of DES equivalent or better.</P>
 <P>The user/password authenticated bind mechanism can be completely disabled by setting &quot;<TT>disallow bind_simple</TT>&quot;.</P>
 <P><HR WIDTH="80%" ALIGN="Left">
 <STRONG>Note: </STRONG>An unsuccessful bind always results in the session having an <EM>anonymous</EM> authorization association.
@@ -3953,7 +3955,7 @@ object identifier
 <P>Also note that the values in an authorization rule must be one of the two forms: an LDAP URL or a DN (with or without regular expression characters). Anything that does not begin with &quot;<TT>ldap://</TT>&quot; is taken as a DN. It is not permissable to enter another authorization identity of the form &quot;<TT>u:&lt;username&gt;</TT>&quot; as an authorization rule.</P>
 <H4><A NAME="Policy Configuration">11.3.3.2. Policy Configuration</A></H4>
 <P>The decision of which type of rules to use, <TT>authzFrom</TT> or <TT>authzTo</TT>, will depend on the site's situation. For example, if the set of people who may become a given identity can easily be written as a search filter, then a single destination rule could be written. If the set of people is not easily defined by a search filter, and the set of people is small, it may be better to write a source rule in the entries of each of those people who should be allowed to perform the proxy authorization.</P>
-<P>By default, processing of proxy authorization rules is disabled. The <TT>authz-policy</TT> directive must be set in the <EM>slapd.conf</EM>(5) file to enable authorization. This directive can be set to <TT>none</TT> for no rules (the default), <TT>from</TT> for source rules, <TT>to</TT> for destination rules, or <TT>both</TT> for both source and destination rules.</P>
+<P>By default, processing of proxy authorization rules is disabled. The <TT>authz-policy</TT> directive must be set in the <EM>slapd.conf</EM>(5) file to enable authorization. This directive can be set to <TT>none</TT> for no rules (the default), <TT>to</TT> for source rules, <TT>from</TT> for destination rules, or <TT>both</TT> for both source and destination rules.</P>
 <P>Destination rules are extremely powerful. If ordinary users have access to write the <TT>authzTo</TT> attribute in their own entries, then they can write rules that would allow them to authorize as anyone else.  As such, when using destination rules, the <TT>authzTo</TT> attribute should be protected with an ACL that only allows privileged users to set its values.</P>
 <P></P>
 <HR>
@@ -4579,16 +4581,16 @@ operates.
 <HR>
 <H1><A NAME="OpenLDAP Software Copyright Notices">B. OpenLDAP Software Copyright Notices</A></H1>
 <H2><A NAME="OpenLDAP Copyright Notice">B.1. OpenLDAP Copyright Notice</A></H2>
-<P>Copyright 1998-2005 The OpenLDAP Foundation.<BR><EM>All rights reserved.</EM></P>
+<P>Copyright 1998-2007 The OpenLDAP Foundation.<BR><EM>All rights reserved.</EM></P>
 <P>Redistribution and use in source and binary forms, with or without modification, are permitted <EM>only as authorized</EM> by the <A HREF="#OpenLDAP Public License">OpenLDAP Public License</A>.</P>
 <P>A copy of this license is available in file <TT>LICENSE</TT> in the top-level directory of the distribution or, alternatively, at &lt;<A HREF="http://www.OpenLDAP.org/license.html">http://www.OpenLDAP.org/license.html</A>&gt;.</P>
 <P>OpenLDAP is a registered trademark of the OpenLDAP Foundation.</P>
 <P>Individual files and/or contributed packages may be copyright by other parties and their use subject to additional restrictions.</P>
-<P>This work is derived from the University of Michigan LDAP v3.3 distribution.  Information concerning this software is available at &lt;<A HREF="http://www.umich.edu/~dirsvcs/ldap/">http://www.umich.edu/~dirsvcs/ldap/</A>&gt;.</P>
+<P>This work is derived from the University of Michigan LDAP v3.3 distribution.  Information concerning this software is available at &lt;<A HREF="http://www.umich.edu/~dirsvcs/ldap/ldap.html">http://www.umich.edu/~dirsvcs/ldap/ldap.html</A>&gt;.</P>
 <P>This work also contains materials derived from public sources.</P>
 <P>Additional information about OpenLDAP software can be obtained at &lt;<A HREF="http://www.OpenLDAP.org/">http://www.OpenLDAP.org/</A>&gt;.</P>
 <H2><A NAME="Additional Copyright Notice">B.2. Additional Copyright Notice</A></H2>
-<P>Portions Copyright 1998-2005 Kurt D. Zeilenga.<BR>Portions Copyright 1998-2005 Net Boolean Incorporated.<BR>Portions Copyright 2001-2005 IBM Corporation.<BR><EM>All rights reserved.</EM></P>
+<P>Portions Copyright 1998-2006 Kurt D. Zeilenga.<BR>Portions Copyright 1998-2006 Net Boolean Incorporated.<BR>Portions Copyright 2001-2006 IBM Corporation.<BR><EM>All rights reserved.</EM></P>
 <P>Redistribution and use in source and binary forms, with or without modification, are permitted only as authorized by the <A HREF="#OpenLDAP Public License">OpenLDAP Public License</A>.</P>
 <P>Portions Copyright 1999-2005 Howard Y.H. Chu.<BR>Portions Copyright 1999-2005 Symas Corporation.<BR>Portions Copyright 1998-2003 Hallvard B. Furuseth.<BR><EM>All rights reserved.</EM></P>
 <P>Redistribution and use in source and binary forms, with or without modification, are permitted provided that this notice is preserved. The names of the copyright holders may not be used to endorse or promote products derived from this software without their specific prior written permission.  This software is provided ``as is'' without express or implied warranty.</P>
@@ -4656,7 +4658,7 @@ distribute verbatim copies of this document is granted.
 <P>
 <FONT COLOR="#808080" FACE="Arial,Verdana,Helvetica" SIZE="1"><B>
 ________________<BR>
-<SMALL>&copy; Copyright 2005, <A HREF="http://www.OpenLDAP.org/foundation/">OpenLDAP Foundation</A>, <A HREF="mailto:info@OpenLDAP.org">info@OpenLDAP.org</A></SMALL></B></FONT>
+<SMALL>&copy; Copyright 2006, <A HREF="http://www.OpenLDAP.org/foundation/">OpenLDAP Foundation</A>, <A HREF="mailto:info@OpenLDAP.org">info@OpenLDAP.org</A></SMALL></B></FONT>
 
 </DIV>
 

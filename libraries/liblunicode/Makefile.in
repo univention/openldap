@@ -1,8 +1,8 @@
 # Makefile.in for LDAP -llunicode
-# $OpenLDAP: pkg/ldap/libraries/liblunicode/Makefile.in,v 1.26.2.6 2006/04/07 02:43:24 kurt Exp $
+# $OpenLDAP: pkg/ldap/libraries/liblunicode/Makefile.in,v 1.26.2.7 2007/01/02 21:43:51 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2006 The OpenLDAP Foundation.
+## Copyright 1998-2007 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without

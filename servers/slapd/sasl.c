@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.212.2.15 2006/01/03 22:16:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.212.2.17 2007/01/25 12:42:38 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1102,10 +1102,6 @@ int slap_sasl_open( Connection *conn, int reopen )
 	}
 
 	conn->c_sasl_layers = 0;
-
-	if( global_host == NULL ) {
-		global_host = ldap_pvt_get_fqdn( NULL );
-	}
 
 	/* create new SASL context */
 #if SASL_VERSION_MAJOR >= 2

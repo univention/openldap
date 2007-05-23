@@ -1,8 +1,8 @@
 /* kerberos.c - ldbm backend kerberos bind routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/kerberos.c,v 1.12.2.2 2006/01/03 22:16:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/kerberos.c,v 1.12.2.4 2007/01/02 21:43:56 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,10 @@ krbv4_ldap_auth(
 	int             err;
 
 	Debug( LDAP_DEBUG_TRACE, "=> kerberosv4_ldap_auth\n", 0, 0, 0 );
+
+	if( cred->len > sizeof(ktxt->dat) ) {
+		return LDAP_OTHER;
+	}
 
 	AC_MEMCPY( ktxt->dat, cred->bv_val, cred->bv_len );
 	ktxt->length = cred->bv_len;

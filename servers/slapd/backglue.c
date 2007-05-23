@@ -1,8 +1,8 @@
 /* backglue.c - backend glue */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.91.2.14 2006/07/28 14:31:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.91.2.17 2007/01/03 08:55:03 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2006 The OpenLDAP Foundation.
+ * Copyright 2001-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,7 @@ glue_back_select (
 	glueinfo		*gi = (glueinfo *)on->on_bi.bi_private;
 	int i;
 
-	for (i = 0; i<gi->gi_nodes; i++) {
+	for (i = gi->gi_nodes-1; i >= 0; i--) {
 		assert( gi->gi_n[i].gn_be->be_nsuffix != NULL );
 
 		if (dnIsSuffix(dn, &gi->gi_n[i].gn_be->be_nsuffix[0])) {
@@ -86,6 +86,15 @@ typedef struct glue_state {
 	int nrefs;
 	int nctrls;
 } glue_state;
+
+static int
+glue_op_cleanup( Operation *op, SlapReply *rs )
+{
+	/* This is not a final result */
+	if (rs->sr_type == REP_RESULT )
+		rs->sr_type = REP_GLUE_RESULT;
+	return SLAP_CB_CONTINUE;
+}
 
 static int
 glue_op_response ( Operation *op, SlapReply *rs )
@@ -192,6 +201,7 @@ glue_op_func ( Operation *op, SlapReply *rs )
 	case LDAP_REQ_DELETE: which = op_delete; break;
 	case LDAP_REQ_MODIFY: which = op_modify; break;
 	case LDAP_REQ_MODRDN: which = op_modrdn; break;
+	case LDAP_REQ_EXTENDED: which = op_extended; break;
 	default: assert( 0 ); break;
 	}
 
@@ -199,11 +209,24 @@ glue_op_func ( Operation *op, SlapReply *rs )
 	if ( func[which] )
 		rc = func[which]( op, rs );
 	else
-		rc = SLAP_CB_CONTINUE;
+		rc = SLAP_CB_BYPASS;
 
 	op->o_bd = b0;
 	op->o_bd->bd_info = bi0;
 	return rc;
+}
+
+static int
+glue_response ( Operation *op, SlapReply *rs )
+{
+	slap_overinst	*on = (slap_overinst *)op->o_bd->bd_info;
+	BackendDB *be = op->o_bd;
+	be = glue_back_select (op->o_bd, &op->o_req_ndn);
+
+	/* If we're on the master backend, let overlay framework handle it.
+	 * Otherwise, bail out.
+	 */
+	return ( op->o_bd == be ) ? SLAP_CB_CONTINUE : SLAP_CB_BYPASS;
 }
 
 static int
@@ -303,7 +326,7 @@ glue_op_search ( Operation *op, SlapReply *rs )
 	int i;
 	long stoptime = 0, starttime;
 	glue_state gs = {NULL, NULL, NULL, 0, 0, 0, 0};
-	slap_callback cb = { NULL, glue_op_response, NULL, NULL };
+	slap_callback cb = { NULL, glue_op_response, glue_op_cleanup, NULL };
 	int scope0, tlimit0;
 	struct berval dn, ndn, *pdn;
 
@@ -340,7 +363,7 @@ glue_op_search ( Operation *op, SlapReply *rs )
 		b1 = op->o_bd;
 
 		/*
-		 * Execute in reverse order, most general first 
+		 * Execute in reverse order, most specific first 
 		 */
 		for (i = gi->gi_nodes; i >= 0; i--) {
 			if ( i == gi->gi_nodes ) {
@@ -384,6 +407,9 @@ glue_op_search ( Operation *op, SlapReply *rs )
 				if ( rs->sr_err == LDAP_NO_SUCH_OBJECT ) {
 					gs.err = LDAP_SUCCESS;
 				}
+				op->ors_scope = LDAP_SCOPE_ONELEVEL;
+				op->o_req_dn = dn;
+				op->o_req_ndn = ndn;
 
 			} else if (scope0 == LDAP_SCOPE_SUBTREE &&
 				dn_match(&op->o_bd->be_nsuffix[0], &ndn))
@@ -1003,9 +1029,11 @@ glue_sub_init()
 	glue.on_bi.bi_op_modrdn = glue_op_func;
 	glue.on_bi.bi_op_add = glue_op_func;
 	glue.on_bi.bi_op_delete = glue_op_func;
+	glue.on_bi.bi_extended = glue_op_func;
 
 	glue.on_bi.bi_chk_referrals = glue_chk_referrals;
 	glue.on_bi.bi_chk_controls = glue_chk_controls;
+	glue.on_response = glue_response;
 
 	return overlay_register( &glue );
 }

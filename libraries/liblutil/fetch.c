@@ -1,8 +1,8 @@
 /* fetch.c - routines for fetching data at URLs */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/fetch.c,v 1.2.2.6 2006/01/03 22:16:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/fetch.c,v 1.2.2.8 2007/01/02 21:43:52 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2006 The OpenLDAP Foundation.
+ * Copyright 1999-2007 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -48,16 +48,15 @@ ldif_open_url(
 	url = fetchGetURL( (char*) urlstr, "" );
 
 #else
-	if( strncasecmp( "file://", urlstr, sizeof("file://")-1 ) == 0 ) {
-		p = strchr( &urlstr[sizeof("file://")-1], '/' );
-		if( p == NULL ) {
-			return NULL;
-		}
+	if( strncasecmp( "file:", urlstr, sizeof("file:")-1 ) == 0 ) {
+		p = urlstr + sizeof("file:")-1;
 
 		/* we don't check for LDAP_DIRSEP since URLs should contain '/' */
-		if( p[1] == '.' && ( p[2] == '/' || ( p[2] == '.' && p[3] == '/' ))) {
-			/* skip over false root */
-			p++;
+		if ( p[0] == '/' && p[1] == '/' ) {
+			p += 2;
+			/* path must be absolute if authority is present */
+			if ( p[0] != '/' )
+				return NULL;
 		}
 
 		p = ber_strdup( p );

@@ -1,8 +1,8 @@
 /* cr.c - content rule routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/cr.c,v 1.14.2.4 2006/01/03 22:16:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/cr.c,v 1.14.2.5 2007/01/02 21:43:55 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

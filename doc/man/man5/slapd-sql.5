@@ -1,5 +1,5 @@
 .TH SLAPD-SQL 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-sql.5,v 1.16.2.6 2005/08/09 16:58:45 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-sql.5,v 1.16.2.7 2007/03/05 18:39:51 ando Exp $
 .SH NAME
 slapd-sql \- SQL backend to slapd
 .SH SYNOPSIS
@@ -100,7 +100,7 @@ see \fBupper_func\fP, \fBupper_needs_cast\fP, \fBconcat_pattern\fP
 and \fBstrcast_func\fP in "HELPER CONFIGURATION" for details.
 
 .TP
-.B use_subtree_shortcut { NO | yes }
+.B use_subtree_shortcut { YES | no }
 Do not use the subtree condition when the searchBase is the database
 suffix, and the scope is subtree; rather collect all entries.
 

@@ -1,8 +1,8 @@
 /* extended.c - ldap backend extended routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/extended.c,v 1.22.2.14 2006/05/20 09:17:02 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/extended.c,v 1.22.2.17 2007/01/13 11:19:07 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2006 The OpenLDAP Foundation.
+ * Copyright 2003-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,9 @@ static struct exop {
 static int
 ldap_back_extended_one( Operation *op, SlapReply *rs, BI_op_extended exop )
 {
-	ldapconn_t	*lc;
+	ldapinfo_t	*li = (ldapinfo_t *) op->o_bd->be_private;
+
+	ldapconn_t	*lc = NULL;
 	LDAPControl	**oldctrls = NULL;
 	int		rc;
 
@@ -50,13 +52,14 @@ ldap_back_extended_one( Operation *op, SlapReply *rs, BI_op_extended exop )
 	 * called twice; maybe we could avoid the 
 	 * ldap_back_dobind() call inside each extended()
 	 * call ... */
-	lc = ldap_back_getconn( op, rs, LDAP_BACK_SENDERR );
-	if ( !lc || !ldap_back_dobind( lc, op, rs, LDAP_BACK_SENDERR ) ) {
+	if ( !ldap_back_dobind( &lc, op, rs, LDAP_BACK_SENDERR ) ) {
 		return -1;
 	}
 
 	oldctrls = op->o_ctrls;
-	if ( ldap_back_proxy_authz_ctrl( lc, op, rs, &op->o_ctrls ) ) {
+	if ( ldap_back_proxy_authz_ctrl( &lc->lc_bound_ndn,
+		li->li_version, &li->li_idassert, op, rs, &op->o_ctrls ) )
+	{
 		op->o_ctrls = oldctrls;
 		send_ldap_extended( op, rs );
 		rs->sr_text = NULL;
@@ -75,7 +78,7 @@ ldap_back_extended_one( Operation *op, SlapReply *rs, BI_op_extended exop )
 
 done:;
 	if ( lc != NULL ) {
-		ldap_back_release_conn( op, rs, lc );
+		ldap_back_release_conn( li, lc );
 	}
 			
 	return rc;
@@ -106,7 +109,9 @@ ldap_back_exop_passwd(
 		Operation	*op,
 		SlapReply	*rs )
 {
-	ldapconn_t	*lc;
+	ldapinfo_t	*li = (ldapinfo_t *) op->o_bd->be_private;
+
+	ldapconn_t	*lc = NULL;
 	req_pwdexop_s	*qpw = &op->oq_pwdexop;
 	LDAPMessage	*res;
 	ber_int_t	msgid;
@@ -114,8 +119,7 @@ ldap_back_exop_passwd(
 	int		do_retry = 1;
 	char *text = NULL;
 
-	lc = ldap_back_getconn( op, rs, LDAP_BACK_SENDERR );
-	if ( !lc || !ldap_back_dobind( lc, op, rs, LDAP_BACK_SENDERR ) ) {
+	if ( !ldap_back_dobind( &lc, op, rs, LDAP_BACK_SENDERR ) ) {
 		return -1;
 	}
 
@@ -136,6 +140,11 @@ retry:
 			rs->sr_err = rc;
 
 		} else {
+			/* only touch when activity actually took place... */
+			if ( li->li_idle_timeout && lc ) {
+				lc->lc_time = op->o_time;
+			}
+
 			/* sigh. parse twice, because parse_passwd
 			 * doesn't give us the err / match / msg info.
 			 */
@@ -191,10 +200,18 @@ retry:
 				goto retry;
 			}
 		}
+
+		if ( LDAP_BACK_QUARANTINE( li ) ) {
+			ldap_back_quarantine( op, rs );
+		}
+
 		if ( text ) rs->sr_text = text;
 		send_ldap_extended( op, rs );
 		/* otherwise frontend resends result */
 		rc = rs->sr_err = SLAPD_ABANDON;
+
+	} else if ( LDAP_BACK_QUARANTINE( li ) ) {
+		ldap_back_quarantine( op, rs );
 	}
 
 	/* these have to be freed anyway... */
@@ -209,7 +226,7 @@ retry:
 	}
 
 	if ( lc != NULL ) {
-		ldap_back_release_conn( op, rs, lc );
+		ldap_back_release_conn( li, lc );
 	}
 
 	return rc;
@@ -220,15 +237,16 @@ ldap_back_exop_generic(
 	Operation	*op,
 	SlapReply	*rs )
 {
-	ldapconn_t	*lc;
+	ldapinfo_t	*li = (ldapinfo_t *) op->o_bd->be_private;
+
+	ldapconn_t	*lc = NULL;
 	LDAPMessage	*res;
 	ber_int_t	msgid;
 	int		rc;
 	int		do_retry = 1;
 	char *text = NULL;
 
-	lc = ldap_back_getconn( op, rs, LDAP_BACK_SENDERR );
-	if ( !lc || !ldap_back_dobind( lc, op, rs, LDAP_BACK_SENDERR ) ) {
+	if ( !ldap_back_dobind( &lc, op, rs, LDAP_BACK_SENDERR ) ) {
 		return -1;
 	}
 
@@ -246,6 +264,11 @@ retry:
 			rs->sr_err = rc;
 
 		} else {
+			/* only touch when activity actually took place... */
+			if ( li->li_idle_timeout && lc ) {
+				lc->lc_time = op->o_time;
+			}
+
 			/* sigh. parse twice, because parse_passwd
 			 * doesn't give us the err / match / msg info.
 			 */
@@ -287,10 +310,18 @@ retry:
 				goto retry;
 			}
 		}
+
+		if ( LDAP_BACK_QUARANTINE( li ) ) {
+			ldap_back_quarantine( op, rs );
+		}
+
 		if ( text ) rs->sr_text = text;
 		send_ldap_extended( op, rs );
 		/* otherwise frontend resends result */
 		rc = rs->sr_err = SLAPD_ABANDON;
+
+	} else if ( LDAP_BACK_QUARANTINE( li ) ) {
+		ldap_back_quarantine( op, rs );
 	}
 
 	/* these have to be freed anyway... */
@@ -305,7 +336,7 @@ retry:
 	}
 
 	if ( lc != NULL ) {
-		ldap_back_release_conn( op, rs, lc );
+		ldap_back_release_conn( li, lc );
 	}
 
 	return rc;

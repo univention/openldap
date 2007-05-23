@@ -1,8 +1,8 @@
 /* add.c - ldap ldbm back-end add routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/add.c,v 1.92.2.6 2006/01/03 22:16:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/add.c,v 1.92.2.8 2007/01/02 21:44:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,7 +56,13 @@ ldbm_back_add(
 	Debug(LDAP_DEBUG_ARGS, "==> ldbm_back_add: %s\n",
 		op->o_req_dn.bv_val, 0, 0);
 	
-	slap_add_opattrs( op, &rs->sr_text, textbuf, textlen, 1 );
+	rs->sr_err = slap_add_opattrs( op, &rs->sr_text, textbuf, textlen, 1 );
+	if ( rs->sr_err != LDAP_SUCCESS ) {
+		Debug( LDAP_DEBUG_TRACE,
+			"entry failed op attrs add: %s (%d)\n",
+			rs->sr_text, rs->sr_err, 0 );
+		goto return_results;
+	}
 
 	cb.sc_cleanup = ldbm_csn_cb;
 	cb.sc_next = op->o_callback;

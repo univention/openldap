@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.198.2.20 2006/02/17 07:38:40 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.198.2.22 2007/01/25 12:42:38 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -750,6 +750,12 @@ unhandled_option:;
 			SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 20 );
 			goto destroy;
 		}
+	}
+#endif
+
+#ifdef HAVE_CYRUS_SASL
+	if( global_host == NULL ) {
+		global_host = ldap_pvt_get_fqdn( NULL );
 	}
 #endif
 

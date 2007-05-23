@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/delete.c,v 1.15.2.8 2006/08/17 17:53:17 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/delete.c,v 1.15.2.9 2007/01/02 21:44:07 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2006 The OpenLDAP Foundation.
+ * Copyright 1999-2007 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * All rights reserved.

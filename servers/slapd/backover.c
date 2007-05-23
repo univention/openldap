@@ -1,8 +1,8 @@
 /* backover.c - backend overlay routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backover.c,v 1.31.2.18 2006/07/28 14:31:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backover.c,v 1.31.2.20 2007/01/02 21:43:54 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2006 The OpenLDAP Foundation.
+ * Copyright 2003-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -210,9 +210,11 @@ over_db_destroy(
 
 	rc = over_db_func( be, db_destroy );
 
-	for (next = on->on_next; on; on=next) {
-		next = on->on_next;
-		free( on );
+	if ( on ) {
+		for (next = on->on_next; on; on=next) {
+			next = on->on_next;
+			free( on );
+		}
 	}
 	free( oi );
 	return rc;
@@ -235,6 +237,11 @@ over_back_response ( Operation *op, SlapReply *rs )
 			if ( rc != SLAP_CB_CONTINUE ) break;
 		}
 	}
+	/* Bypass the remaining on_response layers, but allow
+	 * normal execution to continue.
+	 */
+	if ( rc == SLAP_CB_BYPASS )
+		rc = SLAP_CB_CONTINUE;
 	op->o_bd = be;
 	return rc;
 }
@@ -492,6 +499,8 @@ int overlay_op_walk(
 			if ( rc != SLAP_CB_CONTINUE ) break;
 		}
 	}
+	if ( rc == SLAP_CB_BYPASS )
+		rc = SLAP_CB_CONTINUE;
 
 	func = &oi->oi_orig->bi_op_bind;
 	if ( func[which] && rc == SLAP_CB_CONTINUE ) {

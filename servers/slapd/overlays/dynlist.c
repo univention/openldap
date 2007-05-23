@@ -1,8 +1,8 @@
 /* dynlist.c - dynamic list overlay */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dynlist.c,v 1.5.2.8 2006/11/03 07:36:35 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dynlist.c,v 1.5.2.11 2007/03/22 21:31:18 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2006 The OpenLDAP Foundation.
+ * Copyright 2003-2007 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -289,6 +289,8 @@ dynlist_sc_update( Operation *op, SlapReply *rs )
 done:;
 	if ( rs->sr_flags & REP_ENTRY_MUSTBEFREED ) {
 		entry_free( rs->sr_entry );
+		rs->sr_entry = NULL;
+		rs->sr_flags ^= REP_ENTRY_MUSTBEFREED;
 	}
 
 	return 0;
@@ -478,7 +480,8 @@ cleanup:;
 		if ( !BER_BVISNULL( &o.o_req_ndn ) ) {
 			op->o_tmpfree( o.o_req_ndn.bv_val, op->o_tmpmemctx );
 		}
-		assert( o.ors_filterstr.bv_val != lud->lud_filter );
+		assert( BER_BVISNULL( &o.ors_filterstr )
+			|| o.ors_filterstr.bv_val != lud->lud_filter );
 		op->o_tmpfree( o.ors_filterstr.bv_val, op->o_tmpmemctx );
 		ldap_free_urldesc( lud );
 	}

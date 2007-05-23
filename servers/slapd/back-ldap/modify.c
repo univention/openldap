@@ -1,8 +1,8 @@
 /* modify.c - ldap backend modify function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modify.c,v 1.58.2.11 2006/09/26 12:54:26 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modify.c,v 1.58.2.14 2007/01/13 11:19:07 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2006 The OpenLDAP Foundation.
+ * Copyright 1999-2007 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -36,20 +36,19 @@ ldap_back_modify(
 		Operation	*op,
 		SlapReply	*rs )
 {
-	ldapinfo_t	*li = (ldapinfo_t *)op->o_bd->be_private;
+	ldapinfo_t		*li = (ldapinfo_t *)op->o_bd->be_private;
 
-	ldapconn_t	*lc;
-	LDAPMod		**modv = NULL,
-			*mods = NULL;
-	Modifications	*ml;
-	int		i, j, rc;
-	ber_int_t	msgid;
-	int		isupdate;
-	int		do_retry = 1;
-	LDAPControl	**ctrls = NULL;
+	ldapconn_t		*lc = NULL;
+	LDAPMod			**modv = NULL,
+				*mods = NULL;
+	Modifications		*ml;
+	int			i, j, rc;
+	ber_int_t		msgid;
+	int			isupdate;
+	ldap_back_send_t	retrying = LDAP_BACK_RETRYING;
+	LDAPControl		**ctrls = NULL;
 
-	lc = ldap_back_getconn( op, rs, LDAP_BACK_SENDERR );
-	if ( !lc || !ldap_back_dobind( lc, op, rs, LDAP_BACK_SENDERR ) ) {
+	if ( !ldap_back_dobind( &lc, op, rs, LDAP_BACK_SENDERR ) ) {
 		return rs->sr_err;
 	}
 
@@ -100,7 +99,8 @@ ldap_back_modify(
 
 retry:;
 	ctrls = op->o_ctrls;
-	rc = ldap_back_proxy_authz_ctrl( lc, op, rs, &ctrls );
+	rc = ldap_back_proxy_authz_ctrl( &lc->lc_bound_ndn,
+		li->li_version, &li->li_idassert, op, rs, &ctrls );
 	if ( rc != LDAP_SUCCESS ) {
 		send_ldap_result( op, rs );
 		rc = -1;
@@ -110,9 +110,10 @@ retry:;
 	rs->sr_err = ldap_modify_ext( lc->lc_ld, op->o_req_dn.bv_val, modv,
 			ctrls, NULL, &msgid );
 	rc = ldap_back_op_result( lc, op, rs, msgid,
-		li->li_timeout[ LDAP_BACK_OP_MODIFY], LDAP_BACK_SENDRESULT );
-	if ( rs->sr_err == LDAP_UNAVAILABLE && do_retry ) {
-		do_retry = 0;
+		li->li_timeout[ SLAP_OP_MODIFY ],
+		( LDAP_BACK_SENDRESULT | retrying ) );
+	if ( rs->sr_err == LDAP_UNAVAILABLE && retrying ) {
+		retrying &= ~LDAP_BACK_RETRYING;
 		if ( ldap_back_retry( &lc, op, rs, LDAP_BACK_SENDERR ) ) {
 			/* if the identity changed, there might be need to re-authz */
 			(void)ldap_back_proxy_authz_ctrl_free( op, &ctrls );
@@ -129,7 +130,7 @@ cleanup:;
 	ch_free( modv );
 
 	if ( lc != NULL ) {
-		ldap_back_release_conn( op, rs, lc );
+		ldap_back_release_conn( li, lc );
 	}
 
 	return rc;

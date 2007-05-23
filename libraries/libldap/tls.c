@@ -1,8 +1,8 @@
 /* tls.c - Handle tls/ssl using SSLeay or OpenSSL. */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/tls.c,v 1.118.2.14 2006/11/07 04:06:22 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/tls.c,v 1.118.2.17 2007/01/25 02:28:40 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -115,7 +115,10 @@ static void tls_init_threads( void )
 		ldap_pvt_thread_mutex_init( &tls_mutexes[i] );
 	}
 	CRYPTO_set_locking_callback( tls_locking_cb );
-	/* FIXME: the thread id should be added somehow... */
+	CRYPTO_set_id_callback( ldap_pvt_thread_self );
+	/* FIXME: CRYPTO_set_id_callback only works when ldap_pvt_thread_t
+	 * is an integral type that fits in an unsigned long
+	 */
 
 	ldap_pvt_thread_mutex_init( &tls_def_ctx_mutex );
 	ldap_pvt_thread_mutex_init( &tls_connect_mutex );
@@ -1287,6 +1290,10 @@ ldap_pvt_tls_get_option( LDAP *ld, int option, void *arg )
 		*(int *)arg = tls_opt_crlcheck;
 		break;
 #endif
+	case LDAP_OPT_X_TLS_CIPHER_SUITE:
+		*(char **)arg = tls_opt_ciphersuite ?
+			LDAP_STRDUP( tls_opt_ciphersuite ) : NULL;
+		break;
 	case LDAP_OPT_X_TLS_RANDOM_FILE:
 		*(char **)arg = tls_opt_randfile ?
 			LDAP_STRDUP( tls_opt_randfile ) : NULL;

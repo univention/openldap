@@ -1,8 +1,8 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/syncprov.c,v 1.56.2.38 2006/10/31 18:32:36 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/syncprov.c,v 1.56.2.42 2007/02/07 01:51:36 hyc Exp $ */
 /* syncprov.c - syncrepl provider */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2006 The OpenLDAP Foundation.
+ * Copyright 2004-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -127,7 +127,7 @@ typedef struct syncprov_info_t {
 	time_t	si_chklast;	/* time of last checkpoint */
 	Avlnode	*si_mods;	/* entries being modified */
 	sessionlog	*si_logs;
-	ldap_pvt_thread_mutex_t	si_csn_mutex;
+	ldap_pvt_thread_rdwr_t	si_csn_rwlock;
 	ldap_pvt_thread_mutex_t	si_ops_mutex;
 	ldap_pvt_thread_mutex_t	si_mods_mutex;
 	char		si_ctxcsnbuf[LDAP_LUTIL_CSNSTR_BUFSIZE];
@@ -580,7 +580,7 @@ syncprov_findcsn( Operation *op, find_csn_t mode )
 	char buf[LDAP_LUTIL_CSNSTR_BUFSIZE + STRLENOF("(entryCSN<=)")];
 	char cbuf[LDAP_LUTIL_CSNSTR_BUFSIZE];
 	struct berval maxcsn;
-	Filter cf, af;
+	Filter cf;
 #ifdef LDAP_COMP_MATCH
 	AttributeAssertion eq = { NULL, BER_BVNULL, NULL };
 #else
@@ -652,14 +652,8 @@ again:
 		cb.sc_response = findcsn_cb;
 		break;
 	case FIND_PRESENT:
-		af.f_choice = LDAP_FILTER_AND;
-		af.f_next = NULL;
-		af.f_and = &cf;
-		cf.f_choice = LDAP_FILTER_LE;
-		cf.f_av_value = srs->sr_state.ctxcsn;
-		cf.f_next = op->ors_filter;
-		fop.ors_filter = &af;
-		filter2bv_x( &fop, fop.ors_filter, &fop.ors_filterstr );
+		fop.ors_filter = op->ors_filter;
+		fop.ors_filterstr = op->ors_filterstr;
 		fop.ors_attrsonly = 0;
 		fop.ors_attrs = uuid_anlist;
 		fop.ors_slimit = SLAP_NO_LIMIT;
@@ -703,7 +697,6 @@ again:
 		break;
 	case FIND_PRESENT:
 		op->o_tmpfree( pcookie.uuids, op->o_tmpmemctx );
-		op->o_tmpfree( fop.ors_filterstr.bv_val, op->o_tmpmemctx );
 		break;
 	}
 
@@ -774,7 +767,7 @@ syncprov_sendresp( Operation *op, opcookie *opc, syncops *so,
 			rs.sr_flags = REP_ENTRY_MUSTRELEASE;
 		if ( opc->sreference ) {
 			rs.sr_ref = get_entry_referrals( op, rs.sr_entry );
-			send_search_reference( op, &rs );
+			rs.sr_err = send_search_reference( op, &rs );
 			ber_bvarray_free( rs.sr_ref );
 			if ( !rs.sr_entry )
 				*e = NULL;
@@ -786,7 +779,7 @@ syncprov_sendresp( Operation *op, opcookie *opc, syncops *so,
 		if ( rs.sr_entry->e_private )
 			rs.sr_flags = REP_ENTRY_MUSTRELEASE;
 		rs.sr_attrs = op->ors_attrs;
-		send_search_entry( op, &rs );
+		rs.sr_err = send_search_entry( op, &rs );
 		if ( !rs.sr_entry )
 			*e = NULL;
 		break;
@@ -798,9 +791,9 @@ syncprov_sendresp( Operation *op, opcookie *opc, syncops *so,
 		if ( opc->sreference ) {
 			struct berval bv = BER_BVNULL;
 			rs.sr_ref = &bv;
-			send_search_reference( op, &rs );
+			rs.sr_err = send_search_reference( op, &rs );
 		} else {
-			send_search_entry( op, &rs );
+			rs.sr_err = send_search_entry( op, &rs );
 		}
 		break;
 	default:
@@ -849,7 +842,10 @@ syncprov_qplay( Operation *op, slap_overinst *on, syncops *so )
 		if ( sr->s_mode != LDAP_SYNC_DELETE ) {
 			rc = be_entry_get_rw( op, &opc.sndn, NULL, NULL, 0, &e );
 			if ( rc ) {
+				Debug( LDAP_DEBUG_SYNC, "syncprov_qplay: failed to get %s, "
+					"error (%d), ignoring...\n", opc.sndn.bv_val, rc, 0 );
 				ch_free( sr );
+				rc = 0;
 				continue;
 			}
 		}
@@ -878,6 +874,7 @@ syncprov_qtask( void *ctx, void *arg )
 	OperationBuffer opbuf;
 	Operation *op;
 	BackendDB be;
+	int rc;
 
 	op = (Operation *) &opbuf;
 	*op = *so->s_op;
@@ -898,15 +895,20 @@ syncprov_qtask( void *ctx, void *arg )
 	op->o_private = NULL;
 	op->o_callback = NULL;
 
-	(void)syncprov_qplay( op, on, so );
+	rc = syncprov_qplay( op, on, so );
 
 	/* decrement use count... */
 	syncprov_free_syncop( so );
 
 	/* wait until we get explicitly scheduled again */
 	ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
-	ldap_pvt_runqueue_stoptask( &slapd_rq, so->s_qtask );
-	ldap_pvt_runqueue_resched( &slapd_rq, so->s_qtask, 1 );
+	ldap_pvt_runqueue_stoptask( &slapd_rq, rtask );
+	if ( rc == 0 ) {
+		ldap_pvt_runqueue_resched( &slapd_rq, rtask, 1 );
+	} else {
+		/* bail out on any error */
+		ldap_pvt_runqueue_remove( &slapd_rq, rtask );
+	}
 	ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
 
 	return NULL;
@@ -1243,9 +1245,9 @@ syncprov_op_cleanup( Operation *op, SlapReply *rs )
 }
 
 static void
-syncprov_checkpoint( Operation *op, SlapReply *rs, slap_overinst *on,
-	struct berval *csn )
+syncprov_checkpoint( Operation *op, SlapReply *rs, slap_overinst *on )
 {
+	syncprov_info_t		*si = on->on_bi.bi_private;
 	Modifications mod;
 	Operation opm;
 	SlapReply rsm = { 0 };
@@ -1253,12 +1255,12 @@ syncprov_checkpoint( Operation *op, SlapReply *rs, slap_overinst *on,
 	slap_callback cb = {0};
 
 	/* If ctxcsn is empty, delete it */
-	if ( BER_BVISEMPTY( csn )) {
+	if ( BER_BVISEMPTY( &si->si_ctxcsn )) {
 		mod.sml_values = NULL;
 	} else {
 		mod.sml_values = bv;
 		bv[1].bv_val = NULL;
-		bv[0] = *csn;
+		bv[0] = si->si_ctxcsn;
 	}
 	mod.sml_nvalues = NULL;
 	mod.sml_desc = slap_schema.si_ad_contextCSN;
@@ -1371,9 +1373,19 @@ syncprov_playlog( Operation *op, SlapReply *rs, sessionlog *sl,
 	 * and everything else at the end. Do this first so we can
 	 * unlock the list mutex.
 	 */
+	Debug( LDAP_DEBUG_SYNC, "srs csn %s\n", srs->sr_state.ctxcsn.bv_val, 0, 0 );
 	for ( se=sl->sl_head; se; se=se->se_next ) {
-		if ( ber_bvcmp( &se->se_csn, &srs->sr_state.ctxcsn ) <= 0 ) continue;
-		if ( ber_bvcmp( &se->se_csn, ctxcsn ) > 0 ) break;
+		Debug( LDAP_DEBUG_SYNC, "log csn %s\n", se->se_csn.bv_val, 0, 0 );
+		ndel = ber_bvcmp( &se->se_csn, &srs->sr_state.ctxcsn );
+		if ( ndel <= 0 ) {
+			Debug( LDAP_DEBUG_SYNC, "cmp %d, too old\n", ndel, 0, 0 );
+			continue;
+		}
+		ndel = ber_bvcmp( &se->se_csn, ctxcsn );
+		if ( ndel > 0 ) {
+			Debug( LDAP_DEBUG_SYNC, "cmp %d, too new\n", ndel, 0, 0 );
+			break;
+		}
 		if ( se->se_tag == LDAP_REQ_DELETE ) {
 			j = i;
 			i++;
@@ -1493,11 +1505,11 @@ syncprov_op_response( Operation *op, SlapReply *rs )
 	{
 		struct berval maxcsn = BER_BVNULL;
 		char cbuf[LDAP_LUTIL_CSNSTR_BUFSIZE];
-		int do_check = 0;
+		int do_check=0;
 
 		/* Update our context CSN */
 		cbuf[0] = '\0';
-		ldap_pvt_thread_mutex_lock( &si->si_csn_mutex );
+		ldap_pvt_thread_rdwr_wlock( &si->si_csn_rwlock );
 		slap_get_commit_csn( op, &maxcsn );
 		if ( !BER_BVISNULL( &maxcsn ) ) {
 			strcpy( cbuf, maxcsn.bv_val );
@@ -1510,7 +1522,7 @@ syncprov_op_response( Operation *op, SlapReply *rs )
 		/* Don't do any processing for consumer contextCSN updates */
 		if ( SLAP_SYNC_SHADOW( op->o_bd ) && 
 			op->o_msgid == SLAP_SYNC_UPDATE_MSGID ) {
-			ldap_pvt_thread_mutex_unlock( &si->si_csn_mutex );
+			ldap_pvt_thread_rdwr_wunlock( &si->si_csn_rwlock );
 			return SLAP_CB_CONTINUE;
 		}
 
@@ -1526,14 +1538,16 @@ syncprov_op_response( Operation *op, SlapReply *rs )
 				si->si_chklast = op->o_time;
 			}
 		}
-		ldap_pvt_thread_mutex_unlock( &si->si_csn_mutex );
+		ldap_pvt_thread_rdwr_wunlock( &si->si_csn_rwlock );
+
+		if ( do_check ) {
+			ldap_pvt_thread_rdwr_rlock( &si->si_csn_rwlock );
+			syncprov_checkpoint( op, rs, on );
+			ldap_pvt_thread_rdwr_runlock( &si->si_csn_rwlock );
+		}
 
 		opc->sctxcsn.bv_len = maxcsn.bv_len;
 		opc->sctxcsn.bv_val = cbuf;
-
-		if ( do_check ) {
-			syncprov_checkpoint( op, rs, on, &opc->sctxcsn );
-		}
 
 		/* Handle any persistent searches */
 		if ( si->si_ops ) {
@@ -1594,7 +1608,7 @@ syncprov_op_compare( Operation *op, SlapReply *rs )
 		a.a_vals = bv;
 		a.a_nvals = a.a_vals;
 
-		ldap_pvt_thread_mutex_lock( &si->si_csn_mutex );
+		ldap_pvt_thread_rdwr_rlock( &si->si_csn_rwlock );
 
 		rs->sr_err = access_allowed( op, &e, op->oq_compare.rs_ava->aa_desc,
 			&op->oq_compare.rs_ava->aa_value, ACL_COMPARE, NULL );
@@ -1623,7 +1637,7 @@ syncprov_op_compare( Operation *op, SlapReply *rs )
 
 return_results:;
 
-		ldap_pvt_thread_mutex_unlock( &si->si_csn_mutex );
+		ldap_pvt_thread_rdwr_runlock( &si->si_csn_rwlock );
 
 		send_ldap_result( op, rs );
 
@@ -1983,10 +1997,10 @@ syncprov_op_search( Operation *op, SlapReply *rs )
 	}
 
 	/* snapshot the ctxcsn */
-	ldap_pvt_thread_mutex_lock( &si->si_csn_mutex );
+	ldap_pvt_thread_rdwr_rlock( &si->si_csn_rwlock );
 	strcpy( csnbuf, si->si_ctxcsnbuf );
 	ctxcsn.bv_len = si->si_ctxcsn.bv_len;
-	ldap_pvt_thread_mutex_unlock( &si->si_csn_mutex );
+	ldap_pvt_thread_rdwr_runlock( &si->si_csn_rwlock );
 	ctxcsn.bv_val = csnbuf;
 	
 	/* If we have a cookie, handle the PRESENT lookups */
@@ -2143,13 +2157,13 @@ syncprov_operational(
 				*ap = a;
 			}
 
-			ldap_pvt_thread_mutex_lock( &si->si_csn_mutex );
+			ldap_pvt_thread_rdwr_rlock( &si->si_csn_rwlock );
 			if ( !ap ) {
 				strcpy( a->a_vals[0].bv_val, si->si_ctxcsnbuf );
 			} else {
 				ber_dupbv( &a->a_vals[0], &si->si_ctxcsn );
 			}
-			ldap_pvt_thread_mutex_unlock( &si->si_csn_mutex );
+			ldap_pvt_thread_rdwr_runlock( &si->si_csn_rwlock );
 		}
 	}
 	return SLAP_CB_CONTINUE;
@@ -2267,27 +2281,31 @@ sp_cf_gen(ConfigArgs *c)
 	switch ( c->type ) {
 	case SP_CHKPT:
 		if ( lutil_atoi( &si->si_chkops, c->argv[1] ) != 0 ) {
-			sprintf( c->msg, "%s unable to parse checkpoint ops # \"%s\"",
+			snprintf( c->msg, sizeof( c->msg ), "%s unable to parse checkpoint ops # \"%s\"",
 				c->argv[0], c->argv[1] );
-			Debug( LDAP_DEBUG_CONFIG, "%s: %s\n", c->log, c->msg, 0 );
+			Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
+				"%s: %s\n", c->log, c->msg, 0 );
 			return ARG_BAD_CONF;
 		}
 		if ( si->si_chkops <= 0 ) {
-			sprintf( c->msg, "%s invalid checkpoint ops # \"%d\"",
+			snprintf( c->msg, sizeof( c->msg ), "%s invalid checkpoint ops # \"%d\"",
 				c->argv[0], si->si_chkops );
-			Debug( LDAP_DEBUG_CONFIG, "%s: %s\n", c->log, c->msg, 0 );
+			Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
+				"%s: %s\n", c->log, c->msg, 0 );
 			return ARG_BAD_CONF;
 		}
 		if ( lutil_atoi( &si->si_chktime, c->argv[2] ) != 0 ) {
-			sprintf( c->msg, "%s unable to parse checkpoint time \"%s\"",
+			snprintf( c->msg, sizeof( c->msg ), "%s unable to parse checkpoint time \"%s\"",
 				c->argv[0], c->argv[1] );
-			Debug( LDAP_DEBUG_CONFIG, "%s: %s\n", c->log, c->msg, 0 );
+			Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
+				"%s: %s\n", c->log, c->msg, 0 );
 			return ARG_BAD_CONF;
 		}
 		if ( si->si_chktime <= 0 ) {
-			sprintf( c->msg, "%s invalid checkpoint time \"%d\"",
+			snprintf( c->msg, sizeof( c->msg ), "%s invalid checkpoint time \"%d\"",
 				c->argv[0], si->si_chkops );
-			Debug( LDAP_DEBUG_CONFIG, "%s: %s\n", c->log, c->msg, 0 );
+			Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
+				"%s: %s\n", c->log, c->msg, 0 );
 			return ARG_BAD_CONF;
 		}
 		si->si_chktime *= 60;
@@ -2297,9 +2315,10 @@ sp_cf_gen(ConfigArgs *c)
 		int size = c->value_int;
 
 		if ( size < 0 ) {
-			sprintf( c->msg, "%s size %d is negative",
+			snprintf( c->msg, sizeof( c->msg ), "%s size %d is negative",
 				c->argv[0], size );
-			Debug( LDAP_DEBUG_CONFIG, "%s: %s\n", c->log, c->msg, 0 );
+			Debug( LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE,
+				"%s: %s\n", c->log, c->msg, 0 );
 			return ARG_BAD_CONF;
 		}
 		sl = si->si_logs;
@@ -2430,7 +2449,6 @@ syncprov_db_open(
 
 out:
 	op->o_bd->bd_info = (BackendInfo *)on;
-	ldap_pvt_thread_pool_context_reset( thrctx );
 	return 0;
 }
 
@@ -2459,8 +2477,7 @@ syncprov_db_close(
 		op->o_bd = be;
 		op->o_dn = be->be_rootdn;
 		op->o_ndn = be->be_rootndn;
-		syncprov_checkpoint( op, &rs, on, &si->si_ctxcsn );
-		ldap_pvt_thread_pool_context_reset( thrctx );
+		syncprov_checkpoint( op, &rs, on );
 	}
 
     return 0;
@@ -2474,9 +2491,16 @@ syncprov_db_init(
 	slap_overinst	*on = (slap_overinst *)be->bd_info;
 	syncprov_info_t	*si;
 
+	if ( SLAP_ISGLOBALOVERLAY( be ) ) {
+		Debug( LDAP_DEBUG_ANY,
+			"syncprov must be instantiated within a database.\n",
+			0, 0, 0 );
+		return 1;
+	}
+
 	si = ch_calloc(1, sizeof(syncprov_info_t));
 	on->on_bi.bi_private = si;
-	ldap_pvt_thread_mutex_init( &si->si_csn_mutex );
+	ldap_pvt_thread_rdwr_init( &si->si_csn_rwlock );
 	ldap_pvt_thread_mutex_init( &si->si_ops_mutex );
 	ldap_pvt_thread_mutex_init( &si->si_mods_mutex );
 	si->si_ctxcsn.bv_val = si->si_ctxcsnbuf;
@@ -2514,7 +2538,7 @@ syncprov_db_destroy(
 		}
 		ldap_pvt_thread_mutex_destroy( &si->si_mods_mutex );
 		ldap_pvt_thread_mutex_destroy( &si->si_ops_mutex );
-		ldap_pvt_thread_mutex_destroy( &si->si_csn_mutex );
+		ldap_pvt_thread_rdwr_destroy( &si->si_csn_rwlock );
 		ch_free( si );
 	}
 

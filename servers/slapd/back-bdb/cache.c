@@ -1,8 +1,8 @@
 /* cache.c - routines to maintain an in-core cache of entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.88.2.19 2006/11/12 23:25:27 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.88.2.21 2007/01/25 12:42:38 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2006 The OpenLDAP Foundation.
+ * Copyright 2000-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1290,6 +1290,19 @@ bdb_locker_id_free( void *key, void *data )
 		lr.obj = NULL;
 		env->lock_vec( env, lockid, 0, &lr, 1, NULL );
 		XLOCK_ID_FREE( env, lockid );
+	}
+}
+
+/* free up any keys used by the main thread */
+void
+bdb_locker_flush( DB_ENV *env )
+{
+	void *data;
+	void *ctx = ldap_pvt_thread_pool_context();
+
+	if ( !ldap_pvt_thread_pool_getkey( ctx, env, &data, NULL ) ) {
+		ldap_pvt_thread_pool_setkey( ctx, env, NULL, NULL );
+		bdb_locker_id_free( env, data );
 	}
 }
 

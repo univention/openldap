@@ -1,8 +1,8 @@
 /* ad.c - routines for dealing with attribute descriptions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.74.2.14 2006/05/09 19:26:26 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.74.2.16 2007/03/05 15:19:00 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -888,12 +888,14 @@ str2anlist( AttributeName *an, char *in, const char *brkstr )
 	}
 
 	an = ch_realloc( an, ( i + j + 1 ) * sizeof( AttributeName ) );
-	BER_BVZERO( &an[i + j].an_name );
 	anew = an + i;
 	for ( s = ldap_pvt_strtok( str, brkstr, &lasts );
 		s != NULL;
 		s = ldap_pvt_strtok( NULL, brkstr, &lasts ) )
 	{
+		/* put a stop mark */
+		BER_BVZERO( &anew[1].an_name );
+
 		anew->an_desc = NULL;
 		anew->an_oc = NULL;
 		anew->an_oc_exclude = 0;

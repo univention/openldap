@@ -1,8 +1,8 @@
 /* init.c - initialize various things */
-/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.81.2.14 2006/10/05 23:31:19 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.81.2.16 2007/01/25 12:42:38 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -299,6 +299,9 @@ int slap_destroy(void)
 	if ( default_referral ) {
 		ber_bvarray_free( default_referral );
 	}
+
+	/* clear out any thread-keys for the main thread */
+	ldap_pvt_thread_pool_context_reset( ldap_pvt_thread_pool_context());
 
 	rc = backend_destroy();
 

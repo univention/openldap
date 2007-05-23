@@ -1,8 +1,8 @@
 /* operational.c - bdb backend operational attributes function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/operational.c,v 1.24.2.4 2006/01/16 18:59:27 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/operational.c,v 1.24.2.5 2007/01/02 21:44:00 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2006 The OpenLDAP Foundation.
+ * Copyright 2000-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

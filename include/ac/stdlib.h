@@ -1,8 +1,8 @@
 /* Generic stdlib.h */
-/* $OpenLDAP: pkg/ldap/include/ac/stdlib.h,v 1.17.2.3 2006/10/20 16:52:46 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ac/stdlib.h,v 1.17.2.4 2007/01/02 21:43:47 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

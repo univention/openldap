@@ -1,8 +1,8 @@
 /* ldif.c - routines for dealing with LDIF files */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/ldif.c,v 1.2.2.9 2006/10/07 20:19:22 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/ldif.c,v 1.2.2.11 2007/01/02 21:43:52 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -777,6 +777,7 @@ ldif_close(
 	}
 }
 
+#define	LDIF_MAXLINE	4096
 /*
  * ldif_read_record - read an ldif record.  Return 1 for success, 0 for EOF.
  */
@@ -787,7 +788,7 @@ ldif_read_record(
 	char        **bufp,     /* ptr to malloced output buffer           */
 	int         *buflenp )  /* ptr to length of *bufp                  */
 {
-	char        linebuf[BUFSIZ], *line, *nbufp;
+	char        linebuf[LDIF_MAXLINE], *line, *nbufp;
 	ber_len_t   lcur = 0, len, linesize;
 	int         last_ch = '\n', found_entry = 0, stop, top_comment = 0;
 
@@ -882,7 +883,7 @@ ldif_read_record(
 		}
 
 		if ( *buflenp - lcur <= len ) {
-			*buflenp += len + BUFSIZ;
+			*buflenp += len + LDIF_MAXLINE;
 			nbufp = ber_memrealloc( *bufp, *buflenp );
 			if( nbufp == NULL ) {
 				return 0;

@@ -1,8 +1,8 @@
 /* Generic socket.h */
-/* $OpenLDAP: pkg/ldap/include/ac/socket.h,v 1.65.2.3 2006/11/07 04:06:21 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ac/socket.h,v 1.65.2.4 2007/01/02 21:43:47 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

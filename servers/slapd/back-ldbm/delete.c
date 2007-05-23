@@ -1,8 +1,8 @@
 /* delete.c - ldbm backend delete routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/delete.c,v 1.80.2.5 2006/02/13 19:50:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/delete.c,v 1.80.2.6 2007/01/02 21:44:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/util.c,v 1.31.2.8 2006/01/03 22:16:24 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/util.c,v 1.31.2.10 2007/01/02 21:44:07 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2006 The OpenLDAP Foundation.
+ * Copyright 1999-2007 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * All rights reserved.
@@ -252,7 +252,7 @@ backsql_entry_addattr(
 
 #ifdef BACKSQL_TRACE
 	Debug( LDAP_DEBUG_TRACE, "backsql_entry_addattr(\"%s\"): %s=%s\n", 
-		e->e_name.bv_val, ad->ad_cname->bv_val, val->bv_val );
+		e->e_name.bv_val, ad->ad_cname.bv_val, val->bv_val );
 #endif /* BACKSQL_TRACE */
 
 	rc = attr_merge_normalize_one( e, ad, val, memctx );

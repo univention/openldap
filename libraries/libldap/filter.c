@@ -1,8 +1,8 @@
 /* search.c */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/filter.c,v 1.27.2.2 2006/01/03 22:16:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/filter.c,v 1.27.2.4 2007/01/10 09:22:18 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -425,6 +425,10 @@ ldap_pvt_put_filter( BerElement *ber, const char *str_in )
 				parens--;
 				break;
 
+			case '(':
+				rc = -1;
+				goto done;
+
 			default:
 				Debug( LDAP_DEBUG_TRACE, "put_filter: simple\n",
 				    0, 0, 0 );
@@ -497,9 +501,11 @@ ldap_pvt_put_filter( BerElement *ber, const char *str_in )
 			str = next;
 			break;
 		}
+		if ( !parens )
+			break;
 	}
 
-	rc = parens ? -1 : 0;
+	rc = ( parens || *str ) ? -1 : 0;
 
 done:
 	LDAP_FREE( freeme );

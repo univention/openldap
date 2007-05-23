@@ -1,8 +1,8 @@
 Index: doc/man/man5/slapd-bdb.5
 ===================================================================
---- doc/man/man5/slapd-bdb.5.orig	2006-08-02 22:45:11.289472608 +0200
-+++ doc/man/man5/slapd-bdb.5	2006-08-02 22:46:50.958320640 +0200
-@@ -96,7 +96,7 @@
+--- doc/man/man5/slapd-bdb.5.orig	2007-05-23 13:05:50.000000000 -0700
++++ doc/man/man5/slapd-bdb.5	2007-05-23 13:05:53.000000000 -0700
+@@ -96,7 +96,7 @@ Specify the directory where the BDB file
  associated indexes live.
  A separate directory must be specified for each database.
  The default is
@@ -13,9 +13,9 @@ Index: doc/man/man5/slapd-bdb.5
  Allow reads of modified but not yet committed data.
 Index: doc/man/man5/slapd-ldbm.5
 ===================================================================
---- doc/man/man5/slapd-ldbm.5.orig	2006-08-02 22:45:11.306470024 +0200
-+++ doc/man/man5/slapd-ldbm.5	2006-08-02 22:46:50.959320488 +0200
-@@ -84,7 +84,7 @@
+--- doc/man/man5/slapd-ldbm.5.orig	2007-05-23 13:05:50.000000000 -0700
++++ doc/man/man5/slapd-ldbm.5	2007-05-23 13:05:53.000000000 -0700
+@@ -84,7 +84,7 @@ Specify the directory where the LDBM fil
  associated indexes live.
  A separate directory must be specified for each database.
  The default is
@@ -26,9 +26,9 @@ Index: doc/man/man5/slapd-ldbm.5
  index {<attrlist>|default} [pres,eq,approx,sub,<special>]
 Index: doc/man/man5/slapd.conf.5
 ===================================================================
---- doc/man/man5/slapd.conf.5.orig	2006-08-02 22:45:11.337465312 +0200
-+++ doc/man/man5/slapd.conf.5	2006-08-02 22:46:50.961320184 +0200
-@@ -1870,7 +1870,7 @@
+--- doc/man/man5/slapd.conf.5.orig	2007-05-23 13:05:50.000000000 -0700
++++ doc/man/man5/slapd.conf.5	2007-05-23 13:05:53.000000000 -0700
+@@ -1873,7 +1873,7 @@ suffix    "dc=our-domain,dc=com"
  # The database directory MUST exist prior to
  # running slapd AND should only be accessible
  # by the slapd/tools. Mode 0700 recommended.
@@ -39,8 +39,8 @@ Index: doc/man/man5/slapd.conf.5
  index     cn,sn,mail   pres,eq,approx,sub
 Index: include/ldap_defaults.h
 ===================================================================
---- include/ldap_defaults.h.orig	2006-08-02 22:46:48.153747000 +0200
-+++ include/ldap_defaults.h	2006-08-02 22:46:50.961320184 +0200
+--- include/ldap_defaults.h.orig	2007-05-23 13:05:53.000000000 -0700
++++ include/ldap_defaults.h	2007-05-23 13:06:15.000000000 -0700
 @@ -47,7 +47,7 @@
  	/* location of the default slapd config file */
  #define SLAPD_DEFAULT_CONFIGFILE	LDAP_SYSCONFDIR LDAP_DIRSEP "slapd.conf"
@@ -52,9 +52,9 @@ Index: include/ldap_defaults.h
  	/* default max deref depth for aliases */
 Index: servers/slapd/Makefile.in
 ===================================================================
---- servers/slapd/Makefile.in.orig	2006-08-02 22:45:11.378459080 +0200
-+++ servers/slapd/Makefile.in	2006-08-02 22:46:50.970318816 +0200
-@@ -430,9 +430,9 @@
+--- servers/slapd/Makefile.in.orig	2007-05-23 13:05:50.000000000 -0700
++++ servers/slapd/Makefile.in	2007-05-23 13:05:53.000000000 -0700
+@@ -430,9 +430,9 @@ install-conf: FORCE
  
  install-db-config: FORCE
  	@-$(MKDIR) $(DESTDIR)$(localstatedir) $(DESTDIR)$(sysconfdir)

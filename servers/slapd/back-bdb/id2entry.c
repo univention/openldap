@@ -1,8 +1,8 @@
 /* id2entry.c - routines to deal with the id2entry database */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/id2entry.c,v 1.62.2.8 2006/04/07 16:12:33 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/id2entry.c,v 1.62.2.10 2007/01/25 12:39:23 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2006 The OpenLDAP Foundation.
+ * Copyright 2000-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -386,21 +386,6 @@ dn2entry_retry:
 	Debug( LDAP_DEBUG_ACL,
 		"=> bdb_entry_get: found entry: \"%s\"\n",
 		ndn->bv_val, 0, 0 ); 
-
-	/* find attribute values */
-	if( is_entry_alias( e ) ) {
-		Debug( LDAP_DEBUG_ACL,
-			"<= bdb_entry_get: entry is an alias\n", 0, 0, 0 );
-		rc = LDAP_ALIAS_PROBLEM;
-		goto return_results;
-	}
-
-	if( is_entry_referral( e ) ) {
-		Debug( LDAP_DEBUG_ACL,
-			"<= bdb_entry_get: entry is a referral\n", 0, 0, 0 );
-		rc = LDAP_REFERRAL;
-		goto return_results;
-	}
 
 	if ( oc && !is_entry_objectclass( e, oc, 0 )) {
 		Debug( LDAP_DEBUG_ACL,

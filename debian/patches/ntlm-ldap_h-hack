@@ -1,8 +1,8 @@
 Index: include/ldap.h
 ===================================================================
---- include/ldap.h.orig
-+++ include/ldap.h
-@@ -2115,5 +2115,25 @@
+--- include/ldap.h.orig	2007-05-23 13:05:50.000000000 -0700
++++ include/ldap.h	2007-05-23 13:05:53.000000000 -0700
+@@ -2118,5 +2118,25 @@ LDAP_F( const char * )
  ldap_passwordpolicy_err2txt LDAP_P(( LDAPPasswordPolicyError ));
  #endif /* LDAP_CONTROL_PASSWORDPOLICYREQUEST */
  

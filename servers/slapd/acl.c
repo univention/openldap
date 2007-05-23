@@ -1,8 +1,8 @@
 /* acl.c - routines to parse and check acl's */
-/* $OpenLDAP: pkg/ldap/servers/slapd/acl.c,v 1.250.2.26 2006/07/31 23:35:43 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/acl.c,v 1.250.2.28 2007/04/01 21:31:25 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2006 The OpenLDAP Foundation.
+ * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -2476,7 +2476,7 @@ acl_set_cb_gather( Operation *op, SlapReply *rs )
 			}
 		}
 
-		if ( bvals ) {
+		if ( bvalsp ) {
 			p->bvals = slap_set_join( p->cookie, p->bvals,
 					( '|' | SLAP_SET_RREF ), bvalsp );
 		}
