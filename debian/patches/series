@@ -1,5 +1,5 @@
 man-slapd -p0
-use-lpthreads
+use-lpthread
 slurpd-in-spool
 ntlm-ldap_h-hack -p0
 ntlm_c
