@@ -1,4 +1,12 @@
-#! /bin/sh
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          slapd
+# Required-Start:    networking syslog
+# Required-Stop:     networking syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 6
+# Short-Description: OpenLDAP standalone server (Lightweight Directory Access Protocol)
+### END INIT INFO
 
 # Specify path variable
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -61,8 +69,16 @@ EOF
 	exit 1
 fi
 
+# Make sure the pidfile directory exists with correct permissions
+piddir=`dirname "$SLAPD_PIDFILE"`
+if [ ! -d "$piddir" ]; then
+	mkdir -p "$piddir"
+	[ -z "$SLAPD_USER" ] || chown -R "$SLAPD_USER" "$piddir"
+	[ -z "$SLAPD_GROUP" ] || chgrp -R "$SLAPD_GROUP" "$piddir"
+fi
+
 # Pass the user and group to run under to slapd
-if [  "$SLAPD_USER" ]; then
+if [ "$SLAPD_USER" ]; then
 	SLAPD_OPTIONS="-u $SLAPD_USER $SLAPD_OPTIONS"
 fi
 
@@ -121,6 +137,11 @@ start_slapd() {
 		reason="`start-stop-daemon --start --quiet --oknodo \
 			--pidfile "$SLAPD_PIDFILE" \
 			--exec /usr/sbin/slapd -- -h "$SLAPD_SERVICES" $SLAPD_OPTIONS 2>&1`"
+	fi
+
+	# Backward compatibility with OpenLDAP 2.1 client libraries.
+	if [ ! -h /var/run/ldapi ] && [ ! -e /var/run/ldapi ] ; then
+		ln -s slapd/ldapi /var/run/ldapi
 	fi
 }
 

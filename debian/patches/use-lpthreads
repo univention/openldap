@@ -1,7 +1,8 @@
-diff -urNad openldap2.3-2.3.11~/configure.in openldap2.3-2.3.11/configure.in
---- openldap2.3-2.3.11~/configure.in	2005-12-01 13:48:51.000000000 +0100
-+++ openldap2.3-2.3.11/configure.in	2005-12-01 15:46:27.828727750 +0100
-@@ -1485,6 +1485,7 @@
+Index: openldap2.3-2.3.25/configure.in
+===================================================================
+--- openldap2.3-2.3.25.orig/configure.in	2006-08-02 22:45:12.332314072 +0200
++++ openldap2.3-2.3.25/configure.in	2006-08-02 22:46:36.054586352 +0200
+@@ -1486,6 +1486,7 @@
  		
  dnl		OL_PTHREAD_TRY([-mt],		[ol_cv_pthread_mt])
  		OL_PTHREAD_TRY([-kthread],	[ol_cv_pthread_kthread])

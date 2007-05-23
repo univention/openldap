@@ -1,5 +1,5 @@
 /* retcode.c - customizable response for client testing purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/retcode.c,v 1.4.2.7 2006/05/09 17:29:13 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/retcode.c,v 1.4.2.8 2006/06/02 13:15:49 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2006 The OpenLDAP Foundation.
@@ -531,7 +531,7 @@ retcode_entry_response( Operation *op, SlapReply *rs, BackendInfo *bi, Entry *e 
 
 	/* sleep time */
 	a = attr_find( e->e_attrs, ad_errSleepTime );
-	if ( a != NULL & a->a_nvals[ 0 ].bv_val[ 0 ] != '-' ) {
+	if ( a != NULL && a->a_nvals[ 0 ].bv_val[ 0 ] != '-' ) {
 		int	sleepTime;
 
 		sleepTime = strtoul( a->a_nvals[ 0 ].bv_val, &next, 0 );

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/ldapmap.c,v 1.9.2.3 2006/01/03 22:16:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/ldapmap.c,v 1.9.2.4 2006/09/23 10:33:42 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2006 The OpenLDAP Foundation.
@@ -155,7 +155,7 @@ map_ldap_parse(
 				data->lm_binddn[ l ] = '\0';
 			}
 		} else if ( strncasecmp( argv[ 0 ], "bindpw=", 7 ) == 0 ) {
-			data->lm_bindpw = strdup( argv[ 2 ] + 7 );
+			data->lm_bindpw = strdup( argv[ 0 ] + 7 );
 			if ( data->lm_bindpw == NULL ) {
 				map_ldap_free( data );
 				return NULL;

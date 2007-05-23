@@ -1,5 +1,5 @@
 /* backend.c - routines for dealing with back-end databases */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.288.2.23 2006/04/04 22:34:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.288.2.24 2006/09/20 17:11:57 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -248,7 +248,8 @@ int backend_startup(Backend *be)
 				return rc;
 			}
 		}
-
+		/* append global access controls */
+		acl_append( &be->be_acl, frontendDB->be_acl, -1 );
 		return backend_startup_one( be );
 	}
 

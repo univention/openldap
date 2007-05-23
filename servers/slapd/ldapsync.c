@@ -1,5 +1,5 @@
 /* ldapsync.c -- LDAP Content Sync Routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ldapsync.c,v 1.21.2.7 2006/05/09 17:29:12 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ldapsync.c,v 1.21.2.8 2006/07/28 13:01:36 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2006 The OpenLDAP Foundation.
@@ -38,24 +38,29 @@ slap_compose_sync_cookie(
 	int rid )
 {
 	char cookiestr[ LDAP_LUTIL_CSNSTR_BUFSIZE + 20 ];
+	int len;
 
 	if ( BER_BVISNULL( csn )) {
 		if ( rid == -1 ) {
 			cookiestr[0] = '\0';
+			len = 0;
 		} else {
-			snprintf( cookiestr, LDAP_LUTIL_CSNSTR_BUFSIZE + 20,
+			len = snprintf( cookiestr, LDAP_LUTIL_CSNSTR_BUFSIZE + 20,
 					"rid=%03d", rid );
 		}
 	} else {
-		if ( rid == -1 ) {
-			snprintf( cookiestr, LDAP_LUTIL_CSNSTR_BUFSIZE + 20,
-					"csn=%s", csn->bv_val );
-		} else {
-			snprintf( cookiestr, LDAP_LUTIL_CSNSTR_BUFSIZE + 20,
-					"csn=%s,rid=%03d", csn->bv_val, rid );
+		char *end = cookiestr + sizeof(cookiestr);
+		char *ptr = lutil_strcopy( cookiestr, "csn=" );
+		len = csn->bv_len;
+		if ( ptr + len >= end )
+			len = end - ptr;
+		ptr = lutil_strncopy( ptr, csn->bv_val, len );
+		if ( rid != -1 && ptr < end - STRLENOF(",rid=xxx") ) {
+			ptr += sprintf( ptr, ",rid=%03d", rid );
 		}
+		len = ptr - cookiestr;
 	}
-	ber_str2bv_x( cookiestr, strlen(cookiestr), 1, cookie, 
+	ber_str2bv_x( cookiestr, len, 1, cookie,
 		op ? op->o_tmpmemctx : NULL );
 }
 

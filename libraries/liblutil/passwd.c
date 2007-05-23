@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/passwd.c,v 1.92.2.9 2006/01/03 22:16:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/passwd.c,v 1.92.2.10 2006/07/28 13:01:36 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -309,7 +309,7 @@ lutil_passwd(
 	 * didn't recognize? Assume a scheme name is at least 1 character.
 	 */
 	if (( passwd->bv_val[0] == '{' ) &&
-		( strchr( passwd->bv_val, '}' ) > passwd->bv_val+1 ))
+		( ber_bvchr( passwd, '}' ) > passwd->bv_val+1 ))
 	{
 		return 1;
 	}

@@ -1,7 +1,7 @@
 .TH SLAPD.ACCESS 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" Copyright 1998-2006 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.access.5,v 1.55.2.8 2006/05/27 08:58:52 hyc Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.access.5,v 1.55.2.9 2006/10/10 11:36:55 kurt Exp $
 .SH NAME
 slapd.access \- access configuration for slapd, the stand-alone LDAP daemon
 .SH SYNOPSIS
@@ -67,7 +67,7 @@ brackets <>.
 .SH THE ACCESS DIRECTIVE
 The structure of the access control directives is
 .TP
-.B access to <what> "[ by <who> <access> [ <control> ] ]+"
+.B access to <what> "[ by <who> [ <access> ] [ <control> ] ]+"
 Grant access (specified by 
 .BR <access> ) 
 to a set of entries and/or attributes (specified by 
@@ -81,7 +81,7 @@ specifies the entity the access control directive applies to.
 It can have the forms
 .LP
 .nf
-	[dn[.<dnstyle>]=]<dnpattern>
+	dn[.<dnstyle>]=<dnpattern>
 	filter=<ldapfilter>
 	attrs=<attrlist>[ val[/matchingRule][.<attrstyle>]=<attrval>]
 .fi
@@ -99,9 +99,6 @@ with
 The statement
 .B dn=<dnpattern>
 selects the entries based on their naming context.
-The 
-.B dn=
-part is optional.
 The
 .B <dnpattern>
 is a string representation of the entry's DN.
@@ -113,11 +110,7 @@ form is given.
 .LP
 The 
 .B <dnstyle> 
-is also optional; however, it is recommended to specify both the 
-.B dn=
-and the
-.B <dnstyle>
-to avoid ambiguities.
+is optional; however, it is recommended to specify it to avoid ambiguities.
 .B Base 
 (synonym of
 .BR baseObject ),

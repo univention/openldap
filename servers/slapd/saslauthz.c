@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.144.2.14 2006/05/09 17:29:12 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.144.2.16 2006/11/12 01:58:18 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -1590,7 +1590,7 @@ static int sasl_sc_sasl2dn( Operation *op, SlapReply *rs )
 		Debug( LDAP_DEBUG_TRACE,
 			"%s: slap_sc_sasl2dn: search DN returned more than 1 entry\n",
 			op->o_log_prefix, 0, 0 );
-		return LDAP_OTHER;
+		return LDAP_UNAVAILABLE; /* short-circuit the search */
 	}
 
 	ber_dupbv_x( ndn, &rs->sr_entry->e_nname, op->o_tmpmemctx );
@@ -1607,23 +1607,11 @@ static int sasl_sc_smatch( Operation *o, SlapReply *rs )
 {
 	smatch_info *sm = o->o_callback->sc_private;
 
-	if ( rs->sr_type != REP_SEARCH ) {
-		if ( rs->sr_err != LDAP_SUCCESS ) {
-			sm->match = -1;
-		}
-		return 0;
-	}
-
-	if ( sm->match == 1 ) {
-		sm->match = -1;
-		return 0;
-	}
+	if (rs->sr_type != REP_SEARCH) return 0;
 
 	if (dn_match(sm->dn, &rs->sr_entry->e_nname)) {
 		sm->match = 1;
-
-	} else {
-		sm->match = -1;
+		return LDAP_UNAVAILABLE;	/* short-circuit the search */
 	}
 
 	return 0;
@@ -1849,7 +1837,7 @@ exact_match:
 
 	op.o_bd->be_search( &op, &rs );
 
-	if (sm.match == 1) {
+	if (sm.match) {
 		rc = LDAP_SUCCESS;
 	} else {
 		rc = LDAP_INAPPROPRIATE_AUTH;

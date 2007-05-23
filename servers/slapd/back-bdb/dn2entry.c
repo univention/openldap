@@ -1,5 +1,5 @@
 /* dn2entry.c - routines to deal with the dn2id / id2entry glue */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2entry.c,v 1.25.2.3 2006/01/03 22:16:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2entry.c,v 1.25.2.4 2006/07/28 13:01:37 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2006 The OpenLDAP Foundation.
@@ -56,8 +56,11 @@ bdb_dn2entry(
 				rc2 = bdb_cache_find_id( op, tid, ei->bei_id,
 					&ei, 1, locker, lock );
 				if ( rc2 ) rc = rc2;
-			} else if ( ei )
+			} else if ( ei ) {
 				bdb_cache_entryinfo_unlock( ei );
+				memset( lock, 0, sizeof( *lock ));
+				lock->mode = DB_LOCK_NG;
+			}
 		} else if ( ei ) {
 			bdb_cache_entryinfo_unlock( ei );
 		}

@@ -1,5 +1,5 @@
 /* passwd.c - password extended operation routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.95.2.19 2006/01/03 22:16:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.95.2.20 2006/10/26 21:49:44 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -282,8 +282,13 @@ old_good:
 					 * if it cares... */
 
 		rs->sr_err = op->o_bd->be_modify( op, rs );
+
+		/* be_modify() might have shuffled modifications */
+		qpw->rs_mods = op->orm_modlist;
+
 		if ( rs->sr_err == LDAP_SUCCESS ) {
 			rs->sr_rspdata = rsp;
+
 		} else if ( rsp ) {
 			ber_bvfree( rsp );
 			rsp = NULL;
@@ -520,8 +525,7 @@ void
 slap_passwd_generate( struct berval *pass )
 {
 	Debug( LDAP_DEBUG_TRACE, "slap_passwd_generate\n", 0, 0, 0 );
-	pass->bv_val = NULL;
-	pass->bv_len = 0;
+	BER_BVZERO( pass );
 
 	/*
 	 * generate passwords of only 8 characters as some getpass(3)

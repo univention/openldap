@@ -1,4 +1,4 @@
-dnl $OpenLDAP: pkg/ldap/configure.in,v 1.560.2.29 2006/04/05 21:36:14 kurt Exp $
+dnl $OpenLDAP: pkg/ldap/configure.in,v 1.560.2.31 2006/11/07 20:57:24 ando Exp $
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
 dnl Copyright 1998-2006 The OpenLDAP Foundation.
@@ -25,7 +25,7 @@ dnl ================================================================
 dnl Configure.in for OpenLDAP
 AC_COPYRIGHT([[Copyright 1998-2006 The OpenLDAP Foundation. All rights reserved.
 Restrictions apply, see COPYRIGHT and LICENSE files.]])
-AC_REVISION([$OpenLDAP: pkg/ldap/configure.in,v 1.560.2.29 2006/04/05 21:36:14 kurt Exp $])
+AC_REVISION([$OpenLDAP: pkg/ldap/configure.in,v 1.560.2.31 2006/11/07 20:57:24 ando Exp $])
 AC_INIT([OpenLDAP],,[http://www.openldap.org/its/])
 m4_define([AC_PACKAGE_BUGREPORT],[<http://www.openldap.org/its/>])
 AC_CONFIG_SRCDIR(build/version.sh)dnl
@@ -253,6 +253,9 @@ OL_ARG_WITH(yielding_select,
 OL_ARG_WITH(mp,
 	[  --with-mp               with multiple precision statistics auto|longlong|long|bignum|gmp],
 	auto, [auto longlong long bignum gmp yes no])
+OL_ARG_WITH(odbc,
+	[  --with-odbc             with specific ODBC support iodbc|unixodbc|auto],
+	auto, [auto iodbc unixodbc] )
 
 dnl ----------------------------------------------------------------
 dnl Server options
@@ -903,9 +906,12 @@ AC_CHECK_HEADERS(	\
 	termios.h		\
 	unistd.h		\
 	utime.h			\
-	winsock.h		\
-	winsock2.h		\
 )
+
+dnl Only check Winsock on MinGW
+if test "$ac_cv_mingw32" = yes ; then
+	AC_CHECK_HEADERS( winsock.h winsock2.h )
+fi
 
 AC_CHECK_HEADERS( resolv.h, [], [],
 [$ac_includes_default
@@ -938,9 +944,7 @@ fi
 dnl The following is INTENTIONALLY scripted out because shell does not
 dnl support variable names with the '@' character, which is what
 dnl autoconf would try to generate if one merely used AC_SEARCH_LIBS
-dnl
-dnl Skip Winsock tests on Cygwin
-if test "$ac_cv_cygwin" != yes && test "$ac_cv_header_winsock_h" = yes; then
+if test "$ac_cv_header_winsock_h" = yes; then
 AC_CACHE_CHECK([for winsock], [ol_cv_winsock],
 save_LIBS="$LIBS"
 for curlib in ws2_32 wsock32; do
@@ -2168,15 +2172,33 @@ if test $ol_enable_sql != no ; then
 	sql_LIBS="$LIBS"
 	LIBS="$LTHREAD_LIBS"
 
-	AC_CHECK_LIB(iodbc,SQLDriverConnect,[have_iodbc=yes],[have_iodbc=no])
-	if test $have_iodbc = yes ; then
-		ol_link_sql="-liodbc"
-	else
-		AC_CHECK_LIB(odbc,SQLDriverConnect,[have_odbc=yes],[have_odbc=no])
-		if test $have_odbc = yes ; then
-			ol_link_sql="-lodbc"
-		fi
+	if test $ol_with_odbc = auto ; then
+		ol_with_odbc="iodbc unixodbc"
 	fi
+
+	for odbc in $ol_with_odbc ; do
+		if test $ol_link_sql = no ; then
+			case $odbc in
+			iodbc)
+				AC_CHECK_LIB(iodbc, SQLDriverConnect, [have_iodbc=yes], [have_iodbc=no])
+				if test $have_iodbc = yes ; then
+					ol_link_sql="-liodbc"
+				fi
+				;;
+
+			unixodbc)
+				AC_CHECK_LIB(odbc, SQLDriverConnect, [have_odbc=yes], [have_odbc=no])
+				if test $have_odbc = yes ; then
+					ol_link_sql="-lodbc"
+				fi
+				;;
+
+			*)
+				AC_MSG_ERROR([unknown ODBC library])
+				;;
+			esac
+		fi
+	done
 
 	LIBS="$sql_LIBS"
 
@@ -2446,7 +2468,7 @@ fi
 if test $ol_with_mp = gmp || test $ol_with_mp = auto ; then
 	AC_CHECK_HEADERS(gmp.h)
 	AC_CHECK_LIB(gmp, __gmpz_add_ui)
-	if test $ac_cv_header_gmp_h = yes && test $ac_cv_lib_gmp = yes ; then
+	if test $ac_cv_header_gmp_h = yes && test $ac_cv_lib_gmp___gmpz_add_ui = yes ; then
 		AC_DEFINE(USE_MP_GMP,1,[define to use GMP for MP])
 		ol_with_mp=gmp
 	elif test $ol_with_mp = gmp ; then

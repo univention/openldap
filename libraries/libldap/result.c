@@ -1,5 +1,5 @@
 /* result.c - wait for an ldap result */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/result.c,v 1.99.2.15 2006/04/03 19:49:54 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/result.c,v 1.99.2.18 2006/11/07 04:06:22 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -233,7 +233,7 @@ wait4msg(
 			*tvp;
 	time_t		start_time = 0;
 	time_t		tmp_time;
-	LDAPConn	*lc, *nextlc;
+	LDAPConn	*lc;
 
 	assert( ld != NULL );
 	assert( result != NULL );
@@ -277,8 +277,7 @@ wait4msg(
 #ifdef LDAP_R_COMPILE
 			ldap_pvt_thread_mutex_lock( &ld->ld_conn_mutex );
 #endif
-			for ( lc = ld->ld_conns; lc != NULL; lc = nextlc ) {
-				nextlc = lc->lconn_next;
+			for ( lc = ld->ld_conns; lc != NULL; lc = lc->lconn_next ) {
 				if ( ber_sockbuf_ctrl( lc->lconn_sb,
 						LBER_SB_OPT_DATA_READY, NULL ) ) {
 #ifdef LDAP_R_COMPILE
@@ -302,13 +301,13 @@ wait4msg(
 				if ( rc == -1 ) {
 					Debug( LDAP_DEBUG_TRACE,
 						"ldap_int_select returned -1: errno %d\n",
-						errno, 0, 0 );
+						sock_errno(), 0, 0 );
 				}
 #endif
 
 				if ( rc == 0 || ( rc == -1 && (
 					!LDAP_BOOL_GET(&ld->ld_options, LDAP_BOOL_RESTART)
-						|| errno != EINTR )))
+						|| sock_errno() != EINTR )))
 				{
 					ld->ld_errno = (rc == -1 ? LDAP_SERVER_DOWN :
 						LDAP_TIMEOUT);
@@ -333,10 +332,9 @@ wait4msg(
 					ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
 					ldap_pvt_thread_mutex_lock( &ld->ld_conn_mutex );
 #endif
-					for ( lc = ld->ld_conns; rc == LDAP_MSG_X_KEEP_LOOKING && lc != NULL;
-						lc = nextlc )
+					for ( lc = ld->ld_conns;
+						rc == LDAP_MSG_X_KEEP_LOOKING && lc != NULL; )
 					{
-						nextlc = lc->lconn_next;
 						if ( lc->lconn_status == LDAP_CONNST_CONNECTED &&
 							ldap_is_read_ready( ld, lc->lconn_sb ))
 						{
@@ -344,11 +342,24 @@ wait4msg(
 							ldap_pvt_thread_mutex_unlock( &ld->ld_conn_mutex );
 #endif
 							rc = try_read1msg( ld, msgid, all, &lc, result );
-								if ( lc == NULL ) lc = nextlc;
 #ifdef LDAP_R_COMPILE
 							ldap_pvt_thread_mutex_lock( &ld->ld_conn_mutex );
 #endif
+							if ( lc == NULL ) {
+								/* if lc gets free()'d,
+								 * there's no guarantee
+								 * lc->lconn_next is still
+								 * sane; better restart
+								 * (ITS#4405) */
+								lc = ld->ld_conns;
+
+								/* don't get to next conn! */
+								break;
+							}
 						}
+
+						/* next conn */
+						lc = lc->lconn_next;
 					}
 #ifdef LDAP_R_COMPILE
 					ldap_pvt_thread_mutex_unlock( &ld->ld_conn_mutex );
@@ -434,7 +445,7 @@ retry:
 	assert( LBER_VALID (ber) );
 
 	/* get the next message */
-	errno = 0;
+	sock_errset(0);
 #ifdef LDAP_CONNECTIONLESS
 	if ( LDAP_IS_UDP(ld) ) {
 		struct sockaddr from;
@@ -458,10 +469,10 @@ nextresp3:
 				"ber_get_next failed.\n", 0, 0, 0 );
 #endif		   
 #ifdef EWOULDBLOCK			
-			if (errno==EWOULDBLOCK) return LDAP_MSG_X_KEEP_LOOKING;
+			if ( sock_errno() == EWOULDBLOCK ) return LDAP_MSG_X_KEEP_LOOKING;
 #endif
 #ifdef EAGAIN
-			if (errno == EAGAIN) return LDAP_MSG_X_KEEP_LOOKING;
+			if ( sock_errno() == EAGAIN ) return LDAP_MSG_X_KEEP_LOOKING;
 #endif
 			ld->ld_errno = LDAP_SERVER_DOWN;
 			return -1;

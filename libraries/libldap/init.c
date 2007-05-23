@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/init.c,v 1.93.2.9 2006/04/03 19:49:54 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/init.c,v 1.93.2.11 2006/10/20 16:52:47 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -116,7 +116,7 @@ static const struct ol_attribute {
 static void openldap_ldap_init_w_conf(
 	const char *file, int userconf )
 {
-	char linebuf[128];
+	char linebuf[ AC_LINE_MAX ];
 	FILE *fp;
 	int i;
 	char *cmd, *opt;

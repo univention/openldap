@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblber/memory.c,v 1.57.2.5 2006/01/03 22:16:07 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/memory.c,v 1.57.2.6 2006/07/28 13:01:35 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -700,8 +700,9 @@ struct berval *
 ber_bvreplace_x( struct berval *dst, LDAP_CONST struct berval *src, void *ctx )
 {
 	assert( dst != NULL );
+	assert( !BER_BVISNULL( src ) );
 
-	if ( dst->bv_len < src->bv_len ) {
+	if ( BER_BVISNULL( dst ) || dst->bv_len < src->bv_len ) {
 		dst->bv_val = ber_memrealloc_x( dst->bv_val, src->bv_len + 1, ctx );
 	}
 

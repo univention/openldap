@@ -63,6 +63,28 @@ configure_ldbm_to_bdb_migration() {					# {{{
 	fi
 }
 # }}}
+configure_allow_v2_binds() {                        # {{{
+# Ask if the user would like their package to support LDAPv2..
+# This was the default in older versions but we want to ask
+# for new installs too in case the user needs it..
+
+    db_input medium slapd/allow_ldap_v2 || true
+}
+# }}}
+break_on_ldbm_to_bdb_migration_disagree() { # {{{
+  if [ -e "$SLAPD_CONF" ] && grep -qE \
+      -e '^moduleload[[:space:]]+back_ldbm' \
+      -e '^(database|backend)[[:space:]]+ldbm' \
+      "$SLAPD_CONF"; then
+    db_get slapd/migrate_ldbm_to_bdb
+    if [ "$RET" = "false" ]; then
+      db_fset slapd/migrate_ldbm_to_bdb seen false
+      return 1
+    fi
+    return 0
+  fi
+  return 0
+} # }}}
 database_dumping_enabled() {						# {{{
 # Check if the user has enabled database dumping for the current situation.
 # Return success if yes.
@@ -770,8 +792,9 @@ autoconfigure_modules() {						# {{{
 	echo done. >&2
 }
 # }}}
-update_path_argsfile() {	# {{{
+update_path_argsfile_pidfile() {	# {{{
 	write_slapd_conf "$SLAPD_CONF" 's|^(argsfile\s+).*|$1/var/run/slapd/slapd.args|'
+	write_slapd_conf "$SLAPD_CONF" 's|^(pidfile\s+).*|$1/var/run/slapd/slapd.pid|'
 }
 # }}}
 configure_v2_protocol_support() {					# {{{

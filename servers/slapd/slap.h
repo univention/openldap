@@ -1,5 +1,5 @@
 /* slap.h - stand alone ldap server include file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.612.2.39 2006/04/04 22:34:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.612.2.40 2006/11/07 04:25:02 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -2718,7 +2718,7 @@ struct slap_listener {
 /*
  * Operation indices
  */
-enum {
+typedef enum {
 	SLAP_OP_BIND = 0,
 	SLAP_OP_UNBIND,
 	SLAP_OP_ADD,
@@ -2730,7 +2730,7 @@ enum {
 	SLAP_OP_ABANDON,
 	SLAP_OP_EXTENDED,
 	SLAP_OP_LAST
-};
+} slap_op_t;
 
 typedef struct slap_counters_t {
 	ldap_pvt_thread_mutex_t	sc_sent_mutex;

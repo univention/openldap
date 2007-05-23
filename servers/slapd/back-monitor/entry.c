@@ -1,5 +1,5 @@
 /* entry.c - monitor backend entry handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/entry.c,v 1.14.2.4 2006/04/04 22:34:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/entry.c,v 1.14.2.6 2006/08/05 14:42:04 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2006 The OpenLDAP Foundation.
@@ -42,11 +42,7 @@ monitor_entry_update(
 
 	mp = ( monitor_entry_t * )e->e_private;
 
-	if ( mp->mp_info && mp->mp_info->mss_update ) {
-		rc = mp->mp_info->mss_update( op, rs, e );
-	}
-
-	if ( rc == SLAP_CB_CONTINUE && mp->mp_cb ) {
+	if ( mp->mp_cb ) {
 		struct monitor_callback_t	*mc;
 
 		for ( mc = mp->mp_cb; mc; mc = mc->mc_next ) {
@@ -57,6 +53,10 @@ monitor_entry_update(
 				}
 			}
 		}
+	}
+
+	if ( rc == SLAP_CB_CONTINUE && mp->mp_info && mp->mp_info->mss_update ) {
+		rc = mp->mp_info->mss_update( op, rs, e );
 	}
 
 	if ( rc == SLAP_CB_CONTINUE ) {
@@ -115,11 +115,7 @@ monitor_entry_modify(
 
 	mp = ( monitor_entry_t * )e->e_private;
 
-	if ( mp->mp_info && mp->mp_info->mss_modify ) {
-		rc = mp->mp_info->mss_modify( op, rs, e );
-	}
-
-	if ( rc == SLAP_CB_CONTINUE && mp->mp_cb ) {
+	if ( mp->mp_cb ) {
 		struct monitor_callback_t	*mc;
 
 		for ( mc = mp->mp_cb; mc; mc = mc->mc_next ) {
@@ -130,6 +126,10 @@ monitor_entry_modify(
 				}
 			}
 		}
+	}
+
+	if ( rc == SLAP_CB_CONTINUE && mp->mp_info && mp->mp_info->mss_modify ) {
+		rc = mp->mp_info->mss_modify( op, rs, e );
 	}
 
 	if ( rc == SLAP_CB_CONTINUE ) {

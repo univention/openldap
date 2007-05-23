@@ -1,5 +1,5 @@
 /* translucent.c - translucent proxy module */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/translucent.c,v 1.1.2.10 2006/05/09 17:43:12 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/translucent.c,v 1.1.2.11 2006/09/14 22:43:55 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2006 The OpenLDAP Foundation.
@@ -296,11 +296,10 @@ static int translucent_modify(Operation *op, SlapReply *rs) {
 					m->sml_desc->ad_cname.bv_val, 0, 0);
 				for(mm = op->orm_modlist; mm->sml_next != m; mm = mm->sml_next);
 				mm->sml_next = m->sml_next;
-				mm = m;
-				m = m->sml_next;
-				mm->sml_next = NULL;		/* hack */
-				slap_mods_free(mm, 1);
-				if(m) continue;
+				m->sml_next = NULL;
+				slap_mods_free(m, 1);
+				m = mm;
+				continue;
 			}
 			m->sml_op = LDAP_MOD_ADD;
 		}
@@ -360,7 +359,7 @@ release:
 		a = ch_calloc(1, sizeof(Attribute));
 		a->a_desc  = m->sml_desc;
 		a->a_vals  = m->sml_values;
-		a->a_nvals = m->sml_nvalues;
+		a->a_nvals = m->sml_nvalues ? m->sml_nvalues : a->a_vals;
 		a->a_next  = ax;
 		ax = a;
 	}

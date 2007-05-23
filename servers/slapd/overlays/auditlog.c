@@ -1,5 +1,5 @@
 /* auditlog.c - log modifications for audit/history purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/auditlog.c,v 1.1.2.5 2006/05/09 17:43:12 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/auditlog.c,v 1.1.2.6 2006/07/28 13:01:37 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2006 The OpenLDAP Foundation.
@@ -160,7 +160,7 @@ auditlog_db_init(
 )
 {
 	slap_overinst *on = (slap_overinst *)be->bd_info;
-	auditlog_data *ad = ch_malloc(sizeof(auditlog_data));
+	auditlog_data *ad = ch_calloc(1, sizeof(auditlog_data));
 
 	on->on_bi.bi_private = ad;
 	ldap_pvt_thread_mutex_init( &ad->ad_mutex );

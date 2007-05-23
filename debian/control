@@ -13,7 +13,7 @@ Priority: optional
 Architecture: any
 Pre-Depends: debconf (>= 0.5) | debconf-2.0
 Depends: ${shlibs:Depends}, coreutils (>= 4.5.1-1), psmisc, perl (>> 5.8.0) | libmime-base64-perl, libldap-2.3-0 (= ${Source-Version}), adduser
-Recommends: db4.2-util, libsasl2-modules
+Recommends: libsasl2-modules
 Suggests: ldap-utils
 Conflicts: umich-ldapd, ldap-server, libbind-dev, bind-dev, libltdl3 (= 1.5.4-1)
 Replaces: libldap2, ldap-utils (<< 2.2.23-3)
@@ -39,7 +39,7 @@ Description: OpenLDAP utilities
 
 Package: libldap-2.3-0
 Section: libs
-Priority: important
+Priority: optional
 Architecture: any
 Conflicts: ldap-utils (<= 2.1.23-1)
 Depends: ${shlibs:Depends}, libldap2

@@ -1,5 +1,5 @@
 /* ldif.c - routines for dealing with LDIF files */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/ldif.c,v 1.2.2.8 2006/04/03 19:49:55 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/ldif.c,v 1.2.2.9 2006/10/07 20:19:22 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2006 The OpenLDAP Foundation.
@@ -822,7 +822,8 @@ ldif_read_record(
 		if ( last_ch == '\n' ) {
 			(*lno)++;
 
-			if ( line[0] == '\n' ) {
+			if ( line[0] == '\n' ||
+				( line[0] == '\r' && line[1] == '\n' )) {
 				if ( !found_entry ) {
 					lcur = 0;
 					top_comment = 0;

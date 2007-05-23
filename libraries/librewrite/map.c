@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/map.c,v 1.18.2.3 2006/01/03 22:16:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/map.c,v 1.18.2.4 2006/09/23 14:11:06 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2006 The OpenLDAP Foundation.
@@ -354,7 +354,12 @@ rewrite_map_apply(
 				( struct rewrite_context * )map->lm_data,
 				key->bv_val, &val->bv_val );
 		if ( val->bv_val != NULL ) {
-			val->bv_len = strlen( val->bv_val );
+			if ( val->bv_val == key->bv_val ) {
+				val->bv_len = key->bv_len;
+				key->bv_val = NULL;
+			} else {
+				val->bv_len = strlen( val->bv_val );
+			}
 		}
 		break;
 

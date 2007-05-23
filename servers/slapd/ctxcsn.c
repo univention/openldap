@@ -1,5 +1,5 @@
 /* ctxcsn.c -- Context CSN Management Routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ctxcsn.c,v 1.31.2.7 2006/01/03 22:16:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ctxcsn.c,v 1.31.2.8 2006/08/15 17:11:09 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2006 The OpenLDAP Foundation.
@@ -32,8 +32,7 @@ const struct berval slap_ldapsync_cn_bv = BER_BVC("cn=ldapsync");
 void
 slap_get_commit_csn(
 	Operation *op,
-	struct berval *maxcsn,
-	struct berval *curcsn
+	struct berval *maxcsn
 )
 {
 	struct slap_csn_entry *csne, *committed_csne = NULL;
@@ -46,7 +45,6 @@ slap_get_commit_csn(
 
 	LDAP_TAILQ_FOREACH( csne, op->o_bd->be_pending_csn_list, ce_csn_link ) {
 		if ( csne->ce_opid == op->o_opid && csne->ce_connid == op->o_connid ) {
-			if ( curcsn ) *curcsn = csne->ce_csn;
 			csne->ce_state = SLAP_CSN_COMMIT;
 			break;
 		}
