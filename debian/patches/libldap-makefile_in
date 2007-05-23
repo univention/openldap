@@ -1,3 +1,9 @@
+Part of this patch adds the necessary makefile logic for the NTLM code.
+The rest explicitly links libldap_r against the threading libraries to
+prevent unversioned references to pthread symbols.
+
+The threading part only is ITS#4982.
+
 diff -urNad openldap2.3-2.3.11~/libraries/libldap/Makefile.in openldap2.3-2.3.11/libraries/libldap/Makefile.in
 --- openldap2.3-2.3.11~/libraries/libldap/Makefile.in	2005-12-01 13:48:50.000000000 +0100
 +++ openldap2.3-2.3.11/libraries/libldap/Makefile.in	2005-12-02 10:04:11.513209500 +0100
