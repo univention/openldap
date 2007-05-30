@@ -38,6 +38,11 @@ $(builddir)/Makefile:
 	# get in by accident again.  -- Torsten
 	if [ -e doc/rfc ]; then exit 1; fi
 
+	# Copy our stripped schema versions into where upstream expects them.
+	set -e; for s in debian/schema/*.schema debian/schema/*.ldif ; do \
+	    cp $s servers/slapd/schema/`basename $s` \
+	done
+
 	mkdir -p $(builddir)
 	chmod 755 $(CURDIR)/autogen.sh
 	./autogen.sh
@@ -77,7 +82,7 @@ binary-indep:
 	dh_testdir
 	dh_testroot
 	dh_clean -k
-	
+
 	dh_installdirs -i
 	sh debian/copy_slapd_dev_files
 	dh_installchangelogs -i
@@ -98,12 +103,12 @@ binary-arch: install-stamp
 	dh_clean -k
 	# XXX: remove after libldap2.3-dev is officially built
 	#rm -Rf debian/libldap2.3-dev
-	
+
 	dh_installdirs -a
 	cp -al $(installdir) $(tmpdir)
-	
+
 	dh_install -a
-	
+
 	# Make fix_ldif and ldiftopasswd executable.
 	chmod 0755 $(CURDIR)/debian/slapd/usr/share/slapd/fix_ldif $(CURDIR)/debian/slapd/usr/share/slapd/ldiftopasswd
 	dh_installchangelogs -a
@@ -134,6 +139,10 @@ clean1:
 	dh_testroot
 	# Update translation templates for debconf
 	debconf-updatepo
+	# Remove our stripped schema from the upstream source area.
+	set -e; for s in debian/schema/*.schema debian/schema/*.ldif ; do \
+	    rm servers/slapd/schema/`basename $s` \
+	done
 	# Update config.guess and config.sub
 	if [ -e /usr/share/misc/config.sub ]; then \
 	  rm build/config.sub build/config.guess; \
@@ -143,7 +152,7 @@ clean1:
 	fi
 	rm -f install-stamp build-stamp
 	rm -rf $(builddir) $(builddir_notls) $(installdir)
-	
+
 	dh_clean
 	# XXX: remove after libldap2.3-dev is officially built
 	rm -Rf debian/libldap2.3-dev

@@ -1,4 +1,17 @@
-Copyright 1998-2001 The OpenLDAP Foundation
+This package was downloaded from:
+
+    <http://www.openldap.org/>
+
+The upstream distribution has been repackaged to remove the RFCs and
+Internet-Drafts included in the upstream distribution, since the Internet
+Society license does not meet the Debian Free Software Guidelines.  The
+schema files that contain verbatim text from RFCs or Internet-Drafts have
+similarly been removed and are replaced during the package build with
+versions stripped of the literal RFC or Internet-Draft text.
+
+Copyright:
+
+Copyright 1998-2007 The OpenLDAP Foundation
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -218,6 +231,18 @@ IS
 #    HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
 #    MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
 
+This license was present in the copies of several schema files and one
+LDIF file as distributed upstream.  The relevant content has been removed
+except where it is purely functional (descriptions of an LDAP schema).
+The copyright notice has been retained with a clarifying comment.  The
+provisions in the above license that prohibit modification therefore
+should no longer apply to any files distributed with the Debian package.
+
+Several files in libraries/libldap also reference this license as the
+copyright on ABNF sequences embedded as comments in those files.  These
+too are purely functional interface specifications distributed as part of
+the LDAP protocol standard and do not contain creative work such as
+free-form text.
 -----------------------------------
 
 
