@@ -141,7 +141,7 @@ clean1:
 	debconf-updatepo
 	# Remove our stripped schema from the upstream source area.
 	set -e; for s in debian/schema/*.schema debian/schema/*.ldif ; do \
-	    rm servers/slapd/schema/`basename $$s`; \
+	    rm -f servers/slapd/schema/`basename $$s`; \
 	done
 	# Update config.guess and config.sub
 	if [ -e /usr/share/misc/config.sub ]; then \
