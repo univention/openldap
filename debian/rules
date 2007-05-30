@@ -43,6 +43,8 @@ $(builddir)/Makefile:
 	    cp $$s servers/slapd/schema/`basename $$s`; \
 	done
 
+	cp -f /usr/share/misc/config.* build/
+	cp -f /usr/share/misc/config.* contrib/ldapc++/
 	mkdir -p $(builddir)
 	chmod 755 $(CURDIR)/autogen.sh
 	./autogen.sh
@@ -143,13 +145,9 @@ clean1:
 	set -e; for s in debian/schema/*.schema debian/schema/*.ldif ; do \
 	    rm -f servers/slapd/schema/`basename $$s`; \
 	done
-	# Update config.guess and config.sub
-	if [ -e /usr/share/misc/config.sub ]; then \
-	  rm build/config.sub build/config.guess; \
-	  cp -f /usr/share/misc/config.* build/; \
-	  rm contrib/ldapc++/config.sub contrib/ldapc++/config.guess; \
-	  cp -f /usr/share/misc/config.* contrib/ldapc++/; \
-	fi
+	# Remove updated config.guess and config.sub for a clean diff.
+	rm -f build/config.sub build/config.guess
+	rm -f contrib/ldapc++/config.sub contrib/ldapc++/config.guess
 	rm -f install-stamp build-stamp
 	rm -rf $(builddir) $(builddir_notls) $(installdir)
 

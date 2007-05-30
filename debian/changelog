@@ -14,10 +14,14 @@ openldap2.3 (2.3.35-1) UNRELEASED; urgency=low
     interface specifications, a comment explaining why this is needed, and
     a pointer to the relevant RFC.  (Closes: #361846)
   * Document the repackaging of the upstream source in debian/copyright.
+  * Update config.guess and config.sub during the build instead of in the
+    clean target and remove them in the clean target for a clean diff.
+    Build-depend on autotools-dev so that we can unconditionally copy over
+    the latest versions.
   * Added commentary and upstream ITS numbers for several patches
     applicable upstream.
 
- -- Russ Allbery <rra@debian.org>  Wed, 30 May 2007 13:20:41 -0700
+ -- Russ Allbery <rra@debian.org>  Wed, 30 May 2007 13:30:16 -0700
 
 openldap2.3 (2.3.30-5) unstable; urgency=low
 
