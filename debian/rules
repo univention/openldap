@@ -40,7 +40,7 @@ $(builddir)/Makefile:
 
 	# Copy our stripped schema versions into where upstream expects them.
 	set -e; for s in debian/schema/*.schema debian/schema/*.ldif ; do \
-	    cp $s servers/slapd/schema/`basename $s` \
+	    cp $s servers/slapd/schema/`basename $s`; \
 	done
 
 	mkdir -p $(builddir)
@@ -141,7 +141,7 @@ clean1:
 	debconf-updatepo
 	# Remove our stripped schema from the upstream source area.
 	set -e; for s in debian/schema/*.schema debian/schema/*.ldif ; do \
-	    rm servers/slapd/schema/`basename $s` \
+	    rm servers/slapd/schema/`basename $s`; \
 	done
 	# Update config.guess and config.sub
 	if [ -e /usr/share/misc/config.sub ]; then \
