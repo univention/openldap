@@ -1,6 +1,7 @@
 openldap2.3 (2.3.35-1) UNRELEASED; urgency=low
 
   * New upstream release with many bug fixes.
+    - Allow syncprov to follow aliases.  (Closes: #422087)
   * Apply upstream patches:
     - ITS#4924: client crash on incorrectly tagged result from server.
     - ITS#4925: NOOP modify with BDB backend crashed slapd.
@@ -22,7 +23,7 @@ openldap2.3 (2.3.35-1) UNRELEASED; urgency=low
   * Added commentary and upstream ITS numbers for several patches
     applicable upstream.
 
- -- Russ Allbery <rra@debian.org>  Wed, 30 May 2007 17:41:38 -0700
+ -- Russ Allbery <rra@debian.org>  Wed, 30 May 2007 20:25:46 -0700
 
 openldap2.3 (2.3.30-5) unstable; urgency=low
 
