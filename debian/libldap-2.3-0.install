@@ -4,3 +4,5 @@ debian/tmp/usr/lib/libldap-2.3.so.0 usr/lib
 debian/tmp/usr/lib/libldap-2.3.so.0.*.* usr/lib
 debian/tmp/usr/lib/libldap_r-2.3.so.0 usr/lib
 debian/tmp/usr/lib/libldap_r-2.3.so.0.*.* usr/lib
+debian/tmp/usr/lib/libslapi-2.3.so.0 usr/lib
+debian/tmp/usr/lib/libslapi-2.3.so.0.*.* usr/lib

@@ -58,10 +58,17 @@ build-stamp: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) $(MAKEVARS)
 	touch $@
 
+# Check all built libraries for unresolved symbols except for the libslapi
+# library.  It is a special case since the SLAPI interface depends on symbols
+# defined in slapd itself.  Those symbols will remain unresolved until the
+# plugin is loaded into slapd.
 install: install-stamp
 install-stamp: build-stamp
 	$(MAKE) -C $(builddir) $(MAKEVARS) install
 	for F in $(installdir)/usr/lib/*.so.*.*.*; do \
+	    if echo "$$F" | grep -q libslapi ; then \
+	        continue; \
+	    fi; \
 	    if LD_LIBRARY_PATH=$(installdir)/usr/lib ldd -d -r $$F 2>&1 | grep '^undefined symbol:'; then \
 	        echo; \
 	        echo "library $$F has undefined references.  Please fix this before continuing."; \

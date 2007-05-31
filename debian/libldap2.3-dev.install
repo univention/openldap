@@ -12,3 +12,5 @@ debian/tmp/usr/lib/liblber.a usr/lib
 debian/tmp/usr/lib/liblber.so usr/lib
 debian/tmp/usr/lib/libldap_r.a usr/lib
 debian/tmp/usr/lib/libldap_r.so usr/lib
+debian/tmp/usr/lib/libslapi.a usr/lib
+debian/tmp/usr/lib/libslapi.so usr/lib

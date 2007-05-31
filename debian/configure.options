@@ -95,6 +95,7 @@
 #--enable-rlookups	  enable reverse lookups of client hostnames [no]
 --enable-rlookups
 #--enable-slapi        enable SLAPI support (experimental) [no]
+--enable-slapi
 #--enable-slp          enable SLPv2 support [no]
 --enable-slp
 #--enable-wrappers	  enable tcp wrapper support [no]
