@@ -1,4 +1,4 @@
-openldap2.3 (2.3.35-1) UNRELEASED; urgency=low
+openldap2.3 (2.3.35-1) unstable; urgency=low
 
   * New upstream release with many bug fixes.
     - Allow syncprov to follow aliases.  (Closes: #422087)
@@ -25,7 +25,7 @@ openldap2.3 (2.3.35-1) UNRELEASED; urgency=low
   * Use debian/compat rather than the deprecated DH_COMPAT rules setting.
   * Update to debhelper compatibility level V5 (no changes required).
 
- -- Russ Allbery <rra@debian.org>  Wed, 30 May 2007 21:35:46 -0700
+ -- Russ Allbery <rra@debian.org>  Wed, 30 May 2007 22:42:28 -0700
 
 openldap2.3 (2.3.30-5) unstable; urgency=low
 
