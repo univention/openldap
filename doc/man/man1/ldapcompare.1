@@ -106,8 +106,12 @@ This is used instead of specifying the password on the command line.
 Use \fIpasswd\fP as the password for simple authentication.
 .TP
 .BI \-y \ passwdfile
-Use complete contents of \fIpasswdfile\fP as the password for
-simple authentication.
+Use complete contents of \fIpasswdfile\fP, including any leading or
+trailing whitespace and any final newlines, as the password for
+simple authentication.  If the password does not contain a newline,
+be careful when creating this file.  Many editors and commands like
+\fBecho\fP will add a trailing newline, which will then be taken as part
+of the password.
 .TP
 .BI \-H \ ldapuri
 Specify URI(s) referring to the ldap server(s); only the protocol/host/port
