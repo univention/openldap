@@ -17,6 +17,11 @@ set -e
 # Stop processing if slapd is not there
 [ -x /usr/sbin/slapd ] || exit 0
 
+# debconf may have this file descriptor open and it makes things work a bit
+# more reliably if we redirect it as a matter of course.  db_stop will take
+# care of this, but this won't hurt.
+exec 3>/dev/null
+
 # Source the init script configuration
 if [ -f "/etc/default/slapd" ]; then
 	. /etc/default/slapd
