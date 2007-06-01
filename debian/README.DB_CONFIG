@@ -6,8 +6,12 @@ for your system.
 
 Note that changes to DB_CONFIG will only have any effect after (re-)creating
 the Berkeley DB environment which means that you have either to run 
-db_recover or dump and reload your data. db_recover -eh /var/lib/ldap
-should do the trick.
+db_recover or dump and reload your data.
+
+    su -c 'db_recover -eh /var/lib/ldap' openldap
+
+should do the trick.  Run this command as whatever user you have configured
+slapd to run as (in /etc/default/slapd).
 
  -- Torsten Landschoff <torsten@debian.org>  Sun, 29 May 2005 18:08:10 +0200
 
