@@ -686,7 +686,6 @@ create_new_slapd_conf() {						# {{{
 	# file we're about to write will be horribly broken.  Try to give the
 	# user some warning rather than failing later.
 	if [ ! -e /etc/ldap/schema/core.schema ]; then
-		echo "failed." >&2
 		echo >&2
 		cat >&2 <<-EOF
 	/etc/ldap/schema/core.schema does not exist, which means the slapd
