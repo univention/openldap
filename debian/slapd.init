@@ -14,8 +14,13 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 # Kill me on all errors
 set -e
 
+# Set the paths to slapd and slurpd as variables so that someone who really
+# wants to can override the paths in /etc/default/slapd.
+SLAPD=/usr/sbin/slapd
+SLURPD=/usr/sbin/slurpd
+
 # Stop processing if slapd is not there
-[ -x /usr/sbin/slapd ] || exit 0
+[ -x $SLAPD ] || exit 0
 
 # debconf may have this file descriptor open and it makes things work a bit
 # more reliably if we redirect it as a matter of course.  db_stop will take
@@ -137,11 +142,11 @@ start_slapd() {
 	if [ -z "$SLAPD_SERVICES" ]; then
 		reason="`start-stop-daemon --start --quiet --oknodo \
 			--pidfile "$SLAPD_PIDFILE" \
-			--exec /usr/sbin/slapd -- $SLAPD_OPTIONS 2>&1`"
+			--exec $SLAPD -- $SLAPD_OPTIONS 2>&1`"
 	else
 		reason="`start-stop-daemon --start --quiet --oknodo \
 			--pidfile "$SLAPD_PIDFILE" \
-			--exec /usr/sbin/slapd -- -h "$SLAPD_SERVICES" $SLAPD_OPTIONS 2>&1`"
+			--exec $SLAPD -- -h "$SLAPD_SERVICES" $SLAPD_OPTIONS 2>&1`"
 	fi
 
 	# Backward compatibility with OpenLDAP 2.1 client libraries.
@@ -158,7 +163,7 @@ start_slurpd() {
 	fi
 	echo -n " slurpd"
 	reason="`start-stop-daemon --start --quiet --oknodo \
-		--exec /usr/sbin/slurpd -- $SLURPD_OPTIONS 2>&1`"
+		--exec $SLURPD -- $SLURPD_OPTIONS 2>&1`"
 }
 
 # Stop the slapd daemon and capture the error message (if any) to
@@ -167,7 +172,7 @@ stop_slapd() {
 	echo -n " slapd"
 	reason="`start-stop-daemon --stop --quiet --oknodo --retry 10 \
 		--pidfile "$SLAPD_PIDFILE" \
-		--exec /usr/sbin/slapd 2>&1`"
+		--exec $SLAPD 2>&1`"
 }
 
 # Stop the slurpd daemon and capture the error message (if any) to
@@ -178,7 +183,7 @@ stop_slurpd() {
 	fi
 	echo -n " slurpd"
 	reason="`start-stop-daemon --stop --quiet --oknodo --retry 10 \
-		--exec /usr/sbin/slurpd 2>&1`"
+		--exec $SLURPD 2>&1`"
 }
 
 # Start the OpenLDAP daemons

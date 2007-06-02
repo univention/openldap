@@ -19,6 +19,9 @@ openldap2.3 (2.3.35-2) UNRELEASED; urgency=low
     robustness when debconf is running.  (Closes: #227482)
   * Add to /etc/default/slapd a commented-out example of how to change the
     keytab file used for GSSAPI authentication.  (Closes: #412017)
+  * Use variables in /etc/init.d/slapd for the paths to slapd and slurpd
+    so that someone who really wants to can override them in
+    /etc/default/slapd.  (Closes: #403948)
 
  -- Russ Allbery <rra@debian.org>  Fri, 01 Jun 2007 23:41:10 -0700
 
