@@ -1,5 +1,14 @@
 openldap2.3 (2.3.35-2) UNRELEASED; urgency=low
 
+  * If automatic configuration is selected and slapd.conf doesn't exist
+    during an upgrade, treat this as a fresh installation rather than
+    aborting with an error.  Also try to provide a better error message if
+    the user has deleted /etc/ldap/schema but we just generated a new
+    configuration that references it.  These cases can occur if someone
+    removes (rather than purges) the package, manually deletes /etc/ldap,
+    and then reinstalls.  (Closes: #205010)
+  * Don't fail in slapd's postrm if /etc/ldap/schema has already been
+    deleted.
   * Remove slapd conflicts with libbind-dev and bind-dev.  There no longer
     appears to be anything in those packages that would break slapd's
     resolver.  (Closes: #225896)
@@ -10,7 +19,7 @@ openldap2.3 (2.3.35-2) UNRELEASED; urgency=low
   * Add to /etc/default/slapd a commented-out example of how to change the
     keytab file used for GSSAPI authentication.  (Closes: #412017)
 
- -- Russ Allbery <rra@debian.org>  Fri, 01 Jun 2007 16:50:23 -0700
+ -- Russ Allbery <rra@debian.org>  Fri, 01 Jun 2007 18:11:18 -0700
 
 openldap2.3 (2.3.35-1) unstable; urgency=low
 

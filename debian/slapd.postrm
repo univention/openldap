@@ -22,7 +22,7 @@ remove_database_on_purge() {
 if [ "$1" = "purge" ]; then
   echo -n "Removing slapd configuration... "
   rm -f /etc/ldap/slapd.conf 2>/dev/null || true
-  rmdir --ignore-fail-on-non-empty /etc/ldap/schema
+  rmdir /etc/ldap/schema || true
   echo done
 
   echo -n "Removing maintainer script flag files... "

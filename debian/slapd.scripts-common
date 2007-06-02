@@ -681,6 +681,24 @@ create_new_slapd_conf() {						# {{{
     -e "s/@BACKENDOPTIONS@/$backendoptions/g"
 	install_new_slapd_conf "$conf_new"
 	echo "done." >&2
+
+	# If /etc/ldap/schema/core.schema doesn't exist, the configuration
+	# file we're about to write will be horribly broken.  Try to give the
+	# user some warning rather than failing later.
+	if [ ! -e /etc/ldap/schema/core.schema ]; then
+		echo "failed." >&2
+		echo >&2
+		cat >&2 <<-EOF
+	/etc/ldap/schema/core.schema does not exist, which means the slapd
+	configuration will not work.  If you have moved the schema files
+	elsewhere, you will need to modify $SLAPD_CONF accordingly.
+	If you deleted the schema files inadvertantly, you may need to
+	purge this package and then reinstall it to restore them (be
+	careful to back up your database first if necessary).
+
+EOF
+		exit 1
+	fi
 } 
 # }}}
 noisy_slapadd() {							# {{{
@@ -1217,6 +1235,12 @@ is_initial_configuration() {						# {{{
 	if [ "$1" = reconfigure ] || [ "$DEBCONF_RECONFIGURE" ]; then
     		return 0
   	fi
+	# Upgrade but slapd.conf doesn't exist.  If the user is doing this
+	# intentionally because they want to put it somewhere else, they
+	# should select manual configuration in debconf.
+	if [ "$1" = configure ] && [ ! -e "$SLAPD_CONF" ]; then
+		return 0
+	fi
   	return 1
 }
 
