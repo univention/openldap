@@ -10,7 +10,3 @@ slapd: package-has-a-duplicate-relation depends: libldap-2.3-0, libldap-2.3-0 (=
 # The extended description is needed in slapd/backend. It explains a lot about
 # the different backends.
 slapd: too-long-extended-description-in-templates slapd/backend
-
-# Bug in lintian says insecure tmp file handling. While using the perl function
-# mkstemp.
-slapd: possibly-insecure-handling-of-tmp-files-in-maintainer-script
