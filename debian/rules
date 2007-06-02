@@ -2,6 +2,10 @@
 
 #export DH_VERBOSE = 1
 
+# Set this variable if you're building packages outside of Debian and don't
+# want the checks for DFSG-freeness.
+#DFSG_NONFREE = 1
+
 CFLAGS = -Wall -g -D_FILE_OFFSET_BITS=64
 INSTALL = install
 INSTALL_FILE    = $(INSTALL) -p    -o root -g root  -m  644
@@ -30,17 +34,22 @@ MAKEVARS	:= DESTDIR=$(installdir)
 include /usr/share/quilt/quilt.make
 
 $(builddir)/Makefile:
-	# Check if we include the RFCs (which are non DFSG-free)
-	# You can safely remove this check to build the packages from 
-	# the unchanged upstream sources but Debian can not ship the 
-	# RFCs in main so this test is here to make sure it does not 
-	# get in by accident again.  -- Torsten
-	if [ -e doc/rfc ]; then exit 1; fi
+	# Check if we include the RFCs and Internet-Drafts (which are non
+	# DFSG-free).  You can set DFSG_NONFREE to build the packages from the
+	# unchanged upstream sources but Debian can not ship the RFCs in main
+	# so this test is here to make sure it does not get in by accident
+	# again. -- Torsten
+	if [ -z "$(DFSG_NONFREE)" ]; then \
+	    if [ -e doc/drafts]; then exit 1; fi; \
+	    if [ -e doc/rfc ]; then exit 1; fi; \
+	fi
 
 	# Copy our stripped schema versions into where upstream expects them.
-	set -e; for s in debian/schema/*.schema debian/schema/*.ldif ; do \
-	    cp $$s servers/slapd/schema/`basename $$s`; \
-	done
+	if [ -z "$(DFSG_NONFREE)" ]; then \
+	    set -e; for s in debian/schema/*.schema debian/schema/*.ldif; do \
+	        cp $$s servers/slapd/schema/`basename $$s`; \
+	    done; \
+	fi
 
 	cp -f /usr/share/misc/config.* build/
 	cp -f /usr/share/misc/config.* contrib/ldapc++/
@@ -148,9 +157,11 @@ clean1:
 	# Update translation templates for debconf
 	debconf-updatepo
 	# Remove our stripped schema from the upstream source area.
-	set -e; for s in debian/schema/*.schema debian/schema/*.ldif ; do \
-	    rm -f servers/slapd/schema/`basename $$s`; \
-	done
+	if [ -z "$(DFSG_NONFREE)" ]; then \
+	    set -e; for s in debian/schema/*.schema debian/schema/*.ldif; do \
+	        rm -f servers/slapd/schema/`basename $$s`; \
+	    done; \
+	fi
 	# Remove updated config.guess and config.sub for a clean diff.
 	rm -f build/config.sub build/config.guess
 	rm -f contrib/ldapc++/config.sub contrib/ldapc++/config.guess
