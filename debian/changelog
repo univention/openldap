@@ -1,5 +1,6 @@
 openldap2.3 (2.3.35-2) UNRELEASED; urgency=low
 
+  * Enable LAN Manager password support in slapd.  (Closes: #245341)
   * If automatic configuration is selected and slapd.conf doesn't exist
     during an upgrade, treat this as a fresh installation rather than
     aborting with an error.  Also try to provide a better error message if
@@ -19,7 +20,7 @@ openldap2.3 (2.3.35-2) UNRELEASED; urgency=low
   * Add to /etc/default/slapd a commented-out example of how to change the
     keytab file used for GSSAPI authentication.  (Closes: #412017)
 
- -- Russ Allbery <rra@debian.org>  Fri, 01 Jun 2007 18:11:18 -0700
+ -- Russ Allbery <rra@debian.org>  Fri, 01 Jun 2007 23:41:10 -0700
 
 openldap2.3 (2.3.35-1) unstable; urgency=low
 

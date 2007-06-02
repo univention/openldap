@@ -86,6 +86,7 @@
 #--enable-crypt	  enable crypt(3) passwords [no]
 --enable-crypt
 #--enable-lmpasswd	  enable LAN Manager passwords [no]
+--enable-lmpasswd
 #--enable-spasswd	  enable (Cyrus) SASL password verification [no]
 --enable-spasswd
 #--enable-modules	  enable dynamic module support [no]
