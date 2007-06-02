@@ -13,8 +13,10 @@ openldap2.3 (2.3.35-2) UNRELEASED; urgency=low
   * Remove slapd conflicts with libbind-dev and bind-dev.  There no longer
     appears to be anything in those packages that would break slapd's
     resolver.  (Closes: #225896)
-  * Document in README.DB_CONFIG that the db_recover command should be run
-    as the slapd user.  Thanks, Glennie Vignarajah.  (Closes: #412575)
+  * db_recover is no longer required after changing DB_CONFIG; slapd now
+    detects changes itself and does the right thing.  Also note in
+    README.DB_CONFIG the existence of the dbconfig slapd.conf parameter
+    and slapd's DB_CONFIG writing support.  (Closes: #412575)
   * Redirect fd 3 to /dev/null in the slapd init script for additional
     robustness when debconf is running.  (Closes: #227482)
   * Add to /etc/default/slapd a commented-out example of how to change the
@@ -23,7 +25,7 @@ openldap2.3 (2.3.35-2) UNRELEASED; urgency=low
     so that someone who really wants to can override them in
     /etc/default/slapd.  (Closes: #403948)
 
- -- Russ Allbery <rra@debian.org>  Fri, 01 Jun 2007 23:41:10 -0700
+ -- Russ Allbery <rra@debian.org>  Fri, 01 Jun 2007 23:59:03 -0700
 
 openldap2.3 (2.3.35-1) unstable; urgency=low
 

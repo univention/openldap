@@ -4,17 +4,19 @@ articles should help you to determine a good configuration for your
 requirements. A standard DB_CONFIG is installed but it may not be adequate
 for your system.
 
-Note that changes to DB_CONFIG will only have any effect after (re-)creating
-the Berkeley DB environment which means that you have either to run 
-db_recover or dump and reload your data.
+The current version of OpenLDAP supports putting DB_CONFIG parameters into
+slapd.conf instead by prefixing those options with dbconfig.  See the
+slapd-bdb(5) man page for more information.  If there is no DB_CONFIG file
+when slapd starts and there are dbconfig lines in slapd.conf, slapd will
+write out a DB_CONFIG file with those settings before initializing the
+database.
 
-    su -c 'db_recover -eh /var/lib/ldap' openldap
-
-should do the trick.  Run this command as whatever user you have configured
-slapd to run as (in /etc/default/slapd).
+With the current version of OpenLDAP, any changes to DB_CONFIG will take
+effect automatically after restarting slapd.  Running db_recover is no
+longer required.
 
  -- Torsten Landschoff <torsten@debian.org>  Sun, 29 May 2005 18:08:10 +0200
-
+    Russ Allbery <rra@debian.org>  Fri, 01 Jun 2007 23:57:33 -0700
 
 How do I configure the BDB backend?
 -----------------------------------
