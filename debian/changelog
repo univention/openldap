@@ -31,11 +31,11 @@ openldap2.3 (2.3.35-2) UNRELEASED; urgency=low
   * Allow people building packages for outside Debian to skip the checks
     for non-DFSG-free material by setting a variable. Thanks, Peter
     Marschall.  (Closes: #427245)
-  * Remove duplicate libldap-2.3-0 package dependencies.
+  * Remove duplicate libldap-2.3-0 dependencies.  (Closes: #408987)
   * Use binary:Version instead of Source-Version for the tight
     dependencies between slapd and ldap-utils and libldap-2.3-0.
 
- -- Russ Allbery <rra@debian.org>  Sun, 03 Jun 2007 00:27:00 -0700
+ -- Russ Allbery <rra@debian.org>  Sun, 03 Jun 2007 14:57:54 -0700
 
 openldap2.3 (2.3.35-1) unstable; urgency=low
 
