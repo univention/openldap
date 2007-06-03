@@ -12,7 +12,7 @@ Section: net
 Priority: optional
 Architecture: any
 Pre-Depends: debconf (>= 0.5) | debconf-2.0
-Depends: ${shlibs:Depends}, coreutils (>= 4.5.1-1), psmisc, perl (>> 5.8.0) | libmime-base64-perl, libldap-2.3-0 (= ${Source-Version}), adduser
+Depends: ${shlibs:Depends}, libldap-2.3-0 (= ${binary:Version}), coreutils (>= 4.5.1-1), psmisc, perl (>> 5.8.0) | libmime-base64-perl, adduser
 Recommends: libsasl2-modules
 Suggests: ldap-utils
 Conflicts: umich-ldapd, ldap-server, libltdl3 (= 1.5.4-1)
@@ -27,7 +27,7 @@ Package: ldap-utils
 Section: net
 Priority: optional
 Architecture: any
-Depends: ${shlibs:Depends}, libldap-2.3-0 (= ${Source-Version})
+Depends: ${shlibs:Depends}, libldap-2.3-0 (= ${binary:Version})
 Recommends: libsasl2-modules
 Conflicts: umich-ldap-utils, openldap-utils, ldap-client
 Replaces: openldap-utils, slapd (<< 2.2.23-0.pre6), openldapd

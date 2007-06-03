@@ -19,7 +19,7 @@ else
 CFLAGS += -O2
 endif
 
-CONFIG	      = $(shell grep -v "^\#" debian/configure.options)
+CONFIG		= $(shell grep -v "^\#" debian/configure.options)
 
 installdir	:= $(CURDIR)/debian/install
 tmpdir		:= $(CURDIR)/debian/tmp
@@ -142,7 +142,9 @@ binary-arch: install-stamp
 	dh_makeshlibs -plibldap-2.3-0
 	dh_installdeb -a
 	perl -w debian/dh_installscripts-common -p slapd
-	dh_shlibdeps -a -l$(installdir)/usr/lib
+	dh_shlibdeps -a -L libldap-2.3-0 -l $(installdir)/usr/lib
+	# Strip duplicate dependency out of substvars.
+	sed -i -e 's/ libldap-2.3-0,//' debian/*.substvars
 	dh_gencontrol -a
 	dh_md5sums -a
 	# Don't build the libldap2.3-dev package until after sarge release
