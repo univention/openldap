@@ -48,3 +48,24 @@ Description: OpenLDAP libraries
  These are the run-time libraries for the OpenLDAP (Lightweight Directory
  Access Protocol) servers and clients.
 
+Package: libldap-2.3-0-dbg
+Section: libdevel
+Priority: extra
+Architecture: any
+Depends: libldap-2.3-0 (= ${binary:Version})
+Description: Debugging information for OpenLDAP libraries
+ Detached debugging information for the OpenLDAP (Lightweight Directory
+ Access Protocol) libraries.  It is useful primarily to permit better
+ backtraces and crash dump analysis after problems with the libraries.
+ GDB will find this debug information automatically.
+
+Package: slapd-dbg
+Section: net
+Priority: extra
+Architecture: any
+Depends: slapd (= ${binary:Version})
+Description: Debugging information for the OpenLDAP server (slapd)
+ Detached debugging information for the OpenLDAP (Lightweight Directory
+ Access Protocol) standalone server (slapd).  It is useful primarily to
+ permit better backtraces and crash dump analysis after problems with the
+ libraries.  GDB will find this debug information automatically.
