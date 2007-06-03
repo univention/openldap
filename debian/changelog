@@ -19,6 +19,8 @@ openldap2.3 (2.3.35-2) UNRELEASED; urgency=low
     detects changes itself and does the right thing.  Also note in
     README.DB_CONFIG the existence of the dbconfig slapd.conf parameter
     and slapd's DB_CONFIG writing support.  (Closes: #412575)
+  * Add options to /etc/default/slapd to let the system administrator tell
+    the init script to not start slapd on boot.  (Closes: #254999)
   * Redirect fd 3 to /dev/null in the slapd init script for additional
     robustness when debconf is running.  (Closes: #227482)
   * Add to /etc/default/slapd a commented-out example of how to change the
@@ -33,7 +35,7 @@ openldap2.3 (2.3.35-2) UNRELEASED; urgency=low
   * Use binary:Version instead of Source-Version for the tight
     dependencies between slapd and ldap-utils and libldap-2.3-0.
 
- -- Russ Allbery <rra@debian.org>  Sat, 02 Jun 2007 22:35:13 -0700
+ -- Russ Allbery <rra@debian.org>  Sun, 03 Jun 2007 00:27:00 -0700
 
 openldap2.3 (2.3.35-1) unstable; urgency=low
 

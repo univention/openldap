@@ -96,6 +96,18 @@ if [ "$SLAPD_GROUP" ]; then
 	SLAPD_OPTIONS="-g $SLAPD_GROUP $SLAPD_OPTIONS"
 fi
 
+# Check whether we were configured to not start the services.
+check_for_no_start() {
+	if [ -n "$SLAPD_NO_START" ]; then
+		echo 'Not starting slapd: SLAPD_NO_START set in /etc/default/slapd' >&2
+		exit 0
+	fi
+	if [ -n "$SLAPD_SENTINEL_FILE" ] && [ -e "$SLAPD_SENTINEL_FILE" ]; then
+		echo "Not starting slapd: $SLAPD_SENTINEL_FILE exists" >&2
+		exit 0
+	fi
+}
+
 # Tell the user that something went wrong and give some hints for
 # resolving the problem.
 report_failure() {
@@ -208,10 +220,12 @@ stop() {
 
 case "$1" in
   start)
+	check_for_no_start
   	start ;;
   stop)
   	stop ;;
   restart|force-reload)
+	check_for_no_start
   	stop
 	start
 	;;
