@@ -51,8 +51,6 @@ $(builddir)/Makefile:
 	cp -f /usr/share/misc/config.* build/
 	cp -f /usr/share/misc/config.* contrib/ldapc++/
 	mkdir -p $(builddir)
-	chmod 755 $(CURDIR)/autogen.sh
-	./autogen.sh
 	cd $(builddir) && CFLAGS="$(CFLAGS)" $(CURDIR)/configure \
 		$(CONFIG) 
 	perl debian/check_config
