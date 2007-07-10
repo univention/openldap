@@ -1,3 +1,10 @@
+openldap2.3 (2.3.35-3) UNRELEASED; urgency=low
+
+  * Drop debian/patches/use-lpthread, which is no longer needed on mips*
+    because gcc has been fixed.
+
+ -- Steve Langasek <vorlon@debian.org>  Mon, 09 Jul 2007 23:44:46 -0700
+
 openldap2.3 (2.3.35-2) unstable; urgency=low
 
   * Enable LAN Manager password support in slapd.  (Closes: #245341)
