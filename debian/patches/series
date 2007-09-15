@@ -10,6 +10,4 @@ wrong-database-location -p0
 index-files-created-as-root -p0
 sasl-default-path -p0
 man-slurpd -p0
-ITS4924
-ITS4925
-ITS4966
+ITS5119 -p0

@@ -1,0 +1,12 @@
+Index: servers/slapd/modify.c
+===================================================================
+--- servers/slapd/modify.c.orig
++++ servers/slapd/modify.c
+@@ -734,6 +734,7 @@
+ 							"%s: value #%ld normalization failed",
+ 							ml->sml_type.bv_val, (long) nvals );
+ 						*text = textbuf;
++                        BER_BVZERO( &ml->sml_nvalues[nvals] );
+ 						return rc;
+ 					}
+ 				}
