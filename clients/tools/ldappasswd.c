@@ -1,5 +1,5 @@
 /* ldappasswd -- a tool for change LDAP passwords */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldappasswd.c,v 1.127.2.6 2007/01/02 21:43:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldappasswd.c,v 1.127.2.7 2007/08/13 18:04:39 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -177,6 +177,7 @@ main( int argc, char *argv[] )
 	char *matcheddn = NULL, *text = NULL, **refs = NULL;
 	char	*retoid = NULL;
 	struct berval *retdata = NULL;
+	LDAPControl **ctrls = NULL;
 
     tool_init();
 	prog = lutil_progname( "ldappasswd", argc, argv );
@@ -310,6 +311,8 @@ main( int argc, char *argv[] )
 		goto done;
 	}
 
+	tool_server_controls( ld, NULL, 0);
+
 	rc = ldap_extended_operation( ld,
 		LDAP_EXOP_MODIFY_PASSWD, bv.bv_val ? &bv : NULL, 
 		NULL, NULL, &id );
@@ -344,7 +347,7 @@ main( int argc, char *argv[] )
 	}
 
 	rc = ldap_parse_result( ld, res,
-		&code, &matcheddn, &text, &refs, NULL, 0 );
+		&code, &matcheddn, &text, &refs, &ctrls, 0 );
 	if( rc != LDAP_SUCCESS ) {
 		ldap_perror( ld, "ldap_parse_result" );
 		rc = EXIT_FAILURE;
@@ -380,9 +383,17 @@ main( int argc, char *argv[] )
 		}
 
 		ber_free( ber, 1 );
+
+	} else if ( code == LDAP_SUCCESS && newpw.bv_val == NULL ) {
+		tool_perror( "ldap_parse_extended_result", LDAP_DECODING_ERROR,
+			" new password expected", NULL, NULL, NULL );
 	}
 
-	if( verbose || code != LDAP_SUCCESS || matcheddn || text || refs ) {
+skip:
+	if( verbose || code != LDAP_SUCCESS ||
+		matcheddn || text || refs || ctrls )
+	{
+
 		printf( _("Result: %s (%d)\n"), ldap_err2string( code ), code );
 
 		if( text && *text ) {
@@ -398,6 +409,11 @@ main( int argc, char *argv[] )
 			for( i=0; refs[i]; i++ ) {
 				printf(_("Referral: %s\n"), refs[i] );
 			}
+		}
+
+		if( ctrls ) {
+			tool_print_ctrls( ld, ctrls );
+			ldap_controls_free( ctrls );
 		}
 	}
 

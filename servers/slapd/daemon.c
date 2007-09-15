@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.318.2.30 2007/04/01 21:30:02 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.318.2.32 2007/07/23 20:34:28 hallvard Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -227,7 +227,8 @@ static struct slap_daemon {
 	(int *)(ptr) <= &slap_daemon.sd_index[dtblsize]) ? 0 : 1 )
 
 # define SLAP_EPOLL_EV_PTRFD(ptr)		(SLAP_EPOLL_EV_LISTENER(ptr) ? \
-	((Listener *)ptr)->sl_sd : (int *)(ptr) - slap_daemon.sd_index)
+	((Listener *)ptr)->sl_sd : \
+	(ber_socket_t) ((int *)(ptr) - slap_daemon.sd_index))
 
 # define SLAP_SOCK_DEL(s)		do { \
 	int fd, rc, index = SLAP_EPOLL_SOCK_IX((s)); \
@@ -1582,7 +1583,7 @@ slap_listener(
 	Sockaddr		from;
 
 	ber_socket_t s;
-	socklen_t len = sizeof(from);
+	ber_socklen_t len = sizeof(from);
 	long id;
 	slap_ssf_t ssf = 0;
 	struct berval authid = BER_BVNULL;

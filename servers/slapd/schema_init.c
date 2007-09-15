@@ -1,5 +1,5 @@
 /* schema_init.c - init builtin schema */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_init.c,v 1.360.2.17 2007/03/08 20:09:09 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_init.c,v 1.360.2.18 2007/05/13 18:15:21 hallvard Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -4001,6 +4001,8 @@ schema_destroy( void )
 	mru_destroy();
 	syn_destroy();
 
-	ldap_pvt_thread_mutex_destroy( &ad_undef_mutex );
-	ldap_pvt_thread_mutex_destroy( &oc_undef_mutex );
+	if( schema_init_done ) {
+		ldap_pvt_thread_mutex_destroy( &ad_undef_mutex );
+		ldap_pvt_thread_mutex_destroy( &oc_undef_mutex );
+	}
 }

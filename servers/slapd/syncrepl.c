@@ -1,5 +1,5 @@
 /* syncrepl.c -- Replication Engine which uses the LDAP Sync protocol */
-/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.168.2.47 2007/04/06 21:49:16 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.168.2.49 2007/08/08 16:26:00 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2007 The OpenLDAP Foundation.
@@ -52,7 +52,7 @@ struct nonpresent_entry {
 typedef struct syncinfo_s {
 	struct slap_backend_db *si_be;
 	struct re_s			*si_re;
-	long				si_rid;
+	int					si_rid;
 	slap_bindconf		si_bindconf;
 	struct berval		si_base;
 	struct berval		si_logbase;
@@ -2892,6 +2892,14 @@ parse_syncrepl_line(
 				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->msg, 0 );
 				return -1;
 			}
+			if ( select_backend( &si->si_base, 0, 0 ) != c->be ) {
+				ber_memfree( si->si_base.bv_val );
+				snprintf( c->msg, sizeof( c->msg ),
+					"Base DN \"%s\" is not within the database naming context",
+					val );
+				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->msg, 0 );
+				return -1;
+			}
 			gots |= GOT_BASE;
 		} else if ( !strncasecmp( c->argv[ i ], LOGBASESTR "=",
 					STRLENOF( LOGBASESTR "=" ) ) )
@@ -3316,7 +3324,7 @@ syncrepl_unparse( syncinfo_t *si, struct berval *bv )
 	si->si_bindconf.sb_uri = uri;
 
 	ptr = buf;
-	ptr += snprintf( ptr, sizeof( buf ), IDSTR "=%03ld " PROVIDERSTR "=%s",
+	ptr += snprintf( ptr, sizeof( buf ), IDSTR "=%03d " PROVIDERSTR "=%s",
 		si->si_rid, si->si_bindconf.sb_uri.bv_val );
 	if ( !BER_BVISNULL( &bc )) {
 		ptr = lutil_strcopy( ptr, bc.bv_val );

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.552.2.41 2007/01/02 21:43:57 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.552.2.43 2007/07/23 20:10:22 hallvard Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -426,6 +426,19 @@ LDAP_SLAPD_F (int) overlay_op_walk LDAP_P((
 	slap_operation_t which,
 	slap_overinfo *oi,
 	slap_overinst *on ));
+LDAP_SLAPD_F (int) overlay_entry_get_ov LDAP_P((
+	Operation *op,
+	struct berval *dn,
+	ObjectClass *oc,
+	AttributeDescription *ad,
+	int rw,
+	Entry **e,
+	slap_overinst *ov ));
+LDAP_SLAPD_F (int) overlay_entry_release_ov LDAP_P((
+	Operation *op,
+	Entry *e,
+	int rw,
+	slap_overinst *ov ));
 
 /*
  * bconfig.c
@@ -722,8 +735,8 @@ LDAP_SLAPD_F (int) slapd_daemon(void);
 LDAP_SLAPD_F (Listener **)	slapd_get_listeners LDAP_P((void));
 LDAP_SLAPD_F (void) slapd_remove LDAP_P((ber_socket_t s, Sockbuf *sb,
 	int wasactive, int wake, int locked ));
-LDAP_SLAPD_F (void) slapd_sd_lock();
-LDAP_SLAPD_F (void) slapd_sd_unlock();
+LDAP_SLAPD_F (void) slapd_sd_lock LDAP_P((void));
+LDAP_SLAPD_F (void) slapd_sd_unlock LDAP_P((void));
 
 LDAP_SLAPD_F (RETSIGTYPE) slap_sig_shutdown LDAP_P((int sig));
 LDAP_SLAPD_F (RETSIGTYPE) slap_sig_wake LDAP_P((int sig));

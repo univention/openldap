@@ -1,5 +1,5 @@
 /* common.h - common definitions for the ldap client tools */
-/* $OpenLDAP: pkg/ldap/clients/tools/common.h,v 1.11.2.7 2007/01/02 21:43:41 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/common.h,v 1.11.2.8 2007/08/13 20:03:51 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -61,6 +61,7 @@ extern char *pw_file;
 extern int   referrals;
 extern int   protocol;
 extern int   verbose;
+extern int   ldif;
 extern int   version;
 
 /* Defined in common.c, set in main() */
@@ -89,6 +90,8 @@ void tool_perror LDAP_P((
 	char *matched,
 	char *info,
 	char **refs ));
+void tool_print_ctrls LDAP_P(( LDAP *ld, LDAPControl **ctrls ));
+int tool_write_ldif LDAP_P(( int type, char *name, char *value, ber_len_t vallen ));
 
 LDAP_END_DECL
 

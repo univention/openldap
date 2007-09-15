@@ -1,5 +1,5 @@
 /* search.c - search operation */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.221.2.15 2007/01/02 21:44:00 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.221.2.16 2007/07/20 22:42:26 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2007 The OpenLDAP Foundation.
@@ -360,6 +360,7 @@ bdb_search( Operation *op, SlapReply *rs )
 		ei_root.bei_parent = &ei_root;
 		e_root.e_private = &ei_root;
 		e_root.e_id = 0;
+		e_root.e_ocflags = SLAP_OC_GLUE | SLAP_OC__END;
 		BER_BVSTR( &e_root.e_nname, "" );
 		BER_BVSTR( &e_root.e_name, "" );
 		ei = &ei_root;

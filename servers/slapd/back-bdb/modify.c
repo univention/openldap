@@ -1,5 +1,5 @@
 /* modify.c - bdb backend modify routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modify.c,v 1.124.2.16 2007/01/02 21:44:00 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modify.c,v 1.124.2.17 2007/04/11 18:32:24 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2007 The OpenLDAP Foundation.
@@ -538,6 +538,8 @@ retry:	/* transaction retry */
 		} else {
 			rs->sr_err = LDAP_X_NO_OPERATION;
 			ltid = NULL;
+			/* Only free attrs if they were dup'd.  */
+			if ( dummy.e_attrs == e->e_attrs ) dummy.e_attrs = NULL;
 			goto return_results;
 		}
 	} else {

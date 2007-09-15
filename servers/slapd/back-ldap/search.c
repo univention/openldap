@@ -1,5 +1,5 @@
 /* search.c - ldap backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.148.2.38 2007/03/09 16:23:16 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.148.2.39 2007/07/11 23:41:11 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.
@@ -330,12 +330,18 @@ retry:
 			e = ldap_first_entry( lc->lc_ld, res );
 			rc = ldap_build_entry( op, e, &ent, &bdn );
 			if ( rc == LDAP_SUCCESS ) {
+				ldap_get_entry_controls( lc->lc_ld, res, &rs->sr_ctrls );
 				rs->sr_entry = &ent;
 				rs->sr_attrs = op->ors_attrs;
 				rs->sr_operational_attrs = NULL;
 				rs->sr_flags = 0;
 				rs->sr_err = LDAP_SUCCESS;
 				rc = rs->sr_err = send_search_entry( op, rs );
+				if ( rs->sr_ctrls ) {
+					ldap_controls_free( rs->sr_ctrls );
+					rs->sr_ctrls = NULL;
+				}
+				rs->sr_entry = NULL;
 				if ( !BER_BVISNULL( &ent.e_name ) ) {
 					assert( ent.e_name.bv_val != bdn.bv_val );
 					op->o_tmpfree( ent.e_name.bv_val, op->o_tmpmemctx );
@@ -383,6 +389,7 @@ retry:
 				BER_BVZERO( &rs->sr_ref[ cnt ] );
 
 				/* ignore return value by now */
+				rs->sr_entry = NULL;
 				( void )send_search_reference( op, rs );
 
 			} else {

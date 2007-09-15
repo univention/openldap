@@ -1,5 +1,5 @@
 /* ldbm.c - ldap dbm compatibility routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/ldbm.c,v 1.4.2.4 2007/01/02 21:44:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/ldbm.c,v 1.4.2.6 2007/08/06 12:32:51 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -137,7 +137,7 @@ static void
 #if DB_VERSION_X < 0x040300
 ldbm_db_errcall( const char *prefix, char *message )
 #else
-ldbm_db_errcall( const DB_ENV *env, const char *prefix, char *message )
+ldbm_db_errcall( const DB_ENV *env, const char *prefix, const char *message )
 #endif
 {
 #ifdef LDAP_SYSLOG
@@ -298,10 +298,10 @@ DB_ENV *ldbm_initialize_env(const char *home, int dbcachesize, int *envdirok)
 	home = n2;
 #endif
 #if DB_VERSION_X >= 0x030100
-	err = env->open( env, home, envFlags, 0 );
+	err = (env->open)( env, home, envFlags, 0 );
 #else
 	/* 3.0.x requires an extra argument */
-	err = env->open( env, home, NULL, envFlags, 0 );
+	err = (env->open)( env, home, NULL, envFlags, 0 );
 #endif
 
 	if ( err != 0 ) {
@@ -380,9 +380,9 @@ ldbm_open( DB_ENV *env, char *name, int rw, int mode, int dbcachesize )
 	name = n2;
 #endif
 #if DB_VERSION_X >= 0x040111
-	err = ret->open( ret, NULL, name, NULL, DB_TYPE, rw, mode);
+	err = (ret->open)( ret, NULL, name, NULL, DB_TYPE, rw, mode);
 #else
-	err = ret->open( ret, name, NULL, DB_TYPE, rw, mode);
+	err = (ret->open)( ret, name, NULL, DB_TYPE, rw, mode);
 #endif
 
 	if ( err != 0 ) {

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/passfile.c,v 1.6.2.3 2007/01/02 21:43:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/passfile.c,v 1.6.2.4 2007/06/08 07:59:05 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -44,7 +44,7 @@ lutil_get_filed_password(
 	}
 
 	passwd->bv_val = NULL;
-	passwd->bv_len = 4196;
+	passwd->bv_len = 4096;
 
 #ifdef HAVE_FSTAT
 	{
@@ -56,7 +56,8 @@ lutil_get_filed_password(
 					filename );
 			}
 
-			passwd->bv_len = sb.st_size;
+			if ( sb.st_size )
+				passwd->bv_len = sb.st_size;
 		}
 	}
 #endif /* HAVE_FSTAT */

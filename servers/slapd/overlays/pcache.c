@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.41.2.17 2007/01/02 21:44:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.41.2.19 2007/07/23 20:08:32 hallvard Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2007 The OpenLDAP Foundation.
@@ -417,7 +417,6 @@ strings_containment(struct berval* stored, struct berval* incoming)
 static int
 substr_containment_substr(Operation *op, Filter* stored, Filter* incoming)
 {
-	int i;
 	int rc = 0;
 
 	struct berval init_incoming;
@@ -608,7 +607,6 @@ static void
 free_query (CachedQuery* qc)
 {
 	Query* q = (Query*)qc;
-	int i;
 
 	free(qc->q_uuid.bv_val);
 	filter_free(q->filter);
@@ -1026,6 +1024,19 @@ cache_entries(
 }
 
 static int
+pcache_op_cleanup( Operation *op, SlapReply *rs ) {
+	slap_callback	*cb = op->o_callback;
+	struct search_info *si = cb->sc_private;
+	if ( si->query.save_attrs != NULL ) {
+		rs->sr_attrs = si->query.save_attrs;
+		op->ors_attrs = si->query.save_attrs;
+	}
+	op->o_callback = op->o_callback->sc_next;
+	op->o_tmpfree( cb, op->o_tmpmemctx );
+	return SLAP_CB_CONTINUE;
+}
+
+static int
 pcache_response(
 	Operation	*op,
 	SlapReply	*rs )
@@ -1097,8 +1108,7 @@ pcache_response(
 			filter_free( si->query.filter );
 		}
 
-		/* free self */
-		op->o_callback->sc_cleanup = slap_freeself_cb;
+		op->o_callback->sc_cleanup = pcache_op_cleanup;
 	}
 	return SLAP_CB_CONTINUE;
 }
@@ -1205,8 +1215,6 @@ pcache_op_search(
 	cache_manager *cm = on->on_bi.bi_private;
 	query_manager*		qm = cm->qm;
 
-	int count;
-
 	int i = -1;
 
 	AttributeName	*filter_attrs = NULL;
@@ -1219,7 +1227,6 @@ pcache_op_search(
 	int 		cacheable = 0;
 	int		fattr_cnt=0;
 	int		fattr_got_oc = 0;
-	int		oc_attr_absent = 1;
 
 	struct berval tempstr;
 
@@ -2014,7 +2021,7 @@ pcache_db_close(
 	slap_overinst *on = (slap_overinst *)be->bd_info;
 	cache_manager *cm = on->on_bi.bi_private;
 	query_manager *qm = cm->qm;
-	int i, j, rc = 0;
+	int i, rc = 0;
 
 	/* cleanup stuff inherited from the original database... */
 	cm->db.be_limits = NULL;

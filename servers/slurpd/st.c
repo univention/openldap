@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slurpd/st.c,v 1.18.2.5 2007/01/02 21:44:12 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slurpd/st.c,v 1.18.2.6 2007/07/01 12:15:17 hallvard Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -180,6 +180,7 @@ St_read(
     int		rc;
     char	*hostname, *port, *timestamp, *seq, *p, *t;
     int		found;
+    long	last;
 
     if ( st == NULL ) {
 	return -1;
@@ -235,11 +236,11 @@ St_read(
 	    if ( !strcmp( hostname, sglob->st->st_data[ i ]->hostname ) &&
 		    lutil_atoi( &p, port ) == 0 && p == sglob->st->st_data[ i ]->port )
 	    {
-		found = 1;
-		if ( lutil_atol( &sglob->st->st_data[ i ]->last, timestamp ) != 0
-			|| lutil_atoi( &sglob->st->st_data[ i ]->seq, seq ) != 0 )
-		{
-		    found = 0;
+		found = (lutil_atol( &last, timestamp ) == 0);
+		if ( found ) {
+		    sglob->st->st_data[i]->last = last;
+		    if ( lutil_atoi( &sglob->st->st_data[i]->seq, seq ) != 0 )
+		        found = 0;
 		}
 		break;
 	    }

@@ -1,5 +1,5 @@
 /* index.c - routines for dealing with attribute indexes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/index.c,v 1.46.2.10 2007/01/02 21:44:00 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/index.c,v 1.46.2.11 2007/07/22 15:54:14 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2007 The OpenLDAP Foundation.
@@ -435,6 +435,10 @@ int bdb_index_recrun(
 	AttrList *al;
 	int i, rc = 0;
 
+	/* Never index ID 0 */
+	if ( id == 0 )
+		return 0;
+
 	for (i=base; i<bdb->bi_nattrs; i+=slap_tool_thread_max) {
 		ir = ir0 + i;
 		if ( !ir->ai ) continue;
@@ -471,6 +475,10 @@ bdb_index_entry(
 	void* mem_op;
 	struct berval value = {0};
 #endif
+
+	/* Never index ID 0 */
+	if ( e->e_id == 0 )
+		return 0;
 
 	Debug( LDAP_DEBUG_TRACE, "=> index_entry_%s( %ld, \"%s\" )\n",
 		opid == SLAP_INDEX_DELETE_OP ? "del" : "add",

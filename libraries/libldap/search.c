@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/search.c,v 1.64.2.8 2007/01/02 21:43:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/search.c,v 1.64.2.9 2007/06/08 07:43:26 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -259,8 +259,9 @@ ldap_build_search_req(
 	LDAP_NEXT_MSGID( ld, *idp );
 #ifdef LDAP_CONNECTIONLESS
 	if ( LDAP_IS_UDP(ld) ) {
-	    err = ber_write( ber, ld->ld_options.ldo_peer,
-		    sizeof(struct sockaddr), 0);
+		struct sockaddr sa = {0};
+		/* dummy, filled with ldo_peer in request.c */
+		err = ber_write( ber, &sa, sizeof( sa ), 0 );
 	}
 	if ( LDAP_IS_UDP(ld) && ld->ld_options.ldo_version == LDAP_VERSION2) {
 	    char *dn = ld->ld_options.ldo_cldapdn;

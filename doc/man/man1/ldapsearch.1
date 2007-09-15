@@ -1,5 +1,5 @@
 .TH LDAPSEARCH 1 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man1/ldapsearch.1,v 1.49.2.11 2007/01/02 21:43:44 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man1/ldapsearch.1,v 1.49.2.13 2007/08/06 15:44:51 ghenry Exp $
 .\" Copyright 1998-2007 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
@@ -20,6 +20,8 @@ ldapsearch \- LDAP search tool
 .BI \-F \ prefix\fR]
 [\c
 .BR \-A ]
+[\c
+.BR \-C ]
 [\c
 .BR \-L[L[L]] ]
 [\c
@@ -132,6 +134,9 @@ Retrieve attributes only (no values).  This is useful when you just want to
 see if an attribute is present in an entry and are not interested in the
 specific values.
 .TP
+.B \-C
+Chase referrals (anonymously).
+.TP
 .B \-L
 Search results are display in LDAP Data Interchange Format detailed in
 .BR ldif (5).
@@ -166,7 +171,7 @@ must be compiled with LDAP_DEBUG defined for this option to have any effect.
 Read a series of lines from \fIfile\fP, performing one LDAP search for
 each line.  In this case, the \fIfilter\fP given on the command line
 is treated as a pattern where the first and only occurrence of \fB%s\fP
-is replaced with a line from \fIfile\fP.  Any other occurence of the
+is replaced with a line from \fIfile\fP.  Any other occurrence of the
 the \fB%\fP character in the pattern will be regarded as an error.
 Where it is desired that the search filter include a \fB%\fP character,
 the character should be encoded as \fB\\25\fP (see RFC 4515).

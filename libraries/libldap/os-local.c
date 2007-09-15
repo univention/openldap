@@ -1,5 +1,5 @@
 /* os-local.c -- platform-specific domain socket code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.37.2.8 2007/04/04 21:56:13 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.37.2.9 2007/06/10 18:39:53 hallvard Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -120,7 +120,7 @@ ldap_pvt_is_socket_ready(LDAP *ld, int s)
 #if defined( notyet ) /* && defined( SO_ERROR ) */
 {
 	int so_errno;
-	socklen_t dummy = sizeof(so_errno);
+	ber_socklen_t dummy = sizeof(so_errno);
 	if ( getsockopt( s, SOL_SOCKET, SO_ERROR, &so_errno, &dummy )
 		== AC_SOCKET_ERROR )
 	{
@@ -138,7 +138,7 @@ ldap_pvt_is_socket_ready(LDAP *ld, int s)
 	/* error slippery */
 	struct sockaddr_un sa;
 	char ch;
-	socklen_t dummy = sizeof(sa);
+	ber_socklen_t dummy = sizeof(sa);
 	if ( getpeername( s, (struct sockaddr *) &sa, &dummy )
 		== AC_SOCKET_ERROR )
 	{

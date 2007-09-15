@@ -1,5 +1,5 @@
 /* bconfig.c - the config backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/bconfig.c,v 1.17.2.49 2007/01/02 21:43:54 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/bconfig.c,v 1.17.2.53 2007/07/23 19:41:30 hallvard Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2007 The OpenLDAP Foundation.
@@ -349,7 +349,7 @@ static ConfigTable config_back_cf_table[] = {
 			"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
 	{ "moduleload",	"file", 2, 0, 0,
 #ifdef SLAPD_MODULES
-		ARG_MAGIC|CFG_MODLOAD, &config_generic,
+		ARG_MAGIC|CFG_MODLOAD|ARG_NO_DELETE, &config_generic,
 #else
 		ARG_IGNORED, NULL,
 #endif
@@ -2102,8 +2102,7 @@ int
 slap_loglevel_get( struct berval *s, int *l )
 {
 	int		rc;
-	unsigned long	i;
-	slap_mask_t	m;
+	slap_mask_t	m, i;
 
 	if ( loglevel_ops == NULL ) {
 		loglevel_init();
@@ -2113,12 +2112,10 @@ slap_loglevel_get( struct berval *s, int *l )
 		m |= loglevel_ops[ i ].mask;
 	}
 
-	m = ~m;
-
-	for ( i = 1; i <= ( 1 << ( sizeof( int ) * 8 - 1 ) ) && !( m & i ); i <<= 1 )
+	for ( i = 1; m & i; i <<= 1 )
 		;
 
-	if ( !( m & i ) ) {
+	if ( i == 0 ) {
 		return -1;
 	}
 
@@ -2216,8 +2213,6 @@ config_loglevel(ConfigArgs *c) {
 		return 0;
 	}
 
-	config_syslog = 0;
-
 	for( i=1; i < c->argc; i++ ) {
 		int	level;
 
@@ -2236,7 +2231,11 @@ config_loglevel(ConfigArgs *c) {
 				return( 1 );
 			}
 		}
-		config_syslog |= level;
+		/* Explicitly setting a zero clears all the levels */
+		if ( level )
+			config_syslog |= level;
+		else
+			config_syslog = 0;
 	}
 	if ( slapMode & SLAP_SERVER_MODE ) {
 		ldap_syslog = config_syslog;
@@ -4284,7 +4283,10 @@ config_build_schema_inc( ConfigArgs *c, CfEntryInfo *ceparent,
 	struct berval bv;
 
 	for (; cf; cf=cf->c_sibs, c->depth++) {
+		if ( !cf->c_at_head && !cf->c_cr_head && !cf->c_oc_head &&
+			!cf->c_om_head ) continue;
 		c->value_dn.bv_val = c->log;
+		LUTIL_SLASHPATH( cf->c_file.bv_val );
 		bv.bv_val = strrchr(cf->c_file.bv_val, LDAP_DIRSEP[0]);
 		if ( !bv.bv_val ) {
 			bv = cf->c_file;

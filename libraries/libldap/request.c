@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/request.c,v 1.103.2.15 2007/01/02 21:43:49 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/request.c,v 1.103.2.19 2007/07/01 12:17:28 hallvard Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -222,6 +222,19 @@ ldap_send_server_request(
 
 	use_connection( ld, lc );
 
+#ifdef LDAP_CONNECTIONLESS
+	if ( LDAP_IS_UDP( ld )) {
+		BerElement tmpber = *ber;
+		ber_rewind( &tmpber );
+		rc = ber_write( &tmpber, ld->ld_options.ldo_peer,
+			sizeof( struct sockaddr ), 0 );
+		if ( rc == -1 ) {
+			ld->ld_errno = LDAP_ENCODING_ERROR;
+			return rc;
+		}
+	}
+#endif
+
 	/* If we still have an incomplete write, try to finish it before
 	 * dealing with the new request. If we don't finish here, return
 	 * LDAP_BUSY and let the caller retry later. We only allow a single
@@ -424,7 +437,10 @@ ldap_new_connection( LDAP *ld, LDAPURLDesc *srvlist, int use_ldsb,
 			++lc->lconn_refcnt;	/* avoid premature free */
 			ld->ld_defconn = lc;
 
-			Debug( LDAP_DEBUG_TRACE, "anonymous rebind via ldap_bind_s\n", 0, 0, 0);
+			Debug( LDAP_DEBUG_TRACE,
+				"anonymous rebind via ldap_sasl_bind(\"\")\n",
+				0, 0, 0);
+
 #ifdef LDAP_R_COMPILE
 			ldap_pvt_thread_mutex_unlock( &ld->ld_req_mutex );
 			ldap_pvt_thread_mutex_unlock( &ld->ld_res_mutex );
@@ -462,7 +478,13 @@ ldap_new_connection( LDAP *ld, LDAPURLDesc *srvlist, int use_ldsb,
 						break;
 
 					default:
-						assert( 0 );
+						Debug( LDAP_DEBUG_TRACE,
+							"ldap_new_connection %p: "
+							"unexpected response %d "
+							"from BIND request id=%d\n",
+							(void *)ld, ldap_msgtype( res ), msgid );
+						err = -1;
+						break;
 					}
 				}
 			}
@@ -916,7 +938,7 @@ ldap_chase_v3referrals( LDAP *ld, LDAPRequest *lr, char **refs, int sref, char *
 				if ( lp == origreq ) {
 					lp = lp->lr_child;
 				} else {
-					lp = lr->lr_refnext;
+					lp = lp->lr_refnext;
 				}
 			}
 			if ( looped ) {

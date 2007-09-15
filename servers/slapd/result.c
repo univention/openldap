@@ -1,5 +1,5 @@
 /* result.c - routines to send ldap results, errors, and referrals */
-/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.244.2.22 2007/01/02 21:43:57 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.244.2.24 2007/06/13 14:31:47 ralf Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -170,7 +170,7 @@ static long send_ldap_ber(
 			break;
 		}
 
-		err = errno;
+		err = sock_errno();
 
 		/*
 		 * we got an error.  if it's ewouldblock, we need to
@@ -287,7 +287,7 @@ send_ldap_response(
 	int		rc = LDAP_SUCCESS;
 	long	bytes;
 
-	if ( rs->sr_err == SLAPD_ABANDON ) {
+	if ( rs->sr_err == SLAPD_ABANDON || op->o_abandon ) {
 		rc = SLAPD_ABANDON;
 		goto clean2;
 	}
@@ -527,7 +527,7 @@ slap_send_ldap_result( Operation *op, SlapReply *rs )
 	rs->sr_type = REP_RESULT;
 
 	/* Propagate Abandons so that cleanup callbacks can be processed */
-	if ( rs->sr_err == SLAPD_ABANDON )
+	if ( rs->sr_err == SLAPD_ABANDON || op->o_abandon )
 		goto abandon;
 
 	assert( !LDAP_API_ERROR( rs->sr_err ) );

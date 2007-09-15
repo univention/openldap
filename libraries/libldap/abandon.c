@@ -1,5 +1,5 @@
 /* abandon.c */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/abandon.c,v 1.36.2.5 2007/01/02 21:43:48 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/abandon.c,v 1.36.2.6 2007/06/08 07:43:26 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -191,8 +191,9 @@ do_abandon(
 			i = ++(ld)->ld_msgid;
 #ifdef LDAP_CONNECTIONLESS
 			if ( LDAP_IS_UDP(ld) ) {
-			    err = ber_write( ber, ld->ld_options.ldo_peer,
-				sizeof(struct sockaddr), 0);
+				struct sockaddr sa = {0};
+				/* dummy, filled with ldo_peer in request.c */
+				err = ber_write( ber, &sa, sizeof( sa ), 0 );
 			}
 			if ( LDAP_IS_UDP(ld) && ld->ld_options.ldo_version ==
 				LDAP_VERSION2) {

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/sockpair.c,v 1.15.2.3 2007/01/02 21:43:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/sockpair.c,v 1.15.2.4 2007/06/10 18:39:53 hallvard Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -35,7 +35,8 @@ int lutil_pair( ber_socket_t sds[2] )
 	return pipe( sds );
 #else
 	struct sockaddr_in si;
-	int rc, len = sizeof(si);
+	int rc;
+	ber_socklen_t len = sizeof(si);
 	ber_socket_t sd;
 
 	sd = socket( AF_INET, SOCK_DGRAM, 0 );

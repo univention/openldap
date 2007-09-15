@@ -1,5 +1,5 @@
 /* init.c - initialize various things */
-/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.81.2.16 2007/01/25 12:42:38 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.81.2.17 2007/06/12 23:46:44 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -103,6 +103,8 @@ slap_init( int mode, const char *name )
 	}
 
 	slapMode = mode;
+
+	slap_op_init();
 
 #ifdef SLAPD_MODULES
 	if ( module_init() != 0 ) {
@@ -339,8 +341,10 @@ int slap_destroy(void)
 
 	}
 
+	slap_op_destroy();
+
 	ldap_pvt_thread_destroy();
 
-	/* should destory the above mutex */
+	/* should destroy the above mutex */
 	return rc;
 }

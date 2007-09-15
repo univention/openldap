@@ -1,5 +1,5 @@
 /* getpeereid.c */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/getpeereid.c,v 1.13.2.9 2007/04/02 23:21:36 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/getpeereid.c,v 1.13.2.10 2007/06/10 18:39:53 hallvard Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2007 The OpenLDAP Foundation.
@@ -50,7 +50,7 @@ int getpeereid( int s, uid_t *euid, gid_t *egid )
 #ifdef LDAP_PF_LOCAL
 #if defined( SO_PEERCRED )
 	struct ucred peercred;
-	socklen_t peercredlen = sizeof peercred;
+	ber_socklen_t peercredlen = sizeof peercred;
 
 	if(( getsockopt( s, SOL_SOCKET, SO_PEERCRED,
 		(void *)&peercred, &peercredlen ) == 0 )
@@ -63,7 +63,7 @@ int getpeereid( int s, uid_t *euid, gid_t *egid )
 
 #elif defined( LOCAL_PEERCRED )
 	struct xucred peercred;
-	socklen_t peercredlen = sizeof peercred;
+	ber_socklen_t peercredlen = sizeof peercred;
 
 	if(( getsockopt( s, LOCAL_PEERCRED, 1,
 		(void *)&peercred, &peercredlen ) == 0 )
@@ -139,7 +139,7 @@ int getpeereid( int s, uid_t *euid, gid_t *egid )
 	}
 #elif defined(SOCKCREDSIZE)
 	struct msghdr msg;
-	socklen_t crmsgsize;
+	ber_socklen_t crmsgsize;
 	void *crmsg;
 	struct cmsghdr *cmp;
 	struct sockcred *sc;

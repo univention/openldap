@@ -1,5 +1,5 @@
 /* addentry.c */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/addentry.c,v 1.14.2.3 2007/01/02 21:43:48 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/addentry.c,v 1.14.2.4 2007/07/22 15:55:36 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -64,6 +64,9 @@ ldap_add_result_entry( LDAPMessage **list, LDAPMessage *e )
 	assert( e != NULL );
 
 	e->lm_chain = *list;
-	e->lm_chain_tail = (*list)->lm_chain_tail;
+	if ( *list )
+		e->lm_chain_tail = (*list)->lm_chain_tail;
+	else
+		e->lm_chain_tail = e;
 	*list = e;
 }

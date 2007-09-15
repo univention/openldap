@@ -1,5 +1,5 @@
 /* rwmmap.c - rewrite/mapping routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmmap.c,v 1.14.2.14 2007/02/26 22:59:55 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmmap.c,v 1.14.2.15 2007/07/12 20:23:48 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.
@@ -768,7 +768,9 @@ rwm_filter_map_rewrite(
 	case REWRITE_REGEXEC_OK:
 		if ( !BER_BVISNULL( fstr ) ) {
 			fstr->bv_len = strlen( fstr->bv_val );
-			ch_free( ftmp.bv_val );
+			if ( fstr->bv_val != ftmp.bv_val ) {
+				ch_free( ftmp.bv_val );
+			}
 
 		} else {
 			*fstr = ftmp;

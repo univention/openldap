@@ -1,5 +1,5 @@
 /* back-bdb.h - bdb back-end header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/back-bdb.h,v 1.117.2.13 2007/01/03 04:36:04 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/back-bdb.h,v 1.117.2.14 2007/08/06 12:32:51 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2007 The OpenLDAP Foundation.
@@ -226,7 +226,7 @@ struct bdb_op_info {
 };
 
 #define	DB_OPEN(db, file, name, type, flags, mode) \
-	(db)->open(db, file, name, type, flags, mode)
+	((db)->open)(db, file, name, type, flags, mode)
 
 #if DB_VERSION_MAJOR < 4
 #define LOCK_DETECT(env,f,t,a)		lock_detect(env, f, t, a)
@@ -257,7 +257,7 @@ struct bdb_op_info {
 #if DB_VERSION_FULL >= 0x04010011
 #undef DB_OPEN
 #define	DB_OPEN(db, file, name, type, flags, mode) \
-	(db)->open(db, NULL, file, name, type, flags, mode)
+	((db)->open)(db, NULL, file, name, type, flags, mode)
 #endif
 
 #endif

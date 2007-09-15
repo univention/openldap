@@ -1,5 +1,5 @@
 /* tools.c - tools for slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/tools.c,v 1.72.2.16 2007/01/02 21:44:00 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/tools.c,v 1.72.2.17 2007/08/11 00:32:20 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2007 The OpenLDAP Foundation.
@@ -228,19 +228,22 @@ int bdb_tool_id2entry_get(
 	Entry **e
 )
 {
-	int rc = bdb_id2entry( be, NULL, 0, id, e );
+	int rc;
+	ID nid;
 
-	if ( rc == DB_NOTFOUND && id == 0 ) {
-		Entry *dummy = ch_calloc( 1, sizeof(Entry) );
-		struct berval gluebv = BER_BVC("glue");
-		dummy->e_name.bv_val = ch_strdup( "" );
-		dummy->e_nname.bv_val = ch_strdup( "" );
-		attr_merge_one( dummy, slap_schema.si_ad_objectClass, &gluebv, NULL );
-		attr_merge_one( dummy, slap_schema.si_ad_structuralObjectClass,
-			&gluebv, NULL );
-		*e = dummy;
-		rc = LDAP_SUCCESS;
+	BDB_ID2DISK( id, &nid );
+	key.ulen = key.size = sizeof(ID);
+	key.flags = DB_DBT_USERMEM;
+	key.data = &nid;
+
+	rc = cursor->c_get( cursor, &key, &data, DB_SET );
+	if ( rc == 0 ) {
+		*e = bdb_tool_entry_get( be, id );
+		if ( *e == NULL )
+			rc = LDAP_OTHER;
 	}
+	key.data = NULL;
+
 	return rc;
 }
 

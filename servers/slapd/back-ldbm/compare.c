@@ -1,5 +1,5 @@
 /* compare.c - ldbm backend compare routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/compare.c,v 1.49.2.7 2007/01/02 21:44:02 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldbm/compare.c,v 1.49.2.9 2007/07/13 17:28:55 hallvard Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -55,8 +55,6 @@ ldbm_back_compare(
 			rs->sr_ref = referral_rewrite( default_referral,
 				NULL, &op->o_req_dn, LDAP_SCOPE_DEFAULT );
 		}
-
-		ldap_pvt_thread_rdwr_runlock(&li->li_giant_rwlock);
 
 		rs->sr_err = LDAP_REFERRAL;
 		goto return_results;

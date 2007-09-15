@@ -1,5 +1,5 @@
 /* config.c - bdb backend configuration file routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/config.c,v 1.43.2.17 2007/01/02 21:43:59 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/config.c,v 1.43.2.18 2007/08/11 00:31:46 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2007 The OpenLDAP Foundation.
@@ -470,7 +470,6 @@ bdb_cf_gen(ConfigArgs *c)
 			bdb->bi_db_config_path = NULL;
 			c->cleanup = bdb_cf_cleanup;
 			ldap_pvt_thread_pool_purgekey( bdb->bi_dbenv );
-			ldap_pvt_thread_pool_purgekey( ((char *)bdb->bi_dbenv) + 1 );
 			break;
 		case BDB_NOSYNC:
 			bdb->bi_dbenv->set_flags( bdb->bi_dbenv, DB_TXN_NOSYNC, 0 );

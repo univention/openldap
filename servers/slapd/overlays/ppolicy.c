@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/ppolicy.c,v 1.31.2.29 2007/02/08 12:31:24 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/ppolicy.c,v 1.31.2.35 2007/08/16 18:49:56 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2007 The OpenLDAP Foundation.
@@ -61,6 +61,7 @@ typedef struct pw_conn {
 
 static pw_conn *pwcons;
 static int ppolicy_cid;
+static int ov_count;
 
 typedef struct pass_policy {
 	AttributeDescription *ad; /* attribute to which the policy applies */
@@ -356,6 +357,8 @@ account_locked( Operation *op, Entry *e,
 #define PPOLICY_EXPIRE 0x80L	/* primitive + 0 */
 #define PPOLICY_GRACE  0x81L	/* primitive + 1 */
 
+static const char ppolicy_ctrl_oid[] = LDAP_CONTROL_PASSWORDPOLICYRESPONSE;
+
 static LDAPControl *
 create_passcontrol( int exptime, int grace, LDAPPasswordPolicyError err )
 {
@@ -368,7 +371,7 @@ create_passcontrol( int exptime, int grace, LDAPPasswordPolicyError err )
 	if ( c == NULL ) {
 		return NULL;
 	}
-	c->ldctl_oid = LDAP_CONTROL_PASSWORDPOLICYRESPONSE;
+	c->ldctl_oid = (char *)ppolicy_ctrl_oid;
 	c->ldctl_iscritical = 0;
 	BER_BVZERO( &c->ldctl_value );
 
@@ -848,7 +851,7 @@ ctrls_cleanup( Operation *op, SlapReply *rs, LDAPControl **oldctrls )
 	assert( rs->sr_ctrls[0] != NULL );
 
 	for ( n = 0; rs->sr_ctrls[n]; n++ ) {
-		if ( rs->sr_ctrls[n]->ldctl_oid == LDAP_CONTROL_PASSWORDPOLICYRESPONSE ) {
+		if ( rs->sr_ctrls[n]->ldctl_oid == ppolicy_ctrl_oid ) {
 			ch_free( rs->sr_ctrls[n]->ldctl_value.bv_val );
 			ch_free( rs->sr_ctrls[n] );
 			rs->sr_ctrls[n] = (LDAPControl *)(-1);
@@ -1692,7 +1695,10 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 		goto return_results;
 	}
 
-	if (pp.pwdMinAge > 0) {
+	/* Check age, but only if pwdReset is not TRUE */
+	pa = attr_find( e->e_attrs, ad_pwdReset );
+	if ((!pa || !bvmatch( &pa->a_nvals[0], &slap_true_bv )) &&
+		pp.pwdMinAge > 0) {
 		time_t pwtime = (time_t)-1, now;
 		int age;
 
@@ -2113,6 +2119,7 @@ ppolicy_db_open(
     BackendDB *be
 )
 {
+	ov_count++;
 	return overlay_register_control( be, LDAP_CONTROL_PASSWORDPOLICYREQUEST );
 }
 
@@ -2123,8 +2130,13 @@ ppolicy_close(
 {
 	slap_overinst *on = (slap_overinst *) be->bd_info;
 	pp_info *pi = on->on_bi.bi_private;
-	
-	free( pwcons );
+
+	/* Perhaps backover should provide bi_destroy hooks... */
+	ov_count--;
+	if ( ov_count <=0 && pwcons ) {
+		free( pwcons );
+		pwcons = NULL;
+	}
 	free( pi->def_policy.bv_val );
 	free( pi );
 

@@ -1,5 +1,5 @@
 /* ldapdelete.c - simple program to delete an entry using LDAP */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapdelete.c,v 1.109.2.6 2007/01/02 21:43:41 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapdelete.c,v 1.109.2.7 2007/08/13 18:04:39 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -211,6 +211,7 @@ static int dodelete(
 	int id;
 	int	rc, code;
 	char *matcheddn = NULL, *text = NULL, **refs = NULL;
+	LDAPControl **ctrls = NULL;
 	LDAPMessage *res;
 
 	if ( verbose ) {
@@ -255,7 +256,7 @@ static int dodelete(
 		}
 	}
 
-	rc = ldap_parse_result( ld, res, &code, &matcheddn, &text, &refs, NULL, 1 );
+	rc = ldap_parse_result( ld, res, &code, &matcheddn, &text, &refs, &ctrls, 1 );
 
 	if( rc != LDAP_SUCCESS ) {
 		fprintf( stderr, "%s: ldap_parse_result: %s (%d)\n",
@@ -286,6 +287,11 @@ static int dodelete(
 			}
 		}
 	}
+
+	if (ctrls) {
+		tool_print_ctrls( ld, ctrls );
+		ldap_controls_free( ctrls );
+    }
 
 	ber_memfree( text );
 	ber_memfree( matcheddn );

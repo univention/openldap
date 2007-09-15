@@ -1,5 +1,5 @@
 /* sockbuf.c - i/o routines with support for adding i/o layers. */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/sockbuf.c,v 1.60.2.7 2007/01/02 21:43:48 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/sockbuf.c,v 1.60.2.8 2007/06/10 18:43:56 hallvard Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -873,7 +873,7 @@ static ber_slen_t
 sb_dgram_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len )
 {
 	ber_slen_t rc;
-	socklen_t  addrlen;
+	ber_socklen_t addrlen;
 	struct sockaddr *src;
    
 	assert( sbiod != NULL );
@@ -882,7 +882,7 @@ sb_dgram_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len )
 
 	addrlen = sizeof( struct sockaddr );
 	src = buf;
-	buf += addrlen;
+	buf = (char *) buf + addrlen;
 	len -= addrlen;
 	rc = recvfrom( sbiod->sbiod_sb->sb_fd, buf, len, 0, src, &addrlen );
 
@@ -900,7 +900,7 @@ sb_dgram_write( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len )
 	assert( buf != NULL );
 
 	dst = buf;
-	buf += sizeof( struct sockaddr );
+	buf = (char *) buf + sizeof( struct sockaddr );
 	len -= sizeof( struct sockaddr );
    
 	rc = sendto( sbiod->sbiod_sb->sb_fd, buf, len, 0, dst,

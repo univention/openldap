@@ -1,5 +1,5 @@
 /* init.c - initialize bdb backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.177.2.28 2007/02/24 19:28:11 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.177.2.29 2007/08/06 12:32:51 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2007 The OpenLDAP Foundation.
@@ -288,7 +288,7 @@ shm_retry:
 		bdb->bi_dbenv->set_shm_key( bdb->bi_dbenv, bdb->bi_shm_key );
 		flags |= DB_SYSTEM_MEM;
 	}
-	rc = bdb->bi_dbenv->open( bdb->bi_dbenv, dbhome,
+	rc = (bdb->bi_dbenv->open)( bdb->bi_dbenv, dbhome,
 			flags | do_recover, bdb->bi_dbenv_mode );
 
 	if ( rc ) {

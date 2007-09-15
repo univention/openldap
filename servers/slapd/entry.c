@@ -1,5 +1,5 @@
 /* entry.c - routines for dealing with entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.129.2.13 2007/02/26 08:53:54 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.129.2.15 2007/08/13 17:35:03 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -231,6 +231,16 @@ str2entry2( char *s, int checkvals )
 					goto fail;
 				}
 			}
+
+			/* require ';binary' when appropriate (ITS#5071) */
+			if ( slap_syntax_is_binary( ad->ad_type->sat_syntax ) && !slap_ad_is_binary( ad ) ) {
+				Debug( LDAP_DEBUG_ANY,
+					"str2entry: attributeType %s #%d: "
+					"needs ';binary' transfer as per syntax %s\n", 
+					ad->ad_cname.bv_val, 0,
+					ad->ad_type->sat_syntax->ssyn_oid );
+				goto fail;
+			}
 		}
 
 		if (( ad_prev && ad != ad_prev ) || ( i == lines )) {
@@ -266,6 +276,14 @@ str2entry2( char *s, int checkvals )
 			}
 			attr_cnt = 0;
 			if ( i == lines ) break;
+		}
+
+		if ( BER_BVISNULL( &vals[i] ) ) {
+ 			Debug( LDAP_DEBUG_ANY,
+ 				"str2entry: attributeType %s #%d: "
+ 				"no values\n", 
+ 				ad->ad_cname.bv_val, attr_cnt, 0 );
+ 			goto fail;
 		}
 
 		if( slapMode & SLAP_TOOL_MODE ) {

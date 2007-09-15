@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.198.2.22 2007/01/25 12:42:38 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.198.2.23 2007/06/12 23:46:44 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -656,7 +656,6 @@ unhandled_option:;
 
 	extops_init();
 	lutil_passwd_init();
-	slap_op_init();
 
 	rc = slap_init( serverMode, serverName );
 	if ( rc ) {
@@ -882,8 +881,6 @@ destroy:
 #ifdef SLAPD_MODULES
 	module_kill();
 #endif
-
-	slap_op_destroy();
 
 	extops_kill();
 
