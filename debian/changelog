@@ -1,11 +1,15 @@
 openldap2.3 (2.3.35-3) UNRELEASED; urgency=low
 
+  [ Steve Langasek ]
   * Drop debian/patches/use-lpthread, which is no longer needed on mips*
     because gcc has been fixed.
   * Drop debian/patches/add-autogen-sh, also no longer needed now that
     the above patch is gone.
 
- -- Steve Langasek <vorlon@debian.org>  Mon, 09 Jul 2007 23:44:46 -0700
+  [ Matthijs Mohlmann ]
+  * Fix bashism in initscript. (Closes: #428883)
+
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat, 15 Sep 2007 12:28:43 +0200
 
 openldap2.3 (2.3.35-2) unstable; urgency=low
 

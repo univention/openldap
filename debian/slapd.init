@@ -199,7 +199,7 @@ stop_slurpd() {
 }
 
 # Start the OpenLDAP daemons
-start() {
+start_ldap() {
 	echo -n "Starting OpenLDAP:"
 	trap 'report_failure' 0
 	start_slapd
@@ -209,7 +209,7 @@ start() {
 }
 
 # Stop the OpenLDAP daemons
-stop() {
+stop_ldap() {
 	echo -n "Stopping OpenLDAP:"
 	trap 'report_failure' 0
 	stop_slurpd
@@ -221,13 +221,13 @@ stop() {
 case "$1" in
   start)
 	check_for_no_start
-  	start ;;
+  	start_ldap ;;
   stop)
-  	stop ;;
+  	stop_ldap ;;
   restart|force-reload)
 	check_for_no_start
-  	stop
-	start
+  	stop_ldap
+	start_ldap
 	;;
   *)
   	echo "Usage: $0 {start|stop|restart|force-reload}"
