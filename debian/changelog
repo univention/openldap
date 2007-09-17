@@ -13,8 +13,9 @@ openldap2.3 (2.3.38-1) unstable; urgency=low
     - Upstream bug ITS5119.
   * Change default loglevel to none, to log high priority messages.
     (Closes: #442000)
+  * Tighten up the build dependencies, now that autogen patch is removed.
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 16 Sep 2007 16:55:15 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Mon, 17 Sep 2007 22:58:54 +0200
 
 openldap2.3 (2.3.35-2) unstable; urgency=low
 
