@@ -1,4 +1,4 @@
-openldap2.3 (2.3.38-1) UNRELEASED; urgency=low
+openldap2.3 (2.3.38-1) unstable; urgency=low
 
   [ Steve Langasek ]
   * Drop debian/patches/use-lpthread, which is no longer needed on mips*
