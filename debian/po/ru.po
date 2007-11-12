@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 2.1.30-13.2\n"
 "Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
-"POT-Creation-Date: 2007-11-11 18:54-0800\n"
+"POT-Creation-Date: 2007-11-11 19:49-0800\n"
 "PO-Revision-Date: 2007-01-05 20:38+0300\n"
 "Last-Translator: Yuri Kozlov <kozlov.y@gmail.com>\n"
 "Language-Team: Russian <debian-l10n-russian@lists.debian.org>\n"
@@ -341,15 +341,51 @@ msgstr ""
 "Если проблема была с файлом LDIF, то вы можете попробовать с ней разобраться "
 "и попытаться выполнить slapadd ещё раз."
 
-#. Type: select
+#. Type: boolean
 #. Description
 #: ../slapd.templates:17001
+msgid "Change backend type from LDBM to BDB?"
+msgstr "Изменить тип сервера с LDBM на BDB?"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown to "
+"not work well. BDB is the recommended choice of the OpenLDAP developers."
+msgstr ""
+"Тип сервера LDBM плохо поддерживается в OpenLDAP 2.2 и иногда не работает "
+"совсем. Разработчики OpenLDAP рекомендуют использовать BDB."
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"When using the BDB backend make sure you configure BDB properly. For "
+"information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
+msgstr ""
+"При использовании сервера BDB, убедитесь, что он правильно настроен. "
+"Подробней о настройке BDB смотрите /usr/share/doc/slapd/README.DB_CONFIG.gz"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"If you enable this option an attempt will be made to update your "
+"configuration to use BDB instead of LDBM and convert your databases."
+msgstr ""
+"Если вы ответите утвердительно, то будет сделана попытка обновления вашей "
+"конфигурации для использования BDB вместо LDBM и преобразование баз данных."
+
+#. Type: select
+#. Description
+#: ../slapd.templates:18001
 msgid "Database backend to use:"
 msgstr "Используемые серверы баз данных:"
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:18001
 msgid ""
 "The BDB backend is the recommended choice of the OpenLDAP developers. When "
 "using the BDB backend make sure that you configure the underlying database "
@@ -361,7 +397,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:18001
 msgid ""
 "HDB is the next generation of BDB which might replace it sometime in the "
 "future. There are some problems still in the HDB code of the 2.2 series of "
@@ -373,7 +409,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:18001
 msgid ""
 "The BDB backend (back-bdb) and LDBM backend (back-ldbm) are comparable in "
 "purpose and back-bdb evolved from experience gained from back-ldbm, but the "
@@ -476,30 +512,3 @@ msgstr ""
 #~ "Начиная с версии 2.1.23, для slapd требуется устанавливать параметр "
 #~ "updateref для вспомогательных баз. Убедитесь, что файл конфигурации slapd."
 #~ "conf был исправлен."
-
-#~ msgid "Change backend type from LDBM to BDB?"
-#~ msgstr "Изменить тип сервера с LDBM на BDB?"
-
-#~ msgid ""
-#~ "The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown "
-#~ "to not work well. BDB is the recommended choice of the OpenLDAP "
-#~ "developers."
-#~ msgstr ""
-#~ "Тип сервера LDBM плохо поддерживается в OpenLDAP 2.2 и иногда не работает "
-#~ "совсем. Разработчики OpenLDAP рекомендуют использовать BDB."
-
-#~ msgid ""
-#~ "When using the BDB backend make sure you configure BDB properly. For "
-#~ "information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
-#~ msgstr ""
-#~ "При использовании сервера BDB, убедитесь, что он правильно настроен. "
-#~ "Подробней о настройке BDB смотрите /usr/share/doc/slapd/README.DB_CONFIG."
-#~ "gz"
-
-#~ msgid ""
-#~ "If you enable this option an attempt will be made to update your "
-#~ "configuration to use BDB instead of LDBM and convert your databases."
-#~ msgstr ""
-#~ "Если вы ответите утвердительно, то будет сделана попытка обновления вашей "
-#~ "конфигурации для использования BDB вместо LDBM и преобразование баз "
-#~ "данных."

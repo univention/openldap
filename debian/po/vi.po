@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap2.3\n"
 "Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
-"POT-Creation-Date: 2007-11-11 18:54-0800\n"
+"POT-Creation-Date: 2007-11-11 19:49-0800\n"
 "PO-Revision-Date: 2006-05-13 13:31+0930\n"
 "Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
 "Language-Team: Vietnamese <gnomevi-list@lists.sourceforge.net>\n"
@@ -335,15 +335,52 @@ msgstr ""
 "vấn đề trong tập tin LDIF. Nếu gặp vấn đề trong tập tin LDIF, có lẽ bạn có "
 "khả năng sửa chữa nó, rồi thử lại chạy tiến trình slapadd."
 
-#. Type: select
+#. Type: boolean
 #. Description
 #: ../slapd.templates:17001
+msgid "Change backend type from LDBM to BDB?"
+msgstr "Thay đổi kiểu hậu phương từ LDBM thành BDB không?"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown to "
+"not work well. BDB is the recommended choice of the OpenLDAP developers."
+msgstr ""
+"Kiểu hậu phương LDBM bị phản đối trong OpenLDAP phiên bản 2.2, và không làm "
+"việc khá. Các nhà phát triển OpenLDAP khuyến khích bạn sử dụng BDB."
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"When using the BDB backend make sure you configure BDB properly. For "
+"information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
+msgstr ""
+"Khi sử dụng hậu phương BDB, bạn hãy kiểm tra xem đã cấu hình BDB cho đúng. "
+"Để tìm thông tin về tiến trình này, hãy xem tập tin Đọc Đi </usr/share/doc/"
+"slapd/README.DB_CONFIG.gz> (cần giải nén trước)."
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"If you enable this option an attempt will be made to update your "
+"configuration to use BDB instead of LDBM and convert your databases."
+msgstr ""
+"Nếu bạn hiệu lực tùy chọn này, trình này sẽ cố gắng nâng cấp cấu hình của "
+"bạn để dùng BDB thay vào LDBM, và để chuyển đổi các cơ sở dữ liệu của bạn."
+
+#. Type: select
+#. Description
+#: ../slapd.templates:18001
 msgid "Database backend to use:"
 msgstr "Hậu phương cơ sở dữ liệu cần dùng:"
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:18001
 msgid ""
 "The BDB backend is the recommended choice of the OpenLDAP developers. When "
 "using the BDB backend make sure that you configure the underlying database "
@@ -356,7 +393,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:18001
 msgid ""
 "HDB is the next generation of BDB which might replace it sometime in the "
 "future. There are some problems still in the HDB code of the 2.2 series of "
@@ -368,7 +405,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:18001
 msgid ""
 "The BDB backend (back-bdb) and LDBM backend (back-ldbm) are comparable in "
 "purpose and back-bdb evolved from experience gained from back-ldbm, but the "
@@ -470,29 +507,3 @@ msgstr ""
 #~ "Kể từ phiên bản 2.1.23, trình nền slapd cần thiết tùy chọn « updateref » "
 #~ "được đặt trên mọi điều phụ. Bạn nên kiểm tra xem đã sửa chữa tập tin cấu "
 #~ "hình <slapd.conf> của mình."
-
-#~ msgid "Change backend type from LDBM to BDB?"
-#~ msgstr "Thay đổi kiểu hậu phương từ LDBM thành BDB không?"
-
-#~ msgid ""
-#~ "The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown "
-#~ "to not work well. BDB is the recommended choice of the OpenLDAP "
-#~ "developers."
-#~ msgstr ""
-#~ "Kiểu hậu phương LDBM bị phản đối trong OpenLDAP phiên bản 2.2, và không "
-#~ "làm việc khá. Các nhà phát triển OpenLDAP khuyến khích bạn sử dụng BDB."
-
-#~ msgid ""
-#~ "When using the BDB backend make sure you configure BDB properly. For "
-#~ "information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
-#~ msgstr ""
-#~ "Khi sử dụng hậu phương BDB, bạn hãy kiểm tra xem đã cấu hình BDB cho "
-#~ "đúng. Để tìm thông tin về tiến trình này, hãy xem tập tin Đọc Đi </usr/"
-#~ "share/doc/slapd/README.DB_CONFIG.gz> (cần giải nén trước)."
-
-#~ msgid ""
-#~ "If you enable this option an attempt will be made to update your "
-#~ "configuration to use BDB instead of LDBM and convert your databases."
-#~ msgstr ""
-#~ "Nếu bạn hiệu lực tùy chọn này, trình này sẽ cố gắng nâng cấp cấu hình của "
-#~ "bạn để dùng BDB thay vào LDBM, và để chuyển đổi các cơ sở dữ liệu của bạn."

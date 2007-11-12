@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap2\n"
 "Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
-"POT-Creation-Date: 2007-11-11 18:54-0800\n"
+"POT-Creation-Date: 2007-11-11 19:49-0800\n"
 "PO-Revision-Date: 2006-07-18 12:24+0100\n"
 "Last-Translator: Bart Cornelis <cobaco@skolelinux.no>\n"
 "Language-Team: debian-l10n-dutch <debian-l10n-dutch@lists.debian.org>\n"
@@ -347,15 +347,54 @@ msgstr ""
 "een probleem in het LDIF-bestand. Als het probleem in het LDIF-bestand zit "
 "kunt u dit misschien repareren en daarna slapadd nogmaals proberen uitvoeren."
 
-#. Type: select
+#. Type: boolean
 #. Description
 #: ../slapd.templates:17001
+msgid "Change backend type from LDBM to BDB?"
+msgstr "Wilt u het backendtype veranderen van LDBM naar BDB?"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown to "
+"not work well. BDB is the recommended choice of the OpenLDAP developers."
+msgstr ""
+"Het LDBM-backendtype is verouderd voor OpenLDAP 2.2 en werkt aantoonbaar "
+"niet goed. BDB is de keuze die door de OpenLDAP-ontwikkelaars aangeraden "
+"wordt."
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"When using the BDB backend make sure you configure BDB properly. For "
+"information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
+msgstr ""
+"Wanneer u gebruik maakt van de BDB-backend dient u ervoor te zorgen dat BDB "
+"juist ingesteld is. Meer informatie hierover vindt u in /usr/share/doc/slapd/"
+"README.DB_CONFIG.gz"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"If you enable this option an attempt will be made to update your "
+"configuration to use BDB instead of LDBM and convert your databases."
+msgstr ""
+"Wanneer u deze optie kiest zal er een poging gewaagd worden om uw "
+"configuratie aan te passen om BDB te gebruiken i.p.v. LDBM, en om uw "
+"databases te converteren."
+
+#. Type: select
+#. Description
+#: ../slapd.templates:18001
 msgid "Database backend to use:"
 msgstr "Welk database-backend wilt u gebruiken?"
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:18001
 msgid ""
 "The BDB backend is the recommended choice of the OpenLDAP developers. When "
 "using the BDB backend make sure that you configure the underlying database "
@@ -368,7 +407,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:18001
 msgid ""
 "HDB is the next generation of BDB which might replace it sometime in the "
 "future. There are some problems still in the HDB code of the 2.2 series of "
@@ -381,7 +420,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:18001
 msgid ""
 "The BDB backend (back-bdb) and LDBM backend (back-ldbm) are comparable in "
 "purpose and back-bdb evolved from experience gained from back-ldbm, but the "
@@ -488,31 +527,3 @@ msgstr ""
 #~ "Vanaf versie 2.1.23 vereist slapd dat de 'updateref'-optie geactiveerd is "
 #~ "voor slaaf-databases. U dient dit aan te passen in uw slapd.conf "
 #~ "configuratiebestand."
-
-#~ msgid "Change backend type from LDBM to BDB?"
-#~ msgstr "Wilt u het backendtype veranderen van LDBM naar BDB?"
-
-#~ msgid ""
-#~ "The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown "
-#~ "to not work well. BDB is the recommended choice of the OpenLDAP "
-#~ "developers."
-#~ msgstr ""
-#~ "Het LDBM-backendtype is verouderd voor OpenLDAP 2.2 en werkt aantoonbaar "
-#~ "niet goed. BDB is de keuze die door de OpenLDAP-ontwikkelaars aangeraden "
-#~ "wordt."
-
-#~ msgid ""
-#~ "When using the BDB backend make sure you configure BDB properly. For "
-#~ "information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
-#~ msgstr ""
-#~ "Wanneer u gebruik maakt van de BDB-backend dient u ervoor te zorgen dat "
-#~ "BDB juist ingesteld is. Meer informatie hierover vindt u in /usr/share/"
-#~ "doc/slapd/README.DB_CONFIG.gz"
-
-#~ msgid ""
-#~ "If you enable this option an attempt will be made to update your "
-#~ "configuration to use BDB instead of LDBM and convert your databases."
-#~ msgstr ""
-#~ "Wanneer u deze optie kiest zal er een poging gewaagd worden om uw "
-#~ "configuratie aan te passen om BDB te gebruiken i.p.v. LDBM, en om uw "
-#~ "databases te converteren."

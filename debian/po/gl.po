@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap2.3\n"
 "Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
-"POT-Creation-Date: 2007-11-11 18:54-0800\n"
+"POT-Creation-Date: 2007-11-11 19:49-0800\n"
 "PO-Revision-Date: 2007-01-17 10:34+0100\n"
 "Last-Translator: Jacobo Tarrio <jtarrio@debian.org>\n"
 "Language-Team: Galician <proxecto@trasno.net>\n"
@@ -334,15 +334,53 @@ msgstr ""
 "slapcat) ou debido a un problema no ficheiro LDIF. Se o problema está no "
 "ficheiro LDIF podería arranxarse e tentar outra vez a execución de slapadd."
 
-#. Type: select
+#. Type: boolean
 #. Description
 #: ../slapd.templates:17001
+msgid "Change backend type from LDBM to BDB?"
+msgstr "¿Cambiar o tipo de motor de LDBM a BDB?"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown to "
+"not work well. BDB is the recommended choice of the OpenLDAP developers."
+msgstr ""
+"O tipo de motor LDBM marcouse a extinguir en OpenLDAP 2.2 e comprobouse que "
+"non funciona ben. BDB é a opción recomendada polos desenvolvedores de "
+"OpenLDAP."
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"When using the BDB backend make sure you configure BDB properly. For "
+"information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
+msgstr ""
+"Se emprega o motor BDB asegúrese de configurar BDB correctamente. Para máis "
+"información sobre como o facer, consulte /usr/share/doc/slapd/README."
+"DB_CONFIG.gz"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"If you enable this option an attempt will be made to update your "
+"configuration to use BDB instead of LDBM and convert your databases."
+msgstr ""
+"Se activa esta opción hase tentar actualizar a súa configuración para "
+"empregar BDB no canto de LDBM e converter as bases de datos."
+
+#. Type: select
+#. Description
+#: ../slapd.templates:18001
 msgid "Database backend to use:"
 msgstr "Motor de base de datos a empregar:"
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:18001
 msgid ""
 "The BDB backend is the recommended choice of the OpenLDAP developers. When "
 "using the BDB backend make sure that you configure the underlying database "
@@ -354,7 +392,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:18001
 msgid ""
 "HDB is the next generation of BDB which might replace it sometime in the "
 "future. There are some problems still in the HDB code of the 2.2 series of "
@@ -366,7 +404,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:18001
 msgid ""
 "The BDB backend (back-bdb) and LDBM backend (back-ldbm) are comparable in "
 "purpose and back-bdb evolved from experience gained from back-ldbm, but the "
@@ -470,30 +508,3 @@ msgstr ""
 #~ "A partires da versión 2.1.23, slapd precisa de que se especifique a "
 #~ "opción updateref nos escravos. Debería asegurarse de arranxar o ficheiro "
 #~ "de configuración slapd.conf."
-
-#~ msgid "Change backend type from LDBM to BDB?"
-#~ msgstr "¿Cambiar o tipo de motor de LDBM a BDB?"
-
-#~ msgid ""
-#~ "The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown "
-#~ "to not work well. BDB is the recommended choice of the OpenLDAP "
-#~ "developers."
-#~ msgstr ""
-#~ "O tipo de motor LDBM marcouse a extinguir en OpenLDAP 2.2 e comprobouse "
-#~ "que non funciona ben. BDB é a opción recomendada polos desenvolvedores de "
-#~ "OpenLDAP."
-
-#~ msgid ""
-#~ "When using the BDB backend make sure you configure BDB properly. For "
-#~ "information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
-#~ msgstr ""
-#~ "Se emprega o motor BDB asegúrese de configurar BDB correctamente. Para "
-#~ "máis información sobre como o facer, consulte /usr/share/doc/slapd/README."
-#~ "DB_CONFIG.gz"
-
-#~ msgid ""
-#~ "If you enable this option an attempt will be made to update your "
-#~ "configuration to use BDB instead of LDBM and convert your databases."
-#~ msgstr ""
-#~ "Se activa esta opción hase tentar actualizar a súa configuración para "
-#~ "empregar BDB no canto de LDBM e converter as bases de datos."

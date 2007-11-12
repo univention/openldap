@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap2.3\n"
 "Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
-"POT-Creation-Date: 2007-11-11 18:54-0800\n"
+"POT-Creation-Date: 2007-11-11 19:49-0800\n"
 "PO-Revision-Date: 2006-05-14 07:01+0200\n"
 "Last-Translator: Miroslav Kure <kurem@debian.cz>\n"
 "Language-Team: Czech <debian-l10n-czech@lists.debian.org>\n"
@@ -341,15 +341,52 @@ msgstr ""
 "souboru. Pokud se jedná o chybu v LDIF souboru, můžete jej zkusit opravit a "
 "zkusit slapadd znovu."
 
-#. Type: select
+#. Type: boolean
 #. Description
 #: ../slapd.templates:17001
+msgid "Change backend type from LDBM to BDB?"
+msgstr "Změnit typ backendu z LDBM na BDB?"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown to "
+"not work well. BDB is the recommended choice of the OpenLDAP developers."
+msgstr ""
+"Backend LDBM se ukázal jako nevyhovující a byl v OpenLDAPu 2.2 překonán. "
+"Vývojáři OpenLDAPu nyní doporučují backend BDB."
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"When using the BDB backend make sure you configure BDB properly. For "
+"information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
+msgstr ""
+"Při použití backendu BDB se ujistěte, že jste jej nastavili správně. Více "
+"informací o správném nastavení naleznete v souboru /usr/share/doc/slapd/"
+"README.DB_CONFIG.gz."
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"If you enable this option an attempt will be made to update your "
+"configuration to use BDB instead of LDBM and convert your databases."
+msgstr ""
+"Povolíte-li tuto možnost, systém se pokusí změnit konfiguraci, aby místo "
+"LDBM používala BDB a příslušně také převést databáze."
+
+#. Type: select
+#. Description
+#: ../slapd.templates:18001
 msgid "Database backend to use:"
 msgstr "Databázový backend:"
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:18001
 msgid ""
 "The BDB backend is the recommended choice of the OpenLDAP developers. When "
 "using the BDB backend make sure that you configure the underlying database "
@@ -362,7 +399,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:18001
 msgid ""
 "HDB is the next generation of BDB which might replace it sometime in the "
 "future. There are some problems still in the HDB code of the 2.2 series of "
@@ -374,7 +411,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:18001
 msgid ""
 "The BDB backend (back-bdb) and LDBM backend (back-ldbm) are comparable in "
 "purpose and back-bdb evolved from experience gained from back-ldbm, but the "
@@ -474,29 +511,3 @@ msgstr ""
 #~ "Počínaje verzí 2.1.23 slapd vyžaduje, aby měly podřízené databáze "
 #~ "nastavenu volbu updateref. Měli byste zajistit nápravu svého "
 #~ "konfiguračního souboru slapd.conf co nejdříve."
-
-#~ msgid "Change backend type from LDBM to BDB?"
-#~ msgstr "Změnit typ backendu z LDBM na BDB?"
-
-#~ msgid ""
-#~ "The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown "
-#~ "to not work well. BDB is the recommended choice of the OpenLDAP "
-#~ "developers."
-#~ msgstr ""
-#~ "Backend LDBM se ukázal jako nevyhovující a byl v OpenLDAPu 2.2 překonán. "
-#~ "Vývojáři OpenLDAPu nyní doporučují backend BDB."
-
-#~ msgid ""
-#~ "When using the BDB backend make sure you configure BDB properly. For "
-#~ "information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
-#~ msgstr ""
-#~ "Při použití backendu BDB se ujistěte, že jste jej nastavili správně. Více "
-#~ "informací o správném nastavení naleznete v souboru /usr/share/doc/slapd/"
-#~ "README.DB_CONFIG.gz."
-
-#~ msgid ""
-#~ "If you enable this option an attempt will be made to update your "
-#~ "configuration to use BDB instead of LDBM and convert your databases."
-#~ msgstr ""
-#~ "Povolíte-li tuto možnost, systém se pokusí změnit konfiguraci, aby místo "
-#~ "LDBM používala BDB a příslušně také převést databáze."

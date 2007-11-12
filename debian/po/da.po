@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap2 debconf\n"
 "Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
-"POT-Creation-Date: 2007-11-11 18:54-0800\n"
+"POT-Creation-Date: 2007-11-11 19:49-0800\n"
 "PO-Revision-Date: 2006-05-13 10:30+0200\n"
 "Last-Translator: Claus Hindsgaul <claus.hindsgaul@gmail.com>\n"
 "Language-Team: Danish\n"
@@ -341,15 +341,53 @@ msgstr ""
 "i LDIF-filen. Hvis problemet var i LDIF-filen, kan du måske rette det og "
 "prøve at køre slapadd igen."
 
-#. Type: select
+#. Type: boolean
 #. Description
 #: ../slapd.templates:17001
+msgid "Change backend type from LDBM to BDB?"
+msgstr "Skift bagendetype fra LDBM til BDB?"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown to "
+"not work well. BDB is the recommended choice of the OpenLDAP developers."
+msgstr ""
+"Bagendetypen LDBM anbefales ikke længere i OpenLDAP 2.2, og har vist sig "
+"ikke at fungere så godt. BDB anbefales i stedet af OpenLDAP-udviklerne."
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"When using the BDB backend make sure you configure BDB properly. For "
+"information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
+msgstr ""
+"Når du benytter BDB-bagenden, skal du sørge for at sætte BDB korrekt op. Du "
+"finder oplysninger om, hvordan du gør dette, i /usr/share/doc/slapd/README."
+"DB_CONFIG.gz"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"If you enable this option an attempt will be made to update your "
+"configuration to use BDB instead of LDBM and convert your databases."
+msgstr ""
+"Hvis du aktiverer denne indstilling, vil der blive gjort et forsøg på at "
+"opdatere din opsætning til at benytte BDB i stedet for LDBM, og konvertere "
+"dine databaser."
+
+#. Type: select
+#. Description
+#: ../slapd.templates:18001
 msgid "Database backend to use:"
 msgstr "Database-bagende, der skal benyttes:"
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:18001
 msgid ""
 "The BDB backend is the recommended choice of the OpenLDAP developers. When "
 "using the BDB backend make sure that you configure the underlying database "
@@ -361,7 +399,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:18001
 msgid ""
 "HDB is the next generation of BDB which might replace it sometime in the "
 "future. There are some problems still in the HDB code of the 2.2 series of "
@@ -373,7 +411,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:18001
 msgid ""
 "The BDB backend (back-bdb) and LDBM backend (back-ldbm) are comparable in "
 "purpose and back-bdb evolved from experience gained from back-ldbm, but the "
@@ -475,33 +513,6 @@ msgstr ""
 #~ msgstr ""
 #~ "Fra og med version 2.1.23 kræver slapd at updateref-indstillingen er sat "
 #~ "på slaver. Du må sørge for at rette din slapd.conf-opsætningsfil."
-
-#~ msgid "Change backend type from LDBM to BDB?"
-#~ msgstr "Skift bagendetype fra LDBM til BDB?"
-
-#~ msgid ""
-#~ "The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown "
-#~ "to not work well. BDB is the recommended choice of the OpenLDAP "
-#~ "developers."
-#~ msgstr ""
-#~ "Bagendetypen LDBM anbefales ikke længere i OpenLDAP 2.2, og har vist sig "
-#~ "ikke at fungere så godt. BDB anbefales i stedet af OpenLDAP-udviklerne."
-
-#~ msgid ""
-#~ "When using the BDB backend make sure you configure BDB properly. For "
-#~ "information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
-#~ msgstr ""
-#~ "Når du benytter BDB-bagenden, skal du sørge for at sætte BDB korrekt op. "
-#~ "Du finder oplysninger om, hvordan du gør dette, i /usr/share/doc/slapd/"
-#~ "README.DB_CONFIG.gz"
-
-#~ msgid ""
-#~ "If you enable this option an attempt will be made to update your "
-#~ "configuration to use BDB instead of LDBM and convert your databases."
-#~ msgstr ""
-#~ "Hvis du aktiverer denne indstilling, vil der blive gjort et forsøg på at "
-#~ "opdatere din opsætning til at benytte BDB i stedet for LDBM, og "
-#~ "konvertere dine databaser."
 
 #~ msgid "Admin entry"
 #~ msgstr "Administratoropslaget"
