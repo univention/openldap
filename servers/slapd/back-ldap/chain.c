@@ -1,5 +1,5 @@
 /* chain.c - chain LDAP operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/chain.c,v 1.12.2.23 2007/05/19 12:27:53 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/chain.c,v 1.12.2.24 2007/09/14 22:00:56 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2007 The OpenLDAP Foundation.
@@ -725,9 +725,6 @@ ldap_chain_search(
 cleanup:;
 		ldap_memfree( li.li_uri );
 		li.li_uri = NULL;
-
-		op->o_tmpfree( op->o_req_dn.bv_val, op->o_tmpmemctx );
-		op->o_tmpfree( op->o_req_ndn.bv_val, op->o_tmpmemctx );
 
 		if ( temporary ) {
 			lip->li_uri = NULL;

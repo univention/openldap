@@ -1,5 +1,5 @@
 .TH SLAPCAT 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man8/slapcat.8,v 1.19.2.8 2007/01/02 21:43:46 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man8/slapcat.8,v 1.19.2.9 2007/09/12 15:00:36 ghenry Exp $
 .\" Copyright 1998-2007 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
@@ -109,10 +109,18 @@ default config file is ignored.
 .BI \-l " ldif-file"
 Write LDIF to specified file instead of standard output.
 .SH LIMITATIONS
-In general, your
+For some backend types, your
 .BR slapd (8)
 should not be running (at least, not in read-write
-mode) when you do this to ensure consistency of the database.
+mode) when you do this to ensure consistency of the database. It is
+always safe to run 
+.B slapcat
+with the
+.BR slapd-bdb (5),
+.BR slapd-hdb (5),
+and
+.BR slapd-null (5)
+backends.
 .SH EXAMPLES
 To make a text backup of your SLAPD database and put it in a file called
 .BR ldif ,

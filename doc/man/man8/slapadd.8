@@ -1,5 +1,5 @@
 .TH SLAPADD 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man8/slapadd.8,v 1.23.2.10 2007/04/20 20:00:58 quanah Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man8/slapadd.8,v 1.23.2.11 2007/10/04 09:02:15 ando Exp $
 .\" Copyright 1998-2007 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
@@ -42,6 +42,21 @@ it does not verify that superior entries exist before
 adding an entry, does not perform all user and system
 schema checks, and does not maintain operational
 attributes (such as createTimeStamp and modifiersName). 
+
+All files eventually created by
+.BR slapadd
+will belong to the identity
+.BR slapadd
+is run as, so make sure you either run
+.BR slapadd
+with the same identity
+.BR slapd (8)
+will be run as (see option
+.B \-u
+in
+.BR slapd (8)),
+or change file ownership before running
+.BR slapd (8).
 .SH OPTIONS
 .TP
 .B \-v

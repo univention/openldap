@@ -1,5 +1,5 @@
 /* config.c - bdb backend configuration file routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/config.c,v 1.43.2.18 2007/08/11 00:31:46 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/config.c,v 1.43.2.19 2007/09/02 21:57:35 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2007 The OpenLDAP Foundation.
@@ -363,7 +363,7 @@ bdb_cf_gen(ConfigArgs *c)
 			break;
 
 		case BDB_CONFIG:
-			if (( slapMode&SLAP_SERVER_MODE ) && !( bdb->bi_flags&BDB_IS_OPEN )
+			if ( !( bdb->bi_flags & BDB_IS_OPEN )
 				&& !bdb->bi_db_config ) {
 				char	buf[SLAP_TEXT_BUFLEN];
 				FILE *f = fopen( bdb->bi_db_config_path, "r" );

@@ -1,5 +1,3 @@
-Index: servers/slapd/main.c
-===================================================================
 --- servers/slapd/main.c.orig
 +++ servers/slapd/main.c
 @@ -648,12 +648,6 @@
@@ -14,8 +12,8 @@ Index: servers/slapd/main.c
 -
  	extops_init();
  	lutil_passwd_init();
- 	slap_op_init();
-@@ -675,6 +669,12 @@
+ 
+@@ -674,6 +668,12 @@
  		goto destroy;
  	}
  

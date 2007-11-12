@@ -1,5 +1,5 @@
 /* filter.c - routines for parsing and dealing with filters */
-/* $OpenLDAP: pkg/ldap/servers/slapd/filter.c,v 1.125.2.10 2007/01/02 21:43:55 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/filter.c,v 1.125.2.12 2007/10/05 06:36:24 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -32,6 +32,7 @@
 #include <ac/string.h>
 
 #include "slap.h"
+#include "lutil.h"
 
 static int	get_filter_list(
 	Operation *op,
@@ -561,7 +562,14 @@ filter2bv_x( Operation *op, Filter *f, struct berval *fstr )
 
 	switch ( f->f_choice ) {
 	case LDAP_FILTER_EQUALITY:
-		filter_escape_value_x( &f->f_av_value, &tmp, op->o_tmpmemctx );
+ 		if ( f->f_av_desc->ad_type->sat_syntax == slap_schema.si_ad_entryUUID->ad_type->sat_syntax ) {
+			tmp.bv_val = op->o_tmpalloc( LDAP_LUTIL_UUIDSTR_BUFSIZE, op->o_tmpmemctx );
+ 			tmp.bv_len = lutil_uuidstr_from_normalized( f->f_av_value.bv_val,
+ 				f->f_av_value.bv_len, tmp.bv_val, LDAP_LUTIL_UUIDSTR_BUFSIZE );
+ 			assert( tmp.bv_len > 0 );
+ 		} else {
+			filter_escape_value_x( &f->f_av_value, &tmp, op->o_tmpmemctx );
+		}
 
 		fstr->bv_len = f->f_av_desc->ad_cname.bv_len +
 			tmp.bv_len + ( sizeof("(=)") - 1 );

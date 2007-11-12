@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.227.2.25 2007/01/02 21:43:56 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.227.2.26 2007/09/04 03:42:37 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -734,6 +734,7 @@ int slap_mods_check(
 							"%s: value #%ld normalization failed",
 							ml->sml_type.bv_val, (long) nvals );
 						*text = textbuf;
+						BER_BVZERO( &ml->sml_nvalues[nvals] );
 						return rc;
 					}
 				}

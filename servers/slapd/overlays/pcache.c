@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.41.2.19 2007/07/23 20:08:32 hallvard Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.41.2.22 2007/10/23 23:26:19 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2007 The OpenLDAP Foundation.
@@ -1050,7 +1050,6 @@ pcache_response(
 	if ( si->query.save_attrs != NULL ) {
 		rs->sr_attrs = si->query.save_attrs;
 		op->ors_attrs = si->query.save_attrs;
-		si->query.save_attrs = NULL;
 	}
 
 	if ( rs->sr_type == REP_SEARCH ) {
@@ -1135,8 +1134,8 @@ add_filter_attrs(
 		count++;
 	}
 
-	*new_attrs = (AttributeName*)ch_malloc((count+1)*
-		sizeof(AttributeName));
+	*new_attrs = (AttributeName*)ch_calloc( count + 1,
+		sizeof(AttributeName) );
 	for (i=0; i<attrs->count; i++) {
 		(*new_attrs)[i].an_name = attrs->attrs[i].an_name;
 		(*new_attrs)[i].an_desc = attrs->attrs[i].an_desc;
@@ -1156,18 +1155,13 @@ add_filter_attrs(
 			continue;
 		(*new_attrs)[j].an_name = filter_attrs[i].an_name;
 		(*new_attrs)[j].an_desc = filter_attrs[i].an_desc;
-		(*new_attrs)[j].an_oc = NULL;
-		(*new_attrs)[j].an_oc_exclude = 0;
 		j++;
 	}
 	if ( addoc ) {
 		(*new_attrs)[j].an_name = slap_schema.si_ad_objectClass->ad_cname;
 		(*new_attrs)[j].an_desc = slap_schema.si_ad_objectClass;
-		(*new_attrs)[j].an_oc = NULL;
-		(*new_attrs)[j].an_oc_exclude = 0;
 		j++;
 	}
-	BER_BVZERO( &(*new_attrs)[j].an_name );
 }
 
 /* NOTE: this is a quick workaround to let pcache minimally interact
@@ -1264,7 +1258,7 @@ pcache_op_search(
 				continue;
 			cacheable = 1;
 			template_id = i;
-			Debug( LDAP_DEBUG_NONE, "Entering QC, querystr = %s\n",
+			Debug( pcache_debug, "Entering QC, querystr = %s\n",
 			 		op->ors_filterstr.bv_val, 0, 0 );
 			answerable = (*(qm->qcfunc))(op, qm, &query, i);
 

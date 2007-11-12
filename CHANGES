@@ -1,5 +1,37 @@
 OpenLDAP 2.3 Change Log
 
+OpenLDAP 2.3.39 Release (2007/10/26)
+	Fixed slapd database/overlay config conflict (ITS#4848)
+	Fixed slapd password_hash config order (ITS#5082)
+	Fixed slapd slap_mods_check bug (ITS#5119)
+	Fixed slapd ACL sets memory handling (ITS#4860,ITS#4873)
+	Fixed slapd ordered values add normalization issue (ITS#5136)
+	Fixed slapd-bdb DB_CONFIG conversion bug (ITS#5118)
+	Fixed slapd-ldap search control parsing (ITS#5138)
+	Fixed slapd-ldap SASL idassert w/o authcId
+	Fixed slapd-ldif directory separators in DN (ITS#5172)
+	Fixed slapd-meta conn caching on bind failure (ITS#5154)
+	Fixed slapd-meta bind timeout assertion (ITS#5185)
+	Fixed slapd-sql concurrency issue (ITS#5095)
+	Fixed slapo-chain double-free (ITS#5137)
+	Fixed slapo-pcache and -rwm interaction fix (ITS#4991) 
+	Fixed slapo-pcache non-null terminated array crasher (ITS#5163)
+	Fixed slapo-rwm modlist handling (ITS#5124)
+	Fixed slapo-rwm UUID in filter (ITS#5168)
+	Fixed sasl SASL_SSF_EXTERNAL type (ITS#3864)
+	Fixed liblber Windows x64 portability (ITS#5105)
+	Fixed libldap ppolicy control creation (ITS#5103)
+	Build Environment
+		Fixed termios macro check (ITS#4880)
+		Updated Makefiles
+	Documentation
+		Fixed slapd-bdb(5) note about dbconfig directives (ITS#5134)
+		Added slapd-sql(5) empty oc mapping workaround (ITS#4785)
+		Added max-depth/return-error to slapo-chain(5)
+		slapadd/slapindex note about file ownership (ITS#5166)
+		slapcat note about using against running slapd (ITS#5028)
+		Fixed Admin Guide URL in README (ITS#5107)
+
 OpenLDAP 2.3.38 Release (2007/08/20)
 	Fixed slapadd check for ';binary' when required (ITS#5071)
 	Fixed slapd select_backend/ManageDSAit (ITS#4986)
@@ -107,6 +139,7 @@ OpenLDAP 2.3.34 Release (2007/02/16)
 	Fixed slapo-syncprov contextCSN checkpoint again (ITS#4720)
 	Added slapo-ppolicy cn=config support (ITS#4836)
 	Added slapo-auditlog cn=config support
+	Fixed slapi late initialization (ITS#4468)
 	Build environment
 		Added Berkeley DB 4.5 detection
 	Documentation
@@ -218,6 +251,7 @@ OpenLDAP 2.3.28 Release (2006/10/21)
 
 OpenLDAP 2.3.27 Release (2006/08/19)
 	Fixed libldap dangling pointer issue (previous fix was broken) (ITS#4405)
+	Fixed slapd-sql noop handling (ITS#4563)
 
 OpenLDAP 2.3.26 Release (2006/08/17)
 	Fixed libldap dnssrv bug with "not present" positive statement (ITS#4610)

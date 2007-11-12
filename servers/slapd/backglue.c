@@ -1,5 +1,5 @@
 /* backglue.c - backend glue */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.91.2.18 2007/07/12 00:36:36 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.91.2.19 2007/08/23 14:31:02 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2007 The OpenLDAP Foundation.
@@ -620,8 +620,9 @@ glue_entry_get_rw (
 	Entry	**e )
 {
 	BackendDB *b0 = op->o_bd;
-	op->o_bd = glue_back_select( b0, dn );
 	int rc;
+
+	op->o_bd = glue_back_select( b0, dn );
 
 	if ( op->o_bd->be_fetch ) {
 		rc = op->o_bd->be_fetch( op, dn, oc, ad, rw, e );

@@ -1,5 +1,5 @@
 .TH SLAPD-SQL 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-sql.5,v 1.16.2.7 2007/03/05 18:39:51 ando Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-sql.5,v 1.16.2.8 2007/08/22 09:01:17 ando Exp $
 .SH NAME
 slapd-sql \- SQL backend to slapd
 .SH SYNOPSIS
@@ -657,6 +657,17 @@ to its prettified counterpart "First_Last"; this is not currently
 honored by back-sql if non-prettified data is written via RDBMS;
 when non-prettified data is written thru back-sql, the prettified 
 values are actually used instead.
+
+.LP
+.SH BUGS
+When the
+.B ldap_entry_objclasses
+table is empty, filters on the 
+.B objectClass
+attribute erroneously result in no candidates.
+A workaround consists in adding at least one row to that table,
+no matter if valid or not.
+
 .LP
 .SH PROXY CACHE OVERLAY
 The proxy cache overlay 

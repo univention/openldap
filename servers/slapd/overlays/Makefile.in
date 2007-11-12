@@ -1,5 +1,5 @@
 # Makefile.in for overlays
-# $OpenLDAP: pkg/ldap/servers/slapd/overlays/Makefile.in,v 1.16.2.17 2007/05/29 21:57:47 hallvard Exp $
+# $OpenLDAP: pkg/ldap/servers/slapd/overlays/Makefile.in,v 1.16.2.18 2007/10/23 21:21:38 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 2003-2007 The OpenLDAP Foundation.
@@ -124,7 +124,7 @@ $(LIBRARY): $(OBJS) version.lo
 	$(AR) rs $@ $(OBJS)
 
 # Must fixup depends for non-libtool objects
-depend-local:
+depend-local: depend-common
 	@if test -n "$(OBJS)"; then \
 	OBJ2=`echo $(OBJS) $(OBJDEP) | $(SED) -e 's/\.o//g'`; \
 	SCR=''; for i in $$OBJ2; do SCR="$$SCR -e s/^$$i.lo:/$$i.o:/"; done; \

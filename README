@@ -19,7 +19,9 @@ REQUIRED SOFTWARE
         POSIX REGEX software (required)
 
     SLAPD:
-        BDB and HDB backends require Sleepycat Berkeley DB 4.2 or later
+        BDB and HDB backends require Oracle Berkeley DB 4.2, 4.4,
+        or 4.5.  It is highly recommended to apply the patches
+        from Oracle for a given release.
 
     SLURPD:
         LTHREAD compatible thread package
@@ -39,7 +41,7 @@ DOCUMENTATION
     The OpenLDAP Administrator's Guide is available in the
     guide.html file in the doc/guide/admin directory.  The
     guide and a number of other documents are available at
-    <http://www.openldap.org/doc/guide/admin/guide.html>.
+    <http://www.openldap.org/doc/admin/guide.html>.
 
     The distribution also includes manual pages for most programs
     and library APIs.  See ldap(3) for details.
@@ -76,7 +78,7 @@ CONTRIBUTING
     <http://www.openldap.org/its/> to be considered.
 
 ---
-$OpenLDAP: pkg/ldap/README,v 1.38.2.7 2007/01/02 21:43:21 kurt Exp $
+$OpenLDAP: pkg/ldap/README,v 1.38.2.9 2007/10/11 18:52:18 quanah Exp $
 
 This work is part of OpenLDAP Software <http://www.openldap.org/>.
 

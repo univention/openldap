@@ -1,5 +1,5 @@
 /* value.c - routines for dealing with values */
-/* $OpenLDAP: pkg/ldap/servers/slapd/value.c,v 1.79.2.14 2007/01/02 21:43:59 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/value.c,v 1.79.2.15 2007/09/14 21:59:53 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -697,7 +697,21 @@ ordered_value_add(
 	}
 
 	new = ch_malloc( (anum+vnum+1) * sizeof(struct berval));
-	if ( a->a_nvals && a->a_nvals != a->a_vals ) {
+
+	/* sanity check: if normalized modifications come in, either
+	 * no values are present or normalized existing values differ
+	 * from non-normalized; if no normalized modifications come in,
+	 * either no values are present or normalized existing values
+	 * don't differ from non-normalized */
+	if ( nvals != NULL ) {
+		assert( nvals != vals );
+		assert( a->a_nvals == NULL || a->a_nvals != a->a_vals );
+
+	} else {
+		assert( a->a_nvals == NULL || a->a_nvals == a->a_vals );
+	}
+
+	if ( ( a->a_nvals && a->a_nvals != a->a_vals ) || nvals != NULL ) {
 		nnew = ch_malloc( (anum+vnum+1) * sizeof(struct berval));
 		/* Shouldn't happen... */
 		if ( !nvals ) nvals = vals;

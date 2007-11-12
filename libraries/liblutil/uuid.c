@@ -1,5 +1,5 @@
 /* uuid.c -- Universally Unique Identifier routines */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/uuid.c,v 1.25.2.4 2007/01/02 21:43:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/uuid.c,v 1.25.2.5 2007/10/04 20:02:09 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2007 The OpenLDAP Foundation.
@@ -369,6 +369,47 @@ lutil_uuidstr( char *buf, size_t len )
 
 	return rc < len ? rc : 0;
 #endif
+}
+
+int
+lutil_uuidstr_from_normalized(
+	char		*uuid,
+	size_t		uuidlen,
+	char		*buf,
+	size_t		buflen )
+{
+	unsigned char nibble;
+	int i, d = 0;
+
+	assert( uuid != NULL );
+	assert( buf != NULL );
+
+	if ( uuidlen != 16 ) return -1;
+	if ( buflen < 36 ) return -1;
+
+	for ( i = 0; i < 16; i++ ) {
+		if ( i == 4 || i == 6 || i == 8 || i == 10 ) {
+			buf[(i<<1)+d] = '-';
+			d += 1;
+		}
+
+		nibble = (uuid[i] >> 4) & 0xF;
+		if ( nibble < 10 ) {
+			buf[(i<<1)+d] = nibble + '0';
+		} else {
+			buf[(i<<1)+d] = nibble - 10 + 'a';
+		}
+
+		nibble = (uuid[i]) & 0xF;
+		if ( nibble < 10 ) {
+			buf[(i<<1)+d+1] = nibble + '0';
+		} else {
+			buf[(i<<1)+d+1] = nibble - 10 + 'a';
+		}
+	}
+
+	if ( buflen > 36 ) buf[36] = '\0';
+	return 36;
 }
 
 #ifdef TEST

@@ -1,5 +1,5 @@
 /* rwmmap.c - rewrite/mapping routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmmap.c,v 1.14.2.15 2007/07/12 20:23:48 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmmap.c,v 1.14.2.16 2007/10/04 20:02:08 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.
@@ -32,6 +32,7 @@
 
 #include "slap.h"
 #include "rwm.h"
+#include "lutil.h"
 
 #undef ldap_debug	/* silence a warning in ldap-int.h */
 #include "../../../libraries/libldap/ldap-int.h"
@@ -382,6 +383,7 @@ map_attr_value(
 {
 	struct berval		vtmp = BER_BVNULL;
 	int			freeval = 0;
+	char			uuid[ LDAP_LUTIL_UUIDSTR_BUFSIZE ];
 	AttributeDescription	*ad = *adp;
 	struct ldapmapping	*mapping = NULL;
 
@@ -424,6 +426,14 @@ map_attr_value(
 			default:
 				return -1;
 			}
+
+		} else if ( ad->ad_type->sat_syntax == slap_schema.si_ad_entryUUID->ad_type->sat_syntax ) {
+			vtmp.bv_len = lutil_uuidstr_from_normalized( value->bv_val,
+				value->bv_len, uuid, LDAP_LUTIL_UUIDSTR_BUFSIZE );
+			if ( vtmp.bv_len < 0 ) {
+				return -1;
+			}
+			vtmp.bv_val = uuid;
 
 		} else if ( ad == slap_schema.si_ad_objectClass
 				|| ad == slap_schema.si_ad_structuralObjectClass )

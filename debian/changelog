@@ -1,3 +1,13 @@
+openldap2.3 (2.3.39-1) UNRELEASED; urgency=medium
+
+  * Medium severity due to denial of service fix.
+  * New upstream release.
+    - CVE-2007-5708: Fix remote denial of service attack in slapo-pcache
+      (the overlay for proxy caching).  (Closes: #448644)
+    - Multiple additional more minor bug fixes.
+
+ -- Russ Allbery <rra@debian.org>  Sun, 11 Nov 2007 16:41:54 -0800
+
 openldap2.3 (2.3.38-1) unstable; urgency=low
 
   [ Steve Langasek ]

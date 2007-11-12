@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/conn.c,v 1.31.2.28 2007/01/27 23:56:43 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/conn.c,v 1.31.2.29 2007/10/13 08:26:04 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.
@@ -1183,7 +1183,8 @@ retry_lock:;
 
 	case LDAP_REQ_BIND:
 		/* if bound as rootdn, the backend must bind to all targets
-		 * with the administrative identity */
+		 * with the administrative identity
+		 * (unless pseoudoroot-bind-defer is TRUE) */
 		if ( op->orb_method == LDAP_AUTH_SIMPLE && be_isroot_pw( op ) ) {
 			op_type = META_OP_REQUIRE_ALL;
 		}
@@ -1241,6 +1242,9 @@ retry_lock:;
 				rs, mc, i, LDAP_BACK_CONN_ISPRIV( &mc_curr ),
 				LDAP_BACK_DONTSEND, !new_conn );
 			if ( candidates[ i ].sr_err == LDAP_SUCCESS ) {
+				if ( new_conn && ( sendok & LDAP_BACK_BINDING ) ) {
+					LDAP_BACK_CONN_BINDING_SET( &mc->mc_conns[ i ] );
+				}
 				META_CANDIDATE_SET( &candidates[ i ] );
 				ncandidates++;
 	
@@ -1428,6 +1432,10 @@ retry_lock2:;
 				meta_back_release_conn( mi, mc );
 			}
 			return NULL;
+		}
+
+		if ( new_conn && ( sendok & LDAP_BACK_BINDING ) ) {
+			LDAP_BACK_CONN_BINDING_SET( &mc->mc_conns[ i ] );
 		}
 
 		candidates[ i ].sr_err = LDAP_SUCCESS;

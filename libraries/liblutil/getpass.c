@@ -1,5 +1,5 @@
 /* getpass.c -- get password from user */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/getpass.c,v 1.15.2.3 2007/01/02 21:43:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/getpass.c,v 1.15.2.4 2007/09/22 23:09:11 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -60,7 +60,7 @@
 char *
 lutil_getpass( const char *prompt )
 {
-#if !defined(HAVE_POSIX_TERMIOS) && !defined(HAVE_SGTTY_H)
+#if !defined(HAVE_TERMIOS_H) && !defined(HAVE_SGTTY_H)
 	static char buf[256];
 	int i, c;
 

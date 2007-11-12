@@ -1,7 +1,7 @@
 .TH SLAPD.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" Copyright 1998-2007 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.191.2.31 2007/08/06 15:46:33 ghenry Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.191.2.32 2007/10/11 20:56:48 quanah Exp $
 .SH NAME
 slapd.conf \- configuration file for slapd, the stand-alone LDAP daemon
 .SH SYNOPSIS
@@ -1429,7 +1429,8 @@ when initially populating a database).  If the rootdn is within
 a namingContext (suffix) of the database, a simple bind password
 may also be provided using the
 .B rootpw
-directive. Note that the rootdn is always needed when using syncrepl.
+directive. Many optional features, including syncrepl, require the
+rootdn to be defined for the database.
 .TP
 .B rootpw <password>
 Specify a password (or hash of the password) for the rootdn.  The

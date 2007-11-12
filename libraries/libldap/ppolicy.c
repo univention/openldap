@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/ppolicy.c,v 1.3.2.5 2007/01/02 21:43:49 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/ppolicy.c,v 1.3.2.6 2007/08/22 20:44:41 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2007 The OpenLDAP Foundation.
@@ -61,21 +61,13 @@ int
 ldap_create_passwordpolicy_control( LDAP *ld,
                                     LDAPControl **ctrlp )
 {
-	BerElement *ber;
-
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );
 	assert( ctrlp != NULL );
 
-	if ((ber = ldap_alloc_ber_with_options(ld)) == NULL) {
-		ld->ld_errno = LDAP_NO_MEMORY;
-		return(LDAP_NO_MEMORY);
-	}
-
 	ld->ld_errno = ldap_create_control( LDAP_CONTROL_PASSWORDPOLICYREQUEST,
-		ber, 0, ctrlp);
+		NULL, 0, ctrlp);
 
-	ber_free(ber, 1);
 	return(ld->ld_errno);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/lutil.h,v 1.57.2.7 2007/01/05 09:47:09 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/include/lutil.h,v 1.57.2.8 2007/10/04 20:02:09 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -211,6 +211,13 @@ lutil_pair( ber_socket_t sd[2] );
 #define LDAP_LUTIL_UUIDSTR_BUFSIZE	40
 LDAP_LUTIL_F( size_t )
 lutil_uuidstr( char *buf, size_t len );
+
+LDAP_LUTIL_F( int )
+lutil_uuidstr_from_normalized(
+	char		*uuid,
+	size_t		uuidlen,
+	char		*buf,
+	size_t		buflen );
 
 /* csn.c */
 /* use this macro to allocate buffer for lutil_csnstr */

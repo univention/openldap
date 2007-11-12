@@ -1,5 +1,5 @@
 /* bind.c - ldap backend bind function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.85.2.36 2007/03/19 14:52:17 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.85.2.37 2007/09/09 20:24:13 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.
@@ -2133,7 +2133,8 @@ ldap_back_proxy_authz_ctrl(
 	 * but if it is not set this test fails.  We need a different
 	 * means to detect if idassert is enabled */
 	if ( ( BER_BVISNULL( &si->si_bc.sb_authcId ) || BER_BVISEMPTY( &si->si_bc.sb_authcId ) )
-			&& ( BER_BVISNULL( &si->si_bc.sb_binddn ) || BER_BVISEMPTY( &si->si_bc.sb_binddn ) ) )
+		&& ( BER_BVISNULL( &si->si_bc.sb_binddn ) || BER_BVISEMPTY( &si->si_bc.sb_binddn ) )
+		&& BER_BVISNULL( &si->si_bc.sb_saslmech ) )
 	{
 		goto done;
 	}

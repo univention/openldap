@@ -1,5 +1,5 @@
 dnl OpenLDAP Autoconf Macros
-dnl $OpenLDAP: pkg/ldap/build/openldap.m4,v 1.140.2.13 2007/08/06 12:32:51 ando Exp $
+dnl $OpenLDAP: pkg/ldap/build/openldap.m4,v 1.140.2.14 2007/10/05 15:33:02 hyc Exp $
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
 dnl Copyright 1998-2007 The OpenLDAP Foundation.
@@ -696,8 +696,8 @@ AC_DEFUN([OL_BDB_COMPAT],
 #	define DB_VERSION_MINOR 0
 #endif
 
-/* require 4.2 or later */
-#if (DB_VERSION_MAJOR >= 4) && (DB_VERSION_MINOR >= 2)
+/* require 4.2-4.5 */
+#if (DB_VERSION_MAJOR >= 4) && (DB_VERSION_MINOR >= 2) && (DB_VERSION_MINOR < 6)
 	__db_version_compat
 #endif
 	], [ol_cv_bdb_compat=yes], [ol_cv_bdb_compat=no])])
