@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap2.3\n"
 "Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
-"POT-Creation-Date: 2007-03-07 18:25-0800\n"
+"POT-Creation-Date: 2007-11-11 18:54-0800\n"
 "PO-Revision-Date: 2006-05-13 13:31+0930\n"
 "Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
 "Language-Team: Vietnamese <gnomevi-list@lists.sourceforge.net>\n"
@@ -224,49 +224,12 @@ msgstr "Mật khẩu quản trị đã mặt mã :"
 #. Type: boolean
 #. Description
 #: ../slapd.templates:13001
-msgid "Change configuration to load backend modules?"
-msgstr "Sửa đổi cấu hình để tải các mô-đun hậu phương không?"
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:13001
-msgid ""
-"Starting with OpenLDAP 2.1 backends are not longer built into the server but "
-"are instead dynamically loaded at startup. This means that the slapd "
-"configuration has to be changed to load the modules for the backends you are "
-"using."
-msgstr ""
-"Kể từ OpenLDAP phiên bản 2.1, hậu phương không còn có sẵn lại trong trình "
-"phục vụ. Thay vào đó, chúng được tải động vào lúc khởi chạy trình. Có nghĩa "
-"là cần phải sửa đổi cấu hình slapd để tải các mô-đun cho những hậu phương "
-"bạn đang sử dụng."
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:13001
-msgid ""
-"If you choose this option, an attempt to fix the configuration will be made. "
-"If you don't select this, you *must* fix your configuration file yourself or "
-"slapd (and slapcat if you are upgrading from an older version) will fail and "
-"the package will not be installed. For more information, read /usr/share/doc/"
-"slapd/README.Debian."
-msgstr ""
-"Nếu bạn bật tùy chọn này, trình này sẽ cố gắng sửa chữa cấu hình. Còn nếu "
-"bạn không bật tùy chọn này, bạn • phải • tự sửa chữa tập tin cấu hình: nếu "
-"không thì trình nền slapd (cũng trình slapcat nếu bạn đang nâng cấp từ một "
-"phiên bản cũ hơn) sẽ không hoạt động được, và gói phần mềm sẽ không được cài "
-"đặt. Để tìm thông tin thêm, hãy xem tập tin Đọc Đi </usr/share/doc/slapd/"
-"README.Debian>."
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:14001
 msgid "Allow LDAPv2 protocol?"
 msgstr "Cho phép giao thức LDAPv2 không?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:14001
+#: ../slapd.templates:13001
 msgid ""
 "The slapd daemon now disables the old LDAPv2 protocol by default. Programs "
 "and users are generally expected to be upgraded to LDAPv3. If you have old "
@@ -283,38 +246,13 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:15001
-msgid "Fix LDAP directory on upgrade?"
-msgstr "Sửa thư mục LDAP khi nâng cấp không?"
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:15001
-msgid ""
-"The installation scripts of the old OpenLDAP 2.0 packages create a directory "
-"that does not conform to the ldap schema. The new version is more strict "
-"about this and you won't be able to access your directory after the upgrade "
-"without fixing it."
-msgstr ""
-"Những tập lệnh cài đặt của gói OpenLDAP 2.0 cũ có tạo một thư mục không làm "
-"cho hợp với giản đồ LDAP. Phiên bản mới là chặt chẽ hơn nên bạn sẽ không thể "
-"truy cập thư mục đó sau khi nâng cấp, nếu bạn không sửa chữa nó."
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:15001
-msgid "If you choose this option, an attempt to fix it for you will occur."
-msgstr "Nếu bạn bật tùy chọn này, trình này sẽ cố gắng sửa chữa nó cho bạn."
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:14001
 msgid "Move aside current database and create a new one?"
 msgstr "Di chuyển cơ sở dữ liệu hiện thời ra, rồi tạo một điều mới không?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:14001
 msgid ""
 "You have specified a directory suffix (domain) that doesn't match the one "
 "currently in /etc/ldap/slapd.conf.  Changing the directory suffix requires "
@@ -330,13 +268,13 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:15001
 msgid "slapcat failed during upgrade"
 msgstr "Trình slapcat bị lỗi trong khi nâng cấp"
 
 #. Type: note
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:15001
 msgid ""
 "An error occurred during the attempt to upgrade your LDAP directory. This "
 "error occurred when performing the 'slapcat' which attempts to extract your "
@@ -360,7 +298,7 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:15001
 msgid ""
 "Then move the database files back to a backup area and then try running "
 "slapadd from $location."
@@ -370,13 +308,13 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:18001
+#: ../slapd.templates:16001
 msgid "slapadd failed during upgrade"
 msgstr "Trình slapadd bị lỗi trong khi nâng cấp"
 
 #. Type: note
 #. Description
-#: ../slapd.templates:18001
+#: ../slapd.templates:16001
 msgid ""
 "An error occurred during the attempt to upgrade your LDAP directory. This "
 "error occurred when performing the 'slapadd' which attempts to populate an "
@@ -397,84 +335,15 @@ msgstr ""
 "vấn đề trong tập tin LDIF. Nếu gặp vấn đề trong tập tin LDIF, có lẽ bạn có "
 "khả năng sửa chữa nó, rồi thử lại chạy tiến trình slapadd."
 
-#. Type: note
-#. Description
-#: ../slapd.templates:19001
-msgid "Slave databases require updateref option"
-msgstr "Cơ sở dữ liệu phụ cần thiết tùy chọn « updateref »"
-
-#. Type: note
-#. Description
-#: ../slapd.templates:19001
-msgid ""
-"In your slapd configuration file at least one database is configured as "
-"slave, and the updateref option is not set. The updateref option specifies "
-"the referral(s) to pass back when slapd is asked to modify a replicated "
-"local database. See slapd.conf(5) for more details."
-msgstr ""
-"Trong tập tin cấu hình slapd của bạn, có ít nhất một cơ sở dữ liệu được cấu "
-"hình là điều phụ, nhưng mà chưa lập tùy chọn « updateref ». Tùy chọn « "
-"updateref » ghi rõ tham chiếu cần gởi về khi trình slapd được yêu cầu sửa "
-"đổi một cơ sở dữ liệu cục bộ đã nhân đôi. Hãy xem trang hướng dẫn (man) « "
-"slapd.conf(5) » để tìm chi tiết."
-
-#. Type: note
-#. Description
-#: ../slapd.templates:19001
-msgid ""
-"Starting with version 2.1.23, slapd requires the updateref option to be set "
-"on slaves. You should make sure to fix your slapd.conf configuration file."
-msgstr ""
-"Kể từ phiên bản 2.1.23, trình nền slapd cần thiết tùy chọn « updateref » "
-"được đặt trên mọi điều phụ. Bạn nên kiểm tra xem đã sửa chữa tập tin cấu "
-"hình <slapd.conf> của mình."
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:20001
-msgid "Change backend type from LDBM to BDB?"
-msgstr "Thay đổi kiểu hậu phương từ LDBM thành BDB không?"
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:20001
-msgid ""
-"The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown to "
-"not work well. BDB is the recommended choice of the OpenLDAP developers."
-msgstr ""
-"Kiểu hậu phương LDBM bị phản đối trong OpenLDAP phiên bản 2.2, và không làm "
-"việc khá. Các nhà phát triển OpenLDAP khuyến khích bạn sử dụng BDB."
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:20001
-msgid ""
-"When using the BDB backend make sure you configure BDB properly. For "
-"information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
-msgstr ""
-"Khi sử dụng hậu phương BDB, bạn hãy kiểm tra xem đã cấu hình BDB cho đúng. "
-"Để tìm thông tin về tiến trình này, hãy xem tập tin Đọc Đi </usr/share/doc/"
-"slapd/README.DB_CONFIG.gz> (cần giải nén trước)."
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:20001
-msgid ""
-"If you enable this option an attempt will be made to update your "
-"configuration to use BDB instead of LDBM and convert your databases."
-msgstr ""
-"Nếu bạn hiệu lực tùy chọn này, trình này sẽ cố gắng nâng cấp cấu hình của "
-"bạn để dùng BDB thay vào LDBM, và để chuyển đổi các cơ sở dữ liệu của bạn."
-
 #. Type: select
 #. Description
-#: ../slapd.templates:21001
+#: ../slapd.templates:17001
 msgid "Database backend to use:"
 msgstr "Hậu phương cơ sở dữ liệu cần dùng:"
 
 #. Type: select
 #. Description
-#: ../slapd.templates:21001
+#: ../slapd.templates:17001
 msgid ""
 "The BDB backend is the recommended choice of the OpenLDAP developers. When "
 "using the BDB backend make sure that you configure the underlying database "
@@ -487,7 +356,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:21001
+#: ../slapd.templates:17001
 msgid ""
 "HDB is the next generation of BDB which might replace it sometime in the "
 "future. There are some problems still in the HDB code of the 2.2 series of "
@@ -499,7 +368,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:21001
+#: ../slapd.templates:17001
 msgid ""
 "The BDB backend (back-bdb) and LDBM backend (back-ldbm) are comparable in "
 "purpose and back-bdb evolved from experience gained from back-ldbm, but the "
@@ -533,3 +402,97 @@ msgstr ""
 "để cung cấp khả năng xử lý giao tác, khóa chính xác và tính năng khác cung "
 "cấp cách đồng qui và cấp tin cây đã tiến triển. Để tìm thông tin thêm, hãy "
 "xem tập tin Đọc Đi </usr/share/doc/slapd/README.DB_CONFIG.gz>."
+
+#~ msgid "Change configuration to load backend modules?"
+#~ msgstr "Sửa đổi cấu hình để tải các mô-đun hậu phương không?"
+
+#~ msgid ""
+#~ "Starting with OpenLDAP 2.1 backends are not longer built into the server "
+#~ "but are instead dynamically loaded at startup. This means that the slapd "
+#~ "configuration has to be changed to load the modules for the backends you "
+#~ "are using."
+#~ msgstr ""
+#~ "Kể từ OpenLDAP phiên bản 2.1, hậu phương không còn có sẵn lại trong trình "
+#~ "phục vụ. Thay vào đó, chúng được tải động vào lúc khởi chạy trình. Có "
+#~ "nghĩa là cần phải sửa đổi cấu hình slapd để tải các mô-đun cho những hậu "
+#~ "phương bạn đang sử dụng."
+
+#~ msgid ""
+#~ "If you choose this option, an attempt to fix the configuration will be "
+#~ "made. If you don't select this, you *must* fix your configuration file "
+#~ "yourself or slapd (and slapcat if you are upgrading from an older "
+#~ "version) will fail and the package will not be installed. For more "
+#~ "information, read /usr/share/doc/slapd/README.Debian."
+#~ msgstr ""
+#~ "Nếu bạn bật tùy chọn này, trình này sẽ cố gắng sửa chữa cấu hình. Còn nếu "
+#~ "bạn không bật tùy chọn này, bạn • phải • tự sửa chữa tập tin cấu hình: "
+#~ "nếu không thì trình nền slapd (cũng trình slapcat nếu bạn đang nâng cấp "
+#~ "từ một phiên bản cũ hơn) sẽ không hoạt động được, và gói phần mềm sẽ "
+#~ "không được cài đặt. Để tìm thông tin thêm, hãy xem tập tin Đọc Đi </usr/"
+#~ "share/doc/slapd/README.Debian>."
+
+#~ msgid "Fix LDAP directory on upgrade?"
+#~ msgstr "Sửa thư mục LDAP khi nâng cấp không?"
+
+#~ msgid ""
+#~ "The installation scripts of the old OpenLDAP 2.0 packages create a "
+#~ "directory that does not conform to the ldap schema. The new version is "
+#~ "more strict about this and you won't be able to access your directory "
+#~ "after the upgrade without fixing it."
+#~ msgstr ""
+#~ "Những tập lệnh cài đặt của gói OpenLDAP 2.0 cũ có tạo một thư mục không "
+#~ "làm cho hợp với giản đồ LDAP. Phiên bản mới là chặt chẽ hơn nên bạn sẽ "
+#~ "không thể truy cập thư mục đó sau khi nâng cấp, nếu bạn không sửa chữa nó."
+
+#~ msgid "If you choose this option, an attempt to fix it for you will occur."
+#~ msgstr "Nếu bạn bật tùy chọn này, trình này sẽ cố gắng sửa chữa nó cho bạn."
+
+#~ msgid "Slave databases require updateref option"
+#~ msgstr "Cơ sở dữ liệu phụ cần thiết tùy chọn « updateref »"
+
+#~ msgid ""
+#~ "In your slapd configuration file at least one database is configured as "
+#~ "slave, and the updateref option is not set. The updateref option "
+#~ "specifies the referral(s) to pass back when slapd is asked to modify a "
+#~ "replicated local database. See slapd.conf(5) for more details."
+#~ msgstr ""
+#~ "Trong tập tin cấu hình slapd của bạn, có ít nhất một cơ sở dữ liệu được "
+#~ "cấu hình là điều phụ, nhưng mà chưa lập tùy chọn « updateref ». Tùy chọn "
+#~ "« updateref » ghi rõ tham chiếu cần gởi về khi trình slapd được yêu cầu "
+#~ "sửa đổi một cơ sở dữ liệu cục bộ đã nhân đôi. Hãy xem trang hướng dẫn "
+#~ "(man) « slapd.conf(5) » để tìm chi tiết."
+
+#~ msgid ""
+#~ "Starting with version 2.1.23, slapd requires the updateref option to be "
+#~ "set on slaves. You should make sure to fix your slapd.conf configuration "
+#~ "file."
+#~ msgstr ""
+#~ "Kể từ phiên bản 2.1.23, trình nền slapd cần thiết tùy chọn « updateref » "
+#~ "được đặt trên mọi điều phụ. Bạn nên kiểm tra xem đã sửa chữa tập tin cấu "
+#~ "hình <slapd.conf> của mình."
+
+#~ msgid "Change backend type from LDBM to BDB?"
+#~ msgstr "Thay đổi kiểu hậu phương từ LDBM thành BDB không?"
+
+#~ msgid ""
+#~ "The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown "
+#~ "to not work well. BDB is the recommended choice of the OpenLDAP "
+#~ "developers."
+#~ msgstr ""
+#~ "Kiểu hậu phương LDBM bị phản đối trong OpenLDAP phiên bản 2.2, và không "
+#~ "làm việc khá. Các nhà phát triển OpenLDAP khuyến khích bạn sử dụng BDB."
+
+#~ msgid ""
+#~ "When using the BDB backend make sure you configure BDB properly. For "
+#~ "information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
+#~ msgstr ""
+#~ "Khi sử dụng hậu phương BDB, bạn hãy kiểm tra xem đã cấu hình BDB cho "
+#~ "đúng. Để tìm thông tin về tiến trình này, hãy xem tập tin Đọc Đi </usr/"
+#~ "share/doc/slapd/README.DB_CONFIG.gz> (cần giải nén trước)."
+
+#~ msgid ""
+#~ "If you enable this option an attempt will be made to update your "
+#~ "configuration to use BDB instead of LDBM and convert your databases."
+#~ msgstr ""
+#~ "Nếu bạn hiệu lực tùy chọn này, trình này sẽ cố gắng nâng cấp cấu hình của "
+#~ "bạn để dùng BDB thay vào LDBM, và để chuyển đổi các cơ sở dữ liệu của bạn."

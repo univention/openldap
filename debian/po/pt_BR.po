@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap2_2.1.17-1\n"
 "Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
-"POT-Creation-Date: 2007-03-07 18:25-0800\n"
+"POT-Creation-Date: 2007-11-11 18:54-0800\n"
 "PO-Revision-Date: 2007-03-08 01:40-0300\n"
 "Last-Translator: Felipe Augusto van de Wiel (faw) <faw@cathedrallabs.org>\n"
 "Language-Team: l10n portuguese <debian-l10n-portuguese@lists.debian.org>\n"
@@ -233,48 +233,12 @@ msgstr "Senha administrativa criptografada:"
 #. Type: boolean
 #. Description
 #: ../slapd.templates:13001
-msgid "Change configuration to load backend modules?"
-msgstr "Mudar a configuração para carregar módulos \"backend\"?"
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:13001
-msgid ""
-"Starting with OpenLDAP 2.1 backends are not longer built into the server but "
-"are instead dynamically loaded at startup. This means that the slapd "
-"configuration has to be changed to load the modules for the backends you are "
-"using."
-msgstr ""
-"A partir do OpenLDAP 2.1, os \"backends\" não são mais construídos dentro do "
-"servidor mas, ao invés disto, são dinamicamente carregados no início. Isto "
-"significa que a configuração do slapd tem que ser modificada para carregar "
-"os módulos para os \"backends\" que você está usando."
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:13001
-msgid ""
-"If you choose this option, an attempt to fix the configuration will be made. "
-"If you don't select this, you *must* fix your configuration file yourself or "
-"slapd (and slapcat if you are upgrading from an older version) will fail and "
-"the package will not be installed. For more information, read /usr/share/doc/"
-"slapd/README.Debian."
-msgstr ""
-"Se você selecionar esta opção, uma tentativa de consertar a configuração "
-"será feita. Se você não selecionar esta opção, você *deve* corrigir seu "
-"arquivo de configuração por conta própria ou o slapd (e o slapcat se você "
-"estiver atualizando de uma versão antiga) vão falhar e o pacote não será "
-"instalado. Para mais informações, leia /usr/share/doc/slapd/README.Debian."
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:14001
 msgid "Allow LDAPv2 protocol?"
 msgstr "Permitir protocolo LDAPv2?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:14001
+#: ../slapd.templates:13001
 msgid ""
 "The slapd daemon now disables the old LDAPv2 protocol by default. Programs "
 "and users are generally expected to be upgraded to LDAPv3. If you have old "
@@ -291,40 +255,13 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:15001
-msgid "Fix LDAP directory on upgrade?"
-msgstr "Corrigir seu diretório LDAP na atualização?"
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:15001
-msgid ""
-"The installation scripts of the old OpenLDAP 2.0 packages create a directory "
-"that does not conform to the ldap schema. The new version is more strict "
-"about this and you won't be able to access your directory after the upgrade "
-"without fixing it."
-msgstr ""
-"Os scripts de instalação dos antigos pacotes do OpenLDAP 2.0 criaram um "
-"diretório que não estava em conformidade com o \"schema\" ldap. A nova "
-"versão é mais restrita em relação a isso e você não será capaz de acessar "
-"seu diretório depois da atualização sem corrigí-lo."
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:15001
-msgid "If you choose this option, an attempt to fix it for you will occur."
-msgstr ""
-"Se você selecionar esta opção uma tentativa de correção ocorrerá para você."
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:14001
 msgid "Move aside current database and create a new one?"
 msgstr "Mover de lado as bases de dados atuais e criar uma nova?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:14001
 msgid ""
 "You have specified a directory suffix (domain) that doesn't match the one "
 "currently in /etc/ldap/slapd.conf.  Changing the directory suffix requires "
@@ -339,13 +276,13 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:15001
 msgid "slapcat failed during upgrade"
 msgstr "slapcat falhou durante a atualização"
 
 #. Type: note
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:15001
 msgid ""
 "An error occurred during the attempt to upgrade your LDAP directory. This "
 "error occurred when performing the 'slapcat' which attempts to extract your "
@@ -371,7 +308,7 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:15001
 msgid ""
 "Then move the database files back to a backup area and then try running "
 "slapadd from $location."
@@ -381,13 +318,13 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:18001
+#: ../slapd.templates:16001
 msgid "slapadd failed during upgrade"
 msgstr "slapadd falhou durante a atualização"
 
 #. Type: note
 #. Description
-#: ../slapd.templates:18001
+#: ../slapd.templates:16001
 msgid ""
 "An error occurred during the attempt to upgrade your LDAP directory. This "
 "error occurred when performing the 'slapadd' which attempts to populate an "
@@ -409,84 +346,15 @@ msgstr ""
 "arquivo LDIF. Se o problema for com o arquivo LDIF, você pode ser capaz de "
 "corrigí-lo e tentar o slapadd novamente."
 
-#. Type: note
-#. Description
-#: ../slapd.templates:19001
-msgid "Slave databases require updateref option"
-msgstr "Bases de dados escravas (\"slaves\") requerem a opção updateref"
-
-#. Type: note
-#. Description
-#: ../slapd.templates:19001
-msgid ""
-"In your slapd configuration file at least one database is configured as "
-"slave, and the updateref option is not set. The updateref option specifies "
-"the referral(s) to pass back when slapd is asked to modify a replicated "
-"local database. See slapd.conf(5) for more details."
-msgstr ""
-"No seu arquivo de configuração do slapd há pelo menos uma base de dados "
-"configurada como escrava (\"slave\"), e a opção updateref não está definida. "
-"A opção updateref especifica o(s) \"referral(s)\" para passar de volta "
-"quando o slapd é solicitado a modificar uma base de dados local replicada. "
-"Veja slapd.conf(5) para mais detalhes."
-
-#. Type: note
-#. Description
-#: ../slapd.templates:19001
-msgid ""
-"Starting with version 2.1.23, slapd requires the updateref option to be set "
-"on slaves. You should make sure to fix your slapd.conf configuration file."
-msgstr ""
-"A partir da versão 2.1.23, slapd requer que a opção updateref seja definida "
-"em escravos (\"slaves\"). Você deveria ter certeza que corrigiu seu arquivo "
-"de configuração slapd.conf."
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:20001
-msgid "Change backend type from LDBM to BDB?"
-msgstr "Mudar o tipo do \"backend\" de LDBM para BDB?"
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:20001
-msgid ""
-"The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown to "
-"not work well. BDB is the recommended choice of the OpenLDAP developers."
-msgstr ""
-"O \"backend\" tipo LDBM tornou-se obsoleto no OpenLDAP 2.2 e mostrou não "
-"trabalhar bem. BDB é a escolha recomendada dos desenvolvedores OpenLDAP."
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:20001
-msgid ""
-"When using the BDB backend make sure you configure BDB properly. For "
-"information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
-msgstr ""
-"Quando usando o \"backend\" BDB tenha certeza que você configurou o BDB "
-"apropriadamente. Para informação de como fazê-lo, veja /usr/share/doc/slapd/"
-"README.DB_CONFIG.gz"
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:20001
-msgid ""
-"If you enable this option an attempt will be made to update your "
-"configuration to use BDB instead of LDBM and convert your databases."
-msgstr ""
-"Se você habilitar esta opção uma tentativa será feita para atualizar sua "
-"configuração para usar BDB ao invés de LDBM e converter suas bases de dados."
-
 #. Type: select
 #. Description
-#: ../slapd.templates:21001
+#: ../slapd.templates:17001
 msgid "Database backend to use:"
 msgstr "\"Backend\" de base de dados a ser usado:"
 
 #. Type: select
 #. Description
-#: ../slapd.templates:21001
+#: ../slapd.templates:17001
 msgid ""
 "The BDB backend is the recommended choice of the OpenLDAP developers. When "
 "using the BDB backend make sure that you configure the underlying database "
@@ -499,7 +367,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:21001
+#: ../slapd.templates:17001
 msgid ""
 "HDB is the next generation of BDB which might replace it sometime in the "
 "future. There are some problems still in the HDB code of the 2.2 series of "
@@ -511,7 +379,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:21001
+#: ../slapd.templates:17001
 msgid ""
 "The BDB backend (back-bdb) and LDBM backend (back-ldbm) are comparable in "
 "purpose and back-bdb evolved from experience gained from back-ldbm, but the "
@@ -547,6 +415,103 @@ msgstr ""
 "granularidade e outros recursos que oferecem concorrência melhorada e "
 "confiança. Para mais informação, veja /usr/share/doc/slapd/README.DB_CONFIG."
 "gz"
+
+#~ msgid "Change configuration to load backend modules?"
+#~ msgstr "Mudar a configuração para carregar módulos \"backend\"?"
+
+#~ msgid ""
+#~ "Starting with OpenLDAP 2.1 backends are not longer built into the server "
+#~ "but are instead dynamically loaded at startup. This means that the slapd "
+#~ "configuration has to be changed to load the modules for the backends you "
+#~ "are using."
+#~ msgstr ""
+#~ "A partir do OpenLDAP 2.1, os \"backends\" não são mais construídos dentro "
+#~ "do servidor mas, ao invés disto, são dinamicamente carregados no início. "
+#~ "Isto significa que a configuração do slapd tem que ser modificada para "
+#~ "carregar os módulos para os \"backends\" que você está usando."
+
+#~ msgid ""
+#~ "If you choose this option, an attempt to fix the configuration will be "
+#~ "made. If you don't select this, you *must* fix your configuration file "
+#~ "yourself or slapd (and slapcat if you are upgrading from an older "
+#~ "version) will fail and the package will not be installed. For more "
+#~ "information, read /usr/share/doc/slapd/README.Debian."
+#~ msgstr ""
+#~ "Se você selecionar esta opção, uma tentativa de consertar a configuração "
+#~ "será feita. Se você não selecionar esta opção, você *deve* corrigir seu "
+#~ "arquivo de configuração por conta própria ou o slapd (e o slapcat se você "
+#~ "estiver atualizando de uma versão antiga) vão falhar e o pacote não será "
+#~ "instalado. Para mais informações, leia /usr/share/doc/slapd/README.Debian."
+
+#~ msgid "Fix LDAP directory on upgrade?"
+#~ msgstr "Corrigir seu diretório LDAP na atualização?"
+
+#~ msgid ""
+#~ "The installation scripts of the old OpenLDAP 2.0 packages create a "
+#~ "directory that does not conform to the ldap schema. The new version is "
+#~ "more strict about this and you won't be able to access your directory "
+#~ "after the upgrade without fixing it."
+#~ msgstr ""
+#~ "Os scripts de instalação dos antigos pacotes do OpenLDAP 2.0 criaram um "
+#~ "diretório que não estava em conformidade com o \"schema\" ldap. A nova "
+#~ "versão é mais restrita em relação a isso e você não será capaz de acessar "
+#~ "seu diretório depois da atualização sem corrigí-lo."
+
+#~ msgid "If you choose this option, an attempt to fix it for you will occur."
+#~ msgstr ""
+#~ "Se você selecionar esta opção uma tentativa de correção ocorrerá para "
+#~ "você."
+
+#~ msgid "Slave databases require updateref option"
+#~ msgstr "Bases de dados escravas (\"slaves\") requerem a opção updateref"
+
+#~ msgid ""
+#~ "In your slapd configuration file at least one database is configured as "
+#~ "slave, and the updateref option is not set. The updateref option "
+#~ "specifies the referral(s) to pass back when slapd is asked to modify a "
+#~ "replicated local database. See slapd.conf(5) for more details."
+#~ msgstr ""
+#~ "No seu arquivo de configuração do slapd há pelo menos uma base de dados "
+#~ "configurada como escrava (\"slave\"), e a opção updateref não está "
+#~ "definida. A opção updateref especifica o(s) \"referral(s)\" para passar "
+#~ "de volta quando o slapd é solicitado a modificar uma base de dados local "
+#~ "replicada. Veja slapd.conf(5) para mais detalhes."
+
+#~ msgid ""
+#~ "Starting with version 2.1.23, slapd requires the updateref option to be "
+#~ "set on slaves. You should make sure to fix your slapd.conf configuration "
+#~ "file."
+#~ msgstr ""
+#~ "A partir da versão 2.1.23, slapd requer que a opção updateref seja "
+#~ "definida em escravos (\"slaves\"). Você deveria ter certeza que corrigiu "
+#~ "seu arquivo de configuração slapd.conf."
+
+#~ msgid "Change backend type from LDBM to BDB?"
+#~ msgstr "Mudar o tipo do \"backend\" de LDBM para BDB?"
+
+#~ msgid ""
+#~ "The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown "
+#~ "to not work well. BDB is the recommended choice of the OpenLDAP "
+#~ "developers."
+#~ msgstr ""
+#~ "O \"backend\" tipo LDBM tornou-se obsoleto no OpenLDAP 2.2 e mostrou não "
+#~ "trabalhar bem. BDB é a escolha recomendada dos desenvolvedores OpenLDAP."
+
+#~ msgid ""
+#~ "When using the BDB backend make sure you configure BDB properly. For "
+#~ "information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
+#~ msgstr ""
+#~ "Quando usando o \"backend\" BDB tenha certeza que você configurou o BDB "
+#~ "apropriadamente. Para informação de como fazê-lo, veja /usr/share/doc/"
+#~ "slapd/README.DB_CONFIG.gz"
+
+#~ msgid ""
+#~ "If you enable this option an attempt will be made to update your "
+#~ "configuration to use BDB instead of LDBM and convert your databases."
+#~ msgstr ""
+#~ "Se você habilitar esta opção uma tentativa será feita para atualizar sua "
+#~ "configuração para usar BDB ao invés de LDBM e converter suas bases de "
+#~ "dados."
 
 #~ msgid "Admin entry"
 #~ msgstr "Entrada administrativa"
