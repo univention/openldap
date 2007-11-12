@@ -2,8 +2,11 @@
 
 set -e
 
-# WARNING: This script is in sometimes-works-for-me state. Only use if 
-# you understand what's going on. 
+# WARNING: This script is obsolete and will require a fair bit of work to get
+# working again.  It assumes woody, uses debconf questions that don't exist
+# any more, and probably doesn't check everything that you would want to
+# check.  Preserved just because I haven't done the work to see if puiparts
+# can now do the same thing in a cleaner way.
 
 # Setup
 : ${chroot_dir:=../chroot}

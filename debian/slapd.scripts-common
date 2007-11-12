@@ -768,43 +768,6 @@ config_migrate_backend() {						# {{{
 } 
 
 # }}}
-autoconfigure_modules() {						# {{{
-# On upgrades from pre-2.1 we might have to update the configuration 
-# file for loading the backend modules. This function tries to figure out
-# the needed changes automatically.
-# This function should probably go away some time after sarge release.
-
-	local new_conf
-
-	# Without a configuration we have nothing to update
-	if [ ! -e "$SLAPD_CONF" ]; then
-		echo "  Did not find slapd.conf to update modules" >&2
-		return 0
-	fi
-
-	# If the modulepath directive is already used in slapd.conf we assume 
-	# that the configuration was already adjusted
-	if  grep -q ^modulepath $SLAPD_CONF; then return 0; fi
-
-	# If the user does not want us to do the module config we bail out 
-	db_get slapd/autoconf_modules || true
-	if [ "$RET" != "true" ]; then return 0; fi
-	
-	echo -n "  Updating config for dynamic backends... " >&2
-	new_conf=`mktemp -q ${SLAPD_CONF}.XXXXXX`
-	cat <<-EOF >$new_conf
-		# Loading of backend modules - automatically generated
-		
-		modulepath      /usr/lib/ldap
-	EOF
-	read_slapd_conf < $SLAPD_CONF | sed -n >>"$new_conf" \
-	  's/^database[[:space:]]\+\([a-z]\+\)/moduleload      back_\1/p'
-	echo >>$new_conf
-	cat $SLAPD_CONF >>$new_conf
-	install_new_slapd_conf "$new_conf"
-	echo done. >&2
-}
-# }}}
 update_path_argsfile_pidfile() {	# {{{
 	write_slapd_conf "$SLAPD_CONF" 's|^(argsfile\s+).*|$1/var/run/slapd/slapd.args|'
 	write_slapd_conf "$SLAPD_CONF" 's|^(pidfile\s+).*|$1/var/run/slapd/slapd.pid|'
@@ -1148,36 +1111,6 @@ sub GenRandom {
 print crypt($ARGV[0], GenRandom(2));
 EOF
 # --------------
-}
-
-# }}}
-slave_databases_without_updateref() {					# {{{
-# Read the configuration of the slapd server and check if there are any
-# slave backends without updateref specified.
-# Usage: if slave_databases_without_updateref; then ... fi
-
-	(read_slapd_conf < $SLAPD_CONF && echo database) | \
-    	while read command data; do
-      		case $command in
-      		database)
-        		if [ -n "$backend" ] && [ -n "$updatedn" ] \
-				    && [ -z "$updateref" ]; then
-		  		return 0
-			fi
-			backend="$data"
-        		updatedn=""
-			updateref=""
-        		;;
-      		updatedn)
-        		updatedn="$data"
-        		;;
-      		updateref)
-        		updateref="$data"
-        		;;
-      		esac
-    	done || return 0
-
-  	return 1
 }
 
 # }}}

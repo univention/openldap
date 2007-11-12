@@ -88,21 +88,6 @@ Template: slapd/internal/adminpw
 Type: password
 _Description: Encrypted admin password:
 
-Template: slapd/autoconf_modules
-Type: boolean
-Default: true
-_Description: Change configuration to load backend modules?
- Starting with OpenLDAP 2.1 backends are not longer built into the
- server but are instead dynamically loaded at startup. This means that
- the slapd configuration has to be changed to load the modules for the
- backends you are using.
- .
- If you choose this option, an attempt to fix the configuration will be
- made. If you don't select this, you *must* fix your configuration file
- yourself or slapd (and slapcat if you are upgrading from an older version)
- will fail and the package will not be installed. For more information,
- read /usr/share/doc/slapd/README.Debian.
-
 Template: slapd/allow_ldap_v2
 Type: boolean
 Default: false
@@ -113,17 +98,6 @@ _Description: Allow LDAPv2 protocol?
  and you still need LDAPv2 support then select this option and
  'allow bind_v2' will be added to your slapd.conf to tell slapd to
  accept LDAPv2 connections.
-
-Template: slapd/fix_directory
-Type: boolean
-Default: true
-_Description: Fix LDAP directory on upgrade?
- The installation scripts of the old OpenLDAP 2.0 packages create a
- directory that does not conform to the ldap schema. The new version is
- more strict about this and you won't be able to access your directory
- after the upgrade without fixing it.
- .
- If you choose this option, an attempt to fix it for you will occur.
 
 Template: slapd/suffix_change
 Type: boolean
@@ -164,19 +138,6 @@ _Description: slapadd failed during upgrade
  a configuration problem (in which case slapcat would have failed
  too) or due to a problem in the LDIF file.  If the problem was with the
  LDIF file, you may be able to fix it and attempt the slapadd again.
-
-Template: slapd/slave_databases_require_updateref
-Type: note
-_Description: Slave databases require updateref option
- In your slapd configuration file at least one database is
- configured as slave, and the updateref option is not set.
- The updateref option specifies the referral(s) to pass back
- when slapd is asked to modify a replicated local database.
- See slapd.conf(5) for more details.
- .
- Starting with version 2.1.23, slapd requires the updateref
- option to be set on slaves. You should make sure to fix
- your slapd.conf configuration file.
 
 Template: slapd/migrate_ldbm_to_bdb
 Type: boolean

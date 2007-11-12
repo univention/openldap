@@ -13,8 +13,11 @@ openldap2.3 (2.3.39-1) UNRELEASED; urgency=medium
     the allowable default database choices are now BerekelyDB variants and
     will probably continue to be so for the forseeable future, and this is
     easier to maintain.
+  * Drop debconf questions, warnings, and maintainer script functions
+    dealing with upgrades from OpenLDAP 2.1, which is now too hold for
+    supported direct upgrades.  (Closes: #444806)
 
- -- Russ Allbery <rra@debian.org>  Sun, 11 Nov 2007 17:45:17 -0800
+ -- Russ Allbery <rra@debian.org>  Sun, 11 Nov 2007 17:57:57 -0800
 
 openldap2.3 (2.3.38-1) unstable; urgency=low
 
