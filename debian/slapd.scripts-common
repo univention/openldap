@@ -46,23 +46,6 @@ configure_dumping() {							# {{{
 }
 
 # }}}
-configure_ldbm_to_bdb_migration() {					# {{{
-# If there are any LDBM databases in use we suggest to the user to migrate
-# to the more stable and better maintained BDB backend.
-# Usage: configure_ldbm_to_bdb_migration
-
-	if [ -e "$SLAPD_CONF" ] && grep -qE \
-			-e '^moduleload[[:space:]]+back_ldbm' \
-			-e '^(database|backend)[[:space:]]+ldbm' \
-			"$SLAPD_CONF"; then
-		db_input critical slapd/migrate_ldbm_to_bdb || true
-		db_go || true
-	else
-		# Nothing to migrate
-		db_set slapd/migrate_ldbm_to_bdb false
-	fi
-}
-# }}}
 configure_allow_v2_binds() {                        # {{{
 # Ask if the user would like their package to support LDAPv2..
 # This was the default in older versions but we want to ask
@@ -71,20 +54,6 @@ configure_allow_v2_binds() {                        # {{{
     db_input medium slapd/allow_ldap_v2 || true
 }
 # }}}
-break_on_ldbm_to_bdb_migration_disagree() { # {{{
-  if [ -e "$SLAPD_CONF" ] && grep -qE \
-      -e '^moduleload[[:space:]]+back_ldbm' \
-      -e '^(database|backend)[[:space:]]+ldbm' \
-      "$SLAPD_CONF"; then
-    db_get slapd/migrate_ldbm_to_bdb
-    if [ "$RET" = "false" ]; then
-      db_fset slapd/migrate_ldbm_to_bdb seen false
-      return 1
-    fi
-    return 0
-  fi
-  return 0
-} # }}}
 database_dumping_enabled() {						# {{{
 # Check if the user has enabled database dumping for the current situation.
 # Return success if yes.
@@ -114,9 +83,7 @@ database_format_changed() {						# {{{
 # Return success if yes.
 # Usage: if database_format_changed; then
 
-	db_get slapd/migrate_ldbm_to_bdb
-	if [ "$RET" = "true" ] || dpkg --compare-versions \
-			"$OLD_VERSION" lt-nl "2.3.19"; then
+	if previous_version_older 2.3.19; then
 		return 0
 	else
 		return 1
@@ -134,22 +101,6 @@ database_dumping_destdir() {						# {{{
 	dir=`echo "$RET"|sed -e "s/VERSION/$OLD_VERSION/"`
 	mkdir -p -m 700 "$dir"
 	echo $dir
-}
-
-# }}}
-configure_ldbm_to_bdb_transition() {					# {{{
-# The LDBM backend seems to be quite unusable with OpenLDAP 2.2. Therefore
-# we ask the user if he wants to switch to BDB which is the recommended
-# backend for 2.2.
-
-	if grep -q '^moduleload[[:space:]]\+back_ldbm' $SLAPD_CONF ||
-			grep -q '^database[[:space:]]\+ldbm' $SLAPD_CONF ||
-			grep -q '^backend[[:space:]]\+ldbm' $SLAPD_CONF; then
-		db_input critical slapd/convert_ldbm_to_bdb || true
-		db_go || true
-	else
-		db_set slapd/convert_ldbm_to_bdb false
-	fi
 }
 
 # }}}
@@ -755,7 +706,7 @@ create_new_directory() {						# {{{
 config_migrate_backend() {						# {{{
 # Changes all uses of one backend to another (like ldbm to bdb) in the 
 # configuration file. This includes the moduleload, backend and database
-# directives.  
+# directives.  This function is currently unused.
 # Usage: migrate_databases <old-backend> <new-backend>
 
 	local old new
@@ -1145,7 +1096,7 @@ upgrade_supported_from_backend() {					# {{{
 # our scripts.
 # Usage: if upgrade_supported_from_backend "backend"; then ... fi
 
-	case "$1" in ldbm|bdb|hdb) return 0; esac
+	case "$1" in bdb|hdb) return 0; esac
 	return 1
 }
 

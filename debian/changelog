@@ -16,8 +16,11 @@ openldap2.3 (2.3.39-1) UNRELEASED; urgency=medium
   * Drop debconf questions, warnings, and maintainer script functions
     dealing with upgrades from OpenLDAP 2.1, which is now too hold for
     supported direct upgrades.  (Closes: #444806)
+  * Drop the code to check for and upgrade ldbm databases.  The etch
+    release of slapd had already dropped support for them and direct
+    upgrades from sarge are not supported.
 
- -- Russ Allbery <rra@debian.org>  Sun, 11 Nov 2007 17:57:57 -0800
+ -- Russ Allbery <rra@debian.org>  Sun, 11 Nov 2007 18:32:18 -0800
 
 openldap2.3 (2.3.38-1) unstable; urgency=low
 

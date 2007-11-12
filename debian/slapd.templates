@@ -139,19 +139,6 @@ _Description: slapadd failed during upgrade
  too) or due to a problem in the LDIF file.  If the problem was with the
  LDIF file, you may be able to fix it and attempt the slapadd again.
 
-Template: slapd/migrate_ldbm_to_bdb
-Type: boolean
-Default: true
-_Description: Change backend type from LDBM to BDB?
- The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown to not
- work well. BDB is the recommended choice of the OpenLDAP developers.
- .
- When using the BDB backend make sure you configure BDB properly. For
- information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz
- .
- If you enable this option an attempt will be made to update your
- configuration to use BDB instead of LDBM and convert your databases.
-
 Template: slapd/backend
 Type: select
 Choices: BDB, HDB
