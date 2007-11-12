@@ -5,8 +5,16 @@ openldap2.3 (2.3.39-1) UNRELEASED; urgency=medium
     - CVE-2007-5708: Fix remote denial of service attack in slapo-pcache
       (the overlay for proxy caching).  (Closes: #448644)
     - Multiple additional more minor bug fixes.
+  * Document in the default slapd.conf that dbconfig options only generate
+    the DB_CONFIG file on first slapd start and have no effect afterwards
+    unless DB_CONFIG is removed.  (Closes: #442191)
+  * Inline the checkpoint and BerkeleyDB backend settings in the default
+    slapd.conf rather than generating them dynamically in postinst.  All
+    the allowable default database choices are now BerekelyDB variants and
+    will probably continue to be so for the forseeable future, and this is
+    easier to maintain.
 
- -- Russ Allbery <rra@debian.org>  Sun, 11 Nov 2007 16:41:54 -0800
+ -- Russ Allbery <rra@debian.org>  Sun, 11 Nov 2007 17:45:17 -0800
 
 openldap2.3 (2.3.38-1) unstable; urgency=low
 

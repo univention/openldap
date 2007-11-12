@@ -665,20 +665,16 @@ create_new_slapd_conf() {						# {{{
 	checkpoint=""
 	conf_template="/usr/share/slapd/slapd.conf"
 
-	# Checkpoint if using the BDB backend
-	if [ "$backend" = "bdb" ] || [ "$backend" = "hdb" ]; then
-		checkpoint="checkpoint 512 30"
-    backendoptions="# For the Debian package we use 2MB as default but be sure to update this\n# value if you have plenty of RAM\ndbconfig set_cachesize 0 2097152 0\n\n# Sven Hartge reported that he had to set this value incredibly high\n# to get slapd running at all. See http:\/\/bugs.debian.org\/303057\n# for more information.\n\n# Number of objects that can be locked at the same time.\ndbconfig set_lk_max_objects 1500\n# Number of locks (both requested and granted)\ndbconfig set_lk_max_locks 1500\n# Number of lockers\ndbconfig set_lk_max_lockers 1500"
-	fi
-
+	# Note that, unlike in previous versions of this script, we just
+	# assume that our default database is some BerkeleyDB varient.
+	# Given current upstream feelings and relative performance, this
+	# appears to be a safe assumption for the forseeable future.
 	conf_new=`mktemp -q ${SLAPD_CONF}.XXXXXX`
 	echo -n "  Creating initial slapd configuration... " >&2
 	sed <"$conf_template" >"$conf_new" \
 		-e "s/@SUFFIX@/$basedn/g" \
 		-e "s/@ADMIN@/cn=admin,$basedn/g" \
-		-e "s/@CHECKPOINT@/$checkpoint/g" \
-		-e "s/@BACKEND@/$backend/g" \
-    -e "s/@BACKENDOPTIONS@/$backendoptions/g"
+		-e "s/@BACKEND@/$backend/g"
 	install_new_slapd_conf "$conf_new"
 	echo "done." >&2
 
