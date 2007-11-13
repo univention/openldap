@@ -2,6 +2,8 @@ openldap2.3 (2.3.39-1) unstable; urgency=medium
 
   * Medium severity due to denial of service fix.
   * New upstream release.
+    - CVE-2007-5707: Fix remote denial of service crash by sending a
+      malformed objectClasses attribute.
     - CVE-2007-5708: Fix remote denial of service attack in slapo-pcache
       (the overlay for proxy caching).  (Closes: #448644)
     - Multiple additional more minor bug fixes.
