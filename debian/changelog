@@ -1,4 +1,4 @@
-openldap2.3 (2.3.39-1) UNRELEASED; urgency=medium
+openldap2.3 (2.3.39-1) unstable; urgency=medium
 
   * Medium severity due to denial of service fix.
   * New upstream release.
@@ -19,7 +19,7 @@ openldap2.3 (2.3.39-1) UNRELEASED; urgency=medium
   * Add a watch file.  Thanks, Fernando Ribeiro.  (Closes: #435290)
   * Add Homepage, Vcs-Svn, and Vcs-Browser control fields.
 
- -- Russ Allbery <rra@debian.org>  Sun, 11 Nov 2007 19:48:05 -0800
+ -- Russ Allbery <rra@debian.org>  Mon, 12 Nov 2007 16:00:47 -0800
 
 openldap2.3 (2.3.38-1) unstable; urgency=low
 
