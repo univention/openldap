@@ -1,5 +1,5 @@
-usr/share/doc/slapd/examples/DB_CONFIG usr/share/slapd/DB_CONFIG
-usr/share/doc/slapd/examples/slapd.conf usr/share/slapd/slapd.conf
+usr/share/slapd/DB_CONFIG usr/share/doc/slapd/examples/DB_CONFIG
+usr/share/slapd/slapd.conf usr/share/doc/slapd/examples/slapd.conf
 usr/sbin/slapd usr/sbin/slapacl
 usr/sbin/slapd usr/sbin/slapadd
 usr/sbin/slapd usr/sbin/slapauth

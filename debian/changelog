@@ -1,3 +1,13 @@
+openldap2.3 (2.3.39-2) UNRELEASED; urgency=low
+
+  * slapd.conf and DB_CONFIG are used in the postinst, they shouldn't be
+    shipped under doc/examples because /usr/share/doc can't be depended 
+    on per policy; ship the files under /usr/share/slapd and symlink the
+    /other/ way, which also spares us from dh_compress trying to gzip
+    slapd.conf.  Closes: #452749.
+
+ -- Steve Langasek <vorlon@debian.org>  Sat, 24 Nov 2007 15:09:23 -0800
+
 openldap2.3 (2.3.39-1) unstable; urgency=medium
 
   * Medium severity due to denial of service fix.
