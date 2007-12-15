@@ -1,5 +1,4 @@
 man-slapd -p0
-slurpd-in-spool
 ntlm-ldap_h-hack -p0
 ntlm_c
 libldap-makefile_in
