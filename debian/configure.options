@@ -140,10 +140,6 @@
 #--enable-unique       Attribute Uniqueness overlay no|yes|mod [no]
 #--enable-valsort      Value Sorting overlay no|yes|mod [no]
 #
-#SLURPD (Replication Daemon) Options:
-#--enable-slurpd	  enable building slurpd [auto]
---enable-slurpd
-#
 #Library Generation & Linking Options
 #--enable-static[=PKGS]
 #build static libraries [default=yes]

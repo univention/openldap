@@ -57,11 +57,9 @@ postinst_upgrade_configuration() {					# {{{
 		load_databases
 	fi
 
-	# Update permissions of all database directories and /var/run/slapd,
-	# /var/spool/slurpd
+	# Update permissions of all database directories and /var/run/slapd
 	update_databases_permissions
 	update_permissions /var/run/slapd
-	update_permissions /var/spool/slurpd
 }
 
 # }}}
