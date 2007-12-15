@@ -12,7 +12,6 @@ debian/tmp/usr/share/man/man5/slapd-sql.5
 debian/tmp/usr/share/man/man5/slapd.conf.5
 debian/tmp/usr/share/man/man5/slapd-null.5
 debian/tmp/usr/share/man/man5/slapd-relay.5
-debian/tmp/usr/share/man/man5/slapd-tcl.5
 debian/tmp/usr/share/man/man5/slapd-dnssrv.5
 debian/tmp/usr/share/man/man5/slapd-ldif.5
 debian/tmp/usr/share/man/man5/slapd-passwd.5
