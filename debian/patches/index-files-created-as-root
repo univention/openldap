@@ -1,6 +1,8 @@
+Index: doc/man/man8/slapindex.8
+===================================================================
 --- doc/man/man8/slapindex.8.orig
 +++ doc/man/man8/slapindex.8
-@@ -105,6 +105,10 @@
+@@ -129,6 +129,10 @@
  should not be running (at least, not in read-write
  mode) when you do this to ensure consistency of the database.
  .LP
@@ -11,6 +13,8 @@
  This command provides ample opportunity for the user to obtain
  and drink their favorite beverage.
  .SH EXAMPLES
+Index: servers/slapd/slapindex.c
+===================================================================
 --- servers/slapd/slapindex.c.orig
 +++ servers/slapd/slapindex.c
 @@ -34,6 +34,8 @@

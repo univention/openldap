@@ -1,17 +1,21 @@
+Index: include/ldap_defaults.h
+===================================================================
 --- include/ldap_defaults.h.orig
 +++ include/ldap_defaults.h
-@@ -65,4 +65,6 @@
+@@ -63,4 +63,6 @@
  	/* dn of the default "monitor" subentry */
  #define SLAPD_MONITOR_DN		"cn=Monitor"
  
 +#define SASL_CONFIGPATH                        LDAP_SYSCONFDIR LDAP_DIRSEP "sasl2"
 +
  #endif /* _LDAP_CONFIG_H */
+Index: servers/slapd/sasl.c
+===================================================================
 --- servers/slapd/sasl.c.orig
 +++ servers/slapd/sasl.c
-@@ -952,12 +952,38 @@
- 
- #endif /* HAVE_CYRUS_SASL */
+@@ -1181,12 +1181,38 @@
+ };
+ #endif
  
 +static int
 +slap_sasl_getconfpath( void * context, char ** path )
@@ -47,4 +51,4 @@
 +		{ SASL_CB_GETCONFPATH, &slap_sasl_getconfpath, NULL },
  		{ SASL_CB_LIST_END, NULL, NULL }
  	};
- 
+ #endif

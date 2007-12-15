@@ -1,3 +1,5 @@
+Index: doc/man/man5/slapd-bdb.5
+===================================================================
 --- doc/man/man5/slapd-bdb.5.orig
 +++ doc/man/man5/slapd-bdb.5
 @@ -97,7 +97,7 @@
@@ -9,20 +11,11 @@
  .TP
  .B dirtyread
  Allow reads of modified but not yet committed data.
---- doc/man/man5/slapd-ldbm.5.orig
-+++ doc/man/man5/slapd-ldbm.5
-@@ -84,7 +84,7 @@
- associated indexes live.
- A separate directory must be specified for each database.
- The default is
--.BR LOCALSTATEDIR/openldap-data .
-+.BR LOCALSTATEDIR/lib/ldap .
- .TP
- .B
- index {<attrlist>|default} [pres,eq,approx,sub,<special>]
+Index: doc/man/man5/slapd.conf.5
+===================================================================
 --- doc/man/man5/slapd.conf.5.orig
 +++ doc/man/man5/slapd.conf.5
-@@ -1875,7 +1875,7 @@
+@@ -1811,7 +1811,7 @@
  # The database directory MUST exist prior to
  # running slapd AND should only be accessible
  # by the slapd/tools. Mode 0700 recommended.
@@ -31,6 +24,8 @@
  # Indices to maintain
  index     objectClass  eq
  index     cn,sn,mail   pres,eq,approx,sub
+Index: include/ldap_defaults.h
+===================================================================
 --- include/ldap_defaults.h.orig
 +++ include/ldap_defaults.h
 @@ -47,7 +47,7 @@
@@ -42,6 +37,8 @@
  #define SLAPD_DEFAULT_DB_MODE		0600
  #define SLAPD_DEFAULT_UCDATA		LDAP_DATADIR LDAP_DIRSEP "ucdata"
  	/* default max deref depth for aliases */
+Index: servers/slapd/Makefile.in
+===================================================================
 --- servers/slapd/Makefile.in.orig
 +++ servers/slapd/Makefile.in
 @@ -430,9 +430,9 @@
@@ -56,3 +53,16 @@
  	$(INSTALL) $(INSTALLFLAGS) -m 600 $(srcdir)/DB_CONFIG \
  		$(DESTDIR)$(sysconfdir)/DB_CONFIG.example
  
+Index: doc/man/man5/slapd-config.5
+===================================================================
+--- doc/man/man5/slapd-config.5.orig
++++ doc/man/man5/slapd-config.5
+@@ -1840,7 +1840,7 @@
+ # The database directory MUST exist prior to
+ # running slapd AND should only be accessible
+ # by the slapd/tools. Mode 0700 recommended.
+-olcDbDirectory: LOCALSTATEDIR/openldap-data
++olcDbDirectory: LOCALSTATEDIR/lib/ldap
+ # Indices to maintain
+ olcDbIndex:     objectClass  eq
+ olcDbIndex:     cn,sn,mail   pres,eq,approx,sub
