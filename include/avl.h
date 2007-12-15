@@ -1,5 +1,5 @@
 /* avl.h - avl tree definitions */
-/* $OpenLDAP: pkg/ldap/include/avl.h,v 1.24.2.4 2007/01/02 21:43:46 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/avl.h,v 1.29.2.3 2007/08/31 23:13:53 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -58,6 +58,8 @@ struct avlnode {
 #define LH 	(-1)
 #define EH 	0
 #define RH 	1
+
+#define avl_bf2str(bf)	((bf) == -1 ? "LH" : (bf) == 0 ? "EH" : (bf) == 1 ? "RH" : "(unknown)" )
 
 /* thread bits */
 #define	AVL_THREAD	0
@@ -131,6 +133,9 @@ tavl_find LDAP_P((Avlnode *, const void*, AVL_CMP));
 
 LDAP_AVL_F( Avlnode* )
 tavl_find2 LDAP_P((Avlnode *, const void*, AVL_CMP));
+
+LDAP_AVL_F( Avlnode* )
+tavl_find3 LDAP_P((Avlnode *, const void*, AVL_CMP, int *ret));
 
 #define	TAVL_DIR_LEFT	0
 #define	TAVL_DIR_RIGHT	1

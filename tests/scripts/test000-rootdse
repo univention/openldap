@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test000-rootdse,v 1.22.2.6 2007/01/02 21:44:13 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test000-rootdse,v 1.29.2.2 2007/08/31 23:14:09 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2007 The OpenLDAP Foundation.
@@ -33,7 +33,7 @@ sleep 1
 echo "Using ldapsearch to retrieve the root DSE..."
 for i in 0 1 2 3 4 5; do
 	$LDAPSEARCH -b "" -s base -h $LOCALHOST -p $PORT1 \
-		'+extensibleObject' > $SEARCHOUT 2>&1
+		'@extensibleObject' > $SEARCHOUT 2>&1
 	RC=$?
 	if test $RC = 0 ; then
 		break
@@ -57,7 +57,7 @@ if test $RC = 0 ; then
 		count=3
 		echo "Using ldapsearch to retrieve the cn=Monitor..."
 		$LDAPSEARCH -b "cn=Monitor" -s base -h $LOCALHOST -p $PORT1 \
-			'+extensibleObject' >> $SEARCHOUT 2>&1
+			'@monitor' >> $SEARCHOUT 2>&1
 		RC=$?
 		;;
 	esac
@@ -80,5 +80,7 @@ else
 		RC=0
 	fi
 fi
+
+test $KILLSERVERS != no && wait
 
 exit $RC

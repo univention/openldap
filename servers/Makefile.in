@@ -1,5 +1,5 @@
 # servers Makefile.in for OpenLDAP
-# $OpenLDAP: pkg/ldap/servers/Makefile.in,v 1.9.2.4 2007/01/02 21:43:53 kurt Exp $
+# $OpenLDAP: pkg/ldap/servers/Makefile.in,v 1.12.2.2 2007/08/31 23:13:57 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2007 The OpenLDAP Foundation.
@@ -13,5 +13,5 @@
 ## top-level directory of the distribution or, alternatively, at
 ## <http://www.OpenLDAP.org/license.html>.
 
-SUBDIRS= slapd slurpd
+SUBDIRS= slapd
 

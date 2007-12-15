@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/unbind.c,v 1.48.2.8 2007/01/02 21:43:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/unbind.c,v 1.56.2.3 2007/08/31 23:13:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -15,16 +15,6 @@
 /* Portions Copyright (c) 1990 Regents of the University of Michigan.
  * All rights reserved.
  */
-/* Portions Copyright (C) The Internet Society (1997)
- * ASN.1 fragments are from RFC 2251; see RFC for full legal notices.
- */
-
-/* An Unbind Request looks like this:
- *
- *	UnbindRequest ::= NULL
- *
- * and has no response.
- */
 
 #include "portable.h"
 
@@ -36,6 +26,13 @@
 #include <ac/time.h>
 
 #include "ldap-int.h"
+
+/* An Unbind Request looks like this:
+ *
+ *	UnbindRequest ::= [APPLICATION 2] NULL
+ *
+ * and has no response.  (Source: RFC 4511)
+ */
 
 int
 ldap_unbind_ext(
@@ -106,7 +103,7 @@ ldap_ld_free(
 		next = lm->lm_next;
 		ldap_msgfree( lm );
 	}
-
+    
 	if ( ld->ld_abandoned != NULL ) {
 		LDAP_FREE( ld->ld_abandoned );
 		ld->ld_abandoned = NULL;
@@ -147,16 +144,6 @@ ldap_ld_free(
 	}
 #endif
 
-	if ( ld->ld_options.ldo_tm_api != NULL ) {
-		LDAP_FREE( ld->ld_options.ldo_tm_api );
-		ld->ld_options.ldo_tm_api = NULL;
-	}
-
-	if ( ld->ld_options.ldo_tm_net != NULL ) {
-		LDAP_FREE( ld->ld_options.ldo_tm_net );
-		ld->ld_options.ldo_tm_net = NULL;
-	}
-
 #ifdef HAVE_CYRUS_SASL
 	if ( ld->ld_options.ldo_def_sasl_mech != NULL ) {
 		LDAP_FREE( ld->ld_options.ldo_def_sasl_mech );
@@ -177,6 +164,10 @@ ldap_ld_free(
 		LDAP_FREE( ld->ld_options.ldo_def_sasl_authzid );
 		ld->ld_options.ldo_def_sasl_authzid = NULL;
 	}
+#endif
+
+#ifdef HAVE_TLS
+	ldap_int_tls_destroy( &ld->ld_options );
 #endif
 
 	if ( ld->ld_options.ldo_sctrls != NULL ) {
@@ -257,9 +248,8 @@ ldap_send_unbind(
 
 	ld->ld_errno = LDAP_SUCCESS;
 	/* send the message */
-	if ( ber_flush( sb, ber, 1 ) == -1 ) {
+	if ( ber_flush2( sb, ber, LBER_FLUSH_FREE_ALWAYS ) == -1 ) {
 		ld->ld_errno = LDAP_SERVER_DOWN;
-		ber_free( ber, 1 );
 	}
 
 	return( ld->ld_errno );

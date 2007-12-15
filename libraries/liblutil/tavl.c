@@ -1,5 +1,5 @@
 /* avl.c - routines to implement an avl tree */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/tavl.c,v 1.10.2.4 2007/01/02 21:43:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/tavl.c,v 1.12.2.3 2007/08/31 23:13:57 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2007 The OpenLDAP Foundation.
@@ -284,6 +284,13 @@ tavl_delete( Avlnode **root, void* data, AVL_CMP fcmp )
 
 	ber_memfree( p );
 
+	/* Update child thread */
+	if ( q ) {
+		for ( ; q->avl_bits[nside] == AVL_CHILD && q->avl_link[nside];
+			q = q->avl_link[nside] ) ;
+		q->avl_link[nside] = r;
+	}
+	
 	if ( !depth ) {
 		*root = q;
 		return data;
@@ -295,12 +302,7 @@ tavl_delete( Avlnode **root, void* data, AVL_CMP fcmp )
 	side = pdir[depth];
 	p->avl_link[side] = q;
 
-	/* Update child thread */
-	if ( q ) {
-		for ( ; q->avl_bits[nside] == AVL_CHILD && q->avl_link[nside];
-			q = q->avl_link[nside] ) ;
-		q->avl_link[nside] = r;
-	} else {
+	if ( !q ) {
 		p->avl_bits[side] = AVL_THREAD;
 		p->avl_link[side] = r;
 	}
@@ -442,6 +444,26 @@ tavl_free( Avlnode *root, AVL_FREE dfree )
  * and the current node data as its second.  it should return 0 if they match,
  * < 0 if arg1 is less than arg2 and > 0 if arg1 is greater than arg2.
  */
+
+/*
+ * tavl_find2 - returns Avlnode instead of data pointer.
+ * tavl_find3 - as above, but returns Avlnode even if no match is found.
+ *				also return the last comparison result in ret.
+ */
+Avlnode *
+tavl_find3( Avlnode *root, const void *data, AVL_CMP fcmp, int *ret )
+{
+	int	cmp, dir;
+	Avlnode *prev;
+
+	while ( root != 0 && (cmp = (*fcmp)( data, root->avl_data )) != 0 ) {
+		prev = root;
+		dir = cmp > 0;
+		root = avl_child( root, dir );
+	}
+	*ret = cmp;
+	return root ? root : prev;
+}
 
 Avlnode *
 tavl_find2( Avlnode *root, const void *data, AVL_CMP fcmp )

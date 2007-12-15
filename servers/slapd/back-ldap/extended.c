@@ -1,5 +1,5 @@
 /* extended.c - ldap backend extended routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/extended.c,v 1.22.2.18 2007/05/19 12:27:53 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/extended.c,v 1.36.2.7 2007/09/29 08:30:58 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2007 The OpenLDAP Foundation.
@@ -47,7 +47,7 @@ ldap_back_extended_one( Operation *op, SlapReply *rs, ldap_back_exop_f exop )
 	ldapinfo_t	*li = (ldapinfo_t *) op->o_bd->be_private;
 
 	ldapconn_t	*lc = NULL;
-	LDAPControl	**oldctrls = NULL;
+	LDAPControl	**ctrls = NULL, **oldctrls = NULL;
 	int		rc;
 
 	/* FIXME: this needs to be called here, so it is
@@ -58,9 +58,8 @@ ldap_back_extended_one( Operation *op, SlapReply *rs, ldap_back_exop_f exop )
 		return -1;
 	}
 
-	oldctrls = op->o_ctrls;
-	if ( ldap_back_proxy_authz_ctrl( &lc->lc_bound_ndn,
-		li->li_version, &li->li_idassert, op, rs, &op->o_ctrls ) )
+	ctrls = op->o_ctrls;
+	if ( ldap_back_controls_add( op, rs, lc, &ctrls ) )
 	{
 		op->o_ctrls = oldctrls;
 		send_ldap_extended( op, rs );
@@ -70,13 +69,11 @@ ldap_back_extended_one( Operation *op, SlapReply *rs, ldap_back_exop_f exop )
 		goto done;
 	}
 
+	op->o_ctrls = ctrls;
 	rc = exop( op, rs, &lc );
 
-	if ( op->o_ctrls && op->o_ctrls != oldctrls ) {
-		free( op->o_ctrls[ 0 ] );
-		free( op->o_ctrls );
-	}
 	op->o_ctrls = oldctrls;
+	(void)ldap_back_controls_free( op, rs, &ctrls );
 
 done:;
 	if ( lc != NULL ) {
@@ -125,13 +122,12 @@ ldap_back_exop_passwd(
 			ndn = op->o_req_ndn;
 
 	assert( lc != NULL );
+	assert( rs->sr_ctrls == NULL );
 
 	if ( BER_BVISNULL( &ndn ) && op->ore_reqdata != NULL ) {
-		/* NOTE: most of this code is mutuated
-		 * from slap_passwd_parse(); we can't call
-		 * that function since now the request data
-		 * has been destroyed by NULL-terminating
-		 * the bervals.  Luckily enough, we only need
+		/* NOTE: most of this code is mutated
+		 * from slap_passwd_parse();
+		 * But here we only need
 		 * the first berval... */
 
 		ber_tag_t tag;
@@ -156,7 +152,7 @@ ldap_back_exop_passwd(
 
 		tag = ber_peek_tag( ber, &len );
 		if ( tag == LDAP_TAG_EXOP_MODIFY_PASSWD_ID ) {
-			tag = ber_scanf( ber, "m", &tmpid );
+			tag = ber_get_stringbv( ber, &tmpid, LBER_BV_NOTERM );
 
 			if ( tag == LBER_ERROR ) {
 				return LDAP_PROTOCOL_ERROR;
@@ -164,8 +160,11 @@ ldap_back_exop_passwd(
 		}
 
 		if ( !BER_BVISEMPTY( &tmpid ) ) {
+			char idNull = tmpid.bv_val[tmpid.bv_len];
+			tmpid.bv_val[tmpid.bv_len] = '\0';
 			rs->sr_err = dnPrettyNormal( NULL, &tmpid, &dn,
 				&ndn, op->o_tmpmemctx );
+			tmpid.bv_val[tmpid.bv_len] = idNull;
 			if ( rs->sr_err != LDAP_SUCCESS ) {
 				/* should have been successfully parsed earlier! */
 				return rs->sr_err;
@@ -190,6 +189,7 @@ retry:
 		op->o_ctrls, NULL, &msgid );
 
 	if ( rc == LDAP_SUCCESS ) {
+		/* TODO: set timeout? */
 		if ( ldap_result( lc->lc_ld, msgid, LDAP_MSG_ALL, NULL, &res ) == -1 ) {
 			ldap_get_option( lc->lc_ld, LDAP_OPT_ERROR_NUMBER, &rc );
 			rs->sr_err = rc;
@@ -206,17 +206,7 @@ retry:
 			rc = ldap_parse_result( lc->lc_ld, res, &rs->sr_err,
 					(char **)&rs->sr_matched,
 					&text,
-					NULL, NULL, 0 );
-#ifndef LDAP_NULL_IS_NULL
-			if ( rs->sr_matched && rs->sr_matched[ 0 ] == '\0' ) {
-				free( (char *)rs->sr_matched );
-				rs->sr_matched = NULL;
-			}
-			if ( rs->sr_text && rs->sr_text[ 0 ] == '\0' ) {
-				free( (char *)rs->sr_text );
-				rs->sr_text = NULL;
-			}
-#endif /* LDAP_NULL_IS_NULL */
+					NULL, &rs->sr_ctrls, 0 );
 
 			if ( rc == LDAP_SUCCESS ) {
 				if ( rs->sr_err == LDAP_SUCCESS ) {
@@ -280,6 +270,11 @@ retry:
 		rs->sr_matched = NULL;
 	}
 
+	if ( rs->sr_ctrls ) {
+		ldap_controls_free( rs->sr_ctrls );
+		rs->sr_ctrls = NULL;
+	}
+
 	if ( text ) {
 		free( text );
 		rs->sr_text = NULL;
@@ -309,6 +304,7 @@ ldap_back_exop_generic(
 	char		*text = NULL;
 
 	assert( lc != NULL );
+	assert( rs->sr_ctrls == NULL );
 
 	Debug( LDAP_DEBUG_ARGS, "==> ldap_back_exop_generic(%s, \"%s\")\n",
 		op->ore_reqoid.bv_val, op->o_req_dn.bv_val, 0 );
@@ -319,6 +315,7 @@ retry:
 		op->o_ctrls, NULL, &msgid );
 
 	if ( rc == LDAP_SUCCESS ) {
+		/* TODO: set timeout? */
 		if ( ldap_result( lc->lc_ld, msgid, LDAP_MSG_ALL, NULL, &res ) == -1 ) {
 			ldap_get_option( lc->lc_ld, LDAP_OPT_ERROR_NUMBER, &rc );
 			rs->sr_err = rc;
@@ -335,17 +332,7 @@ retry:
 			rc = ldap_parse_result( lc->lc_ld, res, &rs->sr_err,
 					(char **)&rs->sr_matched,
 					&text,
-					NULL, NULL, 0 );
-#ifndef LDAP_NULL_IS_NULL
-			if ( rs->sr_matched && rs->sr_matched[ 0 ] == '\0' ) {
-				free( (char *)rs->sr_matched );
-				rs->sr_matched = NULL;
-			}
-			if ( rs->sr_text && rs->sr_text[ 0 ] == '\0' ) {
-				free( (char *)rs->sr_text );
-				rs->sr_text = NULL;
-			}
-#endif /* LDAP_NULL_IS_NULL */
+					NULL, &rs->sr_ctrls, 0 );
 			if ( rc == LDAP_SUCCESS ) {
 				if ( rs->sr_err == LDAP_SUCCESS ) {
 					rc = ldap_parse_extended_result( lc->lc_ld, res,
@@ -388,6 +375,11 @@ retry:
 	if ( rs->sr_matched ) {
 		free( (char *)rs->sr_matched );
 		rs->sr_matched = NULL;
+	}
+
+	if ( rs->sr_ctrls ) {
+		ldap_controls_free( rs->sr_ctrls );
+		rs->sr_ctrls = NULL;
 	}
 
 	if ( text ) {

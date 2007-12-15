@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/sasl.c,v 1.58.2.5 2007/01/02 21:43:49 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/sasl.c,v 1.64.2.2 2007/08/31 23:13:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -12,9 +12,6 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
-/* Portions Copyright (C) The Internet Society (1997)
- * ASN.1 fragments are from RFC 2251; see RFC for full legal notices.
- */
 
 /*
  *	BindRequest ::= SEQUENCE {
@@ -22,10 +19,8 @@
  *		name		DistinguishedName,	 -- who
  *		authentication	CHOICE {
  *			simple		[0] OCTET STRING -- passwd
-#ifdef LDAP_API_FEATURE_X_OPENLDAP_V2_KBIND
- *			krbv42ldap	[1] OCTET STRING
- *			krbv42dsa	[2] OCTET STRING
-#endif
+ *			krbv42ldap	[1] OCTET STRING -- OBSOLETE
+ *			krbv42dsa	[2] OCTET STRING -- OBSOLETE
  *			sasl		[3] SaslCredentials	-- LDAPv3
  *		}
  *	}
@@ -196,7 +191,7 @@ ldap_sasl_bind_s(
 	}
 #endif
 
-	if ( ldap_result( ld, msgid, 1, NULL, &result ) == -1 ) {
+	if ( ldap_result( ld, msgid, LDAP_MSG_ALL, NULL, &result ) == -1 || !result ) {
 		return( ld->ld_errno );	/* ldap_result sets ld_errno */
 	}
 
@@ -294,13 +289,8 @@ ldap_parse_sasl_bind_result(
 	}
 
 	if ( ld->ld_version < LDAP_VERSION2 ) {
-#ifdef LDAP_NULL_IS_NULL
 		tag = ber_scanf( ber, "{iA}",
 			&errcode, &ld->ld_error );
-#else /* ! LDAP_NULL_IS_NULL */
-		tag = ber_scanf( ber, "{ia}",
-			&errcode, &ld->ld_error );
-#endif /* ! LDAP_NULL_IS_NULL */
 
 		if( tag == LBER_ERROR ) {
 			ber_free( ber, 0 );
@@ -311,13 +301,8 @@ ldap_parse_sasl_bind_result(
 	} else {
 		ber_len_t len;
 
-#ifdef LDAP_NULL_IS_NULL
 		tag = ber_scanf( ber, "{eAA" /*}*/,
 			&errcode, &ld->ld_matched, &ld->ld_error );
-#else /* ! LDAP_NULL_IS_NULL */
-		tag = ber_scanf( ber, "{eaa" /*}*/,
-			&errcode, &ld->ld_matched, &ld->ld_error );
-#endif /* ! LDAP_NULL_IS_NULL */
 
 		if( tag == LBER_ERROR ) {
 			ber_free( ber, 0 );

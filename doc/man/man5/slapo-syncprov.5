@@ -1,9 +1,9 @@
 .TH SLAPO-SYNCPROV 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" Copyright 2004-2007 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-syncprov.5,v 1.2.2.8 2007/01/02 21:43:45 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-syncprov.5,v 1.9.2.3 2007/08/31 23:13:53 quanah Exp $
 .SH NAME
-slapo-syncprov \- Sync Provider overlay
+slapo-syncprov \- Sync Provider overlay to slapd
 .SH SYNOPSIS
 ETCDIR/slapd.conf
 .SH DESCRIPTION
@@ -20,9 +20,6 @@ memory. The value is written to the database on server shutdown and read into
 memory on startup, and maintained in memory thereafter. Checkpoints may be
 configured to write the contextCSN into the underlying database to minimize
 recovery time after an unclean shutdown.
-
-Note that due to deadlock constraints in the LDBM database, this overlay
-will only work in RefreshOnly mode, and cannot perform checkpoints, on LDBM.
 
 On databases that support inequality indexing, it is helpful to set an
 eq index on the entryCSN attribute when using this overlay.
@@ -64,7 +61,7 @@ Control. In OpenLDAP releases 2.3.11 and earlier the syncrepl consumer did
 not properly set this flag, so the overlay must ignore it. This option
 should be set TRUE when working with newer releases that properly support
 this flag. It must be set TRUE when using the accesslog overlay for
-delta-based syncrepl support.  The default is FALSE.
+delta-based syncrepl replication support.  The default is FALSE.
 .SH FILES
 .TP
 ETCDIR/slapd.conf
@@ -73,3 +70,5 @@ default slapd configuration file
 .BR slapd.conf (5),
 .BR slapo-accesslog (5).
 OpenLDAP Administrator's Guide.
+.SH ACKNOWLEDGEMENTS
+.so ../Project

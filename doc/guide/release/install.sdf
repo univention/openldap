@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/openldap-guide/release/install.sdf,v 1.21.2.2 2007/01/02 21:43:44 kurt Exp $
+# $OpenLDAP: pkg/openldap-guide/release/install.sdf,v 1.23.2.2 2007/08/31 23:48:46 quanah Exp $
 # Copyright 1999-2007 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
@@ -80,7 +80,7 @@ if you have not done so already.
 + Test the standalone system
 
 .This step requires the standalone LDAP server, {{slapd}}(8),
-with {{HDB}}, {{BDB}}, and/or {{LDBM}} support.
+with {{HDB}} and/or {{BDB}} support.
 
 E:	% make test
 

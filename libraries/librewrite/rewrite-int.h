@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/rewrite-int.h,v 1.15.2.6 2007/01/02 21:43:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/rewrite-int.h,v 1.20.2.2 2007/08/31 23:13:57 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2007 The OpenLDAP Foundation.
@@ -157,10 +157,11 @@ struct rewrite_map {
  * Builtin maps
  */
 struct rewrite_builtin_map {
-#define REWRITE_BUILTIN_MAP_LDAP	0x0201
+#define REWRITE_BUILTIN_MAP	0x0200
 	int                             lb_type;
 	char                           *lb_name;
 	void                           *lb_private;
+	const rewrite_mapper		   *lb_mapper;
 
 #ifdef USE_REWRITE_LDAP_PVT_THREADS
 	ldap_pvt_thread_mutex_t         lb_mutex;

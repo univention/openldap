@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/sasl.c,v 1.20.2.3 2007/01/02 21:43:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/sasl.c,v 1.22.2.2 2007/08/31 23:13:57 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -49,6 +49,8 @@ lutil_sasl_freedefs(
 	void *defaults )
 {
 	lutilSASLdefaults *defs = defaults;
+
+	assert( defs != NULL );
 	
 	if (defs->mech) ber_memfree(defs->mech);
 	if (defs->realm) ber_memfree(defs->realm);

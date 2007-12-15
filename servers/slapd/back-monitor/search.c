@@ -1,5 +1,5 @@
 /* search.c - monitor backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/search.c,v 1.32.2.7 2007/01/02 21:44:05 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/search.c,v 1.39.2.4 2007/08/31 23:14:03 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2007 The OpenLDAP Foundation.
@@ -174,15 +174,12 @@ monitor_back_search( Operation *op, SlapReply *rs )
 	if ( e == NULL ) {
 		rs->sr_err = LDAP_NO_SUCH_OBJECT;
 		if ( matched ) {
-#ifdef SLAP_ACL_HONOR_DISCLOSE
 			if ( !access_allowed_mask( op, matched,
 					slap_schema.si_ad_entry,
 					NULL, ACL_DISCLOSE, NULL, NULL ) )
 			{
 				/* do nothing */ ;
-			} else 
-#endif /* SLAP_ACL_HONOR_DISCLOSE */
-			{
+			} else {
 				rs->sr_matched = matched->e_dn;
 			}
 		}
@@ -203,12 +200,9 @@ monitor_back_search( Operation *op, SlapReply *rs )
 	{
 		monitor_cache_release( mi, e );
 
-#ifdef SLAP_ACL_HONOR_DISCLOSE
 		if ( !ACL_GRANT( mask, ACL_DISCLOSE ) ) {
 			rs->sr_err = LDAP_NO_SUCH_OBJECT;
-		} else 
-#endif /* SLAP_ACL_HONOR_DISCLOSE */
-		{
+		} else {
 			rs->sr_err = LDAP_INSUFFICIENT_ACCESS;
 		}
 

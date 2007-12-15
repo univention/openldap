@@ -1,5 +1,5 @@
 /* back-ldap.h - ldap backend header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.63.2.23 2007/01/27 23:56:43 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.88.2.6 2007/08/31 23:14:02 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.
@@ -24,9 +24,25 @@
 #ifndef SLAPD_LDAP_H
 #define SLAPD_LDAP_H
 
+#include "../back-monitor/back-monitor.h"
+
 LDAP_BEGIN_DECL
 
 struct ldapinfo_t;
+
+/* stuff required for monitoring */
+typedef struct ldap_monitor_info_t {
+	monitor_subsys_t	lmi_mss;
+	struct ldapinfo_t	*lmi_li;
+
+	struct berval		lmi_rdn;
+	struct berval		lmi_nrdn;
+	monitor_callback_t	*lmi_cb;
+	struct berval		lmi_base;
+	int			lmi_scope;
+	struct berval		lmi_filter;
+	struct berval		lmi_more_filter;
+} ldap_monitor_info_t;
 
 enum {
 	/* even numbers are connection types */
@@ -231,7 +247,11 @@ typedef struct ldapinfo_t {
 	ldap_pvt_thread_mutex_t	li_uri_mutex;
 
 	LDAP_REBIND_PROC	*li_rebind_f;
+	LDAP_URLLIST_PROC	*li_urllist_f;
 	void			*li_urllist_p;
+
+	/* we only care about the TLS options here */
+	slap_bindconf		li_tls;
 
 	slap_bindconf		li_acl;
 #define	li_acl_authcID		li_acl.sb_authcId
@@ -290,6 +310,11 @@ typedef struct ldapinfo_t {
 
 #define	LDAP_BACK_F_QUARANTINE		(0x00010000U)
 
+#ifdef SLAP_CONTROL_X_SESSION_TRACKING
+#define	LDAP_BACK_F_ST_REQUEST		(0x00020000U)
+#define	LDAP_BACK_F_ST_RESPONSE		(0x00040000U)
+#endif /* SLAP_CONTROL_X_SESSION_TRACKING */
+
 #define	LDAP_BACK_ISSET_F(ff,f)		( ( (ff) & (f) ) == (f) )
 #define	LDAP_BACK_ISMASK_F(ff,m,f)	( ( (ff) & (m) ) == (f) )
 
@@ -323,6 +348,11 @@ typedef struct ldapinfo_t {
 
 #define	LDAP_BACK_QUARANTINE(li)	LDAP_BACK_ISSET( (li), LDAP_BACK_F_QUARANTINE )
 
+#ifdef SLAP_CONTROL_X_SESSION_TRACKING
+#define	LDAP_BACK_ST_REQUEST(li)	LDAP_BACK_ISSET( (li), LDAP_BACK_F_ST_REQUEST)
+#define	LDAP_BACK_ST_RESPONSE(li)	LDAP_BACK_ISSET( (li), LDAP_BACK_F_ST_RESPONSE)
+#endif /* SLAP_CONTROL_X_SESSION_TRACKING */
+
 	int			li_version;
 
 	/* cached connections; 
@@ -338,6 +368,8 @@ typedef struct ldapinfo_t {
 	/* must be between LDAP_BACK_CONN_PRIV_MIN
 	 * and LDAP_BACK_CONN_PRIV_MAX ! */
 #define	LDAP_BACK_CONN_PRIV_DEFAULT	(16)
+
+	ldap_monitor_info_t	li_monitor_info;
 
 	sig_atomic_t		li_isquarantined;
 #define	LDAP_BACK_FQ_NO		(0)

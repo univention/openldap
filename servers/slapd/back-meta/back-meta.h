@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/back-meta.h,v 1.23.2.22 2007/01/27 23:56:43 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/back-meta.h,v 1.64.2.7 2007/10/17 00:49:53 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.
@@ -31,6 +31,7 @@
 
 /* String rewrite library */
 #include "rewrite.h"
+
 LDAP_BEGIN_DECL
 
 /*
@@ -39,9 +40,6 @@ LDAP_BEGIN_DECL
 #ifndef META_BACK_PRINT_CONNTREE
 #define META_BACK_PRINT_CONNTREE 0
 #endif /* !META_BACK_PRINT_CONNTREE */
-
-struct slap_conn;
-struct slap_op;
 
 /* from back-ldap.h before rwm removal */
 struct ldapmap {
@@ -223,7 +221,7 @@ typedef struct metasingleconn_t {
 } metasingleconn_t;
 
 typedef struct metaconn_t {
-	struct slap_conn	*mc_conn;
+	Connection		*mc_conn;
 #define	lc_conn			mc_conn
 	unsigned		mc_refcnt;
 
@@ -261,6 +259,7 @@ typedef struct metatarget_t {
 	/* TODO: we might want to enable different strategies
 	 * for different targets */
 	LDAP_REBIND_PROC	*mt_rebind_f;
+	LDAP_URLLIST_PROC	*mt_urllist_f;
 	void			*mt_urllist_p;
 
 	BerVarray		mt_subtree_exclude;
@@ -311,6 +310,11 @@ typedef struct metatarget_t {
 #define	META_BACK_TGT_CANCEL_DISCOVER(mt)	META_BACK_TGT_ISMASK( (mt), LDAP_BACK_F_CANCEL_MASK2, LDAP_BACK_F_CANCEL_EXOP_DISCOVER )
 #define	META_BACK_TGT_QUARANTINE(mt)		META_BACK_TGT_ISSET( (mt), LDAP_BACK_F_QUARANTINE )
 
+#ifdef SLAP_CONTROL_X_SESSION_TRACKING
+#define	META_BACK_TGT_ST_REQUEST(mt)		META_BACK_TGT_ISSET( (mt), LDAP_BACK_F_ST_REQUEST )
+#define	META_BACK_TGT_ST_RESPONSE(mt)		META_BACK_TGT_ISSET( (mt), LDAP_BACK_F_ST_RESPONSE )
+#endif /* SLAP_CONTROL_X_SESSION_TRACKING */
+
 	int			mt_version;
 	time_t			mt_network_timeout;
 	struct timeval		mt_bind_timeout;
@@ -347,6 +351,7 @@ typedef struct metainfo_t {
 	metacandidates_t	*mi_candidates;
 
 	LDAP_REBIND_PROC	*mi_rebind_f;
+	LDAP_URLLIST_PROC	*mi_urllist_f;
 
 	metadncache_t		mi_cache;
 	
@@ -500,6 +505,14 @@ meta_back_op_result(
 	ldap_back_send_t	sendok );
 
 extern int
+meta_back_controls_add(
+	Operation	*op,
+	SlapReply	*rs,
+	metaconn_t	*mc,
+	int		candidate,
+	LDAPControl	***pctrls );
+
+extern int
 back_meta_LTX_init_module(
 	int			argc,
 	char			*argv[] );
@@ -579,6 +592,7 @@ extern void
 meta_dncache_free( void *entry );
 
 extern LDAP_REBIND_PROC		meta_back_default_rebind;
+extern LDAP_URLLIST_PROC	meta_back_default_urllist;
 
 LDAP_END_DECL
 

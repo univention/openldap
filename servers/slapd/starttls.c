@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/starttls.c,v 1.36.2.5 2007/01/02 21:43:59 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/starttls.c,v 1.41.2.2 2007/08/31 23:14:00 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -17,11 +17,14 @@
 
 #include <stdio.h>
 #include <ac/socket.h>
+#include <ac/string.h>
 
 #include "slap.h"
+#include "lber_pvt.h"
+
+const struct berval slap_EXOP_START_TLS = BER_BVC(LDAP_EXOP_START_TLS);
 
 #ifdef HAVE_TLS
-
 int
 starttls_extop ( Operation *op, SlapReply *rs )
 {

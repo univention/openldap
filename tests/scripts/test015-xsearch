@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test015-xsearch,v 1.17.2.6 2007/01/02 21:44:13 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test015-xsearch,v 1.23.2.2 2007/08/31 23:14:09 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2007 The OpenLDAP Foundation.
@@ -156,6 +156,13 @@ echo "#         f=$FILTER ..." >> $SEARCHOUT
 $LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
 	"$FILTER" >> $SEARCHOUT 2>&1
 
+# ITS#4380: don't crash when a matchingRule without pretty/validate is used
+FILTER="(:dn:caseIgnoreSubstringsMatch:=Information Technology Division)"
+echo "        f=$FILTER ..."
+echo "#         f=$FILTER ..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+	"$FILTER" >> $SEARCHOUT 2>&1
+
 RC=$?
 if test $RC != 0 ; then
 	echo "ldapsearch failed ($RC)!"
@@ -235,4 +242,7 @@ if test $? != 0 ; then
 fi
 
 echo ">>>>> Test succeeded"
+
+test $KILLSERVERS != no && wait
+
 exit 0

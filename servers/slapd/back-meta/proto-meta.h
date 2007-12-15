@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/proto-meta.h,v 1.2.2.5 2007/01/02 21:44:04 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/proto-meta.h,v 1.5.2.2 2007/08/31 23:14:03 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.

@@ -1,4 +1,5 @@
 # Makefile.in for back-relay
+# $OpenLDAP: pkg/ldap/servers/slapd/back-relay/Makefile.in,v 1.5.2.2 2007/08/31 23:14:04 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2007 The OpenLDAP Foundation.
@@ -12,8 +13,8 @@
 ## top-level directory of the distribution or, alternatively, at
 ## <http://www.OpenLDAP.org/license.html>.
 
-SRCS	= init.c config.c op.c
-OBJS	= init.lo config.lo op.lo
+SRCS	= init.c op.c
+OBJS	= init.lo op.lo
 
 LDAP_INCDIR= ../../../include       
 LDAP_LIBDIR= ../../../libraries

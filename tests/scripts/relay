@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/relay,v 1.3.2.9 2007/01/02 21:44:13 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/relay,v 1.13.2.3 2007/08/31 23:14:09 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2007 The OpenLDAP Foundation.
@@ -17,8 +17,9 @@ echo "Using $RELAY backend..."
 echo ""
 
 echo "Starting slapd on TCP/IP port $PORT1..."
+echo "======== Starting slapd with $RELAY backend ========" >> $LOG1
 . $CONFFILTER $BACKEND $MONITORDB < $RELAYCONF > $CONF1
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING >> $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID

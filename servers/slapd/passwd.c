@@ -1,5 +1,5 @@
 /* passwd.c - password extended operation routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.95.2.21 2007/01/02 21:43:57 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.128.2.6 2007/09/29 09:55:21 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -18,7 +18,6 @@
 
 #include <stdio.h>
 
-#include <ac/krb.h>
 #include <ac/socket.h>
 #include <ac/string.h>
 #include <ac/unistd.h>
@@ -32,6 +31,8 @@
 #include <lber_pvt.h>
 #include <lutil.h>
 #include <lutil_sha1.h>
+
+const struct berval slap_EXOP_MODIFY_PASSWD = BER_BVC(LDAP_EXOP_MODIFY_PASSWD);
 
 static const char *defhash[] = {
 #ifdef LUTIL_SHA1_BYTES
@@ -51,14 +52,11 @@ int passwd_extop(
 	req_extended_s qext = op->oq_extended;
 	Modifications *ml;
 	slap_callback cb = { NULL, slap_null_cb, NULL, NULL };
-	slap_callback cb2 = { NULL, slap_replog_cb, NULL, NULL };
 	int i, nhash;
-	char **hashes;
+	char **hashes, idNul;
 	int rc;
 	BackendDB *op_be;
 	int freenewpw = 0;
-
-	cb2.sc_next = &cb;
 
 	assert( ber_bvcmp( &slap_EXOP_MODIFY_PASSWD, &op->ore_reqoid ) == 0 );
 
@@ -79,6 +77,10 @@ int passwd_extop(
 	rs->sr_err = slap_passwd_parse( op->ore_reqdata, &id,
 		&qpw->rs_old, &qpw->rs_new, &rs->sr_text );
 
+	if ( !BER_BVISNULL( &id )) {
+		idNul = id.bv_val[id.bv_len];
+		id.bv_val[id.bv_len] = '\0';
+	}
 	if ( rs->sr_err == LDAP_SUCCESS && !BER_BVISEMPTY( &id ) ) {
 		Statslog( LDAP_DEBUG_STATS, "%s PASSMOD id=\"%s\"%s%s\n",
 			op->o_log_prefix, id.bv_val,
@@ -92,18 +94,21 @@ int passwd_extop(
 	}
 
 	if ( rs->sr_err != LDAP_SUCCESS ) {
+		if ( !BER_BVISNULL( &id ))
+			id.bv_val[id.bv_len] = idNul;
 		return rs->sr_err;
 	}
 
 	if ( !BER_BVISEMPTY( &id ) ) {
 		rs->sr_err = dnPrettyNormal( NULL, &id, &op->o_req_dn,
 				&op->o_req_ndn, op->o_tmpmemctx );
+		id.bv_val[id.bv_len] = idNul;
 		if ( rs->sr_err != LDAP_SUCCESS ) {
 			rs->sr_text = "Invalid DN";
 			rc = rs->sr_err;
 			goto error_return;
 		}
-		op->o_bd = select_backend( &op->o_req_ndn, 0, 1 );
+		op->o_bd = select_backend( &op->o_req_ndn, 1 );
 
 	} else {
 		ber_dupbv_x( &op->o_req_dn, &op->o_dn, op->o_tmpmemctx );
@@ -138,7 +143,7 @@ int passwd_extop(
 	/* If we've got a glued backend, check the real backend */
 	op_be = op->o_bd;
 	if ( SLAP_GLUE_INSTANCE( op->o_bd )) {
-		op->o_bd = select_backend( &op->o_req_ndn, 0, 0 );
+		op->o_bd = select_backend( &op->o_req_ndn, 0 );
 	}
 
 	if (backend_check_restrictions( op, rs,
@@ -153,9 +158,8 @@ int passwd_extop(
 		goto error_return;
 	}
 
-#ifndef SLAPD_MULTIMASTER
 	/* This does not apply to multi-master case */
-	if(!( !SLAP_SHADOW( op->o_bd ) || be_isupdate( op ))) {
+	if(!( !SLAP_SINGLE_SHADOW( op->o_bd ) || be_isupdate( op ))) {
 		/* we SHOULD return a referral in this case */
 		BerVarray defref = op->o_bd->be_update_refs
 			? op->o_bd->be_update_refs : default_referral; 
@@ -177,7 +181,6 @@ int passwd_extop(
 		rc = LDAP_UNWILLING_TO_PERFORM;
 		goto error_return;
 	}
-#endif /* !SLAPD_MULTIMASTER */
 
 	/* generate a new password if none was provided */
 	if ( qpw->rs_new.bv_len == 0 ) {
@@ -249,6 +252,7 @@ old_good:
 		nhash = 1;
 		hashes = (char **)defhash;
 	}
+	ml->sml_numvals = nhash;
 	ml->sml_values = ch_malloc( (nhash+1)*sizeof(struct berval) );
 	for ( i=0; hashes[i]; i++ ) {
 		slap_passwd_hash_type( &qpw->rs_new, &hash, hashes[i], &rs->sr_text );
@@ -276,9 +280,11 @@ old_good:
 		slap_callback *sc = op->o_callback;
 
 		op->o_tag = LDAP_REQ_MODIFY;
-		op->o_callback = &cb2;
+		op->o_callback = &cb;
 		op->orm_modlist = qpw->rs_mods;
-		cb2.sc_private = qpw;	/* let Modify know this was pwdMod,
+		op->orm_no_opattrs = 0;
+		
+		cb.sc_private = qpw;	/* let Modify know this was pwdMod,
 					 * if it cares... */
 
 		rs->sr_err = op->o_bd->be_modify( op, rs );
@@ -319,6 +325,10 @@ error_return:;
 	return rc;
 }
 
+/* NOTE: The DN in *id is NOT NUL-terminated here. dnNormalize will
+ * reject it in this condition, the caller must NUL-terminate it.
+ * FIXME: should dnNormalize still be complaining about that?
+ */
 int slap_passwd_parse( struct berval *reqdata,
 	struct berval *id,
 	struct berval *oldpass,
@@ -343,9 +353,9 @@ int slap_passwd_parse( struct berval *reqdata,
 	/* ber_init2 uses reqdata directly, doesn't allocate new buffers */
 	ber_init2( ber, reqdata, 0 );
 
-	tag = ber_scanf( ber, "{" /*}*/ );
+	tag = ber_skip_tag( ber, &len );
 
-	if( tag == LBER_ERROR ) {
+	if( tag != LBER_SEQUENCE ) {
 		Debug( LDAP_DEBUG_TRACE,
 			"slap_passwd_parse: decoding error\n", 0, 0, 0 );
 		rc = LDAP_PROTOCOL_ERROR;
@@ -363,7 +373,7 @@ int slap_passwd_parse( struct berval *reqdata,
 			goto done;
 		}
 
-		tag = ber_scanf( ber, "m", id );
+		tag = ber_get_stringbv( ber, id, LBER_BV_NOTERM );
 
 		if( tag == LBER_ERROR ) {
 			Debug( LDAP_DEBUG_TRACE, "slap_passwd_parse: ID parse failed.\n",
@@ -385,7 +395,7 @@ int slap_passwd_parse( struct berval *reqdata,
 			goto done;
 		}
 
-		tag = ber_scanf( ber, "m", oldpass );
+		tag = ber_get_stringbv( ber, oldpass, LBER_BV_NOTERM );
 
 		if( tag == LBER_ERROR ) {
 			Debug( LDAP_DEBUG_TRACE, "slap_passwd_parse: OLD parse failed.\n",
@@ -416,7 +426,7 @@ int slap_passwd_parse( struct berval *reqdata,
 			goto done;
 		}
 
-		tag = ber_scanf( ber, "m", newpass );
+		tag = ber_get_stringbv( ber, newpass, LBER_BV_NOTERM );
 
 		if( tag == LBER_ERROR ) {
 			Debug( LDAP_DEBUG_TRACE, "slap_passwd_parse: NEW parse failed.\n",

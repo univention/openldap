@@ -1,5 +1,5 @@
 /* search.c - search operation */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.221.2.16 2007/07/20 22:42:26 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.246.2.9 2007/11/20 18:46:34 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2007 The OpenLDAP Foundation.
@@ -31,7 +31,7 @@ static int search_candidates(
 	Operation *op,
 	SlapReply *rs,
 	Entry *e,
-	u_int32_t locker,
+	BDB_LOCKER locker,
 	ID	*ids,
 	ID	*scopes );
 
@@ -51,7 +51,7 @@ static Entry * deref_base (
 	SlapReply *rs,
 	Entry *e,
 	Entry **matched,
-	u_int32_t locker,
+	BDB_LOCKER locker,
 	DB_LOCK *lock,
 	ID	*tmp,
 	ID	*visited )
@@ -119,8 +119,7 @@ static Entry * deref_base (
 		/* Free the previous entry, continue to work with the
 		 * one we just retrieved.
 		 */
-		bdb_cache_return_entry_r( bdb->bi_dbenv, &bdb->bi_cache,
-			*matched, lock);
+		bdb_cache_return_entry_r( bdb, *matched, lock);
 		*lock = lockr;
 
 		/* We found a regular entry. Return this to the caller. The
@@ -144,7 +143,7 @@ static int search_aliases(
 	Operation *op,
 	SlapReply *rs,
 	Entry *e,
-	u_int32_t locker,
+	BDB_LOCKER locker,
 	ID *ids,
 	ID *scopes,
 	ID *stack )
@@ -155,11 +154,7 @@ static int search_aliases(
 	Entry *matched, *a;
 	EntryInfo *ei;
 	struct berval bv_alias = BER_BVC( "alias" );
-#ifdef LDAP_COMP_MATCH
-	AttributeAssertion aa_alias = { NULL, BER_BVNULL, NULL };
-#else
-	AttributeAssertion aa_alias = { NULL, BER_BVNULL };
-#endif
+	AttributeAssertion aa_alias = ATTRIBUTEASSERTION_INIT;
 	Filter	af;
 	DB_LOCK locka, lockr;
 	int first = 1;
@@ -185,7 +180,7 @@ static int search_aliases(
 
 	/* Find all aliases in database */
 	BDB_IDL_ZERO( aliases );
-	rs->sr_err = bdb_filter_candidates( op, &af, aliases,
+	rs->sr_err = bdb_filter_candidates( op, locker, &af, aliases,
 		curscop, visited );
 	if (rs->sr_err != LDAP_SUCCESS) {
 		return rs->sr_err;
@@ -207,12 +202,12 @@ static int search_aliases(
 		 * to the cumulative list of candidates.
 		 */
 		BDB_IDL_CPY( curscop, aliases );
-		rs->sr_err = bdb_dn2idl( op, e, subscop,
+		rs->sr_err = bdb_dn2idl( op, locker, &e->e_nname, BEI(e), subscop,
 			subscop2+BDB_IDL_DB_SIZE );
 		if (first) {
 			first = 0;
 		} else {
-			bdb_cache_return_entry_r (bdb->bi_dbenv, &bdb->bi_cache, e, &locka);
+			bdb_cache_return_entry_r (bdb, e, &locka);
 		}
 		BDB_IDL_CPY(subscop2, subscop);
 		rs->sr_err = bdb_idl_intersection(curscop, subscop);
@@ -238,8 +233,7 @@ retry1:
 			 * turned into a range that spans IDs indiscriminately
 			 */
 			if (!is_entry_alias(a)) {
-				bdb_cache_return_entry_r (bdb->bi_dbenv, &bdb->bi_cache,
-					a, &lockr);
+				bdb_cache_return_entry_r (bdb, a, &lockr);
 				continue;
 			}
 
@@ -257,15 +251,13 @@ retry1:
 					bdb_idl_insert(newsubs, a->e_id);
 					bdb_idl_insert(scopes, a->e_id);
 				}
-				bdb_cache_return_entry_r( bdb->bi_dbenv, &bdb->bi_cache,
-					a, &lockr);
+				bdb_cache_return_entry_r( bdb, a, &lockr);
 
 			} else if (matched) {
 				/* Alias could not be dereferenced, or it deref'd to
 				 * an ID we've already seen. Ignore it.
 				 */
-				bdb_cache_return_entry_r( bdb->bi_dbenv, &bdb->bi_cache,
-					matched, &lockr );
+				bdb_cache_return_entry_r( bdb, matched, &lockr );
 				rs->sr_text = NULL;
 			}
 		}
@@ -311,23 +303,22 @@ int
 bdb_search( Operation *op, SlapReply *rs )
 {
 	struct bdb_info *bdb = (struct bdb_info *) op->o_bd->be_private;
-	time_t		stoptime;
 	ID		id, cursor;
+	ID		lastid = NOID;
 	ID		candidates[BDB_IDL_UM_SIZE];
 	ID		scopes[BDB_IDL_DB_SIZE];
-	Entry		*e = NULL, base, e_root = {0};
+	Entry		*e = NULL, base, *e_root;
 	Entry		*matched = NULL;
-	EntryInfo	*ei, ei_root = {0};
-	struct berval	realbase = BER_BVNULL;
-#ifdef SLAP_ACL_HONOR_DISCLOSE
-	slap_mask_t	mask;
-#endif
-	int		manageDSAit;
-	int		tentries = 0;
-	ID		lastid = NOID;
+	EntryInfo	*ei;
 	AttributeName	*attrs;
+	struct berval	realbase = BER_BVNULL;
+	slap_mask_t	mask;
+	time_t		stoptime;
+	int		manageDSAit;
+	int		tentries = 0, nentries = 0;
+	int		idflag = 0;
 
-	u_int32_t	locker = 0;
+	BDB_LOCKER	locker = 0;
 	DB_LOCK		lock;
 	struct	bdb_op_info	*opinfo = NULL;
 	DB_TXN			*ltid = NULL;
@@ -354,16 +345,10 @@ bdb_search( Operation *op, SlapReply *rs )
 		}
 	}
 
+	e_root = bdb->bi_cache.c_dntree.bei_e;
 	if ( op->o_req_ndn.bv_len == 0 ) {
 		/* DIT root special case */
-		ei_root.bei_e = &e_root;
-		ei_root.bei_parent = &ei_root;
-		e_root.e_private = &ei_root;
-		e_root.e_id = 0;
-		e_root.e_ocflags = SLAP_OC_GLUE | SLAP_OC__END;
-		BER_BVSTR( &e_root.e_nname, "" );
-		BER_BVSTR( &e_root.e_name, "" );
-		ei = &ei_root;
+		ei = e_root->e_private;
 		rs->sr_err = LDAP_SUCCESS;
 	} else {
 		if ( op->ors_deref & LDAP_DEREF_FINDING ) {
@@ -408,8 +393,7 @@ dn2entry_retry:
 			if ( e ) {
 				build_new_dn( &op->o_req_ndn, &e->e_nname, &stub,
 					op->o_tmpmemctx );
-				bdb_cache_return_entry_r (bdb->bi_dbenv, &bdb->bi_cache,
-					e, &lock);
+				bdb_cache_return_entry_r (bdb, e, &lock);
 				matched = NULL;
 				goto dn2entry_retry;
 			}
@@ -425,7 +409,6 @@ dn2entry_retry:
 		if ( matched != NULL ) {
 			BerVarray erefs = NULL;
 
-#ifdef SLAP_ACL_HONOR_DISCLOSE
 			/* return referral only if "disclose"
 			 * is granted on the object */
 			if ( ! access_allowed( op, matched,
@@ -434,9 +417,7 @@ dn2entry_retry:
 			{
 				rs->sr_err = LDAP_NO_SUCH_OBJECT;
 
-			} else
-#endif /* SLAP_ACL_HONOR_DISCLOSE */
-			{
+			} else {
 				ber_dupbv( &matched_dn, &matched->e_name );
 
 				erefs = is_entry_referral( matched )
@@ -450,8 +431,7 @@ dn2entry_retry:
 #ifdef SLAP_ZONE_ALLOC
 			slap_zn_runlock(bdb->bi_cache.c_zctx, matched);
 #endif
-			bdb_cache_return_entry_r (bdb->bi_dbenv, &bdb->bi_cache,
-				matched, &lock);
+			bdb_cache_return_entry_r (bdb, matched, &lock);
 			matched = NULL;
 
 			if ( erefs ) {
@@ -484,7 +464,6 @@ dn2entry_retry:
 		return rs->sr_err;
 	}
 
-#ifdef SLAP_ACL_HONOR_DISCLOSE
 	/* NOTE: __NEW__ "search" access is required
 	 * on searchBase object */
 	if ( ! access_allowed_mask( op, e, slap_schema.si_ad_entry,
@@ -499,15 +478,14 @@ dn2entry_retry:
 #ifdef SLAP_ZONE_ALLOC
 		slap_zn_runlock(bdb->bi_cache.c_zctx, e);
 #endif
-		if ( e != &e_root ) {
-			bdb_cache_return_entry_r(bdb->bi_dbenv, &bdb->bi_cache, e, &lock);
+		if ( e != e_root ) {
+			bdb_cache_return_entry_r(bdb, e, &lock);
 		}
 		send_ldap_result( op, rs );
 		return rs->sr_err;
 	}
-#endif /* SLAP_ACL_HONOR_DISCLOSE */
 
-	if ( !manageDSAit && e != &e_root && is_entry_referral( e ) ) {
+	if ( !manageDSAit && e != e_root && is_entry_referral( e ) ) {
 		/* entry is a referral, don't allow add */
 		struct berval matched_dn = BER_BVNULL;
 		BerVarray erefs = NULL;
@@ -520,7 +498,7 @@ dn2entry_retry:
 #ifdef SLAP_ZONE_ALLOC
 		slap_zn_runlock(bdb->bi_cache.c_zctx, e);
 #endif
-		bdb_cache_return_entry_r( bdb->bi_dbenv, &bdb->bi_cache, e, &lock );
+		bdb_cache_return_entry_r( bdb, e, &lock );
 		e = NULL;
 
 		if ( erefs ) {
@@ -557,8 +535,8 @@ dn2entry_retry:
 #ifdef SLAP_ZONE_ALLOC
 		slap_zn_runlock(bdb->bi_cache.c_zctx, e);
 #endif
-		if ( e != &e_root ) {
-			bdb_cache_return_entry_r(bdb->bi_dbenv, &bdb->bi_cache, e, &lock);
+		if ( e != e_root ) {
+			bdb_cache_return_entry_r(bdb, e, &lock);
 		}
 		send_ldap_result( op, rs );
 		return 1;
@@ -580,8 +558,8 @@ dn2entry_retry:
 #ifdef SLAP_ZONE_ALLOC
 	slap_zn_runlock(bdb->bi_cache.c_zctx, e);
 #endif
-	if ( e != &e_root ) {
-		bdb_cache_return_entry_r(bdb->bi_dbenv, &bdb->bi_cache, e, &lock);
+	if ( e != e_root ) {
+		bdb_cache_return_entry_r(bdb, e, &lock);
 	}
 	e = NULL;
 
@@ -634,26 +612,15 @@ dn2entry_retry:
 			goto done;
 		}
 
-		if ( (ID)( ps->ps_cookie ) == 0 ) {
-			id = bdb_idl_first( candidates, &cursor );
-
-		} else {
-			if ( ps->ps_size == 0 ) {
-				rs->sr_err = LDAP_SUCCESS;
-				rs->sr_text = "search abandoned by pagedResult size=0";
-				send_ldap_result( op, rs );
-				goto done;
-			}
-			for ( id = bdb_idl_first( candidates, &cursor );
-				id != NOID &&
-					id <= (ID)( ps->ps_cookie );
-				id = bdb_idl_next( candidates, &cursor ) )
-			{
-				/* empty */;
-			}
+		cursor = (ID) ps->ps_cookie;
+		if ( cursor && ps->ps_size == 0 ) {
+			rs->sr_err = LDAP_SUCCESS;
+			rs->sr_text = "search abandoned by pagedResult size=0";
+			send_ldap_result( op, rs );
+			goto done;
 		}
-
-		if ( cursor == NOID ) {
+		id = bdb_idl_first( candidates, &cursor );
+		if ( id == NOID ) {
 			Debug( LDAP_DEBUG_TRACE, 
 				LDAP_XSTRING(bdb_search)
 				": no paged results candidates\n",
@@ -663,6 +630,9 @@ dn2entry_retry:
 			rs->sr_err = LDAP_OTHER;
 			goto done;
 		}
+		nentries = ps->ps_count;
+		if ( id == (ID)ps->ps_cookie )
+			id = bdb_idl_next( candidates, &cursor );
 		goto loop_begin;
 	}
 
@@ -679,6 +649,15 @@ loop_begin:
 			goto done;
 		}
 
+		/* mostly needed by internal searches,
+		 * e.g. related to syncrepl, for whom
+		 * abandon does not get set... */
+		if ( slapd_shutdown ) {
+			rs->sr_err = LDAP_UNAVAILABLE;
+			send_ldap_disconnect( op, rs );
+			goto done;
+		}
+
 		/* check time limit */
 		if ( op->ors_tlimit != SLAP_NO_LIMIT
 				&& slap_get_time() > stoptime )
@@ -690,11 +669,19 @@ loop_begin:
 			goto done;
 		}
 
+		/* If we inspect more entries than will
+		 * fit into the entry cache, stop caching
+		 * any subsequent entries
+		 */
+		nentries++;
+		if ( nentries > bdb->bi_cache.c_maxsize && !idflag )
+			idflag = ID_NOCACHE;
+
 fetch_entry_retry:
 			/* get the entry with reader lock */
 			ei = NULL;
 			rs->sr_err = bdb_cache_find_id( op, ltid,
-				id, &ei, 0, locker, &lock );
+				id, &ei, idflag, locker, &lock );
 
 			if (rs->sr_err == LDAP_BUSY) {
 				rs->sr_text = "ldap server busy";
@@ -705,6 +692,10 @@ fetch_entry_retry:
 				|| rs->sr_err == DB_LOCK_NOTGRANTED )
 			{
 				goto fetch_entry_retry;
+			} else if ( rs->sr_err == LDAP_OTHER ) {
+				rs->sr_text = "internal error";
+				send_ldap_result( op, rs );
+				goto done;
 			}
 
 			if ( ei && rs->sr_err == LDAP_SUCCESS ) {
@@ -860,8 +851,7 @@ fetch_entry_retry:
 #ifdef SLAP_ZONE_ALLOC
 					slap_zn_runlock(bdb->bi_cache.c_zctx, e);
 #endif
-					bdb_cache_return_entry_r( bdb->bi_dbenv,
-							&bdb->bi_cache, e, &lock );
+					bdb_cache_return_entry_r( bdb, e, &lock );
 					e = NULL;
 					send_paged_response( op, rs, &lastid, tentries );
 					goto done;
@@ -888,8 +878,7 @@ fetch_entry_retry:
 #ifdef SLAP_ZONE_ALLOC
 					slap_zn_runlock(bdb->bi_cache.c_zctx, e);
 #endif
-					bdb_cache_return_entry_r(bdb->bi_dbenv,
-						&bdb->bi_cache, e, &lock);
+					bdb_cache_return_entry_r(bdb, e, &lock);
 					e = NULL;
 					rs->sr_entry = NULL;
 					if ( rs->sr_err == LDAP_SIZELIMIT_EXCEEDED ) {
@@ -917,8 +906,7 @@ loop_continue:
 #ifdef SLAP_ZONE_ALLOC
 			slap_zn_runlock(bdb->bi_cache.c_zctx, e);
 #endif
-			bdb_cache_return_entry_r( bdb->bi_dbenv,
-				&bdb->bi_cache, e , &lock );
+			bdb_cache_return_entry_r( bdb, e , &lock );
 			e = NULL;
 			rs->sr_entry = NULL;
 		}
@@ -1033,7 +1021,7 @@ static int search_candidates(
 	Operation *op,
 	SlapReply *rs,
 	Entry *e,
-	u_int32_t locker,
+	BDB_LOCKER locker,
 	ID	*ids,
 	ID	*scopes )
 {
@@ -1041,17 +1029,9 @@ static int search_candidates(
 	int rc, depth = 1;
 	Filter		f, rf, xf, nf;
 	ID		*stack;
-#ifdef LDAP_COMP_MATCH
-	AttributeAssertion aa_ref = { NULL, BER_BVNULL, NULL };
-#else
-	AttributeAssertion aa_ref = { NULL, BER_BVNULL };
-#endif
+	AttributeAssertion aa_ref = ATTRIBUTEASSERTION_INIT;
 	Filter	sf;
-#ifdef LDAP_COMP_MATCH
-	AttributeAssertion aa_subentry = { NULL, BER_BVNULL, NULL };
-#else
-	AttributeAssertion aa_subentry = { NULL, BER_BVNULL };
-#endif
+	AttributeAssertion aa_subentry = ATTRIBUTEASSERTION_INIT;
 
 	/*
 	 * This routine takes as input a filter (user-filter)
@@ -1117,11 +1097,11 @@ static int search_candidates(
 	if( op->ors_deref & LDAP_DEREF_SEARCHING ) {
 		rc = search_aliases( op, rs, e, locker, ids, scopes, stack );
 	} else {
-		rc = bdb_dn2idl( op, e, ids, stack );
+		rc = bdb_dn2idl( op, locker, &e->e_nname, BEI(e), ids, stack );
 	}
 
 	if ( rc == LDAP_SUCCESS ) {
-		rc = bdb_filter_candidates( op, &f, ids,
+		rc = bdb_filter_candidates( op, locker, &f, ids,
 			stack, stack+BDB_IDL_UM_SIZE );
 	}
 
@@ -1148,12 +1128,7 @@ static int search_candidates(
 static int
 parse_paged_cookie( Operation *op, SlapReply *rs )
 {
-	LDAPControl	**c;
 	int		rc = LDAP_SUCCESS;
-	ber_tag_t	tag;
-	ber_int_t	size;
-	BerElement	*ber;
-	struct berval	cookie = BER_BVNULL;
 	PagedResultsState *ps = op->o_pagedresults_state;
 
 	/* this function must be invoked only if the pagedResults
@@ -1161,53 +1136,17 @@ parse_paged_cookie( Operation *op, SlapReply *rs )
 	 * by the frontend */
 	assert( get_pagedresults( op ) > SLAP_CONTROL_IGNORED );
 
-	/* look for the appropriate ctrl structure */
-	for ( c = op->o_ctrls; c[0] != NULL; c++ ) {
-		if ( strcmp( c[0]->ldctl_oid, LDAP_CONTROL_PAGEDRESULTS ) == 0 )
-		{
-			break;
-		}
-	}
-
-	if ( c[0] == NULL ) {
-		rs->sr_text = "missing pagedResults control";
-		return LDAP_PROTOCOL_ERROR;
-	}
-
-	/* Tested by frontend */
-	assert( c[0]->ldctl_value.bv_len > 0 );
-
-	/* Parse the control value
-	 *	realSearchControlValue ::= SEQUENCE {
-	 *		size	INTEGER (0..maxInt),
-	 *				-- requested page size from client
-	 *				-- result set size estimate from server
-	 *		cookie	OCTET STRING
-	 * }
-	 */
-	ber = ber_init( &c[0]->ldctl_value );
-	if ( ber == NULL ) {
-		rs->sr_text = "internal error";
-		return LDAP_OTHER;
-	}
-
-	tag = ber_scanf( ber, "{im}", &size, &cookie );
-
-	/* Tested by frontend */
-	assert( tag != LBER_ERROR );
-	assert( size >= 0 );
-
 	/* cookie decoding/checks deferred to backend... */
-	if ( cookie.bv_len ) {
+	if ( ps->ps_cookieval.bv_len ) {
 		PagedResultsCookie reqcookie;
-		if( cookie.bv_len != sizeof( reqcookie ) ) {
+		if( ps->ps_cookieval.bv_len != sizeof( reqcookie ) ) {
 			/* bad cookie */
 			rs->sr_text = "paged results cookie is invalid";
 			rc = LDAP_PROTOCOL_ERROR;
 			goto done;
 		}
 
-		AC_MEMCPY( &reqcookie, cookie.bv_val, sizeof( reqcookie ));
+		AC_MEMCPY( &reqcookie, ps->ps_cookieval.bv_val, sizeof( reqcookie ));
 
 		if ( reqcookie > ps->ps_cookie ) {
 			/* bad cookie */
@@ -1223,22 +1162,11 @@ parse_paged_cookie( Operation *op, SlapReply *rs )
 
 	} else {
 		/* Initial request.  Initialize state. */
-#if 0
-		if ( op->o_conn->c_pagedresults_state.ps_cookie != 0 ) {
-			/* There's another pagedResults control on the
-			 * same connection; reject new pagedResults controls 
-			 * (allowed by RFC2696) */
-			rs->sr_text = "paged results cookie unavailable; try later";
-			rc = LDAP_UNWILLING_TO_PERFORM;
-			goto done;
-		}
-#endif
 		ps->ps_cookie = 0;
 		ps->ps_count = 0;
 	}
 
 done:;
-	(void)ber_free( ber, 1 );
 
 	return rc;
 }

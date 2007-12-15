@@ -1,5 +1,5 @@
 /* referral.c - muck with referrals */
-/* $OpenLDAP: pkg/ldap/servers/slapd/referral.c,v 1.23.2.4 2007/01/02 21:43:57 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/referral.c,v 1.28.2.4 2007/08/31 23:13:59 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -140,7 +140,7 @@ int validate_global_referral( const char *url )
 	int rc;
 	LDAPURLDesc *lurl;
 
-	rc = ldap_url_parse_ext( url, &lurl );
+	rc = ldap_url_parse_ext( url, &lurl, LDAP_PVT_URL_PARSE_NONE );
 
 	switch( rc ) {
 	case LDAP_URL_SUCCESS:
@@ -148,6 +148,7 @@ int validate_global_referral( const char *url )
 
 	case LDAP_URL_ERR_BADSCHEME:
 		/* not LDAP hence valid */
+		Debug( LDAP_DEBUG_CONFIG, "referral \"%s\": not LDAP.\n", url, 0, 0 );
 		return 0;
 
 	default:
@@ -218,7 +219,7 @@ BerVarray referral_rewrite(
 		char		*dn;
 		int		rc;
 		
-		rc = ldap_url_parse_ext( iv->bv_val, &url );
+		rc = ldap_url_parse_ext( iv->bv_val, &url, LDAP_PVT_URL_PARSE_NONE );
 		if ( rc == LDAP_URL_ERR_BADSCHEME ) {
 			ber_dupbv( jv++, iv );
 			continue;

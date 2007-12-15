@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/config.c,v 1.10.2.5 2007/01/02 21:43:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/config.c,v 1.14.2.2 2007/08/31 23:13:57 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2007 The OpenLDAP Foundation.
@@ -413,8 +413,8 @@ rewrite_parse_builtin_map(
 	/*
 	 * Built-in ldap map
 	 */
-	if ( strcasecmp( argv[ MAP_TYPE ], "ldap" ) == 0 ) {
-		map->lb_type = REWRITE_BUILTIN_MAP_LDAP;
+	if (( map->lb_mapper = rewrite_mapper_find( argv[ MAP_TYPE ] ))) {
+		map->lb_type = REWRITE_BUILTIN_MAP;
 
 #ifdef USE_REWRITE_LDAP_PVT_THREADS
 		if ( ldap_pvt_thread_mutex_init( & map->lb_mutex ) ) {
@@ -424,7 +424,7 @@ rewrite_parse_builtin_map(
 		}
 #endif /* USE_REWRITE_LDAP_PVT_THREADS */
 		
-		map->lb_private = map_ldap_parse( info, fname, lineno,
+		map->lb_private = map->lb_mapper->rm_config( fname, lineno,
 				argc - 3, argv + 3 );
 		
 	/* 

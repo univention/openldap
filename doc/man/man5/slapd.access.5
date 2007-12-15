@@ -1,7 +1,6 @@
 .TH SLAPD.ACCESS 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" Copyright 1998-2007 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.access.5,v 1.55.2.10 2007/01/02 21:43:45 kurt Exp $
 .SH NAME
 slapd.access \- access configuration for slapd, the stand-alone LDAP daemon
 .SH SYNOPSIS
@@ -11,9 +10,7 @@ The
 .BR slapd.conf (5)
 file contains configuration information for the
 .BR slapd (8)
-daemon. This configuration file is also used by the
-.BR slurpd (8)
-replication daemon and by the SLAPD tools
+daemon. This configuration file is also used by the SLAPD tools
 .BR slapacl (8),
 .BR slapadd (8),
 .BR slapauth (8),
@@ -74,6 +71,50 @@ to a set of entries and/or attributes (specified by
 .BR <what> ) 
 by one or more requestors (specified by 
 .BR <who> ).
+
+.LP
+Lists of access directives are evaluated in the order they appear
+in \fIslapd.conf\fP.
+When a
+.B <what>
+clause matches the datum whose access is being evaluated, its
+.B <who>
+clause list is checked.
+When a
+.B <who>
+clause matches the accessor's properties, its
+.B <access>
+and
+.B <control>
+clauses are evaluated.
+Access control checking stops at the first match of the
+.B <what>
+and
+.B <who>
+clause, unless otherwise dictated by the
+.B <control>
+clause.
+Each
+.B <who>
+clause list is implicitly terminated by a
+.LP
+.nf
+	by * none stop
+.fi
+.LP
+clause that results in stopping the access control with no access 
+privileges granted.
+Each
+.B <what>
+clause list is implicitly terminated by a
+.LP
+.nf
+	access to *
+		by * none
+.fi
+.LP
+clause that results in granting no access privileges to an otherwise
+unspecified datum.
 .SH THE <WHAT> FIELD
 The field
 .BR <what>
@@ -151,7 +192,7 @@ The regex form of the pattern does not (yet) support UTF\-8.
 .LP
 The statement
 .B filter=<ldapfilter>
-selects the entries based on a valid LDAP filter as described in RFC 2254.
+selects the entries based on a valid LDAP filter as described in RFC 4515.
 A filter of
 .B (objectClass=*)
 is implied if no
@@ -248,8 +289,7 @@ It can have the forms
 	tls_ssf=<n>
 	sasl_ssf=<n>
 
-	aci[=<attrname>]
-	dynacl/name[/<options>][.<dynstyle>][=<pattern>]
+	dynacl/<name>[/<options>][.<dynstyle>][=<pattern>]
 .fi
 .LP
 with
@@ -260,10 +300,11 @@ with
 	<dnstyle>={{exact|base(object)}|regex
 		|one(level)|sub(tree)|children|level{<n>}}
 	<groupstyle>={exact|expand}
-	<peernamestyle>={<style>|ip|path}
+	<peernamestyle>={<style>|ip|ipv6|path}
 	<domainstyle>={exact|regex|sub(tree)}
 	<setstyle>={exact|regex}
 	<modifier>={expand}
+	<name>=aci		<pattern>=<attrname>]
 .fi
 .LP
 They may be specified in combination.
@@ -490,7 +531,10 @@ The statements
 and
 .BR sockurl=<sockurl>
 mean that the contacting host IP (in the form 
-.BR "IP=<ip>:<port>" )
+.BR "IP=<ip>:<port>"
+for IPv4, or
+.BR "IP=[<ipv6>]:<port>"
+for IPv6)
 or the contacting host named pipe file name (in the form
 .B "PATH=<path>"
 if connecting through a named pipe) for
@@ -539,6 +583,9 @@ and
 are dotted digit representations of the IP and the mask, while
 .BR <n> ,
 delimited by curly brackets, is an optional port.
+The same applies to IPv6 addresses when the special
+.B ipv6
+style is used.
 When checking access privileges, the IP portion of the
 .BR peername 
 is extracted, eliminating the
@@ -551,7 +598,9 @@ portion of the pattern after masking with
 .BR <mask> .
 As an example, 
 .B peername.ip=127.0.0.1
-allows connections only from localhost,
+and
+.B peername.ipv6=::1
+allow connections only from localhost,
 .B peername.ip=192.168.1.0%255.255.255.0 
 allows connections from any IP in the 192.168.1 class C domain, and
 .B peername.ip=192.168.1.16%255.255.255.240{9009}
@@ -614,19 +663,6 @@ The statement
 is undocumented yet.
 .LP
 The statement
-.B aci[=<attrname>]
-means that the access control is determined by the values in the
-.B attrname
-of the entry itself.
-The optional
-.B <attrname>
-indicates what attributeType holds the ACI information in the entry.
-By default, the 
-.B OpenLDAPaci
-operational attribute is used.
-ACIs are experimental; they must be enabled at compile time.
-.LP
-The statement
 .B dynacl/<name>[/<options>][.<dynstyle>][=<pattern>]
 means that access checking is delegated to the admin-defined method
 indicated by
@@ -641,12 +677,19 @@ and
 .B <pattern>
 are optional, and are directly passed to the registered parsing routine.
 Dynacl is experimental; it must be enabled at compile time.
-If dynacl and ACIs are both enabled, ACIs are cast into the dynacl scheme,
-where 
-.B <name>=aci
-and, optionally,
-.BR <patten>=<attrname> .
-However, the original ACI syntax is preserved for backward compatibility.
+.LP
+The statement
+.B dynacl/aci[=<attrname>]
+means that the access control is determined by the values in the
+.B attrname
+of the entry itself.
+The optional
+.B <attrname>
+indicates what attributeType holds the ACI information in the entry.
+By default, the 
+.B OpenLDAPaci
+operational attribute is used.
+ACIs are experimental; they must be enabled at compile time.
 .LP
 The statements
 .BR ssf=<n> ,
@@ -657,7 +700,7 @@ and
 set the minimum required Security Strength Factor (ssf) needed
 to grant access.  The value should be positive integer.
 .SH THE <ACCESS> FIELD
-The field
+The optional field
 .B <access> ::= [[real]self]{<level>|<priv>}
 determines the access level or the specific access privileges the
 .B who 
@@ -665,8 +708,8 @@ field will have.
 Its component are defined as
 .LP
 .nf
-	<level> ::= none|disclose|auth|compare|search|read|write
-	<priv> ::= {=|+|-}{w|r|s|c|x|d|0}+
+	<level> ::= none|disclose|auth|compare|search|read|write|manage
+	<priv> ::= {=|+|-}{m|w|r|s|c|x|d|0}+
 .fi
 .LP
 The modifier
@@ -699,8 +742,8 @@ The possible levels are
 and
 .BR write .
 Each access level implies all the preceding ones, thus 
-.B write
-access will imply all accesses.
+.B manage
+grants all access including administrative access,
 .LP
 The
 .B none 
@@ -733,6 +776,8 @@ and
 .B -
 signs add/remove access privileges to the existing ones.
 The privileges are
+.B m
+for manage,
 .B w
 for write,
 .B r
@@ -748,6 +793,7 @@ for disclose.
 More than one of the above privileges can be added in one statement.
 .B 0
 indicates no privileges and is used only by itself (e.g., +0).
+.LP
 If no access is given, it defaults to 
 .BR +0 .
 .SH THE <CONTROL> FIELD
@@ -1052,7 +1098,4 @@ default slapd configuration file
 .LP
 "OpenLDAP Administrator's Guide" (http://www.OpenLDAP.org/doc/admin/)
 .SH ACKNOWLEDGEMENTS
-.B OpenLDAP
-is developed and maintained by The OpenLDAP Project (http://www.openldap.org/).
-.B OpenLDAP
-is derived from University of Michigan LDAP 3.3 Release.
+.so ../Project

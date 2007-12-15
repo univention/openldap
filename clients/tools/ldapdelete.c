@@ -1,5 +1,5 @@
 /* ldapdelete.c - simple program to delete an entry using LDAP */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapdelete.c,v 1.109.2.7 2007/08/13 18:04:39 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapdelete.c,v 1.118.2.4 2007/08/31 23:13:50 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -39,6 +39,7 @@
 #include <ac/ctype.h>
 #include <ac/string.h>
 #include <ac/unistd.h>
+#include <ac/socket.h>
 #include <ac/time.h>
 
 #include <ldap.h>
@@ -75,7 +76,7 @@ usage( void )
 
 
 const char options[] = "r"
-	"cd:D:e:f:h:H:IkKMnO:p:P:QR:U:vVw:WxX:y:Y:Z";
+	"cd:D:e:f:h:H:IMnO:o:p:P:QR:U:vVw:WxX:y:Y:Z";
 
 int
 handle_private_option( int i )
@@ -140,7 +141,7 @@ main( int argc, char **argv )
 
     fp = NULL;
 
-	tool_init();
+	tool_init( TOOL_DELETE );
     prog = lutil_progname( "ldapdelete", argc, argv );
 
 	tool_args( argc, argv );
@@ -170,13 +171,11 @@ main( int argc, char **argv )
 
 	tool_bind( ld );
 
-	if ( assertion || authzid || manageDIT || manageDSAit || noop ) {
-		tool_server_controls( ld, NULL, 0 );
-	}
+	tool_server_controls( ld, NULL, 0 );
 
 	retval = rc = 0;
 
-    if ( fp == NULL ) {
+	if ( fp == NULL ) {
 		for ( ; optind < argc; ++optind ) {
 			rc = dodelete( ld, argv[ optind ] );
 
@@ -216,10 +215,10 @@ static int dodelete(
 
 	if ( verbose ) {
 		printf( _("%sdeleting entry \"%s\"\n"),
-			(not ? "!" : ""), dn );
+			(dont ? "!" : ""), dn );
 	}
 
-	if ( not ) {
+	if ( dont ) {
 		return LDAP_SUCCESS;
 	}
 
@@ -247,7 +246,7 @@ static int dodelete(
 
 		rc = ldap_result( ld, LDAP_RES_ANY, LDAP_MSG_ALL, &tv, &res );
 		if ( rc < 0 ) {
-			ldap_perror( ld, "ldapdelete: ldap_result" );
+			tool_perror( "ldap_result", rc, NULL, NULL, NULL, NULL );
 			return rc;
 		}
 
@@ -324,7 +323,7 @@ static int deletechildren(
 	rc = ldap_search_ext_s( ld, dn, LDAP_SCOPE_ONELEVEL, NULL, attrs, 1,
 		NULL, NULL, NULL, -1, &res );
 	if ( rc != LDAP_SUCCESS ) {
-		ldap_perror( ld, "ldap_search" );
+		tool_perror( "ldap_search", rc, NULL, NULL, NULL, NULL );
 		return( rc );
 	}
 
@@ -339,15 +338,15 @@ static int deletechildren(
 			char *dn = ldap_get_dn( ld, e );
 
 			if( dn == NULL ) {
-				ldap_perror( ld, "ldap_prune" );
-				ldap_get_option( ld, LDAP_OPT_ERROR_NUMBER, &rc );
+				ldap_get_option( ld, LDAP_OPT_RESULT_CODE, &rc );
+				tool_perror( "ldap_prune", rc, NULL, NULL, NULL, NULL );
 				ber_memfree( dn );
 				return rc;
 			}
 
 			rc = deletechildren( ld, dn );
 			if ( rc == -1 ) {
-				ldap_perror( ld, "ldap_prune" );
+				tool_perror( "ldap_prune", rc, NULL, NULL, NULL, NULL );
 				ber_memfree( dn );
 				return rc;
 			}
@@ -356,9 +355,9 @@ static int deletechildren(
 				printf( _("\tremoving %s\n"), dn );
 			}
 
-			rc = ldap_delete_s( ld, dn );
+			rc = ldap_delete_ext_s( ld, dn, NULL, NULL );
 			if ( rc == -1 ) {
-				ldap_perror( ld, "ldap_delete" );
+				tool_perror( "ldap_delete", rc, NULL, NULL, NULL, NULL );
 				ber_memfree( dn );
 				return rc;
 
@@ -398,7 +397,7 @@ static int deletechildren(
 	rc = ldap_search_ext_s( ld, dn, LDAP_SCOPE_ONELEVEL, NULL, attrs, 1,
 		ctrls, NULL, NULL, -1, &res_se );
 	if ( rc != LDAP_SUCCESS ) {
-		ldap_perror( ld, "ldap_search" );
+		tool_perror( "ldap_search", rc, NULL, NULL, NULL, NULL );
 		return( rc );
 	}
 	ber_free( ber, 1 );
@@ -414,8 +413,8 @@ static int deletechildren(
 			char *dn = ldap_get_dn( ld, e );
 
 			if( dn == NULL ) {
-				ldap_perror( ld, "ldap_prune" );
-				ldap_get_option( ld, LDAP_OPT_ERROR_NUMBER, &rc );
+				ldap_get_option( ld, LDAP_OPT_RESULT_CODE, &rc );
+				tool_perror( "ldap_prune", rc, NULL, NULL, NULL, NULL );
 				ber_memfree( dn );
 				return rc;
 			}
@@ -424,9 +423,9 @@ static int deletechildren(
 				printf( _("\tremoving %s\n"), dn );
 			}
 
-			rc = ldap_delete_s( ld, dn );
+			rc = ldap_delete_ext_s( ld, dn, NULL, NULL );
 			if ( rc == -1 ) {
-				ldap_perror( ld, "ldap_delete" );
+				tool_perror( "ldap_delete", rc, NULL, NULL, NULL, NULL );
 				ber_memfree( dn );
 				return rc;
 

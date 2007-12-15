@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/bind.c,v 1.22.2.4 2007/01/02 21:44:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/bind.c,v 1.24.2.3 2007/08/31 23:14:04 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.
@@ -31,6 +31,16 @@ perl_back_bind(
 	int count;
 
 	PerlBackend *perl_back = (PerlBackend *) op->o_bd->be_private;
+
+	/* allow rootdn as a means to auth without the need to actually
+ 	 * contact the proxied DSA */
+	switch ( be_rootdn_bind( op, rs ) ) {
+	case SLAP_CB_CONTINUE:
+		break;
+
+	default:
+		return rs->sr_err;
+	}
 
 #if defined(HAVE_WIN32_ASPERL) || defined(USE_ITHREADS)
 	PERL_SET_CONTEXT( PERL_INTERPRETER );

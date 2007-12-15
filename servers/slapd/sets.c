@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/sets.c,v 1.24.2.7 2007/10/24 15:03:07 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sets.c,v 1.28.2.5 2007/10/24 15:03:23 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2007 The OpenLDAP Foundation.
@@ -24,20 +24,22 @@
 static BerVarray set_chase( SLAP_SET_GATHER gatherer,
 	SetCookie *cookie, BerVarray set, AttributeDescription *desc, int closure );
 
+/* Count the array members */
 static long
 slap_set_size( BerVarray set )
 {
-	long	i;
+	long	i = 0;
 
-	i = 0;
 	if ( set != NULL ) {
 		while ( !BER_BVISNULL( &set[ i ] ) ) {
 			i++;
 		}
 	}
+
 	return i;
 }
 
+/* Return 0 if there is at least one array member, non-zero otherwise */
 static int
 slap_set_isempty( BerVarray set )
 {
@@ -52,6 +54,14 @@ slap_set_isempty( BerVarray set )
 	return 1;
 }
 
+/* Dispose of the contents of the array and the array itself according
+ * to the flags value.  If SLAP_SET_REFVAL, don't dispose of values;
+ * if SLAP_SET_REFARR, don't dispose of the array itself.  In case of
+ * binary operators, there are LEFT flags and RIGHT flags, referring to
+ * the first and the second operator arguments, respectively.  In this
+ * case, flags must be transformed using macros SLAP_SET_LREF2REF() and
+ * SLAP_SET_RREF2REF() before calling this function.
+ */
 static void
 slap_set_dispose( SetCookie *cp, BerVarray set, unsigned flags )
 {
@@ -65,6 +75,10 @@ slap_set_dispose( SetCookie *cp, BerVarray set, unsigned flags )
 	}
 }
 
+/* Duplicate a set.  If SLAP_SET_REFARR, is not set, the original array
+ * with the original values is returned, otherwise the array is duplicated;
+ * if SLAP_SET_REFVAL is set, also the values are duplicated.
+ */
 static BerVarray
 set_dup( SetCookie *cp, BerVarray set, unsigned flags )
 {
@@ -103,6 +117,19 @@ set_dup( SetCookie *cp, BerVarray set, unsigned flags )
 	return newset;
 }
 
+/* Join two sets according to operator op and flags op_flags.
+ * op can be:
+ *	'|' (or):	the union between the two sets is returned,
+ *		 	eliminating diplicates
+ *	'&' (and):	the intersection between the two sets
+ *			is returned
+ *	'+' (add):	the inner product of the two sets is returned,
+ *			namely a set containing the concatenation of
+ *			all combinations of the two sets members,
+ *			except for duplicates.
+ * The two sets are disposed of according to the flags as described
+ * for slap_set_dispose().
+ */
 BerVarray
 slap_set_join(
 	SetCookie	*cp,
@@ -388,6 +415,127 @@ set_chase( SLAP_SET_GATHER gatherer,
 	return nset;
 }
 
+
+static BerVarray
+set_parents( SetCookie *cp, BerVarray set )
+{
+	int		i, j, last;
+	struct berval	bv, pbv;
+	BerVarray	nset, vals;
+
+	if ( set == NULL ) {
+		set = cp->set_op->o_tmpcalloc( 1, sizeof( struct berval ),
+				cp->set_op->o_tmpmemctx );
+		if ( set != NULL ) {
+			BER_BVZERO( &set[ 0 ] );
+		}
+		return set;
+	}
+
+	if ( BER_BVISNULL( &set[ 0 ] ) ) {
+		return set;
+	}
+
+	nset = cp->set_op->o_tmpcalloc( 1, sizeof( struct berval ), cp->set_op->o_tmpmemctx );
+	if ( nset == NULL ) {
+		ber_bvarray_free_x( set, cp->set_op->o_tmpmemctx );
+		return NULL;
+	}
+
+	BER_BVZERO( &nset[ 0 ] );
+
+	for ( i = 0; !BER_BVISNULL( &set[ i ] ); i++ ) {
+		int	level = 1;
+
+		pbv = bv = set[ i ];
+		for ( ; !BER_BVISEMPTY( &pbv ); dnParent( &bv, &pbv ) ) {
+			level++;
+			bv = pbv;
+		}
+
+		vals = cp->set_op->o_tmpcalloc( level + 1, sizeof( struct berval ), cp->set_op->o_tmpmemctx );
+		if ( vals == NULL ) {
+			ber_bvarray_free_x( set, cp->set_op->o_tmpmemctx );
+			ber_bvarray_free_x( nset, cp->set_op->o_tmpmemctx );
+			return NULL;
+		}
+		BER_BVZERO( &vals[ 0 ] );
+		last = 0;
+
+		bv = set[ i ];
+		for ( j = 0 ; j < level ; j++ ) {
+			ber_dupbv_x( &vals[ last ], &bv, cp->set_op->o_tmpmemctx );
+			last++;
+			dnParent( &bv, &bv );
+		}
+		BER_BVZERO( &vals[ last ] );
+
+		nset = slap_set_join( cp, nset, '|', vals );
+	}
+
+	ber_bvarray_free_x( set, cp->set_op->o_tmpmemctx );
+
+	return nset;
+}
+
+
+
+static BerVarray
+set_parent( SetCookie *cp, BerVarray set, int level )
+{
+	int		i, j, last;
+	struct berval	bv;
+	BerVarray	nset;
+
+	if ( set == NULL ) {
+		set = cp->set_op->o_tmpcalloc( 1, sizeof( struct berval ),
+				cp->set_op->o_tmpmemctx );
+		if ( set != NULL ) {
+			BER_BVZERO( &set[ 0 ] );
+		}
+		return set;
+	}
+
+	if ( BER_BVISNULL( &set[ 0 ] ) ) {
+		return set;
+	}
+
+	nset = cp->set_op->o_tmpcalloc( slap_set_size( set ) + 1, sizeof( struct berval ), cp->set_op->o_tmpmemctx );
+	if ( nset == NULL ) {
+		ber_bvarray_free_x( set, cp->set_op->o_tmpmemctx );
+		return NULL;
+	}
+
+	BER_BVZERO( &nset[ 0 ] );
+	last = 0;
+
+	for ( i = 0; !BER_BVISNULL( &set[ i ] ); i++ ) {
+		bv = set[ i ];
+
+		for ( j = 0 ; j < level ; j++ ) {
+			dnParent( &bv, &bv );
+		}
+
+		for ( j = 0; !BER_BVISNULL( &nset[ j ] ); j++ ) {
+			if ( bvmatch( &bv, &nset[ j ] ) )
+			{
+				break;		
+			}	
+		}
+
+		if ( BER_BVISNULL( &nset[ j ] ) ) {
+			ber_dupbv_x( &nset[ last ], &bv, cp->set_op->o_tmpmemctx );
+			last++;
+		}
+	}
+
+	BER_BVZERO( &nset[ last ] );
+
+	ber_bvarray_free_x( set, cp->set_op->o_tmpmemctx );
+
+	return nset;
+}
+
 int
 slap_set_filter( SLAP_SET_GATHER gatherer,
 	SetCookie *cp, struct berval *fbv,
@@ -511,11 +659,44 @@ slap_set_filter( SLAP_SET_GATHER gatherer,
 			break;
 
 		case '-':
-			c = *filter++;
-			if ( c != '>' ) {
-				SF_ERROR( syntax );
+			if ( ( SF_TOP() == (void *)'/' )
+				&& ( *filter == '*' || ASCII_DIGIT( *filter ) ) )
+			{
+				SF_POP();
+
+				if ( *filter == '*' ) {
+					set = set_parents( cp, SF_POP() );
+					filter++;
+
+				} else {
+					char *next = NULL;
+					long parent = strtol( filter, &next, 10 );
+
+					if ( next == filter ) {
+						SF_ERROR( syntax );
+					}
+
+					set = SF_POP();
+					if ( parent != 0 ) {
+						set = set_parent( cp, set, parent );
+					}
+					filter = next;
+				}
+
+				if ( set == NULL ) {
+					SF_ERROR( memory );
+				}
+
+				SF_PUSH( set );
+				set = NULL;
+				break;
+			} else {
+				c = *filter++;
+				if ( c != '>' ) {
+					SF_ERROR( syntax );
+				}
+				/* fall through to next case */
 			}
-			/* fall through to next case */
 
 		case '/':
 			if ( IS_OP( SF_TOP() ) ) {

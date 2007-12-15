@@ -2,7 +2,7 @@
 .\" Copyright 1998-2007 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-meta.5,v 1.29.2.17 2007/09/13 19:33:55 ando Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-meta.5,v 1.46.2.7 2007/09/13 19:17:15 ando Exp $
 .\"
 .\" Portions of this document should probably be moved to slapd-ldap(5)
 .\" and maybe manual pages for librewrite.
@@ -171,6 +171,15 @@ or when chasing a referral, if
 .B chase-referrals
 is set to
 .IR yes .
+
+.TP
+.B session\-tracking\-request {NO|yes}
+Adds session tracking control for all requests.
+The client's IP and hostname, and the identity associated to each request,
+if known, are sent to the remote server for informational purposes.
+This directive is incompatible with setting \fIprotocol\-version\fP to 2.
+If set before any target specification, it affects all targets, unless
+overridden by any per-target directive.
 
 .TP
 .B single\-conn {NO|yes}

@@ -1,5 +1,5 @@
 /* passwd-shell.c - passwd(5) shell-based backend for slapd(8) */
-/* $OpenLDAP: pkg/ldap/servers/slapd/shell-backends/passwd-shell.c,v 1.12.2.3 2007/01/02 21:44:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/shell-backends/passwd-shell.c,v 1.14.2.3 2007/11/27 18:11:43 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -144,8 +144,6 @@ pw2entry( struct ldop *op, struct passwd *pw )
     struct ldattr	*attr;
     int			i;
 
-    entry = (struct ldentry *) ecalloc( 1, sizeof( struct ldentry ));
-
     /* 
      * construct the DN from pw_name
      */
@@ -153,13 +151,19 @@ pw2entry( struct ldop *op, struct passwd *pw )
 	/*
 	 * X.500 style DN
 	 */
-	sprintf( tmpbuf, "cn=%s, %s", pw->pw_name, op->ldop_suffixes[ 0 ] );
+	i = snprintf( tmpbuf, sizeof( tmpbuf ), "cn=%s, %s", pw->pw_name, op->ldop_suffixes[ 0 ] );
     } else {
 	/*
 	 * RFC-822 style DN
 	 */
-	sprintf( tmpbuf, "%s@%s", pw->pw_name, op->ldop_suffixes[ 0 ] );
+	i = snprintf( tmpbuf, sizeof( tmpbuf ), "%s@%s", pw->pw_name, op->ldop_suffixes[ 0 ] );
     }
+
+    if ( i < 0 || i >= sizeof( tmpbuf ) ) {
+        return NULL;
+    }
+
+    entry = (struct ldentry *) ecalloc( 1, sizeof( struct ldentry ));
     entry->lde_dn = estrdup( tmpbuf );
 
     /*

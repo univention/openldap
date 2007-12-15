@@ -1,5 +1,5 @@
 /* log.c - deal with log subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/log.c,v 1.45.2.7 2007/01/02 21:44:05 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/log.c,v 1.56.2.2 2007/08/31 23:14:03 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2007 The OpenLDAP Foundation.
@@ -111,7 +111,7 @@ monitor_subsys_log_modify(
 	int		rc = LDAP_OTHER;
 	int		newlevel = ldap_syslog;
 	Attribute	*save_attrs;
-	Modifications	*modlist = op->oq_modify.rs_modlist;
+	Modifications	*modlist = op->orm_modlist;
 	Modifications	*ml;
 
 	ldap_pvt_thread_mutex_lock( &monitor_log_mutex );
@@ -181,7 +181,7 @@ monitor_subsys_log_modify(
 		}
 
 		/* check that the entry still obeys the schema */
-		rc = entry_schema_check( op, e, save_attrs, 0,
+		rc = entry_schema_check( op, e, save_attrs, 0, 0,
 			&text, textbuf, sizeof( textbuf ) );
 		if ( rc != LDAP_SUCCESS ) {
 			rs->sr_err = rc;

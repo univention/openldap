@@ -1,5 +1,5 @@
 /* operation.c - routines to deal with pending ldap operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.63.2.9 2007/01/02 21:43:57 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.75.2.4 2007/11/07 20:58:38 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -38,26 +38,27 @@
 #endif
 
 static ldap_pvt_thread_mutex_t	slap_op_mutex;
-static LDAP_STAILQ_HEAD(s_o, slap_op)	slap_free_ops;
 static time_t last_time;
 static int last_incr;
 
 void slap_op_init(void)
 {
 	ldap_pvt_thread_mutex_init( &slap_op_mutex );
-	LDAP_STAILQ_INIT(&slap_free_ops);
 }
 
 void slap_op_destroy(void)
 {
-	Operation *o;
-
-	while ( (o = LDAP_STAILQ_FIRST( &slap_free_ops )) != NULL) {
-		LDAP_STAILQ_REMOVE_HEAD( &slap_free_ops, o_next );
-		LDAP_STAILQ_NEXT(o, o_next) = NULL;
-		ch_free( o );
-	}
 	ldap_pvt_thread_mutex_destroy( &slap_op_mutex );
+}
+
+static void
+slap_op_q_destroy( void *key, void *data )
+{
+	Operation *op, *op2;
+	for ( op = data; op; op = op2 ) {
+		op2 = LDAP_STAILQ_NEXT( op, o_next );
+		ber_memfree_x( op, NULL );
+	}
 }
 
 void
@@ -72,8 +73,10 @@ slap_op_groups_free( Operation *op )
 }
 
 void
-slap_op_free( Operation *op )
+slap_op_free( Operation *op, void *ctx )
 {
+	OperationBuffer *opbuf;
+
 	assert( LDAP_STAILQ_NEXT(op, o_next) == NULL );
 
 	if ( op->o_ber != NULL ) {
@@ -108,14 +111,22 @@ slap_op_free( Operation *op )
 	}
 #endif /* defined( LDAP_SLAPI ) */
 
+	opbuf = (OperationBuffer *) op;
+	memset( opbuf, 0, sizeof(*opbuf) );
+	op->o_hdr = &opbuf->ob_hdr;
+	op->o_controls = opbuf->ob_controls;
 
-	memset( op, 0, sizeof(Operation) + sizeof(Opheader) + SLAP_MAX_CIDS * sizeof(void *) );
-	op->o_hdr = (Opheader *)(op+1);
-	op->o_controls = (void **)(op->o_hdr+1);
-
-	ldap_pvt_thread_mutex_lock( &slap_op_mutex );
-	LDAP_STAILQ_INSERT_HEAD( &slap_free_ops, op, o_next );
-	ldap_pvt_thread_mutex_unlock( &slap_op_mutex );
+	if ( ctx ) {
+		Operation *op2;
+		void *otmp = NULL;
+		ldap_pvt_thread_pool_getkey( ctx, (void *)slap_op_free, &otmp, NULL );
+		op2 = otmp;
+		LDAP_STAILQ_NEXT( op, o_next ) = op2;
+		ldap_pvt_thread_pool_setkey( ctx, (void *)slap_op_free, (void *)op,
+			slap_op_q_destroy );
+	} else {
+		ber_memfree_x( op, NULL );
+	}
 }
 
 void
@@ -138,22 +149,25 @@ slap_op_alloc(
     BerElement		*ber,
     ber_int_t	msgid,
     ber_tag_t	tag,
-    ber_int_t	id
-)
+    ber_int_t	id,
+	void *ctx )
 {
-	Operation	*op;
+	Operation	*op = NULL;
 
-	ldap_pvt_thread_mutex_lock( &slap_op_mutex );
-	if ((op = LDAP_STAILQ_FIRST( &slap_free_ops ))) {
-		LDAP_STAILQ_REMOVE_HEAD( &slap_free_ops, o_next );
+	if ( ctx ) {
+		void *otmp = NULL;
+		ldap_pvt_thread_pool_getkey( ctx, (void *)slap_op_free, &otmp, NULL );
+		if ( otmp ) {
+			op = otmp;
+			otmp = LDAP_STAILQ_NEXT( op, o_next );
+			ldap_pvt_thread_pool_setkey( ctx, (void *)slap_op_free, otmp,
+				slap_op_q_destroy );
+		}
 	}
-	ldap_pvt_thread_mutex_unlock( &slap_op_mutex );
-
 	if (!op) {
-		op = (Operation *) ch_calloc( 1, sizeof(Operation)
-			+ sizeof(Opheader) + SLAP_MAX_CIDS * sizeof(void *) );
-		op->o_hdr = (Opheader *)(op + 1);
-		op->o_controls = (void **)(op->o_hdr+1);
+		op = (Operation *) ch_calloc( 1, sizeof(OperationBuffer) );
+		op->o_hdr = &((OperationBuffer *) op)->ob_hdr;
+		op->o_controls = ((OperationBuffer *) op)->ob_controls;
 	}
 
 	op->o_ber = ber;

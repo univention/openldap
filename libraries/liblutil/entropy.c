@@ -1,5 +1,5 @@
 /* entropy.c -- routines for providing pseudo-random data */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/entropy.c,v 1.27.2.3 2007/01/02 21:43:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/entropy.c,v 1.29.2.2 2007/08/31 23:13:57 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.

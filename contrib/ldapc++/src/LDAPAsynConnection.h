@@ -13,15 +13,14 @@
 #include<ldap.h>
 #include<lber.h>
 
+#include <LDAPEntry.h>
+#include <LDAPException.h>
 #include <LDAPMessageQueue.h>
 #include <LDAPConstraints.h>
 #include <LDAPModification.h>
 #include <LDAPModList.h>
 #include <LDAPUrl.h>
 #include <LDAPUrlList.h>
-
-class LDAPEntry;
-class LDAPAttribute;
 
 //* Main class for an asynchronous LDAP connection 
 /**
@@ -71,7 +70,7 @@ class LDAPAsynConnection{
          *      this connection
          */
         LDAPAsynConnection(const std::string& hostname=std::string("localhost"),
-                int port=389, LDAPConstraints *cons=new LDAPConstraints() );
+                int port=0, LDAPConstraints *cons=new LDAPConstraints() );
 
         //* Destructor
         virtual ~LDAPAsynConnection();
@@ -88,6 +87,15 @@ class LDAPAsynConnection{
          * @param port      The Network Port the server is running on
          */
         void init(const std::string& hostname, int port);
+
+        /**
+         * Initializes a connection to a server. 
+         * 
+         * There actually no communication to the server. Just the
+         * object is initialized 
+         * @param uri  The LDAP-Uri for the destination
+         */ 
+        void initialize(const std::string& uri);
 
         /**
          * Start TLS on this connection.  This isn't in the constructor,
@@ -307,14 +315,9 @@ class LDAPAsynConnection{
         LDAPConstraints *m_constr;
 
         /**
-         * The name of the destination host
+         * The URI of this connection
          */
-        std::string m_host;
-
-        /**
-         * The port the destination server is running on.
-         */
-        int m_port;
+        LDAPUrl m_uri;
 
  protected:
         /**

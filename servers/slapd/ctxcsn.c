@@ -1,5 +1,5 @@
 /* ctxcsn.c -- Context CSN Management Routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ctxcsn.c,v 1.31.2.9 2007/01/02 21:43:55 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ctxcsn.c,v 1.40.2.4 2007/08/31 23:13:58 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2007 The OpenLDAP Foundation.
@@ -28,6 +28,7 @@
 
 const struct berval slap_ldapsync_bv = BER_BVC("ldapsync");
 const struct berval slap_ldapsync_cn_bv = BER_BVC("cn=ldapsync");
+int slap_serverID;
 
 void
 slap_get_commit_csn(
@@ -128,7 +129,7 @@ slap_create_context_csn_entry(
 
 	struct berval bv;
 
-	e = (Entry *) ch_calloc( 1, sizeof( Entry ));
+	e = entry_alloc();
 
 	attr_merge( e, slap_schema.si_ad_objectClass,
 		ocbva, NULL );
@@ -164,7 +165,7 @@ slap_queue_csn(
 	ldap_pvt_thread_mutex_lock( op->o_bd->be_pcl_mutexp );
 
 	ber_dupbv( &pending->ce_csn, csn );
-	ber_dupbv_x( &op->o_csn, &pending->ce_csn, op->o_tmpmemctx );
+	ber_bvreplace_x( &op->o_csn, &pending->ce_csn, op->o_tmpmemctx );
 	pending->ce_connid = op->o_connid;
 	pending->ce_opid = op->o_opid;
 	pending->ce_state = SLAP_CSN_PENDING;
@@ -181,13 +182,10 @@ slap_get_csn(
 {
 	if ( csn == NULL ) return LDAP_OTHER;
 
-#ifndef HAVE_GMTIME_R
+	/* gmtime doesn't always need a mutex, but lutil_csnstr does */
 	ldap_pvt_thread_mutex_lock( &gmtime_mutex );
-#endif
-	csn->bv_len = lutil_csnstr( csn->bv_val, csn->bv_len, 0, 0 );
-#ifndef HAVE_GMTIME_R
+	csn->bv_len = lutil_csnstr( csn->bv_val, csn->bv_len, slap_serverID, 0 );
 	ldap_pvt_thread_mutex_unlock( &gmtime_mutex );
-#endif
 
 	if ( manage_ctxcsn )
 		slap_queue_csn( op, csn );

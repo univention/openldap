@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/conn.c,v 1.31.2.29 2007/10/13 08:26:04 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/conn.c,v 1.86.2.12 2007/11/27 19:49:13 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.
@@ -285,7 +285,7 @@ meta_back_init_one_conn(
 				dont_retry = ( ri->ri_num[ ri->ri_idx ] == SLAP_RETRYNUM_TAIL
 					|| slap_get_time() < ri->ri_last + ri->ri_interval[ ri->ri_idx ] );
 				if ( !dont_retry ) {
-					if ( StatslogTest( LDAP_DEBUG_ANY ) ) {
+					if ( LogTest( LDAP_DEBUG_ANY ) ) {
 						char	buf[ SLAP_TEXT_BUFLEN ];
 
 						snprintf( buf, sizeof( buf ),
@@ -400,6 +400,7 @@ retry_lock:;
 		version = LDAP_VERSION3;
 	}
 	ldap_set_option( msc->msc_ld, LDAP_OPT_PROTOCOL_VERSION, &version );
+	ldap_set_urllist_proc( msc->msc_ld, mt->mt_urllist_f, mt->mt_urllist_p );
 
 	/* automatically chase referrals ("chase-referrals [{yes|no}]" statement) */
 	ldap_set_option( msc->msc_ld, LDAP_OPT_REFERRALS,
@@ -669,7 +670,7 @@ meta_back_retry(
 
 	assert( mc->mc_refcnt > 0 );
 	if ( mc->mc_refcnt == 1 ) {
-		if ( StatslogTest( LDAP_DEBUG_ANY ) ) {
+		if ( LogTest( LDAP_DEBUG_ANY ) ) {
 			char	buf[ SLAP_TEXT_BUFLEN ];
 
 			/* this lock is required; however,
@@ -848,7 +849,6 @@ meta_back_get_candidate(
 		rs->sr_text = "No suitable candidate target found";
 
 	} else if ( candidate == META_TARGET_MULTIPLE ) {
-		Filter		f = { 0 };
 		Operation	op2 = *op;
 		SlapReply	rs2 = { 0 };
 		slap_callback	cb2 = { 0 };
@@ -867,10 +867,8 @@ meta_back_get_candidate(
 		op2.ors_slimit = 1;
 		op2.ors_tlimit = SLAP_NO_LIMIT;
 
-		f.f_choice = LDAP_FILTER_PRESENT;
-		f.f_desc = slap_schema.si_ad_objectClass;
-		op2.ors_filter = &f;
-		BER_BVSTR( &op2.ors_filterstr, "(objectClass=*)" );
+		op2.ors_filter = (Filter *)slap_filter_objectClass_pres;
+		op2.ors_filterstr = *slap_filterstr_objectClass_pres;
 
 		op2.o_callback = &cb2;
 		cb2.sc_response = meta_back_conn_cb;
@@ -1594,6 +1592,7 @@ done:;
 		meta_back_print_conntree( mi, ">>> meta_back_getconn" );
 #endif /* META_BACK_PRINT_CONNTREE */
 
+		err = 0;
 		if ( LDAP_BACK_PCONN_ISPRIV( mc ) ) {
 			if ( mi->mi_conn_priv[ LDAP_BACK_CONN2PRIV( mc ) ].mic_num < mi->mi_conn_priv_max ) {
 				LDAP_TAILQ_INSERT_TAIL( &mi->mi_conn_priv[ LDAP_BACK_CONN2PRIV( mc ) ].mic_priv, mc, mc_q );
@@ -1605,7 +1604,7 @@ done:;
 			}
 			rs->sr_err = 0;
 
-		} else {
+		} else if ( !( sendok & LDAP_BACK_BINDING ) ) {
 			err = avl_insert( &mi->mi_conninfo.lai_tree, ( caddr_t )mc,
 			       	meta_back_conndn_cmp, meta_back_conndn_dup );
 			LDAP_BACK_CONN_CACHED_SET( mc );
@@ -1691,7 +1690,7 @@ meta_back_release_conn_lock(
 	 * that are not privileged would live forever and pollute
 	 * the connection space (and eat up resources).  Maybe this
 	 * should be configurable... */
-	if ( LDAP_BACK_CONN_TAINTED( mc ) ) {
+	if ( LDAP_BACK_CONN_TAINTED( mc ) || !LDAP_BACK_CONN_CACHED( mc ) ) {
 #if META_BACK_PRINT_CONNTREE > 0
 		meta_back_print_conntree( mi, ">>> meta_back_release_conn" );
 #endif /* META_BACK_PRINT_CONNTREE */
@@ -1708,7 +1707,7 @@ meta_back_release_conn_lock(
 				assert( !LDAP_BACK_CONN_CACHED( mc ) );
 			}
 
-		} else {
+		} else if ( LDAP_BACK_CONN_CACHED( mc ) ) {
 			metaconn_t	*tmpmc;
 
 			tmpmc = avl_delete( &mi->mi_conninfo.lai_tree,
@@ -1770,7 +1769,7 @@ meta_back_quarantine(
 			break;
 
 		case LDAP_BACK_FQ_RETRYING:
-			if ( StatslogTest( LDAP_DEBUG_ANY ) ) {
+			if ( LogTest( LDAP_DEBUG_ANY ) ) {
 				char	buf[ SLAP_TEXT_BUFLEN ];
 
 				snprintf( buf, sizeof( buf ),

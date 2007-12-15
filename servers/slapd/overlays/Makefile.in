@@ -1,5 +1,5 @@
 # Makefile.in for overlays
-# $OpenLDAP: pkg/ldap/servers/slapd/overlays/Makefile.in,v 1.16.2.18 2007/10/23 21:21:38 quanah Exp $
+# $OpenLDAP: pkg/ldap/servers/slapd/overlays/Makefile.in,v 1.41.2.4 2007/10/23 21:25:37 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 2003-2007 The OpenLDAP Foundation.
@@ -16,15 +16,17 @@
 SRCS = overlays.c \
 	accesslog.c \
 	auditlog.c \
-	denyop.c \
+	constraint.c \
+	dds.c \
 	dyngroup.c \
 	dynlist.c \
-	lastmod.c \
+	memberof.c \
 	pcache.c \
 	ppolicy.c \
 	refint.c \
 	retcode.c \
 	rwm.c rwmconf.c rwmdn.c rwmmap.c \
+	seqmod.c \
 	syncprov.c \
 	translucent.c \
 	unique.c \
@@ -63,8 +65,11 @@ accesslog.la : accesslog.lo
 auditlog.la : auditlog.lo
 	$(LTLINK_MOD) -module -o $@ auditlog.lo version.lo $(LINK_LIBS)
 
-denyop.la : denyop.lo
-	$(LTLINK_MOD) -module -o $@ denyop.lo version.lo $(LINK_LIBS)
+constraint.la : constraint.lo
+	$(LTLINK_MOD) -module -o $@ constraint.lo version.lo $(LINK_LIBS)
+
+dds.la : dds.lo
+	$(LTLINK_MOD) -module -o $@ dds.lo version.lo $(LINK_LIBS)
 
 dyngroup.la : dyngroup.lo
 	$(LTLINK_MOD) -module -o $@ dyngroup.lo version.lo $(LINK_LIBS)
@@ -72,8 +77,8 @@ dyngroup.la : dyngroup.lo
 dynlist.la : dynlist.lo
 	$(LTLINK_MOD) -module -o $@ dynlist.lo version.lo $(LINK_LIBS)
 
-lastmod.la : lastmod.lo
-	$(LTLINK_MOD) -module -o $@ lastmod.lo version.lo $(LINK_LIBS)
+memberof.la : memberof.lo
+	$(LTLINK_MOD) -module -o $@ memberof.lo version.lo $(LINK_LIBS)
 
 pcache.la : pcache.lo
 	$(LTLINK_MOD) -module -o $@ pcache.lo version.lo $(LINK_LIBS)
@@ -92,6 +97,9 @@ rwm_x.o: rwm.o rwmconf.o rwmdn.o rwmmap.o
 
 rwm.la : rwm.lo rwmconf.lo rwmdn.lo rwmmap.lo
 	$(LTLINK_MOD) -module -o $@ rwm.lo rwmconf.lo rwmdn.lo rwmmap.lo version.lo $(LINK_LIBS)
+
+seqmod.la : seqmod.lo
+	$(LTLINK_MOD) -module -o $@ seqmod.lo version.lo $(LINK_LIBS)
 
 syncprov.la : syncprov.lo
 	$(LTLINK_MOD) -module -o $@ syncprov.lo version.lo $(LINK_LIBS)

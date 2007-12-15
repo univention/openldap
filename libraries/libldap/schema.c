@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/schema.c,v 1.66.2.7 2007/01/02 21:43:49 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/schema.c,v 1.77.2.2 2007/08/31 23:13:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -1028,7 +1028,7 @@ get_token( const char ** sp, char ** token_val )
 			**sp != '$' &&
 			**sp != '\'' &&
 			/* for suggested minimum upper bound on the number
-			 * of characters <draft-ietf-ldapbis-syntaxes> */
+			 * of characters (RFC 4517) */
 			**sp != '{' &&
 			**sp != '\0' )
 			(*sp)++;

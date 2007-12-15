@@ -1,5 +1,5 @@
 /* backglue.c - backend glue */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.91.2.19 2007/08/23 14:31:02 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.112.2.8 2007/11/15 00:34:01 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2007 The OpenLDAP Foundation.
@@ -35,6 +35,7 @@
 
 #define SLAPD_TOOLS
 #include "slap.h"
+#include "config.h"
 
 typedef struct gluenode {
 	BackendDB *gn_be;
@@ -160,6 +161,31 @@ glue_op_response ( Operation *op, SlapReply *rs )
 			if (!j) {
 				newctrls = ch_malloc((i+1)*sizeof(LDAPControl *));
 			} else {
+				/* Forget old pagedResults response if we're sending
+				 * a new one now
+				 */
+				if ( get_pagedresults( op ) > SLAP_CONTROL_IGNORED ) {
+					int newpage = 0;
+					for ( k=0; k<i; k++ ) {
+						if ( !strcmp(rs->sr_ctrls[k]->ldctl_oid,
+							LDAP_CONTROL_PAGEDRESULTS )) {
+							newpage = 1;
+							break;
+						}
+					}
+					if ( newpage ) {
+						for ( k=0; k<j; k++ ) {
+							if ( !strcmp(gs->ctrls[k]->ldctl_oid,
+								LDAP_CONTROL_PAGEDRESULTS )) {
+									gs->ctrls[k]->ldctl_oid = NULL;
+									ldap_control_free( gs->ctrls[k] );
+									gs->ctrls[k] = gs->ctrls[--j];
+									gs->ctrls[j] = NULL;
+									break;
+							}
+						}
+					}
+				}
 				newctrls = ch_realloc(gs->ctrls,
 					(j+i+1)*sizeof(LDAPControl *));
 			}
@@ -219,7 +245,6 @@ glue_op_func ( Operation *op, SlapReply *rs )
 static int
 glue_response ( Operation *op, SlapReply *rs )
 {
-	slap_overinst	*on = (slap_overinst *)op->o_bd->bd_info;
 	BackendDB *be = op->o_bd;
 	be = glue_back_select (op->o_bd, &op->o_req_ndn);
 
@@ -377,6 +402,16 @@ glue_op_search ( Operation *op, SlapReply *rs )
 				continue;
 			if (!dnIsSuffix(&btmp->be_nsuffix[0], &b1->be_nsuffix[0]))
 				continue;
+			if (get_no_subordinate_glue(op) && btmp != b1)
+				continue;
+			/* If we remembered which backend we were on before,
+			 * skip down to it now
+			 */
+			if ( get_pagedresults( op ) > SLAP_CONTROL_IGNORED &&
+				op->o_conn->c_pagedresults_state.ps_be &&
+				op->o_conn->c_pagedresults_state.ps_be != btmp )
+				continue;
+
 			if (tlimit0 != SLAP_NO_LIMIT) {
 				op->o_time = slap_get_time();
 				op->ors_tlimit = stoptime - op->o_time;
@@ -446,7 +481,41 @@ glue_op_search ( Operation *op, SlapReply *rs )
 			case LDAP_X_CANNOT_CHAIN:
 #endif /* LDAP_CONTROL_X_CHAINING_BEHAVIOR */
 				goto end_of_loop;
-			
+
+			case LDAP_SUCCESS:
+				if ( get_pagedresults( op ) > SLAP_CONTROL_IGNORED ) {
+					PagedResultsState *ps = op->o_pagedresults_state;
+
+					/* Assume this backend can be forgotten now */
+					op->o_conn->c_pagedresults_state.ps_be = NULL;
+
+					/* If we have a full page, exit the loop. We may
+					 * need to remember this backend so we can continue
+					 * from here on a subsequent request.
+					 */
+					if ( rs->sr_nentries >= ps->ps_size ) {
+						/* Don't bother to remember the first backend.
+						 * Only remember the last one if there's more state left.
+						 */
+						if ( op->o_bd != b0 &&
+							( op->o_conn->c_pagedresults_state.ps_cookie ||
+							op->o_bd != gi->gi_n[0].gn_be ))
+							op->o_conn->c_pagedresults_state.ps_be = op->o_bd;
+						goto end_of_loop;
+					}
+
+					/* This backend has run out of entries, but more responses
+					 * can fit in the page. Fake a reset of the state so the
+					 * next backend will start up properly. Only back-[bh]db
+					 * and back-sql look at this state info.
+					 */
+					if ( ps->ps_cookieval.bv_len == sizeof( PagedResultsCookie )) {
+						ps->ps_cookie = 0;
+						memset( ps->ps_cookieval.bv_val, 0,
+							sizeof( PagedResultsCookie ));
+					}
+				}
+				
 			default:
 				break;
 			}
@@ -581,7 +650,7 @@ glue_open (
 					gi->gi_n[i].gn_be->bd_info );
 			/* Let backend.c take care of the rest of startup */
 			if ( !rc )
-				rc = backend_startup_one( gi->gi_n[i].gn_be );
+				rc = backend_startup_one( gi->gi_n[i].gn_be, NULL );
 			if ( rc ) break;
 		}
 		if ( !rc && !bsame && on->on_info->oi_orig->bi_open )
@@ -619,9 +688,8 @@ glue_entry_get_rw (
 	int	rw,
 	Entry	**e )
 {
-	BackendDB *b0 = op->o_bd;
 	int rc;
-
+	BackendDB *b0 = op->o_bd;
 	op->o_bd = glue_back_select( b0, dn );
 
 	if ( op->o_bd->be_fetch ) {
@@ -782,13 +850,14 @@ glue_tool_entry_put (
 static int
 glue_tool_entry_reindex (
 	BackendDB *b0,
-	ID id
+	ID id,
+	AttributeDescription **adv
 )
 {
 	if (!glueBack || !glueBack->be_entry_reindex)
 		return -1;
 
-	return glueBack->be_entry_reindex (glueBack, id);
+	return glueBack->be_entry_reindex (glueBack, id, adv);
 }
 
 static int
@@ -814,7 +883,8 @@ glue_tool_sync (
 
 static int
 glue_db_init(
-	BackendDB *be
+	BackendDB *be,
+	ConfigReply *cr
 )
 {
 	slap_overinst	*on = (slap_overinst *)be->bd_info;
@@ -859,7 +929,6 @@ glue_db_init(
 
 	/*FIXME : need to add support */
 	oi->oi_bi.bi_tool_dn2id_get = 0;
-	oi->oi_bi.bi_tool_id2entry_get = 0;
 	oi->oi_bi.bi_tool_entry_modify = 0;
 
 	SLAP_DBFLAGS( be ) |= SLAP_DBFLAG_GLUE_INSTANCE;
@@ -869,7 +938,8 @@ glue_db_init(
 
 static int
 glue_db_destroy (
-	BackendDB *be
+	BackendDB *be,
+	ConfigReply *cr
 )
 {
 	slap_overinst	*on = (slap_overinst *)be->bd_info;
@@ -881,7 +951,8 @@ glue_db_destroy (
 
 static int
 glue_db_close( 
-	BackendDB *be
+	BackendDB *be,
+	ConfigReply *cr
 )
 {
 	slap_overinst	*on = (slap_overinst *)be->bd_info;
@@ -971,7 +1042,7 @@ glue_sub_attach()
 
 			/* If it's not already configured, set up the overlay */
 			if ( !SLAP_GLUE_INSTANCE( be )) {
-				rc = overlay_config( be, glue.on_bi.bi_type );
+				rc = overlay_config( be, glue.on_bi.bi_type, -1, NULL );
 				if ( rc )
 					break;
 			}

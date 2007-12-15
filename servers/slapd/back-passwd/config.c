@@ -1,5 +1,5 @@
 /* config.c - passwd backend configuration file routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/config.c,v 1.12.2.3 2007/01/02 21:44:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/config.c,v 1.14.2.2 2007/08/31 23:14:04 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.

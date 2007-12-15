@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/compare.c,v 1.26.2.3 2007/01/02 21:43:48 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/compare.c,v 1.29.2.2 2007/08/31 23:13:55 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -15,19 +15,6 @@
 /* Portions Copyright (c) 1990 Regents of the University of Michigan.
  * All rights reserved.
  */
-/* Portions Copyright (C) The Internet Society (1997)
- * ASN.1 fragments are from RFC 2251; see RFC for full legal notices.
- */
-
-/* The compare request looks like this:
- *	CompareRequest ::= SEQUENCE {
- *		entry	DistinguishedName,
- *		ava	SEQUENCE {
- *			type	AttributeType,
- *			value	AttributeValue
- *		}
- *	}
- */
 
 #include "portable.h"
 
@@ -39,6 +26,16 @@
 
 #include "ldap-int.h"
 #include "ldap_log.h"
+
+/* The compare request looks like this:
+ *	CompareRequest ::= SEQUENCE {
+ *		entry	DistinguishedName,
+ *		ava	SEQUENCE {
+ *			type	AttributeType,
+ *			value	AttributeValue
+ *		}
+ *	}
+ */
 
 /*
  * ldap_compare_ext - perform an ldap extended compare operation.  The dn
@@ -156,7 +153,7 @@ ldap_compare_ext_s(
 	if (  rc != LDAP_SUCCESS )
 		return( rc );
 
-	if ( ldap_result( ld, msgid, 1, (struct timeval *) NULL, &res ) == -1 )
+	if ( ldap_result( ld, msgid, LDAP_MSG_ALL, (struct timeval *) NULL, &res ) == -1 || !res )
 		return( ld->ld_errno );
 
 	return( ldap_result2error( ld, res, 1 ) );

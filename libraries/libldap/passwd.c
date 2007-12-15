@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/passwd.c,v 1.14.2.3 2007/01/02 21:43:49 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/passwd.c,v 1.18.2.2 2007/08/31 23:13:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -27,7 +27,7 @@
 #include "ldap-int.h"
 
 /*
- * LDAP Password Modify (Extended) Operation <RFC 3062>
+ * LDAP Password Modify (Extended) Operation (RFC 3062)
  */
 
 int ldap_parse_passwd(
@@ -36,8 +36,7 @@ int ldap_parse_passwd(
 	struct berval *newpasswd )
 {
 	int rc;
-	char *retoid = NULL;
-	struct berval *retdata;
+	struct berval *retdata = NULL;
 
 	assert( ld != NULL );
 	assert( LDAP_VALID( ld ) );
@@ -47,31 +46,32 @@ int ldap_parse_passwd(
 	newpasswd->bv_val = NULL;
 	newpasswd->bv_len = 0;
 
-	rc = ldap_parse_extended_result( ld, res, &retoid, &retdata, 0 );
-
-	if( rc != LDAP_SUCCESS ) {
+	rc = ldap_parse_extended_result( ld, res, NULL, &retdata, 0 );
+	if ( rc != LDAP_SUCCESS ) {
 		return rc;
 	}
 
-	if( retdata != NULL ) {
+	if ( retdata != NULL ) {
 		ber_tag_t tag;
 		BerElement *ber = ber_init( retdata );
 
-		if( ber == NULL ) {
-			ld->ld_errno = LDAP_NO_MEMORY;
-			return ld->ld_errno;
+		if ( ber == NULL ) {
+			rc = ld->ld_errno = LDAP_NO_MEMORY;
+			goto done;
 		}
 
 		/* we should check the tag */
 		tag = ber_scanf( ber, "{o}", newpasswd );
 		ber_free( ber, 1 );
 
-		if( tag == LBER_ERROR ) {
+		if ( tag == LBER_ERROR ) {
 			rc = ld->ld_errno = LDAP_DECODING_ERROR;
 		}
 	}
 
-	ber_memfree( retoid );
+done:;
+	ber_bvfree( retdata );
+
 	return rc;
 }
 
@@ -156,7 +156,7 @@ ldap_passwd_s(
 		return rc;
 	}
 
-	if ( ldap_result( ld, msgid, 1, (struct timeval *) NULL, &res ) == -1 ) {
+	if ( ldap_result( ld, msgid, LDAP_MSG_ALL, (struct timeval *) NULL, &res ) == -1 || !res ) {
 		return ld->ld_errno;
 	}
 

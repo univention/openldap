@@ -1,5 +1,5 @@
 /* Generic crypt.h */
-/* $OpenLDAP: pkg/ldap/include/ac/crypt.h,v 1.8.2.3 2007/01/02 21:43:47 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ac/crypt.h,v 1.10.2.2 2007/08/31 23:13:54 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -20,7 +20,7 @@
 #include <ac/unistd.h>
 
 /* crypt() may be defined in a separate include file */
-#if HAVE_CRYPT_H
+#ifdef HAVE_CRYPT_H
 #	include <crypt.h>
 #else
 	extern char *(crypt)();

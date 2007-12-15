@@ -1,5 +1,5 @@
 ## Makefile for OpenLDAP Administrator's Guide
-# $OpenLDAP: pkg/openldap-guide/admin/Makefile,v 1.4.2.3 2007/01/02 21:43:43 kurt Exp $
+# $OpenLDAP: pkg/openldap-guide/admin/Makefile,v 1.5.2.6 2007/11/29 22:51:25 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 2005-2007 The OpenLDAP Foundation.
@@ -14,19 +14,33 @@
 ## <http://www.OpenLDAP.org/license.html>.
 all: guide.html index.html
 
+# for website building (for webmaster use, don't change)
+www: guide.html index.html OpenLDAP-Admin-Guide.pdf
+
 sdf-src: \
 	../plain.sdf \
 	../preamble.sdf \
 	abstract.sdf \
+	appendix-changes.sdf \
+	appendix-common-errors.sdf \
+	appendix-configs.sdf \
+	appendix-contrib.sdf \
+	appendix-deployments.sdf \
+	appendix-ldap-result-codes.sdf \
+	appendix-recommended-versions.sdf \
+	appendix-upgrading.sdf \
+	backends.sdf \
 	config.sdf \
 	dbtools.sdf \
+	glossary.sdf \
 	guide.sdf \
 	install.sdf \
 	intro.sdf \
+	maintenance.sdf \
 	master.sdf \
 	monitoringslapd.sdf \
+	overlays.sdf \
 	preface.sdf \
-	proxycache.sdf \
 	quickstart.sdf \
 	referrals.sdf \
 	replication.sdf \
@@ -35,21 +49,23 @@ sdf-src: \
 	schema.sdf \
 	security.sdf \
 	slapdconfig.sdf \
-	syncrepl.sdf \
 	title.sdf \
 	tls.sdf \
+	troubleshooting.sdf \
 	tuning.sdf
 
 sdf-img: \
 	../images/LDAPlogo.gif \
-	config_local.gif \
-	config_ref.gif \
+	allmail-en.png \
+	allusersgroup-en.png \
+	config_dit.png \
+	config_local.png \
+	config_ref.png \
 	config_repl.gif \
-	config_x500fe.gif \
-	config_x500ref.gif \
-	intro_dctree.gif \
-	intro_tree.gif \
-	replication.gif
+	dual_dc.png \
+	intro_dctree.png \
+	intro_tree.png \
+	refint.png 
 
 guide.html: guide.sdf sdf-src sdf-img
 	sdf -2html guide.sdf
@@ -60,7 +76,11 @@ index.html: index.sdf sdf-src sdf-img
 admin.html: admin.sdf sdf-src sdf-img
 	sdf -DPDF -2html admin.sdf
 
-guide.pdf: admin.html
-	htmldoc --book --duplex --bottom 36 --top 36 \
-		--toclevels 2 \
-		-f guide.pdf admin.html
+guide.pdf: admin.html guide.book
+	htmldoc --batch guide.book -f guide.pdf
+
+OpenLDAP-Admin-Guide.pdf: admin.html guide.book
+	htmldoc --batch guide.book -f OpenLDAP-Admin-Guide.pdf
+
+clean: 
+	rm -f *.pdf *.html *~ *.bak

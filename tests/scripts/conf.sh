@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/conf.sh,v 1.32.2.13 2007/01/02 21:44:13 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/conf.sh,v 1.49.2.7 2007/11/27 20:21:56 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2007 The OpenLDAP Foundation.
@@ -42,7 +42,9 @@ sed -e "s/@BACKEND@/${BACKEND}/"			\
 	-e "s/^#${AC_sql}#//"				\
 		-e "s/^#${RDBMS}#//"			\
 	-e "s/^#${AC_accesslog}#//"			\
+	-e "s/^#${AC_dds}#//"				\
 	-e "s/^#${AC_dynlist}#//"			\
+	-e "s/^#${AC_memberof}#//"			\
 	-e "s/^#${AC_pcache}#//"			\
 	-e "s/^#${AC_ppolicy}#//"			\
 	-e "s/^#${AC_refint}#//"			\
@@ -70,6 +72,8 @@ sed -e "s/@BACKEND@/${BACKEND}/"			\
 	-e "s;@PORT6@;${PORT6};"			\
 	-e "s/@SASL_MECH@/${SASL_MECH}/"		\
 	-e "s/@CACHETTL@/${CACHETTL}/"			\
+	-e "s/@NCACHETTL@/${NCACHETTL}/"		\
+	-e "s/@SCACHETTL@/${SCACHETTL}/"		\
 	-e "s/@ENTRY_LIMIT@/${CACHE_ENTRY_LIMIT}/"	\
 	-e "s;@TESTDIR@;${TESTDIR};"			\
 	-e "s;@DATADIR@;${DATADIR};"			\

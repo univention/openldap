@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/lockf.c,v 1.13.2.3 2007/01/02 21:43:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/lockf.c,v 1.15.2.2 2007/08/31 23:13:57 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -33,12 +33,12 @@
 
 #undef LOCK_API
 
-#if HAVE_LOCKF && defined(F_LOCK)
+#if defined(HAVE_LOCKF) && defined(F_LOCK)
 #	define USE_LOCKF 1
 #	define LOCK_API	"lockf"
 #endif
 
-#if !defined(LOCK_API) && HAVE_FCNTL
+#if !defined(LOCK_API) && defined(HAVE_FCNTL)
 #	ifdef HAVE_FCNTL_H
 #		include <fcntl.h>
 #	endif
@@ -48,8 +48,8 @@
 #	endif
 #endif
 
-#if !defined(LOCK_API) && HAVE_FLOCK
-#	if HAVE_SYS_FILE_H
+#if !defined(LOCK_API) && defined(HAVE_FLOCK)
+#	ifdef HAVE_SYS_FILE_H
 #		include <sys/file.h>
 #	endif
 #	define USE_FLOCK 1

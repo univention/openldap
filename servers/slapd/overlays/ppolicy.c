@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/ppolicy.c,v 1.31.2.35 2007/08/16 18:49:56 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/ppolicy.c,v 1.75.2.8 2007/11/21 17:43:53 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2007 The OpenLDAP Foundation.
@@ -31,7 +31,7 @@
 #include <ldap.h>
 #include "lutil.h"
 #include "slap.h"
-#if SLAPD_MODULES
+#ifdef SLAPD_MODULES
 #define LIBLTDL_DLL_IMPORT	/* Win32: don't re-export libltdl's symbols */
 #include <ltdl.h>
 #endif
@@ -123,7 +123,7 @@ static struct schema_info {
 		"SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 "
 		"SINGLE-VALUE "
 #if 0
-		/* Not until MANAGEDIT control is released */
+		/* Not until Relax control is released */
 		"NO-USER-MODIFICATION "
 #endif
 		"USAGE directoryOperation )",
@@ -164,7 +164,7 @@ static struct schema_info {
 		"SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 "
 		"SINGLE-VALUE "
 #if 0
-		/* Not until MANAGEDIT control is released */
+		/* Not until Relax control is released */
 		"NO-USER-MODIFICATION "
 #endif
 		"USAGE directoryOperation )",
@@ -249,8 +249,6 @@ ppolicy_cf_default( ConfigArgs *c )
 {
 	slap_overinst *on = (slap_overinst *)c->bi;
 	pp_info *pi = (pp_info *)on->on_bi.bi_private;
-	BackendDB *be = (BackendDB *)c->be;
-	const char *text;
 	int rc = ARG_BAD_CONF;
 
 	assert ( c->type == PPOLICY_DEFAULT );
@@ -281,9 +279,13 @@ ppolicy_cf_default( ConfigArgs *c )
 		/* fallthrough to LDAP_MOD_ADD */
 	case LDAP_MOD_ADD:
 		Debug(LDAP_DEBUG_TRACE, "==> ppolicy_cf_default add\n", 0, 0, 0);
-		if ( pi->def_policy.bv_val )
+		if ( pi->def_policy.bv_val ) {
 			ber_memfree ( pi->def_policy.bv_val );
+		}
 		pi->def_policy = c->value_ndn;
+		ber_memfree( c->value_dn.bv_val );
+		BER_BVZERO( &c->value_dn );
+		BER_BVZERO( &c->value_ndn );
 		rc = 0;
 		break;
 	default:
@@ -619,7 +621,7 @@ check_password_quality( struct berval *cred, PassPolicy *pp, LDAPPasswordPolicyE
 	rc = LDAP_SUCCESS;
 
 	if (pp->pwdCheckModule[0]) {
-#if SLAPD_MODULES
+#ifdef SLAPD_MODULES
 		lt_dlhandle mod;
 		const char *err;
 		
@@ -919,6 +921,7 @@ ppolicy_bind_response( Operation *op, SlapReply *rs )
 		m->sml_flags = 0;
 		m->sml_type = ad_pwdFailureTime->ad_cname;
 		m->sml_desc = ad_pwdFailureTime;
+		m->sml_numvals = 1;
 		m->sml_values = ch_calloc( sizeof(struct berval), 2 );
 		m->sml_nvalues = ch_calloc( sizeof(struct berval), 2 );
 
@@ -968,6 +971,7 @@ ppolicy_bind_response( Operation *op, SlapReply *rs )
 			m->sml_flags = 0;
 			m->sml_type = ad_pwdAccountLockedTime->ad_cname;
 			m->sml_desc = ad_pwdAccountLockedTime;
+			m->sml_numvals = 1;
 			m->sml_values = ch_calloc( sizeof(struct berval), 2 );
 			m->sml_nvalues = ch_calloc( sizeof(struct berval), 2 );
 			ber_dupbv( &m->sml_values[0], &timestamp );
@@ -1060,6 +1064,7 @@ grace:
 		m->sml_flags = 0;
 		m->sml_type = ad_pwdGraceUseTime->ad_cname;
 		m->sml_desc = ad_pwdGraceUseTime;
+		m->sml_numvals = 1;
 		m->sml_values = ch_calloc( sizeof(struct berval), 2 );
 		m->sml_nvalues = ch_calloc( sizeof(struct berval), 2 );
 		ber_dupbv( &m->sml_values[0], &timestamp );
@@ -1283,7 +1288,7 @@ ppolicy_add(
 	if ((pa = attr_find( op->oq_add.rs_e->e_attrs,
 		slap_schema.si_ad_userPassword )))
 	{
-		assert( pa->a_vals );
+		assert( pa->a_vals != NULL );
 		assert( !BER_BVISNULL( &pa->a_vals[ 0 ] ) );
 
 		if ( !BER_BVISNULL( &pa->a_vals[ 1 ] ) ) {
@@ -1467,6 +1472,7 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 				ml->sml_flags = SLAP_MOD_INTERNAL;
 				ml->sml_type.bv_val = NULL;
 				ml->sml_desc = ad_pwdGraceUseTime;
+				ml->sml_numvals = 0;
 				ml->sml_values = NULL;
 				ml->sml_nvalues = NULL;
 				ml->sml_next = NULL;
@@ -1479,6 +1485,7 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 				ml->sml_flags = SLAP_MOD_INTERNAL;
 				ml->sml_type.bv_val = NULL;
 				ml->sml_desc = ad_pwdAccountLockedTime;
+				ml->sml_numvals = 0;
 				ml->sml_values = NULL;
 				ml->sml_nvalues = NULL;
 				ml->sml_next = NULL;
@@ -1490,6 +1497,7 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 				ml->sml_flags = SLAP_MOD_INTERNAL;
 				ml->sml_type.bv_val = NULL;
 				ml->sml_desc = ad_pwdFailureTime;
+				ml->sml_numvals = 0;
 				ml->sml_values = NULL;
 				ml->sml_nvalues = NULL;
 				ml->sml_next = NULL;
@@ -1513,7 +1521,7 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 		slap_callback *sc;
 
 		for ( sc = op->o_callback; sc; sc=sc->sc_next ) {
-			if ( sc->sc_response == slap_replog_cb &&
+			if ( sc->sc_response == slap_null_cb &&
 				sc->sc_private ) {
 				req_pwdexop_s *qpw = sc->sc_private;
 				newpw = qpw->rs_new;
@@ -1551,8 +1559,6 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 			if ((ml->sml_op == LDAP_MOD_ADD) ||
 				(ml->sml_op == LDAP_MOD_REPLACE))
 			{
-				addmod = ml;
-
 				/* FIXME: there's no easy way to ensure
 				 * that add does not cause multiple
 				 * userPassword values; one way (that 
@@ -1564,13 +1570,15 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 				 * Let's check at least that a single value
 				 * is being added
 				 */
-				assert( addmod->sml_values != NULL );
-				assert( !BER_BVISNULL( &addmod->sml_values[ 0 ] ) );
-				if ( !BER_BVISNULL( &addmod->sml_values[ 1 ] ) ) {
+				assert( ml->sml_values != NULL );
+				assert( !BER_BVISNULL( &ml->sml_values[ 0 ] ) );
+				if ( addmod || !BER_BVISNULL( &ml->sml_values[ 1 ] ) ) {
 					rs->sr_err = LDAP_CONSTRAINT_VIOLATION; 
 					rs->sr_text = "Password policy only allows one password value";
 					goto return_results;
 				}
+
+				addmod = ml;
 			}
 
 		} else if ( !is_at_operational( ml->sml_desc->ad_type ) ) {
@@ -1669,6 +1677,7 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 		ml->sml_flags = SLAP_MOD_INTERNAL;
 		ml->sml_desc = pp.ad;
 		ml->sml_type = pp.ad->ad_cname;
+		ml->sml_numvals = 1;
 		ml->sml_values = (BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
 		ber_dupbv( &ml->sml_values[0], &oldpw );
 		BER_BVZERO( &ml->sml_values[1] );
@@ -1836,6 +1845,7 @@ do_modify:
 		mods->sml_desc = ad_pwdChangedTime;
 		if (pwmop != LDAP_MOD_DELETE) {
 			mods->sml_op = LDAP_MOD_REPLACE;
+			mods->sml_numvals = 1;
 			mods->sml_values = (BerVarray) ch_malloc( 2 * sizeof( struct berval ) );
 			ber_dupbv( &mods->sml_values[0], &timestamp );
 			BER_BVZERO( &mods->sml_values[1] );
@@ -1912,6 +1922,7 @@ do_modify:
 				mods->sml_op = LDAP_MOD_DELETE;
 				mods->sml_flags = SLAP_MOD_INTERNAL;
 				mods->sml_desc = ad_pwdHistory;
+				mods->sml_numvals = hsize - pp.pwdInHistory + 1;
 				mods->sml_values = ch_calloc( sizeof( struct berval ),
 					hsize - pp.pwdInHistory + 2 );
 				BER_BVZERO( &mods->sml_values[ hsize - pp.pwdInHistory + 1 ] );
@@ -1943,6 +1954,7 @@ do_modify:
 				mods->sml_type.bv_val = NULL;
 				mods->sml_desc = ad_pwdHistory;
 				mods->sml_nvalues = NULL;
+				mods->sml_numvals = 1;
 				mods->sml_values = ch_calloc( sizeof( struct berval ), 2 );
 				mods->sml_values[ 1 ].bv_val = NULL;
 				mods->sml_values[ 1 ].bv_len = 0;
@@ -2022,8 +2034,8 @@ ppolicy_parseCtrl(
 	SlapReply *rs,
 	LDAPControl *ctrl )
 {
-	if ( ctrl->ldctl_value.bv_len ) {
-		rs->sr_text = "passwordPolicyRequest control value not empty";
+	if ( !BER_BVISNULL( &ctrl->ldctl_value ) ) {
+		rs->sr_text = "passwordPolicyRequest control value not absent";
 		return LDAP_PROTOCOL_ERROR;
 	}
 	op->o_ctrlflag[ppolicy_cid] = ctrl->ldctl_iscritical
@@ -2073,7 +2085,8 @@ attrNormalize(
 
 static int
 ppolicy_db_init(
-	BackendDB *be
+	BackendDB *be,
+	ConfigReply *cr
 )
 {
 	slap_overinst *on = (slap_overinst *) be->bd_info;
@@ -2108,15 +2121,19 @@ ppolicy_db_init(
 
 	on->on_bi.bi_private = ch_calloc( sizeof(pp_info), 1 );
 
-	if ( dtblsize && !pwcons )
-		pwcons = ch_calloc(sizeof(pw_conn), dtblsize );
+	if ( dtblsize && !pwcons ) {
+		/* accommodate for c_conn_idx == -1 */
+		pwcons = ch_calloc( sizeof(pw_conn), dtblsize + 1 );
+		pwcons++;
+	}
 
 	return 0;
 }
 
 static int
 ppolicy_db_open(
-    BackendDB *be
+	BackendDB *be,
+	ConfigReply *cr
 )
 {
 	ov_count++;
@@ -2125,7 +2142,8 @@ ppolicy_db_open(
 
 static int
 ppolicy_close(
-	BackendDB *be
+	BackendDB *be,
+	ConfigReply *cr
 )
 {
 	slap_overinst *on = (slap_overinst *) be->bd_info;
@@ -2134,6 +2152,7 @@ ppolicy_close(
 	/* Perhaps backover should provide bi_destroy hooks... */
 	ov_count--;
 	if ( ov_count <=0 && pwcons ) {
+		pwcons--;
 		free( pwcons );
 		pwcons = NULL;
 	}
@@ -2152,26 +2171,13 @@ static slap_overinst ppolicy;
 
 int ppolicy_initialize()
 {
-	LDAPAttributeType *at;
-	const char *err;
 	int i, code;
 
 	for (i=0; pwd_OpSchema[i].def; i++) {
-		at = ldap_str2attributetype( pwd_OpSchema[i].def, &code, &err,
-			LDAP_SCHEMA_ALLOW_ALL );
-		if ( !at ) {
-			fprintf( stderr, "AttributeType Load failed %s %s\n",
-				ldap_scherr2str(code), err );
-			return code;
-		}
-		code = at_add( at, 0, NULL, &err );
-		if ( !code ) {
-			slap_str2ad( at->at_names[0], pwd_OpSchema[i].ad, &err );
-		}
-		ldap_memfree( at );
+		code = register_at( pwd_OpSchema[i].def, pwd_OpSchema[i].ad, 0 );
 		if ( code ) {
-			fprintf( stderr, "AttributeType Load failed %s %s\n",
-				scherr2str(code), err );
+			Debug( LDAP_DEBUG_ANY,
+				"ppolicy_initialize: register_at failed\n", 0, 0, 0 );
 			return code;
 		}
 		/* Allow Manager to set these as needed */

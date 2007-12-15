@@ -1,5 +1,5 @@
 /* referral.c - BDB backend referral handler */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/referral.c,v 1.36.2.6 2007/01/02 21:44:00 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/referral.c,v 1.42.2.3 2007/08/31 23:14:01 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2007 The OpenLDAP Foundation.
@@ -28,7 +28,7 @@ bdb_referrals( Operation *op, SlapReply *rs )
 	EntryInfo *ei;
 	int rc = LDAP_SUCCESS;
 
-	u_int32_t	locker;
+	BDB_LOCKER	locker;
 	DB_LOCK		lock;
 
 	if( op->o_tag == LDAP_REQ_SEARCH ) {
@@ -87,8 +87,8 @@ dn2entry_retry:
 		if ( e != NULL ) {
 			Debug( LDAP_DEBUG_TRACE,
 				LDAP_XSTRING(bdb_referrals)
-				": op=%ld target=\"%s\" matched=\"%s\"\n",
-				(long) op->o_tag, op->o_req_dn.bv_val, e->e_name.bv_val );
+				": tag=%lu target=\"%s\" matched=\"%s\"\n",
+				(unsigned long)op->o_tag, op->o_req_dn.bv_val, e->e_name.bv_val );
 
 			if( is_entry_referral( e ) ) {
 				BerVarray ref = get_entry_referrals( op, e );
@@ -102,7 +102,7 @@ dn2entry_retry:
 				}
 			}
 
-			bdb_cache_return_entry_r (bdb->bi_dbenv, &bdb->bi_cache, e, &lock);
+			bdb_cache_return_entry_r (bdb, e, &lock);
 			e = NULL;
 		} else if ( !be_issuffix( op->o_bd, &op->o_req_ndn ) && default_referral != NULL ) {
 			rc = LDAP_OTHER;
@@ -138,8 +138,8 @@ dn2entry_retry:
 
 		Debug( LDAP_DEBUG_TRACE,
 			LDAP_XSTRING(bdb_referrals)
-			": op=%ld target=\"%s\" matched=\"%s\"\n",
-			(long) op->o_tag, op->o_req_dn.bv_val, e->e_name.bv_val );
+			": tag=%lu target=\"%s\" matched=\"%s\"\n",
+			(unsigned long)op->o_tag, op->o_req_dn.bv_val, e->e_name.bv_val );
 
 		rs->sr_matched = e->e_name.bv_val;
 		if( rs->sr_ref != NULL ) {
@@ -156,7 +156,7 @@ dn2entry_retry:
 		ber_bvarray_free( refs );
 	}
 
-	bdb_cache_return_entry_r(bdb->bi_dbenv, &bdb->bi_cache, e, &lock);
+	bdb_cache_return_entry_r(bdb, e, &lock);
 	LOCK_ID_FREE ( bdb->bi_dbenv, locker );
 	return rc;
 }

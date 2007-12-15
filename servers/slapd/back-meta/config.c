@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.35.2.26 2007/09/13 19:33:55 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.74.2.8 2007/11/27 19:49:13 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.
@@ -158,6 +158,8 @@ meta_back_db_config(
 		mt = mi->mi_targets[ i ];
 
 		mt->mt_rebind_f = mi->mi_rebind_f;
+		mt->mt_urllist_f = mi->mi_urllist_f;
+		mt->mt_urllist_p = mt;
 
 		mt->mt_nretries = mi->mi_nretries;
 		mt->mt_quarantine = mi->mi_quarantine;
@@ -198,7 +200,8 @@ meta_back_db_config(
 			/*
 			 * uri MUST be legal!
 			 */
-			if ( ldap_url_parselist_ext( &ludp, uris[ c ], "\t" ) != LDAP_SUCCESS
+			if ( ldap_url_parselist_ext( &ludp, uris[ c ], "\t",
+					LDAP_PVT_URL_PARSE_NONE ) != LDAP_SUCCESS
 				|| ludp->lud_next != NULL )
 			{
 				Debug( LDAP_DEBUG_ANY,
@@ -926,10 +929,8 @@ meta_back_db_config(
 		if ( strcasecmp( argv[ 1 ], "abandon" ) == 0 ) {
 			flag = LDAP_BACK_F_CANCEL_ABANDON;
 
-#if 0	/* needs ldap_int_discard(), 2.4 */
 		} else if ( strcasecmp( argv[ 1 ], "ignore" ) == 0 ) {
 			flag = LDAP_BACK_F_CANCEL_IGNORE;
-#endif
 
 		} else if ( strcasecmp( argv[ 1 ], "exop" ) == 0 ) {
 			flag = LDAP_BACK_F_CANCEL_EXOP;
@@ -1244,6 +1245,38 @@ idassert-authzFrom	"dn:<rootdn>"
 		} else {
 			mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_flags |= LDAP_BACK_F_QUARANTINE;
 		}
+
+#ifdef SLAP_CONTROL_X_SESSION_TRACKING
+	/* session tracking request */
+	} else if ( strcasecmp( argv[ 0 ], "session-tracking-request" ) == 0 ) {
+		unsigned	*flagsp = mi->mi_ntargets ?
+				&mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_flags
+				: &mi->mi_flags;
+
+		if ( argc != 2 ) {
+			Debug( LDAP_DEBUG_ANY,
+	"%s: line %d: \"session-tracking-request {TRUE|false}\" needs 1 argument.\n",
+				fname, lineno, 0 );
+			return( 1 );
+		}
+
+		/* this is the default; we add it because the default might change... */
+		switch ( check_true_false( argv[ 1 ] ) ) {
+		case 1:
+			*flagsp |= LDAP_BACK_F_ST_REQUEST;
+			break;
+
+		case 0:
+			*flagsp &= ~LDAP_BACK_F_ST_REQUEST;
+			break;
+
+		default:
+			Debug( LDAP_DEBUG_ANY,
+		"%s: line %d: \"session-tracking-request {TRUE|false}\": unknown argument \"%s\".\n",
+				fname, lineno, argv[ 1 ] );
+			return( 1 );
+		}
+#endif /* SLAP_CONTROL_X_SESSION_TRACKING */
 	
 	/* dn massaging */
 	} else if ( strcasecmp( argv[ 0 ], "suffixmassage" ) == 0 ) {
@@ -1292,7 +1325,7 @@ idassert-authzFrom	"dn:<rootdn>"
 
 		if ( BER_BVISNULL( &be->be_nsuffix[ c ] ) ) {
 			Debug( LDAP_DEBUG_ANY, "%s: line %d: "
-	"%s: line %d: <suffix> \"%s\" must be within the database naming context, in "
+	"<suffix> \"%s\" must be within the database naming context, in "
 	"\"suffixMassage <suffix> <massaged suffix>\"\n",
 				fname, lineno, pvnc.bv_val );
 			free( pvnc.bv_val );
@@ -1310,7 +1343,7 @@ idassert-authzFrom	"dn:<rootdn>"
 			return 1;
 		}
 	
-		tmp_bd = select_backend( &nrnc, 0, 0 );
+		tmp_bd = select_backend( &nrnc, 0 );
 		if ( tmp_bd != NULL && tmp_bd->be_private == be->be_private ) {
 			Debug( LDAP_DEBUG_ANY, 
 	"%s: line %d: warning: <massaged suffix> \"%s\" resolves to this database, in "

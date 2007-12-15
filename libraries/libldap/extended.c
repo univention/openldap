@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/extended.c,v 1.32.2.6 2007/01/02 21:43:48 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/extended.c,v 1.39.2.2 2007/08/31 23:13:55 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -12,9 +12,18 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
-/* Portions Copyright (C) The Internet Society (1997).
- * ASN.1 fragments are from RFC 2251; see RFC for full legal notices.
- */
+
+#include "portable.h"
+
+#include <stdio.h>
+#include <ac/stdlib.h>
+
+#include <ac/socket.h>
+#include <ac/string.h>
+#include <ac/time.h>
+
+#include "ldap-int.h"
+#include "ldap_log.h"
 
 /*
  * LDAPv3 Extended Operation Request
@@ -30,19 +39,8 @@
  *		response         [11] OCTET STRING OPTIONAL
  *	}
  *
+ * (Source RFC 4511)
  */
-
-#include "portable.h"
-
-#include <stdio.h>
-#include <ac/stdlib.h>
-
-#include <ac/socket.h>
-#include <ac/string.h>
-#include <ac/time.h>
-
-#include "ldap-int.h"
-#include "ldap_log.h"
 
 int
 ldap_extended_operation(
@@ -140,7 +138,7 @@ ldap_extended_operation_s(
         return( rc );
 	}
  
-    if ( ldap_result( ld, msgid, 1, (struct timeval *) NULL, &res ) == -1 ) {
+    if ( ldap_result( ld, msgid, LDAP_MSG_ALL, (struct timeval *) NULL, &res ) == -1 || !res ) {
         return( ld->ld_errno );
 	}
 
@@ -210,13 +208,8 @@ ldap_parse_extended_result (
 		return ld->ld_errno;
 	}
 
-#ifdef LDAP_NULL_IS_NULL
 	rc = ber_scanf( ber, "{eAA" /*}*/, &errcode,
 		&ld->ld_matched, &ld->ld_error );
-#else /* ! LDAP_NULL_IS_NULL */
-	rc = ber_scanf( ber, "{eaa" /*}*/, &errcode,
-		&ld->ld_matched, &ld->ld_error );
-#endif /* ! LDAP_NULL_IS_NULL */
 
 	if( rc == LBER_ERROR ) {
 		ld->ld_errno = LDAP_DECODING_ERROR;
@@ -248,9 +241,7 @@ ldap_parse_extended_result (
 			return ld->ld_errno;
 		}
 
-#ifdef LDAP_NULL_IS_NULL
 		assert( resoid[ 0 ] != '\0' );
-#endif /* LDAP_NULL_IS_NULL */
 
 		tag = ber_peek_tag( ber, &len );
 	}
@@ -324,6 +315,7 @@ ldap_parse_intermediate (
 
 	if( retoidp != NULL ) *retoidp = NULL;
 	if( retdatap != NULL ) *retdatap = NULL;
+	if( serverctrls != NULL ) *serverctrls = NULL;
 
 	ber = ber_dup( res->lm_ber );
 
@@ -359,9 +351,7 @@ ldap_parse_intermediate (
 			return ld->ld_errno;
 		}
 
-#ifdef LDAP_NULL_IS_NULL
 		assert( resoid[ 0 ] != '\0' );
-#endif /* LDAP_NULL_IS_NULL */
 
 		tag = ber_peek_tag( ber, &len );
 	}

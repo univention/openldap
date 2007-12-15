@@ -1,5 +1,5 @@
 /* shellutil.h */
-/* $OpenLDAP: pkg/ldap/servers/slapd/shell-backends/shellutil.h,v 1.9.2.3 2007/01/02 21:44:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/shell-backends/shellutil.h,v 1.11.2.2 2007/08/31 23:14:06 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.

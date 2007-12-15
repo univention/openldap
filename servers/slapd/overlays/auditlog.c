@@ -1,5 +1,5 @@
 /* auditlog.c - log modifications for audit/history purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/auditlog.c,v 1.1.2.8 2007/02/08 12:31:24 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/auditlog.c,v 1.7.2.5 2007/11/27 19:59:20 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2007 The OpenLDAP Foundation.
@@ -184,7 +184,8 @@ static slap_overinst auditlog;
 
 static int
 auditlog_db_init(
-	BackendDB *be
+	BackendDB *be,
+	ConfigReply *cr
 )
 {
 	slap_overinst *on = (slap_overinst *)be->bd_info;
@@ -197,7 +198,8 @@ auditlog_db_init(
 
 static int
 auditlog_db_close(
-	BackendDB *be
+	BackendDB *be,
+	ConfigReply *cr
 )
 {
 	slap_overinst *on = (slap_overinst *)be->bd_info;
@@ -210,7 +212,8 @@ auditlog_db_close(
 
 static int
 auditlog_db_destroy(
-	BackendDB *be
+	BackendDB *be,
+	ConfigReply *cr
 )
 {
 	slap_overinst *on = (slap_overinst *)be->bd_info;
@@ -219,32 +222,6 @@ auditlog_db_destroy(
 	ldap_pvt_thread_mutex_destroy( &ad->ad_mutex );
 	free( ad );
 	return 0;
-}
-
-static int
-auditlog_config(
-	BackendDB	*be,
-	const char	*fname,
-	int		lineno,
-	int		argc,
-	char	**argv
-)
-{
-	slap_overinst *on = (slap_overinst *) be->bd_info;
-	auditlog_data *ad = on->on_bi.bi_private;
-
-	/* history log file */
-	if ( strcasecmp( argv[0], "auditlog" ) == 0 ) {
-		if ( argc < 2 ) {
-			Debug( LDAP_DEBUG_ANY,
-	    "%s: line %d: missing filename in \"auditlog <filename>\" line\n",
-			    fname, lineno, 0 );
-				return( 1 );
-		}
-		ad->ad_logfile = ch_strdup( argv[1] );
-		return 0;
-	}
-	return SLAP_CONF_UNKNOWN;
 }
 
 int auditlog_initialize() {

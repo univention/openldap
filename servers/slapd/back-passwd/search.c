@@ -1,5 +1,5 @@
 /* search.c - /etc/passwd backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/search.c,v 1.70.2.7 2007/01/02 21:44:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/search.c,v 1.79.2.2 2007/08/31 23:14:04 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.

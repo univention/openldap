@@ -1,5 +1,5 @@
 .TH LDAPMODIFY 1 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man1/ldapmodify.1,v 1.44.2.6 2007/01/02 21:43:44 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man1/ldapmodify.1,v 1.49.2.5 2007/12/10 18:19:13 quanah Exp $
 .\" Copyright 1998-2007 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
@@ -79,6 +79,8 @@ ldapmodify, ldapadd \- LDAP modify entry and LDAP add entry tools
 [\c
 .BI \-y \ passwdfile\fR]
 [\c
+.BI \-H \ ldapuri\fR]
+[\c
 .BI \-h \ ldaphost\fR]
 [\c
 .BI \-p \ ldapport\fR]
@@ -107,9 +109,11 @@ ldapmodify, ldapadd \- LDAP modify entry and LDAP add entry tools
 .SH DESCRIPTION
 .B ldapmodify
 is a shell-accessible interface to the
-.BR ldap_modify (3)
+.BR ldap_add_ext (3),
+.BR ldap_modify_ext (3),
+.BR ldap_delete_ext (3)
 and
-.BR ldap_add (3)
+.BR ldap_rename (3).
 library calls.
 .B ldapadd
 is implemented as a hard link to the ldapmodify tool.  When invoked as
@@ -324,6 +328,7 @@ exists and has the contents:
     title: the world's most famous mythical manager
     mail: bjensen@example.com
     uid: bjensen
+.fi
 .LP
 the command:
 .LP
@@ -342,6 +347,7 @@ exists and has the contents:
 .nf
     dn: cn=Barbara Jensen,dc=example,dc=com
     changetype: delete
+.fi
 .LP
 the command:
 .LP
@@ -360,16 +366,13 @@ exit status and a diagnostic message being written to standard error.
 .BR ldapsearch (1),
 .BR ldap.conf (5),
 .BR ldap (3),
-.BR ldap_add (3),
-.BR ldap_delete (3),
-.BR ldap_modify (3),
-.BR ldap_modrdn (3),
+.BR ldap_add_ext (3),
+.BR ldap_delete_ext (3),
+.BR ldap_modify_ext (3),
+.BR ldap_modrdn_ext (3),
 .BR ldif (5),
 .BR slapd.replog (5)
 .SH AUTHOR
 The OpenLDAP Project <http://www.openldap.org/>
 .SH ACKNOWLEDGEMENTS
-.B OpenLDAP
-is developed and maintained by The OpenLDAP Project (http://www.openldap.org/).
-.B OpenLDAP
-is derived from University of Michigan LDAP 3.3 Release.  
+.so ../Project

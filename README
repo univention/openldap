@@ -1,10 +1,10 @@
-OpenLDAP 2.3 README
+OpenLDAP 2.4 README
     For a description of what this distribution contains, see the
     ANNOUNCEMENT file in this directory.  For a description of
     changes from previous releases, see the CHANGES file in this
     directory.
 
-    This is 2.3 release, it includes significant changes from prior
+    This is 2.4 release, it includes significant changes from prior
     releases.
 
 REQUIRED SOFTWARE
@@ -14,18 +14,14 @@ REQUIRED SOFTWARE
 
     Base system (libraries and tools):
         Standard C compiler (required)
-        Cyrus SASL 2.1.18+ (recommended)
+        Cyrus SASL 2.1.21+ (recommended)
         OpenSSL 0.9.7+ (recommended)
         POSIX REGEX software (required)
 
     SLAPD:
         BDB and HDB backends require Oracle Berkeley DB 4.2, 4.4,
-        or 4.5.  It is highly recommended to apply the patches
+        4.5, or 4.6.  It is highly recommended to apply the patches
         from Oracle for a given release.
-
-    SLURPD:
-        LTHREAD compatible thread package
-            [POSIX threads, Mach Cthreads, select others]
 
     CLIENTS/CONTRIB ware:
         Depends on package.  See per package README.
@@ -78,7 +74,7 @@ CONTRIBUTING
     <http://www.openldap.org/its/> to be considered.
 
 ---
-$OpenLDAP: pkg/ldap/README,v 1.38.2.9 2007/10/11 18:52:18 quanah Exp $
+$OpenLDAP: pkg/ldap/README,v 1.40.2.6 2007/10/11 18:55:56 quanah Exp $
 
 This work is part of OpenLDAP Software <http://www.openldap.org/>.
 

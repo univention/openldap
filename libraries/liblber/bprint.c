@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblber/bprint.c,v 1.55.2.4 2007/08/27 10:11:31 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/bprint.c,v 1.57.2.2 2007/08/31 23:13:54 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.

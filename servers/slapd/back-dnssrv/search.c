@@ -1,5 +1,5 @@
 /* search.c - DNS SRV backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/search.c,v 1.35.2.6 2007/01/02 21:44:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/search.c,v 1.44.2.3 2007/08/31 23:14:02 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2007 The OpenLDAP Foundation.
@@ -48,7 +48,6 @@ dnssrv_back_search(
 	rs->sr_ref = NULL;
 
 	if ( BER_BVISEMPTY( &op->o_req_ndn ) ) {
-#ifdef LDAP_DEVEL
 		/* FIXME: need some means to determine whether the database
 		 * is a glue instance; if we got here with empty DN, then
 		 * we passed this same test in dnssrv_back_referrals() */
@@ -60,7 +59,6 @@ dnssrv_back_search(
 			rs->sr_err = LDAP_SUCCESS;
 		}
 		goto done;
-#endif /* LDAP_DEVEL */
 	}
 
 	manageDSAit = get_manageDSAit( op );

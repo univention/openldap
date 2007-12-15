@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test010-passwd,v 1.18.2.7 2007/01/02 21:44:13 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test010-passwd,v 1.26.2.2 2007/08/31 23:14:09 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2007 The OpenLDAP Foundation.
@@ -183,4 +183,7 @@ $LDAPSEARCH -h $LOCALHOST -p $PORT1 \
 test $KILLSERVERS != no && kill -HUP $KILLPIDS
 
 echo ">>>>> Test succeeded"
+
+test $KILLSERVERS != no && wait
+
 exit 0

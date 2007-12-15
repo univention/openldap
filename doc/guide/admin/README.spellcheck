@@ -1,0 +1,16 @@
+# $OpenLDAP: pkg/openldap-guide/admin/README.spellcheck,v 1.2.2.2 2007/10/23 19:06:09 quanah Exp $
+# Copyright 2007 The OpenLDAP Foundation, All Rights Reserved.
+# COPYING RESTRICTIONS APPLY, see COPYRIGHT.
+#
+# README.spellcheck 
+#
+
+aspell.en.pws
+	We use aspell to spell check the Admin Guide and Man Pages.
+	
+	Please move aspell.en.pws to ~/.aspell.en.pws and run:
+	
+	aspell --lang=en_US -c <filename>
+	
+	If you add additional words and terms, please add
+	them or copy them to aspell.en.pws and commit.

@@ -1,5 +1,5 @@
 /* shell.h - shell backend header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/shell.h,v 1.22.2.3 2007/01/02 21:44:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/shell.h,v 1.24.2.2 2007/08/31 23:14:05 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -46,10 +46,6 @@ struct shellinfo {
 	char	**si_delete;	/* cmd + args to exec for delete  */
 };
 
-struct slap_backend_db;
-struct slap_conn;
-struct slap_op;
-
 extern pid_t forkandexec LDAP_P((
 	char **args,
 	FILE **rfp,
@@ -57,11 +53,11 @@ extern pid_t forkandexec LDAP_P((
 
 extern void print_suffixes LDAP_P((
 	FILE *fp,
-	struct slap_backend_db *bd));
+	BackendDB *bd));
 
 extern int read_and_send_results LDAP_P((
-	struct slap_op *op,
-	struct slap_rep *rs,
+	Operation *op,
+	SlapReply *rs,
 	FILE *fp));
 
 LDAP_END_DECL

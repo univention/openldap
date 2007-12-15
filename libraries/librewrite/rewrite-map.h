@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/rewrite-map.h,v 1.5.2.3 2007/01/02 21:43:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/rewrite-map.h,v 1.7.2.2 2007/08/31 23:13:57 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2007 The OpenLDAP Foundation.
@@ -28,27 +28,5 @@ rewrite_builtin_map_find(
                 struct rewrite_info *info,
                 const char *name
 );
-
-
-/*
- * LDAP map
- */
-LDAP_REWRITE_F (void  *)
-map_ldap_parse(
-		struct rewrite_info *info,
-		const char *fname,
-		int lineno,
-	       	int argc,
-	       	char **argv
-);
-
-LDAP_REWRITE_F (int)
-map_ldap_apply( struct rewrite_builtin_map *map,
-		const char *filter,
-		struct berval *val
-);
-
-LDAP_REWRITE_F (int)
-map_ldap_destroy( struct rewrite_builtin_map **map );
 
 #endif /* MAP_H */

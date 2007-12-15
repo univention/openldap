@@ -1,5 +1,5 @@
 /* init.c - initialize shell backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/init.c,v 1.35.2.3 2007/01/02 21:44:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/init.c,v 1.37.2.2 2007/08/31 23:14:05 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -35,6 +35,8 @@
 #include <ac/socket.h>
 
 #include "slap.h"
+
+#include "config.h"
 
 #include "shell.h"
 
@@ -76,7 +78,8 @@ shell_back_initialize(
 
 int
 shell_back_db_init(
-    Backend	*be
+	Backend	*be,
+	ConfigReply *cr
 )
 {
 	struct shellinfo	*si;
@@ -90,7 +93,8 @@ shell_back_db_init(
 
 int
 shell_back_db_destroy(
-    Backend	*be
+	Backend	*be,
+	ConfigReply *cr
 )
 {
 	free( be->be_private );

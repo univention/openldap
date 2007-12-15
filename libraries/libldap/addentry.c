@@ -1,5 +1,5 @@
 /* addentry.c */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/addentry.c,v 1.14.2.4 2007/07/22 15:55:36 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/addentry.c,v 1.16.2.2 2007/08/31 23:13:55 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.

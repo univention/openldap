@@ -1,5 +1,5 @@
 /* dn2entry.c - routines to deal with the dn2id / id2entry glue */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2entry.c,v 1.25.2.5 2007/01/02 21:44:00 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2entry.c,v 1.28.2.6 2007/12/06 05:43:27 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2007 The OpenLDAP Foundation.
@@ -34,7 +34,7 @@ bdb_dn2entry(
 	struct berval *dn,
 	EntryInfo **e,
 	int matched,
-	u_int32_t locker,
+	BDB_LOCKER locker,
 	DB_LOCK *lock )
 {
 	EntryInfo *ei = NULL;
@@ -45,7 +45,7 @@ bdb_dn2entry(
 
 	*e = NULL;
 
-	rc = bdb_cache_find_ndn( op, tid, dn, &ei );
+	rc = bdb_cache_find_ndn( op, locker, dn, &ei );
 	if ( rc ) {
 		if ( matched && rc == DB_NOTFOUND ) {
 			/* Set the return value, whether we have its entry
@@ -54,7 +54,7 @@ bdb_dn2entry(
 			*e = ei;
 			if ( ei && ei->bei_id ) {
 				rc2 = bdb_cache_find_id( op, tid, ei->bei_id,
-					&ei, 1, locker, lock );
+					&ei, ID_LOCKED, locker, lock );
 				if ( rc2 ) rc = rc2;
 			} else if ( ei ) {
 				bdb_cache_entryinfo_unlock( ei );
@@ -65,7 +65,7 @@ bdb_dn2entry(
 			bdb_cache_entryinfo_unlock( ei );
 		}
 	} else {
-		rc = bdb_cache_find_id( op, tid, ei->bei_id, &ei, 1,
+		rc = bdb_cache_find_id( op, tid, ei->bei_id, &ei, ID_LOCKED,
 			locker, lock );
 		if ( rc == 0 ) {
 			*e = ei;
@@ -73,7 +73,7 @@ bdb_dn2entry(
 			/* always return EntryInfo */
 			if ( ei->bei_parent ) {
 				ei = ei->bei_parent;
-				rc2 = bdb_cache_find_id( op, tid, ei->bei_id, &ei, 1,
+				rc2 = bdb_cache_find_id( op, tid, ei->bei_id, &ei, 0,
 					locker, lock );
 				if ( rc2 ) rc = rc2;
 			}

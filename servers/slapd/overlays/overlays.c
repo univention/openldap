@@ -1,5 +1,5 @@
 /* overlays.c - Static overlay framework */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/overlays.c,v 1.12.2.9 2007/01/02 21:44:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/overlays.c,v 1.24.2.2 2007/08/31 23:14:06 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2007 The OpenLDAP Foundation.

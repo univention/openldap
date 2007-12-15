@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/rewrite.h,v 1.12.2.4 2007/01/02 21:43:47 kurt Exp $
+/* $OpenLDAP: pkg/ldap/include/rewrite.h,v 1.15.2.2 2007/08/31 23:13:53 quanah Exp $
  */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
@@ -252,6 +252,46 @@ LDAP_REWRITE_F (int)
 rewrite_param_destroy(
                 struct rewrite_info *info
 );
+
+/*
+ * Mapping implementations
+ */
+
+struct rewrite_mapper;
+
+typedef void * (rewrite_mapper_config)(
+	const char *fname,
+	int lineno,
+	int argc,
+	char **argv );
+
+typedef int (rewrite_mapper_apply)(
+	void *ctx,
+	const char *arg,
+	struct berval *retval );
+
+typedef int (rewrite_mapper_destroy)(
+	void *ctx );
+
+typedef struct rewrite_mapper {
+	char *rm_name;
+	rewrite_mapper_config *rm_config;
+	rewrite_mapper_apply *rm_apply;
+	rewrite_mapper_destroy *rm_destroy;
+} rewrite_mapper;
+
+/* For dynamic loading and unloading of mappers */
+LDAP_REWRITE_F (int)
+rewrite_mapper_register(
+	const rewrite_mapper *map );
+
+LDAP_REWRITE_F (int)
+rewrite_mapper_unregister(
+	const rewrite_mapper *map );
+
+LDAP_REWRITE_F (const rewrite_mapper *)
+rewrite_mapper_find(
+	const char *name );
 
 LDAP_END_DECL
 

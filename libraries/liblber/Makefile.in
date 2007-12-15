@@ -1,5 +1,5 @@
 # LIBLBER
-# $OpenLDAP: pkg/ldap/libraries/liblber/Makefile.in,v 1.35.2.3 2007/01/02 21:43:48 kurt Exp $
+# $OpenLDAP: pkg/ldap/libraries/liblber/Makefile.in,v 1.37.2.3 2007/11/15 00:31:05 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2007 The OpenLDAP Foundation.
@@ -37,6 +37,7 @@ LDAP_LIBDIR= ../../libraries
 XLIBS = $(LIBRARY) $(LDAP_LIBLUTIL_A)
 XXLIBS = 
 NT_LINK_LIBS = $(AC_LIBS)
+UNIX_LINK_LIBS = $(AC_LIBS)
 
 dtest:    $(XLIBS) dtest.o
 	$(LTLINK) -o $@ dtest.o $(LIBS)

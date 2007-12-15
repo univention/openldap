@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/search.c,v 1.64.2.9 2007/06/08 07:43:26 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/search.c,v 1.76.2.3 2007/08/31 23:13:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -138,7 +138,7 @@ ldap_search_ext_s(
 		return( rc );
 	}
 
-	rc = ldap_result( ld, msgid, 1, timeout, res );
+	rc = ldap_result( ld, msgid, LDAP_MSG_ALL, timeout, res );
 
 	if( rc <= 0 ) {
 		/* error(-1) or timeout(0) */
@@ -261,7 +261,7 @@ ldap_build_search_req(
 	if ( LDAP_IS_UDP(ld) ) {
 		struct sockaddr sa = {0};
 		/* dummy, filled with ldo_peer in request.c */
-		err = ber_write( ber, &sa, sizeof( sa ), 0 );
+	    err = ber_write( ber, &sa, sizeof( sa ), 0 );
 	}
 	if ( LDAP_IS_UDP(ld) && ld->ld_options.ldo_version == LDAP_VERSION2) {
 	    char *dn = ld->ld_options.ldo_cldapdn;
@@ -301,18 +301,27 @@ ldap_build_search_req(
 
 #ifdef LDAP_DEBUG
 	if ( ldap_debug & LDAP_DEBUG_ARGS ) {
-		if ( attrs == NULL ) {
-			Debug( LDAP_DEBUG_ARGS, "ldap_build_search_req ATTRS: *\n", 0, 0, 0 );
-			
-		} else {
+		char	buf[ BUFSIZ ] = { ' ', '*', '\0' };
+
+		if ( attrs != NULL ) {
+			char	*ptr;
 			int	i;
 
-			Debug( LDAP_DEBUG_ARGS, "ldap_build_search_req ATTRS:\n", 0, 0, 0 );
-
-			for ( i = 0; attrs[ i ]; i++ ) {
-				Debug( LDAP_DEBUG_ARGS, "    %s\n", attrs[ i ], 0, 0 );
+			for ( ptr = buf, i = 0;
+				attrs[ i ] != NULL && ptr < &buf[ sizeof( buf ) ];
+				i++ )
+			{
+				ptr += snprintf( ptr, sizeof( buf ) - ( ptr - buf ),
+					" %s", attrs[ i ] );
 			}
+
+			if ( ptr >= &buf[ sizeof( buf ) ] ) {
+				AC_MEMCPY( &buf[ sizeof( buf ) - STRLENOF( "...(truncated)" ) - 1 ],
+					"...(truncated)", STRLENOF( "...(truncated)" ) + 1 );
+			} 
 		}
+
+		Debug( LDAP_DEBUG_ARGS, "ldap_build_search_req ATTRS:%s\n", buf, 0, 0 );
 	}
 #endif /* LDAP_DEBUG */
 
@@ -349,7 +358,7 @@ ldap_search_st(
 	    == -1 )
 		return( ld->ld_errno );
 
-	if ( ldap_result( ld, msgid, 1, timeout, res ) == -1 )
+	if ( ldap_result( ld, msgid, LDAP_MSG_ALL, timeout, res ) == -1 )
 		return( ld->ld_errno );
 
 	if ( ld->ld_errno == LDAP_TIMEOUT ) {
@@ -377,7 +386,7 @@ ldap_search_s(
 	    == -1 )
 		return( ld->ld_errno );
 
-	if ( ldap_result( ld, msgid, 1, (struct timeval *) NULL, res ) == -1 )
+	if ( ldap_result( ld, msgid, LDAP_MSG_ALL, (struct timeval *) NULL, res ) == -1 || !res )
 		return( ld->ld_errno );
 
 	return( ldap_result2error( ld, *res, 0 ) );
@@ -407,8 +416,7 @@ static char escape[128] = {
 #define	NEEDFLTESCAPE(c)	((c) & 0x80 || escape[ (unsigned)(c) ])
 
 /*
- * compute the length of the escaped value;
- * returns ((ber_len_t)(-1)) if no escaping is required.
+ * compute the length of the escaped value
  */
 ber_len_t
 ldap_bv2escaped_filter_value_len( struct berval *in )
@@ -421,7 +429,6 @@ ldap_bv2escaped_filter_value_len( struct berval *in )
 		return 0;
 	}
 
-	/* assume we'll escape everything */
 	for( l = 0, i = 0; i < in->bv_len; l++, i++ ) {
 		char c = in->bv_val[ i ];
 		if ( NEEDFLTESCAPE( c ) ) {

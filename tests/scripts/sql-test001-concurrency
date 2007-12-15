@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/sql-test001-concurrency,v 1.2.4.4 2007/01/02 21:44:13 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/sql-test001-concurrency,v 1.4.2.3 2007/08/31 23:14:09 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2007 The OpenLDAP Foundation.
@@ -24,6 +24,16 @@ fi
 if test $RDBMS = "rdbmsno" ; then
 	echo "SQL test not requested, test skipped"
 	exit 0
+fi
+
+if test "x$LOOPS" = "x" ; then
+	LOOPS=5
+fi
+
+if test "x$CHILDREN" = "x" ; then
+	CHILDREN="-j 4"
+else
+	CHILDREN="-j $CHILDREN"
 fi
 
 SQLDATADIR=$TESTDIR/sql-concurrency
@@ -74,7 +84,7 @@ echo "Filtering original ldif used to create database..."
 if test "${RDBMSWRITE}" != "yes"; then
 	echo "write test disabled for ${RDBMS}; set SLAPD_USE_SQLWRITE=yes to enable"
 	cp $SQLCONCURRENCYDIR/do_read* $SQLCONCURRENCYDIR/do_search* \
-		$SQLDATADIR
+		$SQLCONCURRENCYDIR/do_bind* $SQLDATADIR
 else
 	case ${RDBMS} in
 		# list here the RDBMSes whose mapping allows writes
@@ -84,14 +94,15 @@ else
 	*)
 		echo "write is not supported for ${RDBMS}; performing read-only concurrency test"
 		cp $SQLCONCURRENCYDIR/do_read* $SQLCONCURRENCYDIR/do_search* \
-			$SQLDATADIR
+			$SQLCONCURRENCYDIR/do_bind* $SQLDATADIR
 		;;
 	esac
 fi
 
 echo "Using tester for concurrent server access..."
 $SLAPDTESTER -P "$PROGDIR" -d "$SQLDATADIR" \
-	-h $LOCALHOST -p $PORT1 -D "$MANAGERDN" -w $PASSWD -l 5 -j 4
+	-h $LOCALHOST -p $PORT1 -D "$MANAGERDN" -w $PASSWD \
+	-l $LOOPS $CHILDREN -FF
 RC=$?
 
 if test $RC != 0 ; then

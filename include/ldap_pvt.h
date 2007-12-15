@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/ldap_pvt.h,v 1.82.2.8 2007/01/02 21:43:46 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap_pvt.h,v 1.91.2.4 2007/08/31 23:13:53 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -27,6 +27,7 @@ LDAP_BEGIN_DECL
 #define LDAP_PROTO_TCP 1 /* ldap://  */
 #define LDAP_PROTO_UDP 2 /* reserved */
 #define LDAP_PROTO_IPC 3 /* ldapi:// */
+#define LDAP_PROTO_EXT 4 /* user-defined socket/sockbuf */
 
 LDAP_F ( int )
 ldap_pvt_url_scheme2proto LDAP_P((
@@ -41,10 +42,48 @@ ldap_pvt_url_scheme_port LDAP_P((
 
 struct ldap_url_desc; /* avoid pulling in <ldap.h> */
 
+#define LDAP_PVT_URL_PARSE_NONE			(0x00U)
+#define LDAP_PVT_URL_PARSE_NOEMPTY_HOST		(0x01U)
+#define LDAP_PVT_URL_PARSE_DEF_PORT		(0x02U)
+#define LDAP_PVT_URL_PARSE_NOEMPTY_DN		(0x04U)
+#define LDAP_PVT_URL_PARSE_NODEF_SCOPE		(0x08U)
+#define	LDAP_PVT_URL_PARSE_HISTORIC		(LDAP_PVT_URL_PARSE_NODEF_SCOPE | \
+						 LDAP_PVT_URL_PARSE_NOEMPTY_HOST | \
+						 LDAP_PVT_URL_PARSE_DEF_PORT)
+
 LDAP_F( int )
 ldap_url_parse_ext LDAP_P((
 	LDAP_CONST char *url,
-	struct ldap_url_desc **ludpp ));
+	struct ldap_url_desc **ludpp,
+	unsigned flags ));
+
+LDAP_F (int) ldap_url_parselist LDAP_P((	/* deprecated, use ldap_url_parselist_ext() */
+	struct ldap_url_desc **ludlist,
+	const char *url ));
+
+LDAP_F (int) ldap_url_parselist_ext LDAP_P((
+	struct ldap_url_desc **ludlist,
+	const char *url,
+	const char *sep,
+	unsigned flags ));
+
+LDAP_F (char *) ldap_url_list2urls LDAP_P((
+	struct ldap_url_desc *ludlist ));
+
+LDAP_F (void) ldap_free_urllist LDAP_P((
+	struct ldap_url_desc *ludlist ));
+
+LDAP_F (int) ldap_pvt_scope2bv LDAP_P ((
+	int scope, struct berval *bv ));
+
+LDAP_F (LDAP_CONST char *) ldap_pvt_scope2str LDAP_P ((
+	int scope ));
+
+LDAP_F (int) ldap_pvt_bv2scope LDAP_P ((
+	struct berval *bv ));
+
+LDAP_F (int) ldap_pvt_str2scope LDAP_P ((
+	LDAP_CONST char * ));
 
 LDAP_F( char * )
 ldap_pvt_ctime LDAP_P((
@@ -156,12 +195,10 @@ LDAP_F (void) ldap_pvt_hex_unescape LDAP_P(( char *s ));
 
 /* controls.c */
 struct ldapcontrol;
-LDAP_F (struct ldapcontrol *) ldap_control_dup LDAP_P((
-	const struct ldapcontrol *ctrl ));
-
-LDAP_F (struct ldapcontrol **) ldap_controls_dup LDAP_P((
-	struct ldapcontrol *const *ctrls ));
-
+LDAP_F (int)
+ldap_pvt_put_control LDAP_P((
+	const struct ldapcontrol *c,
+	BerElement *ber ));
 LDAP_F (int) ldap_pvt_get_controls LDAP_P((
 	BerElement *be,
 	struct ldapcontrol ***ctrlsp));
@@ -193,13 +230,20 @@ LDAP_F (void) ldap_pvt_sasl_remove LDAP_P(( struct sockbuf * ));
 struct ldap;
 struct ldapmsg;
 
-LDAP_F (int) ldap_open_internal_connection LDAP_P((
-	struct ldap **ldp, ber_socket_t *fdp ));
+/* abandon */
+LDAP_F ( int ) ldap_pvt_discard LDAP_P((
+	struct ldap *ld, ber_int_t msgid ));
 
 /* messages.c */
 LDAP_F( BerElement * )
 ldap_get_message_ber LDAP_P((
 	struct ldapmsg * ));
+
+/* open */
+LDAP_F (int) ldap_open_internal_connection LDAP_P((
+	struct ldap **ldp, ber_socket_t *fdp ));
+LDAP_F (int) ldap_init_fd LDAP_P((
+	ber_socket_t fd, int proto, LDAP_CONST char *url, struct ldap **ldp ));
 
 /* search.c */
 LDAP_F( int ) ldap_pvt_put_filter LDAP_P((
@@ -246,8 +290,7 @@ LDAP_F (int) ldap_pvt_tls_init_def_ctx LDAP_P(( int is_server ));
 LDAP_F (int) ldap_pvt_tls_accept LDAP_P(( Sockbuf *sb, void *ctx_arg ));
 LDAP_F (int) ldap_pvt_tls_inplace LDAP_P(( Sockbuf *sb ));
 LDAP_F (void *) ldap_pvt_tls_sb_ctx LDAP_P(( Sockbuf *sb ));
-
-LDAP_F (int) ldap_pvt_tls_init_default_ctx LDAP_P(( void ));
+LDAP_F (void) ldap_pvt_tls_ctx_free LDAP_P(( void * ));
 
 typedef int LDAPDN_rewrite_dummy LDAP_P (( void *dn, unsigned flags ));
 
@@ -273,7 +316,7 @@ LDAP_END_DECL
  * If none is available, unsigned long data is used.
  */
 
-#if USE_MP_BIGNUM
+#ifdef USE_MP_BIGNUM
 /*
  * Use OpenSSL's BIGNUM
  */
@@ -299,7 +342,7 @@ typedef	BIGNUM* ldap_pvt_mp_t;
 #define ldap_pvt_mp_clear(mp) \
 	do { BN_free((mp)); (mp) = 0; } while (0)
 
-#elif USE_MP_GMP
+#elif defined(USE_MP_GMP)
 /*
  * Use GNU's multiple precision library
  */
@@ -328,13 +371,13 @@ typedef mpz_t		ldap_pvt_mp_t;
  * Use unsigned long long
  */
 
-#if USE_MP_LONG_LONG
+#ifdef USE_MP_LONG_LONG
 typedef	unsigned long long	ldap_pvt_mp_t;
 #define	LDAP_PVT_MP_INIT	(0LL)
-#elif USE_MP_LONG
+#elif defined(USE_MP_LONG)
 typedef	unsigned long		ldap_pvt_mp_t;
 #define	LDAP_PVT_MP_INIT	(0L)
-#elif HAVE_LONG_LONG
+#elif defined(HAVE_LONG_LONG)
 typedef	unsigned long long	ldap_pvt_mp_t;
 #define	LDAP_PVT_MP_INIT	(0LL)
 #else

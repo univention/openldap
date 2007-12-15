@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/dnssrv.c,v 1.37.2.4 2007/01/02 21:43:48 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/dnssrv.c,v 1.39.2.3 2007/08/31 23:13:55 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -276,7 +276,7 @@ int ldap_domain2hostlist(
 		port = (p[4] << 8) | p[5];
 
 		if ( port == 0 || host[ 0 ] == '\0' ) {
-			goto add_size;
+		    goto add_size;
 		}
 
 		buflen = strlen(host) + STRLENOF(":65355 ");

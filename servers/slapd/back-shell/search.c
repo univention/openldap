@@ -1,5 +1,5 @@
 /* search.c - shell backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/search.c,v 1.27.2.3 2007/01/02 21:44:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/search.c,v 1.29.2.2 2007/08/31 23:14:05 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.

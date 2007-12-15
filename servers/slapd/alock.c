@@ -1,5 +1,5 @@
 /* alock.c - access lock library */
-/* $OpenLDAP: pkg/ldap/servers/slapd/alock.c,v 1.2.2.5 2007/01/02 21:43:54 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/alock.c,v 1.5.2.6 2007/09/26 15:46:37 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2007 The OpenLDAP Foundation.
@@ -21,7 +21,7 @@
 
 #include "portable.h"
 
-#if SLAPD_BDB || SLAPD_HDB || SLAPD_LDBM
+#if SLAPD_BDB || SLAPD_HDB
 
 #include "alock.h"
 
@@ -32,7 +32,9 @@
 #include <ac/assert.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef HAVE_SYS_FILE_H
 #include <sys/file.h>
+#endif
 #include <fcntl.h>
 
 #ifdef _WIN32
@@ -229,7 +231,7 @@ alock_read_slot ( alock_info_t * info,
 	}
 	
 	if (alock_read_iattr (slotbuf) != ALOCK_MAGIC) {
-		return 1;
+		return -1;
 	}
 	slot_data->al_lock  = alock_read_iattr (slotbuf+8);
 	slot_data->al_stamp = alock_read_iattr (slotbuf+16);
@@ -262,7 +264,8 @@ alock_write_slot ( alock_info_t * info,
 	alock_write_iattr (slotbuf+16, slot_data->al_stamp);
 	alock_write_iattr (slotbuf+24, slot_data->al_pid);
 
-	strncpy ((char *)slotbuf+32, slot_data->al_appname, ALOCK_MAX_APPNAME-1);
+	if (slot_data->al_appname)
+		strncpy ((char *)slotbuf+32, slot_data->al_appname, ALOCK_MAX_APPNAME-1);
 	slotbuf[ALOCK_SLOT_SIZE-1] = '\0';
 
 	res = lseek (info->al_fd, 
@@ -513,7 +516,7 @@ alock_scan ( alock_info_t * info )
 }
 
 int
-alock_close ( alock_info_t * info )
+alock_close ( alock_info_t * info, int nosave )
 {
 	alock_slot_t slot_data;
 	int res;
@@ -537,7 +540,9 @@ alock_close ( alock_info_t * info )
 			free (slot_data.al_appname);
 		return ALOCK_UNSTABLE;
 	}
-	slot_data.al_lock = ALOCK_UNLOCKED | (slot_data.al_lock & ALOCK_NOSAVE);
+	slot_data.al_lock = ALOCK_UNLOCKED;
+	if ( nosave )
+		slot_data.al_lock |= ALOCK_NOSAVE;
 	res = alock_write_slot (info, &slot_data);
 	if (res == -1) {
 		close (info->al_fd);

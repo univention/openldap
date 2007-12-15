@@ -1,5 +1,5 @@
 /*
- * Copyright 2000, OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2006, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -12,7 +12,6 @@
 #include "LDAPBindRequest.h"
 #include "LDAPCompareRequest.h"
 #include "LDAPDeleteRequest.h"
-#include "LDAPException.h"
 #include "LDAPExtRequest.h"
 #include "LDAPEntry.h"
 #include "LDAPModDNRequest.h"
@@ -49,19 +48,33 @@ void LDAPAsynConnection::init(const string& hostname, int port){
     DEBUG(LDAP_DEBUG_TRACE | LDAP_DEBUG_PARAMETER,
             "   hostname:" << hostname << endl
             << "   port:" << port << endl);
-    std::ostringstream urlstream;
-    urlstream << "ldap://" + hostname << ":" << port;
-    std::string url = urlstream.str();
-    ldap_initialize(&cur_session, url.c_str());
-    m_host=hostname;
-    m_port=port;
+
+    m_uri.setScheme("ldap");
+    m_uri.setHost(hostname);
+    m_uri.setPort(port);
+    
+    const char *ldapuri = m_uri.getURLString().c_str();
+    int ret = ldap_initialize(&cur_session, ldapuri);
+    if ( ret != LDAP_SUCCESS ) {
+        throw LDAPException( ret );
+    }
+    int opt=3;
+    ldap_set_option(cur_session, LDAP_OPT_REFERRALS, LDAP_OPT_OFF);
+    ldap_set_option(cur_session, LDAP_OPT_PROTOCOL_VERSION, &opt);
+}
+
+void LDAPAsynConnection::initialize(const std::string& uri){
+	m_uri.setURLString(uri);
+    int ret = ldap_initialize(&cur_session, m_uri.getURLString().c_str());
+    if ( ret != LDAP_SUCCESS ) {
+        throw LDAPException( ret );
+    }
     int opt=3;
     ldap_set_option(cur_session, LDAP_OPT_REFERRALS, LDAP_OPT_OFF);
     ldap_set_option(cur_session, LDAP_OPT_PROTOCOL_VERSION, &opt);
 }
 
 void LDAPAsynConnection::start_tls(){
-    int resCode;
     if( ldap_start_tls_s( cur_session, NULL, NULL ) != LDAP_SUCCESS ) {
         throw LDAPException(this);
     }
@@ -241,12 +254,12 @@ LDAP* LDAPAsynConnection::getSessionHandle() const{
 
 const string& LDAPAsynConnection::getHost() const{
     DEBUG(LDAP_DEBUG_TRACE,"LDAPAsynConnection::setHost()" << endl);
-    return m_host;
+    return m_uri.getHost();
 }
 
 int LDAPAsynConnection::getPort() const{
     DEBUG(LDAP_DEBUG_TRACE,"LDAPAsynConnection::getPort()" << endl);
-    return m_port;
+    return m_uri.getPort();
 }
 
 LDAPAsynConnection* LDAPAsynConnection::referralConnect(

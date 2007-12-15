@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/config.c,v 1.17.2.7 2007/01/02 21:44:07 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/config.c,v 1.32.2.3 2007/08/31 23:14:05 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.
@@ -148,7 +148,20 @@ backsql_db_config(
 		}
 		ber_str2bv( argv[ 1 ], 0, 1, &bi->sql_children_cond );
 		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
-			"subtree_cond=%s\n", bi->sql_children_cond.bv_val, 0, 0 );
+			"children_cond=%s\n", bi->sql_children_cond.bv_val, 0, 0 );
+
+	} else if ( !strcasecmp( argv[ 0 ], "dn_match_cond" ) ) {
+		if ( argc < 2 ) {
+			Debug( LDAP_DEBUG_TRACE, 
+				"<==backsql_db_config (%s line %d): "
+				"missing SQL condition "
+				"in \"dn_match_cond\" directive\n",
+				fname, lineno, 0 );
+			return 1;
+		}
+		ber_str2bv( argv[ 1 ], 0, 1, &bi->sql_dn_match_cond );
+		Debug( LDAP_DEBUG_TRACE, "<==backsql_db_config(): "
+			"children_cond=%s\n", bi->sql_dn_match_cond.bv_val, 0, 0 );
 
 	} else if ( !strcasecmp( argv[ 0 ], "oc_query" ) ) {
 		if ( argc < 2 ) {
@@ -661,10 +674,10 @@ read_baseObject(
 		return LDAP_OTHER;
 	}
 
-	bi->sql_baseObject = (Entry *) SLAP_CALLOC( 1, sizeof(Entry) );
+	bi->sql_baseObject = entry_alloc();
 	if ( bi->sql_baseObject == NULL ) {
 		Debug( LDAP_DEBUG_ANY,
-			"read_baseObject_file: SLAP_CALLOC failed", 0, 0, 0 );
+			"read_baseObject_file: entry_alloc failed", 0, 0, 0 );
 		ldif_close( fp );
 		return LDAP_NO_MEMORY;
 	}

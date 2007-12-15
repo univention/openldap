@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/close.c,v 1.14.2.4 2007/01/02 21:44:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/close.c,v 1.17.2.2 2007/08/31 23:14:04 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.
@@ -16,7 +16,7 @@
  */
 
 #include "perl_back.h"
-
+#include "../config.h"
 /**********************************************************
  *
  * Close
@@ -39,7 +39,8 @@ perl_back_close(
 
 int
 perl_back_db_destroy(
-	BackendDB *be
+	BackendDB *be,
+	ConfigReply *cr
 )
 {
 	free( be->be_private );

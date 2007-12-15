@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.144.2.19 2007/01/02 21:43:57 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.163.2.6 2007/09/04 00:39:45 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -202,7 +202,6 @@ int slap_parse_user( struct berval *id, struct berval *user,
 	return LDAP_SUCCESS;
 }
 
-#ifdef SLAP_AUTHZ_SYNTAX
 int
 authzValidate(
 	Syntax *syntax,
@@ -458,20 +457,6 @@ done:
 	ldap_free_urldesc( ludp );
 	return( rc );
 }
-
-#if 0
-int
-authzMatch(
-	int		*matchp,
-	slap_mask_t	flags,
-	Syntax		*syntax,
-	MatchingRule	*mr,
-	struct berval	*value,
-	void		*assertedValue )
-{
-	return octetStringMatch( matchp, flags, syntax, mr, value, assertedValue );
-}
-#endif
 
 static int
 authzPrettyNormal(
@@ -919,7 +904,6 @@ authzPretty(
 	return rc;
 }
 
-#endif /* SLAP_AUTHZ_SYNTAX */
 
 static int
 slap_parseURI(
@@ -936,9 +920,7 @@ slap_parseURI(
 	int		rc;
 	LDAPURLDesc	*ludp;
 
-#ifdef SLAP_ORDERED_PRETTYNORM
 	struct berval	idx;
-#endif /* SLAP_ORDERED_PRETTYNORM */
 
 	assert( uri != NULL && !BER_BVISNULL( uri ) );
 	BER_BVZERO( base );
@@ -952,7 +934,6 @@ slap_parseURI(
 
 	rc = LDAP_PROTOCOL_ERROR;
 
-#ifdef SLAP_ORDERED_PRETTYNORM
 	idx = *uri;
 	if ( idx.bv_val[ 0 ] == '{' ) {
 		char	*ptr;
@@ -965,7 +946,6 @@ slap_parseURI(
 		idx.bv_val = ptr;
 		uri = &idx;
 	}
-#endif /* SLAP_ORDERED_PRETTYNORM */
 
 	/*
 	 * dn[.<dnstyle>]:<dnpattern>
@@ -1320,7 +1300,8 @@ int slap_sasl_rewrite_config(
 	return rc;
 }
 
-int slap_sasl_rewrite_destroy( void )
+static int
+slap_sasl_rewrite_destroy( void )
 {
 	if ( sasl_rwinfo ) {
 		rewrite_info_delete( &sasl_rwinfo );
@@ -1380,38 +1361,59 @@ int slap_sasl_regexp_config( const char *match, const char *replace )
 
 	reg = &SaslRegexp[nSaslRegexp];
 
-	reg->sr_match = ch_strdup( match );
-	reg->sr_replace = ch_strdup( replace );
-
 #ifdef SLAP_AUTH_REWRITE
 	rc = slap_sasl_regexp_rewrite_config( "sasl-regexp", 0,
 			match, replace, AUTHID_CONTEXT );
-	if ( rc == LDAP_SUCCESS ) nSaslRegexp++;
-	return rc;
 #else /* ! SLAP_AUTH_REWRITE */
 
 	/* Precompile matching pattern */
-	rc = regcomp( &reg->sr_workspace, reg->sr_match, REG_EXTENDED|REG_ICASE );
+	rc = regcomp( &reg->sr_workspace, match, REG_EXTENDED|REG_ICASE );
 	if ( rc ) {
 		Debug( LDAP_DEBUG_ANY,
-		"SASL match pattern %s could not be compiled by regexp engine\n",
-		reg->sr_match, 0, 0 );
+			"SASL match pattern %s could not be compiled by regexp engine\n",
+			match, 0, 0 );
 
 #ifdef ENABLE_REWRITE
-	/* Dummy block to force symbol references in librewrite */
-	if ( slapMode == ( SLAP_SERVER_MODE|SLAP_TOOL_MODE )) {
-		rewrite_info_init( 0 );
-	}
+		/* Dummy block to force symbol references in librewrite */
+		if ( slapMode == ( SLAP_SERVER_MODE|SLAP_TOOL_MODE )) {
+			rewrite_info_init( 0 );
+		}
 #endif
 		return( LDAP_OTHER );
 	}
 
-	rc = slap_sasl_rx_off( reg->sr_replace, reg->sr_offset );
-	if ( rc != LDAP_SUCCESS ) return rc;
-
-	nSaslRegexp++;
-	return( LDAP_SUCCESS );
+	rc = slap_sasl_rx_off( replace, reg->sr_offset );
 #endif /* ! SLAP_AUTH_REWRITE */
+	if ( rc == LDAP_SUCCESS ) {
+		reg->sr_match = ch_strdup( match );
+		reg->sr_replace = ch_strdup( replace );
+
+		nSaslRegexp++;
+	}
+
+	return rc;
+}
+
+void
+slap_sasl_regexp_destroy( void )
+{
+	if ( SaslRegexp ) {
+		int	n;
+
+		for ( n = 0; n < nSaslRegexp; n++ ) {
+			ch_free( SaslRegexp[ n ].sr_match );
+			ch_free( SaslRegexp[ n ].sr_replace );
+#ifndef SLAP_AUTH_REWRITE
+			regfree( &SaslRegexp[ n ].sr_workspace );
+#endif /* SLAP_AUTH_REWRITE */
+		}
+
+		ch_free( SaslRegexp );
+	}
+
+#ifdef SLAP_AUTH_REWRITE
+	slap_sasl_rewrite_destroy();
+#endif /* SLAP_AUTH_REWRITE */
 }
 
 void slap_sasl_regexp_unparse( BerVarray *out )
@@ -1667,13 +1669,7 @@ slap_sasl_match( Operation *opx, struct berval *rule,
 
 	/* NOTE: don't normalize rule if authz syntax is enabled */
 	rc = slap_parseURI( opx, rule, &base, &op.o_req_ndn,
-		&op.ors_scope, &op.ors_filter, &op.ors_filterstr, 
-#ifdef SLAP_AUTHZ_SYNTAX
-		0
-#else /* ! SLAP_AUTHZ_SYNTAX */
-		1
-#endif /* ! SLAP_AUTHZ_SYNTAX */
-		);
+		&op.ors_scope, &op.ors_filter, &op.ors_filterstr, 0 );
 
 	if( rc != LDAP_SUCCESS ) goto CONCLUDED;
 
@@ -1810,7 +1806,7 @@ exact_match:
 	   "slap_sasl_match: performing internal search (base=%s, scope=%d)\n",
 	   op.o_req_ndn.bv_val, op.ors_scope, 0 );
 
-	op.o_bd = select_backend( &op.o_req_ndn, 0, 1 );
+	op.o_bd = select_backend( &op.o_req_ndn, 1 );
 	if(( op.o_bd == NULL ) || ( op.o_bd->be_search == NULL)) {
 		rc = LDAP_INAPPROPRIATE_AUTH;
 		goto CONCLUDED;
@@ -1943,7 +1939,7 @@ slap_sasl2dn(
 	}
 
 	/* Must do an internal search */
-	op.o_bd = select_backend( &op.o_req_ndn, 0, 1 );
+	op.o_bd = select_backend( &op.o_req_ndn, 1 );
 
 	switch ( op.ors_scope ) {
 	case LDAP_X_SCOPE_EXACT:

@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/servers/slapd/schema/openldap.ldif,v 1.1.2.3 2007/01/02 21:44:09 kurt Exp $
+# $OpenLDAP: pkg/ldap/servers/slapd/schema/openldap.ldif,v 1.2.2.3 2007/10/08 08:39:33 ando Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2007 The OpenLDAP Foundation.
@@ -84,4 +84,5 @@ olcObjectClasses: ( OpenLDAPobjectClass:5
 olcObjectClasses: ( OpenLDAPobjectClass:6
   NAME 'OpenLDAPdisplayableObject'
   DESC 'OpenLDAP Displayable Object'
-  MAY displayName AUXILIARY )
+  AUXILIARY
+  MAY displayName )

@@ -1,5 +1,5 @@
 /* Generic dirent.h */
-/* $OpenLDAP: pkg/ldap/include/ac/dirent.h,v 1.12.2.3 2007/01/02 21:43:47 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ac/dirent.h,v 1.14.2.3 2007/08/31 23:13:54 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -17,19 +17,33 @@
 #ifndef _AC_DIRENT_H
 #define _AC_DIRENT_H
 
-#if HAVE_DIRENT_H
+#ifdef HAVE_DIRENT_H
 # include <dirent.h>
 # define NAMLEN(dirent) strlen((dirent)->d_name)
+#elif defined(_MSC_VER)
+#include <windows.h>
+#ifndef MAX_PATH
+#define MAX_PATH	260
+#endif
+struct dirent {
+	char *d_name;
+};
+typedef struct DIR {
+	HANDLE dir;
+	struct dirent data;
+	int first;
+	char buf[MAX_PATH+1];
+} DIR;
 #else
 # define dirent direct
 # define NAMLEN(dirent) (dirent)->d_namlen
-# if HAVE_SYS_NDIR_H
+# ifdef HAVE_SYS_NDIR_H
 #  include <sys/ndir.h>
 # endif
-# if HAVE_SYS_DIR_H
+# ifdef HAVE_SYS_DIR_H
 #  include <sys/dir.h>
 # endif
-# if HAVE_NDIR_H
+# ifdef HAVE_NDIR_H
 #  include <ndir.h>
 # endif
 #endif

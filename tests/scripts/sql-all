@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/sql-all,v 1.2.2.4 2007/01/02 21:44:13 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/sql-all,v 1.5.2.2 2007/08/31 23:14:09 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2007 The OpenLDAP Foundation.
@@ -14,8 +14,13 @@
 ## <http://www.OpenLDAP.org/license.html>.
 
 SHTOOL="$SRCDIR/../build/shtool"
-TB=`$SHTOOL echo -e "%B"`
-TN=`$SHTOOL echo -e "%b"`
+
+TB="" TN=""
+if test -t 1 ; then
+	TB=`$SHTOOL echo -e "%B" 2>/dev/null`
+	TN=`$SHTOOL echo -e "%b" 2>/dev/null`
+fi
+
 SLEEPTIME=10
 
 echo "#######################################################################"

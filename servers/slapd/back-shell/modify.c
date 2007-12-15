@@ -1,5 +1,5 @@
 /* modify.c - shell backend modify function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/modify.c,v 1.31.2.3 2007/01/02 21:44:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/modify.c,v 1.33.2.2 2007/08/31 23:14:05 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -46,7 +46,7 @@ shell_back_modify(
 	Modification *mod;
 	struct shellinfo	*si = (struct shellinfo *) op->o_bd->be_private;
 	AttributeDescription *entry = slap_schema.si_ad_entry;
-	Modifications *ml  = op->oq_modify.rs_modlist;
+	Modifications *ml  = op->orm_modlist;
 	Entry e;
 	FILE			*rfp, *wfp;
 	int			i;

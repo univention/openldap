@@ -1,5 +1,5 @@
 /* rwmmap.c - rewrite/mapping routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmmap.c,v 1.14.2.16 2007/10/04 20:02:08 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmmap.c,v 1.31.2.5 2007/10/18 01:35:12 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.
@@ -32,7 +32,6 @@
 
 #include "slap.h"
 #include "rwm.h"
-#include "lutil.h"
 
 #undef ldap_debug	/* silence a warning in ldap-int.h */
 #include "../../../libraries/libldap/ldap-int.h"
@@ -169,12 +168,11 @@ rwm_map( struct ldapmap *map, struct berval *s, struct berval *bv, int remap )
  */
 int
 rwm_map_attrnames(
-		struct ldapmap *at_map,
-		struct ldapmap *oc_map,
-		AttributeName *an,
-		AttributeName **anp,
-		int remap
-)
+	struct ldapmap	*at_map,
+	struct ldapmap	*oc_map,
+	AttributeName	*an,
+	AttributeName	**anp,
+	int		remap )
 {
 	int		i, j;
 
@@ -259,7 +257,6 @@ rwm_map_attrnames(
 			at_drop_missing = rwm_mapping( at_map, &an[i].an_name, &m, remap );
 		
 			if ( at_drop_missing || !m ) {
-
 				oc_drop_missing = rwm_mapping( oc_map, &an[i].an_name, &m, remap );
 
 				/* if both at_map and oc_map required to drop missing,
@@ -314,6 +311,7 @@ rwm_map_attrnames(
 	if ( j == 0 && i != 0 ) {
 		memset( &(*anp)[0], 0, sizeof( AttributeName ) );
 		BER_BVSTR( &(*anp)[0].an_name, LDAP_NO_ATTRS );
+		j = 1;
 	}
 	memset( &(*anp)[j], 0, sizeof( AttributeName ) );
 
@@ -322,11 +320,10 @@ rwm_map_attrnames(
 
 int
 rwm_map_attrs(
-		struct ldapmap *at_map,
-		AttributeName *an,
-		int remap,
-		char ***mapped_attrs
-)
+	struct ldapmap	*at_map,
+	AttributeName	*an,
+	int		remap,
+	char		***mapped_attrs )
 {
 	int i, j;
 	char **na;
@@ -336,9 +333,8 @@ rwm_map_attrs(
 		return LDAP_SUCCESS;
 	}
 
-	for ( i = 0; !BER_BVISNULL( &an[ i ].an_name ); i++ ) {
-		/*  */
-	}
+	for ( i = 0; !BER_BVISNULL( &an[ i ].an_name ); i++ )
+		/* count'em */ ;
 
 	na = (char **)ch_calloc( i + 1, sizeof( char * ) );
 	if ( na == NULL ) {
@@ -374,16 +370,15 @@ rwm_map_attrs(
 
 static int
 map_attr_value(
-		dncookie		*dc,
-		AttributeDescription 	**adp,
-		struct berval		*mapped_attr,
-		struct berval		*value,
-		struct berval		*mapped_value,
-		int			remap )
+	dncookie		*dc,
+	AttributeDescription 	**adp,
+	struct berval		*mapped_attr,
+	struct berval		*value,
+	struct berval		*mapped_value,
+	int			remap )
 {
 	struct berval		vtmp = BER_BVNULL;
 	int			freeval = 0;
-	char			uuid[ LDAP_LUTIL_UUIDSTR_BUFSIZE ];
 	AttributeDescription	*ad = *adp;
 	struct ldapmapping	*mapping = NULL;
 
@@ -408,9 +403,7 @@ map_attr_value(
 			dncookie 	fdc = *dc;
 			int		rc;
 
-#ifdef ENABLE_REWRITE
 			fdc.ctx = "searchFilterAttrDN";
-#endif /* ENABLE_REWRITE */
 
 			vtmp = *value;
 			rc = rwm_dn_massage_normalize( &fdc, value, &vtmp );
@@ -427,13 +420,14 @@ map_attr_value(
 				return -1;
 			}
 
-		} else if ( ad->ad_type->sat_syntax == slap_schema.si_ad_entryUUID->ad_type->sat_syntax ) {
-			vtmp.bv_len = lutil_uuidstr_from_normalized( value->bv_val,
-				value->bv_len, uuid, LDAP_LUTIL_UUIDSTR_BUFSIZE );
-			if ( vtmp.bv_len < 0 ) {
+		} else if ( ad->ad_type->sat_equality->smr_usage & SLAP_MR_MUTATION_NORMALIZER ) {
+			if ( ad->ad_type->sat_equality->smr_normalize(
+				(SLAP_MR_DENORMALIZE|SLAP_MR_VALUE_OF_ASSERTION_SYNTAX),
+				NULL, NULL, value, &vtmp, NULL ) )
+			{
 				return -1;
 			}
-			vtmp.bv_val = uuid;
+			freeval = 1;
 
 		} else if ( ad == slap_schema.si_ad_objectClass
 				|| ad == slap_schema.si_ad_structuralObjectClass )
@@ -464,10 +458,10 @@ map_attr_value(
 
 static int
 rwm_int_filter_map_rewrite(
-		Operation		*op,
-		dncookie		*dc,
-		Filter			*f,
-		struct berval		*fstr )
+	Operation		*op,
+	dncookie		*dc,
+	Filter			*f,
+	struct berval		*fstr )
 {
 	int		i;
 	Filter		*p;
@@ -491,12 +485,15 @@ rwm_int_filter_map_rewrite(
 			ber_bvnone = BER_BVC( "(?=none)" );
 	ber_len_t	len;
 
+	assert( fstr != NULL );
+	BER_BVZERO( fstr );
+
 	if ( f == NULL ) {
 		ber_dupbv( fstr, &ber_bvnone );
 		return LDAP_OTHER;
 	}
 
-	switch ( f->f_choice ) {
+	switch ( f->f_choice & SLAPD_FILTER_MASK ) {
 	case LDAP_FILTER_EQUALITY:
 		ad = f->f_av_desc;
 		if ( map_attr_value( dc, &ad, &atmp,
@@ -705,7 +702,7 @@ rwm_int_filter_map_rewrite(
 		break;
 	}
 
-	case 0:
+	case -1:
 computed:;
 		filter_free_x( op, f );
 		f->f_choice = SLAPD_FILTER_COMPUTED;
@@ -750,10 +747,10 @@ computed:;
 
 int
 rwm_filter_map_rewrite(
-		Operation		*op,
-		dncookie		*dc,
-		Filter			*f,
-		struct berval		*fstr )
+	Operation		*op,
+	dncookie		*dc,
+	Filter			*f,
+	struct berval		*fstr )
 {
 	int		rc;
 	dncookie 	fdc;
@@ -761,7 +758,6 @@ rwm_filter_map_rewrite(
 
 	rc = rwm_int_filter_map_rewrite( op, dc, f, fstr );
 
-#ifdef ENABLE_REWRITE
 	if ( rc != 0 ) {
 		return rc;
 	}
@@ -808,7 +804,6 @@ rwm_filter_map_rewrite(
 		rc = LDAP_OTHER;
 		break;
 	}
-#endif /* ENABLE_REWRITE */
 
 	return rc;
 }
@@ -844,14 +839,9 @@ rwm_referral_rewrite(
 	 * Rewrite the dn if needed
 	 */
 	dc.rwmap = rwmap;
-#ifdef ENABLE_REWRITE
 	dc.conn = op->o_conn;
 	dc.rs = rs;
 	dc.ctx = (char *)cookie;
-#else /* ! ENABLE_REWRITE */
-	dc.tofrom = ((int *)cookie)[0];
-	dc.normalized = 0;
-#endif /* ! ENABLE_REWRITE */
 
 	for ( last = 0; !BER_BVISNULL( &a_vals[last] ); last++ )
 		;
@@ -1017,14 +1007,9 @@ rwm_dnattr_rewrite(
 	 * Rewrite the dn if needed
 	 */
 	dc.rwmap = rwmap;
-#ifdef ENABLE_REWRITE
 	dc.conn = op->o_conn;
 	dc.rs = rs;
 	dc.ctx = (char *)cookie;
-#else /* ! ENABLE_REWRITE */
-	dc.tofrom = ((int *)cookie)[0];
-	dc.normalized = 0;
-#endif /* ! ENABLE_REWRITE */
 
 	for ( last = 0; !BER_BVISNULL( &in[last] ); last++ );
 	last--;
@@ -1109,8 +1094,7 @@ rwm_dnattr_rewrite(
 int
 rwm_referral_result_rewrite(
 	dncookie		*dc,
-	BerVarray		a_vals
-)
+	BerVarray		a_vals )
 {
 	int		i, last;
 
@@ -1188,8 +1172,7 @@ rwm_referral_result_rewrite(
 int
 rwm_dnattr_result_rewrite(
 	dncookie		*dc,
-	BerVarray		a_vals
-)
+	BerVarray		a_vals )
 {
 	int		i, last;
 

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/proto-slapi.h,v 1.26.2.6 2007/01/02 21:44:10 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/proto-slapi.h,v 1.47.2.2 2007/08/31 23:14:06 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2002-2007 The OpenLDAP Foundation.
@@ -27,7 +27,7 @@ LDAP_BEGIN_DECL
 
 /* slapi_utils.c */
 LDAP_SLAPI_F (LDAPMod **) slapi_int_modifications2ldapmods LDAP_P(( Modifications * ));
-LDAP_SLAPI_F (Modifications *) slapi_int_ldapmods2modifications LDAP_P(( LDAPMod ** ));
+LDAP_SLAPI_F (Modifications *) slapi_int_ldapmods2modifications LDAP_P(( Operation *op, LDAPMod ** ));
 LDAP_SLAPI_F (int) slapi_int_count_controls LDAP_P(( LDAPControl **ctrls ));
 LDAP_SLAPI_F (char **) slapi_get_supported_extended_ops LDAP_P((void));
 LDAP_SLAPI_F (int) slapi_int_access_allowed LDAP_P((Operation *op, Entry *entry, AttributeDescription *desc, struct berval *val, slap_access_t access, AccessControlState *state ));

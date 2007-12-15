@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/lutil.h,v 1.57.2.8 2007/10/04 20:02:09 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/include/lutil.h,v 1.63.2.4 2007/12/03 15:04:30 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -158,6 +158,7 @@ typedef struct lutil_tm {
 	int tm_mon;	/* month 0-11 */
 	int tm_year;	/* year - 1900 */
 	int tm_usec;	/* microseconds */
+	int tm_usub;	/* submicro */
 } lutil_tm;
 
 typedef struct lutil_timet {
@@ -166,13 +167,19 @@ typedef struct lutil_timet {
 	unsigned int tt_usec;	/* microseconds */
 } lutil_timet;
 
+/* Parse a timestamp string into a structure */
 LDAP_LUTIL_F( int )
 lutil_parsetime LDAP_P((
 	char *atm, struct lutil_tm * ));
 
+/* Convert structured time to time in seconds since 1900 */
 LDAP_LUTIL_F( int )
 lutil_tm2time LDAP_P((
 	struct lutil_tm *, struct lutil_timet * ));
+
+/* Get current time as a structured time */
+LDAP_LUTIL_F( void )
+lutil_gettime LDAP_P(( struct lutil_tm * ));
 
 #ifdef _WIN32
 LDAP_LUTIL_F( void )
@@ -297,6 +304,10 @@ lutil_atoulx( unsigned long *v, const char *s, int x );
 #define lutil_atol(v, s)	lutil_atolx((v), (s), 10)
 #define lutil_atoul(v, s)	lutil_atoulx((v), (s), 10)
 
+LDAP_LUTIL_F (int)
+lutil_str2bin( struct berval *in, struct berval *out, void *ctx );
+
+/* Parse and unparse time intervals */
 LDAP_LUTIL_F (int)
 lutil_parse_time( const char *in, unsigned long *tp );
 

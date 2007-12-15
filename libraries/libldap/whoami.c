@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/whoami.c,v 1.6.2.3 2007/01/02 21:43:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/whoami.c,v 1.10.2.2 2007/08/31 23:13:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -68,7 +68,7 @@ ldap_whoami( LDAP *ld,
 	assert( LDAP_VALID( ld ) );
 	assert( msgidp != NULL );
 
-	rc = ldap_extended_operation( ld, LDAP_EXOP_X_WHO_AM_I,
+	rc = ldap_extended_operation( ld, LDAP_EXOP_WHO_AM_I,
 		NULL, sctrls, cctrls, msgidp );
 
 	return rc;
@@ -88,7 +88,7 @@ ldap_whoami_s(
 	rc = ldap_whoami( ld, sctrls, cctrls, &msgid );
 	if ( rc != LDAP_SUCCESS ) return rc;
 
-	if ( ldap_result( ld, msgid, 1, (struct timeval *) NULL, &res ) == -1 ) {
+	if ( ldap_result( ld, msgid, LDAP_MSG_ALL, (struct timeval *) NULL, &res ) == -1 || !res ) {
 		return ld->ld_errno;
 	}
 

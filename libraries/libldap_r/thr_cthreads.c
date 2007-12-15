@@ -1,5 +1,5 @@
 /* thr_cthreads.c - wrapper for mach cthreads */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_cthreads.c,v 1.17.2.4 2007/01/02 21:43:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_cthreads.c,v 1.20.2.3 2007/11/07 20:58:37 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -151,6 +151,30 @@ ldap_pvt_thread_t
 ldap_pvt_thread_self( void )
 {
 	return cthread_self();
+}
+
+int
+ldap_pvt_thread_key_create( ldap_pvt_thread_key_t *key )
+{
+	return cthread_keycreate( key );
+}
+
+int
+ldap_pvt_thread_key_destroy( ldap_pvt_thread_key_t key )
+{
+	return( 0 );
+}
+
+int
+ldap_pvt_thread_key_setdata( ldap_pvt_thread_key_t key, void *data )
+{
+	return cthread_setspecific( key, data );
+}
+
+int
+ldap_pvt_thread_key_getdata( ldap_pvt_thread_key_t key, void **data )
+{
+	return cthread_getspecific( key, data );
 }
 
 #endif /* HAVE_MACH_CTHREADS */

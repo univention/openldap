@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/lutil_ldap.h,v 1.9.2.3 2007/01/02 21:43:46 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/lutil_ldap.h,v 1.11.2.2 2007/08/31 23:13:53 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.

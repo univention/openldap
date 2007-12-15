@@ -1,5 +1,5 @@
 /* os-local.c -- platform-specific domain socket code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.37.2.9 2007/06/10 18:39:53 hallvard Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.44.2.2 2007/08/31 23:13:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -154,11 +154,7 @@ ldap_pvt_is_socket_ready(LDAP *ld, int s)
 }
 #undef TRACE
 
-#if !defined(HAVE_GETPEEREID) && \
-	!defined(SO_PEERCRED) && !defined(LOCAL_PEERCRED) && \
-	defined(HAVE_SENDMSG) && (defined(HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTSLEN) || \
-		defined(HAVE_STRUCT_MSGHDR_MSG_CONTROL))
-#define DO_SENDMSG
+#ifdef LDAP_PF_LOCAL_SENDMSG
 static const char abandonPDU[] = {LDAP_TAG_MESSAGE, 6,
 	LDAP_TAG_MSGID, 1, 0, LDAP_REQ_ABANDON, 1, 0};
 #endif
@@ -167,12 +163,11 @@ static int
 ldap_pvt_connect(LDAP *ld, ber_socket_t s, struct sockaddr_un *sa, int async)
 {
 	int rc;
-	struct timeval	tv = { 0 },
-			*opt_tv = NULL;
+	struct timeval	tv, *opt_tv = NULL;
 
-	opt_tv = ld->ld_options.ldo_tm_net;
-	if ( opt_tv != NULL ) {
-		tv = *opt_tv;
+	if ( ld->ld_options.ldo_tm_net.tv_sec >= 0 ) {
+		tv = ld->ld_options.ldo_tm_net;
+		opt_tv = &tv;
 	}
 
 	oslocal_debug(ld, "ldap_connect_timeout: fd: %d tm: %ld async: %d\n",
@@ -185,14 +180,16 @@ ldap_pvt_connect(LDAP *ld, ber_socket_t s, struct sockaddr_un *sa, int async)
 	{
 		if ( ldap_pvt_ndelay_off(ld, s) == -1 ) return -1;
 
-#ifdef DO_SENDMSG
+#ifdef LDAP_PF_LOCAL_SENDMSG
 	/* Send a dummy message with access rights. Remote side will
-	 * obtain our uid/gid by fstat'ing this descriptor.
+	 * obtain our uid/gid by fstat'ing this descriptor. The
+	 * descriptor permissions must match exactly, and we also
+	 * send the socket name, which must also match.
 	 */
 sendcred:
 		{
-#if 0	/* ITS#4893 disable all of this for now */
 			int fds[2];
+			ber_socklen_t salen = sizeof(*sa);
 			if (pipe(fds) == 0) {
 				/* Abandon, noop, has no reply */
 				struct iovec iov;
@@ -231,13 +228,13 @@ sendcred:
 				msg.msg_accrights = (char *)fds;
 				msg.msg_accrightslen = sizeof(int);
 # endif /* HAVE_STRUCT_MSGHDR_MSG_CONTROL */
+				getpeername( s, sa, &salen );
+				fchmod( fds[0], S_ISUID|S_IRWXU );
+				write( fds[1], sa, salen );
 				sendmsg( s, &msg, 0 );
 				close(fds[0]);
 				close(fds[1]);
 			}
-# else
-			write( s, abandonPDU, sizeof( abandonPDU ));
-#endif /* ITS#4893 */
 		}
 #endif
 		return 0;
@@ -270,7 +267,7 @@ sendcred:
 		if( fd.revents & POLL_WRITE ) {
 			if ( ldap_pvt_is_socket_ready(ld, s) == -1 ) return -1;
 			if ( ldap_pvt_ndelay_off(ld, s) == -1 ) return -1;
-#ifdef DO_SENDMSG
+#ifdef LDAP_PF_LOCAL_SENDMSG
 			goto sendcred;
 #else
 			return ( 0 );
@@ -301,7 +298,7 @@ sendcred:
 		if ( FD_ISSET(s, &wfds) ) {
 			if ( ldap_pvt_is_socket_ready(ld, s) == -1 ) return -1;
 			if ( ldap_pvt_ndelay_off(ld, s) == -1 ) return -1;
-#ifdef DO_SENDMSG
+#ifdef LDAP_PF_LOCAL_SENDMSG
 			goto sendcred;
 #else
 			return ( 0 );

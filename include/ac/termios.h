@@ -1,5 +1,5 @@
 /* Generic termios.h */
-/* $OpenLDAP: pkg/ldap/include/ac/termios.h,v 1.16.2.4 2007/09/22 23:09:11 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ac/termios.h,v 1.18.2.2 2007/08/31 23:13:54 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.

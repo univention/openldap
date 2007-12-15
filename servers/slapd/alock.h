@@ -1,5 +1,5 @@
 /* alock.h - access lock header */
-/* $OpenLDAP: pkg/ldap/servers/slapd/alock.h,v 1.1.2.4 2007/01/02 21:43:54 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/alock.h,v 1.3.2.3 2007/09/26 15:46:37 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2007 The OpenLDAP Foundation.
@@ -66,7 +66,7 @@ typedef struct alock_slot {
 LDAP_SLAPD_F (int) alock_open LDAP_P(( alock_info_t * info, const char * appname,
 	const char * envdir, int locktype ));
 LDAP_SLAPD_F (int) alock_scan LDAP_P(( alock_info_t * info ));
-LDAP_SLAPD_F (int) alock_close LDAP_P(( alock_info_t * info ));
+LDAP_SLAPD_F (int) alock_close LDAP_P(( alock_info_t * info, int nosave ));
 LDAP_SLAPD_F (int) alock_recover LDAP_P(( alock_info_t * info ));
 
 LDAP_END_DECL

@@ -1,5 +1,5 @@
 /* ldapwhoami.c -- a tool for asking the directory "Who Am I?" */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapwhoami.c,v 1.33.2.6 2007/08/13 18:04:39 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapwhoami.c,v 1.42.2.2 2007/08/31 23:13:51 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -62,7 +62,7 @@ usage( void )
 
 
 const char options[] = ""
-	"d:D:e:h:H:InO:p:QR:U:vVw:WxX:y:Y:Z";
+	"d:D:e:h:H:InO:o:p:QR:U:vVw:WxX:y:Y:Z";
 
 int
 handle_private_option( int i )
@@ -109,18 +109,15 @@ int
 main( int argc, char *argv[] )
 {
 	int		rc;
-	char		*user = NULL;
-
 	LDAP		*ld = NULL;
-
 	char		*matcheddn = NULL, *text = NULL, **refs = NULL;
 	char		*retoid = NULL;
 	struct berval	*retdata = NULL;
-	int		id, code=0;
+	int		id, code = 0;
 	LDAPMessage	*res;
 	LDAPControl	**ctrls = NULL;
 
-	tool_init();
+	tool_init( TOOL_WHOAMI );
 	prog = lutil_progname( "ldapwhoami", argc, argv );
 
 	/* LDAPv3 only */
@@ -128,12 +125,8 @@ main( int argc, char *argv[] )
 
 	tool_args( argc, argv );
 
-	if( argc - optind > 1 ) {
+	if( argc - optind > 0 ) {
 		usage();
-	} else if ( argc - optind == 1 ) {
-		user = strdup( argv[optind] );
-	} else {
-		user = NULL;
 	}
 
 	if ( pw_file || want_bindpw ) {
@@ -150,19 +143,17 @@ main( int argc, char *argv[] )
 
 	tool_bind( ld );
 
-	if ( not ) {
+	if ( dont ) {
 		rc = LDAP_SUCCESS;
 		goto skip;
 	}
 
-	if ( assertion || authzid || manageDSAit || noop ) {
-		tool_server_controls( ld, NULL, 0 );
-	}
+	tool_server_controls( ld, NULL, 0 );
 
 	rc = ldap_whoami( ld, NULL, NULL, &id ); 
 
 	if( rc != LDAP_SUCCESS ) {
-		ldap_perror( ld, "ldap_whoami" );
+		tool_perror( "ldap_whoami", rc, NULL, NULL, NULL, NULL );
 		rc = EXIT_FAILURE;
 		goto skip;
 	}
@@ -179,7 +170,7 @@ main( int argc, char *argv[] )
 
 		rc = ldap_result( ld, LDAP_RES_ANY, LDAP_MSG_ALL, &tv, &res );
 		if ( rc < 0 ) {
-			ldap_perror( ld, "ldapwhoami: ldap_result" );
+			tool_perror( "ldap_result", rc, NULL, NULL, NULL, NULL );
 			return rc;
 		}
 
@@ -191,8 +182,12 @@ main( int argc, char *argv[] )
 	rc = ldap_parse_result( ld, res,
 		&code, &matcheddn, &text, &refs, &ctrls, 0 );
 
-	if( rc != LDAP_SUCCESS ) {
-		ldap_perror( ld, "ldap_parse_result" );
+	if ( rc == LDAP_SUCCESS ) {
+		rc = code;
+	}
+
+	if ( rc != LDAP_SUCCESS ) {
+		tool_perror( "ldap_parse_result", rc, NULL, matcheddn, text, refs );
 		rc = EXIT_FAILURE;
 		goto skip;
 	}
@@ -200,7 +195,7 @@ main( int argc, char *argv[] )
 	rc = ldap_parse_extended_result( ld, res, &retoid, &retdata, 1 );
 
 	if( rc != LDAP_SUCCESS ) {
-		ldap_perror( ld, "ldap_parse_result" );
+		tool_perror( "ldap_parse_extended_result", rc, NULL, NULL, NULL, NULL );
 		rc = EXIT_FAILURE;
 		goto skip;
 	}

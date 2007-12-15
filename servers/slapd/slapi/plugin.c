@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/plugin.c,v 1.26.2.5 2007/01/02 21:44:10 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/plugin.c,v 1.43.2.4 2007/11/27 18:11:43 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2002-2007 The OpenLDAP Foundation.
@@ -598,7 +598,7 @@ slapi_int_call_plugins(
 	rc = slapi_int_get_plugins( be, funcType, &tmpPlugin );
 	if ( rc != LDAP_SUCCESS || tmpPlugin == NULL ) {
 		/* Nothing to do, front-end should ignore. */
-		return 1;
+		return rc;
 	}
 
 	for ( pGetPlugin = tmpPlugin ; *pGetPlugin != NULL; pGetPlugin++ ) {
@@ -722,7 +722,11 @@ slapi_int_plugin_unparse(
 		slapi_pblock_get( pp, SLAPI_X_CONFIG_ARGV, &argv );
 		if ( argv == NULL ) /* could be dynamic plugin */
 			continue;
-		idx.bv_len = sprintf( idx.bv_val, "{%d}", i );
+		idx.bv_len = snprintf( idx.bv_val, sizeof( ibuf ), "{%d}", i );
+		if ( idx.bv_len >= sizeof( ibuf ) ) {
+			/* FIXME: just truncating by now */
+			idx.bv_len = sizeof( ibuf ) - 1;
+		}
 		bv.bv_len = idx.bv_len;
 		for (j=1; argv[j]; j++) {
 			bv.bv_len += strlen(argv[j]);

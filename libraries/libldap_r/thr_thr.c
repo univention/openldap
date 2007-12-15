@@ -1,5 +1,5 @@
 /* thr_thr.c - wrappers around solaris threads */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_thr.c,v 1.15.2.4 2007/01/02 21:43:51 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_thr.c,v 1.18.2.3 2007/11/07 20:58:37 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -157,6 +157,30 @@ ldap_pvt_thread_t
 ldap_pvt_thread_self( void )
 {
 	return thr_self();
+}
+
+int
+ldap_pvt_thread_key_create( ldap_pvt_thread_key_t *key )
+{
+	return thr_keycreate( key, NULL );
+}
+
+int
+ldap_pvt_thread_key_destroy( ldap_pvt_thread_key_t key )
+{
+	return( 0 );
+}
+
+int
+ldap_pvt_thread_key_setdata( ldap_pvt_thread_key_t key, void *data )
+{
+	return thr_setspecific( key, data );
+}
+
+int
+ldap_pvt_thread_key_getdata( ldap_pvt_thread_key_t key, void **data )
+{
+	return thr_getspecific( key, data );
 }
 
 #endif /* HAVE_THR */

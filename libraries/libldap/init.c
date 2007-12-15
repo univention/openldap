@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/init.c,v 1.93.2.12 2007/01/02 21:43:48 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/init.c,v 1.102.2.4 2007/08/31 23:13:55 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -29,6 +29,7 @@
 
 #include "ldap-int.h"
 #include "ldap_defaults.h"
+#include "lutil.h"
 
 struct ldapoptions ldap_int_global_options =
 	{ LDAP_UNINITIALIZED, LDAP_DEBUG_NONE };  
@@ -42,6 +43,9 @@ struct ldapoptions ldap_int_global_options =
 
 #define ATTR_SASL	6
 #define ATTR_TLS	7
+
+#define ATTR_OPT_TV	8
+#define ATTR_OPT_INT	9
 
 struct ol_keyvalue {
 	const char *		key;
@@ -63,6 +67,9 @@ static const struct ol_attribute {
 	const void *	data;
 	size_t		offset;
 } attrs[] = {
+	{0, ATTR_OPT_TV,	"TIMEOUT",		NULL,	LDAP_OPT_TIMEOUT},
+	{0, ATTR_OPT_TV,	"NETWORK_TIMEOUT",	NULL,	LDAP_OPT_NETWORK_TIMEOUT},
+	{0, ATTR_OPT_INT,	"VERSION",		NULL,	LDAP_OPT_PROTOCOL_VERSION},
 	{0, ATTR_KV,		"DEREF",	deref_kv, /* or &deref_kv[0] */
 		offsetof(struct ldapoptions, ldo_deref)},
 	{0, ATTR_INT,		"SIZELIMIT",	NULL,
@@ -78,12 +85,15 @@ static const struct ol_attribute {
 	{0, ATTR_OPTION,	"HOST",			NULL,	LDAP_OPT_HOST_NAME}, /* deprecated */
 	{0, ATTR_OPTION,	"URI",			NULL,	LDAP_OPT_URI}, /* replaces HOST/PORT */
 	{0, ATTR_BOOL,		"REFERRALS",	NULL,	LDAP_BOOL_REFERRALS},
+#if 0
+	/* This should only be allowed via ldap_set_option(3) */
 	{0, ATTR_BOOL,		"RESTART",		NULL,	LDAP_BOOL_RESTART},
+#endif
 
 #ifdef HAVE_CYRUS_SASL
-	{1, ATTR_STRING,	"SASL_MECH",		NULL,
+	{0, ATTR_STRING,	"SASL_MECH",		NULL,
 		offsetof(struct ldapoptions, ldo_def_sasl_mech)},
-	{1, ATTR_STRING,	"SASL_REALM",		NULL,
+	{0, ATTR_STRING,	"SASL_REALM",		NULL,
 		offsetof(struct ldapoptions, ldo_def_sasl_realm)},
 	{1, ATTR_STRING,	"SASL_AUTHCID",		NULL,
 		offsetof(struct ldapoptions, ldo_def_sasl_authcid)},
@@ -103,6 +113,9 @@ static const struct ol_attribute {
 
 #ifdef HAVE_OPENSSL_CRL
 	{0, ATTR_TLS,	"TLS_CRLCHECK",		NULL,	LDAP_OPT_X_TLS_CRLCHECK},
+#endif
+#ifdef HAVE_GNUTLS
+	{0, ATTR_TLS,	"TLS_CRL",			NULL,	LDAP_OPT_X_TLS_CRLFILE},
 #endif
         
 #endif
@@ -203,10 +216,15 @@ static void openldap_ldap_init_w_conf(
 
 				break;
 
-			case ATTR_INT:
+			case ATTR_INT: {
+				char *next;
+				long l;
 				p = &((char *) gopts)[attrs[i].offset];
-				* (int*) p = atoi(opt);
-				break;
+				l = strtol( opt, &next, 10 );
+				if ( next != opt && next[ 0 ] == '\0' ) {
+					* (int*) p = l;
+				}
+				} break;
 
 			case ATTR_KV: {
 					const struct ol_keyvalue *kv;
@@ -241,6 +259,24 @@ static void openldap_ldap_init_w_conf(
 			   	ldap_int_tls_config( NULL, attrs[i].offset, opt );
 #endif
 				break;
+			case ATTR_OPT_TV: {
+				struct timeval tv;
+				char *next;
+				tv.tv_usec = 0;
+				tv.tv_sec = strtol( opt, &next, 10 );
+				if ( next != opt && next[ 0 ] == '\0' && tv.tv_sec > 0 ) {
+					(void)ldap_set_option( NULL, attrs[i].offset, (const void *)&tv );
+				}
+				} break;
+			case ATTR_OPT_INT: {
+				long l;
+				char *next;
+				l = strtol( opt, &next, 10 );
+				if ( next != opt && next[ 0 ] == '\0' && l > 0 && (long)((int)l) == l ) {
+					int v = (int)l;
+					(void)ldap_set_option( NULL, attrs[i].offset, (const void *)&v );
+				}
+				} break;
 			}
 
 			break;
@@ -410,8 +446,7 @@ ldap_int_destroy_global_options(void)
 	WSACleanup( );
 #endif
 
-#if defined(LDAP_API_FEATURE_X_OPENLDAP_V2_KBIND) \
-	|| defined(HAVE_TLS) || defined(HAVE_CYRUS_SASL)
+#if defined(HAVE_TLS) || defined(HAVE_CYRUS_SASL)
 	if ( ldap_int_hostname ) {
 		LDAP_FREE( ldap_int_hostname );
 		ldap_int_hostname = NULL;
@@ -422,6 +457,9 @@ ldap_int_destroy_global_options(void)
 		LDAP_FREE( gopts->ldo_def_sasl_authcid );
 		gopts->ldo_def_sasl_authcid = NULL;
 	}
+#endif
+#ifdef HAVE_TLS
+	ldap_int_tls_destroy( gopts );
 #endif
 }
 
@@ -440,8 +478,8 @@ void ldap_int_initialize_global_options( struct ldapoptions *gopts, int *dbglvl 
 	gopts->ldo_timelimit = LDAP_NO_LIMIT;
 	gopts->ldo_sizelimit = LDAP_NO_LIMIT;
 
-	gopts->ldo_tm_api = (struct timeval *)NULL;
-	gopts->ldo_tm_net = (struct timeval *)NULL;
+	gopts->ldo_tm_api.tv_sec = -1;
+	gopts->ldo_tm_net.tv_sec = -1;
 
 	/* ldo_defludp will be freed by the termination handler
 	 */
@@ -486,14 +524,14 @@ void ldap_int_initialize_global_options( struct ldapoptions *gopts, int *dbglvl 
 #ifdef HAVE_TLS
 	gopts->ldo_tls_connect_cb = NULL;
 	gopts->ldo_tls_connect_arg = NULL;
+	gopts->ldo_tls_require_cert = LDAP_OPT_X_TLS_DEMAND;
 #endif
 
 	gopts->ldo_valid = LDAP_INITIALIZED;
    	return;
 }
 
-#if defined(LDAP_API_FEATURE_X_OPENLDAP_V2_KBIND) \
-	|| defined(HAVE_TLS) || defined(HAVE_CYRUS_SASL)
+#if defined(HAVE_TLS) || defined(HAVE_CYRUS_SASL)
 char * ldap_int_hostname = NULL;
 #endif
 
@@ -541,8 +579,7 @@ void ldap_int_initialize( struct ldapoptions *gopts, int *dbglvl )
 }
 #endif
 
-#if defined(LDAP_API_FEATURE_X_OPENLDAP_V2_KBIND) \
-	|| defined(HAVE_TLS) || defined(HAVE_CYRUS_SASL)
+#if defined(HAVE_TLS) || defined(HAVE_CYRUS_SASL)
 	{
 		char	*name = ldap_int_hostname;
 

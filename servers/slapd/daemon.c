@@ -1,7 +1,8 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.318.2.32 2007/07/23 20:34:28 hallvard Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.380.2.8 2007/11/27 20:11:48 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Portions Copyright 2007 by Howard Chu, Symas Corporation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,14 +51,9 @@
 #endif /* ! epoll && ! /dev/poll */
 
 #ifdef HAVE_TCPD
-# include <tcpd.h>
 int allow_severity = LOG_INFO;
 int deny_severity = LOG_NOTICE;
-
-# define SLAP_STRING_UNKNOWN	STRING_UNKNOWN
-#else /* ! TCP Wrappers */
-# define SLAP_STRING_UNKNOWN	"unknown"
-#endif /* ! TCP Wrappers */
+#endif /* TCP Wrappers */
 
 #ifdef LDAP_PF_LOCAL
 # include <sys/stat.h>
@@ -90,13 +86,13 @@ static volatile int waking;
 #ifdef NO_THREADS
 #define WAKE_LISTENER(w)	do { \
 	if ((w) && ++waking < 5) { \
-		tcp_write( wake_sds[1], "0", 1 ); \
+		tcp_write( SLAP_FD2SOCK(wake_sds[1]), "0", 1 ); \
 	} \
 } while (0)
 #else /* ! NO_THREADS */
 #define WAKE_LISTENER(w)	do { \
 	if (w) { \
-		tcp_write( wake_sds[1], "0", 1 ); \
+		tcp_write( SLAP_FD2SOCK(wake_sds[1]), "0", 1 ); \
 	} \
 } while (0)
 #endif /* ! NO_THREADS */
@@ -104,6 +100,15 @@ static volatile int waking;
 volatile sig_atomic_t slapd_shutdown = 0;
 volatile sig_atomic_t slapd_gentle_shutdown = 0;
 volatile sig_atomic_t slapd_abrupt_shutdown = 0;
+
+#ifdef HAVE_WINSOCK
+ldap_pvt_thread_mutex_t slapd_ws_mutex;
+SOCKET *slapd_ws_sockets;
+#define	SD_READ 1
+#define	SD_WRITE	2
+#define	SD_ACTIVE	4
+#define	SD_LISTENER	8
+#endif
 
 static struct slap_daemon {
 	ldap_pvt_thread_mutex_t	sd_mutex;
@@ -113,28 +118,27 @@ static struct slap_daemon {
 
 	ber_socket_t		sd_nactives;
 	int			sd_nwriters;
+	int			sd_nfds;
 
 #if defined(HAVE_EPOLL)
 	struct epoll_event	*sd_epolls;
 	int			*sd_index;
 	int			sd_epfd;
-	int			sd_nfds;
 #elif defined(SLAP_X_DEVPOLL) && defined(HAVE_DEVPOLL)
 	/* eXperimental */
 	struct pollfd		*sd_pollfd;
 	int			*sd_index;
 	Listener		**sd_l;
 	int			sd_dpfd;
-	int			sd_nfds;
 #else /* ! epoll && ! /dev/poll */
-#ifndef HAVE_WINSOCK
-	/* In winsock, accept() returns values higher than dtblsize
-		so don't bother with this optimization */
-	int			sd_nfds;
-#endif /* ! HAVE_WINSOCK */
+#ifdef HAVE_WINSOCK
+	char	*sd_flags;
+	char	*sd_rflags;
+#else /* ! HAVE_WINSOCK */
 	fd_set			sd_actives;
 	fd_set			sd_readers;
 	fd_set			sd_writers;
+#endif /* ! HAVE_WINSOCK */
 #endif /* ! epoll && ! /dev/poll */
 } slap_daemon;
 
@@ -187,14 +191,12 @@ static struct slap_daemon {
 # define SLAP_SOCK_CLR_READ(s)		SLAP_EPOLL_SOCK_CLR((s), EPOLLIN)
 # define SLAP_SOCK_CLR_WRITE(s)		SLAP_EPOLL_SOCK_CLR((s), EPOLLOUT)
 
-# ifdef SLAP_LIGHTWEIGHT_DISPATCHER
 #  define SLAP_SOCK_SET_SUSPEND(s) \
 	( slap_daemon.sd_suspend[SLAP_EPOLL_SOCK_IX(s)] = 1 )
 #  define SLAP_SOCK_CLR_SUSPEND(s) \
 	( slap_daemon.sd_suspend[SLAP_EPOLL_SOCK_IX(s)] = 0 )
 #  define SLAP_SOCK_IS_SUSPEND(s) \
 	( slap_daemon.sd_suspend[SLAP_EPOLL_SOCK_IX(s)] == 1 )
-# endif /* SLAP_LIGHTWEIGHT_DISPATCHER */
 
 # define SLAP_EPOLL_EVENT_CLR(i, mode)	(revents[(i)].events &= ~(mode))
 
@@ -361,14 +363,12 @@ static struct slap_daemon {
 # define SLAP_SOCK_CLR_READ(s)		SLAP_DEVPOLL_SOCK_CLR((s), POLLIN)
 # define SLAP_SOCK_CLR_WRITE(s)		SLAP_DEVPOLL_SOCK_CLR((s), POLLOUT)
 
-# ifdef SLAP_LIGHTWEIGHT_DISPATCHER
 #  define SLAP_SOCK_SET_SUSPEND(s) \
 	( slap_daemon.sd_suspend[SLAP_DEVPOLL_SOCK_IX((s))] = 1 )
 #  define SLAP_SOCK_CLR_SUSPEND(s) \
 	( slap_daemon.sd_suspend[SLAP_DEVPOLL_SOCK_IX((s))] = 0 )
 #  define SLAP_SOCK_IS_SUSPEND(s) \
 	( slap_daemon.sd_suspend[SLAP_DEVPOLL_SOCK_IX((s))] == 1 )
-# endif /* SLAP_LIGHTWEIGHT_DISPATCHER */
 
 # define SLAP_DEVPOLL_EVENT_CLR(i, mode)	(revents[(i)].events &= ~(mode))
 
@@ -466,13 +466,119 @@ static struct slap_daemon {
 } while (0)
 
 #else /* ! epoll && ! /dev/poll */
+# ifdef HAVE_WINSOCK
+# define SLAP_EVENT_FNAME		"WSselect"
+/* Winsock provides a "select" function but its fd_sets are
+ * actually arrays of sockets. Since these sockets are handles
+ * and not a contiguous range of small integers, we manage our
+ * own "fd" table of socket handles and use their indices as
+ * descriptors.
+ *
+ * All of our listener/connection structures use fds; the actual
+ * I/O functions use sockets. The SLAP_FD2SOCK macro in proto-slap.h
+ * handles the mapping.
+ *
+ * Despite the mapping overhead, this is about 45% more efficient
+ * than just using Winsock's select and FD_ISSET directly.
+ *
+ * Unfortunately Winsock's select implementation doesn't scale well
+ * as the number of connections increases. This probably needs to be
+ * rewritten to use the Winsock overlapped/asynchronous I/O functions.
+ */
+# define SLAP_EVENTS_ARE_INDEXED	1
+# define SLAP_EVENT_DECL		fd_set readfds, writefds
+# define SLAP_EVENT_INIT	do { \
+	int i; \
+	FD_ZERO( &readfds ); \
+	FD_ZERO( &writefds ); \
+	memset( slap_daemon.sd_rflags, 0, slap_daemon.sd_nfds ); \
+	for ( i=0; i<slap_daemon.sd_nfds; i++ ) { \
+		if ( slap_daemon.sd_flags[i] & SD_READ ) \
+			FD_SET( slapd_ws_sockets[i], &readfds );\
+		if ( slap_daemon.sd_flags[i] & SD_WRITE ) \
+			FD_SET( slapd_ws_sockets[i], &writefds ); \
+	} } while ( 0 )
+
+# define SLAP_EVENT_MAX		slap_daemon.sd_nfds
+
+# define SLAP_EVENT_WAIT(tvp, nsp)	do { \
+	int i; \
+	*(nsp) = select( SLAP_EVENT_MAX, &readfds, \
+		nwriters > 0 ? &writefds : NULL, NULL, (tvp) ); \
+	for ( i=0; i<readfds.fd_count; i++) { \
+		int fd = slapd_sock2fd(readfds.fd_array[i]); \
+		if ( fd >= 0 ) { \
+			slap_daemon.sd_rflags[fd] = SD_READ; \
+			if ( fd >= *(nsp)) *(nsp) = fd+1; \
+		} \
+	} \
+	for ( i=0; i<writefds.fd_count; i++) { \
+		int fd = slapd_sock2fd(writefds.fd_array[i]); \
+		if ( fd >= 0 ) { \
+			slap_daemon.sd_rflags[fd] = SD_WRITE; \
+			if ( fd >= *(nsp)) *(nsp) = fd+1; \
+		} \
+	} \
+} while (0)
+
+# define SLAP_EVENT_IS_READ(fd)		(slap_daemon.sd_rflags[fd] & SD_READ)
+# define SLAP_EVENT_IS_WRITE(fd)	(slap_daemon.sd_rflags[fd] & SD_WRITE)
+
+# define SLAP_EVENT_CLR_READ(fd) 	slap_daemon.sd_rflags[fd] &= ~SD_READ;
+# define SLAP_EVENT_CLR_WRITE(fd)	slap_daemon.sd_rflags[fd] &= ~SD_WRITE;
+
+# define SLAP_SOCK_INIT		do { \
+	ldap_pvt_thread_mutex_init( &slapd_ws_mutex ); \
+	slapd_ws_sockets = ch_malloc( dtblsize * ( sizeof(SOCKET) + 2)); \
+	slap_daemon.sd_flags = (char *)(slapd_ws_sockets + dtblsize); \
+	slap_daemon.sd_rflags = slap_daemon.sd_flags + dtblsize; \
+	memset( slapd_ws_sockets, -1, dtblsize * sizeof(SOCKET) ); \
+	slapd_ws_sockets[0] = wake_sds[0]; \
+	slapd_ws_sockets[1] = wake_sds[1]; \
+	wake_sds[0] = 0; \
+	wake_sds[1] = 1; \
+	slap_daemon.sd_nfds = 2; \
+	} while ( 0 )
+
+# define SLAP_SOCK_DESTROY	do { \
+	ch_free( slapd_ws_sockets ); slapd_ws_sockets = NULL; \
+	slap_daemon.sd_flags = NULL; \
+	slap_daemon.sd_rflags = NULL; \
+	ldap_pvt_thread_mutex_destroy( &slapd_ws_mutex ); \
+	} while ( 0 )
+
+# define SLAP_SOCK_IS_ACTIVE(fd) ( slap_daemon.sd_flags[fd] & SD_ACTIVE )
+# define SLAP_SOCK_IS_READ(fd) ( slap_daemon.sd_flags[fd] & SD_READ )
+# define SLAP_SOCK_IS_WRITE(fd) ( slap_daemon.sd_flags[fd] & SD_WRITE )
+# define SLAP_SOCK_NOT_ACTIVE(fd)	(!slap_daemon.sd_flags[fd])
+
+# define SLAP_SOCK_SET_READ(fd)		( slap_daemon.sd_flags[fd] |= SD_READ )
+# define SLAP_SOCK_SET_WRITE(fd)		( slap_daemon.sd_flags[fd] |= SD_WRITE )
+
+# define SLAP_SELECT_ADDTEST(s)	do { \
+	if ((s) >= slap_daemon.sd_nfds) slap_daemon.sd_nfds = (s)+1; \
+} while (0)
+
+# define SLAP_SOCK_CLR_READ(fd)		( slap_daemon.sd_flags[fd] &= ~SD_READ )
+# define SLAP_SOCK_CLR_WRITE(fd)		( slap_daemon.sd_flags[fd] &= ~SD_WRITE )
+
+# define SLAP_SOCK_ADD(s, l)	do { \
+	SLAP_SELECT_ADDTEST((s)); \
+	slap_daemon.sd_flags[s] = SD_ACTIVE|SD_READ; \
+} while ( 0 )
+
+# define SLAP_SOCK_DEL(s) do { \
+	slap_daemon.sd_flags[s] = 0; \
+	slapd_sockdel( s ); \
+} while ( 0 )
+
+# else /* !HAVE_WINSOCK */
 
 /**************************************
  * Use select system call - select(2) *
  **************************************/
 # define SLAP_EVENT_FNAME		"select"
 /* select */
-
 # define SLAP_EVENTS_ARE_INDEXED	1
 # define SLAP_EVENT_DECL		fd_set readfds, writefds
 
@@ -509,25 +615,13 @@ static struct slap_daemon {
 # define SLAP_SOCK_NOT_ACTIVE(fd)	(!SLAP_SOCK_IS_ACTIVE(fd) && \
 	 !SLAP_SOCK_IS_READ(fd) && !SLAP_SOCK_IS_WRITE(fd))
 
-# ifdef HAVE_WINSOCK
-#  define SLAP_SOCK_SET_READ(fd)	do { \
-	if (!SLAP_SOCK_IS_READ(fd)) { FD_SET((fd), &slap_daemon.sd_readers); } \
-} while (0)
-#  define SLAP_SOCK_SET_WRITE(fd)	do { \
-	if (!SLAP_SOCK_IS_WRITE(fd)) { FD_SET((fd), &slap_daemon.sd_writers); } \
-} while (0)
+# define SLAP_SOCK_SET_READ(fd)	FD_SET((fd), &slap_daemon.sd_readers)
+# define SLAP_SOCK_SET_WRITE(fd)	FD_SET((fd), &slap_daemon.sd_writers)
 
-#  define SLAP_SELECT_ADDTEST(s)	
-#  define SLAP_EVENT_MAX		dtblsize
-# else /* ! HAVE_WINSOCK */
-#  define SLAP_SOCK_SET_READ(fd)	FD_SET((fd), &slap_daemon.sd_readers)
-#  define SLAP_SOCK_SET_WRITE(fd)	FD_SET((fd), &slap_daemon.sd_writers)
-
-#  define SLAP_EVENT_MAX		slap_daemon.sd_nfds
-#  define SLAP_SELECT_ADDTEST(s)	do { \
+# define SLAP_EVENT_MAX		slap_daemon.sd_nfds
+# define SLAP_SELECT_ADDTEST(s)	do { \
 	if ((s) >= slap_daemon.sd_nfds) slap_daemon.sd_nfds = (s)+1; \
 } while (0)
-# endif /* ! HAVE_WINSOCK */
 
 # define SLAP_SOCK_CLR_READ(fd)		FD_CLR((fd), &slap_daemon.sd_readers)
 # define SLAP_SOCK_CLR_WRITE(fd)	FD_CLR((fd), &slap_daemon.sd_writers)
@@ -554,6 +648,7 @@ static struct slap_daemon {
 	*(nsp) = select( SLAP_EVENT_MAX, &readfds, \
 		nwriters > 0 ? &writefds : NULL, NULL, (tvp) ); \
 } while (0)
+# endif /* !HAVE_WINSOCK */
 #endif /* ! epoll && ! /dev/poll */
 
 #ifdef HAVE_SLP
@@ -584,28 +679,17 @@ slapd_slp_init( const char* urls )
 	/* find and expand INADDR_ANY URLs */
 	for ( i = 0; slapd_srvurls[i] != NULL; i++ ) {
 		if ( strcmp( slapd_srvurls[i], "ldap:///" ) == 0 ) {
-			char *host = ldap_pvt_get_fqdn( NULL );
-			if ( host != NULL ) {
-				slapd_srvurls[i] = (char *) ch_realloc( slapd_srvurls[i],
-					strlen( host ) +
-					sizeof( LDAP_SRVTYPE_PREFIX ) );
-				strcpy( lutil_strcopy(slapd_srvurls[i],
-					LDAP_SRVTYPE_PREFIX ), host );
-
-				ch_free( host );
-			}
-
+			slapd_srvurls[i] = (char *) ch_realloc( slapd_srvurls[i],
+				strlen( global_host ) +
+				sizeof( LDAP_SRVTYPE_PREFIX ) );
+			strcpy( lutil_strcopy(slapd_srvurls[i],
+				LDAP_SRVTYPE_PREFIX ), global_host );
 		} else if ( strcmp( slapd_srvurls[i], "ldaps:///" ) == 0 ) {
-			char *host = ldap_pvt_get_fqdn( NULL );
-			if ( host != NULL ) {
-				slapd_srvurls[i] = (char *) ch_realloc( slapd_srvurls[i],
-					strlen( host ) +
-					sizeof( LDAPS_SRVTYPE_PREFIX ) );
-				strcpy( lutil_strcopy(slapd_srvurls[i],
-					LDAPS_SRVTYPE_PREFIX ), host );
-
-				ch_free( host );
-			}
+			slapd_srvurls[i] = (char *) ch_realloc( slapd_srvurls[i],
+				strlen( global_host ) +
+				sizeof( LDAPS_SRVTYPE_PREFIX ) );
+			strcpy( lutil_strcopy(slapd_srvurls[i],
+				LDAPS_SRVTYPE_PREFIX ), global_host );
 		}
 	}
 
@@ -695,6 +779,42 @@ slapd_slp_dereg( void )
 }
 #endif /* HAVE_SLP */
 
+#ifdef HAVE_WINSOCK
+/* Manage the descriptor to socket table */
+ber_socket_t
+slapd_socknew( ber_socket_t s )
+{
+	ber_socket_t i;
+	ldap_pvt_thread_mutex_lock( &slapd_ws_mutex );
+	for ( i = 0; i < dtblsize && slapd_ws_sockets[i] != INVALID_SOCKET; i++ );
+	if ( i == dtblsize ) {
+		WSASetLastError( WSAEMFILE );
+	} else {
+		slapd_ws_sockets[i] = s;
+	}
+	ldap_pvt_thread_mutex_unlock( &slapd_ws_mutex );
+	return i;
+}
+
+void
+slapd_sockdel( ber_socket_t s )
+{
+	ldap_pvt_thread_mutex_lock( &slapd_ws_mutex );
+	slapd_ws_sockets[s] = INVALID_SOCKET;
+	ldap_pvt_thread_mutex_unlock( &slapd_ws_mutex );
+}
+
+ber_socket_t
+slapd_sock2fd( ber_socket_t s )
+{
+	ber_socket_t i;
+	for ( i=0; i<dtblsize && slapd_ws_sockets[i] != s; i++);
+	if ( i == dtblsize )
+		i = -1;
+	return i;
+}
+#endif
+
 /*
  * Add a descriptor to daemon control
  *
@@ -720,9 +840,7 @@ slapd_add( ber_socket_t s, int isactive, Listener *sl )
 
 	ldap_pvt_thread_mutex_unlock( &slap_daemon.sd_mutex );
 
-#ifdef SLAP_LIGHTWEIGHT_DISPATCHER
 	WAKE_LISTENER(1);
-#endif /* SLAP_LIGHTWEIGHT_DISPATCHER */
 }
 
 /*
@@ -870,7 +988,10 @@ slapd_close( ber_socket_t s )
 {
 	Debug( LDAP_DEBUG_CONNS, "daemon: closing %ld\n",
 		(long) s, 0, 0 );
-	tcp_close(s);
+	tcp_close( SLAP_FD2SOCK(s) );
+#ifdef HAVE_WINSOCK
+	slapd_sockdel( s );
+#endif
 }
 
 static void
@@ -1125,6 +1246,7 @@ slap_open_listener(
 	int err, addrlen = 0;
 	struct sockaddr **sal, **psal;
 	int socktype = SOCK_STREAM;	/* default to COTS */
+	ber_socket_t s;
 
 #if defined(LDAP_PF_LOCAL) || defined(SLAP_X_LISTENER_MOD)
 	/*
@@ -1144,9 +1266,7 @@ slap_open_listener(
 
 	l.sl_url.bv_val = NULL;
 	l.sl_mute = 0;
-#ifdef SLAP_LIGHTWEIGHT_DISPATCHER
 	l.sl_busy = 0;
-#endif /* SLAP_LIGHTWEIGHT_DISPATCHER */
 
 #ifndef HAVE_TLS
 	if( ldap_pvt_url_scheme2tls( lud->lud_scheme ) ) {
@@ -1244,8 +1364,8 @@ slap_open_listener(
 		if( l.sl_is_udp ) socktype = SOCK_DGRAM;
 #endif /* LDAP_CONNECTIONLESS */
 
-		l.sl_sd = socket( (*sal)->sa_family, socktype, 0);
-		if ( l.sl_sd == AC_SOCKET_INVALID ) {
+		s = socket( (*sal)->sa_family, socktype, 0);
+		if ( s == AC_SOCKET_INVALID ) {
 			int err = sock_errno();
 			Debug( LDAP_DEBUG_ANY,
 				"daemon: %s socket() failed errno=%d (%s)\n",
@@ -1253,17 +1373,16 @@ slap_open_listener(
 			sal++;
 			continue;
 		}
+		l.sl_sd = SLAP_SOCKNEW( s );
 
-#ifndef HAVE_WINSOCK
 		if ( l.sl_sd >= dtblsize ) {
 			Debug( LDAP_DEBUG_ANY,
 				"daemon: listener descriptor %ld is too great %ld\n",
 				(long) l.sl_sd, (long) dtblsize, 0 );
-			tcp_close( l.sl_sd );
+			tcp_close( s );
 			sal++;
 			continue;
 		}
-#endif /* ! HAVE_WINSOCK */
 
 #ifdef LDAP_PF_LOCAL
 		if ( (*sal)->sa_family == AF_LOCAL ) {
@@ -1274,7 +1393,7 @@ slap_open_listener(
 #ifdef SO_REUSEADDR
 			/* enable address reuse */
 			tmp = 1;
-			rc = setsockopt( l.sl_sd, SOL_SOCKET, SO_REUSEADDR,
+			rc = setsockopt( s, SOL_SOCKET, SO_REUSEADDR,
 				(char *) &tmp, sizeof(tmp) );
 			if ( rc == AC_SOCKET_ERROR ) {
 				int err = sock_errno();
@@ -1294,7 +1413,7 @@ slap_open_listener(
 #ifdef IPV6_V6ONLY
 			/* Try to use IPv6 sockets for IPv6 only */
 			tmp = 1;
-			rc = setsockopt( l.sl_sd, IPPROTO_IPV6, IPV6_V6ONLY,
+			rc = setsockopt( s , IPPROTO_IPV6, IPV6_V6ONLY,
 				(char *) &tmp, sizeof(tmp) );
 			if ( rc == AC_SOCKET_ERROR ) {
 				int err = sock_errno();
@@ -1312,7 +1431,7 @@ slap_open_listener(
 #ifdef LOCAL_CREDS
 			{
 				int one = 1;
-				setsockopt( l.sl_sd, 0, LOCAL_CREDS, &one, sizeof( one ) );
+				setsockopt( s, 0, LOCAL_CREDS, &one, sizeof( one ) );
 			}
 #endif /* LOCAL_CREDS */
 
@@ -1336,7 +1455,7 @@ slap_open_listener(
 				old_umask = umask( 0 );
 			}
 #endif /* LDAP_PF_LOCAL */
-			rc = bind( l.sl_sd, *sal, addrlen );
+			rc = bind( s, *sal, addrlen );
 #ifdef LDAP_PF_LOCAL
 			if ( (*sal)->sa_family == AF_LOCAL ) {
 				umask( old_umask );
@@ -1348,7 +1467,7 @@ slap_open_listener(
 			Debug( LDAP_DEBUG_ANY,
 				"daemon: bind(%ld) failed errno=%d (%s)\n",
 				(long)l.sl_sd, err, sock_errstr( err ) );
-			tcp_close( l.sl_sd );
+			tcp_close( s );
 			sal++;
 			continue;
 		}
@@ -1389,9 +1508,9 @@ slap_open_listener(
 			inet_ntop( AF_INET6, &((struct sockaddr_in6 *)*sal)->sin6_addr,
 				addr, sizeof addr);
 			port = ntohs( ((struct sockaddr_in6 *)*sal)->sin6_port );
-			l.sl_name.bv_len = strlen(addr) + sizeof("IP= 65535");
+			l.sl_name.bv_len = strlen(addr) + sizeof("IP=[]:65535");
 			l.sl_name.bv_val = ber_memalloc( l.sl_name.bv_len );
-			snprintf( l.sl_name.bv_val, l.sl_name.bv_len, "IP=%s %d", 
+			snprintf( l.sl_name.bv_val, l.sl_name.bv_len, "IP=[%s]:%d", 
 				addr, port );
 			l.sl_name.bv_len = strlen( l.sl_name.bv_val );
 		} break;
@@ -1446,7 +1565,7 @@ slapd_daemon_init( const char *urls )
 
 #ifdef HAVE_SYSCONF
 	dtblsize = sysconf( _SC_OPEN_MAX );
-#elif HAVE_GETDTABLESIZE
+#elif defined(HAVE_GETDTABLESIZE)
 	dtblsize = getdtablesize();
 #else /* ! HAVE_SYSCONF && ! HAVE_GETDTABLESIZE */
 	dtblsize = FD_SETSIZE;
@@ -1522,8 +1641,8 @@ int
 slapd_daemon_destroy( void )
 {
 	connections_destroy();
-	tcp_close( wake_sds[1] );
-	tcp_close( wake_sds[0] );
+	tcp_close( SLAP_FD2SOCK(wake_sds[1]) );
+	tcp_close( SLAP_FD2SOCK(wake_sds[0]) );
 	sockdestroy();
 
 #ifdef HAVE_SLP
@@ -1582,9 +1701,9 @@ slap_listener(
 {
 	Sockaddr		from;
 
-	ber_socket_t s;
+	ber_socket_t s, sfd;
 	ber_socklen_t len = sizeof(from);
-	long id;
+	Connection *c;
 	slap_ssf_t ssf = 0;
 	struct berval authid = BER_BVNULL;
 #ifdef SLAPD_RLOOKUPS
@@ -1595,11 +1714,16 @@ slap_listener(
 	char	*peeraddr = NULL;
 #ifdef LDAP_PF_LOCAL
 	char peername[MAXPATHLEN + sizeof("PATH=")];
+#ifdef LDAP_PF_LOCAL_SENDMSG
+	char peerbuf[8];
+	struct berval peerbv = BER_BVNULL;
+#endif
 #elif defined(LDAP_PF_INET6)
-	char peername[sizeof("IP=ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff 65535")];
+	char peername[sizeof("IP=[ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff]:65535")];
 #else /* ! LDAP_PF_LOCAL && ! LDAP_PF_INET6 */
 	char peername[sizeof("IP=255.255.255.255:65336")];
 #endif /* LDAP_PF_LOCAL */
+	int cflag;
 
 	Debug( LDAP_DEBUG_TRACE,
 		">>> slap_listener(%s)\n",
@@ -1617,15 +1741,13 @@ slap_listener(
 	from.sa_un_addr.sun_path[0] = '\0';
 #  endif /* LDAP_PF_LOCAL */
 
-	s = accept( sl->sl_sd, (struct sockaddr *) &from, &len );
+	s = accept( SLAP_FD2SOCK( sl->sl_sd ), (struct sockaddr *) &from, &len );
 
-#ifdef SLAP_LIGHTWEIGHT_DISPATCHER
 	/* Resume the listener FD to allow concurrent-processing of
 	 * additional incoming connections.
 	 */
 	sl->sl_busy = 0;
 	WAKE_LISTENER(1);
-#endif /* SLAP_LIGHTWEIGHT_DISPATCHER */
 
 	if ( s == AC_SOCKET_INVALID ) {
 		int err = sock_errno();
@@ -1652,24 +1774,23 @@ slap_listener(
 		ldap_pvt_thread_yield();
 		return 0;
 	}
+	sfd = SLAP_SOCKNEW( s );
 
-#ifndef HAVE_WINSOCK
 	/* make sure descriptor number isn't too great */
-	if ( s >= dtblsize ) {
+	if ( sfd >= dtblsize ) {
 		Debug( LDAP_DEBUG_ANY,
 			"daemon: %ld beyond descriptor table size %ld\n",
-			(long) s, (long) dtblsize, 0 );
+			(long) sfd, (long) dtblsize, 0 );
 
-		slapd_close(s);
+		tcp_close(s);
 		ldap_pvt_thread_yield();
 		return 0;
 	}
-#endif /* ! HAVE_WINSOCK */
 
 #ifdef LDAP_DEBUG
 	ldap_pvt_thread_mutex_lock( &slap_daemon.sd_mutex );
 	/* newly accepted stream should not be in any of the FD SETS */
-	assert( SLAP_SOCK_NOT_ACTIVE( s ));
+	assert( SLAP_SOCK_NOT_ACTIVE( sfd ));
 	ldap_pvt_thread_mutex_unlock( &slap_daemon.sd_mutex );
 #endif /* LDAP_DEBUG */
 
@@ -1690,7 +1811,7 @@ slap_listener(
 			int err = sock_errno();
 			Debug( LDAP_DEBUG_ANY,
 				"slapd(%ld): setsockopt(SO_KEEPALIVE) failed "
-				"errno=%d (%s)\n", (long) s, err, sock_errstr(err) );
+				"errno=%d (%s)\n", (long) sfd, err, sock_errstr(err) );
 		}
 #endif /* SO_KEEPALIVE */
 #ifdef TCP_NODELAY
@@ -1702,7 +1823,7 @@ slap_listener(
 			int err = sock_errno();
 			Debug( LDAP_DEBUG_ANY,
 				"slapd(%ld): setsockopt(TCP_NODELAY) failed "
-				"errno=%d (%s)\n", (long) s, err, sock_errstr(err) );
+				"errno=%d (%s)\n", (long) sfd, err, sock_errstr(err) );
 		}
 #endif /* TCP_NODELAY */
 	}
@@ -1710,11 +1831,14 @@ slap_listener(
 
 	Debug( LDAP_DEBUG_CONNS,
 		"daemon: listen=%ld, new connection on %ld\n",
-		(long) sl->sl_sd, (long) s, 0 );
+		(long) sl->sl_sd, (long) sfd, 0 );
 
+	cflag = 0;
 	switch ( from.sa_addr.sa_family ) {
 #  ifdef LDAP_PF_LOCAL
 	case AF_LOCAL:
+		cflag |= CONN_IS_IPC;
+
 		/* FIXME: apparently accept doesn't fill
 		 * the sun_path sun_path member */
 		if ( from.sa_un_addr.sun_path[0] == '\0' ) {
@@ -1729,7 +1853,11 @@ slap_listener(
 			uid_t uid;
 			gid_t gid;
 
-			if( getpeereid( s, &uid, &gid ) == 0 ) {
+#ifdef LDAP_PF_LOCAL_SENDMSG
+			peerbv.bv_val = peerbuf;
+			peerbv.bv_len = sizeof( peerbuf );
+#endif
+			if( LUTIL_GETPEEREID( s, &uid, &gid, &peerbv ) == 0 ) {
 				authid.bv_val = ch_malloc(
 					STRLENOF( "gidNumber=4294967295+uidNumber=4294967295,"
 					"cn=peercred,cn=external,cn=auth" ) + 1 );
@@ -1760,7 +1888,7 @@ slap_listener(
 		peeraddr = (char *) inet_ntop( AF_INET6,
 				      &from.sa_in6_addr.sin6_addr,
 				      addr, sizeof addr );
-		sprintf( peername, "IP=%s %d",
+		sprintf( peername, "IP=[%s]:%d",
 			 peeraddr != NULL ? peeraddr : SLAP_STRING_UNKNOWN,
 			 (unsigned) ntohs( from.sa_in6_addr.sin6_port ) );
 	}
@@ -1768,14 +1896,14 @@ slap_listener(
 #  endif /* LDAP_PF_INET6 */
 
 	case AF_INET:
-	peeraddr = inet_ntoa( from.sa_in_addr.sin_addr );
-	sprintf( peername, "IP=%s:%d",
-		peeraddr != NULL ? peeraddr : SLAP_STRING_UNKNOWN,
-		(unsigned) ntohs( from.sa_in_addr.sin_port ) );
+		peeraddr = inet_ntoa( from.sa_in_addr.sin_addr );
+		sprintf( peername, "IP=%s:%d",
+			peeraddr != NULL ? peeraddr : SLAP_STRING_UNKNOWN,
+			(unsigned) ntohs( from.sa_in_addr.sin_port ) );
 		break;
 
 	default:
-		slapd_close(s);
+		slapd_close(sfd);
 		return 0;
 	}
 
@@ -1810,47 +1938,44 @@ slap_listener(
 				/* DENY ACCESS */
 				Statslog( LDAP_DEBUG_STATS,
 					"fd=%ld DENIED from %s (%s)\n",
-					(long) s,
+					(long) sfd,
 					dnsname != NULL ? dnsname : SLAP_STRING_UNKNOWN,
 					peeraddr != NULL ? peeraddr : SLAP_STRING_UNKNOWN,
 					0, 0 );
-				slapd_close(s);
+				slapd_close(sfd);
 				return 0;
 			}
 		}
 #endif /* HAVE_TCPD */
 	}
 
-	id = connection_init(s, sl,
-		dnsname != NULL ? dnsname : SLAP_STRING_UNKNOWN,
-		peername,
 #ifdef HAVE_TLS
-		sl->sl_is_tls ? CONN_IS_TLS : 0,
-#else /* ! HAVE_TLS */
-		0,
-#endif /* ! HAVE_TLS */
-		ssf,
-		authid.bv_val ? &authid : NULL );
+	if ( sl->sl_is_tls ) cflag |= CONN_IS_TLS;
+#endif
+	c = connection_init(sfd, sl,
+		dnsname != NULL ? dnsname : SLAP_STRING_UNKNOWN,
+		peername, cflag, ssf,
+		authid.bv_val ? &authid : NULL
+		LDAP_PF_LOCAL_SENDMSG_ARG(&peerbv));
 
 	if( authid.bv_val ) ch_free(authid.bv_val);
 
-	if( id < 0 ) {
+	if( !c ) {
 		Debug( LDAP_DEBUG_ANY,
 			"daemon: connection_init(%ld, %s, %s) failed.\n",
-			(long) s, peername, sl->sl_name.bv_val );
-		slapd_close(s);
+			(long) sfd, peername, sl->sl_name.bv_val );
+		slapd_close(sfd);
 		return 0;
 	}
 
 	Statslog( LDAP_DEBUG_STATS,
 		"conn=%ld fd=%ld ACCEPT from %s (%s)\n",
-		id, (long) s, peername, sl->sl_name.bv_val,
+		c->c_connid, (long) sfd, peername, sl->sl_name.bv_val,
 		0 );
 
 	return 0;
 }
 
-#ifdef SLAP_LIGHTWEIGHT_DISPATCHER
 static void*
 slap_listener_thread(
 	void* ctx,
@@ -1891,7 +2016,6 @@ slap_listener_activate(
 	}
 	return rc;
 }
-#endif /* SLAP_LIGHTWEIGHT_DISPATCHER */
 
 static void *
 slapd_daemon_task(
@@ -1933,7 +2057,7 @@ slapd_daemon_task(
 			continue;
 #endif /* LDAP_CONNECTIONLESS */
 
-		if ( listen( slap_listeners[l]->sl_sd, SLAPD_LISTEN_BACKLOG ) == -1 ) {
+		if ( listen( SLAP_FD2SOCK( slap_listeners[l]->sl_sd ), SLAPD_LISTEN_BACKLOG ) == -1 ) {
 			int err = sock_errno();
 
 #ifdef LDAP_PF_INET6
@@ -1978,16 +2102,14 @@ slapd_daemon_task(
 			return (void*)-1;
 		}
 
-#ifdef SLAP_LIGHTWEIGHT_DISPATCHER
 		/* make the listening socket non-blocking */
-		if ( ber_pvt_socket_set_nonblock( slap_listeners[l]->sl_sd, 1 ) < 0 ) {
+		if ( ber_pvt_socket_set_nonblock( SLAP_FD2SOCK( slap_listeners[l]->sl_sd ), 1 ) < 0 ) {
 			Debug( LDAP_DEBUG_ANY, "slapd_daemon_task: "
 				"set nonblocking on a listening socket failed\n",
 				0, 0, 0 );
 			slapd_shutdown = 2;
 			return (void*)-1;
 		}
-#endif /* SLAP_LIGHTWEIGHT_DISPATCHER */
 
 		slapd_add( slap_listeners[l]->sl_sd, 0, slap_listeners[l] );
 	}
@@ -1997,15 +2119,6 @@ slapd_daemon_task(
 		ldap_pvt_thread_cond_signal( &started_event );
 	}
 #endif /* HAVE_NT_SERVICE_MANAGER */
-
-#ifdef SLAP_SEM_LOAD_CONTROL
-	/*
-	 * initialize count and lazyness of a semaphore
-	 */
-	(void) ldap_lazy_sem_init(
-		SLAP_MAX_WORKER_THREADS + 4 /* max workers + margin */,
-		4 /* lazyness */ );
-#endif /* SLAP_SEM_LOAD_CONTROL */
 
 	/* initialization complete. Here comes the loop. */
 
@@ -2076,11 +2189,7 @@ slapd_daemon_task(
 
 			if ( lr->sl_sd == AC_SOCKET_INVALID ) continue;
 
-#ifdef SLAP_LIGHTWEIGHT_DISPATCHER
 			if ( lr->sl_mute || lr->sl_busy )
-#else /* ! SLAP_LIGHTWEIGHT_DISPATCHER */
-			if ( lr->sl_mute )
-#endif /* ! SLAP_LIGHTWEIGHT_DISPATCHER */
 			{
 				SLAP_SOCK_CLR_READ( lr->sl_sd );
 			} else {
@@ -2155,7 +2264,6 @@ slapd_daemon_task(
 				continue;
 			}
 
-#ifdef SLAP_LIGHTWEIGHT_DISPATCHER
 			if ( lr->sl_busy ) {
 				Debug( LDAP_DEBUG_CONNS,
 					"daemon: " SLAP_EVENT_FNAME ": "
@@ -2163,7 +2271,6 @@ slapd_daemon_task(
 					lr->sl_sd, 0, 0 );
 				continue;
 			}
-#endif /* SLAP_LIGHTWEIGHT_DISPATCHER */
 
 			Debug( LDAP_DEBUG_CONNS,
 				"daemon: " SLAP_EVENT_FNAME ": "
@@ -2222,7 +2329,7 @@ slapd_daemon_task(
 			char c[BUFSIZ];
 			SLAP_EVENT_CLR_READ( wake_sds[0] );
 			waking = 0;
-			tcp_read( wake_sds[0], c, sizeof(c) );
+			tcp_read( SLAP_FD2SOCK(wake_sds[0]), c, sizeof(c) );
 			Debug( LDAP_DEBUG_CONNS, "daemon: waked\n", 0, 0, 0 );
 			continue;
 		}
@@ -2246,11 +2353,7 @@ slapd_daemon_task(
 			SLAP_EVENT_CLR_WRITE( slap_listeners[l]->sl_sd );
 			ns--;
 
-#ifdef SLAP_LIGHTWEIGHT_DISPATCHER
 			rc = slap_listener_activate( slap_listeners[l] );
-#else /* ! SLAP_LIGHTWEIGHT_DISPATCHER */
-			rc = slap_listener( slap_listeners[l] );
-#endif /* ! SLAP_LIGHTWEIGHT_DISPATCHER */
 		}
 
 		/* bypass the following tests if no descriptors left */
@@ -2262,19 +2365,6 @@ slapd_daemon_task(
 		}
 
 		Debug( LDAP_DEBUG_CONNS, "daemon: activity on:", 0, 0, 0 );
-#ifdef HAVE_WINSOCK
-		nrfds = readfds.fd_count;
-		nwfds = writefds.fd_count;
-		for ( i = 0; i < readfds.fd_count; i++ ) {
-			Debug( LDAP_DEBUG_CONNS, " %d%s",
-				readfds.fd_array[i], "r", 0 );
-		}
-		for ( i = 0; i < writefds.fd_count; i++ ) {
-			Debug( LDAP_DEBUG_CONNS, " %d%s",
-				writefds.fd_array[i], "w", 0 );
-		}
-
-#else /* ! HAVE_WINSOCK */
 		nrfds = 0;
 		nwfds = 0;
 		for ( i = 0; i < nfds; i++ ) {
@@ -2297,18 +2387,13 @@ slapd_daemon_task(
 			}
 			if ( ns <= 0 ) break;
 		}
-#endif /* ! HAVE_WINSOCK */
 		Debug( LDAP_DEBUG_CONNS, "\n", 0, 0, 0 );
 
 		/* loop through the writers */
 		for ( i = 0; nwfds > 0; i++ ) {
 			ber_socket_t wd;
-#ifdef HAVE_WINSOCK
-			wd = writefds.fd_array[i];
-#else /* ! HAVE_WINSOCK */
 			if ( ! SLAP_EVENT_IS_WRITE( i ) ) continue;
 			wd = i;
-#endif /* ! HAVE_WINSOCK */
 
 			SLAP_EVENT_CLR_WRITE( wd );
 			nwfds--;
@@ -2336,12 +2421,8 @@ slapd_daemon_task(
 
 		for ( i = 0; nrfds > 0; i++ ) {
 			ber_socket_t rd;
-#ifdef HAVE_WINSOCK
-			rd = readfds.fd_array[i];
-#else /* ! HAVE_WINSOCK */
 			if ( ! SLAP_EVENT_IS_READ( i ) ) continue;
 			rd = i;
-#endif /* ! HAVE_WINSOCK */
 			SLAP_EVENT_CLR_READ( rd );
 			nrfds--;
 
@@ -2354,11 +2435,7 @@ slapd_daemon_task(
 			 * active.
 			 */
 
-#ifdef SLAP_LIGHTWEIGHT_DISPATCHER
 			connection_read_activate( rd );
-#else /* ! SLAP_LIGHTWEIGHT_DISPATCHER */
-			connection_read( rd );
-#endif /* ! SLAP_LIGHTWEIGHT_DISPATCHER */
 		}
 #else	/* !SLAP_EVENTS_ARE_INDEXED */
 	/* FIXME */
@@ -2381,7 +2458,7 @@ slapd_daemon_task(
 		Debug( LDAP_DEBUG_CONNS, "daemon: activity on:", 0, 0, 0 );
 
 		for ( i = 0; i < ns; i++ ) {
-			int	r, w;
+			int	r, w, fd;
 
 			/* Don't log listener events */
 			if ( SLAP_EVENT_IS_LISTENER( i )
@@ -2393,13 +2470,14 @@ slapd_daemon_task(
 				continue;
 			}
 
+			fd = SLAP_EVENT_FD( i );
 			/* Don't log internal wake events */
-			if ( SLAP_EVENT_FD( i ) == wake_sds[0] ) continue;
+			if ( fd == wake_sds[0] ) continue;
 
 			r = SLAP_EVENT_IS_READ( i );
 			w = SLAP_EVENT_IS_WRITE( i );
 			if ( r || w ) {
-				Debug( LDAP_DEBUG_CONNS, " %d%s%s", SLAP_EVENT_FD(i),
+				Debug( LDAP_DEBUG_CONNS, " %d%s%s", fd,
 				    r ? "r" : "", w ? "w" : "" );
 			}
 		}
@@ -2410,11 +2488,7 @@ slapd_daemon_task(
 			int rc = 1, fd;
 
 			if ( SLAP_EVENT_IS_LISTENER( i ) ) {
-#ifdef SLAP_LIGHTWEIGHT_DISPATCHER
 				rc = slap_listener_activate( SLAP_EVENT_LISTENER( i ) );
-#else /* ! SLAP_LIGHTWEIGHT_DISPATCHER */
-				rc = slap_listener( SLAP_EVENT_LISTENER( i ) );
-#endif /* ! SLAP_LIGHTWEIGHT_DISPATCHER */
 			}
 
 			/* If we found a regular listener, rc is now zero, and we
@@ -2428,7 +2502,7 @@ slapd_daemon_task(
 				if ( fd == wake_sds[0] ) {
 					char c[BUFSIZ];
 					waking = 0;
-					tcp_read( wake_sds[0], c, sizeof(c) );
+					tcp_read( SLAP_FD2SOCK(wake_sds[0]), c, sizeof(c) );
 					break;
 				}
 
@@ -2456,17 +2530,7 @@ slapd_daemon_task(
 						fd, 0, 0 );
 
 					SLAP_EVENT_CLR_READ( i );
-#ifdef SLAP_LIGHTWEIGHT_DISPATCHER
 					connection_read_activate( fd );
-#else /* ! SLAP_LIGHTWEIGHT_DISPATCHER */
-					/*
-					 * NOTE: it is possible that the connection was closed
-					 * and that the stream is now inactive.
-					 * connection_read() must valid the stream is still
-					 * active.
-					 */
-					connection_read( fd );
-#endif /* ! SLAP_LIGHTWEIGHT_DISPATCHER */
 				} else {
 					Debug( LDAP_DEBUG_CONNS,
 						"daemon: hangup on %d\n", fd, 0, 0 );
@@ -2528,16 +2592,17 @@ connectionless_init( void )
 
 	for ( l = 0; slap_listeners[l] != NULL; l++ ) {
 		Listener *lr = slap_listeners[l];
-		long id;
+		Connection *c;
 
 		if ( !lr->sl_is_udp ) {
 			continue;
 		}
 
-		id = connection_init( lr->sl_sd, lr, "", "",
-			CONN_IS_UDP, (slap_ssf_t) 0, NULL );
+		c = connection_init( lr->sl_sd, lr, "", "",
+			CONN_IS_UDP, (slap_ssf_t) 0, NULL
+			LDAP_PF_LOCAL_SENDMSG_ARG(NULL));
 
-		if ( id < 0 ) {
+		if ( !c ) {
 			Debug( LDAP_DEBUG_TRACE,
 				"connectionless_init: failed on %s (%d)\n",
 				lr->sl_url, lr->sl_sd, 0 );
@@ -2651,7 +2716,7 @@ slap_sig_shutdown( int sig )
 	 * SIGBREAK is generated when a user logs out.
 	 */
 
-#if HAVE_NT_SERVICE_MANAGER && SIGBREAK
+#if defined(HAVE_NT_SERVICE_MANAGER) && defined(SIGBREAK)
 	if (is_NT_Service && sig == SIGBREAK) {
 		/* empty */;
 	} else

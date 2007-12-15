@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/init.c,v 1.37.2.16 2007/01/26 22:05:36 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/init.c,v 1.58.2.5 2007/08/31 23:14:03 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.
@@ -23,6 +23,7 @@
 #include <ac/socket.h>
 
 #include "slap.h"
+#include "config.h"
 #include "../back-ldap/back-ldap.h"
 #include "back-meta.h"
 
@@ -40,6 +41,20 @@ int
 meta_back_initialize(
 	BackendInfo	*bi )
 {
+	bi->bi_flags =
+#if 0
+	/* this is not (yet) set essentially because back-meta does not
+	 * directly support extended operations... */
+#ifdef LDAP_DYNAMIC_OBJECTS
+		/* this is set because all the support a proxy has to provide
+		 * is the capability to forward the refresh exop, and to
+		 * pass thru entries that contain the dynamicObject class
+		 * and the entryTtl attribute */
+		SLAP_BFLAG_DYNAMIC |
+#endif /* LDAP_DYNAMIC_OBJECTS */
+#endif
+		0;
+
 	bi->bi_open = meta_back_open;
 	bi->bi_config = 0;
 	bi->bi_close = 0;
@@ -73,7 +88,8 @@ meta_back_initialize(
 
 int
 meta_back_db_init(
-	Backend		*be )
+	Backend		*be,
+	ConfigReply	*cr)
 {
 	metainfo_t	*mi;
 	int		i;
@@ -92,6 +108,7 @@ meta_back_db_init(
 	mi->mi_bind_timeout.tv_usec = META_BIND_TIMEOUT;
 
 	mi->mi_rebind_f = meta_back_default_rebind;
+	mi->mi_urllist_f = meta_back_default_urllist;
 
 	ldap_pvt_thread_mutex_init( &mi->mi_conninfo.lai_mutex );
 	ldap_pvt_thread_mutex_init( &mi->mi_cache.mutex );
@@ -113,7 +130,8 @@ meta_back_db_init(
 
 int
 meta_back_db_open(
-	Backend		*be )
+	Backend		*be,
+	ConfigReply	*cr )
 {
 	metainfo_t	*mi = (metainfo_t *)be->be_private;
 
@@ -131,10 +149,16 @@ meta_back_db_open(
 	}
 
 	for ( i = 0; i < mi->mi_ntargets; i++ ) {
+		slap_bindconf	sb = { BER_BVNULL };
 		metatarget_t	*mt = mi->mi_targets[ i ];
 
+		ber_str2bv( mt->mt_uri, 0, 0, &sb.sb_uri );
+		sb.sb_version = mt->mt_version;
+		sb.sb_method = LDAP_AUTH_SIMPLE;
+		BER_BVSTR( &sb.sb_binddn, "" );
+
 		if ( META_BACK_TGT_T_F_DISCOVER( mt ) ) {
-			rc = slap_discover_feature( mt->mt_uri, mt->mt_version,
+			rc = slap_discover_feature( &sb,
 					slap_schema.si_ad_supportedFeatures->ad_cname.bv_val,
 					LDAP_FEATURE_ABSOLUTE_FILTERS );
 			if ( rc == LDAP_COMPARE_TRUE ) {
@@ -143,7 +167,7 @@ meta_back_db_open(
 		}
 
 		if ( META_BACK_TGT_CANCEL_DISCOVER( mt ) ) {
-			rc = slap_discover_feature( mt->mt_uri, mt->mt_version,
+			rc = slap_discover_feature( &sb,
 					slap_schema.si_ad_supportedExtension->ad_cname.bv_val,
 					LDAP_EXOP_CANCEL );
 			if ( rc == LDAP_COMPARE_TRUE ) {
@@ -307,7 +331,8 @@ target_free(
 
 int
 meta_back_db_destroy(
-	Backend		*be )
+	Backend		*be,
+	ConfigReply	*cr )
 {
 	metainfo_t	*mi;
 

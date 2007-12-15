@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblunicode/ucdata/ucdata.c,v 1.30.2.4 2007/01/02 21:43:51 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblunicode/ucdata/ucdata.c,v 1.32.2.2 2007/08/31 23:13:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -397,7 +397,7 @@ static ac_uint4
 _uccase_lookup(ac_uint4 code, long l, long r, int field)
 {
     long m;
-	ac_uint4 *tmp;
+	const ac_uint4 *tmp;
 
     /*
      * Do the binary search.

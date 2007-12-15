@@ -1,5 +1,5 @@
 /* ftest.c -- OpenLDAP Filter API Test */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/ftest.c,v 1.13.2.3 2007/01/02 21:43:48 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/ftest.c,v 1.15.2.2 2007/08/31 23:13:55 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -38,7 +38,7 @@ int usage()
 {
 	fprintf( stderr, "usage:\n"
 		"  ftest [-d n] filter\n"
-		"    filter - RFC 2254 string representation of an "
+		"    filter - RFC 4515 string representation of an "
 			"LDAP search filter\n" );
 	return EXIT_FAILURE;
 }

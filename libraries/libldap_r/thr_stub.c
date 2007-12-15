@@ -1,5 +1,5 @@
 /* thr_stub.c - stubs for the threads */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_stub.c,v 1.22.2.5 2007/01/02 21:43:51 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_stub.c,v 1.27.2.4 2007/11/07 20:58:37 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -173,6 +173,14 @@ ldap_pvt_thread_pool_maxthreads ( ldap_pvt_thread_pool_t *tpool, int max_threads
 }
 
 int
+ldap_pvt_thread_pool_query( ldap_pvt_thread_pool_t *tpool,
+	ldap_pvt_thread_pool_param_t param, void *value )
+{
+	*(int *)value = -1;
+	return(-1);
+}
+
+int
 ldap_pvt_thread_pool_backload (
 	ldap_pvt_thread_pool_t *pool )
 {
@@ -226,6 +234,37 @@ void ldap_pvt_thread_pool_context_reset( void *vctx )
 ldap_pvt_thread_t
 ldap_pvt_thread_self( void )
 {
+	return(0);
+}
+
+int
+ldap_pvt_thread_key_create( ldap_pvt_thread_key_t *key )
+{
+	return(0);
+}
+
+int
+ldap_pvt_thread_key_destroy( ldap_pvt_thread_key_t key )
+{
+	return(0);
+}
+
+int
+ldap_pvt_thread_key_setdata( ldap_pvt_thread_key_t key, void *data )
+{
+	return(0);
+}
+
+int
+ldap_pvt_thread_key_getdata( ldap_pvt_thread_key_t key, void **data )
+{
+	return(0);
+}
+
+ldap_pvt_thread_t
+ldap_pvt_thread_pool_tid( void *vctx )
+{
+
 	return(0);
 }
 

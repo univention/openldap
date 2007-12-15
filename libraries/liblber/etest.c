@@ -1,5 +1,5 @@
 /* etest.c - lber encoding test program */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/etest.c,v 1.33.2.3 2007/01/02 21:43:48 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/etest.c,v 1.35.2.3 2007/08/31 23:13:54 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -171,8 +171,8 @@ main( int argc, char **argv )
 		return( EXIT_FAILURE );
 	}
 
-	if ( ber_flush( sb, ber, 1 ) == -1 ) {
-		perror( "ber_flush" );
+	if ( ber_flush2( sb, ber, LBER_FLUSH_FREE_ALWAYS ) == -1 ) {
+		perror( "ber_flush2" );
 		return( EXIT_FAILURE );
 	}
 

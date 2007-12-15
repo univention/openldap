@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/lber_pvt.h,v 1.30.2.5 2007/01/02 21:43:46 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/lber_pvt.h,v 1.35.2.3 2007/08/31 23:13:53 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -145,6 +145,9 @@ ber_bvarray_free_x LDAP_P(( BerVarray p, void *ctx ));
 LBER_F( int )
 ber_bvarray_add_x LDAP_P(( BerVarray *p, BerValue *bv, void *ctx ));
 
+LBER_F( int )
+ber_bvarray_dup_x LDAP_P(( BerVarray *dst, BerVarray src, void *ctx ));
+
 #if 0
 #define ber_bvstrcmp(v1,v2) \
 	((v1)->bv_len < (v2)->bv_len \
@@ -172,26 +175,26 @@ ber_bvarray_add_x LDAP_P(( BerVarray *p, BerValue *bv, void *ctx ));
 #define ber_bvrchr(bv,c) \
 	((char *) memrchr( (bv)->bv_val, (c), (bv)->bv_len ))
 
-#define ber_bvchr_right(dst,bv,c) \
+#define ber_bvchr_post(dst,bv,c) \
 	do { \
 		(dst)->bv_val = memchr( (bv)->bv_val, (c), (bv)->bv_len ); \
 		(dst)->bv_len = (dst)->bv_val ? (bv)->bv_len - ((dst)->bv_val - (bv)->bv_val) : 0; \
 	} while (0)
 
-#define ber_bvchr_left(dst,bv,c) \
+#define ber_bvchr_pre(dst,bv,c) \
 	do { \
 		(dst)->bv_val = memchr( (bv)->bv_val, (c), (bv)->bv_len ); \
 		(dst)->bv_len = (dst)->bv_val ? ((dst)->bv_val - (bv)->bv_val) : (bv)->bv_len; \
 		(dst)->bv_val = (bv)->bv_val; \
 	} while (0)
 
-#define ber_bvrchr_right(dst,bv,c) \
+#define ber_bvrchr_post(dst,bv,c) \
 	do { \
 		(dst)->bv_val = memrchr( (bv)->bv_val, (c), (bv)->bv_len ); \
 		(dst)->bv_len = (dst)->bv_val ? (bv)->bv_len - ((dst)->bv_val - (bv)->bv_val) : 0; \
 	} while (0)
 
-#define ber_bvrchr_left(dst,bv,c) \
+#define ber_bvrchr_pre(dst,bv,c) \
 	do { \
 		(dst)->bv_val = memrchr( (bv)->bv_val, (c), (bv)->bv_len ); \
 		(dst)->bv_len = (dst)->bv_val ? ((dst)->bv_val - (bv)->bv_val) : (bv)->bv_len; \

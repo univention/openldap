@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/compare.c,v 1.10.2.5 2007/01/02 21:44:07 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/compare.c,v 1.24.2.4 2007/09/29 09:55:22 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.
@@ -42,7 +42,7 @@ backsql_compare( Operation *op, SlapReply *rs )
  	Debug( LDAP_DEBUG_TRACE, "==>backsql_compare()\n", 0, 0, 0 );
 
 	rs->sr_err = backsql_get_db_conn( op, &dbh );
-	if ( !dbh ) {
+	if ( rs->sr_err != LDAP_SUCCESS ) {
      		Debug( LDAP_DEBUG_TRACE, "backsql_compare(): "
 			"could not get connection handle - exiting\n",
 			0, 0, 0 );
@@ -131,11 +131,10 @@ backsql_compare( Operation *op, SlapReply *rs )
 			a = attrs_find( a->a_next, op->oq_compare.rs_ava->aa_desc ) )
 	{
 		rs->sr_err = LDAP_COMPARE_FALSE;
-		if ( value_find_ex( op->oq_compare.rs_ava->aa_desc,
+		if ( attr_valfind( a,
 					SLAP_MR_ATTRIBUTE_VALUE_NORMALIZED_MATCH |
 					SLAP_MR_ASSERTED_VALUE_NORMALIZED_MATCH,
-					a->a_nvals,
-					&op->oq_compare.rs_ava->aa_value,
+					&op->oq_compare.rs_ava->aa_value, NULL,
 					op->o_tmpmemctx ) == 0 )
 		{
 			rs->sr_err = LDAP_COMPARE_TRUE;
@@ -150,7 +149,6 @@ return_results:;
 		break;
 
 	default:
-#ifdef SLAP_ACL_HONOR_DISCLOSE
 		if ( !BER_BVISNULL( &e.e_nname ) &&
 				! access_allowed( op, &e,
 					slap_schema.si_ad_entry, NULL,
@@ -159,7 +157,6 @@ return_results:;
 			rs->sr_err = LDAP_NO_SUCH_OBJECT;
 			rs->sr_text = NULL;
 		}
-#endif /* SLAP_ACL_HONOR_DISCLOSE */
 		break;
 	}
 
@@ -175,7 +172,7 @@ return_results:;
 	}
 
 	if ( !BER_BVISNULL( &bsi.bsi_base_id.eid_ndn ) ) {
-		(void)backsql_free_entryID( op, &bsi.bsi_base_id, 0 );
+		(void)backsql_free_entryID( &bsi.bsi_base_id, 0, op->o_tmpmemctx );
 	}
 
 	if ( !BER_BVISNULL( &e.e_nname ) ) {

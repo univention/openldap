@@ -1,5 +1,5 @@
 /* Generic param.h */
-/* $OpenLDAP: pkg/ldap/include/ac/param.h,v 1.11.2.3 2007/01/02 21:43:47 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ac/param.h,v 1.13.2.2 2007/08/31 23:13:54 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.

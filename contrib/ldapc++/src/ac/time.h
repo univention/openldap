@@ -1,5 +1,5 @@
 /* Generic time.h */
-/* $OpenLDAP: pkg/ldap/contrib/ldapc++/src/ac/time.h,v 1.5.2.3 2007/01/02 21:43:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/ldapc++/src/ac/time.h,v 1.7.2.3 2007/10/02 02:24:57 ralf Exp $ */
 /*
  * Copyright 1998-2007 The OpenLDAP Foundation, Redwood City, California, USA
  * All rights reserved.
@@ -13,10 +13,10 @@
 #ifndef _AC_TIME_H
 #define _AC_TIME_H
 
-#if TIME_WITH_SYS_TIME
+#ifdef TIME_WITH_SYS_TIME
 # include <sys/time.h>
 # include <time.h>
-#elif HAVE_SYS_TIME_H
+#elif defined HAVE_SYS_TIME_H
 # include <sys/time.h>
 # ifdef HAVE_SYS_TIMEB_H
 #  include <sys/timeb.h>

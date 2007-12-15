@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/init.c,v 1.40.2.5 2007/01/02 21:44:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/init.c,v 1.44.2.3 2007/08/31 23:14:04 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.
@@ -16,6 +16,7 @@
  */
 
 #include "perl_back.h"
+#include "../config.h"
 
 static void perl_back_xs_init LDAP_P((PERL_BACK_XS_INIT_PARAMS));
 EXT void boot_DynaLoader LDAP_P((PERL_BACK_BOOT_DYNALOADER_PARAMS));
@@ -85,7 +86,8 @@ perl_back_initialize(
 
 int
 perl_back_db_init(
-	BackendDB	*be
+	BackendDB	*be,
+	ConfigReply	*cr
 )
 {
 	be->be_private = (PerlBackend *) ch_malloc( sizeof(PerlBackend) );
@@ -100,7 +102,8 @@ perl_back_db_init(
 
 int
 perl_back_db_open(
-	BackendDB	*be
+	BackendDB	*be,
+	ConfigReply	*cr
 )
 {
 	int count;

@@ -1,5 +1,5 @@
 /* io.c - ber general i/o routines */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/io.c,v 1.107.2.6 2007/01/02 21:43:48 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/io.c,v 1.111.2.6 2007/10/18 01:37:30 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -46,6 +46,25 @@
 
 #include "lber-int.h"
 #include "ldap_log.h"
+
+ber_slen_t
+ber_skip_data(
+	BerElement *ber,
+	ber_len_t len )
+{
+	ber_len_t	actuallen, nleft;
+
+	assert( ber != NULL );
+
+	assert( LBER_VALID( ber ) );
+
+	nleft = ber_pvt_ber_remaining( ber );
+	actuallen = nleft < len ? nleft : len;
+	ber->ber_ptr += actuallen;
+	ber->ber_tag = *(unsigned char *)ber->ber_ptr;
+
+	return( (ber_slen_t) actuallen );
+}
 
 ber_slen_t
 ber_read(
@@ -185,11 +204,8 @@ ber_free_buf( BerElement *ber )
 void
 ber_free( BerElement *ber, int freebuf )
 {
-#ifdef LDAP_MEMORY_DEBUG
-	assert( ber != NULL );
-#endif
-
 	if( ber == NULL ) {
+		LDAP_MEMORY_DEBUG_ASSERT( ber != NULL );
 		return;
 	}
 
@@ -201,8 +217,16 @@ ber_free( BerElement *ber, int freebuf )
 int
 ber_flush( Sockbuf *sb, BerElement *ber, int freeit )
 {
+	return ber_flush2( sb, ber,
+		freeit ? LBER_FLUSH_FREE_ON_SUCCESS
+			: LBER_FLUSH_FREE_NEVER );
+}
+
+int
+ber_flush2( Sockbuf *sb, BerElement *ber, int freeit )
+{
 	ber_len_t	towrite;
-	ber_slen_t	rc;	
+	ber_slen_t	rc;
 
 	assert( sb != NULL );
 	assert( ber != NULL );
@@ -217,7 +241,7 @@ ber_flush( Sockbuf *sb, BerElement *ber, int freeit )
 
 	if ( sb->sb_debug ) {
 		ber_log_printf( LDAP_DEBUG_TRACE, sb->sb_debug,
-			"ber_flush: %ld bytes to sd %ld%s\n",
+			"ber_flush2: %ld bytes to sd %ld%s\n",
 			towrite, (long) sb->sb_fd,
 			ber->ber_rwptr != ber->ber_buf ?  " (re-flush)" : "" );
 		ber_log_bprint( LDAP_DEBUG_PACKETS, sb->sb_debug,
@@ -231,16 +255,17 @@ ber_flush( Sockbuf *sb, BerElement *ber, int freeit )
 #else
 		rc = ber_int_sb_write( sb, ber->ber_rwptr, towrite );
 #endif
-		if (rc<=0) {
+		if ( rc <= 0 ) {
+			if ( freeit & LBER_FLUSH_FREE_ON_ERROR ) ber_free( ber, 1 );
 			return -1;
 		}
 		towrite -= rc;
 		ber->ber_rwptr += rc;
 	} 
 
-	if ( freeit ) ber_free( ber, 1 );
+	if ( freeit & LBER_FLUSH_FREE_ON_SUCCESS ) ber_free( ber, 1 );
 
-	return( 0 );
+	return 0;
 }
 
 BerElement *
@@ -463,8 +488,10 @@ ber_get_next(
 	assert( SOCKBUF_VALID( sb ) );
 	assert( LBER_VALID( ber ) );
 
-	ber_log_printf( LDAP_DEBUG_TRACE, ber->ber_debug,
-		"ber_get_next\n" );
+	if ( ber->ber_debug & LDAP_DEBUG_TRACE ) {
+		ber_log_printf( LDAP_DEBUG_TRACE, ber->ber_debug,
+			"ber_get_next\n" );
+	}
 
 	/*
 	 * Any ber element looks like this: tag length contents.

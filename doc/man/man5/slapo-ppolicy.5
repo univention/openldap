@@ -1,9 +1,9 @@
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-ppolicy.5,v 1.4.2.8 2007/05/23 21:29:17 ghenry Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-ppolicy.5,v 1.12.2.5 2007/11/14 09:04:34 ghenry Exp $
 .\" Copyright 2004-2007 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .TH SLAPO_PPOLICY 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .SH NAME
-slapo-ppolicy \- Password Policy overlay
+slapo-ppolicy \- Password Policy overlay to slapd
 .SH SYNOPSIS
 ETCDIR/slapd.conf
 .SH DESCRIPTION
@@ -29,6 +29,12 @@ is performed with the
 .B rootdn
 identity; all the operations, when performed with any other identity,
 may be subjected to constraints, like access control.
+.P
+Note that the IETF Password Policy proposal for LDAP makes sense
+when considering a single-valued password attribute, while 
+the userPassword attribute allows multiple values.  This implementation
+enforces a single value for the userPassword attribute, despite
+its specification.
 
 .SH CONFIGURATION
 These 
@@ -497,7 +503,7 @@ module.
 .B userPassword
 .P
 The
-.b userPassword
+.B userPassword
 attribute is not strictly part of the
 .B ppolicy
 module.  It is, however, the attribute that is tracked and controlled
@@ -623,7 +629,7 @@ time "#" syntaxOID "#" length "#" data
 
 time=
 .RS 4
-generalizedTimeString as specified in section 6.14 of [RFC2252]
+GeneralizedTime as specified in section 3.3.13 of [RFC4517]
 .RE
 
 .P
@@ -631,13 +637,13 @@ syntaxOID = numericoid
 .RS 4
 This is the string representation of the dotted-decimal OID that
 defines the syntax used to store the password.  numericoid is
-described in section 4.1 of [RFC2252].
+described in section 1.4 of [RFC4512].
 .RE
 
-length = numericstring
+length = NumericString
 .RS 4
-The number of octets in the data.  numericstring is described in
-section 4.1 of [RFC2252].
+The number of octets in the data.  NumericString is described in
+section 3.3.23 of [RFC4517].
 .RE
 
 data =
@@ -750,7 +756,4 @@ the
 IETF document named draft-behera-ldap-password-policy-09.txt,
 written in July of 2005.
 .P
-.B OpenLDAP
-is developed and maintained by The OpenLDAP Project (http://www.openldap.org/).
-.B OpenLDAP
-is derived from University of Michigan LDAP 3.3 Release.  
+.so ../Project

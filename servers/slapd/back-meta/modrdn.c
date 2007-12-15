@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/modrdn.c,v 1.19.2.16 2007/01/13 11:19:07 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/modrdn.c,v 1.39.2.6 2007/08/31 23:14:03 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2007 The OpenLDAP Foundation.
@@ -120,8 +120,7 @@ meta_back_modrdn( Operation *op, SlapReply *rs )
 
 retry:;
 	ctrls = op->o_ctrls;
-	if ( ldap_back_proxy_authz_ctrl( &mc->mc_conns[ candidate ].msc_bound_ndn,
-		mt->mt_version, &mt->mt_idassert, op, rs, &ctrls ) != LDAP_SUCCESS )
+	if ( meta_back_controls_add( op, rs, mc, candidate, &ctrls ) != LDAP_SUCCESS )
 	{
 		send_ldap_result( op, rs );
 		goto cleanup;
@@ -137,13 +136,13 @@ retry:;
 		do_retry = 0;
 		if ( meta_back_retry( op, rs, &mc, candidate, LDAP_BACK_SENDERR ) ) {
 			/* if the identity changed, there might be need to re-authz */
-			(void)ldap_back_proxy_authz_ctrl_free( op, &ctrls );
+			(void)ldap_back_controls_free( op, rs, &ctrls );
 			goto retry;
 		}
 	}
 
 cleanup:;
-	(void)ldap_back_proxy_authz_ctrl_free( op, &ctrls );
+	(void)ldap_back_controls_free( op, rs, &ctrls );
 
 	if ( mdn.bv_val != op->o_req_dn.bv_val ) {
 		free( mdn.bv_val );

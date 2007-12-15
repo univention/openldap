@@ -1,5 +1,5 @@
 /* ldif.c - routines for dealing with LDIF files */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/ldif.c,v 1.2.2.11 2007/01/02 21:43:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/ldif.c,v 1.15.2.5 2007/09/03 21:53:04 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -778,6 +778,7 @@ ldif_close(
 }
 
 #define	LDIF_MAXLINE	4096
+
 /*
  * ldif_read_record - read an ldif record.  Return 1 for success, 0 for EOF.
  */
@@ -864,6 +865,10 @@ ldif_read_record(
 						fp2 = ldif_open_url( ptr );
 						if ( fp2 ) {
 							LDIFFP *lnew = ber_memalloc( sizeof( LDIFFP ));
+							if ( lnew == NULL ) {
+								fclose( fp2 );
+								return 0;
+							}
 							lnew->prev = lfp->prev;
 							lnew->fp = lfp->fp;
 							lfp->prev = lnew;
@@ -875,7 +880,9 @@ ldif_read_record(
 							/* We failed to open the file, this should
 							 * be reported as an error somehow.
 							 */
-							break;
+							ber_pvt_log_printf( LDAP_DEBUG_ANY, ldif_debug,
+								_("ldif_read_record: include %s failed\n"), ptr );
+							return 0;
 						}
 					}
 				}

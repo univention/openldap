@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/acl/posixgroup.c,v 1.1.2.5 2007/01/02 21:43:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/acl/posixgroup.c,v 1.3.2.3 2007/08/31 23:13:51 quanah Exp $ */
 /*
  * Copyright 1998-2007 The OpenLDAP Foundation.
  * All rights reserved.
@@ -247,7 +247,7 @@ pg_dynacl_mask(
 		Attribute	*a_uid,
 				*a_member;
 
-		a_uid = attr_find( user->e_attrs, pg_uidNumber);
+		a_uid = attr_find( user->e_attrs, pg_uidNumber );
 		if ( !a_uid || !BER_BVISNULL( &a_uid->a_nvals[ 1 ] ) ) {
 			rc = LDAP_NO_SUCH_ATTRIBUTE;
 

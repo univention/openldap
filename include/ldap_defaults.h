@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/ldap_defaults.h,v 1.30.2.4 2007/01/02 21:43:46 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap_defaults.h,v 1.33.2.3 2007/08/31 23:13:53 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -56,8 +56,6 @@
 #define SLAPD_DEFAULT_SIZELIMIT		500
 	/* default timelimit to spend on a search */
 #define SLAPD_DEFAULT_TIMELIMIT		3600
-	/* minimum max ids that a single index entry can map to in ldbm */
-#define SLAPD_LDBM_MIN_MAXIDS		(8192-4)
 
 /* the following DNs must be normalized! */
 	/* dn of the default subschema subentry */

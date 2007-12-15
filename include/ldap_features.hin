@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/ldap_features.hin,v 1.2.2.3 2007/01/02 21:43:46 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap_features.hin,v 1.3.2.2 2007/08/31 23:13:53 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2007 The OpenLDAP Foundation.
@@ -53,9 +53,6 @@
 
 /* is -lldap_r available or not */
 #undef LDAP_API_FEATURE_X_OPENLDAP_THREAD_SAFE
-
-/* LDAP v2 Kerberos Bind */
-#undef LDAP_API_FEATURE_X_OPENLDAP_V2_KBIND
 
 /* LDAP v2 Referrals */
 #undef LDAP_API_FEATURE_X_OPENLDAP_V2_REFERRALS
