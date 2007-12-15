@@ -15,7 +15,7 @@ Section: net
 Priority: optional
 Architecture: any
 Pre-Depends: debconf (>= 0.5) | debconf-2.0
-Depends: ${shlibs:Depends}, libldap-2.3-0 (= ${binary:Version}), coreutils (>= 4.5.1-1), psmisc, perl (>> 5.8.0) | libmime-base64-perl, adduser
+Depends: ${shlibs:Depends}, libldap-2.4-2 (= ${binary:Version}), coreutils (>= 4.5.1-1), psmisc, perl (>> 5.8.0) | libmime-base64-perl, adduser
 Recommends: libsasl2-modules
 Suggests: ldap-utils
 Conflicts: umich-ldapd, ldap-server, libltdl3 (= 1.5.4-1)
@@ -30,7 +30,7 @@ Package: ldap-utils
 Section: net
 Priority: optional
 Architecture: any
-Depends: ${shlibs:Depends}, libldap-2.3-0 (= ${binary:Version})
+Depends: ${shlibs:Depends}, libldap-2.4-2 (= ${binary:Version})
 Recommends: libsasl2-modules
 Conflicts: umich-ldap-utils, openldap-utils, ldap-client
 Replaces: openldap-utils, slapd (<< 2.2.23-0.pre6), openldapd
@@ -40,27 +40,40 @@ Description: OpenLDAP utilities
  package. These utilities can access a local or remote LDAP server
  and contain all the client programs required to access LDAP servers.
 
-Package: libldap-2.3-0
+Package: libldap-2.4-2
 Section: libs
 Priority: optional
 Architecture: any
 Conflicts: ldap-utils (<= 2.1.23-1)
 Depends: ${shlibs:Depends}, libldap2
-Replaces: libldap2
+Replaces: libldap2, libldap-2.3-0
 Description: OpenLDAP libraries 
  These are the run-time libraries for the OpenLDAP (Lightweight Directory
  Access Protocol) servers and clients.
 
-Package: libldap-2.3-0-dbg
+Package: libldap-2.4-2-dbg
 Section: libdevel
 Priority: extra
 Architecture: any
-Depends: libldap-2.3-0 (= ${binary:Version})
+Depends: libldap-2.4-2 (= ${binary:Version})
 Description: Debugging information for OpenLDAP libraries
  Detached debugging information for the OpenLDAP (Lightweight Directory
  Access Protocol) libraries.  It is useful primarily to permit better
  backtraces and crash dump analysis after problems with the libraries.
  GDB will find this debug information automatically.
+
+Package: libldap2-dev
+Section: libdevel
+Priority: extra
+Architecture: any
+Conflicts: libldap-dev, libopenldap-dev
+Replaces: libopenldap-dev
+Provides: libldap-dev
+Depends: libldap-2.4-2 (= ${binary:Version})
+Description: OpenLDAP development libraries
+ This package allows development of LDAP applications using the OpenLDAP
+ libraries. It includes headers, libraries and links to allow static and
+ dynamic linking.
 
 Package: slapd-dbg
 Section: net

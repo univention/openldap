@@ -113,8 +113,6 @@ binary-arch: install-stamp
 	dh_testdir
 	dh_testroot
 	dh_clean -k
-	# XXX: remove after libldap2.3-dev is officially built
-	#rm -Rf debian/libldap2.3-dev
 
 	dh_installdirs -a
 	cp -al $(installdir) $(tmpdir)
@@ -131,23 +129,21 @@ binary-arch: install-stamp
 	dh_installdebconf -a
 	# when using OpenSSL, we do not need to add crontab entries
 	#dh_installcron -a
-	dh_strip -plibldap-2.3-0 --dbg-package=libldap-2.3-0-dbg
+	dh_strip -plibldap-2.4-2 --dbg-package=libldap-2.4-2-dbg
 	dh_strip -pslapd --dbg-package=slapd-dbg
 	dh_strip -pldap-utils
 	dh_link -a
 	dh_compress -a
 	dh_fixperms -a
-	dh_makeshlibs -plibldap-2.3-0
+	dh_makeshlibs -plibldap-2.4-2
 	dh_installdeb -a
 	perl -w debian/dh_installscripts-common -p slapd
-	dh_shlibdeps -a -L libldap-2.3-0 -l $(installdir)/usr/lib
+	dh_shlibdeps -a -L libldap-2.4-2 -l $(installdir)/usr/lib
 	# Strip duplicate dependency out of substvars.
-	sed -i -e 's/ libldap-2.3-0,//' debian/*.substvars
+	sed -i -e 's/ libldap-2.4-2,//' debian/*.substvars
 	dh_gencontrol -a
 	dh_md5sums -a
-	# Don't build the libldap2.3-dev package until after sarge release
-	# so nobody can build against it.
-	dh_builddeb -a -Nlibldap2.3-dev
+	dh_builddeb -a
 
 clean: clean1 unpatch
 clean1:
@@ -168,7 +164,5 @@ clean1:
 	rm -rf $(builddir) $(builddir_notls) $(installdir)
 
 	dh_clean
-	# XXX: remove after libldap2.3-dev is officially built
-	rm -Rf debian/libldap2.3-dev
 
 .PHONY: binary binary-arch binary-indep build clean
