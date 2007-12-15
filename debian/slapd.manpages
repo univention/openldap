@@ -19,7 +19,6 @@ debian/tmp/usr/share/man/man5/slapo-accesslog.5
 debian/tmp/usr/share/man/man5/slapo-auditlog.5
 debian/tmp/usr/share/man/man5/slapo-chain.5
 debian/tmp/usr/share/man/man5/slapo-dynlist.5
-debian/tmp/usr/share/man/man5/slapo-lastmod.5
 debian/tmp/usr/share/man/man5/slapo-pcache.5
 debian/tmp/usr/share/man/man5/slapo-ppolicy.5
 debian/tmp/usr/share/man/man5/slapo-refint.5

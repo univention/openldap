@@ -9,6 +9,8 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
     - libldap2.3-0 is now libldap2.4-2
     - build libldap2-dev from this source package now, superseding
       openldap2
+    - lastmod and denyop have been moved to contrib upstream and are no
+      longer shipped as supported overlays
   * slapd.conf and DB_CONFIG are used in the postinst, they shouldn't be
     shipped under doc/examples because /usr/share/doc can't be depended
     on per policy; ship the files under /usr/share/slapd and symlink the
