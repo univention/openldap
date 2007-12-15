@@ -1,0 +1,3 @@
+#!/bin/sh -e
+
+rm -f /var/run/slapd/params_cache_dh /var/run/slapd/params_cache_rsa

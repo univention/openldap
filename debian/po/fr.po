@@ -1,0 +1,539 @@
+# translation of fr.po to French
+#
+#    Translators, if you are not familiar with the PO format, gettext
+#    documentation is worth reading, especially sections dedicated to
+#    this format, e.g. by running:
+#         info -n '(gettext)PO Files'
+#         info -n '(gettext)Header Entry'
+#
+#    Some information specific to po-debconf are available at
+#            /usr/share/doc/po-debconf/README-trans
+#         or http://www.debian.org/intl/l10n/po-debconf/README-trans
+#
+#    Developers do not need to manually edit POT or PO files.
+#
+# Christian Perrier <bubulle@debian.org>, 2006.
+msgid ""
+msgstr ""
+"Project-Id-Version: fr\n"
+"Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
+"POT-Creation-Date: 2007-11-11 19:49-0800\n"
+"PO-Revision-Date: 2006-05-12 22:28+0200\n"
+"Last-Translator: Christian Perrier <bubulle@debian.org>\n"
+"Language-Team: French <debian-l10n-french@lists.debian.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-15\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.11.2\n"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:1001
+msgid "Omit OpenLDAP server configuration?"
+msgstr "Voulez-vous omettre la configuration d'OpenLDAP ?"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:1001
+msgid ""
+"If you enable this option, no initial configuration or database will be "
+"created for you."
+msgstr ""
+"Si vous choisissez cette option, aucune configuration par défaut et aucune "
+"base de données ne seront créées."
+
+#. Type: select
+#. Description
+#: ../slapd.templates:2001
+msgid "Dump databases to file on upgrade:"
+msgstr ""
+"Sauvegarde des bases de données dans un fichier pour la mise à niveau :"
+
+#. Type: select
+#. Description
+#: ../slapd.templates:2001
+msgid ""
+"Before upgrading to a new version of the OpenLDAP server the data of your "
+"LDAP directories can be dumped to plain text files (LDIF format) which is a "
+"standardized description of that data (LDIF stands for LDAP Data Interchange "
+"Format)."
+msgstr ""
+"Avant la mise à niveau du serveur OpenLDAP, les données de votre annuaire "
+"LDAP peuvent être exportées dans des fichiers au format texte LDIF qui est "
+"une description normalisée de ce type d'informations (« LDAP Data "
+"Interchange Format » : format d'échange de données LDAP)."
+
+#. Type: select
+#. Description
+#: ../slapd.templates:2001
+msgid ""
+"Selecting \"always\" will make the maintainer scripts dump your databases "
+"before upgrading unconditionally. Selecting \"when needed\" will only dump "
+"the database if the new version is incompatible with the old database format "
+"and it has to be reimported. The \"never\" choice will just go ahead without "
+"ever dumping your database."
+msgstr ""
+"Si vous choisissez l'option « Toujours », les scripts de configuration "
+"exporteront systématiquement les données avant d'effectuer une mise à "
+"niveau. Si vous choisissez « Lorsque nécessaire », les données ne seront "
+"exportées que lorsque la nouvelle version utilisera un format incompatible "
+"avec l'ancienne, ce qui imposera de réimporter les données. Le choix "
+"« Jamais » indique que les données ne seront jamais exportées."
+
+#. Type: string
+#. Description
+#: ../slapd.templates:3001
+msgid "Directory to dump databases:"
+msgstr "Répertoire où exporter les bases de données :"
+
+#. Type: string
+#. Description
+#: ../slapd.templates:3001
+msgid ""
+"Please specify the directory where the LDAP databases will be exported. "
+"Within this directory several LDIF files are created which correspond to the "
+"search bases located on the server. Make sure you have enough free space on "
+"the partition the directory is located.  The first occurrence of the string "
+"\"VERSION\" is replaced with the server version you are upgrading from. The "
+"default is /var/backups/slapd-VERSION"
+msgstr ""
+"Veuillez indiquer le répertoire où les bases de données LDAP seront "
+"exportées. Plusieurs fichiers LDIF seront créés dans ce répertoire. Ils "
+"correspondent aux bases de recherche présentes sur le serveur. Veuillez "
+"vérifier que la partition où se trouve ce répertoire comporte suffisamment "
+"de place disponible. La première occurrence de « VERSION » dans le nom de ce "
+"répertoire sera remplacée par la version d'OpenLDAP utilisée avant la mise à "
+"niveau. La valeur par défaut est « /var/backups/slapd-VERSION »."
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:4001
+msgid "Move old database?"
+msgstr "Faut-il déplacer l'ancienne base de données ?"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:4001
+msgid ""
+"There are still files in /var/lib/ldap which will probably break the "
+"configuration process. If you enable this option, the maintainer scripts "
+"will move the old database files out of the way before creating a new "
+"database."
+msgstr ""
+"Des fichiers présents dans /var/lib/ldap vont probablement provoquer l'échec "
+"de la procédure de configuration. Si vous choisissez cette option, les "
+"scripts de configuration déplaceront les anciens fichiers des bases de "
+"données avant de créer une nouvelle base de données."
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:5001
+msgid "Invalid configuration. Retry configuration?"
+msgstr "Faut-il recommencer la configuration ?"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:5001
+msgid ""
+"The configuration you entered is invalid. Make sure that the DNS domain name "
+"has a valid syntax, the organization is not left empty and that the admin "
+"passwords match. If you decide not to retry the configuration the LDAP "
+"server will not be set up. Run \"dpkg-reconfigure\" if you want to retry "
+"later."
+msgstr ""
+"La configuration que vous avez indiquée n'est pas valable. Veuillez vérifier "
+"que le nom de domaine DNS utilise une syntaxe correcte, que le champ "
+"« organization » n'est pas vide et que les mots de passe des administrateurs "
+"correspondent. Si vous choisissez de ne pas recommencer la configuration, le "
+"serveur LDAP ne sera pas configuré. Si vous voulez recommencer ce processus, "
+"utilisez la commande « dpkg-reconfigure »."
+
+#. Type: string
+#. Description
+#: ../slapd.templates:6001
+msgid "DNS domain name:"
+msgstr "Nom de domaine :"
+
+#. Type: string
+#. Description
+#: ../slapd.templates:6001
+msgid ""
+"The DNS domain name is used to construct the base DN of your LDAP directory. "
+"Entering foo.bar.org will give you the base DN dc=foo, dc=bar, dc=org."
+msgstr ""
+"Le nom de domaine DNS est utilisé pour établir le nom distinctif de base "
+"(« base DN » ou « Distinguished Name ») de votre annuaire LDAP. Par exemple, "
+"si vous indiquez «toto.titi.org » ici, le nom distinctif de base sera "
+"« dc=toto, dc=titi, dc=org »."
+
+#. Type: string
+#. Description
+#: ../slapd.templates:7001
+msgid "Name of your organization:"
+msgstr "Nom de votre organisation :"
+
+#. Type: string
+#. Description
+#: ../slapd.templates:7001
+msgid ""
+"Whatever you enter here will be stored as the name of your organization in "
+"the base DN of your LDAP directory."
+msgstr ""
+"Veuillez indiquer la valeur que sera utilisée comme nom de votre entité "
+"(« organization ») dans le nom distinctif de base de votre annuaire LDAP."
+
+#. Type: password
+#. Description
+#: ../slapd.templates:8001
+msgid "Admin password:"
+msgstr "Mot de passe de l'administrateur :"
+
+#. Type: password
+#. Description
+#: ../slapd.templates:8001
+msgid " Please enter the password for the admin entry in your LDAP directory."
+msgstr ""
+"Veuillez indiquer le mot de passe de l'administrateur de l'annuaire LDAP."
+
+#. Type: password
+#. Description
+#: ../slapd.templates:9001
+msgid "Confirm password:"
+msgstr "Mot de passe de l'administrateur :"
+
+#. Type: password
+#. Description
+#: ../slapd.templates:9001
+msgid ""
+"Please reenter the admin password for your LDAP directory for verification."
+msgstr ""
+"Veuillez confirmer le mot de passe de l'administrateur de l'annuaire LDAP."
+
+#. Type: note
+#. Description
+#: ../slapd.templates:10001
+msgid "Password mismatch"
+msgstr "Erreur de saisie du mot de passe"
+
+#. Type: note
+#. Description
+#: ../slapd.templates:10001
+msgid ""
+"The admin password and its confirmation must match. Please note that "
+"differences such as uppercase/lowercase and added whitespace matter."
+msgstr ""
+"Le mot de passe et sa confirmation ne correspondent pas. Veuillez noter que "
+"les différences de casse (majuscule/minuscule) et les espaces importent."
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:11001
+msgid "Do you want your database to be removed when slapd is purged?"
+msgstr "Faut-il supprimer la base de données à la purge du paquet ?"
+
+#. Type: password
+#. Description
+#: ../slapd.templates:12001
+msgid "Encrypted admin password:"
+msgstr "Mot de passe chiffré de l'administrateur :"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:13001
+msgid "Allow LDAPv2 protocol?"
+msgstr "Faut-il autoriser le protocole LDAPv2 ?"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:13001
+msgid ""
+"The slapd daemon now disables the old LDAPv2 protocol by default. Programs "
+"and users are generally expected to be upgraded to LDAPv3. If you have old "
+"programs which have not been moved to use LDAPv3 and you still need LDAPv2 "
+"support then select this option and 'allow bind_v2' will be added to your "
+"slapd.conf to tell slapd to accept LDAPv2 connections."
+msgstr ""
+"Désormais slapd n'utilise plus par défaut l'ancien protocole LDAPv2. Il est "
+"conseillé de migrer les programmes et les utilisateurs vers la version "
+"LDAPv3 . Si vous utilisez d'anciens programmes qui ne gèrent pas encore "
+"LDAPv3, vous pouvez choisir cette option malgré tout. Cela ajoutera l'option "
+"« allow bind_v2 » au fichier slapd.conf pour indiquer au démon slapd qu'il "
+"doit accepter les connexions LDAPv2."
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:14001
+msgid "Move aside current database and create a new one?"
+msgstr "Faut-il déplacer l'ancienne base de données et en créer une nouvelle ?"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:14001
+msgid ""
+"You have specified a directory suffix (domain) that doesn't match the one "
+"currently in /etc/ldap/slapd.conf.  Changing the directory suffix requires "
+"moving aside the current LDAP database and creating a new one.  Please "
+"confirm whether you want to abandon the current database (a backup will be "
+"made)."
+msgstr ""
+"Vous avez indiqué un suffixe d'annuaire (domaine) qui ne correspond pas à "
+"celui qui est actuellement mentionné dans /etc/ldap/slapd.conf. Le "
+"changement du suffixe d'annuaire nécessite de déplacer la base de données "
+"actuelle et d'en créer une nouvelle. Veuillez confirmer si vous voulez "
+"délaisser la base de données actuelle (une sauvegarde sera effectuée)."
+
+#. Type: note
+#. Description
+#: ../slapd.templates:15001
+msgid "slapcat failed during upgrade"
+msgstr "Échec de slapcat durant la mise à niveau"
+
+#. Type: note
+#. Description
+#: ../slapd.templates:15001
+msgid ""
+"An error occurred during the attempt to upgrade your LDAP directory. This "
+"error occurred when performing the 'slapcat' which attempts to extract your "
+"LDAP directory.  This failure could be because of an incorrect config file.  "
+"For example, if the appropriate moduleload lines for your backend database "
+"type are missing.  This failure will cause 'slapadd' later to fail too.  The "
+"old database files are about to be moved to /var/backups.  If you want to "
+"try this upgrade again then move the old database files back into place, fix "
+"whatever caused slapcat to fail, and run:\n"
+" slapcat | /usr/share/slapd/fix_ldif -w -o \"$organization\" > $location"
+msgstr ""
+"Une erreur s'est produite lors de la mise à niveau de l'annuaire LDAP. La "
+"commande « slapcat » utilisée pour l'extraction de l'annuaire LDAP a échoué. "
+"Cet échec peut être dû à un fichier de configuration incorrect, par exemple "
+"si les instructions de chargement de modules de bases de données (lignes "
+"« moduleload ») manquent. Cette erreur provoquera un dysfonctionnement de "
+"« slapadd » par la suite. Les anciens fichiers de bases de données vont être "
+"déplacés dans /var/backups. Si vous souhaitez recommencer la mise à niveau, "
+"vous devrez remettre les anciens fichiers en place, corriger ce qui a "
+"provoqué l'échec, puis utiliser la commande :\n"
+"slapcat | /usr/share/slapd/fix_ldif -w -o \"$organization\" > $location"
+
+#. Type: note
+#. Description
+#: ../slapd.templates:15001
+msgid ""
+"Then move the database files back to a backup area and then try running "
+"slapadd from $location."
+msgstr ""
+"Déplacez ensuite les bases de données vers un emplacement de sauvegarde et "
+"tentez d'utiliser la commande « slapadd » depuis $location."
+
+#. Type: note
+#. Description
+#: ../slapd.templates:16001
+msgid "slapadd failed during upgrade"
+msgstr "Échec de slapadd durant la mise à niveau"
+
+#. Type: note
+#. Description
+#: ../slapd.templates:16001
+msgid ""
+"An error occurred during the attempt to upgrade your LDAP directory. This "
+"error occurred when performing the 'slapadd' which attempts to populate an "
+"empty new LDAP directory using the information from your original LDAP "
+"directory.  Your original LDAP directory files have been saved in /var/"
+"backups.  The results of the attempted upgrade is the ldif file in /var/"
+"backups.  slapadd may have failed due to a configuration problem (in which "
+"case slapcat would have failed too) or due to a problem in the LDIF file.  "
+"If the problem was with the LDIF file, you may be able to fix it and attempt "
+"the slapadd again."
+msgstr ""
+"Une erreur s'est produite lors de la mise à niveau de l'annuaire LDAP. La "
+"commande « slapadd », utilisée pour remplir un nouvel annuaire LDAP avec "
+"celles de votre annuaire d'origine, a échoué. Les fichiers de votre annuaire "
+"d'origine ont été préservés dans /var/backups. Les résultats de la tentative "
+"de mise à niveau sont dans le fichier LDIF situé dans /var/backups. L'échec "
+"de slapadd peut être dû à un problème de configuration (qui a probablement "
+"également provoqué l'échec de slapcat) ou à un problème dans le fichier "
+"LDIF. Dans ce dernier cas, il est possible de corriger ce fichier et tenter "
+"l'opération à nouveau."
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:17001
+msgid "Change backend type from LDBM to BDB?"
+msgstr "Faut-il remplacer LDBM par BDB comme module de base de données ?"
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown to "
+"not work well. BDB is the recommended choice of the OpenLDAP developers."
+msgstr ""
+"Le module de base de données LDBM est considéré comme obsolète dans OpenLDAP "
+"2.2. Il a été confirmé qu'il ne fonctionne pas toujours correctement. Pour "
+"cette raison, BDB est le module recommandé par les développeurs d'OpenLDAP."
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"When using the BDB backend make sure you configure BDB properly. For "
+"information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
+msgstr ""
+"Si vous utilisez le module BDB, veillez à ce qu'il soit configuré "
+"correctement. Pour plus d'informations, veuillez consulter le fichier /usr/"
+"share/doc/slapd/README.DB_CONFIG.gz."
+
+#. Type: boolean
+#. Description
+#: ../slapd.templates:17001
+msgid ""
+"If you enable this option an attempt will be made to update your "
+"configuration to use BDB instead of LDBM and convert your databases."
+msgstr ""
+"Si vous choisissez cette option, les scripts d'installation tenteront de "
+"mettre à jour votre configuration et de convertir vos bases de données pour "
+"qu'elles utilisent BDB à la place de LDBM."
+
+#. Type: select
+#. Description
+#: ../slapd.templates:18001
+msgid "Database backend to use:"
+msgstr "Module de base de données à utiliser :"
+
+#. Type: select
+#. Description
+#: ../slapd.templates:18001
+msgid ""
+"The BDB backend is the recommended choice of the OpenLDAP developers. When "
+"using the BDB backend make sure that you configure the underlying database "
+"for your requirements. Look into /usr/share/doc/slapd/README.DB_CONFIG.gz"
+msgstr ""
+"Le module de bases de données BDB est le module recommandé par les "
+"développeurs d'OpenLDAP. Pour plus d'informations, veuillez consulter le "
+"fichier /usr/share/doc/slapd/README.DB_CONFIG.gz."
+
+#. Type: select
+#. Description
+#: ../slapd.templates:18001
+msgid ""
+"HDB is the next generation of BDB which might replace it sometime in the "
+"future. There are some problems still in the HDB code of the 2.2 series of "
+"OpenLDAP so you should probably stick to BDB until version 2.3."
+msgstr ""
+"HDB est la version qui est amenée à remplacer BDB dans le futur. Des "
+"problèmes peuvent subsister dans le code HDB des versions 2.2 d'OpenLDAP et "
+"vous devriez donc conserver BDB en attendant les versions 2.3."
+
+#. Type: select
+#. Description
+#: ../slapd.templates:18001
+msgid ""
+"The BDB backend (back-bdb) and LDBM backend (back-ldbm) are comparable in "
+"purpose and back-bdb evolved from experience gained from back-ldbm, but the "
+"two are quite distinct today. They both store entries based on a 32-bit "
+"entry ID key, and they use a dn2id table to map from DNs to entry IDs. They "
+"both perform attribute indexing using the same code, and store index data as "
+"lists of entry IDs. As such, the LDAP-specific features they offer are "
+"nearly identical. The differences are in the APIs used to implement the "
+"databases. back-ldbm uses a generic database API that can plug into several "
+"different database packages. In Debian, it's built against BerkeleyDB (BDB). "
+"While BerkeleyDB supports this generic interface, it also offers a much "
+"richer API that has a lot more power and a lot more complexity. back-bdb is "
+"written specifically for the full BDB API, and uses some of BDB's more "
+"advanced features to offer transaction processing, fine grained locking, and "
+"other features that offer improved concurrency and reliability. For more "
+"information, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
+msgstr ""
+"Les modules BDB (back-bdb) et LDBM (back-ldbm) ont des buts analogues. Back-"
+"bdb a été développé en profitant de l'expérience acquise avec back-ldbm mais "
+"les deux sont sensiblement différents. Tous deux stockent les "
+"enregistrements avec une clé unique d'identification (« ID key ») sur "
+"32 bits en utilisant dn2id pour établir les correspondances entre noms "
+"distinctifs (DN) et clés uniques d'identification. Tous deux effectuent "
+"l'indexation des attributs avec le même code et conservent les données "
+"d'indexation sous forme de listes de clés d'identification. En conséquence, "
+"leurs fonctionnalités pour LDAP sont presque identiques. Les différences "
+"résident dans les interfaces de programmation d'applications (API : "
+"« Application Programming Interfaces ») utilisées pour la mise en oeuvre des "
+"bases de données. Back-ldbm utilise une API générique qui peut ensuite être "
+"interfacée avec plusieurs types de serveurs de bases de données. La version "
+"Debian est construite avec BerkeleyDB (BDB). Or, BerkeleyDB, bien qu'il gère "
+"cette interface générique, comporte une API bien plus riche et complexe. "
+"Back-bdb est construit pour exploiter pleinement cette API et utilise "
+"certaines fonctionnalités avancées de BDB pour le traitement des "
+"transactions, un verrouillage plus fin et d'autres fonctionnalités qui "
+"améliorent le fonctionnement en parallèle et la fiabilité. Pour plus "
+"d'informations, veuillez consulter le fichier /usr/share/doc/slapd/README."
+"DB_CONFIG.gz."
+
+#~ msgid "Change configuration to load backend modules?"
+#~ msgstr ""
+#~ "Faut-il modifier la configuration pour charger les modules de bases de "
+#~ "données ?"
+
+#~ msgid ""
+#~ "Starting with OpenLDAP 2.1 backends are not longer built into the server "
+#~ "but are instead dynamically loaded at startup. This means that the slapd "
+#~ "configuration has to be changed to load the modules for the backends you "
+#~ "are using."
+#~ msgstr ""
+#~ "Depuis OpenLDAP 2.1, les modules de bases de données (« backend "
+#~ "modules ») ne font plus partie intégrante du serveur mais chargés "
+#~ "dynamiquement au démarrage. En conséquence, la configuration de slapd "
+#~ "doit être modifiée pour charger les modules que vous souhaitez utiliser."
+
+#~ msgid ""
+#~ "If you choose this option, an attempt to fix the configuration will be "
+#~ "made. If you don't select this, you *must* fix your configuration file "
+#~ "yourself or slapd (and slapcat if you are upgrading from an older "
+#~ "version) will fail and the package will not be installed. For more "
+#~ "information, read /usr/share/doc/slapd/README.Debian."
+#~ msgstr ""
+#~ "Si vous choisissez cette option, une tentative d'adaptation de la "
+#~ "configuration aura lieu. Dans le cas contraire, vous devrez corriger le "
+#~ "fichier de configuration vous-même sinon slapd (et slapcat dans le cas "
+#~ "d'une mise à niveau depuis une nouvelle version) ne fonctionneront pas et "
+#~ "le paquet ne sera pas installé. Veuillez consulter le fichier /usr/share/"
+#~ "doc/slapd/README.Debian pour plus d'informations."
+
+#~ msgid "Fix LDAP directory on upgrade?"
+#~ msgstr "Faut-il corriger l'annuaire LDAP lors de la mise à niveau ?"
+
+#~ msgid ""
+#~ "The installation scripts of the old OpenLDAP 2.0 packages create a "
+#~ "directory that does not conform to the ldap schema. The new version is "
+#~ "more strict about this and you won't be able to access your directory "
+#~ "after the upgrade without fixing it."
+#~ msgstr ""
+#~ "Les scripts d'installation des anciens paquet d'OpenLDAP 2.0 créaient un "
+#~ "annuaire qui n'était pas conforme avec le schéma LDAP. La nouvelle "
+#~ "version est plus rigoureuse et l'annuaire ne pourra pas être utilisé tant "
+#~ "qu'il n'aura pas été corrigé."
+
+#~ msgid "If you choose this option, an attempt to fix it for you will occur."
+#~ msgstr ""
+#~ "Si vous choisissez cette option, une tentative de correction automatique "
+#~ "sera effectuée."
+
+#~ msgid "Slave databases require updateref option"
+#~ msgstr "Les bases de données esclaves ont besoin de l'option « updateref »"
+
+#~ msgid ""
+#~ "In your slapd configuration file at least one database is configured as "
+#~ "slave, and the updateref option is not set. The updateref option "
+#~ "specifies the referral(s) to pass back when slapd is asked to modify a "
+#~ "replicated local database. See slapd.conf(5) for more details."
+#~ msgstr ""
+#~ "Votre fichier de configuration de slapd indique qu'au moins une base de "
+#~ "données est configurée comme esclave. Cependant, l'option « updateref » "
+#~ "n'a pas été utilisée. Elle indique à quel référent d'éventuelles "
+#~ "modifications locales effectuées par slapd doivent être transmises. "
+#~ "Veuillez consulter la page de manuel slapd.conf(5) pour plus "
+#~ "d'informations."
+
+#~ msgid ""
+#~ "Starting with version 2.1.23, slapd requires the updateref option to be "
+#~ "set on slaves. You should make sure to fix your slapd.conf configuration "
+#~ "file."
+#~ msgstr ""
+#~ "À partir de la version 2.1.23, splad a besoin de cette option sur les "
+#~ "serveurs esclaves. Veuillez adapter en conséquence votre fichier de "
+#~ "configuration."

@@ -1,0 +1,8 @@
+# db_input is used for telling the user when something goes wrong during
+# configuration. That's a perfectly valid reason to use debconf in postinst.
+# -- Torsten
+slapd: postinst-uses-db-input
+
+# The extended description is needed in slapd/backend. It explains a lot about
+# the different backends.
+slapd: too-long-extended-description-in-templates slapd/backend

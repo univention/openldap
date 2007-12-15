@@ -1,0 +1,30 @@
+Index: include/ldap.h
+===================================================================
+--- include/ldap.h.orig	2007-05-23 13:05:50.000000000 -0700
++++ include/ldap.h	2007-05-23 13:05:53.000000000 -0700
+@@ -2118,5 +2118,25 @@ LDAP_F( const char * )
+ ldap_passwordpolicy_err2txt LDAP_P(( LDAPPasswordPolicyError ));
+ #endif /* LDAP_CONTROL_PASSWORDPOLICYREQUEST */
+ 
++/*
++ * hacks for NTLM
++ */
++#define LDAP_AUTH_NTLM_REQUEST ((ber_tag_t) 0x8aU)
++#define LDAP_AUTH_NTLM_RESPONSE  ((ber_tag_t) 0x8bU)
++LDAP_F( int )
++ldap_ntlm_bind LDAP_P((
++      LDAP    *ld,
++      LDAP_CONST char *dn,
++      ber_tag_t tag,
++      struct berval *cred,
++      LDAPControl **sctrls,
++      LDAPControl **cctrls,
++      int   *msgidp ));
++LDAP_F( int )
++ldap_parse_ntlm_bind_result LDAP_P((
++      LDAP    *ld,
++      LDAPMessage *res,
++      struct berval *challenge));
++
+ LDAP_END_DECL
+ #endif /* _LDAP_H */

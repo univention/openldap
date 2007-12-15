@@ -1,0 +1,51 @@
+Index: doc/man/man8/slapd.8
+===================================================================
+--- doc/man/man8/slapd.8.orig
++++ doc/man/man8/slapd.8
+@@ -5,7 +5,7 @@
+ .SH NAME
+ slapd \- Stand-alone LDAP Daemon
+ .SH SYNOPSIS
+-.B LIBEXECDIR/slapd 
++.B /usr/sbin/slapd 
+ .B [\-[4|6]]
+ .B [\-T {acl|add|auth|cat|dn|index|passwd|test}]
+ .B [\-d debug\-level]
+@@ -85,7 +85,9 @@
+ will not fork or disassociate from the invoking terminal.  Some general
+ operation and status messages are printed for any value of \fIdebug\-level\fP.
+ \fIdebug\-level\fP is taken as a bit string, with each bit corresponding to a
+-different kind of debugging information.  See <ldap_log.h> for details.
++different kind of debugging information. The meaning is the same as for
++the \fBloglevel\fP configuration option documented in
++.BR slapd.conf (5).
+ Remember that if you turn on packet logging, packets containing bind passwords
+ will be output, so if you redirect the log to a logfile, that file should
+ be read-protected.
+@@ -234,7 +236,7 @@
+ .LP
+ .nf
+ .ft tt
+-	LIBEXECDIR/slapd
++	/usr/sbin/slapd
+ .ft
+ .fi
+ .LP
+@@ -245,7 +247,7 @@
+ .LP
+ .nf
+ .ft tt
+-	LIBEXECDIR/slapd -f /var/tmp/slapd.conf -d 255
++	/usr/sbin/slapd -f /var/tmp/slapd.conf -d 255
+ .ft
+ .fi
+ .LP
+@@ -253,7 +255,7 @@
+ .LP
+ .nf
+ .ft tt
+-	LIBEXECDIR/slapd -Tt
++	/usr/sbin/slapd -Tt
+ .ft
+ .fi
+ .LP

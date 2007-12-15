@@ -1,0 +1,174 @@
+#!/usr/bin/make -f
+
+#export DH_VERBOSE = 1
+
+# Set this variable if you're building packages outside of Debian and don't
+# want the checks for DFSG-freeness.
+#DFSG_NONFREE = 1
+
+CFLAGS = -Wall -g -D_FILE_OFFSET_BITS=64
+INSTALL = install
+INSTALL_FILE    = $(INSTALL) -p    -o root -g root  -m  644
+INSTALL_PROGRAM = $(INSTALL) -p    -o root -g root  -m  755
+INSTALL_SCRIPT  = $(INSTALL) -p    -o root -g root  -m  755
+INSTALL_DIR     = $(INSTALL) -p -d -o root -g root  -m  755
+
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+CFLAGS += -O0
+else
+CFLAGS += -O2
+endif
+
+CONFIG		= $(shell grep -v "^\#" debian/configure.options)
+
+installdir	:= $(CURDIR)/debian/install
+tmpdir		:= $(CURDIR)/debian/tmp
+builddir	:= $(CURDIR)/debian/build
+
+MAKEVARS	:= DESTDIR=$(installdir) STRIP=
+
+# Include the quilt patch system.
+include /usr/share/quilt/quilt.make
+
+$(builddir)/Makefile:
+	# Check if we include the RFCs and Internet-Drafts (which are non
+	# DFSG-free).  You can set DFSG_NONFREE to build the packages from the
+	# unchanged upstream sources but Debian can not ship the RFCs in main
+	# so this test is here to make sure it does not get in by accident
+	# again. -- Torsten
+	if [ -z "$(DFSG_NONFREE)" ]; then \
+	    if [ -e doc/drafts]; then exit 1; fi; \
+	    if [ -e doc/rfc ]; then exit 1; fi; \
+	fi
+
+	# Copy our stripped schema versions into where upstream expects them.
+	if [ -z "$(DFSG_NONFREE)" ]; then \
+	    set -e; for s in debian/schema/*.schema debian/schema/*.ldif; do \
+	        cp $$s servers/slapd/schema/`basename $$s`; \
+	    done; \
+	fi
+
+	cp -f /usr/share/misc/config.* build/
+	cp -f /usr/share/misc/config.* contrib/ldapc++/
+	mkdir -p $(builddir)
+	cd $(builddir) && CFLAGS="$(CFLAGS)" $(CURDIR)/configure \
+		$(CONFIG) 
+	perl debian/check_config
+	$(MAKE) -C $(builddir) depend
+
+build: patch build-stamp
+build-stamp: $(builddir)/Makefile
+	$(MAKE) -C $(builddir) $(MAKEVARS)
+	touch $@
+
+# Check all built libraries for unresolved symbols except for the libslapi
+# library.  It is a special case since the SLAPI interface depends on symbols
+# defined in slapd itself.  Those symbols will remain unresolved until the
+# plugin is loaded into slapd.
+install: install-stamp
+install-stamp: build-stamp
+	$(MAKE) -C $(builddir) $(MAKEVARS) install
+	for F in $(installdir)/usr/lib/*.so.*.*.*; do \
+	    if echo "$$F" | grep -q libslapi ; then \
+	        continue; \
+	    fi; \
+	    if LD_LIBRARY_PATH=$(installdir)/usr/lib ldd -d -r $$F 2>&1 | grep '^undefined symbol:'; then \
+	        echo; \
+	        echo "library $$F has undefined references.  Please fix this before continuing."; \
+		exit 1; \
+	    fi; \
+	done
+	# Upstream installs schema files in mode 0444 - policy wants 0644
+	find $(installdir)/etc -type f|xargs chmod 0644
+	# Upstream manpages are section 8C but installed as section 8
+	find $(installdir)/usr/share/man -name \*.8 \
+		| xargs perl -pi -e 's#(\.TH \w+ 8)C#$$1#'
+	touch $@
+
+
+binary: binary-arch 
+# Don't build binary-indep for now (only liblslapd-dev was in there)
+# Reenable after sarge...
+
+binary-indep: 
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+
+	dh_installdirs -i
+	sh debian/copy_slapd_dev_files
+	dh_installchangelogs -i
+	dh_installdocs -i
+	dh_installdebconf -i
+	dh_installdeb -i
+	dh_compress -i
+	dh_gencontrol -i
+	dh_md5sums -i
+	# Don't build the libslapd2.3-dev package so nobody builds against
+	# it. We'll support it after sarge release...
+	#dh_builddeb -i -Nlibslapd2.3-dev
+	dh_builddeb -i
+
+binary-arch: install-stamp
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	# XXX: remove after libldap2.3-dev is officially built
+	#rm -Rf debian/libldap2.3-dev
+
+	dh_installdirs -a
+	cp -al $(installdir) $(tmpdir)
+
+	dh_install -a
+
+	# Make fix_ldif and ldiftopasswd executable.
+	chmod 0755 $(CURDIR)/debian/slapd/usr/share/slapd/fix_ldif $(CURDIR)/debian/slapd/usr/share/slapd/ldiftopasswd
+	dh_installchangelogs -a
+	dh_installdocs -a
+	dh_installexamples -a
+	dh_installman -a
+	dh_installinit -Xslapd.prerm -a -- "defaults 19 80"
+	dh_installdebconf -a
+	# when using OpenSSL, we do not need to add crontab entries
+	#dh_installcron -a
+	dh_strip -plibldap-2.3-0 --dbg-package=libldap-2.3-0-dbg
+	dh_strip -pslapd --dbg-package=slapd-dbg
+	dh_strip -pldap-utils
+	dh_link -a
+	dh_compress -a
+	dh_fixperms -a
+	dh_makeshlibs -plibldap-2.3-0
+	dh_installdeb -a
+	perl -w debian/dh_installscripts-common -p slapd
+	dh_shlibdeps -a -L libldap-2.3-0 -l $(installdir)/usr/lib
+	# Strip duplicate dependency out of substvars.
+	sed -i -e 's/ libldap-2.3-0,//' debian/*.substvars
+	dh_gencontrol -a
+	dh_md5sums -a
+	# Don't build the libldap2.3-dev package until after sarge release
+	# so nobody can build against it.
+	dh_builddeb -a -Nlibldap2.3-dev
+
+clean: clean1 unpatch
+clean1:
+	dh_testdir
+	dh_testroot
+	# Update translation templates for debconf
+	debconf-updatepo
+	# Remove our stripped schema from the upstream source area.
+	if [ -z "$(DFSG_NONFREE)" ]; then \
+	    set -e; for s in debian/schema/*.schema debian/schema/*.ldif; do \
+	        rm -f servers/slapd/schema/`basename $$s`; \
+	    done; \
+	fi
+	# Remove updated config.guess and config.sub for a clean diff.
+	rm -f build/config.sub build/config.guess
+	rm -f contrib/ldapc++/config.sub contrib/ldapc++/config.guess
+	rm -f install-stamp build-stamp
+	rm -rf $(builddir) $(builddir_notls) $(installdir)
+
+	dh_clean
+	# XXX: remove after libldap2.3-dev is officially built
+	rm -Rf debian/libldap2.3-dev
+
+.PHONY: binary binary-arch binary-indep build clean

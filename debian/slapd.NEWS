@@ -1,0 +1,10 @@
+openldap2.3 (2.3.20-1) unstable; urgency=low
+
+   The Debian slapd package no longer includes support for the LDBM backend.
+   It has been disabled as a result of concerns over data loss and lack of
+   upstream support.  For more information, see:
+   http://www.openldap.org/faq/index.cgi?_highlightWords=ldbm&file=756
+   The BDB backend is now the main backend to use. This backend is supported
+   upstream and has several fixes included for known problems.
+
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 26 Feb 2006 20:05:44 +0100

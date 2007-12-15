@@ -1,0 +1,28 @@
+--- servers/slapd/main.c.orig
++++ servers/slapd/main.c
+@@ -648,12 +648,6 @@
+ 	}
+ #endif
+ 
+-#if defined(HAVE_SETUID) && defined(HAVE_SETGID)
+-	if ( username != NULL || groupname != NULL ) {
+-		slap_init_user( username, groupname );
+-	}
+-#endif
+-
+ 	extops_init();
+ 	lutil_passwd_init();
+ 
+@@ -674,6 +668,12 @@
+ 		goto destroy;
+ 	}
+ 
++#if defined(HAVE_SETUID) && defined(HAVE_SETGID)
++	if ( username != NULL || groupname != NULL ) {
++		slap_init_user( username, groupname );
++	}
++#endif
++
+ 	if ( debug_unknowns ) {
+ 		rc = parse_debug_unknowns( debug_unknowns, &slap_debug );
+ 		ldap_charray_free( debug_unknowns );

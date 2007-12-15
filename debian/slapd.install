@@ -1,0 +1,10 @@
+debian/tmp/etc/ldap/schema etc/ldap
+debian/tmp/usr/lib/slapd usr/sbin
+debian/tmp/usr/lib/slurpd usr/sbin
+debian/tmp/usr/lib/ldap/*.so* usr/lib/ldap
+debian/tmp/usr/lib/ldap/*.la usr/lib/ldap
+debian/lintian-overrides/slapd usr/share/lintian/overrides
+debian/fix_ldif usr/share/slapd
+debian/ldiftopasswd usr/share/slapd
+debian/DB_CONFIG usr/share/slapd
+debian/slapd.conf usr/share/slapd

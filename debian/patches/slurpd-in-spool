@@ -1,0 +1,12 @@
+diff -urNad openldap2.3-2.3.11~/servers/slurpd/slurp.h openldap2.3-2.3.11/servers/slurpd/slurp.h
+--- openldap2.3-2.3.11~/servers/slurpd/slurp.h	2005-12-01 13:48:46.000000000 +0100
++++ openldap2.3-2.3.11/servers/slurpd/slurp.h	2005-12-02 11:22:47.856278500 +0100
+@@ -67,7 +67,7 @@
+ #define SERVICE_NAME	OPENLDAP_PACKAGE "-slurpd"
+ 
+ /* Default directory for slurpd's private copy of replication logs */
+-#define	DEFAULT_SLURPD_REPLICA_DIR	LDAP_RUNDIR LDAP_DIRSEP "openldap-slurp"
++#define	DEFAULT_SLURPD_REPLICA_DIR	LDAP_RUNDIR LDAP_DIRSEP "spool/slurpd"
+ 
+ /* Default name for slurpd's private copy of the replication log */
+ #define	DEFAULT_SLURPD_REPLOGFILE	"slurpd.replog"

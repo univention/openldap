@@ -1,0 +1,57 @@
+Part of this patch adds the necessary makefile logic for the NTLM code.
+The rest explicitly links libldap_r against the threading libraries to
+prevent unversioned references to pthread symbols.
+
+The threading part only is ITS#4982.
+
+diff -urNad openldap2.3-2.3.11~/libraries/libldap/Makefile.in openldap2.3-2.3.11/libraries/libldap/Makefile.in
+--- openldap2.3-2.3.11~/libraries/libldap/Makefile.in	2005-12-01 13:48:50.000000000 +0100
++++ openldap2.3-2.3.11/libraries/libldap/Makefile.in	2005-12-02 10:04:11.513209500 +0100
+@@ -20,7 +20,7 @@
+ SRCS	= bind.c open.c result.c error.c compare.c search.c \
+ 	controls.c messages.c references.c extended.c cyrus.c \
+ 	modify.c add.c modrdn.c delete.c abandon.c \
+-	sasl.c sbind.c kbind.c unbind.c cancel.c  \
++	sasl.c ntlm.c sbind.c kbind.c unbind.c cancel.c  \
+ 	filter.c free.c sort.c passwd.c whoami.c \
+ 	getdn.c getentry.c getattr.c getvalues.c addentry.c \
+ 	request.c os-ip.c url.c sortctrl.c vlvctrl.c \
+@@ -31,7 +31,7 @@
+ OBJS	= bind.lo open.lo result.lo error.lo compare.lo search.lo \
+ 	controls.lo messages.lo references.lo extended.lo cyrus.lo \
+ 	modify.lo add.lo modrdn.lo delete.lo abandon.lo \
+-	sasl.lo sbind.lo kbind.lo unbind.lo cancel.lo \
++	sasl.lo ntlm.lo sbind.lo kbind.lo unbind.lo cancel.lo \
+ 	filter.lo free.lo sort.lo passwd.lo whoami.lo \
+ 	getdn.lo getentry.lo getattr.lo getvalues.lo addentry.lo \
+ 	request.lo os-ip.lo url.lo sortctrl.lo vlvctrl.lo \
+diff -urNad openldap2.3-2.3.11~/libraries/libldap_r/Makefile.in openldap2.3-2.3.11/libraries/libldap_r/Makefile.in
+--- openldap2.3-2.3.11~/libraries/libldap_r/Makefile.in	2005-12-01 13:48:50.000000000 +0100
++++ openldap2.3-2.3.11/libraries/libldap_r/Makefile.in	2005-12-02 10:05:17.637342000 +0100
+@@ -22,7 +22,7 @@
+ 	bind.c open.c result.c error.c compare.c search.c \
+ 	controls.c messages.c references.c extended.c cyrus.c \
+ 	modify.c add.c modrdn.c delete.c abandon.c \
+-	sasl.c sbind.c kbind.c unbind.c cancel.c \
++	sasl.c ntlm.c sbind.c kbind.c unbind.c cancel.c \
+ 	filter.c free.c sort.c passwd.c whoami.c \
+ 	getdn.c getentry.c getattr.c getvalues.c addentry.c \
+ 	request.c os-ip.c url.c sortctrl.c vlvctrl.c \
+@@ -38,7 +38,7 @@
+ 	bind.lo open.lo result.lo error.lo compare.lo search.lo \
+ 	controls.lo messages.lo references.lo extended.lo cyrus.lo \
+ 	modify.lo add.lo modrdn.lo delete.lo abandon.lo \
+-	sasl.lo sbind.lo kbind.lo unbind.lo cancel.lo \
++	sasl.lo ntlm.lo sbind.lo kbind.lo unbind.lo cancel.lo \
+ 	filter.lo free.lo sort.lo passwd.lo whoami.lo \
+ 	getdn.lo getentry.lo getattr.lo getvalues.lo addentry.lo \
+ 	request.lo os-ip.lo url.lo sortctrl.lo vlvctrl.lo \
+@@ -56,7 +56,7 @@
+ XXLIBS = $(SECURITY_LIBS) $(LUTIL_LIBS)
+ XXXLIBS = $(LTHREAD_LIBS)
+ NT_LINK_LIBS = $(LDAP_LIBLBER_LA) $(AC_LIBS) $(SECURITY_LIBS)
+-UNIX_LINK_LIBS = $(LDAP_LIBLBER_LA) $(AC_LIBS) $(SECURITY_LIBS)
++UNIX_LINK_LIBS = $(LDAP_LIBLBER_LA) $(AC_LIBS) $(SECURITY_LIBS) $(LTHREAD_LIBS)
+ 
+ .links : Makefile
+ 	@for i in $(XXSRCS); do \
