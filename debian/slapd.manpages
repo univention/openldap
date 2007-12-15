@@ -30,7 +30,6 @@ debian/tmp/usr/share/man/man5/slapo-syncprov.5
 debian/tmp/usr/share/man/man5/slapo-translucent.5
 debian/tmp/usr/share/man/man5/slapo-unique.5
 debian/tmp/usr/share/man/man5/slapo-valsort.5
-debian/tmp/usr/share/man/man8/slurpd.8
 debian/tmp/usr/share/man/man8/slapd.8
 debian/tmp/usr/share/man/man8/slapadd.8
 debian/tmp/usr/share/man/man8/slapcat.8

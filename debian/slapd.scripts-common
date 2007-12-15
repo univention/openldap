@@ -170,14 +170,10 @@ create_ldap_directories() {	# {{{
 	if [ ! -d /var/lib/ldap ]; then
 		mkdir -m 0700 /var/lib/ldap
 	fi
-	if [ ! -d /var/spool/slurpd ]; then
-		mkdir -m 0700 /var/spool/slurpd
-	fi
 	if [ ! -d /var/run/slapd ]; then
 		mkdir -m 0755 /var/run/slapd
 	fi
 	update_permissions /var/lib/ldap
-	update_permissions /var/spool/slurpd
 	update_permissions /var/run/slapd
 }
 # }}}
