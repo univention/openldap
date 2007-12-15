@@ -1,6 +1,9 @@
 openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
 
   * New upstream version.
+    - remove another schema from upstream source, collective.schema,
+      that contains text from the IETF RFCs and include a stripped copy
+      in debian/schema.
   * slapd.conf and DB_CONFIG are used in the postinst, they shouldn't be
     shipped under doc/examples because /usr/share/doc can't be depended
     on per policy; ship the files under /usr/share/slapd and symlink the
