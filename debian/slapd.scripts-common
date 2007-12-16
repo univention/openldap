@@ -16,6 +16,23 @@
 # for example. Therefore we must give the user exact control over what we
 # are doing.
 
+configure_ldbm_to_bdb_migration() {					# {{{
+# If there are any LDBM databases in use we suggest to the user to migrate
+# to the more stable and better maintained BDB backend.
+# Usage: configure_ldbm_to_bdb_migration
+
+	if [ -e "$SLAPD_CONF" ] && grep -qE \
+			-e '^moduleload[[:space:]]+back_ldbm' \
+			-e '^(database|backend)[[:space:]]+ldbm' \
+			"$SLAPD_CONF"; then
+		db_input critical slapd/migrate_ldbm_to_bdb || true
+		db_go || true
+	else
+		# Nothing to migrate
+		db_set slapd/migrate_ldbm_to_bdb false
+	fi
+}
+# }}}
 break_on_ldbm_to_bdb_migration_disagree() { # {{{
   if [ -e "$SLAPD_CONF" ] && grep -qE \
       -e '^moduleload[[:space:]]+back_ldbm' \
