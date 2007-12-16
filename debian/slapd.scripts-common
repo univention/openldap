@@ -97,22 +97,6 @@ database_dumping_destdir() {						# {{{
 }
 
 # }}}
-configure_ldbm_to_bdb_transition() {					# {{{
-# The LDBM backend seems to be quite unusable with OpenLDAP 2.2. Therefore
-# we ask the user if he wants to switch to BDB which is the recommended
-# backend for 2.2.
-
-	if grep -q '^moduleload[[:space:]]\+back_ldbm' $SLAPD_CONF ||
-			grep -q '^database[[:space:]]\+ldbm' $SLAPD_CONF ||
-			grep -q '^backend[[:space:]]\+ldbm' $SLAPD_CONF; then
-		db_input critical slapd/convert_ldbm_to_bdb || true
-		db_go || true
-	else
-		db_set slapd/convert_ldbm_to_bdb false
-	fi
-}
-
-# }}}
 create_new_user() { # {{{
 	if [ -z "`getent group openldap`" ]; then
 		addgroup --quiet --system openldap
