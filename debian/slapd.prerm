@@ -4,62 +4,6 @@ set -e
 
 . /usr/share/debconf/confmodule
 
-# Work around bug introduced in 2.1.x, fixed in 2.1.22-2      		{{{
-
-# The slapd 2.1.x packages before 2.1.17-3 had a problem in the init.d
-# script. Namely if /etc/init.d/slapd stop was called and slapd was not
-# running, the init script failed with an error code. Problem is that 
-# the prerm called /etc/init.d/slapd stop which failed so the upgrade
-# breaks.  Same problem with slurpd, fixed in 2.1.22-2.
-#
-# dpkg calls the new prerm script if the old prerm failed so this is 
-# our chance to work around that problem by trying to kill slapd 
-# ourselves and ignoring the case that no slapd is running.
-#
-# Work around implemented by Stephen Frost, should go away one release
-# after sarge
-#
-# -- Torsten Landschoff <torsten@debian.org>  Fri, 25 Feb 2005 15:28:23 +0100
-
-if [ "$1" = "failed-upgrade"  ] \
-	&& dpkg --compare-versions "$2" -lt 2.1.22-2 \
-	&& dpkg --compare-versions "$2" -ge 2.1.0-1; then
-
-	# Source the init script configuration
-	if [ -f "/etc/default/slapd" ]; then
-		. /etc/default/slapd
-	fi
-
-	# Load the default location of the slapd config file
-	if [ -z "$SLAPD_CONF" ]; then
-		SLAPD_CONF="/etc/ldap/slapd.conf"
-	fi
-
-	# Find out the name of slapd's pid file
-	if [ -z "$SLAPD_PIDFILE" ] && [ -f "$SLAPD_CONF" ]; then
-		SLAPD_PIDFILE=`sed -ne 's/^pidfile[[:space:]]\+\(.\+\)/\1/p' \
-			"$SLAPD_CONF"`
-	fi
-
-	# Use the pidfile if it is there, if not then just do without
-	if [ -z "$SLAPD_PIDFILE" ]; then
-	        start-stop-daemon --stop --quiet --oknodo --retry 10 \
-			--exec /usr/sbin/slapd
-	else
-	        start-stop-daemon --stop --quiet --oknodo --retry 10 \
-			--pidfile \"$SLAPD_PIDFILE\" \
-			--exec /usr/sbin/slapd
-	fi
-
-	# Slurpd does not use a pidfile so just kill it via the exec
-	start-stop-daemon --stop --quiet --oknodo --retry 10 \
-		--exec /usr/sbin/slurpd
-
-	# Don't let debhelper try the same thing
-	exit
-fi
-# }}}
-
 # Set seen flag of this question to false to get it asked if someone disagrees
 # with the upgrade from ldbm to bdb backend.
 db_fset slapd/migrate_ldbm_to_bdb seen false

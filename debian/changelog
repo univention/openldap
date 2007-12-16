@@ -30,8 +30,9 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
   * build-depend on libgnutls-dev instead of on libssl-dev, so that at long
     last we can build the server and lib from the same source package again
     without licensing problems
+  * slapd.prerm: drop no-longer-needed upgrade code for openldap < 2.1.22
 
- -- Steve Langasek <vorlon@debian.org>  Sun, 16 Dec 2007 01:42:17 -0800
+ -- Steve Langasek <vorlon@debian.org>  Sun, 16 Dec 2007 01:48:15 -0800
 
 openldap2.3 (2.3.39-1) unstable; urgency=medium
 
