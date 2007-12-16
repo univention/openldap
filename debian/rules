@@ -51,6 +51,8 @@ $(builddir)/Makefile:
 	cp -f /usr/share/misc/config.* build/
 	cp -f /usr/share/misc/config.* contrib/ldapc++/
 	mkdir -p $(builddir)
+	chmod 755 $(CURDIR)/autogen.sh
+	./autogen.sh
 	cd $(builddir) && CFLAGS="$(CFLAGS)" $(CURDIR)/configure \
 		$(CONFIG) 
 	perl debian/check_config
@@ -165,6 +167,7 @@ clean1:
 	rm -f contrib/ldapc++/config.sub contrib/ldapc++/config.guess
 	rm -f install-stamp build-stamp
 	rm -rf $(builddir) $(builddir_notls) $(installdir)
+	rm -rf build/ltmain.sh autom4te.cache configure aclocal.m4
 
 	dh_clean
 

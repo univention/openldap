@@ -2,6 +2,7 @@ man-slapd -p0
 ntlm-ldap_h-hack -p0
 ntlm_c
 libldap-makefile_in
+add-autogen-sh
 slapi-errorlog-file -p0
 ldapi-socket-place -p0
 read-config-before-dropping-privileges -p0
