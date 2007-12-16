@@ -76,9 +76,7 @@ database_format_changed() {						# {{{
 # Return success if yes.
 # Usage: if database_format_changed; then
 
-	db_get slapd/migrate_ldbm_to_bdb
-	if [ "$RET" = "true" ] || dpkg --compare-versions \
-			"$OLD_VERSION" lt-nl 2.4.7; then
+	if dpkg --compare-versions "$OLD_VERSION" lt-nl 2.4.7; then
 		return 0
 	else
 		return 1
