@@ -794,33 +794,6 @@ assign_permissions() {							# {{{
 	chown --reference="$1" "$2"
 }
 # }}}
-update_access_config_directives() {					# {{{
-# Update the config file for some changes done for 2.2.x (vs. 2.1.x):
-# access to attribute=<attr> becomes access to attrs=<attr>
-# access to dn=".*,..." becomes access to dn.regex=".*,..."
-
-	# Check if we have to apply these changes
-	# Users can have it in the config file. 2.2.26 allowed to have attr in the
-	# config files due to a bug in the config parser.
-	if previous_version_newer 2.3.24; then
-		return 0
-	fi
-
-	# Without a configuration we have nothing to update
-	if [ ! -e "$SLAPD_CONF" ]; then
-		echo >&2 \
-		  "  Did not find slapd.conf to update access directives."
-		return 0
-	fi
-
-	echo -n "  Updating config access directives... " >&2
-
-	write_slapd_conf "$SLAPD_CONF" 's/^(access\s+to\s+)dn=/$1dn.regex=/g'
-	write_slapd_conf "$SLAPD_CONF" 's/^(access\s+to\s+)(attribute=|attr=)/$1attrs=/g'
-
-	echo "done." >&2
-
-} # }}}
 stop_slapd() {								# {{{
 # Make sure slapd is shut down before mucking with the db files
 # and whatnot...

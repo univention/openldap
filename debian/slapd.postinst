@@ -31,7 +31,6 @@ postinst_upgrade_configuration() {					# {{{
 	echo done. >&2
 
 	configure_v2_protocol_support
-	update_access_config_directives
 
 	if previous_version_older 2.3.25-1; then
 		update_path_argsfile_pidfile
