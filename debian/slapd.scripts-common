@@ -16,61 +16,6 @@
 # for example. Therefore we must give the user exact control over what we
 # are doing.
 
-configure_dumping() {							# {{{
-# Ask the user for the configuration of the dumping component
-# Usage: configure_dumping
-
-  # Look if the user wants to migrate to the BDB backend
-  if ! database_dumping_enabled; then
-    return 0
-  fi
-
-	# Configure if and where to dump the LDAP databases
-	db_input medium slapd/dump_database || true
-	db_go || true
-	db_get slapd/dump_database
-
-	# Abort if the user does not want dumping
-	if [ "$RET" = never ]; then
-		return 0
-	fi
-
-	db_input medium slapd/dump_database_destdir || true
-	db_go || true
-
-	# If the user entered the empty value, go back to the default
-	db_get slapd/dump_database_destdir 
-	if [ "$RET" = "" ]; then
-		db_reset slapd/dump_database_destdir
-	fi
-}
-
-# }}}
-configure_ldbm_to_bdb_migration() {					# {{{
-# If there are any LDBM databases in use we suggest to the user to migrate
-# to the more stable and better maintained BDB backend.
-# Usage: configure_ldbm_to_bdb_migration
-
-	if [ -e "$SLAPD_CONF" ] && grep -qE \
-			-e '^moduleload[[:space:]]+back_ldbm' \
-			-e '^(database|backend)[[:space:]]+ldbm' \
-			"$SLAPD_CONF"; then
-		db_input critical slapd/migrate_ldbm_to_bdb || true
-		db_go || true
-	else
-		# Nothing to migrate
-		db_set slapd/migrate_ldbm_to_bdb false
-	fi
-}
-# }}}
-configure_allow_v2_binds() {                        # {{{
-# Ask if the user would like their package to support LDAPv2..
-# This was the default in older versions but we want to ask
-# for new installs too in case the user needs it..
-
-    db_input medium slapd/allow_ldap_v2 || true
-}
-# }}}
 break_on_ldbm_to_bdb_migration_disagree() { # {{{
   if [ -e "$SLAPD_CONF" ] && grep -qE \
       -e '^moduleload[[:space:]]+back_ldbm' \
@@ -116,7 +61,7 @@ database_format_changed() {						# {{{
 
 	db_get slapd/migrate_ldbm_to_bdb
 	if [ "$RET" = "true" ] || dpkg --compare-versions \
-			"$OLD_VERSION" lt-nl "2.4.7"; then
+			"$OLD_VERSION" lt-nl 2.4.7; then
 		return 0
 	else
 		return 1
