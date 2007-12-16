@@ -135,7 +135,6 @@ binary-arch: install-stamp
 	dh_link -a
 	dh_compress -a
 	dh_fixperms -a
-	dh_makeshlibs -plibldap-2.4-2
 	dh_installdeb -a
 	perl -w debian/dh_installscripts-common -p slapd
 	dh_shlibdeps -a -L libldap-2.4-2 -l $(installdir)/usr/lib

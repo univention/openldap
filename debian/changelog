@@ -16,8 +16,10 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
     on per policy; ship the files under /usr/share/slapd and symlink the
     /other/ way, which also spares us from dh_compress trying to gzip
     slapd.conf.  Closes: #452749.
+  * drop libldap.so as was done for libldap2, making it a link to
+    libldap_r.so to avoid unfortunate symbol collisions.
 
- -- Steve Langasek <vorlon@debian.org>  Sat, 15 Dec 2007 02:24:25 -0800
+ -- Steve Langasek <vorlon@debian.org>  Sun, 16 Dec 2007 00:14:31 -0800
 
 openldap2.3 (2.3.39-1) unstable; urgency=medium
 
