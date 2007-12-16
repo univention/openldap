@@ -133,7 +133,7 @@ Index: trunk/libraries/libldap/Makefile.in
  UNIX_LINK_LIBS = $(LDAP_LIBLBER_LA) $(AC_LIBS) $(SECURITY_LIBS)
 -
 +ifneq (,$(VERSION_OPTION))
-+  VERSION_FLAGS = "$(VERSION_OPTION)$(srcdir)/libldap.map"
++  VERSION_FLAGS = $(VERSION_OPTION)$(srcdir)/libldap.map
 +endif
 +  
  apitest:	$(XLIBS) apitest.o
