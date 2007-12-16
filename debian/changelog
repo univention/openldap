@@ -38,8 +38,11 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
     phase.
   * Don't stop slapd in the preinst by hand, the prerm already stops the
     old slapd using the standard interfaces.
+  * Don't build with LAN Manager password support; these passwords are more
+    insecure than traditional Unix crypt, and only relevant when talking to
+    Windows 98.
 
- -- Steve Langasek <vorlon@debian.org>  Sun, 16 Dec 2007 03:35:25 -0800
+ -- Steve Langasek <vorlon@debian.org>  Sun, 16 Dec 2007 04:33:49 -0800
 
 openldap2.3 (2.3.39-1) unstable; urgency=medium
 
