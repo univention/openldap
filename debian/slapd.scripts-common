@@ -814,23 +814,6 @@ install_new_slapd_conf() {						# {{{
 	mv "$conf_new" "$SLAPD_CONF"
 }
 # }}}
-install_new_configuration() {       # {{{
-# Installs a given $2 (new) as new $1 (old) configuration file
-# Usage: install_new_configuration oldconf newconf
-	local conf_old="$1"
-	local conf_new="$2"
-
-	# Make sure we keep the permissions of an old configuration file, this is not
-	# really needed anymore because slapd reads it configuration before it drops
-	# the privileges.
-	if [ -e "$conf_old" ]; then
-		assign_permissions "$conf_old" "$conf_new"
-	fi
-
-	# Move configuration file in place.
-	mv "$conf_new" "$conf_old"
-}
-# }}}
 backup_config_once() {							# {{{
 # Create a backup of the current configuration files. 
 # Usage: backup_config_once
