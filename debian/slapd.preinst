@@ -14,7 +14,6 @@ set -e
 if [ "$MODE" = upgrade ]; then
 	configure_ldbm_to_bdb_migration
 	break_on_ldbm_to_bdb_migration_disagree
-	stop_slapd
 	dump_databases
 fi
 

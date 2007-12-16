@@ -794,31 +794,6 @@ assign_permissions() {							# {{{
 	chown --reference="$1" "$2"
 }
 # }}}
-stop_slapd() {								# {{{
-# Make sure slapd is shut down before mucking with the db files
-# and whatnot...
-# Usage: stop_slapd
-# XXX: Why are we stopping slapd manually? That should be done via 
-# the init.d script and invoke-rc.d. Leaving this alone for now 
-# -- Torsten
-
-	# Find out the name of slapd's pid file
-  	if [ -z "$SLAPD_PIDFILE" ] && [ -f "$SLAPD_CONF" ]; then
-    		SLAPD_PIDFILE=`read_slapd_conf < $SLAPD_CONF \
-			| sed -ne 's/^pidfile[[:space:]]\+\(.\+\)/\1/p'`
-  	fi
-
-	# Use the pidfile if it is there, if not then just do without
-  	if [ -z "$SLAPD_PIDFILE" ]; then
-    		start-stop-daemon --stop --retry 10 --quiet --oknodo \
-			--exec /usr/sbin/slapd >&2
-  	else
-    		start-stop-daemon --stop --retry 10 --quiet --oknodo \
-			--pidfile "$SLAPD_PIDFILE" >&2
-	fi
-}
-
-# }}}
 install_new_slapd_conf() {						# {{{
 # Installs a given file as new slapd.conf configuration file. 
 # Usage: install_new_slapd_conf <newfile>
