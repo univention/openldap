@@ -162,7 +162,7 @@
 #--with-threads	  with threads [auto]
 --with-threads
 #--with-tls		  with TLS/SSL support [auto]
---with-tls
+--with-tls=gnutls
 #--with-yielding-select  with implicitly yielding select [auto]
 #--with-multiple-precision
 #multiple precision support for statistics
