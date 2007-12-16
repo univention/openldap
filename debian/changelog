@@ -11,6 +11,7 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
       openldap2
     - lastmod and denyop have been moved to contrib upstream and are no
       longer shipped as supported overlays
+    - need to dump and reload databases again for the upgrade from 2.3.39.
   * slapd.conf and DB_CONFIG are used in the postinst, they shouldn't be
     shipped under doc/examples because /usr/share/doc can't be depended
     on per policy; ship the files under /usr/share/slapd and symlink the
