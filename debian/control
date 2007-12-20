@@ -20,7 +20,7 @@ Recommends: libsasl2-modules
 Suggests: ldap-utils
 Conflicts: umich-ldapd, ldap-server, libltdl3 (= 1.5.4-1)
 Replaces: libldap2, ldap-utils (<< 2.2.23-3)
-Provides: ldap-server
+Provides: ldap-server, ${slapd:Provides}
 Description: OpenLDAP server (slapd)
  This is the OpenLDAP (Lightweight Directory Access Protocol) standalone
  server (slapd). The server can be used to provide a standalone directory

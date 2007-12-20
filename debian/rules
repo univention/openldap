@@ -141,6 +141,11 @@ binary-arch: install-stamp
 	# at all, but that requires adjusting the build scripts first to
 	# link against libldap_r, otherwise dh_shlibdeps fails
 	#dh_makeshlibs -plibldap-2.4-2 -V 'libldap-2.4-2 (>= 2.4.7)'
+	echo "slapd:Provides=$$(objdump -p debian/slapd/usr/lib/libslapi-*.so.* \
+		| sed -ne '/SONAME/ { s/[[:space:]]*SONAME[[:space:]]*//; \
+		                      s/\.so\./-/; p; q }' \
+	)" >> debian/slapd.substvars
+	dh_makeshlibs -pslapd -X/usr/lib/ldap/ -V "$$(sed -ne's/slapd:Provides=//p' debian/slapd.substvars)"
 	dh_installdeb -a
 	perl -w debian/dh_installscripts-common -p slapd
 	dh_shlibdeps -a -L libldap-2.4-2 -l $(installdir)/usr/lib

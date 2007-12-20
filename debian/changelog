@@ -41,8 +41,11 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
   * Don't build with LAN Manager password support; these passwords are more
     insecure than traditional Unix crypt, and only relevant when talking to
     Windows 98.
+  * Move libslapi into the slapd package and provide a virtual package for
+    library dependencies, since this is expected to stay lockstep with the
+    server.
 
- -- Steve Langasek <vorlon@debian.org>  Sun, 16 Dec 2007 04:33:49 -0800
+ -- Steve Langasek <vorlon@debian.org>  Tue, 18 Dec 2007 15:07:16 -0800
 
 openldap2.3 (2.3.39-1) unstable; urgency=medium
 
