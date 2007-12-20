@@ -44,8 +44,11 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
   * Move libslapi into the slapd package and provide a virtual package for
     library dependencies, since this is expected to stay lockstep with the
     server.
+  * Split slapi dev support into a new libslapi-dev package, as this is
+    unrelated to libldap; and drop libslapi.a since it would be insane to try
+    to statically link a dynamically-loaded slapi plugin.
 
- -- Steve Langasek <vorlon@debian.org>  Tue, 18 Dec 2007 15:07:16 -0800
+ -- Steve Langasek <vorlon@debian.org>  Thu, 20 Dec 2007 01:36:15 -0800
 
 openldap2.3 (2.3.39-1) unstable; urgency=medium
 
