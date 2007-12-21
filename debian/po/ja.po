@@ -289,7 +289,7 @@ msgid ""
 "old database files are about to be moved to /var/backups.  If you want to "
 "try this upgrade again then move the old database files back into place, fix "
 "whatever caused slapcat to fail, and run:\n"
-" slapcat | /usr/share/slapd/fix_ldif -w -o \"$organization\" > $location"
+" slapcat > $location"
 msgstr ""
 "LDAP ディレクトリの更新を試みているときに、エラーが発生しました。このエラーは"
 "あなたの LDAP ディレクトリを展開することを試みる 'slapcat' の動作中に起きまし"
@@ -299,7 +299,7 @@ msgstr ""
 "は /var/backups に移動されようとしています。この更新を再び試して古いデータ"
 "ベースファイルを元の場所に戻したいのであれば、slapcat が失敗する原因を修正"
 "し、次のように実行します:\n"
-" slapcat | /usr/share/slapd/fix_ldif -w -o \"$organization\" > $location"
+" slapcat > $location"
 
 #. Type: note
 #. Description

@@ -296,7 +296,7 @@ msgid ""
 "old database files are about to be moved to /var/backups.  If you want to "
 "try this upgrade again then move the old database files back into place, fix "
 "whatever caused slapcat to fail, and run:\n"
-" slapcat | /usr/share/slapd/fix_ldif -w -o \"$organization\" > $location"
+" slapcat > $location"
 msgstr ""
 "Er is een fout opgetreden tijdens de poging om uw LDAP-catalogus op te "
 "waarderen. Deze fout trad op tijdens de 'slapcat'-aanroep die uw LDAP-"
@@ -304,8 +304,7 @@ msgstr ""
 "configuratie. Bijvoorbeeld als de regels, die de toepasselijke modules voor "
 "de gebruikte backend-databasetypes laden, ontbreken. Als u deze opwaardering "
 "nogmaals wilt proberen dient u: de oude databasebestanden terug te kopiëren, "
-"de oorzaak van de mislukte 'slapcat'-aanroep te repareren, en 'slapcat | /"
-"usr/share/slapd/fix_ldif -w -o \"$organization\" > $location' uit te voeren."
+"de oorzaak van de mislukte 'slapcat'-aanroep te repareren, en 'slapcat > $location' uit te voeren."
 
 #. Type: note
 #. Description

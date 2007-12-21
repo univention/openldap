@@ -284,7 +284,7 @@ msgid ""
 "old database files are about to be moved to /var/backups.  If you want to "
 "try this upgrade again then move the old database files back into place, fix "
 "whatever caused slapcat to fail, and run:\n"
-" slapcat | /usr/share/slapd/fix_ldif -w -o \"$organization\" > $location"
+" slapcat > $location"
 msgstr ""
 "Gặp lỗi trong khi cố gắng nâng cấp thư mục LDAP của bạn. Lỗi này xảy ra khi "
 "chạy tiến trình « slapcat » mà cố gắng rút thư mục LDAP của bạn. Lỗi này có "
@@ -294,7 +294,7 @@ msgstr ""
 "được di chuyển sang thư mục </var/backups>. Nếu bạn muốn thử lại nâng cấp, "
 "hãy di chuyển các tập tin cơ sở dữ liệu cũ về vị trí trước, sửa nguyên nhân "
 "lỗi của slapcat, rồi chạy lệnh:\n"
-" slapcat | /usr/share/slapd/fix_ldif -w -o \"$organization\" > $location"
+" slapcat > $location"
 
 #. Type: note
 #. Description

@@ -120,9 +120,8 @@ binary-arch: install-stamp
 	cp -al $(installdir) $(tmpdir)
 
 	dh_install -a
+	chmod 0755 $(CURDIR)/debian/slapd/usr/share/slapd/ldiftopasswd
 
-	# Make fix_ldif and ldiftopasswd executable.
-	chmod 0755 $(CURDIR)/debian/slapd/usr/share/slapd/fix_ldif $(CURDIR)/debian/slapd/usr/share/slapd/ldiftopasswd
 	dh_installchangelogs -a
 	dh_installdocs -a
 	dh_installexamples -a

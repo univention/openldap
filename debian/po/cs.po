@@ -289,7 +289,7 @@ msgid ""
 "old database files are about to be moved to /var/backups.  If you want to "
 "try this upgrade again then move the old database files back into place, fix "
 "whatever caused slapcat to fail, and run:\n"
-" slapcat | /usr/share/slapd/fix_ldif -w -o \"$organization\" > $location"
+" slapcat > $location"
 msgstr ""
 "Při pokusu o aktualizaci vašeho LDAP adresáře se vyskytla chyba. Chyba "
 "nastala při provádění příkazu 'slapcat', jenž se snažil získat obsah vašeho "
@@ -300,7 +300,7 @@ msgstr ""
 "Budete-li chtít později zkusit provést tuto aktualizaci znovu, přesuňte "
 "staré databázové soubory zpět na jejich původní místo, spravte příčinu toho, "
 "proč slapcat selhal a spusťte:\n"
-"  slapcat | /usr/share/slapd/fix_ldif -w -o \"$organization\" > $location"
+"  slapcat > $location"
 
 #. Type: note
 #. Description

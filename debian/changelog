@@ -55,6 +55,9 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
     to statically link a dynamically-loaded slapi plugin.
 
   [ Russ Allbery ]
+  * Removed fix_ldif and all remaining code to try running it on LDIF
+    dumps. Schema checking has been imposed since 2.1 and it's highly
+    unlikely that anyone still needs this.
   * Create /etc/ldap/slapd.conf owned by the openldap group and mode 640
     by default so that slapindex and friends can read it when run as the
     openldap user. Fix permissions on upgrade if slapd.conf is owned by
@@ -74,7 +77,7 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
   * Remove versioned dependency on an ancient dpkg-dev.
   * Wrap and reorder Build-Depends for readability.
 
- -- Russ Allbery <rra@debian.org>  Thu, 20 Dec 2007 23:50:46 -0800
+ -- Russ Allbery <rra@debian.org>  Fri, 21 Dec 2007 00:48:02 -0800
 
 openldap2.3 (2.3.39-1) unstable; urgency=medium
 

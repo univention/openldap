@@ -156,34 +156,6 @@ update_slapd_conf_permissions() {	# {{{
 # }}}
 # ----- Dumping and loading the data ------------------------------------ {{{
 
-automatic_ldif_fixing_wanted_for() {					# {{{ 
-# Check if the user wants us to automatically fix the given LDIF file.
-# Usage: if automatic_ldif_fixing_wanted_for "$file"; then ...
-# XXX: Use debconf to configure this
-
-	local file size maxsize
-	file="$1"
-	size=`wc -c < "$file"`
-	maxsize=$((1024 * 1024 * 20))
-
-	if [ "$size" -lt "$maxsize" ]; then 
-		return 0
-	else
-		return 1
-	fi
-}
-
-# }}}
-corrective_ldif_filter() {						# {{{
-# Try to fix any errors found in an LDIF stream.
-# Usage: source | corrective_ldif_filter | target
-# XXX: Store the stderr output of the script somewhere.
-
-	/usr/share/slapd/fix_ldif -f 2>/dev/null
-}
-
-# }}}
-
 dump_databases() {							# {{{
 # If the user wants us to dump the databases they are dumped to the 
 # configured directory.
@@ -239,28 +211,6 @@ load_databases() {							# {{{
 
 		capture_diagnostics slapadd -q -b "$suffix" -l "$file" \
 			|| failed=1
-		if [ "$failed" ] && \
-			  automatic_ldif_fixing_wanted_for "$file"; then
-			rm -f "$dbdir"/*
-			# If there is an old DB_CONFIG file, restore it 
-			# before running slapadd
-			if [ -e "$backupdir"/DB_CONFIG ]; then
-				cp -a "$backupdir"/DB_CONFIG "$dbdir"/
-			else
-				copy_example_DB_CONFIG "$dbdir"/
-			fi
-			failed=
-			echo -n "fixing" >&2
-			# This only works because we used capture_diag
-			# above already and the FD for the capture is 
-			# already assigned in the master shell. There 
-			# should be a cleaner way for this...
-			# -- Torsten
-			corrective_ldif_filter < "$file" \
-				| capture_diagnostics slapadd -q -b "$suffix" \
-				|| failed=1
-			echo -n ", " >&2
-		fi
 		if [ "$failed" ]; then
 			rm -f "$dbdir"/*
 			echo failed. >&2
@@ -790,23 +740,6 @@ extend_existing_allow_directive() {					# {{{
 		exit ! $done;'
 
 	perl -e "$script" || return 1
-}
-# }}}
-fix_ldif() {								# {{{
-# Fix the directory when upgrading from before 2.1 and the root
-# dn has no structural objectclass
-# Usage: fix_ldif <old-ldif-file> <new-ldif-file>
-
-	local location fixed_location
-	location="$1"
-	fixed_location="$2"
-
-	db_get shared/organization
-	organization="$RET"
-	if [ -z "$organization" ]; then organization=Unknown; fi
-	
-	/usr/share/slapd/fix_ldif -w -o "$organization" \
-		< "$location" > "$fixed_location"
 }
 # }}}
 assign_permissions() {							# {{{

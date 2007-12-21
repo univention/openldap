@@ -121,7 +121,7 @@ _Description: slapcat failed during upgrade
  about to be moved to /var/backups.  If you want to try this upgrade
  again then move the old database files back into place, fix whatever
  caused slapcat to fail, and run:
-  slapcat | /usr/share/slapd/fix_ldif -w -o "$organization" > $location
+  slapcat > $location
  .
  Then move the database files back to a backup area and then try running
  slapadd from $location.
