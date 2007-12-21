@@ -80,6 +80,7 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
   * debian/rules cleanup:
     - Fix patch dependencies for parallel build (hopefully).
     - Tell configure the system type.
+    - Rewrite upstream_strip_nondfsg.sh as a get-orig-source target.
     - Remove stamp files as the first step of the clean target.
     - Add trivial build-arch and build-indep targets.
     - Remove dead code and unnecessary comments.
@@ -89,7 +90,7 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
   * Remove versioned dependency on an ancient dpkg-dev.
   * Wrap and reorder Build-Depends for readability.
 
- -- Russ Allbery <rra@debian.org>  Fri, 21 Dec 2007 13:04:52 -0800
+ -- Russ Allbery <rra@debian.org>  Fri, 21 Dec 2007 13:47:01 -0800
 
 openldap2.3 (2.3.39-1) unstable; urgency=medium
 

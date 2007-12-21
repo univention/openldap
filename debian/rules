@@ -39,6 +39,32 @@ MAKEVARS	:= DESTDIR=$(installdir) STRIP=
 # Include the quilt patch system.
 include /usr/share/quilt/quilt.make
 
+# These variable is used only by get-orig-source, which will normally only be
+# run by maintainers.
+VERSION = 2.4.7
+URL     = http://www.openldap.org/software/download/OpenLDAP/openldap-release/
+
+# Download the upstream source and make changes as required for DFSG reasons.
+# Assumes wget is available, as this is generally only used by the package
+# maintainers.
+get-orig-source:
+	@if [ ! -d "debian/schema" ] ; then \
+	    echo 'Run this from the top directory of the Debian source' >&2; \
+	    exit 1; \
+	fi
+	wget $(URL)/openldap-$(VERSION).tgz
+	tar xzf openldap-$(VERSION).tgz
+	rm -r openldap-$(VERSION)/doc/drafts
+	rm -r openldap-$(VERSION)/doc/rfc
+	set -e; for schema in debian/schema/*.schema debian/schema/*.ldif ; do \
+	    file=`basename "$$schema"`; \
+	    rm openldap-$(VERSION)/servers/slapd/schema/$$file; \
+	done
+	mv openldap-$(VERSION) openldap_$(VERSION).orig
+	tar cf openldap_$(VERSION).orig.tar openldap_$(VERSION).orig
+	rm -r openldap_$(VERSION).orig
+	gzip -9 openldap_$(VERSION).orig.tar
+
 $(builddir)/Makefile: patch
 	# Check if we include the RFCs and Internet-Drafts (which are non
 	# DFSG-free).  You can set DFSG_NONFREE to build the packages from the
