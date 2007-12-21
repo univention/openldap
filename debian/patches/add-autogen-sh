@@ -13,7 +13,7 @@ Debian-specific.
 +
 +LIBTOOL=`which libtoolize`
 +AUTOCONF=`which autoconf`
-+ACLOCAL=`which aclocal-1.9`
++ACLOCAL=`which aclocal`
 +
 +if [ ! -x $LIBTOOL ]; then
 +  echo "libtool doesn't exist! Please install libtool"
@@ -21,7 +21,7 @@ Debian-specific.
 +fi
 +
 +if [ ! -x $ACLOCAL ]; then
-+  echo "aclocal doesn't exist! Please install automake1.9"
++  echo "aclocal doesn't exist! Please install automake"
 +  exit 1
 +fi
 +
