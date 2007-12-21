@@ -1,6 +1,5 @@
 man-slapd -p0
-ntlm-ldap_h-hack -p0
-ntlm_c
+evolution-ntlm
 libldap-makefile_in
 add-autogen-sh
 slapi-errorlog-file -p0
