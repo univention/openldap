@@ -1,6 +1,6 @@
 openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
 
-  * New upstream version.
+  * New upstream version; closes: #449354.
     - remove another schema from upstream source, collective.schema,
       that contains text from the IETF RFCs and include a stripped copy
       in debian/schema.
