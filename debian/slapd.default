@@ -1,5 +1,7 @@
 # Default location of the slapd.conf file. If empty, use the compiled-in
-# default (/etc/ldap/slapd.conf).
+# default (/etc/ldap/slapd.conf). If using the cn=config backend to store
+# configuration in LDIF, set this variable to the directory containing the
+# cn=config data.
 SLAPD_CONF=
 
 # System account to run the slapd server under. If empty the server
@@ -11,7 +13,8 @@ SLAPD_USER="openldap"
 SLAPD_GROUP="openldap"
 
 # Path to the pid file of the slapd server. If not set the init.d script
-# will try to figure it out from $SLAPD_CONF (/etc/ldap/slapd.conf)
+# will try to figure it out from $SLAPD_CONF (/etc/ldap/slapd.conf by
+# default)
 SLAPD_PIDFILE=
 
 # slapd normally serves ldap only on all TCP-ports 389. slapd can also

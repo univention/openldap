@@ -1,5 +1,6 @@
 openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
 
+  [ Steve Langasek ]
   * New upstream version; closes: #449354.
     - remove another schema from upstream source, collective.schema,
       that contains text from the IETF RFCs and include a stripped copy
@@ -50,7 +51,12 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
     unrelated to libldap; and drop libslapi.a since it would be insane to try
     to statically link a dynamically-loaded slapi plugin.
 
- -- Steve Langasek <vorlon@debian.org>  Thu, 20 Dec 2007 01:36:15 -0800
+  [ Russ Allbery ]
+  * If SLAPD_CONF is set to a directory in /etc/default/slapd, assume
+    the cn=config backend is used and start slapd with the appropriate
+    options.  Based on a patch from Mike Burr.  Closes: #411413.
+
+ -- Russ Allbery <rra@debian.org>  Thu, 20 Dec 2007 21:45:20 -0800
 
 openldap2.3 (2.3.39-1) unstable; urgency=medium
 
