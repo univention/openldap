@@ -25,10 +25,6 @@ if [ "$1" = "purge" ]; then
   rmdir /etc/ldap/schema || true
   echo done
 
-  echo -n "Removing maintainer script flag files... "
-  rm -f /var/lib/slapd/upgrade*
-  echo done
-
   if remove_database_on_purge; then
     echo -n "Purging OpenLDAP database... "
     rm -rf /var/lib/ldap || true

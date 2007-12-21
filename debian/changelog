@@ -82,11 +82,13 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
     - Remove stamp files as the first step of the clean target.
     - Add trivial build-arch and build-indep targets.
     - Remove dead code and unnecessary comments.
+  * Remove postrm code to delete /var/lib/slapd/upgrade* flag files.  We
+    haven't used those since the 2.1 upgrade.
   * Update Vcs-* headers for new repository layout.
   * Remove versioned dependency on an ancient dpkg-dev.
   * Wrap and reorder Build-Depends for readability.
 
- -- Russ Allbery <rra@debian.org>  Fri, 21 Dec 2007 12:54:29 -0800
+ -- Russ Allbery <rra@debian.org>  Fri, 21 Dec 2007 13:04:52 -0800
 
 openldap2.3 (2.3.39-1) unstable; urgency=medium
 
