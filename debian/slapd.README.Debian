@@ -1,6 +1,17 @@
 Notes about Debian's slapd package
 ----------------------------------
 
+++ Logging
+
+   slapd logs to the facility local4. If you want to direct slapd's logs
+   to a separate log file, add a line like:
+
+       local4.debug     /var/log/slapd.log
+
+   to /etc/syslog.conf. You may also want to add ";local4.none" to the
+   catch-all entry that logs to /var/log/messages so that it doesn't
+   continue to receive slapd logs.
+
 ++ BerkeleyDB version
 
    slapd has been built against version 4.2 of BerkeleyDB. This version
@@ -94,4 +105,4 @@ Notes about Debian's slapd package
    and it will generate the files for you.  You will need appropriate
    privileges, of course.
 
- -- Russ Allbery <rra@debian.org>, Thu, 20 Dec 2007 23:03:22 -0800
+ -- Russ Allbery <rra@debian.org>, Thu, 20 Dec 2007 23:50:16 -0800

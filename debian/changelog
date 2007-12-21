@@ -66,6 +66,7 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
     options.  Based on a patch from Mike Burr.  Closes: #411413.
   * Rework slapd's README.Debian:
     - Document the BerkeleyDB version.  Closes: #438127.
+    - Document how to direct slapd's logs to another file. Closes: #258931.
     - Remove obsolete information about TLS/SSL and OpenLDAP 2.0 upgrades.
     - Recommend HDB instead of BDB.
     - Generally reformat and reorganize.
@@ -73,7 +74,7 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
   * Remove versioned dependency on an ancient dpkg-dev.
   * Wrap and reorder Build-Depends for readability.
 
- -- Russ Allbery <rra@debian.org>  Thu, 20 Dec 2007 23:32:40 -0800
+ -- Russ Allbery <rra@debian.org>  Thu, 20 Dec 2007 23:50:46 -0800
 
 openldap2.3 (2.3.39-1) unstable; urgency=medium
 
