@@ -19,6 +19,15 @@ else
     CFLAGS += -O2
 endif
 
+# Tell Autoconf the correct system types.
+DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+ifeq ($(DEB_BUILD_GNU_TYPE),$(DEB_HOST_GNU_TYPE))
+    SYSTEM = --build $(DEB_HOST_GNU_TYPE)
+else
+    SYSTEM = --build $(DEB_BUILD_GNU_TYPE) --host $(DEB_HOST_GNU_TYPE)
+endif
+
 CONFIG		= $(shell grep -v "^\#" debian/configure.options)
 
 installdir	:= $(CURDIR)/debian/install
@@ -54,7 +63,7 @@ $(builddir)/Makefile: patch
 	chmod 755 $(CURDIR)/autogen.sh
 	./autogen.sh
 	cd $(builddir) && CFLAGS="$(CFLAGS)" $(CURDIR)/configure \
-		$(CONFIG) 
+		$(CONFIG) $(SYSTEM)
 	perl debian/check_config
 	$(MAKE) -C $(builddir) depend
 

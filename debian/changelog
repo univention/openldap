@@ -79,6 +79,7 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
     - Refresh all patches to remove diff garbage and trailing whitespace.
   * debian/rules cleanup:
     - Fix patch dependencies for parallel build (hopefully).
+    - Tell configure the system type.
     - Remove stamp files as the first step of the clean target.
     - Add trivial build-arch and build-indep targets.
     - Remove dead code and unnecessary comments.
