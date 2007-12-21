@@ -58,6 +58,9 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
   * Removed fix_ldif and all remaining code to try running it on LDIF
     dumps. Schema checking has been imposed since 2.1 and it's highly
     unlikely that anyone still needs this.
+  * Move the checkpoint directive in the default slapd.conf below the
+    database and suffix directives for the primary database. This is now
+    required for OpenLDAP 2.4.
   * Create /etc/ldap/slapd.conf owned by the openldap group and mode 640
     by default so that slapindex and friends can read it when run as the
     openldap user. Fix permissions on upgrade if slapd.conf is owned by
@@ -90,7 +93,7 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
   * Remove versioned dependency on an ancient dpkg-dev.
   * Wrap and reorder Build-Depends for readability.
 
- -- Russ Allbery <rra@debian.org>  Fri, 21 Dec 2007 13:47:01 -0800
+ -- Russ Allbery <rra@debian.org>  Fri, 21 Dec 2007 15:37:47 -0800
 
 openldap2.3 (2.3.39-1) unstable; urgency=medium
 
