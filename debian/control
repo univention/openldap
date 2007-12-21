@@ -7,8 +7,8 @@ Build-Depends: libdb4.2-dev, libwrap0-dev, libiodbc2-dev, libsasl2-dev (>= 2.1.1
 Build-Conflicts: libbind-dev, bind-dev
 Standards-Version: 3.7.2.0
 Homepage: http://www.openldap.org/
-Vcs-Svn: svn://svn.debian.org/pkg-openldap/openldap/trunk-2.3
-Vcs-Browser: http://svn.debian.org/wsvn/pkg-openldap/openldap/trunk-2.3
+Vcs-Svn: svn://svn.debian.org/pkg-openldap/openldap/trunk
+Vcs-Browser: http://svn.debian.org/wsvn/pkg-openldap/openldap/trunk
 
 Package: slapd
 Section: net
