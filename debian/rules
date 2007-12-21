@@ -39,8 +39,8 @@ MAKEVARS	:= DESTDIR=$(installdir) STRIP=
 # Include the quilt patch system.
 include /usr/share/quilt/quilt.make
 
-# These variable is used only by get-orig-source, which will normally only be
-# run by maintainers.
+# These variables are used only by get-orig-source, which will normally only
+# be run by maintainers.
 VERSION = 2.4.7
 URL     = http://www.openldap.org/software/download/OpenLDAP/openldap-release/
 
