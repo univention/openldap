@@ -1,6 +1,6 @@
 man-slapd -p0
 evolution-ntlm
-libldap-makefile_in
+libldap_r-link
 add-autogen-sh
 slapi-errorlog-file -p0
 ldapi-socket-place -p0

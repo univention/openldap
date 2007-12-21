@@ -75,11 +75,13 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
     - Generally reformat and reorganize.
   * Patch cleanup:
     - Combine the NTLM patches for Evolution into a single patch.
+    - Add explanatory comments to every patch.
+    - Refresh all patches to remove diff garbage and trailing whitespace.
   * Update Vcs-* headers for new repository layout.
   * Remove versioned dependency on an ancient dpkg-dev.
   * Wrap and reorder Build-Depends for readability.
 
- -- Russ Allbery <rra@debian.org>  Fri, 21 Dec 2007 00:48:02 -0800
+ -- Russ Allbery <rra@debian.org>  Fri, 21 Dec 2007 12:39:24 -0800
 
 openldap2.3 (2.3.39-1) unstable; urgency=medium
 

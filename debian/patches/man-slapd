@@ -1,5 +1,9 @@
-Index: doc/man/man8/slapd.8
-===================================================================
+Patch the slapd man page to not refer to a header file that isn't
+installed with the slapd package and to reference the correct path
+for slapd.
+
+Debian-specific.
+
 --- doc/man/man8/slapd.8.orig
 +++ doc/man/man8/slapd.8
 @@ -5,7 +5,7 @@
@@ -7,7 +11,7 @@ Index: doc/man/man8/slapd.8
  slapd \- Stand-alone LDAP Daemon
  .SH SYNOPSIS
 -.B LIBEXECDIR/slapd 
-+.B /usr/sbin/slapd 
++.B /usr/sbin/slapd
  .B [\-[4|6]]
  .B [\-T {acl|add|auth|cat|dn|index|passwd|test}]
  .B [\-d debug\-level]

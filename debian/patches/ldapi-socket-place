@@ -1,3 +1,8 @@
+Move the ldapi socket to /var/run/slapd from /var/run, since /var/run
+is only writable by root and slapd runs as openldap.
+
+Debian-specific.
+
 Index: include/ldap_defaults.h
 ===================================================================
 --- include/ldap_defaults.h.orig

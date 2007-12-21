@@ -1,5 +1,8 @@
-Index: include/ldap_defaults.h
-===================================================================
+Add /etc/ldap/sasl2 to the SASL configuration search path.
+
+Not submitted upstream.  Somewhat Debian-specific and probably not of
+interest upstream.
+
 --- include/ldap_defaults.h.orig
 +++ include/ldap_defaults.h
 @@ -63,4 +63,6 @@
@@ -9,8 +12,6 @@ Index: include/ldap_defaults.h
 +#define SASL_CONFIGPATH                        LDAP_SYSCONFDIR LDAP_DIRSEP "sasl2"
 +
  #endif /* _LDAP_CONFIG_H */
-Index: servers/slapd/sasl.c
-===================================================================
 --- servers/slapd/sasl.c.orig
 +++ servers/slapd/sasl.c
 @@ -1181,12 +1181,38 @@

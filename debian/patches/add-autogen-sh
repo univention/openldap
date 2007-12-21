@@ -1,6 +1,11 @@
-diff -urNad openldap2.3-2.3.11~/autogen.sh openldap2.3-2.3.11/autogen.sh
---- openldap2.3-2.3.11~/autogen.sh	1970-01-01 01:00:00.000000000 +0100
-+++ openldap2.3-2.3.11/autogen.sh	2005-12-24 16:37:21.693602500 +0100
+Add an autogen.sh script to run all of the autotools in the right order
+to regenerate the build machinery.  Needed since we have patches that
+modify the source for Autoconf.
+
+Debian-specific.
+
+--- /dev/null
++++ openldap/autogen.sh
 @@ -0,0 +1,29 @@
 +#!/bin/sh
 +#

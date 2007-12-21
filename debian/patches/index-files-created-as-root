@@ -1,5 +1,11 @@
-Index: doc/man/man8/slapindex.8
-===================================================================
+Document in the man page that slapindex should be run as the same user
+as slapd, and print a warning if it's run as root (since Debian defaults
+to running slapd as openldap).
+
+Not suitable for upstream in this form.  This patch needs to be reworked
+to check the BerkeleyDB database ownership and only warn if running as
+root with a database that's not owned by root.
+
 --- doc/man/man8/slapindex.8.orig
 +++ doc/man/man8/slapindex.8
 @@ -129,6 +129,10 @@
@@ -13,8 +19,6 @@ Index: doc/man/man8/slapindex.8
  This command provides ample opportunity for the user to obtain
  and drink their favorite beverage.
  .SH EXAMPLES
-Index: servers/slapd/slapindex.c
-===================================================================
 --- servers/slapd/slapindex.c.orig
 +++ servers/slapd/slapindex.c
 @@ -34,6 +34,8 @@

@@ -1,5 +1,8 @@
-Index: doc/man/man5/slapd-bdb.5
-===================================================================
+Move the default slapd database location to /var/lib/ldap instead of
+/var/openldap-data.
+
+Debian-specific.
+
 --- doc/man/man5/slapd-bdb.5.orig
 +++ doc/man/man5/slapd-bdb.5
 @@ -97,7 +97,7 @@
@@ -11,8 +14,6 @@ Index: doc/man/man5/slapd-bdb.5
  .TP
  .B dirtyread
  Allow reads of modified but not yet committed data.
-Index: doc/man/man5/slapd.conf.5
-===================================================================
 --- doc/man/man5/slapd.conf.5.orig
 +++ doc/man/man5/slapd.conf.5
 @@ -1811,7 +1811,7 @@
@@ -24,8 +25,6 @@ Index: doc/man/man5/slapd.conf.5
  # Indices to maintain
  index     objectClass  eq
  index     cn,sn,mail   pres,eq,approx,sub
-Index: include/ldap_defaults.h
-===================================================================
 --- include/ldap_defaults.h.orig
 +++ include/ldap_defaults.h
 @@ -47,7 +47,7 @@
@@ -37,8 +36,6 @@ Index: include/ldap_defaults.h
  #define SLAPD_DEFAULT_DB_MODE		0600
  #define SLAPD_DEFAULT_UCDATA		LDAP_DATADIR LDAP_DIRSEP "ucdata"
  	/* default max deref depth for aliases */
-Index: servers/slapd/Makefile.in
-===================================================================
 --- servers/slapd/Makefile.in.orig
 +++ servers/slapd/Makefile.in
 @@ -430,9 +430,9 @@
@@ -53,8 +50,6 @@ Index: servers/slapd/Makefile.in
  	$(INSTALL) $(INSTALLFLAGS) -m 600 $(srcdir)/DB_CONFIG \
  		$(DESTDIR)$(sysconfdir)/DB_CONFIG.example
  
-Index: doc/man/man5/slapd-config.5
-===================================================================
 --- doc/man/man5/slapd-config.5.orig
 +++ doc/man/man5/slapd-config.5
 @@ -1840,7 +1840,7 @@
