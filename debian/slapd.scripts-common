@@ -1,3 +1,4 @@
+# -*- sh -*-
 # This file can be included with #SCRIPTSCOMMON#
 
 
@@ -21,7 +22,7 @@ configure_ldbm_to_bdb_migration() {					# {{{
 # to the more stable and better maintained BDB backend.
 # Usage: configure_ldbm_to_bdb_migration
 
-	if [ -e "$SLAPD_CONF" ] && grep -qE \
+	if [ -f "$SLAPD_CONF" ] && grep -qE \
 			-e '^moduleload[[:space:]]+back_ldbm' \
 			-e '^(database|backend)[[:space:]]+ldbm' \
 			"$SLAPD_CONF"; then
@@ -34,7 +35,7 @@ configure_ldbm_to_bdb_migration() {					# {{{
 }
 # }}}
 break_on_ldbm_to_bdb_migration_disagree() { # {{{
-  if [ -e "$SLAPD_CONF" ] && grep -qE \
+  if [ -f "$SLAPD_CONF" ] && grep -qE \
       -e '^moduleload[[:space:]]+back_ldbm' \
       -e '^(database|backend)[[:space:]]+ldbm' \
       "$SLAPD_CONF"; then
@@ -142,7 +143,9 @@ update_slapd_conf_permissions() {	# {{{
 	if [ -n "$SLAPD_USER" ] && [ -n "$SLAPD_GROUP" ] ; then
 		if perl -e '
 			($o, $m) = (stat $ARGV[0])[4,2];
-			exit 1 if ($o == 0 && ($m & 040) == 0);
+			exit 1 unless defined $o;
+			exit 0 if ($o == 0 && ($m & 040) == 0);
+			exit 1;
 		' "$SLAPD_CONF"; then
 			chgrp "$SLAPD_GROUP" "$SLAPD_CONF"
 			chmod g+r "$SLAPD_CONF"
@@ -721,6 +724,10 @@ config_migrate_backend() {						# {{{
 
 # }}}
 update_path_argsfile_pidfile() {	# {{{
+	# If $SLAPD_CONF is a directory, the user is using cn=config.  Assume
+	# they know what they're doing.
+	if [ -d "$SLAPD_CONF" ]; then return 0; fi
+
 	write_slapd_conf "$SLAPD_CONF" 's|^(argsfile\s+).*|$1/var/run/slapd/slapd.args|'
 	write_slapd_conf "$SLAPD_CONF" 's|^(pidfile\s+).*|$1/var/run/slapd/slapd.pid|'
 }
@@ -733,6 +740,10 @@ configure_v2_protocol_support() {					# {{{
 
 	db_get slapd/allow_ldap_v2
 	if [ "$RET" != "true" ]; then return 0; fi
+
+	# If $SLAPD_CONF is a directory, the user is using cn=config.  Assume
+	# they know what they're doing.
+	if [ -d "$SLAPD_CONF" ]; then return 0; fi
 
 	echo -n "  Enabling LDAPv2 support... " >&2
 
