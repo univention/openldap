@@ -5,7 +5,7 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
     - remove another schema from upstream source, collective.schema,
       that contains text from the IETF RFCs and include a stripped copy
       in debian/schema.
-    - drop patches slurpd-in-spool an man-slurpd, since slurpd is no
+    - drop patches slurpd-in-spool and man-slurpd, since slurpd is no
       longer provided upstream.
     - libldap2.3-0 is now libldap2.4-2
     - build libldap2-dev from this source package now, superseding
