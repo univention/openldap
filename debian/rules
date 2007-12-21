@@ -61,7 +61,7 @@ get-orig-source:
 	    rm openldap-$(VERSION)/servers/slapd/schema/$$file; \
 	done
 	mv openldap-$(VERSION) openldap2.3_$(VERSION).orig
-	tar cf openldap_$(VERSION).orig.tar openldap2.3_$(VERSION).orig
+	tar cf openldap2.3_$(VERSION).orig.tar openldap2.3_$(VERSION).orig
 	rm -r openldap2.3_$(VERSION).orig
 	gzip -9 openldap2.3_$(VERSION).orig.tar
 
