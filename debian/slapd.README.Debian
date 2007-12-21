@@ -56,7 +56,7 @@ Notes about Debian's slapd package
 	- tell linux slapd can access all database files -- usually:
 		chown -R <user>:<group> /var/lib/ldap
 	- tell linux slapd can access configuration files -- usually:
-		chgrp <user> /etc/ldap/slapd.conf
+		chgrp <group> /etc/ldap/slapd.conf
 		chmod 0640 /etc/ldap/slapd.conf
 	- tell linux slapd can access /var/run/slapd and writes his pid file
 		chgrp <group> /var/run/slapd
