@@ -53,6 +53,10 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
     to statically link a dynamically-loaded slapi plugin.
 
   [ Russ Allbery ]
+  * Create /etc/ldap/slapd.conf owned by the openldap group and mode 640
+    by default so that slapindex and friends can read it when run as the
+    openldap user. Fix permissions on upgrade if slapd.conf is owned by
+    root and mode 600. Closes: #432662
   * If SLAPD_CONF is set to a directory in /etc/default/slapd, assume
     the cn=config backend is used and start slapd with the appropriate
     options.  Based on a patch from Mike Burr.  Closes: #411413.

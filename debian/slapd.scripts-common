@@ -138,6 +138,18 @@ update_databases_permissions() {	# {{{
 	done
 }
 # }}}
+update_slapd_conf_permissions() {	# {{{
+	if [ -n "$SLAPD_USER" ] && [ -n "$SLAPD_GROUP" ] ; then
+		if perl -e '
+			($o, $m) = (stat $ARGV[0])[4,2];
+			exit 1 if ($o == 0 && ($m & 040) == 0);
+		' "$SLAPD_CONF"; then
+			chgrp "$SLAPD_GROUP" "$SLAPD_CONF"
+			chmod g+r "$SLAPD_CONF"
+		fi
+	fi
+}
+# }}}
 # }}}
 # ----- Dumping and loading the data ------------------------------------ {{{
 
@@ -801,15 +813,18 @@ install_new_slapd_conf() {						# {{{
 	local conf_new
 	conf_new="$1"
 
-  # On install and remove we don't have to backup the configuration file. Only
-  # on upgrade.
-  if [ "$MODE" = "upgrade" ]; then
-    backup_config_once
-  fi
+	# On install and remove we don't have to backup the configuration
+	# file. Only on upgrade.
+	if [ "$MODE" = "upgrade" ]; then
+		backup_config_once
+	fi
 
 	# Make sure we keep the permissions of an old slapd.conf
 	if [ -e "$SLAPD_CONF" ]; then
 		assign_permissions "$SLAPD_CONF" "$conf_new"
+	elif [ -n "$SLAPD_GROUP" ] ; then
+		chgrp "$SLAPD_GROUP" "$conf_new"
+		chmod 640 "$conf_new"
 	fi
 	mv "$conf_new" "$SLAPD_CONF"
 }
