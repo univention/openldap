@@ -14,9 +14,9 @@ INSTALL_SCRIPT  = $(INSTALL) -p    -o root -g root  -m  755
 INSTALL_DIR     = $(INSTALL) -p -d -o root -g root  -m  755
 
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-CFLAGS += -O0
+    CFLAGS += -O0
 else
-CFLAGS += -O2
+    CFLAGS += -O2
 endif
 
 CONFIG		= $(shell grep -v "^\#" debian/configure.options)
@@ -30,7 +30,7 @@ MAKEVARS	:= DESTDIR=$(installdir) STRIP=
 # Include the quilt patch system.
 include /usr/share/quilt/quilt.make
 
-$(builddir)/Makefile:
+$(builddir)/Makefile: patch
 	# Check if we include the RFCs and Internet-Drafts (which are non
 	# DFSG-free).  You can set DFSG_NONFREE to build the packages from the
 	# unchanged upstream sources but Debian can not ship the RFCs in main
@@ -58,7 +58,9 @@ $(builddir)/Makefile:
 	perl debian/check_config
 	$(MAKE) -C $(builddir) depend
 
-build: patch build-stamp
+build: build-arch build-indep
+build-arch: build-stamp
+build-indep:
 build-stamp: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) $(MAKEVARS)
 	touch $@
@@ -87,30 +89,8 @@ install-stamp: build-stamp
 		| xargs perl -pi -e 's#(\.TH \w+ 8)C#$$1#'
 	touch $@
 
-
-binary: binary-arch 
-# Don't build binary-indep for now (only liblslapd-dev was in there)
-# Reenable after sarge...
-
-binary-indep: 
-	dh_testdir
-	dh_testroot
-	dh_clean -k
-
-	dh_installdirs -i
-	sh debian/copy_slapd_dev_files
-	dh_installchangelogs -i
-	dh_installdocs -i
-	dh_installdebconf -i
-	dh_installdeb -i
-	dh_compress -i
-	dh_gencontrol -i
-	dh_md5sums -i
-	# Don't build the libslapd2.3-dev package so nobody builds against
-	# it. We'll support it after sarge release...
-	#dh_builddeb -i -Nlibslapd2.3-dev
-	dh_builddeb -i
-
+binary: binary-arch binary-indep
+binary-indep:
 binary-arch: install-stamp
 	dh_testdir
 	dh_testroot
@@ -128,8 +108,6 @@ binary-arch: install-stamp
 	dh_installman -a
 	dh_installinit -Xslapd.prerm -a -- "defaults 19 80"
 	dh_installdebconf -a
-	# when using OpenSSL, we do not need to add crontab entries
-	#dh_installcron -a
 	dh_strip -plibldap-2.4-2 --dbg-package=libldap-2.4-2-dbg
 	dh_strip -pslapd --dbg-package=slapd-dbg
 	dh_strip -pldap-utils
@@ -154,10 +132,10 @@ binary-arch: install-stamp
 	dh_md5sums -a
 	dh_builddeb -a
 
-clean: clean1 unpatch
-clean1:
+clean: unpatch
 	dh_testdir
 	dh_testroot
+	rm -f install-stamp build-stamp
 	# Update translation templates for debconf
 	debconf-updatepo
 	# Remove our stripped schema from the upstream source area.
@@ -169,10 +147,9 @@ clean1:
 	# Remove updated config.guess and config.sub for a clean diff.
 	rm -f build/config.sub build/config.guess
 	rm -f contrib/ldapc++/config.sub contrib/ldapc++/config.guess
-	rm -f install-stamp build-stamp
 	rm -rf $(builddir) $(builddir_notls) $(installdir)
 	rm -rf build/ltmain.sh autom4te.cache configure aclocal.m4
-
 	dh_clean
 
-.PHONY: binary binary-arch binary-indep build clean
+.PHONY: binary binary-arch binary-indep build build-arch build-indep clean
+.PHONY: install
