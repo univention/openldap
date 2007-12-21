@@ -6,3 +6,7 @@ slapd: postinst-uses-db-input
 # The extended description is needed in slapd/backend. It explains a lot about
 # the different backends.
 slapd: too-long-extended-description-in-templates slapd/backend
+
+# libslapi is a special case, used only for writing extension modules for
+# slapd, and is therefore shipped with slapd.
+slapd: package-name-doesnt-match-sonames libslapi-2.4-2
