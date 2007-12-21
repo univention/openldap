@@ -1,94 +1,82 @@
 Notes about Debian's slapd package
 ----------------------------------
 
-++ TCP Wrappers
+++ BerkeleyDB version
 
-   The Debian slapd package is compiled with TCP wrappers. This means that you
-   are able to restrict access to the LDAP server using /etc/hosts.deny or
-   /etc/hosts.allow.
+   slapd has been built against version 4.2 of BerkeleyDB. This version
+   is faster and more stable than later versions for the use to which
+   OpenLDAP puts it. There are remaining performance problems with
+   BerkeleyDB 4.6 that have not yet been resolved, but it looks likely
+   that eventually slapd will be able to use 4.6. All intermediate
+   versions (4.3 through 4.5) either had serious stability bugs or serious
+   performance issues.
 
-++ No LDBM backend support
+   slapd will automatically handle database recovery, so you generally do
+   not need the BerkeleyDB 4.2 utilities. However, if you want to perform
+   other operations directly on the raw database without using the slapd
+   tools, install db4.2-util and use those BerkeleyDB utilities. Utilities
+   from other db*-util packages will not work correctly and may render the
+   database unusable by slapd.
 
-   The Debian slapd package no longer includes support for the LDBM backend.
-   It has been disabled as a result of concerns over data loss and lack of
-   upstream support.  For more information, see:
-   http://www.openldap.org/faq/index.cgi?_highlightWords=ldbm&file=756
-   The BDB backend is now the main backend to use. This backend is supported
-   upstream and has several fixes included for known problems.
+++ TCP wrappers
+
+   The Debian slapd package is compiled with TCP wrappers. This means that
+   you are able to restrict access to the LDAP server using
+   /etc/hosts.deny or /etc/hosts.allow.
 
 ++ Using BDB/HDB backends
    
    slapd BDB and HDB backends rely on libdb to store data on your
-   disks. libdb uses a configuration file to tune database 
-   specific parameters. This file is called DB_CONFIG, and should
-   be created in each directory containing one of your ldap
-   databases, usually /var/lib/ldap. With libdb4.2 and previous
-   versions, and thus with slapd 2.2, it is _VERY IMPORTANT_ to 
-   correctly setup a DB_CONFIG file. 
-     It is not just a matter of performance: depending on the 
-   version of slapd and libdb being used, your slapd may just 
-   hang and stop answering queries. To correctly setup your 
-   DB_CONFIG file, please refer to README.DB_CONFIG.gz in this directory.
+   disks. libdb uses a configuration file to tune database specific
+   parameters. This file is called DB_CONFIG, and should be created in
+   each directory containing one of your ldap databases, usually
+   /var/lib/ldap.
+
+   It is VERY IMPORTANT to correctly setup a DB_CONFIG file.  It is not
+   just a matter of performance: depending on the version of slapd and
+   libdb being used, your slapd may just hang and stop answering
+   queries.
+
+   To correctly setup your DB_CONFIG file, please refer to
+   README.DB_CONFIG.gz in this directory.
 
 ++ Running slapd under a different uid/gid
    
-   In order to run slapd under a different uid/gid, you
-   need to:
-   	- create the user/group for slapd/slurpd -- usually:
-		adduser --system --group ldap
+   By default, slapd runs as openldap in the openldap group. Keeping the
+   default is easiest. If for some reason you need to run slapd as a
+   different user:
+
+   	- create the user/group for slapd -- usually:
+		adduser --system --group <group> --disabled-login <user>
    	- stop slapd -- /etc/init.d/slapd stop
 	- tell slapd to run under a different uid:
 		- edit /etc/default/slapd
 		- set SLAPD_USER, SLAPD_GROUP
 		  (ie, SLAPD_USER="ldap", SLAPD_GROUP="ldap")
 	- tell linux slapd can access all database files -- usually:
-		chown -R ldap.ldap /var/lib/ldap
+		chown -R <user>:<group> /var/lib/ldap
 	- tell linux slapd can access configuration files -- usually:
-		chgrp ldap /etc/ldap/slapd.conf
+		chgrp <user> /etc/ldap/slapd.conf
 		chmod 0640 /etc/ldap/slapd.conf
 	- tell linux slapd can access /var/run/slapd and writes his pid file
-		chgrp ldap /var/run/slapd
+		chgrp <group> /var/run/slapd
 		chmod 0770 /var/run/slapd
-	- edit /etc/init.d/slapd and run the db_recover command as the non root
-	  user
 	- start slapd -- /etc/init.d/slapd start
 
-   Once you have done so, if you are using a bdb o hdb backend,
-   always remember to execute the chown after running utilities
-   such as db4.x_recover or db4.x_checkpoint.
+   Once you have done so, remember to always run any utilities that access
+   or update the database (such as slapadd) as the same user that slapd is
+   running as. If you forget, you will need to redo the chown noted above.
 
-++ When upgrading from OpenLDAP 2.0
+++ No LDBM backend support
 
-   Starting with OpenLDAP 2.1, backend modules are compiled as dynamically
-   loadable shared objects in Debian. As a consequence thereof, you need to
-   specify the path of the modules and the modules to load in your slapd.conf
-   file for now. This can be done by lines such as the following:
-   
-   modulepath      /usr/lib/ldap
-   moduleload      back_bdb
-   
-   for the BDB database backend module.
+   The Debian slapd package no longer includes support for the LDBM
+   backend.  It has been disabled as a result of concerns over data loss
+   and lack of upstream support.  For more information, see:
+   http://www.openldap.org/faq/index.cgi?_highlightWords=ldbm&file=756
 
-   To switch the database backend, you should export your current database
-   in LDIF format with the slapcat command (be sure to stop slapd before
-   doing so if you're using LDBM), move the old database files away, change
-   /etc/ldap/slapd.conf, and then reimport your database from the LDIF file
-   via slapadd.
-
-++ TLS/SSL support
-
-   This version of the OpenLDAP server and its library is compiled with the
-   OpenSSL library as supported by the upstream sources. Other packages 
-   are not allowed to link against this version of OpenLDAP (or rather
-   its library) but this way we have a working OpenLDAP server. 
-
-   Client packages will have to continue using the old libldap2 package
-   for ldap access as that version is linked against GNUTLS to allow
-   for example dynamic linking into Samba. We are working on updating that
-   GNUTLS patch for OpenLDAP 2.2 and getting it into the upstream package. 
-
-   When that is accomplished the old libldap2 packages will disappear
-   and OpenLDAP 2.2 will be used together with GNUTLS in Debian.
+   The HDB backend is now the recommended backend to use. The BDB backend
+   is also supported. Other backends are generally not recommended by
+   upstream except in special circumstances.
 
 ++ If slapd depends on other service (such as SQL)
 
@@ -106,7 +94,4 @@ Notes about Debian's slapd package
    and it will generate the files for you.  You will need appropriate
    privileges, of course.
 
- -- The Debian OpenLDAP maintainers
-     Torsten Landschoff <torsten@debian.org>
-     Roland Bauerschmidt <rb@debian.org>
-     Stephen Frost <sfrost@debian.org>
+ -- Russ Allbery <rra@debian.org>, Thu, 20 Dec 2007 23:03:22 -0800
