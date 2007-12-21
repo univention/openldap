@@ -8,7 +8,7 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
       longer provided upstream.
     - libldap2.3-0 is now libldap2.4-2
     - build libldap2-dev from this source package now, superseding
-      openldap2
+      openldap2; closes: #428385.
     - lastmod and denyop have been moved to contrib upstream and are no
       longer shipped as supported overlays
     - need to dump and reload databases again for the upgrade from 2.3.39.
