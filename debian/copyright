@@ -32,11 +32,6 @@ at: http://www.umich.edu/~dirsvcs/ldap/
 
 This work also contains materials derived from public sources.
 
-The fix_ldif script is Copyright (c) Dave Horsfall and is available
-under the terms of the BSD license.  On Debian GNU/Linux systems, the
-complete text of the BSD license can be found in
-/usr/share/common-licenses/BSD.
-
 Additional Information about OpenLDAP can be obtained at:
     http://www.openldap.org/
 
