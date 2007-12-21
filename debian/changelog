@@ -56,7 +56,9 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
   * Create /etc/ldap/slapd.conf owned by the openldap group and mode 640
     by default so that slapindex and friends can read it when run as the
     openldap user. Fix permissions on upgrade if slapd.conf is owned by
-    root and mode 600. Closes: #432662
+    root and mode 600. Closes: #432662.
+  * Drop slapd patch to read slapd.conf before dropping privileges, since
+    slapd.conf should now be readable by SLAPD_GROUP.
   * If SLAPD_CONF is set to a directory in /etc/default/slapd, assume
     the cn=config backend is used and start slapd with the appropriate
     options.  Based on a patch from Mike Burr.  Closes: #411413.
@@ -69,7 +71,7 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
   * Remove versioned dependency on an ancient dpkg-dev.
   * Wrap and reorder Build-Depends for readability.
 
- -- Russ Allbery <rra@debian.org>  Thu, 20 Dec 2007 23:05:17 -0800
+ -- Russ Allbery <rra@debian.org>  Thu, 20 Dec 2007 23:32:40 -0800
 
 openldap2.3 (2.3.39-1) unstable; urgency=medium
 
