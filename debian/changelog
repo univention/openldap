@@ -15,6 +15,8 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
     - need to dump and reload databases again for the upgrade from 2.3.39.
     - ldap_init(3) no longer attempts to document the internals of the
       LDAP opaque type.  Closes: #320072.
+    - ldap-utils utilities find LDAP servers via SRV records when given a
+      URL with -H and no host in the URL. Closes: #221173.
   * slapd.conf and DB_CONFIG are used in the postinst, they shouldn't be
     shipped under doc/examples because /usr/share/doc can't be depended
     on per policy; ship the files under /usr/share/slapd and symlink the
