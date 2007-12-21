@@ -849,18 +849,18 @@ backup_config_once() {							# {{{
 
 # Set up the defaults for our templates
 set_defaults_for_unseen_entries() {
-  DOMAIN=`hostname -d 2>/dev/null` || true
-  if [ -z "$DOMAIN" ]; then DOMAIN='nodomain'; fi
+	DOMAIN=`hostname -d 2>/dev/null` || true
+	if [ -z "$DOMAIN" ]; then DOMAIN='nodomain'; fi
 
-  db_fget slapd/domain seen
-  if [ "$RET" = false ]; then
-    db_set slapd/domain "$DOMAIN"
-  fi
+	db_fget slapd/domain seen
+	if [ "$RET" = false ]; then
+		db_set slapd/domain "$DOMAIN"
+	fi
 
-  db_fget shared/organization seen
-  if [ "$RET" = false ]; then
-    db_set shared/organization "$DOMAIN"
-  fi
+	db_fget shared/organization seen
+	if [ "$RET" = false ]; then
+		db_set shared/organization "$DOMAIN"
+	fi
 }
 
 crypt_admin_pass() {							# {{{
