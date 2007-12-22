@@ -4,7 +4,12 @@ Without this patch, the Exchange addressbook integration uses simple binds
 with cleartext passwords.
 
 Russ checked with openldap-software for upstream's opinion on this patch
-on 2007-12-21.  No results yet.
+on 2007-12-21.  Upstream had never received it as a patch submission and
+given that it's apparently only for older Exchange servers that can't do
+SASL and DIGEST-MD5, it's not very appealing.
+
+Bug#457374 filed against evolution-data-server asking if this support is
+still required on 2007-12-21.
 
 --- openldap.orig/include/ldap.h
 +++ openldap/include/ldap.h
