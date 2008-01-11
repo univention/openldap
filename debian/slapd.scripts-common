@@ -747,6 +747,13 @@ config_migrate_backend() {						# {{{
 } 
 
 # }}}
+config_obsolete_schemacheck() {						# {{{
+# comment out any occurences of "schemacheck" options in the config,
+# as this option is obsolete with OpenLDAP 2.4
+	write_slapd_conf "$SLAPD_CONF" "s|^(schemacheck\s+)|#\$1|"
+}
+
+# }}}
 update_path_argsfile_pidfile() {	# {{{
 	# If $SLAPD_CONF is a directory, the user is using cn=config.  Assume
 	# they know what they're doing.

@@ -56,6 +56,8 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
   * "checkpoint" directives are no longer supported as part of the backend
     config, only as part of the database config; move the lines around in
     slapd.conf on upgrade.
+  * "schemacheck" directives are no longer supported; comment them out
+    on upgrade since this option was set by default in sarge.
 
   [ Russ Allbery ]
   * Removed fix_ldif and all remaining code to try running it on LDIF

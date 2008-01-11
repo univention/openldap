@@ -45,6 +45,7 @@ postinst_upgrade_configuration() {					# {{{
 
 	if previous_version_older 2.4.7-1; then
 		migrate_bdb_checkpoint
+		config_obsolete_schemacheck
 	fi
 
 	if database_format_changed; then
