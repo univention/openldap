@@ -142,7 +142,6 @@ upgrade() {
 	# Tell our scripts to fix the config
 	debconf_set slapd/fix_directory true
 	debconf_set slapd/password1 foobar
-	debconf_set slapd/autoconf_modules true
 	debconf_set slapd/allow_ldap_v2
 
 	# Do an upgrade of our packages
