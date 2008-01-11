@@ -456,20 +456,20 @@ migrate_bdb_checkpoint() {						# {{{
 						changeConfig($file) 
 					}
 				}
-				$backend_bdb = $backend_hdb = 0 if (/^\s+(backend|database)\s+/);
-				$backend_bdb = 1 if (/^\s*backend\s+bdb/);
-				$backend_hdb = 1 if (/^\s*backend\s+hdb/);
-				if (/^\s*checkpoint\s+/) {
+				$backend_bdb = $backend_hdb = 0 if (/^(backend|database)\s+/);
+				$backend_bdb = 1 if (/^backend\s+bdb/);
+				$backend_hdb = 1 if (/^backend\s+hdb/);
+				if (/^checkpoint\s+/) {
 					$checkpoint_bdb = $_ if ($backend_bdb);
 					$checkpoint_hdb = $_ if ($backend_hdb);
 					next if ($backend_bdb || $backend_hdb);
 				}
-				if (/^\s*database\s+bdb/)
+				if (/^database\s+bdb/)
 				{
 					print $fh $_ . $checkpoint_bdb;
 					next;
 				}
-				if (/^\s*database\s+hdb/)
+				if (/^database\s+hdb/)
 				{
 					print $fh $_ . $checkpoint_hdb;
 					next;
