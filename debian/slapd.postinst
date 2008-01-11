@@ -43,6 +43,10 @@ postinst_upgrade_configuration() {					# {{{
 		fi
 	fi
 
+	if previous_version_older 2.4.7-1; then
+		migrate_bdb_checkpoint
+	fi
+
 	if database_format_changed; then
 		# During upgrading we have to load the old data
 		move_incompatible_databases_away

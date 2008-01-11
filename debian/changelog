@@ -53,6 +53,9 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
   * Split slapi dev support into a new libslapi-dev package, as this is
     unrelated to libldap; and drop libslapi.a since it would be insane to try
     to statically link a dynamically-loaded slapi plugin.
+  * "checkpoint" directives are no longer supported as part of the backend
+    config, only as part of the database config; move the lines around in
+    slapd.conf on upgrade.
 
   [ Russ Allbery ]
   * Removed fix_ldif and all remaining code to try running it on LDIF
@@ -93,7 +96,7 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
   * Remove versioned dependency on an ancient dpkg-dev.
   * Wrap and reorder Build-Depends for readability.
 
- -- Russ Allbery <rra@debian.org>  Fri, 21 Dec 2007 15:37:47 -0800
+ -- Steve Langasek <vorlon@debian.org>  Thu, 10 Jan 2008 17:44:26 -0800
 
 openldap2.3 (2.3.39-1) unstable; urgency=medium
 

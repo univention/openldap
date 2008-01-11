@@ -424,6 +424,80 @@ get_database_list() {
 
 # }}}
 
+migrate_bdb_checkpoint() {						# {{{
+# move any 'checkpoint' options from the backend stanza to the
+# per-database stanza
+
+	local script
+	script='
+		use File::Temp;
+		use File::Compare;
+		use File::Copy;
+
+		$backend_bdb = $backend_hdb = 0;
+		$checkpoint_bdb = "";
+		$checkpoint_hdb = "";
+
+		sub changeConfig
+		{
+			my ($filename) = @_;
+
+			open(HANDLE, "<". $filename) || return;
+			my @data = <HANDLE>;
+			close(HANDLE);
+
+			my ($fh, $tmpfile) = mkstemp("/tmp/slapd.XXXXXX");
+
+			foreach (@data) {
+				# Parse includes, but forget the schema files.
+				if (/^include\s+([^\s#]+)/) {
+					my $file = $1;
+					if ($file !~ m,/etc/ldap/schema/,) {
+						changeConfig($file) 
+					}
+				}
+				$backend_bdb = $backend_hdb = 0 if (/^\s+(backend|database)\s+/);
+				$backend_bdb = 1 if (/^\s*backend\s+bdb/);
+				$backend_hdb = 1 if (/^\s*backend\s+hdb/);
+				if (/^\s*checkpoint\s+/) {
+					$checkpoint_bdb = $_ if ($backend_bdb);
+					$checkpoint_hdb = $_ if ($backend_hdb);
+					next if ($backend_bdb || $backend_hdb);
+				}
+				if (/^\s*database\s+bdb/)
+				{
+					print $fh $_ . $checkpoint_bdb;
+					next;
+				}
+				if (/^\s*database\s+hdb/)
+				{
+					print $fh $_ . $checkpoint_hdb;
+					next;
+				}
+				print $fh $_;
+			}
+
+			# Close the tempfile handle opened by mkstemp.
+			close($fh);
+
+			# If file is changed replace the original file.
+			if (compare($filename, $tmpfile) != 0) {
+				move($tmpfile, $filename);
+			} else {
+				unlink($tmpfile);
+			}
+		}
+
+		$config = shift;
+		changeConfig ($config);'
+
+	echo -n "  Upgrading BDB 'checkpoint' options... " >&2
+
+	perl -e "$script" $SLAPD_CONF
+
+	echo . >&2
+}
+# }}}
 
 compute_backup_path() {							# {{{
 # Compute the path to backup a database directory
