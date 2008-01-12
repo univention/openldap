@@ -19,6 +19,9 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
       LDAP opaque type.  Closes: #320072.
     - ldap-utils utilities find LDAP servers via SRV records when given a
       URL with -H and no host in the URL. Closes: #221173.
+    - if the old slapd.conf included any replica commands, automatically
+      enable syncprov for the corresponding database and print an error
+      with debconf.
   * slapd.conf and DB_CONFIG are used in the postinst, they shouldn't be
     shipped under doc/examples because /usr/share/doc can't be depended
     on per policy; ship the files under /usr/share/slapd and symlink the
@@ -103,7 +106,7 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
   * Remove versioned dependency on an ancient dpkg-dev.
   * Wrap and reorder Build-Depends for readability.
 
- -- Steve Langasek <vorlon@debian.org>  Sat, 12 Jan 2008 02:22:54 -0800
+ -- Steve Langasek <vorlon@debian.org>  Sat, 12 Jan 2008 14:00:40 -0800
 
 openldap2.3 (2.3.39-1) unstable; urgency=medium
 

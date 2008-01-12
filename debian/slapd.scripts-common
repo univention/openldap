@@ -424,9 +424,10 @@ get_database_list() {
 
 # }}}
 
-migrate_bdb_checkpoint() {						# {{{
+migrate_checkpoint_and_slurpd() {					# {{{
 # move any 'checkpoint' options from the backend stanza to the
-# per-database stanza
+# per-database stanza, and translate slurpd "replica" options into
+# syncrepl defaults
 
 	local script
 	script='
@@ -434,6 +435,7 @@ migrate_bdb_checkpoint() {						# {{{
 		use File::Compare;
 		use File::Copy;
 
+		$has_replica = $seen_syncprov = 0;
 		$backend_bdb = $backend_hdb = 0;
 		$checkpoint_bdb = "";
 		$checkpoint_hdb = "";
@@ -474,6 +476,17 @@ migrate_bdb_checkpoint() {						# {{{
 					print $fh $_ . $checkpoint_hdb;
 					next;
 				}
+				$seen_syncprov = 1 if /^moduleload\s+syncprov/;
+				if (/^replica\s+/)
+				{
+					if (!$has_replica && !$seen_syncprov) {
+						print $fh "moduleload syncprov\n";
+						$seen_syncprov = 1;
+					}
+					print $fh "overlay syncprov\n";
+					print $fh "syncprov-checkpoint 100 10\n";
+					$has_replica = 1;
+				}
 				print $fh $_;
 			}
 
@@ -489,13 +502,20 @@ migrate_bdb_checkpoint() {						# {{{
 		}
 
 		$config = shift;
-		changeConfig ($config);'
+		changeConfig ($config);
+		exit $has_replica;'
 
 	echo -n "  Upgrading BDB 'checkpoint' options... " >&2
 
-	perl -e "$script" $SLAPD_CONF
+	if perl -e "$script" $SLAPD_CONF ; then
+		result=0
+	else
+		result=1
+	fi
 
 	echo . >&2
+
+	return $result
 }
 # }}}
 

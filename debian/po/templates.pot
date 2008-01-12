@@ -7,8 +7,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
-"POT-Creation-Date: 2007-11-11 19:49-0800\n"
+"Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
+"POT-Creation-Date: 2008-01-11 00:15-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -344,4 +344,29 @@ msgid ""
 "advanced features to offer transaction processing, fine grained locking, and "
 "other features that offer improved concurrency and reliability. For more "
 "information, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../slapd.templates:19001
+msgid "slurpd is obsolete; replicas must be reconfigured by hand"
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../slapd.templates:19001
+msgid ""
+"One or more slurpd \"replica\" options were found in your slapd config when "
+"upgrading.  Because slurpd is obsolete beginning with OpenLDAP  2.4, you "
+"will need to migrate your replicas to use the syncrepl protocol instead."
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../slapd.templates:19001
+msgid ""
+"Since syncrepl is a pull-based protocol instead of a push-based one, your "
+"configuration cannot be automatically converted for you and you will need to "
+"configure your replica servers by hand.  Please see http://www.openldap.org/"
+"doc/admin24/syncrepl.html for details."
 msgstr ""

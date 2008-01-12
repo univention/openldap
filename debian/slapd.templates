@@ -181,3 +181,16 @@ _Description: Database backend to use:
  features to offer transaction processing, fine grained locking, and other
  features that offer improved concurrency and reliability. For more
  information, see /usr/share/doc/slapd/README.DB_CONFIG.gz
+
+Template: slapd/slurpd_obsolete
+Type: error
+_Description: slurpd is obsolete; replicas must be reconfigured by hand
+ One or more slurpd "replica" options were found in your slapd config
+ when upgrading.  Because slurpd is obsolete beginning with OpenLDAP 
+ 2.4, you will need to migrate your replicas to use the syncrepl
+ protocol instead.
+ .
+ Since syncrepl is a pull-based protocol instead of a push-based one,
+ your configuration cannot be automatically converted for you and you
+ will need to configure your replica servers by hand.  Please see
+ http://www.openldap.org/doc/admin24/syncrepl.html for details.
