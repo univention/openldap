@@ -12,6 +12,8 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
       openldap2; closes: #428385, #260118, #262539, #391899, #393215.
     - lastmod and denyop have been moved to contrib upstream and are no
       longer shipped as supported overlays
+    - drop dependency on libldap2 and take ownership of the
+      /etc/ldap/ldap.conf conffile, since libldap2 is now obsolete
     - need to dump and reload databases again for the upgrade from 2.3.39.
     - ldap_init(3) no longer attempts to document the internals of the
       LDAP opaque type.  Closes: #320072.
@@ -101,7 +103,7 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
   * Remove versioned dependency on an ancient dpkg-dev.
   * Wrap and reorder Build-Depends for readability.
 
- -- Steve Langasek <vorlon@debian.org>  Sat, 12 Jan 2008 02:13:11 -0800
+ -- Steve Langasek <vorlon@debian.org>  Sat, 12 Jan 2008 02:22:54 -0800
 
 openldap2.3 (2.3.39-1) unstable; urgency=medium
 

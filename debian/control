@@ -50,7 +50,7 @@ Section: libs
 Priority: optional
 Architecture: any
 Conflicts: ldap-utils (<= 2.1.23-1)
-Depends: ${shlibs:Depends}, libldap2
+Depends: ${shlibs:Depends}
 Replaces: libldap2, libldap-2.3-0
 Description: OpenLDAP libraries 
  These are the run-time libraries for the OpenLDAP (Lightweight Directory
