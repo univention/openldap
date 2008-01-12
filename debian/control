@@ -26,9 +26,9 @@ Conflicts: umich-ldapd, ldap-server, libltdl3 (= 1.5.4-1)
 Replaces: libldap2, ldap-utils (<< 2.2.23-3)
 Provides: ldap-server, ${slapd:Provides}
 Description: OpenLDAP server (slapd)
- This is the OpenLDAP (Lightweight Directory Access Protocol) standalone
- server (slapd). The server can be used to provide a standalone directory
- service and also includes the slurpd replication server.
+ This is the OpenLDAP (Lightweight Directory Access Protocol) server
+ (slapd). The server can be used to provide a standalone directory
+ service.
 
 Package: ldap-utils
 Section: net
@@ -40,9 +40,10 @@ Conflicts: umich-ldap-utils, openldap-utils, ldap-client
 Replaces: openldap-utils, slapd (<< 2.2.23-0.pre6), openldapd
 Provides: ldap-client, openldap-utils
 Description: OpenLDAP utilities
- Utilities from the OpenLDAP (Lightweight Directory Access Protocol)
- package. These utilities can access a local or remote LDAP server
- and contain all the client programs required to access LDAP servers.
+ This package provides utilities from the OpenLDAP (Lightweight
+ Directory Access Protocol) package. These utilities can access a
+ local or remote LDAP server and contain all the client programs
+ required to access LDAP servers.
 
 Package: libldap-2.4-2
 Section: libs
@@ -61,10 +62,11 @@ Priority: extra
 Architecture: any
 Depends: libldap-2.4-2 (= ${binary:Version})
 Description: Debugging information for OpenLDAP libraries
- Detached debugging information for the OpenLDAP (Lightweight Directory
- Access Protocol) libraries.  It is useful primarily to permit better
- backtraces and crash dump analysis after problems with the libraries.
- GDB will find this debug information automatically.
+ This package provides detached debugging information for the OpenLDAP
+ (Lightweight Directory Access Protocol) libraries. It is useful
+ primarily to permit better backtraces and crash dump analysis after
+ problems with the libraries. GDB will find this debug information
+ automatically.
 
 Package: libldap2-dev
 Section: libdevel
@@ -95,7 +97,8 @@ Priority: extra
 Architecture: any
 Depends: slapd (= ${binary:Version})
 Description: Debugging information for the OpenLDAP server (slapd)
- Detached debugging information for the OpenLDAP (Lightweight Directory
- Access Protocol) standalone server (slapd).  It is useful primarily to
- permit better backtraces and crash dump analysis after problems with the
- libraries.  GDB will find this debug information automatically.
+ This package provides detached debugging information for the OpenLDAP
+ (Lightweight Directory Access Protocol) server (slapd). It is useful
+ primarily to permit better backtraces and crash dump analysis after
+ problems with the libraries. GDB will find this debug information
+ automatically.

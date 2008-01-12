@@ -58,6 +58,9 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
     slapd.conf on upgrade.
   * "schemacheck" directives are no longer supported; comment them out
     on upgrade since this option was set by default in sarge.
+  * Package description updates; thanks to Christian Perrier
+    <bubulle@debian.org> and the Smith review project for these
+    improvements.
 
   [ Russ Allbery ]
   * Removed fix_ldif and all remaining code to try running it on LDIF
@@ -98,7 +101,7 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
   * Remove versioned dependency on an ancient dpkg-dev.
   * Wrap and reorder Build-Depends for readability.
 
- -- Steve Langasek <vorlon@debian.org>  Thu, 10 Jan 2008 17:44:26 -0800
+ -- Steve Langasek <vorlon@debian.org>  Sat, 12 Jan 2008 02:13:11 -0800
 
 openldap2.3 (2.3.39-1) unstable; urgency=medium
 
