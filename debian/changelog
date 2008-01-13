@@ -108,7 +108,10 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
   * Remove versioned dependency on an ancient dpkg-dev.
   * Wrap and reorder Build-Depends for readability.
 
- -- Steve Langasek <vorlon@debian.org>  Sat, 12 Jan 2008 22:14:02 -0800
+  [ Updated translations ]
+  * Czech, thanks to Miroslav Kure <kurem@debian.cz>.  Closes: #458215.
+
+ -- Steve Langasek <vorlon@debian.org>  Sat, 12 Jan 2008 22:17:29 -0800
 
 openldap2.3 (2.3.39-1) unstable; urgency=medium
 

@@ -15,8 +15,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap2.3\n"
 "Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
-"POT-Creation-Date: 2008-01-12 14:20-0800\n"
-"PO-Revision-Date: 2006-05-14 07:01+0200\n"
+"POT-Creation-Date: 2008-01-12 20:20-0800\n"
+"PO-Revision-Date: 2007-12-29 16:26+0100\n"
 "Last-Translator: Miroslav Kure <kurem@debian.cz>\n"
 "Language-Team: Czech <debian-l10n-czech@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -25,13 +25,13 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:1001
+#: ../slapd.templates:2001
 msgid "Omit OpenLDAP server configuration?"
 msgstr "Přeskočit nastavení OpenLDAP serveru?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:1001
+#: ../slapd.templates:2001
 msgid ""
 "If you enable this option, no initial configuration or database will be "
 "created for you."
@@ -40,74 +40,90 @@ msgstr ""
 "nastavení."
 
 #. Type: select
+#. Choices
+#: ../slapd.templates:3001
+msgid "always"
+msgstr "vždy"
+
+#. Type: select
+#. Choices
+#: ../slapd.templates:3001
+msgid "when needed"
+msgstr "v případě potřeby"
+
+#. Type: select
+#. Choices
+#: ../slapd.templates:3001
+msgid "never"
+msgstr "nikdy"
+
+#. Type: select
 #. Description
-#: ../slapd.templates:2001
+#: ../slapd.templates:3002
 msgid "Dump databases to file on upgrade:"
 msgstr "Při aktualizaci uložit databáze do souboru:"
 
 #. Type: select
 #. Description
-#: ../slapd.templates:2001
+#: ../slapd.templates:3002
+#, fuzzy
 msgid ""
-"Before upgrading to a new version of the OpenLDAP server the data of your "
-"LDAP directories can be dumped to plain text files (LDIF format) which is a "
-"standardized description of that data (LDIF stands for LDAP Data Interchange "
-"Format)."
+"Before upgrading to a new version of the OpenLDAP server, the data from your "
+"LDAP directories can be dumped into plain text files in the standard LDAP "
+"Data Interchange Format."
 msgstr ""
 "Před aktualizací na novější verzi serveru OpenLDAP se musí data z LDAP "
-"adresářů vyexportovat do textových souborů ve formátu LDIF, což je "
-"standardizovaný formát pro popis těchto dat. (LDIF je zkratka z LDAP Data "
-"Interchange Format.)"
+"adresářů vyexportovat do textových souborů ve formátu LDAP Data Interchange "
+"Format, což je standardizovaný formát pro popis těchto dat."
 
 #. Type: select
 #. Description
-#: ../slapd.templates:2001
+#: ../slapd.templates:3002
+#, fuzzy
 msgid ""
-"Selecting \"always\" will make the maintainer scripts dump your databases "
-"before upgrading unconditionally. Selecting \"when needed\" will only dump "
-"the database if the new version is incompatible with the old database format "
-"and it has to be reimported. The \"never\" choice will just go ahead without "
-"ever dumping your database."
+"Selecting \"always\" will cause the databases to be dumped unconditionally "
+"before an upgrade. Selecting \"when needed\" will only dump the database if "
+"the new version is incompatible with the old database format and it needs to "
+"be reimported. If you select \"never\", no dump will be done."
 msgstr ""
-"Výběrem \"always\" zajistíte, že se databáze před každou aktualizací "
-"vyexportují do souborů. Výběrem \"when needed\" se databáze vyexportují "
-"pouze v případě, že je formát nové databáze nekompatibilní s předchozí verzí "
-"a tudíž je potřeba data znovu nahrát. Možnost \"never\" půjde vždy bezhlavě "
-"vpřed a data nikdy nevyexportuje."
+"Výběrem \"vždy\" zajistíte, že se databáze před každou aktualizací "
+"vyexportují do souborů. Výběrem \"v případě potřeby\" se databáze "
+"vyexportují pouze v případě, že je formát nové databáze nekompatibilní s "
+"předchozí verzí a tudíž je potřeba data znovu nahrát. Jestli zajistíte "
+"\"nikdy\" data nevyexportuje."
 
 #. Type: string
 #. Description
-#: ../slapd.templates:3001
-msgid "Directory to dump databases:"
-msgstr "Adresář pro export databází:"
+#: ../slapd.templates:4001
+msgid "Directory to use for dumped databases:"
+msgstr "Adresář pro exportované databáze:"
 
 #. Type: string
 #. Description
-#: ../slapd.templates:3001
+#: ../slapd.templates:4001
 msgid ""
-"Please specify the directory where the LDAP databases will be exported. "
-"Within this directory several LDIF files are created which correspond to the "
+"Please specify the directory where the LDAP databases will be exported. In "
+"this directory, several LDIF files will be created which correspond to the "
 "search bases located on the server. Make sure you have enough free space on "
-"the partition the directory is located.  The first occurrence of the string "
-"\"VERSION\" is replaced with the server version you are upgrading from. The "
-"default is /var/backups/slapd-VERSION"
+"the partition where the directory is located. The first occurrence of the "
+"string \"VERSION\" is replaced with the server version you are upgrading "
+"from."
 msgstr ""
 "Zadejte prosím adresář, do kterého se budou exportovat LDAP databáze. V "
 "tomto adresáři se vytvoří několik LDIF souborů odpovídajících kořenům LDAP "
 "adresářů na daném serveru. Ujistěte se, že máte na dané oblasti dostatek "
 "místa. První výskyt řetězce \"VERSION\" se nahradí verzí LDAP serveru, ze "
-"kterého aktualizujete na novější verzi. Výchozí cesta je /var/backups/slapd-"
-"VERSION"
+"kterého aktualizujete na novější verzi."
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:4001
+#: ../slapd.templates:5001
 msgid "Move old database?"
 msgstr "Přesunout starou databázi?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:4001
+#: ../slapd.templates:5001
 msgid ""
 "There are still files in /var/lib/ldap which will probably break the "
 "configuration process. If you enable this option, the maintainer scripts "
@@ -120,226 +136,202 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:5001
-msgid "Invalid configuration. Retry configuration?"
-msgstr "Neplatné nastavení. Zopakovat konfiguraci?"
+#: ../slapd.templates:6001
+msgid "Retry configuration?"
+msgstr "Zopakovat nastavení?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:5001
+#: ../slapd.templates:6001
 msgid ""
 "The configuration you entered is invalid. Make sure that the DNS domain name "
-"has a valid syntax, the organization is not left empty and that the admin "
+"is syntactically valid, the organization is not left empty and the admin "
 "passwords match. If you decide not to retry the configuration the LDAP "
-"server will not be set up. Run \"dpkg-reconfigure\" if you want to retry "
+"server will not be set up. Run 'dpkg-reconfigure slapd' if you want to retry "
 "later."
 msgstr ""
 "Zadané nastavení není platné. Ujistěte se, že máte doménové jméno (DNS) ve "
 "správném formátu, že je vyplněná organizace a že administrátorská hesla "
-"souhlasí. Jestliže neprovedete nové nastavení, LDAP server nebude "
-"nakonfigurován. Budete-li chtít balík nastavit později, použijte \"dpkg-"
-"reconfigure\"."
+"souhlasí. Jestliže znovu nespustíte tohoto průvodce, LDAP server nebude "
+"nakonfigurován. Budete-li chtít balík nastavit později, použijte příkaz "
+"„dpkg-reconfigure slapd“."
 
 #. Type: string
 #. Description
-#: ../slapd.templates:6001
+#: ../slapd.templates:7001
 msgid "DNS domain name:"
 msgstr "DNS název domény:"
 
 #. Type: string
 #. Description
-#: ../slapd.templates:6001
+#: ../slapd.templates:7001
 msgid ""
-"The DNS domain name is used to construct the base DN of your LDAP directory. "
-"Entering foo.bar.org will give you the base DN dc=foo, dc=bar, dc=org."
+"The DNS domain name is used to construct the base DN of the LDAP directory. "
+"For example, 'foo.example.org' will create the directory with 'dc=foo, "
+"dc=example, dc=org' as base DN."
 msgstr ""
 "Název domény se používá pro vytvoření základního DN vašeho LDAP adresáře. "
-"Zadáním foo.bar.cz se vytvoří základní DN dc=foo, dc=bar, dc=cz."
+"Například zadáním „foo.bar.cz“ se vytvoří adresář se základním DN „dc=foo, "
+"dc=bar, dc=cz“."
 
 #. Type: string
 #. Description
-#: ../slapd.templates:7001
-msgid "Name of your organization:"
-msgstr "Název vaší organizace:"
+#: ../slapd.templates:8001
+msgid "Organization name:"
+msgstr "Název organizace:"
 
 #. Type: string
 #. Description
-#: ../slapd.templates:7001
+#: ../slapd.templates:8001
 msgid ""
-"Whatever you enter here will be stored as the name of your organization in "
-"the base DN of your LDAP directory."
+"Please enter the name of the organization to use in the base DN of your LDAP "
+"directory."
 msgstr ""
-"Cokoliv zde zadáte, se uloží jako název vaší organizace do základního DN ve "
-"vašem LDAP adresáři."
-
-#. Type: password
-#. Description
-#: ../slapd.templates:8001
-msgid "Admin password:"
-msgstr "Administrátorské heslo:"
-
-#. Type: password
-#. Description
-#: ../slapd.templates:8001
-msgid " Please enter the password for the admin entry in your LDAP directory."
-msgstr "Zadejte prosím heslo pro administrátora LDAP databáze."
+"Zadejte prosím jméno organizace, které se použije v základním DN vašeho LDAP "
+"adresáře."
 
 #. Type: password
 #. Description
 #: ../slapd.templates:9001
+msgid "Administrator password:"
+msgstr "Administrátorské heslo:"
+
+#. Type: password
+#. Description
+#: ../slapd.templates:9001
+msgid "Please enter the password for the admin entry in your LDAP directory."
+msgstr "Zadejte prosím heslo pro administrátorský záznam v LDAP adresáři."
+
+#. Type: password
+#. Description
+#: ../slapd.templates:10001
 msgid "Confirm password:"
 msgstr "Potvrzení hesla:"
 
 #. Type: password
 #. Description
-#: ../slapd.templates:9001
+#: ../slapd.templates:10001
+#, fuzzy
 msgid ""
-"Please reenter the admin password for your LDAP directory for verification."
+"Please enter the admin password for your LDAP directory again to verify that "
+"you have typed it correctly."
 msgstr ""
-"Pro ověření zadejte prosím administrátorské heslo do LDAP adresáře ještě "
-"jednou."
+"Zadejte znovu administrátorské heslo do LDAP adresáře, že jste jej zadali "
+"správně."
 
 #. Type: note
 #. Description
-#: ../slapd.templates:10001
+#: ../slapd.templates:11001
 msgid "Password mismatch"
 msgstr "Hesla nesouhlasí"
 
 #. Type: note
 #. Description
-#: ../slapd.templates:10001
-msgid ""
-"The admin password and its confirmation must match. Please note that "
-"differences such as uppercase/lowercase and added whitespace matter."
-msgstr ""
-"Administrátorské heslo musíte zadat dvakrát po sobě stejně. Pamatujte, že se "
-"rozlišují malá a velká písmena a také že záleží na netisknutelných (bílých) "
-"znacích."
+#: ../slapd.templates:11001
+msgid "The two passwords you entered were not the same. Please try again."
+msgstr "Zadaná hesla nejsou stejná. Zkuste to znovu."
 
 #. Type: boolean
-#. Description
-#: ../slapd.templates:11001
-msgid "Do you want your database to be removed when slapd is purged?"
-msgstr "Chcete při odstranění balíku slapd smazat i svou databázi?"
-
-#. Type: password
 #. Description
 #: ../slapd.templates:12001
-msgid "Encrypted admin password:"
-msgstr "Zašifrované administrátorské heslo:"
+#, fuzzy
+msgid "Do you want the database to be removed when slapd is purged?"
+msgstr "Chcete při vyčištění balíku slapd ze systému smazat i databázi?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:13001
+#: ../slapd.templates:14001
 msgid "Allow LDAPv2 protocol?"
 msgstr "Povolit protokol LDAPv2?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:13001
+#: ../slapd.templates:14001
+#, fuzzy
 msgid ""
-"The slapd daemon now disables the old LDAPv2 protocol by default. Programs "
-"and users are generally expected to be upgraded to LDAPv3. If you have old "
-"programs which have not been moved to use LDAPv3 and you still need LDAPv2 "
-"support then select this option and 'allow bind_v2' will be added to your "
-"slapd.conf to tell slapd to accept LDAPv2 connections."
+"The obsolete LDAPv2 protocol is disabled by default in slapd. Programs and "
+"users should upgrade to LDAPv3.  If you have old programs which can't use "
+"LDAPv3, you should select this option and 'allow bind_v2' will be added to "
+"your slapd.conf file."
 msgstr ""
-"Daemon slapd nyní implicitně zakazuje starý protokol LDAPv2, protože se "
+"Daemon slapd nyní implicitně zakazuje zastaralý protokol LDAPv2, protože se "
 "předpokládá, že programy i uživatelé již přešli na LDAPv3. Máte-li staré "
 "programy, které nezvládají LDAPv3, povolte tuto možnost, což do souboru "
-"slapd.conf přidá řádek 'allow bind_v2'. Tím daemonu slapd řeknete, že má "
-"přijímat také spojení LDAPv2."
+"slapd.conf přidá řádek „allow bind_v2“."
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:14001
-msgid "Move aside current database and create a new one?"
-msgstr "Přesunout starou databázi a vytvořit novou?"
+#: ../slapd.templates:15001
+msgid "Back up current database and create a new one?"
+msgstr "Zazálohovat stávající databázi a vytvořit novou?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:14001
+#: ../slapd.templates:15001
 msgid ""
-"You have specified a directory suffix (domain) that doesn't match the one "
-"currently in /etc/ldap/slapd.conf.  Changing the directory suffix requires "
-"moving aside the current LDAP database and creating a new one.  Please "
-"confirm whether you want to abandon the current database (a backup will be "
-"made)."
+"The directory suffix (domain) you specified doesn't match the one currently "
+"in /etc/ldap/slapd.conf. Changing the directory suffix requires moving aside "
+"the current LDAP database and creating a new one. Please confirm whether you "
+"want to back up and abandon the current database."
 msgstr ""
 "Zadali jste příponu adresáře (doménu), která neodpovídá té v souboru /etc/"
 "ldap/slapd.conf. Změna přípony adresáře vyžaduje odsunutí stávající LDAP "
-"databáze a vytvoření nové. Potvrďte prosím, zda chcete zrušit stávající "
-"databázi (pro jistotu se vytvoří její záloha)."
+"databáze a vytvoření nové. Potvrďte prosím, zda chcete zazálohovat a opustit "
+"stávající databázi."
 
-#. Type: note
+#. Type: error
 #. Description
-#: ../slapd.templates:15001
-msgid "slapcat failed during upgrade"
+#: ../slapd.templates:16001
+msgid "slapcat failure during upgrade"
 msgstr "slapcat během aktualizace selhal"
 
-#. Type: note
+#. Type: error
 #. Description
-#: ../slapd.templates:15001
-msgid ""
-"An error occurred during the attempt to upgrade your LDAP directory. This "
-"error occurred when performing the 'slapcat' which attempts to extract your "
-"LDAP directory.  This failure could be because of an incorrect config file.  "
-"For example, if the appropriate moduleload lines for your backend database "
-"type are missing.  This failure will cause 'slapadd' later to fail too.  The "
-"old database files are about to be moved to /var/backups.  If you want to "
-"try this upgrade again then move the old database files back into place, fix "
-"whatever caused slapcat to fail, and run:\n"
-" slapcat > $location"
-msgstr ""
-"Při pokusu o aktualizaci vašeho LDAP adresáře se vyskytla chyba. Chyba "
-"nastala při provádění příkazu 'slapcat', jenž se snažil získat obsah vašeho "
-"LDAP adresáře. Tuto chybu může způsobit třeba chybný konfigurační soubor. "
-"(Například pokud chybí příslušné řádky 'moduleload' pro backend databáze, "
-"která uchovává obsah LDAP adresáře.) Tato chyba později způsobí také selhání "
-"příkazu 'slapadd'. Staré databázové soubory budou přesunuty do /var/backups. "
-"Budete-li chtít později zkusit provést tuto aktualizaci znovu, přesuňte "
-"staré databázové soubory zpět na jejich původní místo, spravte příčinu toho, "
-"proč slapcat selhal a spusťte:\n"
-"  slapcat > $location"
+#: ../slapd.templates:16001
+#, fuzzy
+msgid "An error occurred while upgrading the LDAP directory."
+msgstr "Při pokusu o aktualizaci LDAP adresáře se vyskytla chyba."
 
-#. Type: note
+#. Type: error
 #. Description
-#: ../slapd.templates:15001
+#: ../slapd.templates:16001
+#, fuzzy
+msgid ""
+"The 'slapcat' program failed while extracting the LDAP directory. This may "
+"be caused by an incorrect configuration file (for example, missing "
+"'moduleload' lines to support the backend database)."
+msgstr ""
+"Program „slapcat“ selhal. Tuto chybu může způsobit třeba chybný konfigurační "
+"soubor. (Například pokud chybí příslušné řádky „moduleload“ pro backend "
+"databáze, která uchovává obsah LDAP adresáře.)"
+
+#. Type: error
+#. Description
+#. This paragraph is followed by a (non translatable) paragraph
+#. containing a command line
+#: ../slapd.templates:16001
+msgid ""
+"This failure will cause 'slapadd' to fail later as well. The old database "
+"files will be moved to /var/backups. If you want to try this upgrade again, "
+"you should move the old database files back into place, fix whatever caused "
+"slapcat to fail, and run:"
+msgstr ""
+"Tato chyba později způsobí také selhání příkazu „slapadd“. Staré databázové "
+"soubory budou přesunuty do /var/backups. Budete-li chtít později zkusit "
+"provést tuto aktualizaci znovu, přesuňte staré databázové soubory zpět na "
+"jejich původní místo, spravte příčinu toho, proč slapcat selhal a spusťte:"
+
+#. Type: error
+#. Description
+#. Translators: keep "$location" unchanged. This is a variable that
+#. will be replaced by a directory name at execution
+#: ../slapd.templates:16001
 msgid ""
 "Then move the database files back to a backup area and then try running "
 "slapadd from $location."
 msgstr ""
 "Poté přesuňte databázové soubory zpět mezi zálohy a zkuste spustit slapadd z "
 "$location."
-
-#. Type: note
-#. Description
-#: ../slapd.templates:16001
-msgid "slapadd failed during upgrade"
-msgstr "slapadd během aktualizace selhal"
-
-#. Type: note
-#. Description
-#: ../slapd.templates:16001
-msgid ""
-"An error occurred during the attempt to upgrade your LDAP directory. This "
-"error occurred when performing the 'slapadd' which attempts to populate an "
-"empty new LDAP directory using the information from your original LDAP "
-"directory.  Your original LDAP directory files have been saved in /var/"
-"backups.  The results of the attempted upgrade is the ldif file in /var/"
-"backups.  slapadd may have failed due to a configuration problem (in which "
-"case slapcat would have failed too) or due to a problem in the LDIF file.  "
-"If the problem was with the LDIF file, you may be able to fix it and attempt "
-"the slapadd again."
-msgstr ""
-"Při pokusu o aktualizaci vašeho LDAP adresáře se vyskytla chyba. Chyba "
-"nastala při provádění příkazu 'slapadd', jenž se snažil naplnit váš nový "
-"LDAP adresář daty z původního LDAP adresáře. Soubory původního LDAP adresáře "
-"jsou uloženy ve /var/backups. Výsledkem pokusu o automatickou aktualizaci je "
-"ldif soubor ve /var/backups. slapadd mohl selhat kvůli chybě v konfiguračním "
-"souboru (to by ovšem selhal také příkaz 'slapcat'), nebo kvůli chybě v LDIF "
-"souboru. Pokud se jedná o chybu v LDIF souboru, můžete jej zkusit opravit a "
-"zkusit slapadd znovu."
 
 #. Type: boolean
 #. Description
@@ -351,32 +343,33 @@ msgstr "Změnit typ backendu z LDBM na BDB?"
 #. Description
 #: ../slapd.templates:17001
 msgid ""
-"The LDBM backend type has been deprecated in OpenLDAP 2.2 and has shown to "
-"not work well. BDB is the recommended choice of the OpenLDAP developers."
+"The LDBM backend type has serious stability problems and has been deprecated "
+"by OpenLDAP as of 2.2. It is no longer supported by the OpenLDAP packages."
 msgstr ""
-"Backend LDBM se ukázal jako nevyhovující a byl v OpenLDAPu 2.2 překonán. "
-"Vývojáři OpenLDAPu nyní doporučují backend BDB."
+"Backend LDBM má vážné problémy se stabilitou a proto byl v OpenLDAPu od "
+"verze 2.2 zavrhnut. Balíky OpenLDAPu tento backend již dále nepodporují."
 
 #. Type: boolean
 #. Description
 #: ../slapd.templates:17001
 msgid ""
-"When using the BDB backend make sure you configure BDB properly. For "
-"information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
+"When the BDB backend is used, it must be configured properly. For more "
+"information, see /usr/share/doc/slapd/README.DB_CONFIG.gz."
 msgstr ""
-"Při použití backendu BDB se ujistěte, že jste jej nastavili správně. Více "
-"informací o správném nastavení naleznete v souboru /usr/share/doc/slapd/"
-"README.DB_CONFIG.gz."
+"Při použití backendu BDB se ujistěte, že je nastaven správně. Více informací "
+"naleznete v souboru /usr/share/doc/slapd/README.DB_CONFIG.gz."
 
 #. Type: boolean
 #. Description
 #: ../slapd.templates:17001
 msgid ""
-"If you enable this option an attempt will be made to update your "
-"configuration to use BDB instead of LDBM and convert your databases."
+"If you enable this option, an attempt will be made to update the "
+"configuration to use BDB instead of LDBM and convert the databases. If you "
+"do not enable this option, the upgrade will be aborted."
 msgstr ""
 "Povolíte-li tuto možnost, systém se pokusí změnit konfiguraci, aby místo "
-"LDBM používala BDB a příslušně také převést databáze."
+"LDBM používala BDB a příslušně také převést databáze. V opačném případě se "
+"aktualizace přeruší."
 
 #. Type: select
 #. Description
@@ -388,62 +381,24 @@ msgstr "Databázový backend:"
 #. Description
 #: ../slapd.templates:18001
 msgid ""
-"The BDB backend is the recommended choice of the OpenLDAP developers. When "
-"using the BDB backend make sure that you configure the underlying database "
-"for your requirements. Look into /usr/share/doc/slapd/README.DB_CONFIG.gz"
+"The HDB backend is recommended. HDB and BDB use similar storage formats, but "
+"HDB adds support for subtree renames. Both support the same configuration "
+"options."
 msgstr ""
-"Backend BDB je doporučenou volbou vývojářů OpenLDAPu. Při použití tohoto "
-"backendu se ujistěte, že jste nastavili databázi podle svých potřeb. Více "
-"informací o nastavení BDB naleznete v souboru /usr/share/doc/slapd/README."
-"DB_CONFIG.gz."
+"Doporučenou volbou je backend HDB. HDB i BDB ukládají data obdobně, ale HDB "
+"přidává podporu pro přejmenování podstromů. Oba backendy podporují stejné "
+"konfigurační parametry."
 
 #. Type: select
 #. Description
 #: ../slapd.templates:18001
 msgid ""
-"HDB is the next generation of BDB which might replace it sometime in the "
-"future. There are some problems still in the HDB code of the 2.2 series of "
-"OpenLDAP so you should probably stick to BDB until version 2.3."
+"In either case, you should review the resulting database configuration for "
+"your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more details."
 msgstr ""
-"HDB je další generace BDB, která by jej jednou mohla nahradit. HDB má ve "
-"verzích OpenLDAPu 2.2 stále nějaké problémy a proto byste měli zůstat u BDB "
-"alespoň do verze 2.3."
-
-#. Type: select
-#. Description
-#: ../slapd.templates:18001
-msgid ""
-"The BDB backend (back-bdb) and LDBM backend (back-ldbm) are comparable in "
-"purpose and back-bdb evolved from experience gained from back-ldbm, but the "
-"two are quite distinct today. They both store entries based on a 32-bit "
-"entry ID key, and they use a dn2id table to map from DNs to entry IDs. They "
-"both perform attribute indexing using the same code, and store index data as "
-"lists of entry IDs. As such, the LDAP-specific features they offer are "
-"nearly identical. The differences are in the APIs used to implement the "
-"databases. back-ldbm uses a generic database API that can plug into several "
-"different database packages. In Debian, it's built against BerkeleyDB (BDB). "
-"While BerkeleyDB supports this generic interface, it also offers a much "
-"richer API that has a lot more power and a lot more complexity. back-bdb is "
-"written specifically for the full BDB API, and uses some of BDB's more "
-"advanced features to offer transaction processing, fine grained locking, and "
-"other features that offer improved concurrency and reliability. For more "
-"information, see /usr/share/doc/slapd/README.DB_CONFIG.gz"
-msgstr ""
-"Backendy BDB (back-bdb) a LDBM (back-ldbm) mají podobný cíl, ovšem back-bdb "
-"se vyvíjel ze zkušeností získaných z back-ldbm a dnes je již svému "
-"předchůdci poněkud vzdálený. Oba backendy ukládají záznamy podle 32 bitového "
-"vstupního identifikačního klíče, a oba používají pro mapování rozlišitelných "
-"názvů (DN) na identifikátory (ID) tabulku dn2id. Oba také indexují atributy "
-"stejným způsobem a indexy ukládají jako seznamy vstupních ID. To znamená, že "
-"nabízí téměř shodné vlastnosti LDAPu. Rozdíl je v API použitých pro "
-"implementaci databáze. back-ldbm používá obecné databázové rozhraní, kterým "
-"se může připojit k různým databázím, v Debianu je sestaven s podporou "
-"BerkleyDB (BDB). Kromě obecného rozhraní nabízí BerkleyDB také mnohem "
-"bohatší API, které je mocnější, ale také komplexnější. back-dbd je napsán "
-"speciálně pro podporu plného BDB rozhraní a používá pokročilé vlastnosti "
-"BDB, aby zajistil transakční zpracování, jemnější zamykání a další "
-"vymoženosti, jež poskytují zvýšenou spolehlivost a rychlost. Více informací "
-"naleznete v souboru /usr/share/doc/slapd/README.DB_CONFIG.gz."
+"V obou případech byste zkontrolovat, zda nastavení databáze odpovídá vašim "
+"potřebám. Více informací o nastavení databáze naleznete v souboru /usr/share/"
+"doc/slapd/README.DB_CONFIG.gz."
 
 #. Type: error
 #. Description
@@ -469,70 +424,3 @@ msgid ""
 "configure your replica servers by hand.  Please see http://www.openldap.org/"
 "doc/admin24/syncrepl.html for details."
 msgstr ""
-
-#~ msgid "Change configuration to load backend modules?"
-#~ msgstr "Změnit nastavení pro nahrávání backendů?"
-
-#~ msgid ""
-#~ "Starting with OpenLDAP 2.1 backends are not longer built into the server "
-#~ "but are instead dynamically loaded at startup. This means that the slapd "
-#~ "configuration has to be changed to load the modules for the backends you "
-#~ "are using."
-#~ msgstr ""
-#~ "Od OpenLDAPu verze 2.1 již nejsou backendy zabudovány v serveru, ale "
-#~ "existují jako moduly, které se dynamicky nahrávají při startu. To "
-#~ "znamená, že se musí změnit nastavení slapd tak, aby zaváděl moduly "
-#~ "backendů, které používáte."
-
-#~ msgid ""
-#~ "If you choose this option, an attempt to fix the configuration will be "
-#~ "made. If you don't select this, you *must* fix your configuration file "
-#~ "yourself or slapd (and slapcat if you are upgrading from an older "
-#~ "version) will fail and the package will not be installed. For more "
-#~ "information, read /usr/share/doc/slapd/README.Debian."
-#~ msgstr ""
-#~ "Zvolíte-li tuto možnost, instalační skript se pokusí upravit nastavení "
-#~ "sám. V opačném případě *musíte* upravit konfigurační soubor sami, protože "
-#~ "jinak slapd (a při aktualizaci ze starší verze i slapcat) selže a balík "
-#~ "se nenainstaluje. Více informací naleznete v /usr/share/doc/slapd/README."
-#~ "Debian."
-
-#~ msgid "Fix LDAP directory on upgrade?"
-#~ msgstr "Opravit při aktualizaci LDAP adresář?"
-
-#~ msgid ""
-#~ "The installation scripts of the old OpenLDAP 2.0 packages create a "
-#~ "directory that does not conform to the ldap schema. The new version is "
-#~ "more strict about this and you won't be able to access your directory "
-#~ "after the upgrade without fixing it."
-#~ msgstr ""
-#~ "Instalační skripty starých balíků OpenLDAP 2.0 vytvoří adresář, který "
-#~ "neodpovídá ldap schématu. Nová verze je v tomto přísnější a pokud adresář "
-#~ "neopravíte, nebudete k němu moci po aktualizaci přistupovat."
-
-#~ msgid "If you choose this option, an attempt to fix it for you will occur."
-#~ msgstr "Pokud zvolíte tuto možnost, skript se pokusí vše opravit."
-
-#~ msgid "Slave databases require updateref option"
-#~ msgstr "Podřízené databáze vyžadují volbu updateref"
-
-#~ msgid ""
-#~ "In your slapd configuration file at least one database is configured as "
-#~ "slave, and the updateref option is not set. The updateref option "
-#~ "specifies the referral(s) to pass back when slapd is asked to modify a "
-#~ "replicated local database. See slapd.conf(5) for more details."
-#~ msgstr ""
-#~ "Ve vašem konfiguračním souboru je minimálně jedna databáze nastavena jako "
-#~ "podřízená a přitom nemá nastavenu volbu updateref. Volba updateref "
-#~ "definuje poukázky, které předává zpět, kdykoliv slapd požádá o změnu v "
-#~ "replikované lokální databázi. Podrobnosti naleznete v manuálové stránce "
-#~ "slapd.conf(5)."
-
-#~ msgid ""
-#~ "Starting with version 2.1.23, slapd requires the updateref option to be "
-#~ "set on slaves. You should make sure to fix your slapd.conf configuration "
-#~ "file."
-#~ msgstr ""
-#~ "Počínaje verzí 2.1.23 slapd vyžaduje, aby měly podřízené databáze "
-#~ "nastavenu volbu updateref. Měli byste zajistit nápravu svého "
-#~ "konfiguračního souboru slapd.conf co nejdříve."
