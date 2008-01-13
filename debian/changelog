@@ -108,8 +108,10 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
   * Remove versioned dependency on an ancient dpkg-dev.
   * Wrap and reorder Build-Depends for readability.
 
-  [ Updated translations ]
+  [ Updated debconf translations ]
   * Czech, thanks to Miroslav Kure <kurem@debian.cz>.  Closes: #458215.
+  * German, thanks to Helge Kreutzmann <debian@helgefjell.de>.
+    Closes: #452833.
 
  -- Steve Langasek <vorlon@debian.org>  Sat, 12 Jan 2008 22:17:29 -0800
 
