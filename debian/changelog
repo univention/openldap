@@ -119,6 +119,7 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
   * Galician, thanks to Jacobo Tarrio <jtarrio@trasno.net>.
     Closes: #451158.
   * Italian, thanks to Luca Monducci <luca.mo@tiscali.it>.  Closes: #449442.
+  * Japanese, thanks to Kenshi Muto <kmuto@debian.org>.  Closes: #451325.
 
  -- Steve Langasek <vorlon@debian.org>  Sat, 12 Jan 2008 22:17:29 -0800
 
