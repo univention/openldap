@@ -435,7 +435,7 @@ migrate_checkpoint_and_slurpd() {					# {{{
 		use File::Compare;
 		use File::Copy;
 
-		$has_replica = $seen_syncprov = 0;
+		$has_replica = 0;
 		$backend_bdb = $backend_hdb = 0;
 		$checkpoint_bdb = "";
 		$checkpoint_hdb = "";
@@ -476,13 +476,8 @@ migrate_checkpoint_and_slurpd() {					# {{{
 					print $fh $_ . $checkpoint_hdb;
 					next;
 				}
-				$seen_syncprov = 1 if /^moduleload\s+syncprov/;
 				if (/^replica\s+/)
 				{
-					if (!$has_replica && !$seen_syncprov) {
-						print $fh "moduleload syncprov\n";
-						$seen_syncprov = 1;
-					}
 					print $fh "overlay syncprov\n";
 					print $fh "syncprov-checkpoint 100 10\n";
 					$has_replica = 1;
@@ -511,6 +506,22 @@ migrate_checkpoint_and_slurpd() {					# {{{
 		result=0
 	else
 		result=1
+	fi
+
+	if [ $result -eq 1 ] \
+	   && ! grep -q '^moduleload[[:space:]]\+syncprov' $SLAPD_CONF
+	then
+		# Create a temporary file for the new config
+		new_conf=`mktemp -q ${SLAPD_CONF}.XXXXXX`
+
+		# Prepend the module load command
+		echo '# load syncrepl provider support, replacing slurpd' > $new_conf
+		echo 'moduleload syncprov' >> $new_conf
+		echo >> $new_conf
+		cat $SLAPD_CONF >> $new_conf
+
+		# Activate the new configuration file
+		install_new_slapd_conf "$new_conf"
 	fi
 
 	echo . >&2
