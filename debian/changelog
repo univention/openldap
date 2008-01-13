@@ -67,7 +67,7 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
     <bubulle@debian.org> and the Smith review project for these
     improvements.
   * Incorporate debconf template changes suggested by the debian-l10n-english
-    team as part of the Smith review project.
+    team as part of the Smith review project.  Closes: #447224.
 
   [ Russ Allbery ]
   * Removed fix_ldif and all remaining code to try running it on LDIF
