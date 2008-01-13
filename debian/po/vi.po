@@ -1,12 +1,12 @@
 # Vietnamese translation for OpenLDAP.
 # Copyright © 2006 Free Software Foundation, Inc.
 # Clytie Siddall <clytie@riverland.net.au>, 2005-2006.
-# 
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: openldap2.3\n"
-"Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
-"POT-Creation-Date: 2007-11-11 19:49-0800\n"
+"Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
+"POT-Creation-Date: 2008-01-12 14:20-0800\n"
 "PO-Revision-Date: 2006-05-13 13:31+0930\n"
 "Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
 "Language-Team: Vietnamese <gnomevi-list@lists.sourceforge.net>\n"
@@ -62,12 +62,12 @@ msgid ""
 "and it has to be reimported. The \"never\" choice will just go ahead without "
 "ever dumping your database."
 msgstr ""
-"Việc chọn « luôn luôn » (always) sẽ làm cho những tập lệnh bảo quản đổ các "
-"cơ sở dữ liệu trước khi nâng cấp một cách không điều kiện. Còn việc chọn « "
-"khi cần thiết » (when needed) sẽ đổ cơ sở dữ liệu chỉ nếu phiên bản mới "
-"không tương thích với dạng thức của cơ sở dữ liệu cũ nên phải nhập lại nó. "
-"Sự chọn « không bao giờ » (never) đơn giản sẽ tiếp tục mà không bao giờ đổ "
-"cơ sở dữ liệu của bạn."
+"Việc chọn « luôn luôn » (always) sẽ làm cho những tập lệnh bảo quản đổ các cơ "
+"sở dữ liệu trước khi nâng cấp một cách không điều kiện. Còn việc chọn « khi "
+"cần thiết » (when needed) sẽ đổ cơ sở dữ liệu chỉ nếu phiên bản mới không "
+"tương thích với dạng thức của cơ sở dữ liệu cũ nên phải nhập lại nó. Sự chọn "
+"« không bao giờ » (never) đơn giản sẽ tiếp tục mà không bao giờ đổ cơ sở dữ "
+"liệu của bạn."
 
 #. Type: string
 #. Description
@@ -288,12 +288,12 @@ msgid ""
 msgstr ""
 "Gặp lỗi trong khi cố gắng nâng cấp thư mục LDAP của bạn. Lỗi này xảy ra khi "
 "chạy tiến trình « slapcat » mà cố gắng rút thư mục LDAP của bạn. Lỗi này có "
-"lẽ do một tập tin cấu hình không đúng. Lấy thí dụ, nếu còn thiếu những dòng "
-"« moduleload » (tải mô-đun) thích hợp cho cơ sở dữ liệu hậu phương. Lỗi này "
-"sẽ cũng gây ra trình « slapadd » bị lỗi. Các tập tin cơ sở dữ liệu cũ sắp "
-"được di chuyển sang thư mục </var/backups>. Nếu bạn muốn thử lại nâng cấp, "
-"hãy di chuyển các tập tin cơ sở dữ liệu cũ về vị trí trước, sửa nguyên nhân "
-"lỗi của slapcat, rồi chạy lệnh:\n"
+"lẽ do một tập tin cấu hình không đúng. Lấy thí dụ, nếu còn thiếu những dòng « "
+"moduleload » (tải mô-đun) thích hợp cho cơ sở dữ liệu hậu phương. Lỗi này sẽ "
+"cũng gây ra trình « slapadd » bị lỗi. Các tập tin cơ sở dữ liệu cũ sắp được "
+"di chuyển sang thư mục </var/backups>. Nếu bạn muốn thử lại nâng cấp, hãy di "
+"chuyển các tập tin cơ sở dữ liệu cũ về vị trí trước, sửa nguyên nhân lỗi của "
+"slapcat, rồi chạy lệnh:\n"
 " slapcat > $location"
 
 #. Type: note
@@ -440,6 +440,31 @@ msgstr ""
 "cấp cách đồng qui và cấp tin cây đã tiến triển. Để tìm thông tin thêm, hãy "
 "xem tập tin Đọc Đi </usr/share/doc/slapd/README.DB_CONFIG.gz>."
 
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid "slurpd is obsolete; replicas must be reconfigured by hand"
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid ""
+"One or more slurpd \"replica\" options were found in your slapd config when "
+"upgrading.  Because slurpd is obsolete beginning with OpenLDAP  2.4, you "
+"will need to migrate your replicas to use the syncrepl protocol instead."
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid ""
+"Since syncrepl is a pull-based protocol instead of a push-based one, your "
+"configuration cannot be automatically converted for you and you will need to "
+"configure your replica servers by hand.  Please see http://www.openldap.org/"
+"doc/admin24/syncrepl.html for details."
+msgstr ""
+
 #~ msgid "Change configuration to load backend modules?"
 #~ msgstr "Sửa đổi cấu hình để tải các mô-đun hậu phương không?"
 
@@ -494,10 +519,10 @@ msgstr ""
 #~ "replicated local database. See slapd.conf(5) for more details."
 #~ msgstr ""
 #~ "Trong tập tin cấu hình slapd của bạn, có ít nhất một cơ sở dữ liệu được "
-#~ "cấu hình là điều phụ, nhưng mà chưa lập tùy chọn « updateref ». Tùy chọn "
-#~ "« updateref » ghi rõ tham chiếu cần gởi về khi trình slapd được yêu cầu "
-#~ "sửa đổi một cơ sở dữ liệu cục bộ đã nhân đôi. Hãy xem trang hướng dẫn "
-#~ "(man) « slapd.conf(5) » để tìm chi tiết."
+#~ "cấu hình là điều phụ, nhưng mà chưa lập tùy chọn « updateref ». Tùy chọn « "
+#~ "updateref » ghi rõ tham chiếu cần gởi về khi trình slapd được yêu cầu sửa "
+#~ "đổi một cơ sở dữ liệu cục bộ đã nhân đôi. Hãy xem trang hướng dẫn (man) « "
+#~ "slapd.conf(5) » để tìm chi tiết."
 
 #~ msgid ""
 #~ "Starting with version 2.1.23, slapd requires the updateref option to be "

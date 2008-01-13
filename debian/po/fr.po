@@ -16,8 +16,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: fr\n"
-"Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
-"POT-Creation-Date: 2007-11-11 19:49-0800\n"
+"Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
+"POT-Creation-Date: 2008-01-12 14:20-0800\n"
 "PO-Revision-Date: 2006-05-12 22:28+0200\n"
 "Last-Translator: Christian Perrier <bubulle@debian.org>\n"
 "Language-Team: French <debian-l10n-french@lists.debian.org>\n"
@@ -60,8 +60,8 @@ msgid ""
 msgstr ""
 "Avant la mise à niveau du serveur OpenLDAP, les données de votre annuaire "
 "LDAP peuvent être exportées dans des fichiers au format texte LDIF qui est "
-"une description normalisée de ce type d'informations (« LDAP Data "
-"Interchange Format » : format d'échange de données LDAP)."
+"une description normalisée de ce type d'informations (« LDAP Data Interchange "
+"Format » : format d'échange de données LDAP)."
 
 #. Type: select
 #. Description
@@ -445,15 +445,15 @@ msgstr ""
 "Les modules BDB (back-bdb) et LDBM (back-ldbm) ont des buts analogues. Back-"
 "bdb a été développé en profitant de l'expérience acquise avec back-ldbm mais "
 "les deux sont sensiblement différents. Tous deux stockent les "
-"enregistrements avec une clé unique d'identification (« ID key ») sur "
-"32 bits en utilisant dn2id pour établir les correspondances entre noms "
-"distinctifs (DN) et clés uniques d'identification. Tous deux effectuent "
-"l'indexation des attributs avec le même code et conservent les données "
-"d'indexation sous forme de listes de clés d'identification. En conséquence, "
-"leurs fonctionnalités pour LDAP sont presque identiques. Les différences "
-"résident dans les interfaces de programmation d'applications (API : "
-"« Application Programming Interfaces ») utilisées pour la mise en oeuvre des "
-"bases de données. Back-ldbm utilise une API générique qui peut ensuite être "
+"enregistrements avec une clé unique d'identification (« ID key ») sur 32 bits "
+"en utilisant dn2id pour établir les correspondances entre noms distinctifs "
+"(DN) et clés uniques d'identification. Tous deux effectuent l'indexation des "
+"attributs avec le même code et conservent les données d'indexation sous "
+"forme de listes de clés d'identification. En conséquence, leurs "
+"fonctionnalités pour LDAP sont presque identiques. Les différences résident "
+"dans les interfaces de programmation d'applications (API : « Application "
+"Programming Interfaces ») utilisées pour la mise en oeuvre des bases de "
+"données. Back-ldbm utilise une API générique qui peut ensuite être "
 "interfacée avec plusieurs types de serveurs de bases de données. La version "
 "Debian est construite avec BerkeleyDB (BDB). Or, BerkeleyDB, bien qu'il gère "
 "cette interface générique, comporte une API bien plus riche et complexe. "
@@ -463,6 +463,31 @@ msgstr ""
 "améliorent le fonctionnement en parallèle et la fiabilité. Pour plus "
 "d'informations, veuillez consulter le fichier /usr/share/doc/slapd/README."
 "DB_CONFIG.gz."
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid "slurpd is obsolete; replicas must be reconfigured by hand"
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid ""
+"One or more slurpd \"replica\" options were found in your slapd config when "
+"upgrading.  Because slurpd is obsolete beginning with OpenLDAP  2.4, you "
+"will need to migrate your replicas to use the syncrepl protocol instead."
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid ""
+"Since syncrepl is a pull-based protocol instead of a push-based one, your "
+"configuration cannot be automatically converted for you and you will need to "
+"configure your replica servers by hand.  Please see http://www.openldap.org/"
+"doc/admin24/syncrepl.html for details."
+msgstr ""
 
 #~ msgid "Change configuration to load backend modules?"
 #~ msgstr ""
@@ -475,10 +500,10 @@ msgstr ""
 #~ "configuration has to be changed to load the modules for the backends you "
 #~ "are using."
 #~ msgstr ""
-#~ "Depuis OpenLDAP 2.1, les modules de bases de données (« backend "
-#~ "modules ») ne font plus partie intégrante du serveur mais chargés "
-#~ "dynamiquement au démarrage. En conséquence, la configuration de slapd "
-#~ "doit être modifiée pour charger les modules que vous souhaitez utiliser."
+#~ "Depuis OpenLDAP 2.1, les modules de bases de données (« backend modules ») "
+#~ "ne font plus partie intégrante du serveur mais chargés dynamiquement au "
+#~ "démarrage. En conséquence, la configuration de slapd doit être modifiée "
+#~ "pour charger les modules que vous souhaitez utiliser."
 
 #~ msgid ""
 #~ "If you choose this option, an attempt to fix the configuration will be "

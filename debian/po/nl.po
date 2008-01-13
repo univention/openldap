@@ -14,8 +14,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: openldap2\n"
-"Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
-"POT-Creation-Date: 2007-11-11 19:49-0800\n"
+"Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
+"POT-Creation-Date: 2008-01-12 14:20-0800\n"
 "PO-Revision-Date: 2006-07-18 12:24+0100\n"
 "Last-Translator: Bart Cornelis <cobaco@skolelinux.no>\n"
 "Language-Team: debian-l10n-dutch <debian-l10n-dutch@lists.debian.org>\n"
@@ -304,7 +304,8 @@ msgstr ""
 "configuratie. Bijvoorbeeld als de regels, die de toepasselijke modules voor "
 "de gebruikte backend-databasetypes laden, ontbreken. Als u deze opwaardering "
 "nogmaals wilt proberen dient u: de oude databasebestanden terug te kopiëren, "
-"de oorzaak van de mislukte 'slapcat'-aanroep te repareren, en 'slapcat > $location' uit te voeren."
+"de oorzaak van de mislukte 'slapcat'-aanroep te repareren, en 'slapcat > "
+"$location' uit te voeren."
 
 #. Type: note
 #. Description
@@ -453,6 +454,31 @@ msgstr ""
 "vergrendeling, en andere features die zorgen voor verbeterde betrouwbaarheid "
 "en 'concurrency' aan te bieden. Meer informatie vindt u in /usr/share/doc/"
 "slapd/README.DB_CONFIG.gz"
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid "slurpd is obsolete; replicas must be reconfigured by hand"
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid ""
+"One or more slurpd \"replica\" options were found in your slapd config when "
+"upgrading.  Because slurpd is obsolete beginning with OpenLDAP  2.4, you "
+"will need to migrate your replicas to use the syncrepl protocol instead."
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid ""
+"Since syncrepl is a pull-based protocol instead of a push-based one, your "
+"configuration cannot be automatically converted for you and you will need to "
+"configure your replica servers by hand.  Please see http://www.openldap.org/"
+"doc/admin24/syncrepl.html for details."
+msgstr ""
 
 #~ msgid "Change configuration to load backend modules?"
 #~ msgstr ""

@@ -14,8 +14,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: pkg-openldap-devel@lists.alioth.debian.org\n"
-"POT-Creation-Date: 2007-11-11 19:49-0800\n"
+"Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
+"POT-Creation-Date: 2008-01-12 14:20-0800\n"
 "PO-Revision-Date: 2006-10-29 20:42+0100\n"
 "Last-Translator: Helge Kreutzmann <debian@helgefjell.de>\n"
 "Language-Team: de <debian-l10n-german@lists.debian.org>\n"
@@ -69,12 +69,12 @@ msgid ""
 "and it has to be reimported. The \"never\" choice will just go ahead without "
 "ever dumping your database."
 msgstr ""
-"Die Auswahl von »always« führt dazu, dass die Betreuer-Skripte Ihre "
-"Datenbank bedingungslos ausgeben. Die Auswahl von »when needed« führt dazu, "
-"dass die Datenbank nur ausgegeben wird, falls die neue Version nicht mit dem "
-"alten Datenbankformat kompatibel ist und re-importiert werden muss. Die "
-"»never«-Auswahl führt dazu, dass fortgefahren wird, ohne Ihre Datenbank "
-"jemals auszugeben."
+"Die Auswahl von »always« führt dazu, dass die Betreuer-Skripte Ihre Datenbank "
+"bedingungslos ausgeben. Die Auswahl von »when needed« führt dazu, dass die "
+"Datenbank nur ausgegeben wird, falls die neue Version nicht mit dem alten "
+"Datenbankformat kompatibel ist und re-importiert werden muss. Die »never«-"
+"Auswahl führt dazu, dass fortgefahren wird, ohne Ihre Datenbank jemals "
+"auszugeben."
 
 #. Type: string
 #. Description
@@ -97,9 +97,9 @@ msgstr ""
 "wird. Innerhalb dieses Verzeichnisses werden mehrere LDIF-Dateien erstellt, "
 "die zu den im Server befindlichen Suchbasen korrespondieren. Stellen Sie "
 "sicher, dass Sie genug freien Platz auf der Partition haben, auf der sich "
-"das Verzeichnis befindet. Das erste Auftreten der Zeichenkette »VERSION« "
-"wird mit der Server-Version ersetzt, von der Sie das Upgrade aus "
-"durchführen. Die Standardeinstellung ist /var/backups/slapd-VERSION."
+"das Verzeichnis befindet. Das erste Auftreten der Zeichenkette »VERSION« wird "
+"mit der Server-Version ersetzt, von der Sie das Upgrade aus durchführen. Die "
+"Standardeinstellung ist /var/backups/slapd-VERSION."
 
 #. Type: boolean
 #. Description
@@ -311,7 +311,8 @@ msgstr ""
 "»slapadd« fehlschlägt. Die alten Datenbanken werden jetzt nach /var/backups "
 "verschoben. Falls Sie dieses Upgrade erneut versuchen wollen, verschieben "
 "Sie die alten Datenbanken zurück an ihren Platz, korrigieren Sie, was auch "
-"immer den Fehlschlag von slapcat ausgelöst hat, und führen Sie »slapcat > $location« aus. "
+"immer den Fehlschlag von slapcat ausgelöst hat, und führen Sie »slapcat > "
+"$location« aus. "
 
 #. Type: note
 #. Description
@@ -463,6 +464,31 @@ msgstr ""
 "Funktionen, die gleichzeitigen Zugriff und Zuverlässigkeit verbessern, "
 "anzubieten. Für weitere Informationen lesen Sie bitte /usr/share/doc/slapd/"
 "README.DB_CONFIG.gz."
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid "slurpd is obsolete; replicas must be reconfigured by hand"
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid ""
+"One or more slurpd \"replica\" options were found in your slapd config when "
+"upgrading.  Because slurpd is obsolete beginning with OpenLDAP  2.4, you "
+"will need to migrate your replicas to use the syncrepl protocol instead."
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid ""
+"Since syncrepl is a pull-based protocol instead of a push-based one, your "
+"configuration cannot be automatically converted for you and you will need to "
+"configure your replica servers by hand.  Please see http://www.openldap.org/"
+"doc/admin24/syncrepl.html for details."
+msgstr ""
 
 #~ msgid "Change configuration to load backend modules?"
 #~ msgstr "Konfiguration ändern, um Backend-Module zu laden?"
