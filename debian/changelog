@@ -124,6 +124,7 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
   * Brazilian Portuguese
   * Portuguese, thanks to Tiago Fernandes <tjg.fernandes@gmail.com>.
     Closes: #453341.
+  * Russian, thanks to Yuri Kozlov <kozlov.y@gmail.com>.  Closes: #453318.
 
  -- Steve Langasek <vorlon@debian.org>  Sat, 12 Jan 2008 22:17:29 -0800
 
