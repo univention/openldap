@@ -122,6 +122,8 @@ openldap2.3 (2.4.7-1) UNRELEASED; urgency=low
   * Japanese, thanks to Kenshi Muto <kmuto@debian.org>.  Closes: #451325.
   * Dutch, thanks to Bart Cornelis <cobaco@skolelinux.no>.  Closes: #448935.
   * Brazilian Portuguese
+  * Portuguese, thanks to Tiago Fernandes <tjg.fernandes@gmail.com>.
+    Closes: #453341.
 
  -- Steve Langasek <vorlon@debian.org>  Sat, 12 Jan 2008 22:17:29 -0800
 
