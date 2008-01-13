@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap2.3\n"
 "Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
-"POT-Creation-Date: 2008-01-12 20:20-0800\n"
+"POT-Creation-Date: 2008-01-13 15:32-0800\n"
 "PO-Revision-Date: 2007-11-14 19:02+0000\n"
 "Last-Translator: Jacobo Tarrio <jtarrio@debian.org>\n"
 "Language-Team: Galician <proxecto@trasno.net>\n"
@@ -16,13 +16,13 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:2001
+#: ../slapd.templates:1001
 msgid "Omit OpenLDAP server configuration?"
 msgstr "¿Omitir a configuración do servidor OpenLDAP?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:2001
+#: ../slapd.templates:1001
 msgid ""
 "If you enable this option, no initial configuration or database will be "
 "created for you."
@@ -32,31 +32,31 @@ msgstr ""
 
 #. Type: select
 #. Choices
-#: ../slapd.templates:3001
+#: ../slapd.templates:2001
 msgid "always"
 msgstr "sempre"
 
 #. Type: select
 #. Choices
-#: ../slapd.templates:3001
+#: ../slapd.templates:2001
 msgid "when needed"
 msgstr "cando se precise"
 
 #. Type: select
 #. Choices
-#: ../slapd.templates:3001
+#: ../slapd.templates:2001
 msgid "never"
 msgstr "nunca"
 
 #. Type: select
 #. Description
-#: ../slapd.templates:3002
+#: ../slapd.templates:2002
 msgid "Dump databases to file on upgrade:"
 msgstr "Envorcar as bases de datos a un ficheiro na actualización:"
 
 #. Type: select
 #. Description
-#: ../slapd.templates:3002
+#: ../slapd.templates:2002
 #, fuzzy
 msgid ""
 "Before upgrading to a new version of the OpenLDAP server, the data from your "
@@ -69,7 +69,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:3002
+#: ../slapd.templates:2002
 msgid ""
 "Selecting \"always\" will cause the databases to be dumped unconditionally "
 "before an upgrade. Selecting \"when needed\" will only dump the database if "
@@ -84,13 +84,13 @@ msgstr ""
 
 #. Type: string
 #. Description
-#: ../slapd.templates:4001
+#: ../slapd.templates:3001
 msgid "Directory to use for dumped databases:"
 msgstr "Directorio para as bases de datos envorcadas:"
 
 #. Type: string
 #. Description
-#: ../slapd.templates:4001
+#: ../slapd.templates:3001
 msgid ""
 "Please specify the directory where the LDAP databases will be exported. In "
 "this directory, several LDIF files will be created which correspond to the "
@@ -108,13 +108,13 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:5001
+#: ../slapd.templates:4001
 msgid "Move old database?"
 msgstr "¿Trasladar a base de datos antiga?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:5001
+#: ../slapd.templates:4001
 msgid ""
 "There are still files in /var/lib/ldap which will probably break the "
 "configuration process. If you enable this option, the maintainer scripts "
@@ -128,13 +128,13 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:6001
+#: ../slapd.templates:5001
 msgid "Retry configuration?"
 msgstr "¿Volver tentar a configuración?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:6001
+#: ../slapd.templates:5001
 msgid ""
 "The configuration you entered is invalid. Make sure that the DNS domain name "
 "is syntactically valid, the organization is not left empty and the admin "
@@ -150,13 +150,13 @@ msgstr ""
 
 #. Type: string
 #. Description
-#: ../slapd.templates:7001
+#: ../slapd.templates:6001
 msgid "DNS domain name:"
 msgstr "Nome de dominio DNS:"
 
 #. Type: string
 #. Description
-#: ../slapd.templates:7001
+#: ../slapd.templates:6001
 msgid ""
 "The DNS domain name is used to construct the base DN of the LDAP directory. "
 "For example, 'foo.example.org' will create the directory with 'dc=foo, "
@@ -168,13 +168,13 @@ msgstr ""
 
 #. Type: string
 #. Description
-#: ../slapd.templates:8001
+#: ../slapd.templates:7001
 msgid "Organization name:"
 msgstr "Nome da organización:"
 
 #. Type: string
 #. Description
-#: ../slapd.templates:8001
+#: ../slapd.templates:7001
 msgid ""
 "Please enter the name of the organization to use in the base DN of your LDAP "
 "directory."
@@ -184,26 +184,26 @@ msgstr ""
 
 #. Type: password
 #. Description
-#: ../slapd.templates:9001
+#: ../slapd.templates:8001
 msgid "Administrator password:"
 msgstr "Contrasinal do administrador:"
 
 #. Type: password
 #. Description
-#: ../slapd.templates:9001
+#: ../slapd.templates:8001
 msgid "Please enter the password for the admin entry in your LDAP directory."
 msgstr ""
 "Introduza o contrasinal para a entrada do administrador no directorio LDAP."
 
 #. Type: password
 #. Description
-#: ../slapd.templates:10001
+#: ../slapd.templates:9001
 msgid "Confirm password:"
 msgstr "Confirme o contrasinal:"
 
 #. Type: password
 #. Description
-#: ../slapd.templates:10001
+#: ../slapd.templates:9001
 #, fuzzy
 msgid ""
 "Please enter the admin password for your LDAP directory again to verify that "
@@ -214,31 +214,31 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:11001
+#: ../slapd.templates:10001
 msgid "Password mismatch"
 msgstr "Contrasinais distintos"
 
 #. Type: note
 #. Description
-#: ../slapd.templates:11001
+#: ../slapd.templates:10001
 msgid "The two passwords you entered were not the same. Please try again."
 msgstr "Os dous contrasinais que introduciu non son iguais. Volva tentalo."
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:12001
+#: ../slapd.templates:11001
 msgid "Do you want the database to be removed when slapd is purged?"
 msgstr "¿Quere que se elimine a base de datos ao purgar slapd?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:14001
+#: ../slapd.templates:13001
 msgid "Allow LDAPv2 protocol?"
 msgstr "¿Admitir o protocolo LDAPv2?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:14001
+#: ../slapd.templates:13001
 msgid ""
 "The obsolete LDAPv2 protocol is disabled by default in slapd. Programs and "
 "users should upgrade to LDAPv3.  If you have old programs which can't use "
@@ -252,13 +252,13 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:15001
+#: ../slapd.templates:14001
 msgid "Back up current database and create a new one?"
 msgstr "¿Facer unha copia da base de datos actual e crear unha nova?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:15001
+#: ../slapd.templates:14001
 msgid ""
 "The directory suffix (domain) you specified doesn't match the one currently "
 "in /etc/ldap/slapd.conf. Changing the directory suffix requires moving aside "
@@ -272,20 +272,20 @@ msgstr ""
 
 #. Type: error
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid "slapcat failure during upgrade"
 msgstr "Fallou a execución de slapcat durante a actualización"
 
 #. Type: error
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 #, fuzzy
 msgid "An error occurred while upgrading the LDAP directory."
 msgstr "Houbo un erro ao actualizar o directorio LDAP."
 
 #. Type: error
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 #, fuzzy
 msgid ""
 "The 'slapcat' program failed while extracting the LDAP directory. This may "
@@ -300,7 +300,7 @@ msgstr ""
 #. Description
 #. This paragraph is followed by a (non translatable) paragraph
 #. containing a command line
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid ""
 "This failure will cause 'slapadd' to fail later as well. The old database "
 "files will be moved to /var/backups. If you want to try this upgrade again, "
@@ -316,7 +316,7 @@ msgstr ""
 #. Description
 #. Translators: keep "$location" unchanged. This is a variable that
 #. will be replaced by a directory name at execution
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid ""
 "Then move the database files back to a backup area and then try running "
 "slapadd from $location."
@@ -326,13 +326,13 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:16001
 msgid "Change backend type from LDBM to BDB?"
 msgstr "¿Cambiar o tipo de motor de LDBM a BDB?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:16001
 msgid ""
 "The LDBM backend type has serious stability problems and has been deprecated "
 "by OpenLDAP as of 2.2. It is no longer supported by the OpenLDAP packages."
@@ -343,7 +343,7 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:16001
 msgid ""
 "When the BDB backend is used, it must be configured properly. For more "
 "information, see /usr/share/doc/slapd/README.DB_CONFIG.gz."
@@ -353,7 +353,7 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:16001
 msgid ""
 "If you enable this option, an attempt will be made to update the "
 "configuration to use BDB instead of LDBM and convert the databases. If you "
@@ -365,13 +365,13 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:18001
+#: ../slapd.templates:17001
 msgid "Database backend to use:"
 msgstr "Motor de base de datos a empregar:"
 
 #. Type: select
 #. Description
-#: ../slapd.templates:18001
+#: ../slapd.templates:17001
 msgid ""
 "The HDB backend is recommended. HDB and BDB use similar storage formats, but "
 "HDB adds support for subtree renames. Both support the same configuration "
@@ -383,7 +383,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:18001
+#: ../slapd.templates:17001
 msgid ""
 "In either case, you should review the resulting database configuration for "
 "your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more details."
@@ -394,13 +394,13 @@ msgstr ""
 
 #. Type: error
 #. Description
-#: ../slapd.templates:19001
+#: ../slapd.templates:18001
 msgid "slurpd is obsolete; replicas must be reconfigured by hand"
 msgstr ""
 
 #. Type: error
 #. Description
-#: ../slapd.templates:19001
+#: ../slapd.templates:18001
 msgid ""
 "One or more slurpd \"replica\" options were found in your slapd config when "
 "upgrading.  Because slurpd is obsolete beginning with OpenLDAP  2.4, you "
@@ -409,7 +409,7 @@ msgstr ""
 
 #. Type: error
 #. Description
-#: ../slapd.templates:19001
+#: ../slapd.templates:18001
 msgid ""
 "Since syncrepl is a pull-based protocol instead of a push-based one, your "
 "configuration cannot be automatically converted for you and you will need to "
