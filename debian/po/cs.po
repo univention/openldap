@@ -89,7 +89,7 @@ msgstr ""
 "Výběrem \"vždy\" zajistíte, že se databáze před každou aktualizací "
 "vyexportují do souborů. Výběrem \"v případě potřeby\" se databáze "
 "vyexportují pouze v případě, že je formát nové databáze nekompatibilní s "
-"předchozí verzí a tudíž je potřeba data znovu nahrát. Jestli zajistíte "
+"předchozí verzí a tudíž je potřeba data znovu nahrát. zajistíte-li "
 "\"nikdy\" data nevyexportuje."
 
 #. Type: string
