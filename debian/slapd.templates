@@ -169,7 +169,7 @@ _Description: slurpd is obsolete; replicas must be reconfigured by hand
  2.4, you will need to migrate your replicas to use the syncrepl
  protocol instead.
  .
- Since syncrepl is a pull-based protocol instead of a push-based one,
- your configuration cannot be automatically converted for you and you
- will need to configure your replica servers by hand.  Please see
- http://www.openldap.org/doc/admin24/syncrepl.html for details.
+ The conversion from slurpd to the pull-based syncrepl protocol cannot be
+ done automatically and you will need to configure your replica servers by
+ hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for
+ details.
