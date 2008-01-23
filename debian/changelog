@@ -3,6 +3,9 @@ openldap2.3 (2.4.7-4) UNRELEASED; urgency=low
   * Build-conflict with libicu-dev, for consistent dependencies in all
     build environments.
 
+  [ Updated debconf translations ]
+  * Japanese, thanks to Kenshi Muto <kmuto@debian.org>.  Closes: #462191.
+
  -- Steve Langasek <vorlon@debian.org>  Wed, 23 Jan 2008 05:44:03 -0800
 
 openldap2.3 (2.4.7-3) unstable; urgency=low

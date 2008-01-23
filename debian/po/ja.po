@@ -1,22 +1,22 @@
-#
+# 
 #    Translators, if you are not familiar with the PO format, gettext
 #    documentation is worth reading, especially sections dedicated to
 #    this format, e.g. by running:
 #         info -n '(gettext)PO Files'
 #         info -n '(gettext)Header Entry'
-#
+# 
 #    Some information specific to po-debconf are available at
 #            /usr/share/doc/po-debconf/README-trans
 #         or http://www.debian.org/intl/l10n/po-debconf/README-trans
-#
+# 
 #    Developers do not need to manually edit POT or PO files.
-#
+# 
 msgid ""
 msgstr ""
 "Project-Id-Version: openldap2.3\n"
 "Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
 "POT-Creation-Date: 2008-01-19 00:20-0800\n"
-"PO-Revision-Date: 2007-11-15 09:01+0900\n"
+"PO-Revision-Date: 2008-01-23 12:16+0900\n"
 "Last-Translator: Kenshi Muto <kmuto@debian.org>\n"
 "Language-Team: Japanese <debian-japanese@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -64,20 +64,18 @@ msgstr "更新時にデータベースをファイルにダンプ:"
 #. Type: select
 #. Description
 #: ../slapd.templates:2002
-#, fuzzy
 msgid ""
 "Before upgrading to a new version of the OpenLDAP server, the data from your "
 "LDAP directories can be dumped into plain text files in the standard LDAP "
 "Data Interchange Format."
 msgstr ""
 "OpenLDAP サーバの新しいバージョンへの更新の前に、LDAP ディレクトリのデータ"
-"を、データ標準記述形式のプレインテキストファイル (LDIF フォーマット) にダンプ"
-"できます (LDIF は LDAP データ交換フォーマットに基づいています)。"
+"を、標準 LDAP データ交換フォーマットのプレインテキストファイルにダンプできま"
+"す。"
 
 #. Type: select
 #. Description
 #: ../slapd.templates:2002
-#, fuzzy
 msgid ""
 "Selecting \"always\" will cause the databases to be dumped unconditionally "
 "before an upgrade. Selecting \"when needed\" will only dump the database if "
@@ -92,14 +90,12 @@ msgstr ""
 #. Type: string
 #. Description
 #: ../slapd.templates:3001
-#, fuzzy
 msgid "Directory to use for dumped databases:"
-msgstr "データベースがダンプされるディレクトリ:"
+msgstr "データベースのダンプに使うディレクトリ:"
 
 #. Type: string
 #. Description
 #: ../slapd.templates:3001
-#, fuzzy
 msgid ""
 "Please specify the directory where the LDAP databases will be exported. In "
 "this directory, several LDIF files will be created which correspond to the "
@@ -175,18 +171,16 @@ msgstr ""
 #. Type: string
 #. Description
 #: ../slapd.templates:7001
-#, fuzzy
 msgid "Organization name:"
-msgstr "組織の名前:"
+msgstr "組織名:"
 
 #. Type: string
 #. Description
 #: ../slapd.templates:7001
-#, fuzzy
 msgid ""
 "Please enter the name of the organization to use in the base DN of your LDAP "
 "directory."
-msgstr "LDAP ディレクトリのベース DN 内で遣う組織の名前を入力してください。"
+msgstr "LDAP ディレクトリのベース DN 内で使う組織の名前を入力してください。"
 
 #. Type: password
 #. Description
@@ -197,7 +191,6 @@ msgstr "管理者のパスワード:"
 #. Type: password
 #. Description
 #: ../slapd.templates:8001
-#, fuzzy
 msgid "Please enter the password for the admin entry in your LDAP directory."
 msgstr ""
 "あなたの LDAP ディレクトリでの管理者エントリのパスワードを入力してください。"
@@ -211,13 +204,12 @@ msgstr "パスワードの確認:"
 #. Type: password
 #. Description
 #: ../slapd.templates:9001
-#, fuzzy
 msgid ""
 "Please enter the admin password for your LDAP directory again to verify that "
 "you have typed it correctly."
 msgstr ""
-"確認のために、先ほど入力した同じ LDAP ディレクトリでの admin のパスワードを再"
-"度入力してください。"
+"正しくタイプしたかの確認のために、先ほど入力したのと同じ LDAP ディレクトリ用"
+"の admin のパスワードを再度入力してください。"
 
 #. Type: note
 #. Description
@@ -246,7 +238,6 @@ msgstr "LDAPv2 プロトコルを許可しますか?"
 #. Type: boolean
 #. Description
 #: ../slapd.templates:13001
-#, fuzzy
 msgid ""
 "The obsolete LDAPv2 protocol is disabled by default in slapd. Programs and "
 "users should upgrade to LDAPv3.  If you have old programs which can't use "
@@ -255,7 +246,7 @@ msgid ""
 msgstr ""
 "時代遅れの LDAPv2 プロトコルは slapd のデフォルトで無効になっています。プログ"
 "ラムおよびユーザは LDAPv3 に更新すべきです。いくつかの古いプログラムが "
-"LDAPv3 を利用できないのなら、この選択肢で「はい」を選ぶと、'allow bind_v2' "
+"LDAPv3 を利用できないのなら、この選択肢で「はい」を選べば、'allow bind_v2' "
 "が slapd.conf に追加されます。"
 
 #. Type: boolean
@@ -288,21 +279,19 @@ msgstr "更新中に slapcat が失敗"
 #. Type: error
 #. Description
 #: ../slapd.templates:15001
-#, fuzzy
 msgid "An error occurred while upgrading the LDAP directory."
-msgstr "LDAP ディレクトリの更新の試行中にエラーが発生しました。"
+msgstr "LDAP ディレクトリの更新中にエラーが発生しました。"
 
 #. Type: error
 #. Description
 #: ../slapd.templates:15001
-#, fuzzy
 msgid ""
 "The 'slapcat' program failed while extracting the LDAP directory. This may "
 "be caused by an incorrect configuration file (for example, missing "
 "'moduleload' lines to support the backend database)."
 msgstr ""
-"LDAP ディレクトリの展開を試みる 'slapcat' プログラムが失敗しました。これは不"
-"正な設定ファイル (たとえばバックエンドデータベースをサポートするための "
+"LDAP ディレクトリの展開中に 'slapcat' プログラムが失敗しました。これは不正な"
+"設定ファイル (たとえばバックエンドデータベースをサポートするための "
 "'moduleload' 行がないなど) によって引き起こされた可能性があります。"
 
 #. Type: error
@@ -310,7 +299,6 @@ msgstr ""
 #. This paragraph is followed by a (non translatable) paragraph
 #. containing a command line
 #: ../slapd.templates:15001
-#, fuzzy
 msgid ""
 "This failure will cause 'slapadd' to fail later as well. The old database "
 "files will be moved to /var/backups. If you want to try this upgrade again, "
@@ -404,7 +392,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:18001
 msgid "slurpd is obsolete; replicas must be reconfigured by hand"
-msgstr ""
+msgstr "slurpd は時代遅れです; 複製は手動で設定しなければなりません"
 
 #. Type: error
 #. Description
@@ -414,6 +402,9 @@ msgid ""
 "upgrading.  Because slurpd is obsolete beginning with OpenLDAP  2.4, you "
 "will need to migrate your replicas to use the syncrepl protocol instead."
 msgstr ""
+"更新中、1つ以上の slurpd の \"replica\" オプションがあなたの slapd 設定に見つ"
+"かりました。slurpd は OpenLDAP 2.4 から時代遅れになっているので、syncrepl プ"
+"ロトコルを代わりに使うようにあなたの複製を移行する必要があります。"
 
 #. Type: error
 #. Description
@@ -424,12 +415,6 @@ msgid ""
 "hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for "
 "details."
 msgstr ""
-
-#~ msgid ""
-#~ "Before the upgrade to a new version of the OpenLDAP server, the LDAP "
-#~ "directories can be dumped into plain text LDIF files (in the standardized "
-#~ "LDAP Data Interchange Format)."
-#~ msgstr ""
-#~ "OpenLDAP サーバの新しいバージョンへの更新の前に、LDAP ディレクトリを、プレ"
-#~ "インテキストの LDIF ファイル (標準 LDAP データ交換フォーマット) にダンプで"
-#~ "きます。"
+"slurpd からプルベースの syncrepl プロトコルへの変換は自動では行うことができ"
+"ず、あなたの複製サーバを手動で設定する必要があります。詳細については http://"
+"www.openldap.org/doc/admin24/syncrepl.html を参照してください。"
