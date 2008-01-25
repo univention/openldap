@@ -437,6 +437,7 @@ migrate_checkpoint_and_slurpd() {					# {{{
 
 		$has_replica = 0;
 		$backend_bdb = $backend_hdb = 0;
+		$in_bdb = $in_hdb = 0;
 		$checkpoint_bdb = "";
 		$checkpoint_hdb = "";
 
@@ -462,17 +463,21 @@ migrate_checkpoint_and_slurpd() {					# {{{
 				$backend_bdb = 1 if (/^backend\s+bdb/);
 				$backend_hdb = 1 if (/^backend\s+hdb/);
 				if (/^checkpoint\s+/) {
-					$checkpoint_bdb = $_ if ($backend_bdb);
-					$checkpoint_hdb = $_ if ($backend_hdb);
-					next if ($backend_bdb || $backend_hdb);
+					$checkpoint_bdb = $_ if ($backend_bdb || $in_bdb);
+					$checkpoint_hdb = $_ if ($backend_hdb || $in_bdb);
+					next if ($backend_bdb || $backend_hdb || $in_bdb || $in_hdb);
 				}
-				if (/^database\s+bdb/)
+				$in_bdb = 1 if /^database\s+bdb/;
+				$in_hdb = 1 if /^database\s+hdb/;
+				if (/^suffix/ && $in_bdb)
 				{
+					$in_bdb = 0;
 					print $fh $_ . $checkpoint_bdb;
 					next;
 				}
-				if (/^database\s+hdb/)
+				if (/^suffix/ && $in_hdb)
 				{
+					$in_hdb = 0;
 					print $fh $_ . $checkpoint_hdb;
 					next;
 				}

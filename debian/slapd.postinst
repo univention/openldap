@@ -43,7 +43,7 @@ postinst_upgrade_configuration() {					# {{{
 		fi
 	fi
 
-	if previous_version_older 2.4.7-1; then
+	if previous_version_older 2.4.7-4; then
 		if ! migrate_checkpoint_and_slurpd; then
 			db_input critical slapd/slurpd_obsolete || true
 			db_go || true
