@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: openldap2.3\n"
 "Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
 "POT-Creation-Date: 2008-01-19 00:20-0800\n"
-"PO-Revision-Date: 2007-11-14 17:31+0200\n"
+"PO-Revision-Date: 2008-01-26 23:23+0200\n"
 "Last-Translator: Esko Arajärvi <edu@iki.fi>\n"
 "Language-Team: Finnish <debian-l10n-finnish@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -21,11 +21,10 @@ msgstr "Ohitetaanko OpenLDAP-palvelimen asetus?"
 #. Type: boolean
 #. Description
 #: ../slapd.templates:1001
-#, fuzzy
 msgid ""
 "If you enable this option, no initial configuration or database will be "
 "created for you."
-msgstr "Jos valitset tämän, asetuksia ja tietokantaa ei luoda."
+msgstr "Jos valitset tämän vaihtoehdon, asetuksia ja tietokantaa ei luoda."
 
 #. Type: select
 #. Choices
@@ -54,20 +53,18 @@ msgstr "Vedosta tietokannat tiedostoon päivitettäessä:"
 #. Type: select
 #. Description
 #: ../slapd.templates:2002
-#, fuzzy
 msgid ""
 "Before upgrading to a new version of the OpenLDAP server, the data from your "
 "LDAP directories can be dumped into plain text files in the standard LDAP "
 "Data Interchange Format."
 msgstr ""
 "Ennen päivitystä OpenLDAP-palvelimen uuteen versioon, LDAP-hakemistoista "
-"voidaan tallentaa vedos LDIF-tekstitiedostoiksi (standardoidussa LDAP-"
-"tiedonsiirtomuodossa)."
+"voidaan tallentaa vedos standardissa LDAP-tiedonsiirtomuodossa oleviin "
+"tekstitiedostoihin."
 
 #. Type: select
 #. Description
 #: ../slapd.templates:2002
-#, fuzzy
 msgid ""
 "Selecting \"always\" will cause the databases to be dumped unconditionally "
 "before an upgrade. Selecting \"when needed\" will only dump the database if "
@@ -83,14 +80,12 @@ msgstr ""
 #. Type: string
 #. Description
 #: ../slapd.templates:3001
-#, fuzzy
 msgid "Directory to use for dumped databases:"
 msgstr "Tietokantavedosten hakemisto:"
 
 #. Type: string
 #. Description
 #: ../slapd.templates:3001
-#, fuzzy
 msgid ""
 "Please specify the directory where the LDAP databases will be exported. In "
 "this directory, several LDIF files will be created which correspond to the "
@@ -99,11 +94,11 @@ msgid ""
 "string \"VERSION\" is replaced with the server version you are upgrading "
 "from."
 msgstr ""
-"Anna hakemisto, johon viennit LDAP-tietokannoista tehdään. Hakemistoon "
-"luodaan useita LDIF-tiedostoja, joiden sisältö vastaa palvelimen "
-"hakukantoja. Varmista, että valitulla levyosiolla on tarpeeksi vapaata "
-"tilaa. Merkkijonon ”VERSION” ensimmäinen esiintymä korvataan päivitettävän "
-"palvelimen versionumerolla."
+"Anna hakemisto, johon LDAP-tietokannat vedostetaan. Hakemistoon luodaan "
+"useita LDIF-tiedostoja, joiden sisältö vastaa palvelimen hakukantoja. "
+"Varmista, että valitulla levyosiolla on tarpeeksi vapaata tilaa. Merkkijonon "
+"”VERSION” ensimmäinen esiintymä korvataan päivitettävän palvelimen "
+"versionumerolla."
 
 #. Type: boolean
 #. Description
@@ -133,7 +128,6 @@ msgstr "Yritetäänkö asetusten tekoa uudelleen?"
 #. Type: boolean
 #. Description
 #: ../slapd.templates:5001
-#, fuzzy
 msgid ""
 "The configuration you entered is invalid. Make sure that the DNS domain name "
 "is syntactically valid, the organization is not left empty and the admin "
@@ -141,9 +135,9 @@ msgid ""
 "server will not be set up. Run 'dpkg-reconfigure slapd' if you want to retry "
 "later."
 msgstr ""
-"Antamasi asetukset ovat epäkelpoja. Varmista, että DNS-aluenimi on oikea, "
-"organisaatiokenttä ei ole tyhjä ja että ylläpitosalasanat täsmäävät. Jos "
-"päätät olla yrittämättä asetusten tekemistä uudelleen, LDAP-palvelimen "
+"Antamasi asetukset ovat epäkelpoja. Varmista, että DNS-aluenimen syntaksi on "
+"oikea, organisaatiokenttä ei ole tyhjä ja että ylläpitosalasanat täsmäävät. "
+"Jos päätät olla yrittämättä asetusten tekemistä uudelleen, LDAP-palvelimen "
 "asetukset eivät ole valmiit. Voit tehdä asetukset myöhemmin ajamalla "
 "komennon ”dpkg-reconfigure slapd”."
 
@@ -168,14 +162,12 @@ msgstr ""
 #. Type: string
 #. Description
 #: ../slapd.templates:7001
-#, fuzzy
 msgid "Organization name:"
-msgstr "Organisaatio:"
+msgstr "Organisaation nimi:"
 
 #. Type: string
 #. Description
 #: ../slapd.templates:7001
-#, fuzzy
 msgid ""
 "Please enter the name of the organization to use in the base DN of your LDAP "
 "directory."
@@ -190,7 +182,6 @@ msgstr "Ylläpitosalasana:"
 #. Type: password
 #. Description
 #: ../slapd.templates:8001
-#, fuzzy
 msgid "Please enter the password for the admin entry in your LDAP directory."
 msgstr "Anna LDAP-hakemiston ylläpitosalasana."
 
@@ -203,12 +194,11 @@ msgstr "Vahvista salasana:"
 #. Type: password
 #. Description
 #: ../slapd.templates:9001
-#, fuzzy
 msgid ""
 "Please enter the admin password for your LDAP directory again to verify that "
 "you have typed it correctly."
 msgstr ""
-"Syötäthän saman LDAP-hakemiston salasanan uudelleen varmistaaksesi, että "
+"Syötä LDAP-hakemiston ylläpitosalasana uudelleen varmistaaksesi, että "
 "kirjoitit sen oikein."
 
 #. Type: note
@@ -226,11 +216,8 @@ msgstr "Syöttämäsi kaksi salasanaa eivät olleet sama. Yritä uudelleen."
 #. Type: boolean
 #. Description
 #: ../slapd.templates:11001
-#, fuzzy
 msgid "Do you want the database to be removed when slapd is purged?"
-msgstr ""
-"Haluatko, että LDAP-tietokanta poistetaan poistettaessa paketti ja sen "
-"asetustiedostot?"
+msgstr "Haluatko, että tietokanta poistetaan siivottaessa paketti slapd?"
 
 #. Type: boolean
 #. Description
@@ -241,17 +228,16 @@ msgstr "Sallitaanko LDAPv2-yhteyskäytäntö?"
 #. Type: boolean
 #. Description
 #: ../slapd.templates:13001
-#, fuzzy
 msgid ""
 "The obsolete LDAPv2 protocol is disabled by default in slapd. Programs and "
 "users should upgrade to LDAPv3.  If you have old programs which can't use "
 "LDAPv3, you should select this option and 'allow bind_v2' will be added to "
 "your slapd.conf file."
 msgstr ""
-"Vanhentunut LDAPv2-yhteyskäytäntö on oletuksena poissa käytöstä. Ohjelmien "
-"ja käyttäjien tulisi päivittää versioon LDAPv3. Jos jotkut vanhat ohjelmat "
-"eivät voi käyttää LDAPv3-yhteyskäytäntöä, valitse tämä, jolloin ”allow "
-"bind_v2” lisätään tiedostoon slapd.conf."
+"Vanhentunut LDAPv2-yhteyskäytäntö on slapdissa oletuksena poissa käytöstä. "
+"Ohjelmien ja käyttäjien tulisi päivittää versioon LDAPv3. Jos jotkut vanhat "
+"ohjelmat eivät voi käyttää LDAPv3-yhteyskäytäntöä, valitse tämä, jolloin "
+"”allow bind_v2” lisätään tiedostoon slapd.conf."
 
 #. Type: boolean
 #. Description
@@ -282,14 +268,12 @@ msgstr "Toimintahäiriö ohjelmassa slapcat päivityksen aikana"
 #. Type: error
 #. Description
 #: ../slapd.templates:15001
-#, fuzzy
 msgid "An error occurred while upgrading the LDAP directory."
-msgstr "Yritettäessä päivittää LDAP-hakemistoa tapahtui virhe."
+msgstr "Päivitettäessä LDAP-hakemistoa tapahtui virhe."
 
 #. Type: error
 #. Description
 #: ../slapd.templates:15001
-#, fuzzy
 msgid ""
 "The 'slapcat' program failed while extracting the LDAP directory. This may "
 "be caused by an incorrect configuration file (for example, missing "
@@ -304,7 +288,6 @@ msgstr ""
 #. This paragraph is followed by a (non translatable) paragraph
 #. containing a command line
 #: ../slapd.templates:15001
-#, fuzzy
 msgid ""
 "This failure will cause 'slapadd' to fail later as well. The old database "
 "files will be moved to /var/backups. If you want to try this upgrade again, "
@@ -312,8 +295,8 @@ msgid ""
 "slapcat to fail, and run:"
 msgstr ""
 "Tämän toimintahäiriön takia ohjelmassa ”slapadd” tulee myöhemmin ilmenemään "
-"toimintahäiriö. Vanhat tietokantatiedostot tullaan siirtämään hakemistoon /"
-"var/backups. Jos haluat yrittää päivittämistä uudelleen, vanhat "
+"toimintahäiriö. Vanhat tietokantatiedostot siirretään hakemistoon /var/"
+"backups. Jos haluat yrittää päivittämistä uudelleen, vanhat "
 "tietokantatiedostot tulisi siirtää takaisin paikoilleen, korjata "
 "toimintahäiriön aiheuttanut virhe ja ajaa:"
 
@@ -333,7 +316,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:16001
 msgid "Change backend type from LDBM to BDB?"
-msgstr "Vaihdetaanko taustatietokannan tyyppi LDBM:stä BDB:hen?"
+msgstr "Vaihdetaanko taustatietokannan tyyppi LDBM:stä BDB:een?"
 
 #. Type: boolean
 #. Description
@@ -365,7 +348,7 @@ msgid ""
 "configuration to use BDB instead of LDBM and convert the databases. If you "
 "do not enable this option, the upgrade will be aborted."
 msgstr ""
-"Jos valitset tämän, yritetään päivittää asetukset käyttämään BDB:tä LDBM:n "
+"Jos valitset tämän, yritetään asetukset päivittää käyttämään BDB:tä LDBM:n "
 "sijaan ja muuntaa tietokanta. Jos et valitse tätä, päivitys keskeytetään."
 
 #. Type: select
@@ -401,7 +384,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:18001
 msgid "slurpd is obsolete; replicas must be reconfigured by hand"
-msgstr ""
+msgstr "slurpd on vanhentunut; kopioiden asetukset tulee tehdä käsin uudelleen"
 
 #. Type: error
 #. Description
@@ -411,6 +394,9 @@ msgid ""
 "upgrading.  Because slurpd is obsolete beginning with OpenLDAP  2.4, you "
 "will need to migrate your replicas to use the syncrepl protocol instead."
 msgstr ""
+"Päivitettäessä slapdin asetuksista löytyi yksi tai useampia ”replica”-"
+"asetuksia. Koska slurpd on vanhentunut OpenLDAPin versiosta 2.4 alkaen, "
+"tulee kopiot vaihtaa käyttämään syncrepl-yhteyskäytäntöä."
 
 #. Type: error
 #. Description
@@ -421,3 +407,7 @@ msgid ""
 "hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for "
 "details."
 msgstr ""
+"Muunnosta slurpdista vetoon perustuvaan syncrepl-yhteyskäytäntöön ei voida "
+"tehdä automaattisesti ja kopiopalvelimien asetukset tulee tehdä käsin. "
+"Lisätietoja (englanniksi) löytyy tiedostosta http://www.openldap.org/doc/"
+"admin24/syncrepl.html."
