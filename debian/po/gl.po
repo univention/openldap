@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: openldap2.3\n"
 "Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
 "POT-Creation-Date: 2008-01-19 00:20-0800\n"
-"PO-Revision-Date: 2007-11-14 19:02+0000\n"
+"PO-Revision-Date: 2008-01-28 18:58+0000\n"
 "Last-Translator: Jacobo Tarrio <jtarrio@debian.org>\n"
 "Language-Team: Galician <proxecto@trasno.net>\n"
 "MIME-Version: 1.0\n"
@@ -57,14 +57,13 @@ msgstr "Envorcar as bases de datos a un ficheiro na actualización:"
 #. Type: select
 #. Description
 #: ../slapd.templates:2002
-#, fuzzy
 msgid ""
 "Before upgrading to a new version of the OpenLDAP server, the data from your "
 "LDAP directories can be dumped into plain text files in the standard LDAP "
 "Data Interchange Format."
 msgstr ""
-"Antes de se actualizar a unha nova versión do servidor OpenLDAP os datos dos "
-"seus directorios LDAP pódense envorcar a ficheiros de texto normal no "
+"Antes de se actualizar a unha nova versión do servidor OpenLDAP, pódense "
+"envorcar os datos dos seus directorios LDAP a ficheiros de texto normal no "
 "formato estándar LDIF, formato de intercambio de datos LDAP."
 
 #. Type: select
@@ -204,7 +203,6 @@ msgstr "Confirme o contrasinal:"
 #. Type: password
 #. Description
 #: ../slapd.templates:9001
-#, fuzzy
 msgid ""
 "Please enter the admin password for your LDAP directory again to verify that "
 "you have typed it correctly."
@@ -279,14 +277,12 @@ msgstr "Fallou a execución de slapcat durante a actualización"
 #. Type: error
 #. Description
 #: ../slapd.templates:15001
-#, fuzzy
 msgid "An error occurred while upgrading the LDAP directory."
 msgstr "Houbo un erro ao actualizar o directorio LDAP."
 
 #. Type: error
 #. Description
 #: ../slapd.templates:15001
-#, fuzzy
 msgid ""
 "The 'slapcat' program failed while extracting the LDAP directory. This may "
 "be caused by an incorrect configuration file (for example, missing "
@@ -396,7 +392,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:18001
 msgid "slurpd is obsolete; replicas must be reconfigured by hand"
-msgstr ""
+msgstr "slurpd está obsoleto; é preciso reconfigurar as réplicas á man"
 
 #. Type: error
 #. Description
@@ -406,6 +402,9 @@ msgid ""
 "upgrading.  Because slurpd is obsolete beginning with OpenLDAP  2.4, you "
 "will need to migrate your replicas to use the syncrepl protocol instead."
 msgstr ""
+"Atopouse unha ou máis opcións \"replica\" na configuración de slapd ao "
+"actualizar. Como slurpd está obsoleto a partires de OpenLDAP 2.4, ha ter que "
+"migrar as súas réplicas para que empreguen no seu canto o protocolo syncrepl."
 
 #. Type: error
 #. Description
@@ -416,3 +415,7 @@ msgid ""
 "hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for "
 "details."
 msgstr ""
+"Non se pode realizar automaticamente a conversión de slurpd ao protocolo "
+"syncrepl baseado en pull, e ha ter que configurar manualmente os seus "
+"servidores réplica. Consulte http://www.openldap.org/doc/admin24/syncrepl."
+"html para máis detalles."
