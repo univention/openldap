@@ -16,7 +16,7 @@ msgstr ""
 "Project-Id-Version: openldap2.3\n"
 "Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
 "POT-Creation-Date: 2008-01-19 00:20-0800\n"
-"PO-Revision-Date: 2007-12-29 16:26+0100\n"
+"PO-Revision-Date: 2008-01-31 21:20+0100\n"
 "Last-Translator: Miroslav Kure <kurem@debian.cz>\n"
 "Language-Team: Czech <debian-l10n-czech@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -66,31 +66,29 @@ msgstr "Při aktualizaci uložit databáze do souboru:"
 #. Type: select
 #. Description
 #: ../slapd.templates:2002
-#, fuzzy
 msgid ""
 "Before upgrading to a new version of the OpenLDAP server, the data from your "
 "LDAP directories can be dumped into plain text files in the standard LDAP "
 "Data Interchange Format."
 msgstr ""
-"Před aktualizací na novější verzi serveru OpenLDAP se musí data z LDAP "
+"Před aktualizací na novější verzi serveru OpenLDAP se mohou data z LDAP "
 "adresářů vyexportovat do textových souborů ve formátu LDAP Data Interchange "
 "Format, což je standardizovaný formát pro popis těchto dat."
 
 #. Type: select
 #. Description
 #: ../slapd.templates:2002
-#, fuzzy
 msgid ""
 "Selecting \"always\" will cause the databases to be dumped unconditionally "
 "before an upgrade. Selecting \"when needed\" will only dump the database if "
 "the new version is incompatible with the old database format and it needs to "
 "be reimported. If you select \"never\", no dump will be done."
 msgstr ""
-"Výběrem \"vždy\" zajistíte, že se databáze před každou aktualizací "
-"vyexportují do souborů. Výběrem \"v případě potřeby\" se databáze "
-"vyexportují pouze v případě, že je formát nové databáze nekompatibilní s "
-"předchozí verzí a tudíž je potřeba data znovu nahrát. Zajistíte-li \"nikdy\" "
-"data nevyexportuje."
+"Výběrem „“vždy“ zajistíte, že se databáze vyexportují do souborů před každou "
+"aktualizací. Volba „v případě potřeby“ znamená, že se databáze vyexportují "
+"pouze v případě, že je formát nové databáze nekompatibilní s předchozí verzí "
+"a tudíž je potřeba data znovu nahrát. Zvolíte-li „nikdy“, data se nebudou "
+"exportovat."
 
 #. Type: string
 #. Description
@@ -211,13 +209,12 @@ msgstr "Potvrzení hesla:"
 #. Type: password
 #. Description
 #: ../slapd.templates:9001
-#, fuzzy
 msgid ""
 "Please enter the admin password for your LDAP directory again to verify that "
 "you have typed it correctly."
 msgstr ""
-"Zadejte znovu administrátorské heslo do LDAP adresáře, že jste jej zadali "
-"správně."
+"Zadejte prosím znovu administrátorské heslo k LDAP adresáři, abyste se "
+"ujistili, že jste jej zadali správně."
 
 #. Type: note
 #. Description
@@ -234,7 +231,6 @@ msgstr "Zadaná hesla nejsou stejná. Zkuste to znovu."
 #. Type: boolean
 #. Description
 #: ../slapd.templates:11001
-#, fuzzy
 msgid "Do you want the database to be removed when slapd is purged?"
 msgstr "Chcete při vyčištění balíku slapd ze systému smazat i databázi?"
 
@@ -247,17 +243,16 @@ msgstr "Povolit protokol LDAPv2?"
 #. Type: boolean
 #. Description
 #: ../slapd.templates:13001
-#, fuzzy
 msgid ""
 "The obsolete LDAPv2 protocol is disabled by default in slapd. Programs and "
 "users should upgrade to LDAPv3.  If you have old programs which can't use "
 "LDAPv3, you should select this option and 'allow bind_v2' will be added to "
 "your slapd.conf file."
 msgstr ""
-"Daemon slapd nyní implicitně zakazuje zastaralý protokol LDAPv2, protože se "
-"předpokládá, že programy i uživatelé již přešli na LDAPv3. Máte-li staré "
-"programy, které nezvládají LDAPv3, povolte tuto možnost, což do souboru "
-"slapd.conf přidá řádek „allow bind_v2“."
+"Zastaralý protokol LDAPv2 je nyní v slapd implicitně zakázán. Programy i "
+"uživatelé by měli přejít na LDAPv3. Máte-li staré programy, které nezvládají "
+"LDAPv3, povolte tuto možnost, což do souboru slapd.conf přidá řádek „allow "
+"bind_v2“."
 
 #. Type: boolean
 #. Description
@@ -288,14 +283,12 @@ msgstr "slapcat během aktualizace selhal"
 #. Type: error
 #. Description
 #: ../slapd.templates:15001
-#, fuzzy
 msgid "An error occurred while upgrading the LDAP directory."
 msgstr "Při pokusu o aktualizaci LDAP adresáře se vyskytla chyba."
 
 #. Type: error
 #. Description
 #: ../slapd.templates:15001
-#, fuzzy
 msgid ""
 "The 'slapcat' program failed while extracting the LDAP directory. This may "
 "be caused by an incorrect configuration file (for example, missing "
@@ -404,7 +397,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:18001
 msgid "slurpd is obsolete; replicas must be reconfigured by hand"
-msgstr ""
+msgstr "slurpd je zastaralý, repliky se musí znovu nastavit ručně"
 
 #. Type: error
 #. Description
@@ -414,6 +407,10 @@ msgid ""
 "upgrading.  Because slurpd is obsolete beginning with OpenLDAP  2.4, you "
 "will need to migrate your replicas to use the syncrepl protocol instead."
 msgstr ""
+"Při aktualizaci byla v konfiguračním souboru slapd nalezena nejméně jedna "
+"volba „replica“ pro slurpd. Protože je slurpd od OpenLDAPu verze 2.4 "
+"překonaný, budete muset své repliky převést, aby místo toho používaly "
+"protokol syncrepl."
 
 #. Type: error
 #. Description
@@ -424,3 +421,6 @@ msgid ""
 "hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for "
 "details."
 msgstr ""
+"Konverzi ze slurpd na protokol syncrepl (založený na technologii pull) nelze "
+"provést automaticky a budete muset své replikační servery nastavit ručně. "
+"Podrobnosti naleznete na http://www.openldap.org/doc/admin24/syncrepl.html."
