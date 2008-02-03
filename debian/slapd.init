@@ -162,7 +162,7 @@ start_slapd() {
 # $reason.
 stop_slapd() {
 	echo -n " slapd"
-	reason="`start-stop-daemon --stop --quiet --oknodo --retry 10 \
+	reason="`start-stop-daemon --stop --quiet --oknodo --retry TERM/10 \
 		--pidfile "$SLAPD_PIDFILE" \
 		--exec $SLAPD 2>&1`"
 }
