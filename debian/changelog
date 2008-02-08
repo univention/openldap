@@ -7,6 +7,8 @@ openldap2.3 (2.4.7-5) UNRELEASED; urgency=low
     Closes: #463149.
   * Russian, thanks to Yuri Kozlov <kozlov.y@gmail.com>.  Closes: #463442.
   * Czech, thanks to Miroslav Kure <kurem@debian.cz>.  Closes: #463472.
+  * German, thanks to Helge Kreutzmann <debian@helgefjell.de>.
+    Closes: #464718.
 
   [ Steve Langasek ]
   * Add new patch, gnutls-ciphers, to fix support for specifying multiple
