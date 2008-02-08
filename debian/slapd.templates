@@ -165,7 +165,7 @@ Template: slapd/slurpd_obsolete
 Type: error
 _Description: slurpd is obsolete; replicas must be reconfigured by hand
  One or more slurpd "replica" options were found in your slapd config
- when upgrading.  Because slurpd is obsolete beginning with OpenLDAP 
+ when upgrading.  Because slurpd is obsolete beginning with OpenLDAP
  2.4, you will need to migrate your replicas to use the syncrepl
  protocol instead.
  .

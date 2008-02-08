@@ -409,7 +409,7 @@ msgstr "slurpd устарел; реплики должны быть перена
 #: ../slapd.templates:18001
 msgid ""
 "One or more slurpd \"replica\" options were found in your slapd config when "
-"upgrading.  Because slurpd is obsolete beginning with OpenLDAP  2.4, you "
+"upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, you "
 "will need to migrate your replicas to use the syncrepl protocol instead."
 msgstr ""
 "При обновлении в вашем конфигурационном файле для slapd найден один или "

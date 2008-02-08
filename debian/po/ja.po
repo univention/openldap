@@ -399,7 +399,7 @@ msgstr "slurpd は時代遅れです; 複製は手動で設定しなければな
 #: ../slapd.templates:18001
 msgid ""
 "One or more slurpd \"replica\" options were found in your slapd config when "
-"upgrading.  Because slurpd is obsolete beginning with OpenLDAP  2.4, you "
+"upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, you "
 "will need to migrate your replicas to use the syncrepl protocol instead."
 msgstr ""
 "更新中、1つ以上の slurpd の \"replica\" オプションがあなたの slapd 設定に見つ"
