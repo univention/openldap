@@ -6,7 +6,7 @@ difference when comparing certificates.
 
 Partially addresses Debian bug #462588.
 
-To be forwarded upstream.
+Forwarded upstream as ITS #5361.
 
 Index: libraries/libldap/tls.c
 ===================================================================
