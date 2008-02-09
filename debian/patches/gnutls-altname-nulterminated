@@ -1,0 +1,23 @@
+Author: Steve Langasek <vorlon@debian.org>
+
+When using GnuTLS, the size returned for subjectAltNames includes a
+terminating NUL whereas the size of a CN does not; account for this
+difference when comparing certificates.
+
+Partially addresses Debian bug #462588.
+
+To be forwarded upstream.
+
+Index: libraries/libldap/tls.c
+===================================================================
+--- libraries/libldap/tls.c	(revision 1074)
++++ libraries/libldap/tls.c	(working copy)
+@@ -1846,7 +1846,7 @@
+ 			if (ntype != IS_DNS) continue;
+ 	
+ 			/* Is this an exact match? */
+-			if ((len1 == altnamesize) && !strncasecmp(name, altname, len1)) {
++			if ((len1 == altnamesize - 1) && !strncasecmp(name, altname, len1)) {
+ 				break;
+ 			}
+ 

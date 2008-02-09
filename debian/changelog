@@ -11,12 +11,15 @@ openldap2.3 (2.4.7-5) UNRELEASED; urgency=low
     Closes: #464718.
 
   [ Steve Langasek ]
-  * Add new patch, gnutls-ciphers, to fix support for specifying multiple
-    ciphers with TLSCipherSuite option in slapd.conf.  Thanks to Kyle Moffett
-    <kyle@moffetthome.net> for the patch.  Closes LP: #188200.
-  * Add new patch, slapd-tlsverifyclient-default, to set the intended default
-    value of "TLSVerifyClient never" in the right place.  Partially addresses
-    bug #462588.
+  * Fix various regressions related to the introduction of GnuTLS:
+    - Add new patch, gnutls-ciphers, to fix support for specifying multiple
+      ciphers with TLSCipherSuite option in slapd.conf.  Thanks to Kyle
+      Moffett <kyle@moffetthome.net> for the patch.  Closes LP: #188200.
+    - Add new patch, slapd-tlsverifyclient-default, to set the intended
+      default value of "TLSVerifyClient never" in the right place.
+    - Add new patch, gnutls-altname-nulterminated, to account for differences
+      in how the "length" is returned for commonName vs. subjectAltName.
+    Partially addresses bug #462588.
   * Add new patch from upstream, entryCSN-backwards-compatibility, to support
     auto-converting entryCSN attributes in a previously supported old format,
     fixing an upgrade failure.  Closes: #462099.
