@@ -12,7 +12,7 @@ Index: servers/slapd/main.c
 ===================================================================
 --- servers/slapd/main.c	(revision 1074)
 +++ servers/slapd/main.c	(working copy)
-@@ -736,6 +736,14 @@
+@@ -736,6 +736,13 @@
  		SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 20 );
  		goto destroy;
  	}
@@ -22,7 +22,6 @@ Index: servers/slapd/main.c
 +	 * to be no checking. The config file can override this as usual.
 +	 */
 +	rc = LDAP_OPT_X_TLS_NEVER;
-+	printf("Initializing the server the right way\n");
 +	(void) ldap_pvt_tls_set_option( slap_tls_ld, LDAP_OPT_X_TLS_REQUIRE_CERT, &rc );
  #endif
  
