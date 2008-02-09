@@ -6,6 +6,8 @@ never used within slapd.
 
 Partially addresses Debian bug #462588.
 
+To be forwarded upstream.
+
 Index: servers/slapd/main.c
 ===================================================================
 --- servers/slapd/main.c	(revision 1074)
