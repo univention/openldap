@@ -10,3 +10,4 @@ sasl-default-path -p0
 libldap-symbol-versions
 gnutls-ciphers
 entryCSN-backwards-compatibility
+slapd-tlsverifyclient-default -p0
