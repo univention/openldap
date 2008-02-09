@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap2.3\n"
 "Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
-"POT-Creation-Date: 2008-01-19 00:20-0800\n"
+"POT-Creation-Date: 2008-02-09 10:32-0800\n"
 "PO-Revision-Date: 2008-01-23 12:16+0900\n"
 "Last-Translator: Kenshi Muto <kmuto@debian.org>\n"
 "Language-Team: Japanese <debian-japanese@lists.debian.org>\n"
@@ -399,8 +399,8 @@ msgstr "slurpd は時代遅れです; 複製は手動で設定しなければな
 #: ../slapd.templates:18001
 msgid ""
 "One or more slurpd \"replica\" options were found in your slapd config when "
-"upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, you "
-"will need to migrate your replicas to use the syncrepl protocol instead."
+"upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, you will "
+"need to migrate your replicas to use the syncrepl protocol instead."
 msgstr ""
 "更新中、1つ以上の slurpd の \"replica\" オプションがあなたの slapd 設定に見つ"
 "かりました。slurpd は OpenLDAP 2.4 から時代遅れになっているので、syncrepl プ"
@@ -418,3 +418,29 @@ msgstr ""
 "slurpd からプルベースの syncrepl プロトコルへの変換は自動では行うことができ"
 "ず、あなたの複製サーバを手動で設定する必要があります。詳細については http://"
 "www.openldap.org/doc/admin24/syncrepl.html を参照してください。"
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid "TLSCipherSuite values have changed"
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid ""
+"A \"TLSCipherSuite\" option was found in your slapd config when upgrading. "
+"The values allowed for this option are determined by the SSL implementation "
+"used, which has been changed from OpenSSL to GnuTLS.  As a result, your "
+"existing TLSCipherSuite setting will not work with this package."
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid ""
+"This setting has been automatically commented out for you.  If you have "
+"specific encryption needs that require this option to be re-enabled, see the "
+"output of 'gnutls-cli -l' in the gnutls-bin package for the list of ciphers "
+"supported by GnuTLS."
+msgstr ""

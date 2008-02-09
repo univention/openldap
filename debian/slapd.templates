@@ -173,3 +173,17 @@ _Description: slurpd is obsolete; replicas must be reconfigured by hand
  done automatically and you will need to configure your replica servers by
  hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for
  details.
+
+Template: slapd/tlsciphersuite
+Type: error
+_Description: TLSCipherSuite values have changed
+ A "TLSCipherSuite" option was found in your slapd config when upgrading.
+ The values allowed for this option are determined by the SSL
+ implementation used, which has been changed from OpenSSL to GnuTLS.  As a
+ result, your existing TLSCipherSuite setting will not work with this
+ package.
+ .
+ This setting has been automatically commented out for you.  If you have
+ specific encryption needs that require this option to be re-enabled,
+ see the output of 'gnutls-cli -l' in the gnutls-bin package for the
+ list of ciphers supported by GnuTLS.

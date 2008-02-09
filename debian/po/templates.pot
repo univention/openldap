@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
-"POT-Creation-Date: 2008-02-08 13:56-0800\n"
+"POT-Creation-Date: 2008-02-09 10:32-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -349,4 +349,30 @@ msgid ""
 "done automatically and you will need to configure your replica servers by "
 "hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for "
 "details."
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid "TLSCipherSuite values have changed"
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid ""
+"A \"TLSCipherSuite\" option was found in your slapd config when upgrading. "
+"The values allowed for this option are determined by the SSL implementation "
+"used, which has been changed from OpenSSL to GnuTLS.  As a result, your "
+"existing TLSCipherSuite setting will not work with this package."
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid ""
+"This setting has been automatically commented out for you.  If you have "
+"specific encryption needs that require this option to be re-enabled, see the "
+"output of 'gnutls-cli -l' in the gnutls-bin package for the list of ciphers "
+"supported by GnuTLS."
 msgstr ""

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap2.3 2.3.38-2\n"
 "Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
-"POT-Creation-Date: 2008-01-19 00:20-0800\n"
+"POT-Creation-Date: 2008-02-09 10:32-0800\n"
 "PO-Revision-Date: 2007-11-29 22:34+1030\n"
 "Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
 "Language-Team: Vietnamese <vi-VN@googlegroups.com>\n"
@@ -423,8 +423,8 @@ msgstr ""
 #: ../slapd.templates:18001
 msgid ""
 "One or more slurpd \"replica\" options were found in your slapd config when "
-"upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, you "
-"will need to migrate your replicas to use the syncrepl protocol instead."
+"upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, you will "
+"need to migrate your replicas to use the syncrepl protocol instead."
 msgstr ""
 
 #. Type: error
@@ -435,4 +435,30 @@ msgid ""
 "done automatically and you will need to configure your replica servers by "
 "hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for "
 "details."
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid "TLSCipherSuite values have changed"
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid ""
+"A \"TLSCipherSuite\" option was found in your slapd config when upgrading. "
+"The values allowed for this option are determined by the SSL implementation "
+"used, which has been changed from OpenSSL to GnuTLS.  As a result, your "
+"existing TLSCipherSuite setting will not work with this package."
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid ""
+"This setting has been automatically commented out for you.  If you have "
+"specific encryption needs that require this option to be re-enabled, see the "
+"output of 'gnutls-cli -l' in the gnutls-bin package for the list of ciphers "
+"supported by GnuTLS."
 msgstr ""

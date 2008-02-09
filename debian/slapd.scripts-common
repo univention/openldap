@@ -535,6 +535,25 @@ migrate_checkpoint_and_slurpd() {					# {{{
 }
 # }}}
 
+disable_openssl_cipher_suite() {					# {{{
+# disable any occurrences of the TLSCipherSuite on upgrade, because 
+# OpenSSL cipher suite specs are completely incompatible with GnuTLS ones
+
+	# If $SLAPD_CONF is a directory, the user is using cn=config.  Assume
+	# they know what they're doing.
+	if [ -d "$SLAPD_CONF" ]; then return 0; fi
+
+	# Check if there's anything for us to do
+	if ! read_slapd_conf < $SLAPD_CONF | \
+			grep -q -E '^TLSCipherSuite[[:space:]]'; then
+		return 0
+	fi
+
+	write_slapd_conf "$SLAPD_CONF" 's|^(TLSCipherSuite\s+)|#$1|i'
+	return 1
+}
+# }}}
+
 compute_backup_path() {							# {{{
 # Compute the path to backup a database directory
 # Usage: compute_backup_path [-n] <dir> <basedn>

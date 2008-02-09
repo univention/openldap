@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
-"POT-Creation-Date: 2008-01-19 00:20-0800\n"
+"POT-Creation-Date: 2008-02-09 10:32-0800\n"
 "PO-Revision-Date: 2008-01-22 18:10+0100\n"
 "Last-Translator: Christian Perrier <bubulle@debian.org>\n"
 "Language-Team: French <debian-l10n-french@lists.debian.org>\n"
@@ -414,8 +414,8 @@ msgstr "Programme slurpd obsolète : reconfiguration manuelle des réplicats"
 #: ../slapd.templates:18001
 msgid ""
 "One or more slurpd \"replica\" options were found in your slapd config when "
-"upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, you "
-"will need to migrate your replicas to use the syncrepl protocol instead."
+"upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, you will "
+"need to migrate your replicas to use the syncrepl protocol instead."
 msgstr ""
 "Une ou plusieurs options « replica » de slurpd ont été trouvée dans le "
 "fichier de configuration lors de la mise à niveau. Le programme slurpd est "
@@ -434,3 +434,29 @@ msgstr ""
 "Cette conversion ne peut se faire automatiquement et vous devez configurer "
 "les serveurs réplicats vous-même. Veuillez consulter http://www.openldap.org/"
 "doc/admin24/syncrepl.html pour plus d'informations."
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid "TLSCipherSuite values have changed"
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid ""
+"A \"TLSCipherSuite\" option was found in your slapd config when upgrading. "
+"The values allowed for this option are determined by the SSL implementation "
+"used, which has been changed from OpenSSL to GnuTLS.  As a result, your "
+"existing TLSCipherSuite setting will not work with this package."
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid ""
+"This setting has been automatically commented out for you.  If you have "
+"specific encryption needs that require this option to be re-enabled, see the "
+"output of 'gnutls-cli -l' in the gnutls-bin package for the list of ciphers "
+"supported by GnuTLS."
+msgstr ""
