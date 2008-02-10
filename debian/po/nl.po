@@ -415,7 +415,6 @@ msgstr "slurpd is verouderd; replica's dienen handmatig ingesteld te worden"
 #. Type: error
 #. Description
 #: ../slapd.templates:18001
-#, fuzzy
 msgid ""
 "One or more slurpd \"replica\" options were found in your slapd config when "
 "upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, you will "
