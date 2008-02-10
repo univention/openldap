@@ -1,30 +1,31 @@
-# Brazilian Portuguese translation (openldap package)
+# openldap Brazilian Portuguese translation
 # Copyright (C) 2007 THE openldap'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the openldap package.
-#
-#  André Luís Lopes <andrelop@debian.org>, 2003-2006.
-#  Felipe Augusto van de Wiel (faw) <faw@debian.org>, 2007.
-#  Steve Langasek <vorlon@debian.org>, 2008.
-#
+# André Luís Lopes <andrelop@debian.org>, 2003-2006.
+# Felipe Augusto van de Wiel (faw) <faw@debian.org>, 2007.
+# Steve Langasek <vorlon@debian.org>, 2008.
+# Eder L. Marques (frolic) <frolic@debian-ce.org>, 2008.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: openldap2_2.1.17-1\n"
+"Project-Id-Version: openldap2.3 2.4.7-3\n"
 "Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
 "POT-Creation-Date: 2008-02-09 10:32-0800\n"
-"PO-Revision-Date: 2008-01-13 04:56-0800\n"
-"Last-Translator: Steve Langasek <vorlon@debian.org>\n"
-"Language-Team: l10n portuguese <debian-l10n-portuguese@lists.debian.org>\n"
+"PO-Revision-Date: 2008-01-31 14:10-0200\n"
+"Last-Translator: Eder L. Marques (frolic) <frolic@debian-ce.org>\n"
+"Language-Team: l10n Portuguese <debian-l10n-portuguese@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "pt_BR utf-8\n"
+"X-Generator: KBabel 1.11.4\n"
+"Plural-Forms:  nplurals=2; plural=(n > 1);\n"
 
 #. Type: boolean
 #. Description
 #: ../slapd.templates:1001
 msgid "Omit OpenLDAP server configuration?"
-msgstr "Omitir a configuração do servidor OpenLDAP"
+msgstr "Omitir a configuração do servidor OpenLDAP?"
 
 #. Type: boolean
 #. Description
@@ -63,7 +64,6 @@ msgstr "Descarregar as bases de dados para arquivos na atualização:"
 #. Type: select
 #. Description
 #: ../slapd.templates:2002
-#, fuzzy
 msgid ""
 "Before upgrading to a new version of the OpenLDAP server, the data from your "
 "LDAP directories can be dumped into plain text files in the standard LDAP "
@@ -71,24 +71,22 @@ msgid ""
 msgstr ""
 "Antes de atualizar para uma nova versão do servidor OpenLDAP os dados dos "
 "seus diretórios LDAP podem ser descarregados em arquivos texto plano no "
-"formato padrão LDAP Interchange Format (Formato de Intercâmbio LDAP)."
+"formato padrão \"LDAP Interchange Format\" (Formato de Intercâmbio LDAP)."
 
 #. Type: select
 #. Description
 #: ../slapd.templates:2002
-#, fuzzy
 msgid ""
 "Selecting \"always\" will cause the databases to be dumped unconditionally "
 "before an upgrade. Selecting \"when needed\" will only dump the database if "
 "the new version is incompatible with the old database format and it needs to "
 "be reimported. If you select \"never\", no dump will be done."
 msgstr ""
-"Selecionar \"sempre\" fará com que os scripts de manutenção descarreguem "
-"suas bases de dados antes de atualizar incondicionalmente. Selecionando "
-"\"quando necessário\" só descarregará a base de dados se a nova versão for "
-"incompatível com o formato da antiga base de dados e tiver que ser importada "
-"novamente. A escolha \"nunca\" prossegue sem jamais descarregar sua base de "
-"dados."
+"Selecionar \"sempre\" fará com que as bases de dados sejam descarregadas "
+"incondicionalmente antes de atualizar. Selecionando \"quando necessário\" só "
+"descarregará a base de dados se a nova versão for incompatível com o formato "
+"da antiga base de dados e tiver que ser importada novamente. Se você "
+"escolher \"nunca\", nenhum descarregamento será feito."
 
 #. Type: string
 #. Description
@@ -108,8 +106,8 @@ msgid ""
 "from."
 msgstr ""
 "Por favor, especifique o diretório onde as bases LDAP serão exportadas. "
-"Dentro deste diretório vários arquivos LDIF serão criados correspondendo às "
-"bases de procura localizadas no servidor. Tenha certeza de ter espaço livre "
+"Nesse diretório vários arquivos LDIF serão criados correspondendo às bases "
+"de procura localizadas no servidor. Tenha certeza de ter espaço livre "
 "suficiente na partição onde este diretório está localizado. A primeira "
 "ocorrência da string \"VERSION\" é substituída com a versão do servidor a "
 "partir da qual você está atualizando."
@@ -118,7 +116,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:4001
 msgid "Move old database?"
-msgstr "Mover base de dados antiga?"
+msgstr "Mover a base de dados antiga?"
 
 #. Type: boolean
 #. Description
@@ -130,7 +128,7 @@ msgid ""
 "database."
 msgstr ""
 "Ainda há arquivos em /var/lib/ldap que provavelmente quebrarão o processo de "
-"configuração. Se você habilitar esta opção, os scripts de manutenção vão "
+"configuração. Se você habilitar esta opção, os scripts de manutenção irão "
 "mover os arquivos da antiga base de dados para fora do caminho antes de "
 "criar a nova base de dados."
 
@@ -160,36 +158,33 @@ msgstr ""
 #. Description
 #: ../slapd.templates:6001
 msgid "DNS domain name:"
-msgstr "Informe o nome do domínio DNS:"
+msgstr "Nome do domínio DNS:"
 
 #. Type: string
 #. Description
 #: ../slapd.templates:6001
-#, fuzzy
 msgid ""
 "The DNS domain name is used to construct the base DN of the LDAP directory. "
 "For example, 'foo.example.org' will create the directory with 'dc=foo, "
 "dc=example, dc=org' as base DN."
 msgstr ""
 "O nome do domínio é usado para construir a base DN de seu diretório LDAP. "
-"Por exemplo, foo.bar.org irá resultar na criação da base DN dc=foo, dc=bar, "
-"dc=org."
+"Por exemplo, foo.example.org irá criar a base DN dc=foo, dc=example, dc=org."
 
 #. Type: string
 #. Description
 #: ../slapd.templates:7001
 msgid "Organization name:"
-msgstr "Informe o nome de sua organização:"
+msgstr "Nome da organização:"
 
 #. Type: string
 #. Description
 #: ../slapd.templates:7001
-#, fuzzy
 msgid ""
 "Please enter the name of the organization to use in the base DN of your LDAP "
 "directory."
 msgstr ""
-"Por favor informe o nome da organização para usar na base DN de seu "
+"Por favor, informe o nome da organização para usar na base DN de seu "
 "diretório LDAP."
 
 #. Type: password
@@ -203,7 +198,7 @@ msgstr "Senha do administrador:"
 #: ../slapd.templates:8001
 msgid "Please enter the password for the admin entry in your LDAP directory."
 msgstr ""
-"Por favor informe a senha para a entrada administrativa em seu diretório "
+"Por favor, informe a senha para a entrada administrativa em seu diretório "
 "LDAP."
 
 #. Type: password
@@ -239,7 +234,6 @@ msgstr ""
 #. Type: boolean
 #. Description
 #: ../slapd.templates:11001
-#, fuzzy
 msgid "Do you want the database to be removed when slapd is purged?"
 msgstr ""
 "Você deseja que a base de dados seja removida quando o pacote slapd for "
@@ -249,22 +243,21 @@ msgstr ""
 #. Description
 #: ../slapd.templates:13001
 msgid "Allow LDAPv2 protocol?"
-msgstr "Permitir protocolo LDAPv2?"
+msgstr "Permitir o protocolo LDAPv2?"
 
 #. Type: boolean
 #. Description
 #: ../slapd.templates:13001
-#, fuzzy
 msgid ""
 "The obsolete LDAPv2 protocol is disabled by default in slapd. Programs and "
 "users should upgrade to LDAPv3.  If you have old programs which can't use "
 "LDAPv3, you should select this option and 'allow bind_v2' will be added to "
 "your slapd.conf file."
 msgstr ""
-"O \"daemon\" slapd agora desabilita o antigo protocolo LDAPv2 por padrão. Os "
-"programas e usuários devem atualizar-se para o LDAPv3. Se você tem programas "
-"antigos que ainda não foram mudados para usar LDAPv3, deve selecionar esta "
-"opção e 'allow bind_v2' será adicionado ao seu slapd.conf."
+"O protocolo LDAPv2 é desabilitado por padrão no slapd. Os programas e "
+"usuários devem atualizar-se para o LDAPv3. Se você tem programas antigos que "
+"não usam LDAPv3, você deve selecionar esta opção e \"allow bind_v2\" será "
+"adicionado ao seu arquivo slapd.conf."
 
 #. Type: boolean
 #. Description
@@ -275,7 +268,6 @@ msgstr "Fazer backup da base de dados atual e criar uma nova?"
 #. Type: boolean
 #. Description
 #: ../slapd.templates:14001
-#, fuzzy
 msgid ""
 "The directory suffix (domain) you specified doesn't match the one currently "
 "in /etc/ldap/slapd.conf. Changing the directory suffix requires moving aside "
@@ -290,9 +282,8 @@ msgstr ""
 #. Type: error
 #. Description
 #: ../slapd.templates:15001
-#, fuzzy
 msgid "slapcat failure during upgrade"
-msgstr "falha de slapcat durante a atualização"
+msgstr "falha do slapcat durante a atualização"
 
 #. Type: error
 #. Description
@@ -303,23 +294,21 @@ msgstr "Um erro ocorreu durante a atualização do diretório LDAP."
 #. Type: error
 #. Description
 #: ../slapd.templates:15001
-#, fuzzy
 msgid ""
 "The 'slapcat' program failed while extracting the LDAP directory. This may "
 "be caused by an incorrect configuration file (for example, missing "
 "'moduleload' lines to support the backend database)."
 msgstr ""
-"O 'slapcat' falhou ao extrair o diretório LDAP. Isso pode ser por causa de "
-"um arquivo de configuração incorreto (por exemplo, se as linhas moduleload "
-"apropriadas para o módulo do backend do seu tipo de base de dados estiverem "
-"faltando)."
+"O programa 'slapcat' falhou ao extrair o diretório LDAP. Isso pode ser "
+"causado por um arquivo de configuração incorreto (por exemplo, se as linhas "
+"'moduleload' apropriadas para o módulo do backend do seu tipo de base de "
+"dados estiverem faltando)."
 
 #. Type: error
 #. Description
 #. This paragraph is followed by a (non translatable) paragraph
 #. containing a command line
 #: ../slapd.templates:15001
-#, fuzzy
 msgid ""
 "This failure will cause 'slapadd' to fail later as well. The old database "
 "files will be moved to /var/backups. If you want to try this upgrade again, "
@@ -353,37 +342,35 @@ msgstr "Mudar o tipo do \"backend\" de LDBM para BDB?"
 #. Type: boolean
 #. Description
 #: ../slapd.templates:16001
-#, fuzzy
 msgid ""
 "The LDBM backend type has serious stability problems and has been deprecated "
 "by OpenLDAP as of 2.2. It is no longer supported by the OpenLDAP packages."
 msgstr ""
-"O \"backend\" tipo LDBM tornou-se obsoleto no OpenLDAP 2.2 e mostrou não "
-"trabalhar bem. BDB é a escolha recomendada dos desenvolvedores OpenLDAP."
+"O \"backend\" tipo LDBM tem sérios problemas de estabilidade e tornou-se "
+"obsoleto a partir do OpenLDAP 2.2. Ele não é mais suportado pelos pacotes "
+"OpenLDAP."
 
 #. Type: boolean
 #. Description
 #: ../slapd.templates:16001
-#, fuzzy
 msgid ""
 "When the BDB backend is used, it must be configured properly. For more "
 "information, see /usr/share/doc/slapd/README.DB_CONFIG.gz."
 msgstr ""
-"Quando usa-se o \"backend\" BDB tenha certeza que você configurou o BDB "
-"apropriadamente. Para mais informação, veja /usr/share/doc/slapd/README."
-"DB_CONFIG.gz"
+"Quando o \"backend\" BDB é usado, ele deve ser configurado corretamente. "
+"Para mais informações, veja /usr/share/doc/slapd/README.DB_CONFIG.gz"
 
 #. Type: boolean
 #. Description
 #: ../slapd.templates:16001
-#, fuzzy
 msgid ""
 "If you enable this option, an attempt will be made to update the "
 "configuration to use BDB instead of LDBM and convert the databases. If you "
 "do not enable this option, the upgrade will be aborted."
 msgstr ""
-"Se você habilitar esta opção uma tentativa será feita para atualizar a "
-"configuração para usar BDB ao invés de LDBM e converter suas bases de dados."
+"Se você habilitar esta opção, uma tentativa será feita para atualizar a "
+"configuração para usar BDB ao invés de LDBM e converter suas bases de dados. "
+"Se você não habilitar esta opção, a atualização irá abortar."
 
 #. Type: select
 #. Description
@@ -394,35 +381,31 @@ msgstr "\"Backend\" de base de dados a ser usado:"
 #. Type: select
 #. Description
 #: ../slapd.templates:17001
-#, fuzzy
 msgid ""
 "The HDB backend is recommended. HDB and BDB use similar storage formats, but "
 "HDB adds support for subtree renames. Both support the same configuration "
 "options."
 msgstr ""
-"O \"backend\" BDB é a escolha recomendada pelos desenvolvedores OpenLDAP. "
-"Quando usando o \"backend\" BDB tenha certeza de que você configurou a "
-"camada da base de dados para seus requerimentos. Veja em /usr/share/doc/"
-"slapd/README.DB_CONFIG.gz"
+"O \"backend\" HDB é recomendado. HDB e BDB usam métodos de armazenamento "
+"similares, mas o HDB adiciona suporte para renomeação de sub-árvores. Ambos "
+"suportam as mesmas opções de configuração."
 
 #. Type: select
 #. Description
 #: ../slapd.templates:17001
-#, fuzzy
 msgid ""
 "In either case, you should review the resulting database configuration for "
 "your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more details."
 msgstr ""
-"O \"backend\" BDB é a escolha recomendada pelos desenvolvedores OpenLDAP. "
-"Quando usando o \"backend\" BDB tenha certeza de que você configurou a "
-"camada da base de dados para seus requerimentos. Veja em /usr/share/doc/"
-"slapd/README.DB_CONFIG.gz"
+"Neste caso, você deve rever a configuração da base de dados resultante que "
+"você necessita. Veja /usr/share/doc/slapd/README.DB_CONFIG.gz para maiores "
+"detalhes."
 
 #. Type: error
 #. Description
 #: ../slapd.templates:18001
 msgid "slurpd is obsolete; replicas must be reconfigured by hand"
-msgstr ""
+msgstr "O slurpd está obsoleto, réplicas devem ser configuradas manualmente."
 
 #. Type: error
 #. Description
@@ -432,6 +415,10 @@ msgid ""
 "upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, you will "
 "need to migrate your replicas to use the syncrepl protocol instead."
 msgstr ""
+"Uma ou mais opções slurpd \"replica\" foram encontradas em seu arquivo de "
+"configuração slapd quando estava atualizando. Por causa de o slurpd está "
+"obsoleto a partir do OpenLDAP 2.4, em vez disso você precisará migrar suas "
+"replicas para usar o protocolo syncrepl."
 
 #. Type: error
 #. Description
@@ -442,6 +429,10 @@ msgid ""
 "hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for "
 "details."
 msgstr ""
+"A conversão de slurpd para o protocolo syncrepl baseado no método de puxar "
+"(\"pull\") atualizações, não pode ser feito automaticamente e você precisará "
+"configurar seus servidores de réplica manualmente. Por favor, veja http://"
+"www.openldap.org/doc/admin24/syncrepl.html para detalhes."
 
 #. Type: error
 #. Description
