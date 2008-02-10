@@ -10,6 +10,8 @@ openldap2.3 (2.4.7-6) UNRELEASED; urgency=low
   * Avoid using a mutex around getaddrinfo() and getnameinfo() calls, which
     are guaranteed by glibc to be threadsafe; this fixes a deadlock when
     using nss_ldap for host lookups.  Closes: #340601.
+  * debian/libldap2-dev.manpages: install all of man3/* instead of
+    enumerating specific manpages to install.  Closes: #320073.
 
  -- Steve Langasek <vorlon@debian.org>  Sat, 09 Feb 2008 18:02:00 -0800
 
