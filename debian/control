@@ -5,7 +5,7 @@ Maintainer: Debian OpenLDAP Maintainers <pkg-openldap-devel@lists.alioth.debian.
 Uploaders: Roland Bauerschmidt <rb@debian.org>, Stephen Frost <sfrost@debian.org>, Steve Langasek <vorlon@debian.org>, Torsten Landschoff <torsten@debian.org>, Matthijs Mohlmann <matthijs@cacholong.nl>, Russ Allbery <rra@debian.org>
 Build-Depends: debhelper (>= 5), libdb4.2-dev, libgcrypt-dev,
  libgnutls-dev, unixodbc-dev, libncurses5-dev, libperl-dev (>= 5.8.0),
- libsasl2-dev (>= 2.1.18-1), libslp-dev, libltdl3-dev (>= 1.4.3),
+ libsasl2-dev, libslp-dev, libltdl3-dev (>= 1.4.3),
  libwrap0-dev, perl, debconf-utils, po-debconf, quilt (>= 0.40),
  autotools-dev, libtool, automake, autoconf, groff-base
 Build-Conflicts: libbind-dev, bind-dev, libicu-dev
