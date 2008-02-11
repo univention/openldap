@@ -1,0 +1,25 @@
+Author: Steve Langasek <vorlon@debian.org>
+
+Fix a regression introduced by wholesale replacement of strncasecmp()
+with ber_bvstrcasecmp(): this code deliberately used strncasecmp() to
+check for {CLEARTEXT} as an initial substring of the userPassword field,
+changing this to strcasecmp() breaks the use of the {CLEARTEXT} password
+scheme for sasl auth.
+
+Forwarded upstream as ITS#5368.
+
+Index: servers/slapd/sasl.c
+===================================================================
+--- servers/slapd/sasl.c	(revision 1086)
++++ servers/slapd/sasl.c	(working copy)
+@@ -237,7 +237,9 @@
+ 					 * past the scheme name, skip this value.
+ 					 */
+ #ifdef SLAPD_CLEARTEXT
+-					if ( !ber_bvstrcasecmp( bv, &sc_cleartext ) ) {
++					if ( !strncasecmp( bv->bv_val, sc_cleartext.bv_val,
++						sc_cleartext.bv_len ))
++					{
+ 						struct berval cbv;
+ 						cbv.bv_len = bv->bv_len - sc_cleartext.bv_len;
+ 						if ( cbv.bv_len > 0 ) {
