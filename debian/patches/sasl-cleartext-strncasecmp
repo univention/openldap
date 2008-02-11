@@ -6,7 +6,7 @@ check for {CLEARTEXT} as an initial substring of the userPassword field,
 changing this to strcasecmp() breaks the use of the {CLEARTEXT} password
 scheme for sasl auth.
 
-Forwarded upstream as ITS#5368.
+Forwarded as ITS#5368, committed to upstream CVS.
 
 Index: servers/slapd/sasl.c
 ===================================================================
