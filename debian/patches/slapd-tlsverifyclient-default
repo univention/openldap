@@ -6,7 +6,7 @@ never used within slapd.
 
 Partially addresses Debian bug #462588.
 
-Forwarded upstream as ITS#5360.
+Forwarded as ITS#5360, committed to upstream CVS.
 
 Index: servers/slapd/main.c
 ===================================================================
