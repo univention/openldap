@@ -16,6 +16,7 @@ openldap2.3 (2.4.7-6) UNRELEASED; urgency=low
     enumerating specific manpages to install.  Closes: #320073.
   * Add new patch, sasl-cleartext-strncasecmp, to correct a regression that
     prevented the use of the {CLEARTEXT} password scheme with SASL.
+    Closes LP: #191563.
 
  -- Steve Langasek <vorlon@debian.org>  Sat, 09 Feb 2008 18:02:00 -0800
 
