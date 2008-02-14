@@ -9,4 +9,4 @@ slapd: too-long-extended-description-in-templates slapd/backend
 
 # libslapi is a special case, used only for writing extension modules for
 # slapd, and is therefore shipped with slapd.
-slapd: package-name-doesnt-match-sonames @LIBSLAPI@
+slapd: package-name-doesnt-match-sonames libslapi-2.4-2
