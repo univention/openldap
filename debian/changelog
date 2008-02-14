@@ -18,6 +18,10 @@ openldap2.3 (2.4.7-6) UNRELEASED; urgency=low
     prevented the use of the {CLEARTEXT} password scheme with SASL.
     Closes LP: #191563.
 
+  [ Russ Allbery ]
+  * Add a stamp file for the configure rule to avoid rerunning configure
+    needlessly.
+
  -- Steve Langasek <vorlon@debian.org>  Sat, 09 Feb 2008 18:02:00 -0800
 
 openldap2.3 (2.4.7-5) unstable; urgency=low

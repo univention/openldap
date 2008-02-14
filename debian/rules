@@ -65,7 +65,8 @@ get-orig-source:
 	rm -r openldap2.3_$(VERSION).orig
 	gzip -9 openldap2.3_$(VERSION).orig.tar
 
-$(builddir)/Makefile: patch
+configure: configure-stamp
+configure-stamp: $(QUILT_STAMPFN)
 	# Check if we include the RFCs and Internet-Drafts (which are non
 	# DFSG-free).  You can set DFSG_NONFREE to build the packages from the
 	# unchanged upstream sources but Debian can not ship the RFCs in main
@@ -92,11 +93,12 @@ $(builddir)/Makefile: patch
 		$(CONFIG) $(SYSTEM)
 	perl debian/check_config
 	$(MAKE) -C $(builddir) depend
+	touch $@
 
 build: build-arch build-indep
 build-arch: build-stamp
 build-indep:
-build-stamp: $(builddir)/Makefile
+build-stamp: configure-stamp
 	$(MAKE) -C $(builddir) $(MAKEVARS)
 	touch $@
 
@@ -170,7 +172,7 @@ binary-arch: install-stamp
 clean: unpatch
 	dh_testdir
 	dh_testroot
-	rm -f install-stamp build-stamp
+	rm -f install-stamp build-stamp configure-stamp
 	# Update translation templates for debconf
 	debconf-updatepo
 	# Remove our stripped schema from the upstream source area.
