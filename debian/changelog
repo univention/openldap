@@ -20,7 +20,7 @@ openldap2.3 (2.4.7-6) UNRELEASED; urgency=low
 
   [ Russ Allbery ]
   * Add a stamp file for the configure rule to avoid rerunning configure
-    needlessly.
+    needlessly.  Closes: #465588.
 
  -- Steve Langasek <vorlon@debian.org>  Sat, 09 Feb 2008 18:02:00 -0800
 
