@@ -5,6 +5,9 @@ dependency chains during the transition.
 
 Not yet contributed upstream.
 
+Upstream ITS #5365 filed requesting symbol versioning for libldap and
+libber.
+
 --- openldap.orig/libraries/libldap_r/Makefile.in
 +++ openldap/libraries/libldap_r/Makefile.in
 @@ -57,6 +57,9 @@
