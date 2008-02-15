@@ -1,108 +1,123 @@
 Notes about Debian's slapd package
 ----------------------------------
 
-++ Logging
+Using BDB/HDB Backends
 
-   slapd logs to the facility local4. If you want to direct slapd's logs
-   to a separate log file, add a line like:
-
-       local4.debug     /var/log/slapd.log
-
-   to /etc/syslog.conf. You may also want to add ";local4.none" to the
-   catch-all entry that logs to /var/log/messages so that it doesn't
-   continue to receive slapd logs.
-
-++ BerkeleyDB version
-
-   slapd has been built against version 4.2 of BerkeleyDB. This version
-   is faster and more stable than later versions for the use to which
-   OpenLDAP puts it. There are remaining performance problems with
-   BerkeleyDB 4.6 that have not yet been resolved, but it looks likely
-   that eventually slapd will be able to use 4.6. All intermediate
-   versions (4.3 through 4.5) either had serious stability bugs or serious
-   performance issues.
-
-   slapd will automatically handle database recovery, so you generally do
-   not need the BerkeleyDB 4.2 utilities. However, if you want to perform
-   other operations directly on the raw database without using the slapd
-   tools, install db4.2-util and use those BerkeleyDB utilities. Utilities
-   from other db*-util packages will not work correctly and may render the
-   database unusable by slapd.
-
-++ TCP wrappers
-
-   The Debian slapd package is compiled with TCP wrappers. This means that
-   you are able to restrict access to the LDAP server using
-   /etc/hosts.deny or /etc/hosts.allow.
-
-++ Using BDB/HDB backends
+  HDB is the recommended database backend.  It's the same as BDB but
+  allows some additional operations.
    
-   slapd BDB and HDB backends rely on libdb to store data on your
-   disks. libdb uses a configuration file to tune database specific
-   parameters. This file is called DB_CONFIG, and should be created in
-   each directory containing one of your ldap databases, usually
-   /var/lib/ldap.
+  slapd BDB and HDB backends rely on libdb to store data on your disks.
+  libdb uses a configuration file to tune database specific
+  parameters. This file is called DB_CONFIG, and should be created in each
+  directory containing one of your ldap databases, usually /var/lib/ldap.
 
-   It is VERY IMPORTANT to correctly setup a DB_CONFIG file.  It is not
-   just a matter of performance: depending on the version of slapd and
-   libdb being used, your slapd may just hang and stop answering
-   queries.
+  It is VERY IMPORTANT to correctly setup a DB_CONFIG file.  It is not
+  just a matter of performance: depending on the version of slapd and
+  libdb being used, your slapd may just hang and stop answering queries.
 
-   To correctly setup your DB_CONFIG file, please refer to
-   README.DB_CONFIG.gz in this directory.
+  To correctly set up your DB_CONFIG file, please refer to
+  README.DB_CONFIG.gz in this directory.
 
-++ Running slapd under a different uid/gid
+BerkeleyDB Version
+
+  slapd has been built against version 4.2 of BerkeleyDB.  This version is
+  faster and more stable than later versions for the use to which OpenLDAP
+  puts it.  There are remaining performance problems with BerkeleyDB 4.6
+  that have not yet been resolved, but it looks likely that eventually
+  slapd will be able to use 4.6.  All intermediate versions (4.3 through
+  4.5) either had serious stability bugs or serious performance issues.
+
+  slapd will automatically handle database recovery, so you generally do
+  not need the BerkeleyDB 4.2 utilities.  However, if you want to perform
+  other operations directly on the raw database without using the slapd
+  tools, install db4.2-util and use those BerkeleyDB utilities.  Utilities
+  from other db*-util packages will not work correctly and may render the
+  database unusable by slapd.
+
+Logging
+
+  slapd logs to the facility local4. If you want to direct slapd's logs to
+  a separate log file, add a line like:
+
+      local4.debug     /var/log/slapd.log
+
+  to /etc/syslog.conf. You may also want to add ";local4.none" to the
+  catch-all entry that logs to /var/log/messages so that it doesn't
+  continue to receive slapd logs.
+
+SASL Configuration
+
+  To enable GSSAPI (Kerberos) authentication to slapd, install either the
+  libsasl2-modules-gssapi-mit or libsasl2-modules-gssapi-heimdal packages
+  depending on which Kerberos implementation you want to use.
+
+  SASL configuration files may be placed either in /usr/lib/sasl2 (the
+  standard path, but not a great place for configuration files) or in
+  /etc/ldap/sasl2.  A SASL configuration file should be named after the
+  program that will use it.  So, for instance, to configure SASL for
+  slapd, create a file named slapd.conf in /etc/ldap/sasl2 or in
+  /usr/lib/sasl2.
+
+TCP Wrappers
+
+  The Debian slapd package is compiled with TCP wrappers.  This means that
+  you are able to restrict access to the LDAP server using /etc/hosts.deny
+  or /etc/hosts.allow.
+
+Running slapd under a Different UID/GID
    
-   By default, slapd runs as openldap in the openldap group. Keeping the
-   default is easiest. If for some reason you need to run slapd as a
-   different user:
+  By default, slapd runs as openldap in the openldap group.  Keeping the
+  default is easiest.  If for some reason you need to run slapd as a
+  different user:
 
-   	- create the user/group for slapd -- usually:
-		adduser --system --group <group> --disabled-login <user>
-   	- stop slapd -- /etc/init.d/slapd stop
-	- tell slapd to run under a different uid:
-		- edit /etc/default/slapd
-		- set SLAPD_USER, SLAPD_GROUP
-		  (ie, SLAPD_USER="ldap", SLAPD_GROUP="ldap")
-	- tell linux slapd can access all database files -- usually:
-		chown -R <user>:<group> /var/lib/ldap
-	- tell linux slapd can access configuration files -- usually:
-		chgrp <group> /etc/ldap/slapd.conf
-		chmod 0640 /etc/ldap/slapd.conf
-	- tell linux slapd can access /var/run/slapd and writes his pid file
-		chgrp <group> /var/run/slapd
-		chmod 0770 /var/run/slapd
-	- start slapd -- /etc/init.d/slapd start
+  - Create the user/group for slapd -- usually:
 
-   Once you have done so, remember to always run any utilities that access
-   or update the database (such as slapadd) as the same user that slapd is
-   running as. If you forget, you will need to redo the chown noted above.
+      adduser --system --group <group> --disabled-login <user>
 
-++ No LDBM backend support
+  - Stop slapd:
 
-   The Debian slapd package no longer includes support for the LDBM
-   backend.  It has been disabled as a result of concerns over data loss
-   and lack of upstream support.  For more information, see:
-   http://www.openldap.org/faq/index.cgi?_highlightWords=ldbm&file=756
+      /etc/init.d/slapd stop
 
-   The HDB backend is now the recommended backend to use. The BDB backend
-   is also supported. Other backends are generally not recommended by
-   upstream except in special circumstances.
+  - Tell slapd to run under a different UID by editing /etc/default/slapd
+    and setting SLAPD_USER and SLAPD_GROUP.  (For example,
+    SLAPD_USER="ldap", SLAPD_GROUP="ldap")
 
-++ If slapd depends on other service (such as SQL)
+  - Tell linux slapd can access all database files -- usually:
 
-   In the event that you are running slapd with a different back-end module
-   that depends on other programs (such as an SQL database) you may need to
-   adjust the runlevels of slapd to start after the SQL database.
+      chown -R <user>:<group> /var/lib/ldap
 
-++ Creating NSS flat files from LDAP
+  - Tell linux slapd can access configuration files -- usually:
 
-   If you have need to create passwd/shadow/etc files from an LDAP
-   directory there is now a script included with these Debian packages
-   which may help you.  The script is in /usr/share/slapd/ and is named
-   'ldiftopasswd'.  In general you should be able to do:
+      chgrp <group> /etc/ldap/slapd.conf
+      chmod 0640 /etc/ldap/slapd.conf
+
+  - Tell linux slapd can access /var/run/slapd and write a PID file:
+
+       chgrp <group> /var/run/slapd
+       chmod 0770 /var/run/slapd
+
+  - Start slapd -- /etc/init.d/slapd start
+
+  Once you have done so, remember to always run any utilities that access
+  or update the database (such as slapadd) as the same user that slapd is
+  running as.  If you forget, you will need to redo the chown noted above.
+
+If slapd Depends on Other Service
+
+  In the event that you are running slapd with a different back-end module
+  that depends on other programs (such as an SQL database) you may need to
+  adjust the runlevels of slapd to start after the SQL database.
+
+Creating NSS Flat Files from LDAP
+
+  If you have need to create passwd/shadow/etc files from an LDAP
+  directory there is now a script included with these Debian packages
+  which may help you.  The script is in /usr/share/slapd/ and is named
+  ldiftopasswd.  In general you should be able to do:
+
       ldapsearch | ldiftopasswd
-   and it will generate the files for you.  You will need appropriate
-   privileges, of course.
 
- -- Russ Allbery <rra@debian.org>, Thu, 20 Dec 2007 23:50:16 -0800
+  and it will generate the files for you.  You will need appropriate
+  privileges, of course, and appropriate arguments to ldapsearch.
+
+ -- Russ Allbery <rra@debian.org>, Thu, 14 Feb 2008 17:28:39 -0800

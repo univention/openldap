@@ -21,6 +21,11 @@ openldap2.3 (2.4.7-6) UNRELEASED; urgency=low
   [ Russ Allbery ]
   * Add a stamp file for the configure rule to avoid rerunning configure
     needlessly.  Closes: #465588.
+  * Reformat, reorganize, and update slapd's README.Debian.
+    - Include SASL configuration information.
+    - Remove LDBM information, since upstream no longer even ships LDBM
+      and the debconf prompting and maintainer scripts already take care
+      of any lingering databases.
 
  -- Steve Langasek <vorlon@debian.org>  Sat, 09 Feb 2008 18:02:00 -0800
 
