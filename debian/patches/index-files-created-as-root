@@ -6,6 +6,11 @@ Not suitable for upstream in this form.  This patch needs to be reworked
 to check the BerkeleyDB database ownership and only warn if running as
 root with a database that's not owned by root.
 
+Upstream ITS #5356 filed requesting better handling of this.  Current
+upstream discussion leans towards putting the check into the database
+backend and aborting if slapd is run as a different user than the database
+owner, which is an even better fix.
+
 --- doc/man/man8/slapindex.8.orig
 +++ doc/man/man8/slapindex.8
 @@ -129,6 +129,10 @@
