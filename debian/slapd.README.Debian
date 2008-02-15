@@ -137,7 +137,7 @@ Modifications Compared to Upstream
   * The only LDAP library installed is libldap_r, which in the upstream
     release is only used for slapd, and libldap is a symlink to it.  This
     library has thread safety for use with slapd, but that thread safety
-    is not check for any application other than slapd by upstream.
+    is not checked for any application other than slapd by upstream.
     Upstream does not support using libldap_r for programs other than
     slapd.  The current library installation strategy in the Debian
     packages is an attempt to deal with problems caused by symbol
@@ -145,8 +145,8 @@ Modifications Compared to Upstream
     same process (most commonly by libnss-ldap) and the number of packages
     that use libldap in threaded code expecting thread safety.
 
-  * libldap has symbol versioning added to prevent problems during partial
-    upgrades from older versions of the libraries.
+  * libldap and libber have symbol versioning added to prevent problems
+    during partial upgrades from older versions of the libraries.
 
   * slapindex has been patched to warn when run as root and the man page
     has been patched to notify users that slapindex should be run as the
@@ -184,4 +184,4 @@ Modifications Compared to Upstream
   synchronization status, see the debian/patches directory in the
   openldap2.3 source package.
 
- -- Russ Allbery <rra@debian.org>, Thu, 14 Feb 2008 18:41:15 -0800
+ -- Russ Allbery <rra@debian.org>, Thu, 14 Feb 2008 18:47:07 -0800
