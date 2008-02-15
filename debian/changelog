@@ -21,6 +21,9 @@ openldap2.3 (2.4.7-6) UNRELEASED; urgency=low
   [ Russ Allbery ]
   * Add a stamp file for the configure rule to avoid rerunning configure
     needlessly.  Closes: #465588.
+  * Don't create the openldap user if slapd has been configured to run as
+    a different user.  If slapd has been configured to run as openldap, do
+    create the user on reconfigure.  Closes: #452438.
   * Reformat, reorganize, and update slapd's README.Debian.
     - Include SASL configuration information.
     - Remove LDBM information, since upstream no longer even ships LDBM
