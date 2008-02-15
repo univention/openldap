@@ -1,6 +1,12 @@
 Notes about Debian's slapd package
 ----------------------------------
 
+  Please see the bottom of this file for the ways in which the Debian
+  OpenLDAP packages differ from the upstream OpenLDAP releases.  Please
+  report any bugs that may be related to those changes to Debian via
+  reportbug and not to upstream; upstream is not responsible for changes
+  made in the Debian package.
+
 Using BDB/HDB Backends
 
   HDB is the recommended database backend.  It's the same as BDB but
@@ -120,4 +126,62 @@ Creating NSS Flat Files from LDAP
   and it will generate the files for you.  You will need appropriate
   privileges, of course, and appropriate arguments to ldapsearch.
 
- -- Russ Allbery <rra@debian.org>, Thu, 14 Feb 2008 17:28:39 -0800
+Modifications Compared to Upstream
+
+  Compared to stock OpenLDAP as shipped by the OpenLDAP project, the
+  Debian packages make the following modifications.  If you see any
+  problems caused by or related to these modifications, please report them
+  via the Debian bug tracking system using reportbug, not to the OpenLDAP
+  project.
+
+  * The only LDAP library installed is libldap_r, which in the upstream
+    release is only used for slapd, and libldap is a symlink to it.  This
+    library has thread safety for use with slapd, but that thread safety
+    is not check for any application other than slapd by upstream.
+    Upstream does not support using libldap_r for programs other than
+    slapd.  The current library installation strategy in the Debian
+    packages is an attempt to deal with problems caused by symbol
+    conflicts between libldap and libldap_r when both are pulled in by the
+    same process (most commonly by libnss-ldap) and the number of packages
+    that use libldap in threaded code expecting thread safety.
+
+  * libldap has symbol versioning added to prevent problems during partial
+    upgrades from older versions of the libraries.
+
+  * slapindex has been patched to warn when run as root and the man page
+    has been patched to notify users that slapindex should be run as the
+    user slapd runs as.  There is some upstream discussion of a better
+    fix.
+
+  * slapd is configured to look in /etc/ldap/sasl2 in addition to
+    /usr/lib/sasl2 for SASL configuration files.
+
+  * libldap has been patched to work around what may be a bug in GnuTLS in
+    calculating the length of subjectAltName in TLS certificates.  See
+    <http://bugs.debian.org/465197>.
+
+  * The libldap library is patched to add two functions used by
+    evolution-exchange for NTLM authentication to Active Directory.  See
+    <http://bugs.debian.org/457374>.
+
+  * Several paths have been adjusted to fit Debian file permissions and
+    for Filesystem Hierarchy Standard compliance, namely:
+    - The ldapi socket is in /var/run/slapd
+    - The slapi error log has been moved to /var/log/slapi-errors
+    - The slapd database location is /var/lib/ldap
+
+  In addition, upstream patches from CVS may be applied to fix bugs in the
+  current release and will not be noted here unless they're not expected
+  to be in the next release.
+
+  Finally, note that the Debian OpenLDAP packages have been compiled
+  against GnuTLS instead of OpenSSL to avoid licensing problems for
+  GPL-covered packages that use the LDAP libraries.  This is a supported
+  configuration, but it's not widely used outside of Debian.
+
+  For the exact patches applied to the upstream source and references to
+  the relevant upstream ITS numbers, Debian bugs, and upstream
+  synchronization status, see the debian/patches directory in the
+  openldap2.3 source package.
+
+ -- Russ Allbery <rra@debian.org>, Thu, 14 Feb 2008 18:41:15 -0800

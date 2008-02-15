@@ -29,6 +29,8 @@ openldap2.3 (2.4.7-6) UNRELEASED; urgency=low
     - Remove LDBM information, since upstream no longer even ships LDBM
       and the debconf prompting and maintainer scripts already take care
       of any lingering databases.
+    - Document the differences between the Debian OpenLDAP packages and
+      upstream.
 
  -- Steve Langasek <vorlon@debian.org>  Sat, 09 Feb 2008 18:02:00 -0800
 
