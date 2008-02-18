@@ -85,7 +85,7 @@ postinst_upgrade_configuration() {					# {{{
 
 # Create a new user.  Don't create the user, however, if the local
 # administrator has already customized slapd to run as a different user.
-if [ "$MODE" = "configure" ] || [ "$MODE" = "reconfigure" ] ; then
+if [ "$MODE" = "configure" ]; then
 	if [ "openldap" = "$SLAPD_USER" ] ; then
 		create_new_user
 	fi
