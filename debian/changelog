@@ -4,6 +4,8 @@ openldap2.3 (2.4.7-6) UNRELEASED; urgency=low
   * Dutch, thanks to Bart Cornelis <cobaco@skolelinux.no>.  Closes: #452950.
   * Brazilian Portuguese, thanks to Eder L. Marques <frolic@debian-ce.org>.
     Closes: #463460.
+  * German, thanks to Helge Kreutzmann <debian@helgefjell.de>.
+    Closes: #465784.
 
   [ Steve Langasek ]
   * Relax build-dependency on libsasl2-dev now that the versioned dependency

@@ -4,10 +4,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: openldap2.3 2.4.7-4\n"
+"Project-Id-Version: openldap2.3 2.4.7-5\n"
 "Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
 "POT-Creation-Date: 2008-02-09 10:32-0800\n"
-"PO-Revision-Date: 2008-02-08 17:48+0100\n"
+"PO-Revision-Date: 2008-02-14 20:32+0100\n"
 "Last-Translator: Helge Kreutzmann <debian@helgefjell.de>\n"
 "Language-Team: de <debian-l10n-german@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -438,7 +438,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:19001
 msgid "TLSCipherSuite values have changed"
-msgstr ""
+msgstr "TLSCipherSuite-Werte haben sich geändert"
 
 #. Type: error
 #. Description
@@ -449,6 +449,11 @@ msgid ""
 "used, which has been changed from OpenSSL to GnuTLS.  As a result, your "
 "existing TLSCipherSuite setting will not work with this package."
 msgstr ""
+"Eine Option »TLSCipherSuite« wurde beim Upgrade in Ihrer Slapd-Konfiguration "
+"gefunden. Die erlaubten Werte hierfür hängen von der verwendeten SSL-"
+"Implementation ab, die von OpenSSL auf GnuTLS geändert wurde. Im Ergebnis "
+"werden Ihre existierenden TLSCipherSuite-Einstellungen nicht mit diesem "
+"Paket funktionieren."
 
 #. Type: error
 #. Description
@@ -459,3 +464,7 @@ msgid ""
 "output of 'gnutls-cli -l' in the gnutls-bin package for the list of ciphers "
 "supported by GnuTLS."
 msgstr ""
+"Diese Einstellung wurde für Sie automatisch auskommentiert. Falls Sie "
+"spezielle Anforderung an die Verschlüsselung haben, bei denen diese Option "
+"wieder aktiviert werden muss, lesen Sie die Ausgabe von »gnutls-cli -l« aus "
+"dem Paket Gnutls-bin für die Liste der von GnuTLS unterstützen Chiffren."
