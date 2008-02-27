@@ -19,6 +19,8 @@ openldap2.3 (2.4.7-6) UNRELEASED; urgency=low
   * Add new patch, sasl-cleartext-strncasecmp, to correct a regression that
     prevented the use of the {CLEARTEXT} password scheme with SASL.
     Closes LP: #191563.
+  * drop LGPL from debian/copyright; there is no longer any code under this
+    license in the package.
 
   [ Russ Allbery ]
   * Add a stamp file for the configure rule to avoid rerunning configure
