@@ -23,6 +23,9 @@ openldap2.3 (2.4.7-6) unstable; urgency=low
     license in the package.
   * Drop patch gnutls-altname-nulterminated; it's been determined that the
     "length" discrepancy was a bug in gnutls, and fixed in that package.
+  * debian/configure.options: explicitly pass --with-odbc=unixodbc, so
+    that we depend on the right ODBC implementation when both happen to 
+    be installed at build time.
 
   [ Russ Allbery ]
   * Add a stamp file for the configure rule to avoid rerunning configure

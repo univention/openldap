@@ -168,6 +168,8 @@
 #multiple precision support for statistics
 #auto|bignum|gmp [auto]
 #
+#--with-odbc             with specific ODBC support iodbc|unixodbc|auto [auto]
+--with-odbc=unixodbc
 #--with-gnu-ld           assume the C compiler uses GNU ld [default=no]
 #--with-pic              try to use only PIC/non-PIC objects [default=use
 #both]
