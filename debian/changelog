@@ -1,4 +1,4 @@
-openldap2.3 (2.4.7-6) UNRELEASED; urgency=low
+openldap2.3 (2.4.7-6) unstable; urgency=low
 
   [ Updated debconf translations ]
   * Dutch, thanks to Bart Cornelis <cobaco@skolelinux.no>.  Closes: #452950.
@@ -38,7 +38,7 @@ openldap2.3 (2.4.7-6) UNRELEASED; urgency=low
     - Document the differences between the Debian OpenLDAP packages and
       upstream.
 
- -- Steve Langasek <vorlon@debian.org>  Sat, 09 Feb 2008 18:02:00 -0800
+ -- Steve Langasek <vorlon@debian.org>  Thu, 28 Feb 2008 22:15:17 -0800
 
 openldap2.3 (2.4.7-5) unstable; urgency=low
 
