@@ -11,6 +11,5 @@ libldap-symbol-versions
 gnutls-ciphers
 entryCSN-backwards-compatibility
 slapd-tlsverifyclient-default -p0
-gnutls-altname-nulterminated -p0
 getaddrinfo-is-threadsafe
 sasl-cleartext-strncasecmp -p0
