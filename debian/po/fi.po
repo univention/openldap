@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: openldap2.3\n"
 "Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
 "POT-Creation-Date: 2008-02-09 10:32-0800\n"
-"PO-Revision-Date: 2008-01-26 23:23+0200\n"
+"PO-Revision-Date: 2008-04-09 20:55+0200\n"
 "Last-Translator: Esko Arajärvi <edu@iki.fi>\n"
 "Language-Team: Finnish <debian-l10n-finnish@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -235,9 +235,9 @@ msgid ""
 "your slapd.conf file."
 msgstr ""
 "Vanhentunut LDAPv2-yhteyskäytäntö on slapdissa oletuksena poissa käytöstä. "
-"Ohjelmien ja käyttäjien tulisi päivittää versioon LDAPv3. Jos jotkut vanhat "
-"ohjelmat eivät voi käyttää LDAPv3-yhteyskäytäntöä, valitse tämä, jolloin "
-"”allow bind_v2” lisätään tiedostoon slapd.conf."
+"Järjestelmät ja ohjelmat päivittää käyttämään LDAPv3:a. Jos jotkin vanhat "
+"ohjelmat eivät voi käyttää LDAPv3-yhteyskäytäntöä, valitse tämä lisätäksesi "
+"asetuksen ”allow bind_v2” tiedostoon slapd.conf"
 
 #. Type: boolean
 #. Description
@@ -255,8 +255,8 @@ msgid ""
 "want to back up and abandon the current database."
 msgstr ""
 "Annettu hakemistopääte (verkkotunnus) ei täsmää tiedostossa /etc/ldap/slapd."
-"conf olevaan. Hakemistopäätteen muuttaminen vaatii nykyisen LDAP-tietokannan "
-"siirtämistä syrjään ja uuden luomista. Vahvista haluatko tehdä tehdä "
+"conf olevaan. Hakemistopäätteen muuttaminen vaatii, että nykyinen LDAP-"
+"tietokanta siirretään syrjään ja luodaan uusi. Vahvista haluatko tehdä tehdä "
 "varmuuskopion nykyisestä tietokannasta ja hylätä sen."
 
 #. Type: error
@@ -416,7 +416,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:19001
 msgid "TLSCipherSuite values have changed"
-msgstr ""
+msgstr "TLSCipherSuite-arvot ovat muuttuneet"
 
 #. Type: error
 #. Description
@@ -427,6 +427,10 @@ msgid ""
 "used, which has been changed from OpenSSL to GnuTLS.  As a result, your "
 "existing TLSCipherSuite setting will not work with this package."
 msgstr ""
+"Asetus ”TLSCipherSuite” löydettiin päivitettäessä slapdin asetuksista. Tämän "
+"asetuksen sallitut arvot riippuvat käytetystä SSL-toteutuksesta. Käytetty "
+"toteutus on vaihdettu OpenSSL:stä GnuTLS:ään. Tämän seurauksena nykyinen "
+"TLSCipherSuite-asetus ei toimi tämän paketin kanssa."
 
 #. Type: error
 #. Description
@@ -437,3 +441,7 @@ msgid ""
 "output of 'gnutls-cli -l' in the gnutls-bin package for the list of ciphers "
 "supported by GnuTLS."
 msgstr ""
+"Tämä asetus on automaattisesti kommentoitu pois käytöstä. Jos on tarpeen "
+"asettaa tietty salaus tällä asetuksella, lista GnuTLS:n tukemista "
+"salauksista voidaan tulostaa paketin gnutls-bin avulla komennolla ”gnutls-"
+"cli -l”."
