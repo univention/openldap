@@ -4,6 +4,8 @@ openldap2.3 (2.4.7-7) UNRELEASED; urgency=low
   * French, thanks to Christian Perrier <bubulle@debian.org>.
     Closes: #471792.
   * Finnish, thanks to Esko Arajärvi <edu@iki.fi>.  Closes: #475238.
+  * Czech, thanks to Miroslav Kure <kurem@upcase.info.upol.cz>.
+    Closes: #480138.
 
  -- Steve Langasek <vorlon@debian.org>  Thu, 28 Feb 2008 22:32:44 -0800
 

@@ -16,7 +16,7 @@ msgstr ""
 "Project-Id-Version: openldap2.3\n"
 "Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
 "POT-Creation-Date: 2008-02-09 10:32-0800\n"
-"PO-Revision-Date: 2008-01-31 21:20+0100\n"
+"PO-Revision-Date: 2008-05-08 11:22+0200\n"
 "Last-Translator: Miroslav Kure <kurem@debian.cz>\n"
 "Language-Team: Czech <debian-l10n-czech@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -429,7 +429,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:19001
 msgid "TLSCipherSuite values have changed"
-msgstr ""
+msgstr "Hodnota TLSCipherSuite se změnila"
 
 #. Type: error
 #. Description
@@ -440,6 +440,11 @@ msgid ""
 "used, which has been changed from OpenSSL to GnuTLS.  As a result, your "
 "existing TLSCipherSuite setting will not work with this package."
 msgstr ""
+"Při aktualizaci byla ve vašem konfiguračním souboru programu slapd nalezena "
+"volba „TLSCipherSuite“. Přípustné hodnoty, které můžete v této volbě použít, "
+"jsou určeny použitou implementací SSL. Ta se změnila z OpenSSL na GnuTLS, "
+"což znamená, že stávající nastavení TLSCipherSuite nebude s tímto balíkem "
+"fungovat."
 
 #. Type: error
 #. Description
@@ -450,3 +455,7 @@ msgid ""
 "output of 'gnutls-cli -l' in the gnutls-bin package for the list of ciphers "
 "supported by GnuTLS."
 msgstr ""
+"Toto nastavení bylo automaticky zakomentováno. Máte-li speciální požadavky, "
+"které vyžadují opětovné zapnutí této volby, zjistěte si prosím seznam šifer "
+"podporovaných v GnuTLS (např. příkazem „gnutls-cli -l“, který se nachází v "
+"balíku gnutls-bin)."
