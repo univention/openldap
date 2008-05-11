@@ -8,6 +8,8 @@ openldap2.3 (2.4.7-7) UNRELEASED; urgency=low
     Closes: #480138.
   * Basque, thanks to Piarres Beobide <pi+debian@beobide.net>.
     Closes: #480177.
+  * Vietnamese, thanks to Clytie Siddall <clytie@riverland.net.au>.
+    Closes: #480181.
 
  -- Steve Langasek <vorlon@debian.org>  Thu, 28 Feb 2008 22:32:44 -0800
 
