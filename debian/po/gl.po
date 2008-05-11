@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: openldap2.3\n"
 "Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
 "POT-Creation-Date: 2008-02-09 10:32-0800\n"
-"PO-Revision-Date: 2008-01-28 18:58+0000\n"
+"PO-Revision-Date: 2008-05-08 20:39+0100\n"
 "Last-Translator: Jacobo Tarrio <jtarrio@debian.org>\n"
 "Language-Team: Galician <proxecto@trasno.net>\n"
 "MIME-Version: 1.0\n"
@@ -424,7 +424,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:19001
 msgid "TLSCipherSuite values have changed"
-msgstr ""
+msgstr "Os valores de TLSCipherSuite cambiaron"
 
 #. Type: error
 #. Description
@@ -435,6 +435,11 @@ msgid ""
 "used, which has been changed from OpenSSL to GnuTLS.  As a result, your "
 "existing TLSCipherSuite setting will not work with this package."
 msgstr ""
+"Atopouse unha opción \"TLSCipherSuite\" na configuración de slapd ao "
+"actualizar. Os valores admitidos para esta opción están determinados pola "
+"implementación de SSL en uso, que se cambiou de OpenSSL a GnuTLS. Coma "
+"resultado, a configuración actual de TLSCipherSuite non ha funcionar con "
+"este paquete."
 
 #. Type: error
 #. Description
@@ -445,3 +450,7 @@ msgid ""
 "output of 'gnutls-cli -l' in the gnutls-bin package for the list of ciphers "
 "supported by GnuTLS."
 msgstr ""
+"Anulouse cun comentario esta configuración por vostede. Se ten necesidades "
+"de cifrado específicas que precisan de que se volva activar esta opción, "
+"consulte a saída de \"gnutls-cli -l\" no paquete gnutls-bin para obter a "
+"lista de sistemas de cifrado soportados por GnuTLS."
