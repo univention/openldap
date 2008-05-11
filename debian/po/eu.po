@@ -29,8 +29,8 @@ msgid ""
 "If you enable this option, no initial configuration or database will be "
 "created for you."
 msgstr ""
-"Aukera hau gaitzen baduzu ez da hasierako konfigurazio edo "
-"datubaserik sortuko."
+"Aukera hau gaitzen baduzu ez da hasierako konfigurazio edo datubaserik "
+"sortuko."
 
 #. Type: select
 #. Choices
@@ -77,10 +77,11 @@ msgid ""
 "the new version is incompatible with the old database format and it needs to "
 "be reimported. If you select \"never\", no dump will be done."
 msgstr ""
-"\"Beti\" hautatuaz datubaseak baldintzarik gabe iraukiko dira bertsio-berritze "
-"baten aurretik. \"Beharrezko denean\" hautatuaz bertsio berria datubase formatu "
-"zaharrarekin bateragarri ez denean eta berrinportatu behar denean bakarrik "
-"irauliko da datubasea. \"Inoiz\" hautatzen baduzu inoiz ez da datubasea irauliko."
+"\"Beti\" hautatuaz datubaseak baldintzarik gabe iraukiko dira bertsio-"
+"berritze baten aurretik. \"Beharrezko denean\" hautatuaz bertsio berria "
+"datubase formatu zaharrarekin bateragarri ez denean eta berrinportatu behar "
+"denean bakarrik irauliko da datubasea. \"Inoiz\" hautatzen baduzu inoiz ez "
+"da datubasea irauliko."
 
 #. Type: string
 #. Description
@@ -102,8 +103,8 @@ msgstr ""
 "Mesedez zehaztu LDAP esportatzeko erabiliko den direktorioa. Direktorio "
 "honetan zerbitzariko datubase ezberdinei dagozkien LDIF fitxategiak sortuko "
 "dira. Ziurtatu zaitez direktorioaren partizioan behar duzun bezainbeste leku "
-"libre duzula. \"VERSION\" katearen lehenengo agerpena zerbitzariaren jatorrizko "
-"bertsio zenbakiagatik ordeztuko da."
+"libre duzula. \"VERSION\" katearen lehenengo agerpena zerbitzariaren "
+"jatorrizko bertsio zenbakiagatik ordeztuko da."
 
 #. Type: boolean
 #. Description
@@ -120,10 +121,10 @@ msgid ""
 "will move the old database files out of the way before creating a new "
 "database."
 msgstr ""
-"Konfigurazio prozesua apur dezaketen fitxategiak daude oraindik "
-"/var/lib/ldap direktorioan. Aukera hau gaitzen baduzu mantentzailearen "
-"skript-ek datubase zaharreko fitxategiak hortik kenduko ditu datubase "
-"berria sortu aurretik."
+"Konfigurazio prozesua apur dezaketen fitxategiak daude oraindik /var/lib/"
+"ldap direktorioan. Aukera hau gaitzen baduzu mantentzailearen skript-ek "
+"datubase zaharreko fitxategiak hortik kenduko ditu datubase berria sortu "
+"aurretik."
 
 #. Type: boolean
 #. Description
@@ -143,9 +144,9 @@ msgid ""
 msgstr ""
 "Zuk sartutako konfigurazioa baliogabea da. Ziurtatu DNS domeinu izena "
 "sintaktikoki zuzena dela. erakundea ezin da hutsik egon eta kudeaketa "
-"pasahitzak berdinak izan behar dira. Konfigurazioa ez berregitea "
-"hautatzen baduzu LDAP zerbitzaria ez da konfiguratuko. Beranduago "
-"konfigurazioa egin nahi izanez gero 'dpkg-reconfigure slapd' exekutatu."
+"pasahitzak berdinak izan behar dira. Konfigurazioa ez berregitea hautatzen "
+"baduzu LDAP zerbitzaria ez da konfiguratuko. Beranduago konfigurazioa egin "
+"nahi izanez gero 'dpkg-reconfigure slapd' exekutatu."
 
 #. Type: string
 #. Description
@@ -177,7 +178,8 @@ msgstr "Erakunde izena:"
 msgid ""
 "Please enter the name of the organization to use in the base DN of your LDAP "
 "directory."
-msgstr "Mesedez idatzi LDAP direktorioko oinarri DN-an erabiliko den erakunde izena."
+msgstr ""
+"Mesedez idatzi LDAP direktorioko oinarri DN-an erabiliko den erakunde izena."
 
 #. Type: password
 #. Description
@@ -286,8 +288,8 @@ msgid ""
 "'moduleload' lines to support the backend database)."
 msgstr ""
 "'slapcat' programak huts egin du LDAP direktorioa ateratzean. Hau "
-"konfigurazio fitxategi oker bategatik izan daiteke (adibidez, "
-"datubase interfazea onartzeko 'moduleload' lerroak falta badira)."
+"konfigurazio fitxategi oker bategatik izan daiteke (adibidez, datubase "
+"interfazea onartzeko 'moduleload' lerroak falta badira)."
 
 #. Type: error
 #. Description
@@ -300,11 +302,11 @@ msgid ""
 "you should move the old database files back into place, fix whatever caused "
 "slapcat to fail, and run:"
 msgstr ""
-"Errore honek 'slapdd'-ek lehenago edo beranduago huts egitea eragingo "
-"du. Datubase zaharra /var/backups karpetara mugituko da. Bertsio-berritze "
-"hau beranduago Ebroz saiatu nahi izanez gero datubase zaharreko fitxategiak "
-"atzera lehengo kokagunera mugitu beharko dituzu. slapcat-ek "
-"huts egitea eragin duena konpondu eta komando hau exekutatu:"
+"Errore honek 'slapdd'-ek lehenago edo beranduago huts egitea eragingo du. "
+"Datubase zaharra /var/backups karpetara mugituko da. Bertsio-berritze hau "
+"beranduago Ebroz saiatu nahi izanez gero datubase zaharreko fitxategiak "
+"atzera lehengo kokagunera mugitu beharko dituzu. slapcat-ek huts egitea "
+"eragin duena konpondu eta komando hau exekutatu:"
 
 #. Type: error
 #. Description
@@ -332,8 +334,7 @@ msgid ""
 "by OpenLDAP as of 2.2. It is no longer supported by the OpenLDAP packages."
 msgstr ""
 "LDBM interfazeak estabilitate arazo handiak ditu eta baztertua izan da "
-"OpenLDAP 2.2-tik aurrera. Aurrerantzean ez da onartuko OpenLDAP "
-"paketeetan."
+"OpenLDAP 2.2-tik aurrera. Aurrerantzean ez da onartuko OpenLDAP paketeetan."
 
 #. Type: boolean
 #. Description
@@ -342,8 +343,8 @@ msgid ""
 "When the BDB backend is used, it must be configured properly. For more "
 "information, see /usr/share/doc/slapd/README.DB_CONFIG.gz."
 msgstr ""
-"BDB interfazea erabiltzen denean behar bezala konfiguratu behar da. "
-"Argibide gehiagorako, /usr/share/doc/slapd/README.DB_CONFIG.gz begiratu."
+"BDB interfazea erabiltzen denean behar bezala konfiguratu behar da. Argibide "
+"gehiagorako, /usr/share/doc/slapd/README.DB_CONFIG.gz begiratu."
 
 #. Type: boolean
 #. Description
@@ -353,9 +354,9 @@ msgid ""
 "configuration to use BDB instead of LDBM and convert the databases. If you "
 "do not enable this option, the upgrade will be aborted."
 msgstr ""
-"Aukera hau gaitzen baduzu, LDBM ordez BDB erabiltzeko konfigurazio "
-"berritze eta datubaseak bihurtzeko saiakera bat egingo da. Aukera hau "
-"gaitzen ez baduzu bertsio-berritzea utzia izango da."
+"Aukera hau gaitzen baduzu, LDBM ordez BDB erabiltzeko konfigurazio berritze "
+"eta datubaseak bihurtzeko saiakera bat egingo da. Aukera hau gaitzen ez "
+"baduzu bertsio-berritzea utzia izango da."
 
 #. Type: select
 #. Description
@@ -372,8 +373,8 @@ msgid ""
 "options."
 msgstr ""
 "HDB interfazea gomendatzen da. HDM eta BDB interfazeek antzeko biltegiratze "
-"formatuak erabiltzen dituzte, baina HDB-ek azpi-zuhaitz berrizendatzea onartzen du. "
-"Biek konfigurazio aukera berdinak onartzen dituzte."
+"formatuak erabiltzen dituzte, baina HDB-ek azpi-zuhaitz berrizendatzea "
+"onartzen du. Biek konfigurazio aukera berdinak onartzen dituzte."
 
 #. Type: select
 #. Description
@@ -383,8 +384,8 @@ msgid ""
 "your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more details."
 msgstr ""
 "Edozein kasuetan sortutako datubasea konfigurazioa begiratu beharko zenuke "
-"zure beharrei erantzuten diren jakiteko. Begiratu /usr/share/doc/slapd/README."
-"DB_CONFIG.gz xehetasun gehiagorako."
+"zure beharrei erantzuten diren jakiteko. Begiratu /usr/share/doc/slapd/"
+"README.DB_CONFIG.gz xehetasun gehiagorako."
 
 #. Type: error
 #. Description
@@ -399,7 +400,11 @@ msgid ""
 "One or more slurpd \"replica\" options were found in your slapd config when "
 "upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, you will "
 "need to migrate your replicas to use the syncrepl protocol instead."
-msgstr "Bertsio-berritzean zure slapd konfigurazioan sluprd-ren \"replica\" aukera bat edo gehiago aurkitu da.  OpenLDAP2.4-tik aurrera slurpd zaharkiturik dagoenez zure erreplikak horren ordez syncrepl protokoloa erabiltzea aldatu beharko dituzu."
+msgstr ""
+"Bertsio-berritzean zure slapd konfigurazioan sluprd-ren \"replica\" aukera "
+"bat edo gehiago aurkitu da.  OpenLDAP2.4-tik aurrera slurpd zaharkiturik "
+"dagoenez zure erreplikak horren ordez syncrepl protokoloa erabiltzea aldatu "
+"beharko dituzu."
 
 #. Type: error
 #. Description
@@ -410,10 +415,10 @@ msgid ""
 "hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for "
 "details."
 msgstr ""
-"Slurped-etik ilaratan oinarritutako syncrepl protokolora aldatzeko bihurketa ezin "
-"da automatikoki egin, beraz zure erreplika zerbitzariak eskuz konfiguratu beharko "
-"dituzu.  Mesedez begiratu http://www.openldap.org/doc/admin24/syncrepl.html "
-"xehetasun gehiago nahi badituzu."
+"Slurped-etik ilaratan oinarritutako syncrepl protokolora aldatzeko bihurketa "
+"ezin da automatikoki egin, beraz zure erreplika zerbitzariak eskuz "
+"konfiguratu beharko dituzu.  Mesedez begiratu http://www.openldap.org/doc/"
+"admin24/syncrepl.html xehetasun gehiago nahi badituzu."
 
 #. Type: error
 #. Description
@@ -430,10 +435,10 @@ msgid ""
 "used, which has been changed from OpenSSL to GnuTLS.  As a result, your "
 "existing TLSCipherSuite setting will not work with this package."
 msgstr ""
-"Bertsio-berritzean \"TLSCipherSuite\" aukera bat topatu da slapd.conf konfigurazioan. "
-"Aukera honetan onartzen diren balioak OpenSSL-tik GnuTLS-ra aldatu den SSL "
-"inplementazioaren arabera aldatzen dira.  Hau dela eta dagoen TLSCipherSuite "
-"ezarpenak ez du funtzioantuko pakete honekin."
+"Bertsio-berritzean \"TLSCipherSuite\" aukera bat topatu da slapd.conf "
+"konfigurazioan. Aukera honetan onartzen diren balioak OpenSSL-tik GnuTLS-ra "
+"aldatu den SSL inplementazioaren arabera aldatzen dira.  Hau dela eta dagoen "
+"TLSCipherSuite ezarpenak ez du funtzioantuko pakete honekin."
 
 #. Type: error
 #. Description
@@ -444,8 +449,6 @@ msgid ""
 "output of 'gnutls-cli -l' in the gnutls-bin package for the list of ciphers "
 "supported by GnuTLS."
 msgstr ""
-"Ezarpen hori komentatua izan da.  Aukera hau birgaitzea behar duten "
-"behar kriptografiko zehatzak baldin badituzu, begiratu gnutls-bin paketeko "
-"'gnutls-cli -l' komandoko irteeran GnuTLS-ek onartzen dituen zifraketen "
-"zerrenda."
-
+"Ezarpen hori komentatua izan da.  Aukera hau birgaitzea behar duten behar "
+"kriptografiko zehatzak baldin badituzu, begiratu gnutls-bin paketeko 'gnutls-"
+"cli -l' komandoko irteeran GnuTLS-ek onartzen dituen zifraketen zerrenda."
