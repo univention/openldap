@@ -1,22 +1,22 @@
-# 
+#
 #    Translators, if you are not familiar with the PO format, gettext
 #    documentation is worth reading, especially sections dedicated to
 #    this format, e.g. by running:
 #         info -n '(gettext)PO Files'
 #         info -n '(gettext)Header Entry'
-# 
+#
 #    Some information specific to po-debconf are available at
 #            /usr/share/doc/po-debconf/README-trans
 #         or http://www.debian.org/intl/l10n/po-debconf/README-trans
-# 
+#
 #    Developers do not need to manually edit POT or PO files.
-# 
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: openldap2.3\n"
 "Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
 "POT-Creation-Date: 2008-02-09 10:32-0800\n"
-"PO-Revision-Date: 2008-01-23 12:16+0900\n"
+"PO-Revision-Date: 2008-05-09 11:50+0900\n"
 "Last-Translator: Kenshi Muto <kmuto@debian.org>\n"
 "Language-Team: Japanese <debian-japanese@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -423,7 +423,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:19001
 msgid "TLSCipherSuite values have changed"
-msgstr ""
+msgstr "TLSCipherSuite の値が変更されました"
 
 #. Type: error
 #. Description
@@ -434,6 +434,10 @@ msgid ""
 "used, which has been changed from OpenSSL to GnuTLS.  As a result, your "
 "existing TLSCipherSuite setting will not work with this package."
 msgstr ""
+"更新中に、\"TLSCipherSuite\" オプションがあなたの slapd 設定に見つかりまし"
+"た。このオプションで許される値は、利用するSSL 実装によって決定されますが、そ"
+"の実装は OpenSSL から GnuTLS へと変更されました。結果として、既存の "
+"TLSCipherSuite 設定はこのパッケージでは動作しません。"
 
 #. Type: error
 #. Description
@@ -444,3 +448,7 @@ msgid ""
 "output of 'gnutls-cli -l' in the gnutls-bin package for the list of ciphers "
 "supported by GnuTLS."
 msgstr ""
+"設定は自動的にコメントアウトされました。このオプションを再び有効化しないとい"
+"けないような特定の暗号化を使う必要があるなら、GnuTLS でサポートしている暗号法"
+"の一覧を得るために gnutls-bin パッケージの 'gnutls-cli -i'  の出力を参照して"
+"ください。"
