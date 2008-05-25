@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/search.c,v 1.117.2.6 2007/11/08 19:16:50 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/search.c,v 1.117.2.8 2008/02/11 23:26:48 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2007 The OpenLDAP Foundation.
+ * Copyright 1999-2008 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -864,7 +864,7 @@ backsql_process_filter( backsql_srch_info *bsi, Filter *f )
 		struct berval	keyval;
 #else /* ! BACKSQL_ARBITRARY_KEY */
 		unsigned long	keyval;
-		char		keyvalbuf[] = "18446744073709551615";
+		char		keyvalbuf[LDAP_PVT_INTTYPE_CHARS(unsigned long)];
 #endif /* ! BACKSQL_ARBITRARY_KEY */
 
 		switch ( f->f_choice ) {

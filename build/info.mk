@@ -1,7 +1,7 @@
-# $OpenLDAP: pkg/ldap/build/info.mk,v 1.12.2.2 2007/08/31 23:13:50 quanah Exp $
+# $OpenLDAP: pkg/ldap/build/info.mk,v 1.12.2.3 2008/02/11 23:26:37 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2007 The OpenLDAP Foundation.
+## Copyright 1998-2008 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without

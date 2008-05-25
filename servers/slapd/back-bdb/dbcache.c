@@ -1,8 +1,8 @@
 /* dbcache.c - manage cache of open databases */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dbcache.c,v 1.43.2.4 2007/11/26 04:08:37 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dbcache.c,v 1.43.2.6 2008/02/11 23:26:45 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2007 The OpenLDAP Foundation.
+ * Copyright 2000-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -104,7 +104,21 @@ bdb_db_cache(
 			"bdb_db_cache: db_create(%s) failed: %s (%d)\n",
 			bdb->bi_dbenv_home, db_strerror(rc), rc );
 		ldap_pvt_thread_mutex_unlock( &bdb->bi_database_mutex );
+		ch_free( db );
 		return rc;
+	}
+
+	if( !BER_BVISNULL( &bdb->bi_db_crypt_key )) {
+		rc = db->bdi_db->set_flags( db->bdi_db, DB_ENCRYPT );
+		if ( rc ) {
+			Debug( LDAP_DEBUG_ANY,
+				"bdb_db_cache: db set_flags(DB_ENCRYPT)(%s) failed: %s (%d)\n",
+				bdb->bi_dbenv_home, db_strerror(rc), rc );
+			ldap_pvt_thread_mutex_unlock( &bdb->bi_database_mutex );
+			db->bdi_db->close( db->bdi_db, 0 );
+			ch_free( db );
+			return rc;
+		}
 	}
 
 	rc = db->bdi_db->set_pagesize( db->bdi_db, BDB_PAGESIZE );

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/modrdn.c,v 1.39.2.6 2007/08/31 23:14:03 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/modrdn.c,v 1.39.2.9 2008/04/14 18:57:13 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2007 The OpenLDAP Foundation.
+ * Copyright 1999-2008 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -44,6 +44,7 @@ meta_back_modrdn( Operation *op, SlapReply *rs )
 	int		msgid;
 	int		do_retry = 1;
 	LDAPControl	**ctrls = NULL;
+	struct berval	newrdn = BER_BVNULL;
 
 	mc = meta_back_getconn( op, rs, &candidate, LDAP_BACK_SENDERR );
 	if ( !mc || !meta_back_dobind( op, rs, mc, LDAP_BACK_SENDERR ) ) {
@@ -118,6 +119,13 @@ meta_back_modrdn( Operation *op, SlapReply *rs )
 		goto cleanup;
 	}
 
+	/* NOTE: we need to copy the newRDN in case it was formed
+	 * from a DN by simply changing the length (ITS#5397) */
+	newrdn = op->orr_newrdn;
+	if ( newrdn.bv_val[ newrdn.bv_len ] != '\0' ) {
+		ber_dupbv_x( &newrdn, &op->orr_newrdn, op->o_tmpmemctx );
+	}
+
 retry:;
 	ctrls = op->o_ctrls;
 	if ( meta_back_controls_add( op, rs, mc, candidate, &ctrls ) != LDAP_SUCCESS )
@@ -127,7 +135,7 @@ retry:;
 	}
 
 	rs->sr_err = ldap_rename( mc->mc_conns[ candidate ].msc_ld,
-			mdn.bv_val, op->orr_newrdn.bv_val,
+			mdn.bv_val, newrdn.bv_val,
 			mnewSuperior.bv_val, op->orr_deleteoldrdn,
 			ctrls, NULL, &msgid );
 	rs->sr_err = meta_back_op_result( mc, op, rs, candidate, msgid,
@@ -136,13 +144,13 @@ retry:;
 		do_retry = 0;
 		if ( meta_back_retry( op, rs, &mc, candidate, LDAP_BACK_SENDERR ) ) {
 			/* if the identity changed, there might be need to re-authz */
-			(void)ldap_back_controls_free( op, rs, &ctrls );
+			(void)mi->mi_ldap_extra->controls_free( op, rs, &ctrls );
 			goto retry;
 		}
 	}
 
 cleanup:;
-	(void)ldap_back_controls_free( op, rs, &ctrls );
+	(void)mi->mi_ldap_extra->controls_free( op, rs, &ctrls );
 
 	if ( mdn.bv_val != op->o_req_dn.bv_val ) {
 		free( mdn.bv_val );
@@ -154,6 +162,10 @@ cleanup:;
 	{
 		free( mnewSuperior.bv_val );
 		BER_BVZERO( &mnewSuperior );
+	}
+
+	if ( newrdn.bv_val != op->orr_newrdn.bv_val ) {
+		op->o_tmpfree( newrdn.bv_val, op->o_tmpmemctx );
 	}
 
 	if ( mc ) {

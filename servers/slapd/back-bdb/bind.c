@@ -1,8 +1,8 @@
 /* bind.c - bdb backend bind routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/bind.c,v 1.45.2.3 2007/09/07 10:34:18 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/bind.c,v 1.45.2.4 2008/02/11 23:26:45 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2007 The OpenLDAP Foundation.
+ * Copyright 2000-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

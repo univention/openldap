@@ -1,10 +1,11 @@
+// $OpenLDAP: pkg/ldap/contrib/ldapc++/examples/main.cpp,v 1.1.8.3 2008/04/14 23:18:59 quanah Exp $
 /*
  * Copyright 2000, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
-#include<iostream>
-#include<sstream>
+#include <iostream>
+#include <sstream>
 #include "LDAPConnection.h"
 #include "LDAPConstraints.h"
 #include "LDAPSearchReference.h"
@@ -14,9 +15,8 @@
 #include "LDAPEntry.h"
 #include "LDAPException.h"
 #include "LDAPModification.h"
-#include "LDAPReferralException.h"
 
-#include"debug.h"
+#include "debug.h"
 
 int main(){
     LDAPConstraints* cons=new LDAPConstraints;
@@ -69,7 +69,7 @@ int main(){
         
         lc->unbind();
         delete lc;
-   }catch (LDAPException e){
+   }catch (LDAPException &e){
         std::cout << "-------------- caught Exception ---------"<< std::endl;
         std::cout << e << std::endl;
     }

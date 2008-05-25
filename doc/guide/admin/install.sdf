@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/admin/install.sdf,v 1.38.2.5 2007/11/07 23:01:35 ghenry Exp $
-# Copyright 1999-2007 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP: pkg/openldap-guide/admin/install.sdf,v 1.38.2.6 2008/02/11 23:26:39 kurt Exp $
+# Copyright 1999-2008 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Building and Installing OpenLDAP Software

@@ -1,8 +1,8 @@
 /* passwd.c - password extended operation routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.128.2.6 2007/09/29 09:55:21 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/passwd.c,v 1.128.2.10 2008/02/11 23:34:15 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -505,8 +505,10 @@ slap_passwd_check(
 	AccessControlState	acl_state = ACL_STATE_INIT;
 
 #ifdef SLAPD_SPASSWD
-	ldap_pvt_thread_pool_setkey( op->o_threadctx, slap_sasl_bind,
-		op->o_conn->c_sasl_authctx, NULL );
+	void		*old_authctx = NULL;
+
+	ldap_pvt_thread_pool_setkey( op->o_threadctx, (void *)slap_sasl_bind,
+		op->o_conn->c_sasl_authctx, 0, &old_authctx, NULL );
 #endif
 
 	for ( bv = a->a_vals; bv->bv_val != NULL; bv++ ) {
@@ -524,8 +526,8 @@ slap_passwd_check(
 	}
 
 #ifdef SLAPD_SPASSWD
-	ldap_pvt_thread_pool_setkey( op->o_threadctx, slap_sasl_bind,
-		NULL, NULL );
+	ldap_pvt_thread_pool_setkey( op->o_threadctx, (void *)slap_sasl_bind,
+		old_authctx, 0, NULL, NULL );
 #endif
 
 	return result;

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/config.c,v 1.32.2.3 2007/08/31 23:14:05 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/config.c,v 1.32.2.5 2008/02/11 23:26:48 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2007 The OpenLDAP Foundation.
+ * Copyright 1999-2008 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -540,8 +540,8 @@ backsql_db_config(
 			0, 0 );
 
 	} else if ( !strcasecmp( argv[ 0 ], "fetch_attrs" ) ) {
-		char	*str, *s, *next;
-		char	delimstr[] = ",";
+		char		*str, *s, *next;
+		const char	*delimstr = ",";
 
 		if ( argc < 2 ) {
 			Debug( LDAP_DEBUG_TRACE,
@@ -761,10 +761,10 @@ create_baseObject(
 			"objectClass: extensibleObject\n"
 			"description: builtin baseObject for back-sql\n"
 			"description: all entries mapped "
-			"in the \"ldap_entries\" table\n"
-			"description: must have "
-			"\"" BACKSQL_BASEOBJECT_IDSTR "\" "
-			"in the \"parent\" column",
+				"in table \"ldap_entries\" "
+				"must have "
+				"\"" BACKSQL_BASEOBJECT_IDSTR "\" "
+				"in the \"parent\" column",
 			be->be_suffix[0].bv_val );
 
 	bi->sql_baseObject = str2entry( buf );

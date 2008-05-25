@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/admin/appendix-common-errors.sdf,v 1.4.2.2 2007/11/07 23:01:35 ghenry Exp $
-# Copyright 2007 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP: pkg/openldap-guide/admin/appendix-common-errors.sdf,v 1.4.2.3 2008/02/11 23:26:39 kurt Exp $
+# Copyright 2007-2008 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Common errors encountered when using OpenLDAP Software

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/search.c,v 1.146.2.7 2007/09/29 09:55:22 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/search.c,v 1.146.2.11 2008/04/21 17:03:23 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2007 The OpenLDAP Foundation.
+ * Copyright 1999-2008 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -624,7 +624,7 @@ retry:;
 		if ( nretries && meta_back_retry( op, rs, mcp, candidate, LDAP_BACK_DONTSEND ) ) {
 			nretries = 0;
 			/* if the identity changed, there might be need to re-authz */
-			(void)ldap_back_controls_free( op, rs, &ctrls );
+			(void)mi->mi_ldap_extra->controls_free( op, rs, &ctrls );
 			goto retry;
 		}
 
@@ -641,7 +641,7 @@ retry:;
 	}
 
 done:;
-	(void)ldap_back_controls_free( op, rs, &ctrls );
+	(void)mi->mi_ldap_extra->controls_free( op, rs, &ctrls );
 
 	if ( mapped_attrs ) {
 		free( mapped_attrs );
@@ -2041,8 +2041,11 @@ next_attr:;
 					mod.sm_op = LDAP_MOD_ADD;
 					mod.sm_desc = (*ap)->a_desc;
 					mod.sm_type = mod.sm_desc->ad_cname;
+					mod.sm_numvals = (*ap)->a_numvals;
 					mod.sm_values = (*tap)->a_vals;
-					mod.sm_nvalues = (*tap)->a_nvals;
+					if ( (*tap)->a_nvals != (*tap)->a_vals ) {
+						mod.sm_nvalues = (*tap)->a_nvals;
+					}
 
 					(void)modify_add_values( &e, &mod,
 						/* permissive */ 1,

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.670.2.17 2007/12/03 15:04:31 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.670.2.24 2008/04/14 22:08:32 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -98,7 +98,7 @@ LDAP_SLAPD_F (int) acl_string_expand LDAP_P((
 /*
  * aclparse.c
  */
-LDAP_SLAPD_V (char *) style_strings[];
+LDAP_SLAPD_V (LDAP_CONST char *) style_strings[];
 
 LDAP_SLAPD_F (int) parse_acl LDAP_P(( Backend *be,
 	const char *fname, int lineno,
@@ -248,7 +248,7 @@ LDAP_SLAPD_F (void) at_unparse LDAP_P((
 	BerVarray *bva, AttributeType *start, AttributeType *end, int system ));
 
 LDAP_SLAPD_F (int) register_at LDAP_P((
-	char *at,
+	const char *at,
 	AttributeDescription **ad,
 	int dupok ));
 
@@ -754,6 +754,11 @@ LDAP_SLAPD_F (void) connection_fake_init LDAP_P((
 LDAP_SLAPD_F (void) connection_fake_init2 LDAP_P((
 	Connection *conn,
 	OperationBuffer *opbuf,
+	void *threadctx,
+	int newmem ));
+LDAP_SLAPD_F (void) operation_fake_init LDAP_P((
+	Connection *conn,
+	Operation *op,
 	void *threadctx,
 	int newmem ));
 LDAP_SLAPD_F (void) connection_assign_nextid LDAP_P((Connection *));
@@ -1363,7 +1368,7 @@ LDAP_SLAPD_F (void) oc_unparse LDAP_P((
 	BerVarray *bva, ObjectClass *start, ObjectClass *end, int system ));
 
 LDAP_SLAPD_F (int) register_oc LDAP_P((
-	char *desc,
+	const char *desc,
 	ObjectClass **oc,
 	int dupok ));
 
@@ -1389,9 +1394,6 @@ LDAP_SLAPD_F (Operation *) slap_op_alloc LDAP_P((
 	BerElement *ber, ber_int_t msgid,
 	ber_tag_t tag, ber_int_t id, void *ctx ));
 
-LDAP_SLAPD_F (int) slap_op_add LDAP_P(( Operation **olist, Operation *op ));
-LDAP_SLAPD_F (int) slap_op_remove LDAP_P(( Operation **olist, Operation *op ));
-LDAP_SLAPD_F (Operation *) slap_op_pop LDAP_P(( Operation **olist ));
 LDAP_SLAPD_F (slap_op_t) slap_req2op LDAP_P(( ber_tag_t tag ));
 
 /*
@@ -1629,7 +1631,7 @@ LDAP_SLAPD_F( int ) entry_schema_check(
 	Entry *e,
 	Attribute *attrs,
 	int manage,
-	int add_soc,
+	int add,
 	const char** text,
 	char *textbuf, size_t textlen );
 
@@ -1716,7 +1718,7 @@ LDAP_SLAPD_V (BerMemoryFunctions) slap_sl_mfuncs;
 
 LDAP_SLAPD_F (void) slap_sl_mem_init LDAP_P(( void ));
 LDAP_SLAPD_F (void *) slap_sl_mem_create LDAP_P((
-						ber_len_t size, int stack, void *ctx, int new ));
+						ber_len_t size, int stack, void *ctx, int flag ));
 LDAP_SLAPD_F (void) slap_sl_mem_detach LDAP_P(( void *ctx, void *memctx ));
 LDAP_SLAPD_F (void) slap_sl_mem_destroy LDAP_P(( void *key, void *data ));
 LDAP_SLAPD_F (void *) slap_sl_context LDAP_P(( void *ptr ));
@@ -2039,7 +2041,7 @@ LDAP_SLAPD_F (int) fe_access_allowed LDAP_P((
 
 # define UI2BVX(bv,ui,ctx) \
 	do { \
-		char		buf[] = "+9223372036854775807L"; \
+		char		buf[LDAP_PVT_INTTYPE_CHARS(long)]; \
 		ber_len_t	len; \
 		len = snprintf( buf, sizeof( buf ), UI2BV_FORMAT, (ui) ); \
 		if ( len > (bv)->bv_len ) { \

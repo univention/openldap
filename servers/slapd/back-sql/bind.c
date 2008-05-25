@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/bind.c,v 1.41.2.2 2007/08/31 23:14:05 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/bind.c,v 1.41.2.3 2008/02/11 23:26:48 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2007 The OpenLDAP Foundation.
+ * Copyright 1999-2008 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * All rights reserved.

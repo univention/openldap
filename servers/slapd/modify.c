@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.276.2.6 2007/09/29 09:55:21 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.276.2.9 2008/04/14 22:05:06 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -383,6 +383,10 @@ slap_mods_no_user_mod_check(
 			continue;
 		}
 
+		if ( ml->sml_flags & SLAP_MOD_INTERNAL ) {
+			continue;
+		}
+
 		if ( get_relax( op ) ) {
 			if ( ml->sml_desc->ad_type->sat_flags & SLAP_AT_MANAGEABLE ) {
 				ml->sml_flags |= SLAP_MOD_MANAGING;
@@ -585,6 +589,7 @@ int slap_mods_check(
 					ml->sml_values[nvals] = pval;
 				}
 			}
+			ml->sml_values[nvals].bv_len = 0;
 			ml->sml_numvals = nvals;
 
 			/*

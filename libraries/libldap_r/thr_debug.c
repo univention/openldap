@@ -1,8 +1,8 @@
 /* thr_debug.c - wrapper around the chosen thread wrapper, for debugging. */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_debug.c,v 1.5.2.3 2007/08/31 23:13:56 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_debug.c,v 1.5.2.6 2008/02/11 23:26:42 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2007 The OpenLDAP Foundation.
+ * Copyright 2005-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1246,11 +1246,14 @@ ldap_pvt_thread_pool_setkey(
 	void *xctx,
 	void *key,
 	void *data,
-	ldap_pvt_thread_pool_keyfree_t *kfree )
+	ldap_pvt_thread_pool_keyfree_t *kfree,
+	void **olddatap,
+	ldap_pvt_thread_pool_keyfree_t **oldkfreep )
 {
 	int rc;
 	ERROR_IF( !threading_enabled, "ldap_pvt_thread_pool_setkey" );
-	rc = ldap_int_thread_pool_setkey( xctx, key, data, kfree );
+	rc = ldap_int_thread_pool_setkey(
+		xctx, key, data, kfree, olddatap, oldkfreep );
 	ERROR_IF( rc, "ldap_pvt_thread_pool_setkey" );
 	return rc;
 }

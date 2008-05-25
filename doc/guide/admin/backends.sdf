@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/admin/backends.sdf,v 1.8.2.3 2007/11/07 23:01:35 ghenry Exp $
-# Copyright 2007 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP: pkg/openldap-guide/admin/backends.sdf,v 1.8.2.5 2008/04/14 19:00:49 quanah Exp $
+# Copyright 2007-2008 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Backends
@@ -44,7 +44,7 @@ Sessions that explicitly {{Bind}} to the {{back-ldap}} database always create
 their own private connection to the remote LDAP server. Anonymous sessions 
 will share a single anonymous connection to the remote server. For sessions 
 bound through other mechanisms, all sessions with the same DN will share the 
-same connection. This connection pooling strategy can enhance the proxy’s 
+same connection. This connection pooling strategy can enhance the proxy's 
 efficiency by reducing the overhead of repeatedly making/breaking multiple 
 connections.
 

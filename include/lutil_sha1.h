@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/include/lutil_sha1.h,v 1.28.2.2 2007/08/31 23:13:53 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/include/lutil_sha1.h,v 1.28.2.3 2008/02/11 23:26:40 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

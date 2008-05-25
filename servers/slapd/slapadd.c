@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapadd.c,v 1.36.2.4 2007/11/15 00:27:55 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapadd.c,v 1.36.2.7 2008/04/14 21:15:47 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -203,6 +203,7 @@ slapadd( int argc, char **argv )
 					if( continuemode ) continue;
 					break;
 				}
+				textbuf[ 0 ] = '\0';
 			}
 		}
 
@@ -255,6 +256,20 @@ slapadd( int argc, char **argv )
 				attr_merge( e, slap_schema.si_ad_creatorsName, vals, nvals );
 			}
 
+			if( attr_find( e->e_attrs, slap_schema.si_ad_createTimestamp )
+				== NULL )
+			{
+				vals[0] = timestamp;
+				attr_merge( e, slap_schema.si_ad_createTimestamp, vals, NULL );
+			}
+
+			if( attr_find( e->e_attrs, slap_schema.si_ad_entryCSN )
+				== NULL )
+			{
+				vals[0] = csn;
+				attr_merge( e, slap_schema.si_ad_entryCSN, vals, NULL );
+			}
+
 			if( attr_find( e->e_attrs, slap_schema.si_ad_modifiersName )
 				== NULL )
 			{
@@ -263,25 +278,11 @@ slapadd( int argc, char **argv )
 				attr_merge( e, slap_schema.si_ad_modifiersName, vals, nvals );
 			}
 
-			if( attr_find( e->e_attrs, slap_schema.si_ad_createTimestamp )
-				== NULL )
-			{
-				vals[0] = timestamp;
-				attr_merge( e, slap_schema.si_ad_createTimestamp, vals, NULL );
-			}
-
 			if( attr_find( e->e_attrs, slap_schema.si_ad_modifyTimestamp )
 				== NULL )
 			{
 				vals[0] = timestamp;
 				attr_merge( e, slap_schema.si_ad_modifyTimestamp, vals, NULL );
-			}
-
-			if( attr_find( e->e_attrs, slap_schema.si_ad_entryCSN )
-				== NULL )
-			{
-				vals[0] = csn;
-				attr_merge( e, slap_schema.si_ad_entryCSN, vals, NULL );
 			}
 
 			if ( update_ctxcsn ) {

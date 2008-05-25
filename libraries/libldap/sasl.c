@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/sasl.c,v 1.64.2.2 2007/08/31 23:13:56 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/sasl.c,v 1.64.2.4 2008/02/11 23:26:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -201,7 +201,7 @@ ldap_sasl_bind_s(
 		rc = ldap_parse_sasl_bind_result( ld, result, &scredp, 0 );
 	}
 
-	if ( rc != LDAP_SUCCESS && rc != LDAP_SASL_BIND_IN_PROGRESS ) {
+	if ( rc != LDAP_SUCCESS ) {
 		ldap_msgfree( result );
 		return( rc );
 	}
@@ -347,7 +347,7 @@ ldap_parse_sasl_bind_result(
 		ldap_msgfree( res );
 	}
 
-	return( ld->ld_errno );
+	return( LDAP_SUCCESS );
 }
 
 int

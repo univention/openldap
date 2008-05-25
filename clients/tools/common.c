@@ -1,8 +1,8 @@
 /* common.c - common routines for the ldap client tools */
-/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.78.2.4 2007/08/31 23:13:50 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.78.2.7 2008/02/11 23:26:38 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * Portions Copyright 2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -149,8 +149,8 @@ static struct tool_ctrls_t {
 };
 
 /* "features" */
-static int	gotintr;
-static int	abcan;
+enum { Intr_None = 0, Intr_Abandon, Intr_Cancel, Intr_Ignore }; 
+static volatile sig_atomic_t	gotintr, abcan;
 
 
 #ifdef LDAP_CONTROL_X_SESSION_TRACKING
@@ -223,6 +223,17 @@ tool_destroy( void )
 #ifdef HAVE_TLS
 	ldap_pvt_tls_destroy();
 #endif
+
+	if ( ldapuri != NULL ) {
+		ber_memfree( ldapuri );
+		ldapuri = NULL;
+	}
+
+	if ( pr_cookie.bv_val != NULL ) {
+		ber_memfree( pr_cookie.bv_val );
+		pr_cookie.bv_val = NULL;
+		pr_cookie.bv_len = 0;
+	}
 }
 
 void
@@ -558,19 +569,19 @@ tool_args( int argc, char **argv )
 
 			/* this shouldn't go here, really; but it's a feature... */
 			} else if ( strcasecmp( control, "abandon" ) == 0 ) {
-				abcan = LDAP_REQ_ABANDON;
+				abcan = Intr_Abandon;
 				if ( crit ) {
 					gotintr = abcan;
 				}
 
 			} else if ( strcasecmp( control, "cancel" ) == 0 ) {
-				abcan = LDAP_REQ_EXTENDED;
+				abcan = Intr_Cancel;
 				if ( crit ) {
 					gotintr = abcan;
 				}
 
 			} else if ( strcasecmp( control, "ignore" ) == 0 ) {
-				abcan = -1;
+				abcan = Intr_Ignore;
 				if ( crit ) {
 					gotintr = abcan;
 				}
@@ -746,7 +757,7 @@ tool_args( int argc, char **argv )
 		case 'P':
 			ival = strtol( optarg, &next, 10 );
 			if ( next == NULL || next[0] != '\0' ) {
-				fprintf( stderr, "%s: unabel to parse protocol version \"%s\"\n", prog, optarg );
+				fprintf( stderr, "%s: unable to parse protocol version \"%s\"\n", prog, optarg );
 				exit( EXIT_FAILURE );
 			}
 			switch( ival ) {
@@ -1720,19 +1731,19 @@ tool_check_abandon( LDAP *ld, int msgid )
 	int	rc;
 
 	switch ( gotintr ) {
-	case LDAP_REQ_EXTENDED:
+	case Intr_Cancel:
 		rc = ldap_cancel_s( ld, msgid, NULL, NULL );
 		fprintf( stderr, "got interrupt, cancel got %d: %s\n",
 				rc, ldap_err2string( rc ) );
 		return -1;
 
-	case LDAP_REQ_ABANDON:
+	case Intr_Abandon:
 		rc = ldap_abandon_ext( ld, msgid, NULL, NULL );
 		fprintf( stderr, "got interrupt, abandon got %d: %s\n",
 				rc, ldap_err2string( rc ) );
 		return -1;
 
-	case -1:
+	case Intr_Ignore:
 		/* just unbind, ignoring the request */
 		return -1;
 	}

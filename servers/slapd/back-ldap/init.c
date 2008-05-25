@@ -1,8 +1,8 @@
 /* init.c - initialize ldap backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/init.c,v 1.99.2.5 2007/08/31 23:14:02 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/init.c,v 1.99.2.7 2008/02/12 00:25:47 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2007 The OpenLDAP Foundation.
+ * Copyright 2003-2008 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -31,6 +31,11 @@
 #include "slap.h"
 #include "config.h"
 #include "back-ldap.h"
+
+static const ldap_extra_t ldap_extra = {
+	ldap_back_proxy_authz_ctrl,
+	ldap_back_controls_free
+};
 
 int
 ldap_back_open( BackendInfo	*bi )
@@ -82,6 +87,8 @@ ldap_back_initialize( BackendInfo *bi )
 
 	bi->bi_connection_init = 0;
 	bi->bi_connection_destroy = ldap_back_conn_destroy;
+
+	bi->bi_extra = (void *)&ldap_extra;
 
 	rc = chain_initialize();
 	if ( rc ) {

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.133.2.6 2007/10/08 09:52:25 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.133.2.8 2008/02/11 23:26:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -670,9 +670,9 @@ ldap_int_sasl_bind(
 	{
 		char authid[sizeof("gidNumber=4294967295+uidNumber=4294967295,"
 			"cn=peercred,cn=external,cn=auth")];
-		sprintf( authid, "gidNumber=%d+uidNumber=%d,"
+		sprintf( authid, "gidNumber=%u+uidNumber=%u,"
 			"cn=peercred,cn=external,cn=auth",
-			(int) getegid(), (int) geteuid() );
+			getegid(), geteuid() );
 		(void) ldap_int_sasl_external( ld, ld->ld_defconn, authid,
 			LDAP_PVT_SASL_LOCAL_SSF );
 	}

@@ -1,8 +1,8 @@
 /* filter.c - routines for parsing and dealing with filters */
-/* $OpenLDAP: pkg/ldap/servers/slapd/filter.c,v 1.134.2.10 2007/11/09 15:15:17 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/filter.c,v 1.134.2.12 2008/02/18 22:25:47 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -608,7 +608,9 @@ filter2bv_x( Operation *op, Filter *f, struct berval *fstr )
 simple:
 		value = f->f_av_value;
 		if ( f->f_av_desc->ad_type->sat_equality &&
-			( f->f_av_desc->ad_type->sat_equality->smr_usage & SLAP_MR_MUTATION_NORMALIZER )) {
+			!undef &&
+			( f->f_av_desc->ad_type->sat_equality->smr_usage & SLAP_MR_MUTATION_NORMALIZER ))
+		{
 			f->f_av_desc->ad_type->sat_equality->smr_normalize(
 				(SLAP_MR_DENORMALIZE|SLAP_MR_VALUE_OF_ASSERTION_SYNTAX),
 				NULL, NULL, &f->f_av_value, &value, op->o_tmpmemctx );

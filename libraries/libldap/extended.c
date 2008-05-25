@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/extended.c,v 1.39.2.2 2007/08/31 23:13:55 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/extended.c,v 1.39.2.4 2008/02/11 23:26:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -291,7 +291,6 @@ ldap_parse_intermediate (
 	int				freeit )
 {
 	BerElement *ber;
-	ber_tag_t rc;
 	ber_tag_t tag;
 	ber_len_t len;
 	struct berval *resdata;
@@ -324,9 +323,9 @@ ldap_parse_intermediate (
 		return ld->ld_errno;
 	}
 
-	rc = ber_scanf( ber, "{" /*}*/ );
+	tag = ber_scanf( ber, "{" /*}*/ );
 
-	if( rc == LBER_ERROR ) {
+	if( tag == LBER_ERROR ) {
 		ld->ld_errno = LDAP_DECODING_ERROR;
 		ber_free( ber, 0 );
 		return ld->ld_errno;
@@ -367,16 +366,16 @@ ldap_parse_intermediate (
 	}
 
 	if ( serverctrls == NULL ) {
-		rc = LDAP_SUCCESS;
+		ld->ld_errno = LDAP_SUCCESS;
 		goto free_and_return;
 	}
 
 	if ( ber_scanf( ber, /*{*/ "}" ) == LBER_ERROR ) {
-		rc = LDAP_DECODING_ERROR;
+		ld->ld_errno = LDAP_DECODING_ERROR;
 		goto free_and_return;
 	}
 
-	rc = ldap_pvt_get_controls( ber, serverctrls );
+	ld->ld_errno = ldap_pvt_get_controls( ber, serverctrls );
 
 free_and_return:
 	ber_free( ber, 0 );
@@ -397,6 +396,6 @@ free_and_return:
 		ldap_msgfree( res );
 	}
 
-	return LDAP_SUCCESS;
+	return ld->ld_errno;
 }
 

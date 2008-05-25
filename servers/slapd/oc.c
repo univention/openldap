@@ -1,8 +1,8 @@
 /* oc.c - object class routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/oc.c,v 1.77.2.3 2007/08/31 23:13:59 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/oc.c,v 1.77.2.6 2008/04/14 22:08:32 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -502,6 +502,10 @@ oc_next( ObjectClass **oc )
 	}
 #endif
 
+	if ( *oc == NULL ) {
+		return 0;
+	}
+
 	*oc = LDAP_STAILQ_NEXT(*oc,soc_next);
 
 	return (*oc != NULL);
@@ -892,7 +896,7 @@ oc_schema_info( Entry *e )
 }
 
 int
-register_oc( char *def, ObjectClass **soc, int dupok )
+register_oc( const char *def, ObjectClass **soc, int dupok )
 {
 	LDAPObjectClass *oc;
 	int code;

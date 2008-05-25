@@ -1,8 +1,8 @@
 /* null.c - the null backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-null/null.c,v 1.18.2.3 2007/08/31 23:14:04 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-null/null.c,v 1.18.2.5 2008/02/12 00:58:15 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2007 The OpenLDAP Foundation.
+ * Copyright 2002-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -70,7 +70,8 @@ null_back_false( Operation *op, SlapReply *rs )
 
 
 /* for overlays */
-int null_back_entry_get(
+static int
+null_back_entry_get(
 	Operation *op,
 	struct berval *ndn,
 	ObjectClass *oc,
@@ -78,8 +79,10 @@ int null_back_entry_get(
 	int rw,
 	Entry **ent )
 {
-	*ent = NULL;
-	return 1;
+	assert( *ent == NULL );
+
+	/* don't admit the object isn't there */
+	return oc || at ? LDAP_NO_SUCH_ATTRIBUTE : LDAP_BUSY;
 }
 
 

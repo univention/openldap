@@ -1,8 +1,8 @@
 /* thr_posix.c - wrapper around posix and posixish thread implementations.  */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_posix.c,v 1.46.2.3 2007/11/07 20:58:37 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_posix.c,v 1.46.2.5 2008/02/11 23:26:42 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@
 #define LDAP_THREAD_IMPLEMENTATION
 #define LDAP_THREAD_RDWR_IMPLEMENTATION
 #include "ldap_thr_debug.h"	 /* May rename the symbols defined below */
+#include <signal.h>			 /* For pthread_kill() */
 
 #if HAVE_PTHREADS < 6
 #  define LDAP_INT_THREAD_ATTR_DEFAULT		pthread_attr_default

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.380.2.8 2007/11/27 20:11:48 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.380.2.10 2008/02/11 23:26:44 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * Portions Copyright 2007 by Howard Chu, Symas Corporation.
  * All rights reserved.
  *
@@ -1058,7 +1058,7 @@ get_url_perms(
 						S_IRGRP, S_IWGRP, S_IXGRP,
 						S_IROTH, S_IWOTH, S_IXOTH
 					};
-					static char	c[] = "-rwxrwxrwx"; 
+					static const char	c[] = "-rwxrwxrwx"; 
 
 					if ( value[ j ] == c[ j ] ) {
 						p |= m[ j ];

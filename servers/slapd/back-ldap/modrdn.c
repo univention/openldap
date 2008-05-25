@@ -1,8 +1,8 @@
 /* modrdn.c - ldap backend modrdn function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modrdn.c,v 1.47.2.5 2007/08/31 23:14:02 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/modrdn.c,v 1.47.2.7 2008/04/14 18:57:13 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2007 The OpenLDAP Foundation.
+ * Copyright 1999-2008 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -44,6 +44,7 @@ ldap_back_modrdn(
 	ldap_back_send_t	retrying = LDAP_BACK_RETRYING;
 	int			rc = LDAP_SUCCESS;
 	char			*newSup = NULL;
+	struct berval		newrdn = BER_BVNULL;
 
 	if ( !ldap_back_dobind( &lc, op, rs, LDAP_BACK_SENDERR ) ) {
 		return rs->sr_err;
@@ -72,6 +73,13 @@ ldap_back_modrdn(
 		newSup = op->orr_newSup->bv_val;
 	}
 
+	/* NOTE: we need to copy the newRDN in case it was formed
+	 * from a DN by simply changing the length (ITS#5397) */
+	newrdn = op->orr_newrdn;
+	if ( newrdn.bv_val[ newrdn.bv_len ] != '\0' ) {
+		ber_dupbv_x( &newrdn, &op->orr_newrdn, op->o_tmpmemctx );
+	}
+
 retry:
 	ctrls = op->o_ctrls;
 	rc = ldap_back_controls_add( op, rs, lc, &ctrls );
@@ -82,7 +90,7 @@ retry:
 	}
 
 	rs->sr_err = ldap_rename( lc->lc_ld, op->o_req_dn.bv_val,
-			op->orr_newrdn.bv_val, newSup,
+			newrdn.bv_val, newSup,
 			op->orr_deleteoldrdn, ctrls, NULL, &msgid );
 	rc = ldap_back_op_result( lc, op, rs, msgid,
 		li->li_timeout[ SLAP_OP_MODRDN ],
@@ -98,6 +106,10 @@ retry:
 
 cleanup:
 	(void)ldap_back_controls_free( op, rs, &ctrls );
+
+	if ( newrdn.bv_val != op->orr_newrdn.bv_val ) {
+		op->o_tmpfree( newrdn.bv_val, op->o_tmpmemctx );
+	}
 
 	if ( lc != NULL ) {
 		ldap_back_release_conn( li, lc );

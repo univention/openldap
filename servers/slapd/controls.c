@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/controls.c,v 1.174.2.8 2007/11/08 19:16:50 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/controls.c,v 1.174.2.10 2008/04/14 22:15:21 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1102,6 +1102,10 @@ static int parsePagedResults (
 	ps->ps_size = size;
 	ps->ps_cookieval = cookie;
 	op->o_pagedresults_state = ps;
+	if ( !cookie.bv_len ) {
+		ps->ps_count = 0;
+		ps->ps_cookie = 0;
+	}
 
 	/* NOTE: according to RFC 2696 3.:
 

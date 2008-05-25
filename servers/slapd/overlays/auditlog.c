@@ -1,8 +1,8 @@
 /* auditlog.c - log modifications for audit/history purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/auditlog.c,v 1.7.2.5 2007/11/27 19:59:20 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/auditlog.c,v 1.7.2.7 2008/04/14 21:18:48 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2007 The OpenLDAP Foundation.
+ * Copyright 2005-2008 The OpenLDAP Foundation.
  * Portions copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -74,7 +74,7 @@ static int auditlog_response(Operation *op, SlapReply *rs) {
 	Modifications *m;
 	struct berval *b, *who = NULL;
 	char *what, *suffix;
-	long stamp = slap_get_time();
+	time_t stamp;
 	int i;
 
 	if ( rs->sr_err != LDAP_SUCCESS ) return SLAP_CB_CONTINUE;
@@ -125,8 +125,9 @@ static int auditlog_response(Operation *op, SlapReply *rs) {
 		return SLAP_CB_CONTINUE;
 	}
 
+	stamp = slap_get_time();
 	fprintf(f, "# %s %ld %s%s%s\n",
-		what, stamp, suffix, who ? " " : "", who ? who->bv_val : "");
+		what, (long)stamp, suffix, who ? " " : "", who ? who->bv_val : "");
 
 	if ( !BER_BVISEMPTY( &op->o_conn->c_dn ) &&
 		(!who || !dn_match( who, &op->o_conn->c_dn )))
@@ -173,7 +174,7 @@ static int auditlog_response(Operation *op, SlapReply *rs) {
 		break;
 	}
 
-	fprintf(f, "# end %s %ld\n\n", what, stamp);
+	fprintf(f, "# end %s %ld\n\n", what, (long)stamp);
 
 	fclose(f);
 	ldap_pvt_thread_mutex_unlock(&ad->ad_mutex);

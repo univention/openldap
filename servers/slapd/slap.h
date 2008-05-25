@@ -1,8 +1,8 @@
 /* slap.h - stand alone ldap server include file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.764.2.19 2007/11/27 20:19:14 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.764.2.26 2008/04/24 08:13:39 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1006,11 +1006,11 @@ struct SubstringsAssertion {
 };
 
 struct MatchingRuleAssertion {
+	AttributeDescription	*ma_desc;	/* optional */
+	struct berval		ma_value;	/* required */
 	MatchingRule		*ma_rule;	/* optional */
 	struct berval		ma_rule_text;	/* optional */
-	AttributeDescription	*ma_desc;	/* optional */
 	int			ma_dnattrs;	/* boolean */
-	struct berval		ma_value;	/* required */
 #ifdef LDAP_COMP_MATCH
 	ComponentFilter		*ma_cf;	/* component filter */
 #endif
@@ -1707,6 +1707,7 @@ struct ConfigOCs;	/* config.h */
 
 struct BackendDB {
 	BackendInfo	*bd_info;	/* pointer to shared backend info */
+	BackendDB	*bd_self;	/* pointer to this struct */
 
 	/* fields in this structure (and routines acting on this structure)
 	   should be renamed from be_ to bd_ */
@@ -1903,8 +1904,8 @@ typedef int (BI_config) LDAP_P((BackendInfo *bi,
 	const char *fname, int lineno,
 	int argc, char **argv));
 
-struct config_reply_s ; /* config.h */
-typedef int (BI_db_func) LDAP_P((Backend *bd, struct config_reply_s *c));
+typedef struct config_reply_s ConfigReply; /* config.h */
+typedef int (BI_db_func) LDAP_P((Backend *bd, ConfigReply *cr));
 typedef BI_db_func BI_db_init;
 typedef BI_db_func BI_db_open;
 typedef BI_db_func BI_db_close;
@@ -2446,7 +2447,7 @@ typedef struct Opheader {
 
 	slap_counters_t	*oh_counters;
 
-	char		oh_log_prefix[ /* sizeof("conn=18446744073709551615 op=18446744073709551615") */ SLAP_TEXT_BUFLEN ];
+	char		oh_log_prefix[ /* sizeof("conn= op=") + 2*LDAP_PVT_INTTYPE_CHARS(unsigned long) */ SLAP_TEXT_BUFLEN ];
 
 #ifdef LDAP_SLAPI
 	void	*oh_extensions;		/* NS-SLAPI plugin */
@@ -2465,6 +2466,20 @@ typedef union OpRequest {
 	req_extended_s oq_extended;
 	req_pwdexop_s oq_pwdexop;
 } OpRequest;
+
+/* This is only a header. Actual users should define their own
+ * structs with the oe_next / oe_key fields at the top and
+ * whatever else they need following.
+ */
+typedef struct OpExtra {
+	LDAP_SLIST_ENTRY(OpExtra) oe_next;
+	void *oe_key;
+} OpExtra;
+
+typedef struct OpExtraDB {
+	OpExtra oe;
+	BackendDB *oe_db;
+} OpExtraDB;
 
 struct Operation {
 	Opheader *o_hdr;
@@ -2657,7 +2672,9 @@ struct Operation {
 	LDAPControl	**o_ctrls;	 /* controls */
 	struct berval o_csn;
 
+	/* DEPRECATE o_private - use o_extra instead */
 	void	*o_private;	/* anything the backend needs */
+	LDAP_SLIST_HEAD(o_e, OpExtra) o_extra;	/* anything the backend needs */
 
 	LDAP_STAILQ_ENTRY(Operation)	o_next;	/* next operation in list */
 };

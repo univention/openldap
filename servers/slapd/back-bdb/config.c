@@ -1,8 +1,8 @@
 /* config.c - bdb backend configuration file routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/config.c,v 1.91.2.7 2007/10/18 01:03:41 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/config.c,v 1.91.2.11 2008/04/14 21:28:42 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2007 The OpenLDAP Foundation.
+ * Copyright 2000-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,6 +42,8 @@ static ConfigDriver bdb_cf_gen;
 enum {
 	BDB_CHKPT = 1,
 	BDB_CONFIG,
+	BDB_CRYPTFILE,
+	BDB_CRYPTKEY,
 	BDB_DIRECTORY,
 	BDB_NOSYNC,
 	BDB_DIRTYR,
@@ -70,6 +72,14 @@ static ConfigTable bdbcfg[] = {
 		bdb_cf_gen, "( OLcfgDbAt:1.2 NAME 'olcDbCheckpoint' "
 			"DESC 'Database checkpoint interval in kbytes and minutes' "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )",NULL, NULL },
+	{ "cryptfile", "file", 2, 2, 0, ARG_STRING|ARG_MAGIC|BDB_CRYPTFILE,
+		bdb_cf_gen, "( OLcfgDbAt:1.13 NAME 'olcDbCryptFile' "
+			"DESC 'Pathname of file containing the DB encryption key' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )",NULL, NULL },
+	{ "cryptkey", "key", 2, 2, 0, ARG_BERVAL|ARG_MAGIC|BDB_CRYPTKEY,
+		bdb_cf_gen, "( OLcfgDbAt:1.14 NAME 'olcDbCryptKey' "
+			"DESC 'DB encryption key' "
+			"SYNTAX OMsOctetString SINGLE-VALUE )",NULL, NULL },
 	{ "dbconfig", "DB_CONFIG setting", 1, 0, 0, ARG_MAGIC|BDB_CONFIG,
 		bdb_cf_gen, "( OLcfgDbAt:1.3 NAME 'olcDbConfig' "
 			"DESC 'BerkeleyDB DB_CONFIG configuration directives' "
@@ -143,6 +153,7 @@ static ConfigOCs bdbocs[] = {
 		"SUP olcDatabaseConfig "
 		"MUST olcDbDirectory "
 		"MAY ( olcDbCacheSize $ olcDbCheckpoint $ olcDbConfig $ "
+		"olcDbCryptFile $ olcDbCryptKey $ "
 		"olcDbNoSync $ olcDbDirtyRead $ olcDbIDLcacheSize $ "
 		"olcDbIndex $ olcDbLinearIndex $ olcDbLockDetect $ "
 		"olcDbMode $ olcDbSearchStack $ olcDbShmKey $ "
@@ -326,9 +337,9 @@ bdb_cf_cleanup( ConfigArgs *c )
 	
 	if ( bdb->bi_flags & BDB_RE_OPEN ) {
 		bdb->bi_flags ^= BDB_RE_OPEN;
-		rc = c->be->bd_info->bi_db_close( c->be, NULL );
+		rc = c->be->bd_info->bi_db_close( c->be, &c->reply );
 		if ( rc == 0 )
-			rc = c->be->bd_info->bi_db_open( c->be, NULL );
+			rc = c->be->bd_info->bi_db_open( c->be, &c->reply );
 		/* If this fails, we need to restart */
 		if ( rc ) {
 			slapd_shutdown = 2;
@@ -360,6 +371,25 @@ bdb_cf_gen( ConfigArgs *c )
 				bv.bv_val = buf;
 				value_add_one( &c->rvalue_vals, &bv );
 			} else{
+				rc = 1;
+			}
+			break;
+
+		case BDB_CRYPTFILE:
+			if ( bdb->bi_db_crypt_file ) {
+				c->value_string = ch_strdup( bdb->bi_db_crypt_file );
+			} else {
+				rc = 1;
+			}
+			break;
+
+		/* If a crypt file has been set, its contents are copied here.
+		 * But we don't want the key to be incorporated here.
+		 */
+		case BDB_CRYPTKEY:
+			if ( !bdb->bi_db_crypt_file && !BER_BVISNULL( &bdb->bi_db_crypt_key )) {
+				value_add_one( &c->rvalue_vals, &bdb->bi_db_crypt_key );
+			} else {
 				rc = 1;
 			}
 			break;
@@ -453,9 +483,11 @@ bdb_cf_gen( ConfigArgs *c )
 			if ( bdb->bi_txn_cp_task ) {
 				struct re_s *re = bdb->bi_txn_cp_task;
 				bdb->bi_txn_cp_task = NULL;
+				ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
 				if ( ldap_pvt_runqueue_isrunning( &slapd_rq, re ) )
 					ldap_pvt_runqueue_stoptask( &slapd_rq, re );
 				ldap_pvt_runqueue_remove( &slapd_rq, re );
+				ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
 			}
 			bdb->bi_txn_cp = 0;
 			break;
@@ -471,6 +503,21 @@ bdb_cf_gen( ConfigArgs *c )
 			}
 			bdb->bi_flags |= BDB_UPD_CONFIG;
 			c->cleanup = bdb_cf_cleanup;
+			break;
+		/* Doesn't really make sense to change these on the fly;
+		 * the entire DB must be dumped and reloaded
+		 */
+		case BDB_CRYPTFILE:
+			if ( bdb->bi_db_crypt_file ) {
+				ch_free( bdb->bi_db_crypt_file );
+				bdb->bi_db_crypt_file = NULL;
+			}
+			/* FALLTHRU */
+		case BDB_CRYPTKEY:
+			if ( !BER_BVISNULL( &bdb->bi_db_crypt_key )) {
+				ch_free( bdb->bi_db_crypt_key.bv_val );
+				BER_BVZERO( &bdb->bi_db_crypt_key );
+			}
 			break;
 		case BDB_DIRECTORY:
 			bdb->bi_flags |= BDB_RE_OPEN;
@@ -575,9 +622,11 @@ bdb_cf_gen( ConfigArgs *c )
 						c->log );
 					return 1;
 				}
+				ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
 				bdb->bi_txn_cp_task = ldap_pvt_runqueue_insert( &slapd_rq,
 					bdb->bi_txn_cp_min * 60, bdb_checkpoint, bdb,
 					LDAP_XSTRING(bdb_checkpoint), c->be->be_suffix[0].bv_val );
+				ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
 			}
 		}
 		} break;
@@ -613,6 +662,22 @@ bdb_cf_gen( ConfigArgs *c )
 		}
 		ber_str2bv( ptr, 0, 1, &bv );
 		ber_bvarray_add( &bdb->bi_db_config, &bv );
+		}
+		break;
+
+	case BDB_CRYPTFILE:
+		rc = lutil_get_filed_password( c->value_string, &bdb->bi_db_crypt_key );
+		if ( rc == 0 ) {
+			bdb->bi_db_crypt_file = c->value_string;
+		}
+		break;
+
+	/* Cannot set key if file was already set */
+	case BDB_CRYPTKEY:
+		if ( bdb->bi_db_crypt_file ) {
+			rc = 1;
+		} else {
+			bdb->bi_db_crypt_key = c->value_bv;
 		}
 		break;
 
@@ -686,9 +751,11 @@ bdb_cf_gen( ConfigArgs *c )
 					c->log );
 				return 1;
 			}
+			ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
 			bdb->bi_index_task = ldap_pvt_runqueue_insert( &slapd_rq, 36000,
 				bdb_online_index, c->be,
 				LDAP_XSTRING(bdb_online_index), c->be->be_suffix[0].bv_val );
+			ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
 		}
 		break;
 

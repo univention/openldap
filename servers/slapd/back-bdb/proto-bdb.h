@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.137.2.7 2007/12/06 15:13:57 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.137.2.9 2008/02/12 00:34:58 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2007 The OpenLDAP Foundation.
+ * Copyright 2000-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -419,7 +419,7 @@ bdb_key_change(
 #define bdb_next_id					BDB_SYMBOL(next_id)
 #define bdb_last_id					BDB_SYMBOL(last_id)
 
-int bdb_next_id( BackendDB *be, DB_TXN *tid, ID *id );
+int bdb_next_id( BackendDB *be, ID *id );
 int bdb_last_id( BackendDB *be, DB_TXN *tid );
 
 /*

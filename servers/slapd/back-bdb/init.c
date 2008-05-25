@@ -1,8 +1,8 @@
 /* init.c - initialize bdb backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.247.2.8 2007/12/06 15:13:57 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.247.2.11 2008/02/11 23:26:45 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2007 The OpenLDAP Foundation.
+ * Copyright 2000-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -279,6 +279,18 @@ shm_retry:
 
 	bdb->bi_dbenv->set_lk_detect( bdb->bi_dbenv, bdb->bi_lock_detect );
 
+	if ( !BER_BVISNULL( &bdb->bi_db_crypt_key )) {
+		rc = bdb->bi_dbenv->set_encrypt( bdb->bi_dbenv, bdb->bi_db_crypt_key.bv_val,
+			DB_ENCRYPT_AES );
+		if ( rc ) {
+			Debug( LDAP_DEBUG_ANY,
+				LDAP_XSTRING(bdb_db_open) ": database \"%s\": "
+				"dbenv set_encrypt failed: %s (%d).\n",
+				be->be_suffix[0].bv_val, db_strerror(rc), rc );
+			goto fail;
+		}
+	}
+
 	/* One long-lived TXN per thread, two TXNs per write op */
 	bdb->bi_dbenv->set_tx_max( bdb->bi_dbenv, connection_pool_max * 3 );
 
@@ -388,6 +400,20 @@ shm_retry:
 				LDAP_XSTRING(bdb_db_open) ": %s\n",
 				cr->msg, 0, 0 );
 			goto fail;
+		}
+
+		if( !BER_BVISNULL( &bdb->bi_db_crypt_key )) {
+			rc = db->bdi_db->set_flags( db->bdi_db, DB_ENCRYPT );
+			if ( rc ) {
+				snprintf(cr->msg, sizeof(cr->msg),
+					"database \"%s\": db set_flags(DB_ENCRYPT)(%s) failed: %s (%d).",
+					be->be_suffix[0].bv_val, 
+					bdb->bi_dbenv_home, db_strerror(rc), rc );
+				Debug( LDAP_DEBUG_ANY,
+					LDAP_XSTRING(bdb_db_open) ": %s\n",
+					cr->msg, 0, 0 );
+				goto fail;
+			}
 		}
 
 		if( i == BDB_ID2ENTRY ) {
@@ -574,7 +600,7 @@ bdb_db_close( BackendDB *be, ConfigReply *cr )
 	/* close db environment */
 	if( bdb->bi_dbenv ) {
 		/* Free cache locker if we enabled locking */
-		if ( !( slapMode & SLAP_TOOL_QUICK )) {
+		if ( !( slapMode & SLAP_TOOL_QUICK ) && bdb->bi_cache.c_locker ) {
 #if DB_VERSION_FULL >= 0x04060012
 			XLOCK_ID_FREE(bdb->bi_dbenv, bdb->bi_cache.c_locker->id);
 #else

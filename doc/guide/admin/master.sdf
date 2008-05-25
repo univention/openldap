@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/admin/master.sdf,v 1.18.2.5 2007/11/07 23:01:35 ghenry Exp $
-# Copyright 1999-2007 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP: pkg/openldap-guide/admin/master.sdf,v 1.18.2.7 2008/04/14 20:35:10 quanah Exp $
+# Copyright 1999-2008 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 #
 # master file for the OpenLDAP Administrator's Guide
@@ -40,6 +40,9 @@ PB:
 PB:
 
 !include "slapdconfig.sdf"; chapter
+PB:
+
+!include "access-control.sdf"; chapter
 PB:
 
 !include "runningslapd.sdf"; chapter

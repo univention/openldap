@@ -1,7 +1,8 @@
+dnl $OpenLDAP: pkg/ldap/contrib/ldapc++/configure.in,v 1.8.2.5 2008/04/14 23:20:12 quanah Exp $
+
 dnl Copyright 2000-2003, OpenLDAP Foundation, All Rights Reserved.
 dnl COPYING RESTRICTIONS APPLY, see COPYRIGHT file
-  
-  
+
 dnl Process this file with autoconf to produce a configure script.
 
 dnl disable config.cache
@@ -67,7 +68,7 @@ dnl NOOP
     ])
 dnl Checks for header files.
 AC_HEADER_TIME
-AC_CHECK_HEADER(ldap.h)
+AC_CHECK_HEADERS(termios.h ldap.h)
 AC_EGREP_HEADER(ldap_add_ext,ldap.h,[
 dnl NOOP
         :

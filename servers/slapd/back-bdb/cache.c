@@ -1,8 +1,8 @@
 /* cache.c - routines to maintain an in-core cache of entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.120.2.7 2007/12/06 05:43:27 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.120.2.15 2008/05/01 21:39:35 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2007 The OpenLDAP Foundation.
+ * Copyright 2000-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -251,15 +251,28 @@ bdb_cache_return_entry_rw( struct bdb_info *bdb, Entry *e,
 	EntryInfo *ei;
 	int free = 0;
 
-	bdb_cache_entry_db_unlock( bdb, lock );
 	ei = e->e_private;
-	bdb_cache_entryinfo_lock( ei );
-	if ( ei->bei_state & CACHE_ENTRY_NOT_CACHED ) {
-		ei->bei_e = NULL;
-		ei->bei_state ^= CACHE_ENTRY_NOT_CACHED;
-		free = 1;
+	if ( ei &&
+		( ei->bei_state & CACHE_ENTRY_NOT_CACHED ) &&
+		( bdb_cache_entryinfo_trylock( ei ) == 0 )) {
+		if ( ei->bei_state & CACHE_ENTRY_NOT_CACHED ) {
+			/* Releasing the entry can only be done when
+			 * we know that nobody else is using it, i.e we
+			 * should have an entry_db writelock.  But the
+			 * flag is only set by the thread that loads the
+			 * entry, and only if no other threads has found
+			 * it while it was working.  All other threads
+			 * clear the flag, which mean that we should be
+			 * the only thread using the entry if the flag
+			 * is set here.
+			 */
+			ei->bei_e = NULL;
+			ei->bei_state ^= CACHE_ENTRY_NOT_CACHED;
+			free = 1;
+		}
+		bdb_cache_entryinfo_unlock( ei );
 	}
-	bdb_cache_entryinfo_unlock( ei );
+	bdb_cache_entry_db_unlock( bdb, lock );
 	if ( free ) {
 		e->e_private = NULL;
 		bdb_entry_return( e );
@@ -852,6 +865,11 @@ again:	ldap_pvt_thread_rdwr_rlock( &bdb->bi_cache.c_rwlock );
 
 	/* Ok, we found the info, do we have the entry? */
 	if ( rc == 0 ) {
+		if ( !( flag & ID_LOCKED )) {
+			bdb_cache_entryinfo_lock( *eip );
+			flag |= ID_LOCKED;
+		}
+
 		if ( (*eip)->bei_state & CACHE_ENTRY_DELETED ) {
 			rc = DB_NOTFOUND;
 		} else {
@@ -871,13 +889,13 @@ load1:
 				(*eip)->bei_state |= CACHE_ENTRY_LOADING;
 			}
 
-			/* If the entry was loaded before but uncached, and we need
-			 * it again, clear the uncached state
-			 */
-			if ( (*eip)->bei_state & CACHE_ENTRY_NOT_CACHED ) {
-				(*eip)->bei_state ^= CACHE_ENTRY_NOT_CACHED;
-				if ( flag & ID_NOCACHE )
-					flag ^= ID_NOCACHE;
+			if ( !load ) {
+				/* Clear the uncached state if we are not
+				 * loading it, i.e it is already cached or
+				 * another thread is currently loading it.
+				 */
+				(*eip)->bei_state &= ~CACHE_ENTRY_NOT_CACHED;
+				flag &= ~ID_NOCACHE;
 			}
 
 			if ( flag & ID_LOCKED ) {
@@ -904,9 +922,13 @@ load1:
 #endif
 						ep = NULL;
 						bdb_cache_lru_link( bdb, *eip );
-						if ( flag & ID_NOCACHE ) {
-							bdb_cache_entryinfo_lock( *eip );
-							(*eip)->bei_state |= CACHE_ENTRY_NOT_CACHED;
+						if (( flag & ID_NOCACHE ) &&
+							( bdb_cache_entryinfo_trylock( *eip ) == 0 )) {
+							/* Set the cached state only if no other thread
+							 * found the info while we were loading the entry.
+							 */
+							if ( (*eip)->bei_finders == 1 )
+								(*eip)->bei_state |= CACHE_ENTRY_NOT_CACHED;
 							bdb_cache_entryinfo_unlock( *eip );
 						}
 					}
@@ -942,12 +964,12 @@ load1:
 					}
 #endif
 				}
-				bdb_cache_entryinfo_lock( *eip );
-				(*eip)->bei_finders--;
-				if ( load )
-					(*eip)->bei_state ^= CACHE_ENTRY_LOADING;
-				bdb_cache_entryinfo_unlock( *eip );
 			}
+			bdb_cache_entryinfo_lock( *eip );
+			(*eip)->bei_finders--;
+			if ( load )
+				(*eip)->bei_state ^= CACHE_ENTRY_LOADING;
+			bdb_cache_entryinfo_unlock( *eip );
 		}
 	}
 	if ( flag & ID_LOCKED ) {
@@ -1235,18 +1257,19 @@ bdb_cache_delete(
 
 	assert( e->e_private != NULL );
 
+	/* Lock the entry's info */
+	bdb_cache_entryinfo_lock( ei );
+
 	/* Set this early, warn off any queriers */
 	ei->bei_state |= CACHE_ENTRY_DELETED;
 
-	/* Lock the entry's info */
-	bdb_cache_entryinfo_lock( ei );
+	bdb_cache_entryinfo_unlock( ei );
 
 	/* Get write lock on the data */
 	rc = bdb_cache_entry_db_relock( bdb, locker, ei, 1, 0, lock );
 	if ( rc ) {
 		/* couldn't lock, undo and give up */
 		ei->bei_state ^= CACHE_ENTRY_DELETED;
-		bdb_cache_entryinfo_unlock( ei );
 		return rc;
 	}
 
@@ -1261,8 +1284,6 @@ bdb_cache_delete(
 	/* free lru mutex */
 	ldap_pvt_thread_mutex_unlock( &bdb->bi_cache.c_lru_mutex );
 
-	/* Leave entry info locked */
-
 	return( rc );
 }
 
@@ -1271,6 +1292,8 @@ bdb_cache_delete_cleanup(
 	Cache *cache,
 	EntryInfo *ei )
 {
+	/* Enter with ei locked */
+
 	if ( ei->bei_e ) {
 		ei->bei_e->e_private = NULL;
 #ifdef SLAP_ZONE_ALLOC
@@ -1449,7 +1472,7 @@ bdb_locker_flush( DB_ENV *env )
 	void *ctx = ldap_pvt_thread_pool_context();
 
 	if ( !ldap_pvt_thread_pool_getkey( ctx, env, &data, NULL ) ) {
-		ldap_pvt_thread_pool_setkey( ctx, env, NULL, NULL );
+		ldap_pvt_thread_pool_setkey( ctx, env, NULL, 0, NULL, NULL );
 		bdb_locker_id_free( env, data );
 	}
 }
@@ -1494,7 +1517,7 @@ bdb_locker_id( Operation *op, DB_ENV *env, BDB_LOCKER *locker )
 		data = (void *)((long)lockid);
 #endif
 		if ( ( rc = ldap_pvt_thread_pool_setkey( ctx, env,
-			data, bdb_locker_id_free ) ) ) {
+			data, bdb_locker_id_free, NULL, NULL ) ) ) {
 			XLOCK_ID_FREE( env, lockid );
 			Debug( LDAP_DEBUG_ANY, "bdb_locker_id: err %s(%d)\n",
 				db_strerror(rc), rc, 0 );

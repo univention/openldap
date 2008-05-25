@@ -1,8 +1,8 @@
 /* thread.c - deal with thread subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/thread.c,v 1.38.2.5 2007/08/31 23:14:04 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/thread.c,v 1.38.2.7 2008/02/11 23:26:47 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2007 The OpenLDAP Foundation.
+ * Copyright 2001-2008 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -260,6 +260,7 @@ monitor_subsys_thread_update(
 				ber_bvarray_free( a->a_vals );
 				a->a_vals = NULL;
 				a->a_nvals = NULL;
+				a->a_numvals = 0;
 			}
 
 			i = 0;
@@ -292,6 +293,7 @@ monitor_subsys_thread_update(
 				ber_bvarray_free( a->a_vals );
 				a->a_vals = NULL;
 				a->a_nvals = NULL;
+				a->a_numvals = 0;
 			}
 	
 			i = 0;

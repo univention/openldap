@@ -1,5 +1,6 @@
+// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPAttributeList.cpp,v 1.7.6.3 2008/04/14 23:09:26 quanah Exp $
 /*
- * Copyright 2000-2002, OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2007, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -139,6 +140,24 @@ void LDAPAttributeList::addAttribute(const LDAPAttribute& attr){
     }
 }
 
+void LDAPAttributeList::replaceAttribute(const LDAPAttribute& attr)
+{
+    DEBUG(LDAP_DEBUG_TRACE,"LDAPAttribute::replaceAttribute()" << endl);
+    DEBUG(LDAP_DEBUG_TRACE | LDAP_DEBUG_PARAMETER,
+            "   attr:" << attr << endl);
+    
+    LDAPAttributeList::iterator i;
+    for( i = m_attrs.begin(); i != m_attrs.end(); i++){
+	if(attr.getName().size() == i->getName().size()){
+	    if(equal(attr.getName().begin(), attr.getName().end(), i->getName().begin(),
+		    nocase_compare)){
+                m_attrs.erase(i);
+                break;
+            }
+        }
+    }
+    m_attrs.push_back(attr);
+}
 
 LDAPMod** LDAPAttributeList::toLDAPModArray() const{
     DEBUG(LDAP_DEBUG_TRACE,"LDAPAttribute::toLDAPModArray()" << endl);

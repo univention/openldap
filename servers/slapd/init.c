@@ -1,8 +1,8 @@
 /* init.c - initialize various things */
-/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.97.2.7 2007/11/07 20:58:38 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.97.2.9 2008/02/12 00:46:46 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -178,16 +178,6 @@ slap_init( int mode, const char *name )
 		    name, 0, 0 );
 		return 1;
 	}
-
-#ifdef HAVE_TLS
-	/* Library defaults to full certificate checking. This is correct when
-	 * a client is verifying a server because all servers should have a
-	 * valid cert. But few clients have valid certs, so we want our default
-	 * to be no checking. The config file can override this as usual.
-	 */
-	rc = 0;
-	(void) ldap_pvt_tls_set_option( NULL, LDAP_OPT_X_TLS_REQUIRE_CERT, &rc );
-#endif
 
 	if ( frontend_init() ) {
 		slap_debug |= LDAP_DEBUG_NONE;

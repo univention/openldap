@@ -1,8 +1,8 @@
 /* monitor.c - monitor ldap backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/monitor.c,v 1.2.2.3 2007/08/31 23:14:02 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/monitor.c,v 1.2.2.4 2008/02/11 23:26:46 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2007 The OpenLDAP Foundation.
+ * Copyright 2003-2008 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.

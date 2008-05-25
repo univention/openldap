@@ -1,8 +1,8 @@
 /* bind.c - ldap backend bind function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.162.2.14 2007/10/17 00:45:15 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.162.2.17 2008/04/14 20:02:21 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2007 The OpenLDAP Foundation.
+ * Copyright 1999-2008 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -1228,6 +1228,8 @@ ldap_back_dobind_cb(
 {
 	ber_tag_t *tptr = op->o_callback->sc_private;
 	op->o_tag = *tptr;
+	rs->sr_tag = slap_req2res( op->o_tag );
+
 	return SLAP_CB_CONTINUE;
 }
 
@@ -1390,15 +1392,26 @@ retry_lock:;
 
 		lutil_sasl_freedefs( defaults );
 
-		rs->sr_err = slap_map_api2result( rs );
-		if ( rs->sr_err != LDAP_SUCCESS ) {
+		switch ( rs->sr_err ) {
+		case LDAP_SUCCESS:
+			LDAP_BACK_CONN_ISBOUND_SET( lc );
+			break;
+
+		case LDAP_LOCAL_ERROR:
+			/* list client API error codes that require
+			 * to taint the connection */
+			/* FIXME: should actually retry? */
+			LDAP_BACK_CONN_TAINTED_SET( lc );
+
+			/* fallthru */
+
+		default:
 			LDAP_BACK_CONN_ISBOUND_CLEAR( lc );
+			rs->sr_err = slap_map_api2result( rs );
 			if ( sendok & LDAP_BACK_SENDERR ) {
 				send_ldap_result( op, rs );
 			}
-
-		} else {
-			LDAP_BACK_CONN_ISBOUND_SET( lc );
+			break;
 		}
 
 		if ( LDAP_BACK_QUARANTINE( li ) ) {
@@ -1467,7 +1480,7 @@ retry:;
 		}
 
 		rc = 0;
-		goto leave;
+		goto func_leave;
 	}
 
 	rc = ldap_back_op_result( lc, op, rs, msgid,
@@ -1486,7 +1499,7 @@ done:;
 		ldap_set_rebind_proc( lc->lc_ld, li->li_rebind_f, lc );
 	}
 
-leave:;
+func_leave:;
 	if ( op->o_callback == &cb )
 		op->o_callback = cb.sc_next;
 	op->o_tag = o_tag;
@@ -2134,15 +2147,26 @@ ldap_back_proxy_authz_bind(
 				LDAP_SASL_QUIET, lutil_sasl_interact,
 				defaults );
 
-		rs->sr_err = slap_map_api2result( rs );
-		if ( rs->sr_err != LDAP_SUCCESS ) {
+		switch ( rs->sr_err ) {
+		case LDAP_SUCCESS:
+			LDAP_BACK_CONN_ISBOUND_SET( lc );
+			break;
+
+		case LDAP_LOCAL_ERROR:
+			/* list client API error codes that require
+			 * to taint the connection */
+			/* FIXME: should actually retry? */
+			LDAP_BACK_CONN_TAINTED_SET( lc );
+
+			/* fallthru */
+
+		default:
 			LDAP_BACK_CONN_ISBOUND_CLEAR( lc );
+			rs->sr_err = slap_map_api2result( rs );
 			if ( sendok & LDAP_BACK_SENDERR ) {
 				send_ldap_result( op, rs );
 			}
-
-		} else {
-			LDAP_BACK_CONN_ISBOUND_SET( lc );
+			break;
 		}
 
 		lutil_sasl_freedefs( defaults );

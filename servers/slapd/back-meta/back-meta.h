@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/back-meta.h,v 1.64.2.7 2007/10/17 00:49:53 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/back-meta.h,v 1.64.2.9 2008/02/12 00:25:47 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2007 The OpenLDAP Foundation.
+ * Copyright 1999-2008 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -397,6 +397,9 @@ typedef struct metainfo_t {
 	time_t			mi_idle_timeout;
 	struct timeval		mi_bind_timeout;
 	time_t			mi_timeout[ SLAP_OP_LAST ];
+
+	ldap_extra_t	*mi_ldap_extra;
+
 } metainfo_t;
 
 typedef enum meta_op_type {

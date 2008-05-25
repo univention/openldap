@@ -1,8 +1,8 @@
 /* log.c - deal with log subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/log.c,v 1.56.2.2 2007/08/31 23:14:03 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/log.c,v 1.56.2.4 2008/02/11 23:26:47 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2007 The OpenLDAP Foundation.
+ * Copyright 2001-2008 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -395,6 +395,7 @@ delete_values( Operation *op, Entry *e, Modification *mod, int *newlevel )
 				a->a_vals[ k - 1 ] = a->a_vals[ k ];
 			}
 			BER_BVZERO( &a->a_vals[ k - 1 ] );
+			a->a_numvals--;
 
 			break;
 		}
@@ -409,6 +410,8 @@ delete_values( Operation *op, Entry *e, Modification *mod, int *newlevel )
 
 	/* if no values remain, delete the entire attribute */
 	if ( BER_BVISNULL( &a->a_vals[ 0 ] ) ) {
+		assert( a->a_numvals == 0 );
+
 		/* should already be zero */
 		*newlevel = 0;
 		

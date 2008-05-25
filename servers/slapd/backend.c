@@ -1,8 +1,8 @@
 /* backend.c - routines for dealing with back-end databases */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.362.2.7 2007/09/29 09:55:21 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.362.2.17 2008/04/24 08:13:39 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -269,7 +269,7 @@ int backend_startup(Backend *be)
 
 	/* open frontend, if required */
 	if ( frontendDB->bd_info->bi_db_open ) {
-		rc = frontendDB->bd_info->bi_db_open( frontendDB, NULL );
+		rc = frontendDB->bd_info->bi_db_open( frontendDB, &cr );
 		if ( rc != 0 ) {
 			Debug( LDAP_DEBUG_ANY,
 				"backend_startup: bi_db_open(frontend) failed! (%d)\n",
@@ -585,6 +585,7 @@ backend_db_init(
 	}
 
 	be->bd_info = bi;
+	be->bd_self = be;
 
 	be->be_def_limit = frontendDB->be_def_limit;
 	be->be_dfltaccess = frontendDB->be_dfltaccess;
@@ -783,7 +784,7 @@ be_isroot_pw( Operation *op )
  * checks if binding as rootdn
  *
  * return value:
- *	SLAP_CB_CONTINUE		if not the rootdn
+ *	SLAP_CB_CONTINUE		if not the rootdn, or if rootpw is null
  *	LDAP_SUCCESS			if rootdn & rootpw
  *	LDAP_INVALID_CREDENTIALS	if rootdn & !rootpw
  *
@@ -795,6 +796,9 @@ int
 be_rootdn_bind( Operation *op, SlapReply *rs )
 {
 	int		rc;
+#ifdef SLAPD_SPASSWD
+	void	*old_authctx = NULL;
+#endif
 
 	assert( op->o_tag == LDAP_REQ_BIND );
 	assert( op->orb_method == LDAP_AUTH_SIMPLE );
@@ -819,14 +823,15 @@ be_rootdn_bind( Operation *op, SlapReply *rs )
 	}
 
 #ifdef SLAPD_SPASSWD
-	ldap_pvt_thread_pool_setkey( op->o_threadctx, slap_sasl_bind,
-		op->o_conn->c_sasl_authctx, NULL );
+	ldap_pvt_thread_pool_setkey( op->o_threadctx, (void *)slap_sasl_bind,
+		op->o_conn->c_sasl_authctx, 0, &old_authctx, NULL );
 #endif
 
 	rc = lutil_passwd( &op->o_bd->be_rootpw, &op->orb_cred, NULL, NULL );
 
 #ifdef SLAPD_SPASSWD
-	ldap_pvt_thread_pool_setkey( op->o_threadctx, slap_sasl_bind, NULL, NULL );
+	ldap_pvt_thread_pool_setkey( op->o_threadctx, (void *)slap_sasl_bind,
+		old_authctx, 0, NULL, NULL );
 #endif
 
 	rc = ( rc == 0 ? LDAP_SUCCESS : LDAP_INVALID_CREDENTIALS );
@@ -1345,8 +1350,18 @@ fe_acl_group(
 	int rc;
 	GroupAssertion *g;
 	Backend *be = op->o_bd;
+	OpExtra		*oex;
 
-	op->o_bd = select_backend( gr_ndn, 0 );
+	LDAP_SLIST_FOREACH(oex, &op->o_extra, oe_next) {
+		if ( oex->oe_key == (void *)backend_group )
+			break;
+	}
+
+	if ( oex && ((OpExtraDB *)oex)->oe_db )
+		op->o_bd = ((OpExtraDB *)oex)->oe_db;
+
+	if ( !op->o_bd || !SLAP_DBHIDDEN( op->o_bd ))
+		op->o_bd = select_backend( gr_ndn, 0 );
 
 	for ( g = op->o_groups; g; g = g->ga_next ) {
 		if ( g->ga_be != op->o_bd || g->ga_oc != group_oc ||
@@ -1552,17 +1567,23 @@ backend_group(
 	AttributeDescription *group_at )
 {
 	int			rc;
-	BackendDB		*be_orig;
+	BackendDB *be_orig;
+	OpExtraDB	oex;
 
 	if ( op->o_abandon ) {
 		return SLAPD_ABANDON;
 	}
+
+	oex.oe_db = op->o_bd;
+	oex.oe.oe_key = (void *)backend_group;
+	LDAP_SLIST_INSERT_HEAD(&op->o_extra, &oex.oe, oe_next);
 
 	be_orig = op->o_bd;
 	op->o_bd = frontendDB;
 	rc = frontendDB->be_group( op, target, gr_ndn,
 		op_ndn, group_oc, group_at );
 	op->o_bd = be_orig;
+	LDAP_SLIST_REMOVE(&op->o_extra, &oex.oe, OpExtra, oe_next);
 
 	return rc;
 }
@@ -1582,8 +1603,18 @@ fe_acl_attribute(
 	int			freeattr = 0, i, j, rc = LDAP_SUCCESS;
 	AccessControlState	acl_state = ACL_STATE_INIT;
 	Backend			*be = op->o_bd;
+	OpExtra		*oex;
 
-	op->o_bd = select_backend( edn, 0 );
+	LDAP_SLIST_FOREACH(oex, &op->o_extra, oe_next) {
+		if ( oex->oe_key == (void *)backend_attribute )
+			break;
+	}
+
+	if ( oex && ((OpExtraDB *)oex)->oe_db )
+		op->o_bd = ((OpExtraDB *)oex)->oe_db;
+
+	if ( !op->o_bd || !SLAP_DBHIDDEN( op->o_bd ))
+		op->o_bd = select_backend( edn, 0 );
 
 	if ( target && dn_match( &target->e_nname, edn ) ) {
 		e = target;
@@ -1702,13 +1733,19 @@ backend_attribute(
 	slap_access_t access )
 {
 	int			rc;
-	BackendDB		*be_orig;
+	BackendDB *be_orig;
+	OpExtraDB	oex;
+
+	oex.oe_db = op->o_bd;
+	oex.oe.oe_key = (void *)backend_attribute;
+	LDAP_SLIST_INSERT_HEAD(&op->o_extra, &oex.oe, oe_next);
 
 	be_orig = op->o_bd;
 	op->o_bd = frontendDB;
 	rc = frontendDB->be_attribute( op, target, edn,
 		entry_at, vals, access );
 	op->o_bd = be_orig;
+	LDAP_SLIST_REMOVE(&op->o_extra, &oex.oe, OpExtra, oe_next);
 
 	return rc;
 }
@@ -1734,7 +1771,9 @@ backend_access(
 	assert( edn != NULL );
 	assert( access > ACL_NONE );
 
-	op->o_bd = select_backend( edn, 0 );
+	if ( !op->o_bd ) {
+		op->o_bd = select_backend( edn, 0 );
+	}
 
 	if ( target && dn_match( &target->e_nname, edn ) ) {
 		e = target;
@@ -1826,7 +1865,14 @@ fe_aux_operational(
 	SlapReply *rs )
 {
 	Attribute		**ap;
-	int			rc = 0;
+	int			rc = LDAP_SUCCESS;
+	BackendDB		*be_orig = op->o_bd;
+	OpExtra		*oex;
+
+	LDAP_SLIST_FOREACH(oex, &op->o_extra, oe_next) {
+		if ( oex->oe_key == (void *)backend_operational )
+			break;
+	}
 
 	for ( ap = &rs->sr_operational_attrs; *ap; ap = &(*ap)->a_next )
 		/* just count them */ ;
@@ -1852,19 +1898,20 @@ fe_aux_operational(
 		ap = &(*ap)->a_next;
 	}
 
-	if ( op->o_bd != NULL ) {
-		BackendDB		*be_orig = op->o_bd;
+	/* Let the overlays have a chance at this */
+	if ( oex && ((OpExtraDB *)oex)->oe_db )
+		op->o_bd = ((OpExtraDB *)oex)->oe_db;
 
-		/* Let the overlays have a chance at this */
+	if ( !op->o_bd || !SLAP_DBHIDDEN( op->o_bd ))
 		op->o_bd = select_backend( &op->o_req_ndn, 0 );
-		if ( op->o_bd != NULL && !be_match( op->o_bd, frontendDB ) &&
-			( SLAP_OPATTRS( rs->sr_attr_flags ) || rs->sr_attrs ) &&
-			op->o_bd->be_operational != NULL )
-		{
-			rc = op->o_bd->be_operational( op, rs );
-		}
-		op->o_bd = be_orig;
+
+	if ( op->o_bd != NULL && !be_match( op->o_bd, frontendDB ) &&
+		( SLAP_OPATTRS( rs->sr_attr_flags ) || rs->sr_attrs ) &&
+		op->o_bd->be_operational != NULL )
+	{
+		rc = op->o_bd->be_operational( op, rs );
 	}
+	op->o_bd = be_orig;
 
 	return rc;
 }
@@ -1873,6 +1920,11 @@ int backend_operational( Operation *op, SlapReply *rs )
 {
 	int rc;
 	BackendDB *be_orig;
+	OpExtraDB	oex;
+
+	oex.oe_db = op->o_bd;
+	oex.oe.oe_key = (void *)backend_operational;
+	LDAP_SLIST_INSERT_HEAD(&op->o_extra, &oex.oe, oe_next);
 
 	/* Moved this into the frontend so global overlays are called */
 
@@ -1880,6 +1932,7 @@ int backend_operational( Operation *op, SlapReply *rs )
 	op->o_bd = frontendDB;
 	rc = frontendDB->be_operational( op, rs );
 	op->o_bd = be_orig;
+	LDAP_SLIST_REMOVE(&op->o_extra, &oex.oe, OpExtra, oe_next);
 
 	return rc;
 }

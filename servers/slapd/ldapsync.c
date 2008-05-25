@@ -1,8 +1,8 @@
 /* ldapsync.c -- LDAP Content Sync Routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ldapsync.c,v 1.32.2.6 2007/10/18 01:35:12 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ldapsync.c,v 1.32.2.7 2008/02/11 23:26:44 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2007 The OpenLDAP Foundation.
+ * Copyright 2003-2008 The OpenLDAP Foundation.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
  *

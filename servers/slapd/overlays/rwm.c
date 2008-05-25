@@ -1,8 +1,8 @@
 /* rwm.c - rewrite/remap operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwm.c,v 1.70.2.8 2007/09/29 09:55:22 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwm.c,v 1.70.2.10 2008/02/15 18:11:46 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2007 The OpenLDAP Foundation.
+ * Copyright 2003-2008 The OpenLDAP Foundation.
  * Portions Copyright 2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -1227,7 +1227,9 @@ cleanup_attr:;
 					mod.sm_type = mod.sm_desc->ad_cname;
 					mod.sm_numvals = (*tap)->a_numvals;
 					mod.sm_values = (*tap)->a_vals;
-					mod.sm_nvalues = (*tap)->a_nvals;
+					if ( (*tap)->a_nvals != (*tap)->a_vals ) {
+						mod.sm_nvalues = (*tap)->a_nvals;
+					}
 
 					(void)modify_add_values( &e, &mod,
 						/* permissive */ 1,
@@ -1614,6 +1616,7 @@ rwm_db_config(
 				fname, lineno, argv[ 1 ] );
 			return 1;
 		}
+
 	} else if ( strcasecmp( argv[0], "normalize-mapped-attrs" ) ==  0 ) {
 		if ( argc !=2 ) { 
 			fprintf( stderr,

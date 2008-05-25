@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/ppolicy.c,v 1.11.2.3 2007/08/31 23:13:56 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/ppolicy.c,v 1.11.2.4 2008/02/11 23:26:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2007 The OpenLDAP Foundation.
+ * Copyright 2004-2008 The OpenLDAP Foundation.
  * Portions Copyright 2004 Hewlett-Packard Company.
  * Portions Copyright 2004 Howard Chu, Symas Corp.
  * All rights reserved.

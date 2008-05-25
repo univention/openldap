@@ -1,4 +1,4 @@
-openldap2.3 (2.4.7-7) UNRELEASED; urgency=low
+openldap2.3 (2.4.9-1) unstable; urgency=low
 
   [ Updated debconf translations ]
   * French, thanks to Christian Perrier <bubulle@debian.org>.
@@ -13,7 +13,7 @@ openldap2.3 (2.4.7-7) UNRELEASED; urgency=low
   * Galician, thanks to Jacobo Tarrio <jtarrio@trasno.net>.  Closes: #480218.
   * Japanese, thanks to Kenshi Muto <kmuto@debian.org>.  Closes: #480247.
 
- -- Steve Langasek <vorlon@debian.org>  Thu, 28 Feb 2008 22:32:44 -0800
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 25 May 2008 11:58:39 +0200
 
 openldap2.3 (2.4.7-6) unstable; urgency=low
 

@@ -1,8 +1,8 @@
 /* back-bdb.h - bdb back-end header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/back-bdb.h,v 1.141.2.10 2007/12/06 17:29:52 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/back-bdb.h,v 1.141.2.14 2008/05/01 21:39:35 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2007 The OpenLDAP Foundation.
+ * Copyright 2000-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -235,6 +235,8 @@ struct bdb_info {
 	alock_info_t	bi_alock_info;
 	char		*bi_db_config_path;
 	BerVarray	bi_db_config;
+	char		*bi_db_crypt_file;
+	struct berval	bi_db_crypt_key;
 	bdb_monitor_t	bi_monitor;
 
 #ifdef BDB_MONITOR_IDX
@@ -265,9 +267,8 @@ struct bdb_lock_info {
 };
 
 struct bdb_op_info {
-	BackendDB*	boi_bdb;
+	OpExtra boi_oe;
 	DB_TXN*		boi_txn;
-	BDB_LOCKER	boi_locker;
 	u_int32_t	boi_err;
 	int		boi_acl_cache;
 	struct bdb_lock_info *boi_locks;	/* used when no txn */

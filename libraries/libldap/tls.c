@@ -1,8 +1,8 @@
 /* tls.c - Handle tls/ssl using SSLeay, OpenSSL or GNUTLS. */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/tls.c,v 1.133.2.7 2007/08/31 23:13:56 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/tls.c,v 1.133.2.9 2008/02/12 00:48:16 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -307,6 +307,7 @@ tls_parse_ciphers( tls_ctx *ctx, char *suites )
 			/* unrecognized cipher suite */
 			return -1;
 		}
+		ptr += len + 1;
 	} while (end);
 
 	/* Space for all 3 lists */
@@ -348,6 +349,7 @@ tls_parse_ciphers( tls_ctx *ctx, char *suites )
 				break;
 			}
 		}
+		ptr += len + 1;
 	} while (end);
 	kx[nkx] = 0;
 	cipher[ncipher] = 0;

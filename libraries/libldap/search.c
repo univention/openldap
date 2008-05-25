@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/search.c,v 1.76.2.3 2007/08/31 23:13:56 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/search.c,v 1.76.2.5 2008/02/11 23:26:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -358,7 +358,7 @@ ldap_search_st(
 	    == -1 )
 		return( ld->ld_errno );
 
-	if ( ldap_result( ld, msgid, LDAP_MSG_ALL, timeout, res ) == -1 )
+	if ( ldap_result( ld, msgid, LDAP_MSG_ALL, timeout, res ) == -1 || !*res )
 		return( ld->ld_errno );
 
 	if ( ld->ld_errno == LDAP_TIMEOUT ) {
@@ -386,7 +386,7 @@ ldap_search_s(
 	    == -1 )
 		return( ld->ld_errno );
 
-	if ( ldap_result( ld, msgid, LDAP_MSG_ALL, (struct timeval *) NULL, res ) == -1 || !res )
+	if ( ldap_result( ld, msgid, LDAP_MSG_ALL, (struct timeval *) NULL, res ) == -1 || !*res )
 		return( ld->ld_errno );
 
 	return( ldap_result2error( ld, *res, 0 ) );

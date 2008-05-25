@@ -1,8 +1,8 @@
 /* at.c - routines for dealing with attribute types */
-/* $OpenLDAP: pkg/ldap/servers/slapd/at.c,v 1.84.2.3 2007/08/31 23:13:58 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/at.c,v 1.84.2.5 2008/04/14 22:08:32 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1031,7 +1031,7 @@ at_schema_info( Entry *e )
 }
 
 int
-register_at( char *def, AttributeDescription **rad, int dupok )
+register_at( const char *def, AttributeDescription **rad, int dupok )
 {
 	LDAPAttributeType *at;
 	int code, freeit = 0;

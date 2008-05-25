@@ -1,6 +1,6 @@
 .TH LDAPDELETE 1 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man1/ldapdelete.1,v 1.42.2.3 2007/08/31 23:13:52 quanah Exp $
-.\" Copyright 1998-2007 The OpenLDAP Foundation All Rights Reserved.
+.\" $OpenLDAP: pkg/ldap/doc/man/man1/ldapdelete.1,v 1.42.2.5 2008/02/11 23:26:39 kurt Exp $
+.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldapdelete \- LDAP delete entry tool
@@ -52,6 +52,8 @@ ldapdelete \- LDAP delete entry tool
 .BI \-X \ authzid\fR]
 [\c
 .BI \-Y \ mech\fR]
+[\c
+.BI \-z \ sizelimit\fR]
 [\c
 .BR \-Z[Z] ]
 [\c
@@ -137,6 +139,11 @@ Do a recursive delete.  If the DN specified isn't a leaf, its
 children, and all their children are deleted down the tree.  No
 verification is done, so if you add this switch, ldapdelete will
 happily delete large portions of your tree.  Use with care.
+.TP
+.BI \-z \ sizelimit
+Use \fIsizelimit\fP when searching for children DN to delete,
+to circumvent any server-side size limit.  Only useful in conjunction
+with \-r.
 .TP
 .BI \-O \ security-properties
 Specify SASL security properties.

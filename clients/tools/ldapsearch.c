@@ -1,8 +1,8 @@
 /* ldapsearch -- a tool for searching LDAP directories */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapsearch.c,v 1.234.2.5 2007/08/31 23:13:51 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapsearch.c,v 1.234.2.9 2008/02/12 19:59:52 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -94,6 +94,8 @@ static int deref = -1;
 static int attrsonly;
 static int timelimit = -1;
 static int sizelimit = -1;
+
+static char *control;
 
 static char *def_tmpdir;
 static char *def_urlpre;
@@ -255,7 +257,7 @@ int
 handle_private_option( int i )
 {
 	int crit, ival;
-	char *control, *cvalue, *next;
+	char *cvalue, *next;
 	switch ( i ) {
 	case 'a':	/* set alias deref option */
 		if ( strcasecmp( optarg, "never" ) == 0 ) {
@@ -623,7 +625,7 @@ main( int argc, char **argv )
 {
 	char		*filtpattern, **attrs = NULL, line[BUFSIZ];
 	FILE		*fp = NULL;
-	int		rc, i, first;
+	int			rc, rc1, i, first;
 	LDAP		*ld = NULL;
 	BerElement	*seber = NULL, *vrber = NULL;
 
@@ -979,6 +981,7 @@ getNextPage:
 			attrs, attrsonly, NULL, NULL, NULL, -1 );
 
 	} else {
+		rc = 0;
 		first = 1;
 		while ( fgets( line, sizeof( line ), fp ) != NULL ) { 
 			line[ strlen( line ) - 1 ] = '\0';
@@ -987,11 +990,13 @@ getNextPage:
 			} else {
 				first = 0;
 			}
-			rc = dosearch( ld, base, scope, filtpattern, line,
+			rc1 = dosearch( ld, base, scope, filtpattern, line,
 				attrs, attrsonly, NULL, NULL, NULL, -1 );
 
-			if ( rc != 0 && !contoper ) {
-				break;
+			if ( rc1 != 0 ) {
+				rc = rc1;
+				if ( !contoper )
+					break;
 			}
 		}
 		if ( fp != stdin ) {
@@ -1040,6 +1045,12 @@ getNextPage:
 
 	tool_unbind( ld );
 	tool_destroy();
+	if ( base != NULL ) {
+		ber_memfree( base );
+	}
+	if ( control != NULL ) {
+		ber_memfree( control );
+	}
 
 	if ( c ) {
 		for ( ; save_nctrls-- > 0; ) {

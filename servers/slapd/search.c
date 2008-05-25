@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/search.c,v 1.181.2.3 2007/08/31 23:14:00 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/search.c,v 1.181.2.5 2008/04/14 22:16:16 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -241,8 +241,7 @@ fe_op_search( Operation *op, SlapReply *rs )
 {
 	BackendDB		*bd = op->o_bd;
 
-	/* fake while loop to allow breaking out */
-	while ( op->ors_scope == LDAP_SCOPE_BASE ) {
+	if ( op->ors_scope == LDAP_SCOPE_BASE ) {
 		Entry *entry = NULL;
 
 		if ( BER_BVISEMPTY( &op->o_req_ndn ) ) {
@@ -299,7 +298,6 @@ fe_op_search( Operation *op, SlapReply *rs )
 			send_ldap_result( op, rs );
 			goto return_results;
 		}
-		break;
 	}
 
 	if( BER_BVISEMPTY( &op->o_req_ndn ) && !BER_BVISEMPTY( &default_search_nbase ) ) {

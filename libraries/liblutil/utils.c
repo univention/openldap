@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/utils.c,v 1.33.2.15 2007/12/10 18:00:18 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/utils.c,v 1.33.2.17 2008/02/11 23:26:42 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <ac/stdlib.h>
+#include <ac/stdarg.h>
 #include <ac/string.h>
 #include <ac/ctype.h>
 #include <ac/unistd.h>
@@ -880,6 +881,56 @@ lutil_unparse_time(
 			buflen -= len;
 			ptr += len;
 		}
+	}
+
+	return 0;
+}
+
+/*
+ * formatted print to string
+ *
+ * - if return code < 0, the error code returned by vsnprintf(3) is returned
+ *
+ * - if return code > 0, the buffer was not long enough;
+ *	- if next is not NULL, *next will be set to buf + bufsize - 1
+ *	- if len is not NULL, *len will contain the required buffer length
+ *
+ * - if return code == 0, the buffer was long enough;
+ *	- if next is not NULL, *next will point to the end of the string printed so far
+ *	- if len is not NULL, *len will contain the length of the string printed so far 
+ */
+int
+lutil_snprintf( char *buf, ber_len_t bufsize, char **next, ber_len_t *len, LDAP_CONST char *fmt, ... )
+{
+	va_list		ap;
+	int		ret;
+
+	assert( buf != NULL );
+	assert( bufsize > 0 );
+	assert( fmt != NULL );
+
+	va_start( ap, fmt );
+	ret = vsnprintf( buf, bufsize, fmt, ap );
+	va_end( ap );
+
+	if ( ret < 0 ) {
+		return ret;
+	}
+
+	if ( len ) {
+		*len = ret;
+	}
+
+	if ( ret >= bufsize ) {
+		if ( next ) {
+			*next = &buf[ bufsize - 1 ];
+		}
+
+		return 1;
+	}
+
+	if ( next ) {
+		*next = &buf[ ret ];
 	}
 
 	return 0;

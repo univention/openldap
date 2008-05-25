@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.74.2.8 2007/11/27 19:49:13 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.74.2.10 2008/04/14 22:46:48 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2007 The OpenLDAP Foundation.
+ * Copyright 1999-2008 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -802,7 +802,7 @@ meta_back_db_config(
 	{
 		if ( argc != 2 ) {
 			Debug( LDAP_DEBUG_ANY,
-	"%s: line %d: \"[pseudo]root-bind-defer {FALSE|true}\" takes 1 argument\n",
+	"%s: line %d: \"[pseudo]root-bind-defer {TRUE|false}\" takes 1 argument\n",
 				fname, lineno, 0 );
 			return( 1 );
 		}
@@ -818,7 +818,7 @@ meta_back_db_config(
 
 		default:
 			Debug( LDAP_DEBUG_ANY,
-	"%s: line %d: \"[pseudo]root-bind-defer {FALSE|true}\": invalid arg \"%s\".\n",
+	"%s: line %d: \"[pseudo]root-bind-defer {TRUE|false}\": invalid arg \"%s\".\n",
 				fname, lineno, argv[ 1 ] );
 			return 1;
 		}

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/candidates.c,v 1.28.2.4 2007/08/31 23:14:03 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/candidates.c,v 1.28.2.5 2008/02/11 23:26:46 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2007 The OpenLDAP Foundation.
+ * Copyright 1999-2008 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.

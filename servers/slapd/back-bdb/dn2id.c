@@ -1,8 +1,8 @@
 /* dn2id.c - routines to deal with the dn2id index */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2id.c,v 1.137.2.6 2007/12/13 07:05:24 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2id.c,v 1.137.2.9 2008/04/14 19:37:25 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2007 The OpenLDAP Foundation.
+ * Copyright 2000-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -302,7 +302,7 @@ bdb_dn2id(
 	data.flags = DB_DBT_USERMEM;
 
 	rc = db->cursor( db, NULL, &cursor, bdb->bi_db_opflags );
-	if ( rc ) goto leave;
+	if ( rc ) goto func_leave;
 
 	rc = bdb_dn2id_lock( bdb, dn, 0, locker, lock );
 	if ( rc ) goto nolock;
@@ -316,7 +316,7 @@ bdb_dn2id(
 
 nolock:
 	cursor->c_close( cursor );
-leave:
+func_leave:
 
 	if( rc != 0 ) {
 		Debug( LDAP_DEBUG_TRACE, "<= bdb_dn2id: get failed: %s (%d)\n",
@@ -465,7 +465,7 @@ hdb_dup_compare(
 )
 {
 	diskNode *un, *cn;
-	int rc, ul, cl;
+	int rc;
 
 	un = (diskNode *)usrkey->data;
 	cn = (diskNode *)curkey->data;
@@ -624,7 +624,7 @@ hdb_dn2id_add(
 		}
 	}
 
-leave:
+func_leave:
 	op->o_tmpfree( d, op->o_tmpmemctx );
 	Debug( LDAP_DEBUG_TRACE, "<= hdb_dn2id_add 0x%lx: %d\n", e->e_id, rc, 0 );
 
@@ -674,7 +674,7 @@ hdb_dn2id_delete(
 	data.data = d;
 
 	rc = db->cursor( db, txn, &cursor, bdb->bi_db_opflags );
-	if ( rc ) goto leave;
+	if ( rc ) goto func_leave;
 
 	/* We hold this lock until the TXN completes */
 	rc = bdb_dn2id_lock( bdb, &e->e_nname, 1, TXN_ID( txn ), &lock );
@@ -703,7 +703,7 @@ hdb_dn2id_delete(
 
 nolock:
 	cursor->c_close( cursor );
-leave:
+func_leave:
 	op->o_tmpfree( d, op->o_tmpmemctx );
 
 	/* Delete IDL cache entries */
@@ -779,7 +779,7 @@ hdb_dn2id(
 	data.data = d;
 
 	rc = bdb_dn2id_lock( bdb, in, 0, locker, lock );
-	if ( rc ) goto leave;
+	if ( rc ) goto func_leave;
 
 	rc = cursor->c_get( cursor, &key, &data, DB_GET_BOTH_RANGE );
 	if ( rc == 0 && (dlen[1] != d->nrdnlen[1] || dlen[0] != d->nrdnlen[0] ||
@@ -803,7 +803,7 @@ hdb_dn2id(
 		}
 	}
 
-leave:
+func_leave:
 	cursor->c_close( cursor );
 	op->o_tmpfree( d, op->o_tmpmemctx );
 	if( rc != 0 ) {

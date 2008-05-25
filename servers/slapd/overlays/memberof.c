@@ -1,5 +1,5 @@
 /* memberof.c - back-reference for group membership */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/memberof.c,v 1.2.2.5 2007/12/10 17:47:05 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/memberof.c,v 1.2.2.14 2008/02/11 23:34:16 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2007 Pierangelo Masarati <ando@sys-net.it>
@@ -155,6 +155,8 @@ typedef struct memberof_t {
 #define	MEMBEROF_FREFINT	0x04U
 #define	MEMBEROF_FREVERSE	0x08U
 
+	ber_int_t		mo_dangling_err;
+
 #define MEMBEROF_CHK(mo,f) \
 	(((mo)->mo_flags & (f)) == (f))
 #define MEMBEROF_DANGLING_CHECK(mo) \
@@ -192,7 +194,7 @@ memberof_saved_member_free( void *key, void *data )
 static BerVarray
 memberof_saved_member_get( Operation *op, void *keyp )
 {
-	BerVarray	vals;
+	void		*vals;
 	BerVarray	*key = (BerVarray *)keyp;
 
 	assert( op != NULL );
@@ -202,10 +204,8 @@ memberof_saved_member_get( Operation *op, void *keyp )
 		*key = NULL;
 
 	} else {
-		ldap_pvt_thread_pool_getkey( op->o_threadctx,
-				key, (void **)&vals, NULL );
 		ldap_pvt_thread_pool_setkey( op->o_threadctx,
-				key, NULL, NULL );
+				key, NULL, 0, &vals, NULL );
 	}
 
 	return vals;
@@ -230,8 +230,13 @@ memberof_saved_member_set( Operation *op, void *keyp, BerVarray vals )
 		*key = saved_vals;
 
 	} else {
+		void	*old_vals = NULL;
+
 		ldap_pvt_thread_pool_setkey( op->o_threadctx, key,
-				saved_vals, memberof_saved_member_free );
+				saved_vals, memberof_saved_member_free, &old_vals, NULL );
+		if ( old_vals != NULL ) {
+			ber_bvarray_free( old_vals );
+		}
 	}
 }
 
@@ -264,6 +269,7 @@ memberof_saveMember_cb( Operation *op, SlapReply *rs )
 	if ( rs->sr_type == REP_SEARCH ) {
 		memberof_cookie_t	*mc;
 		Attribute		*a;
+		BerVarray		vals = NULL;
 
 		mc = (memberof_cookie_t *)op->o_callback->sc_private;
 		mc->foundit = 1;
@@ -272,12 +278,13 @@ memberof_saveMember_cb( Operation *op, SlapReply *rs )
 		assert( rs->sr_entry->e_attrs != NULL );
 
 		a = attr_find( rs->sr_entry->e_attrs, mc->ad );
+		if ( a != NULL ) {
+			vals = a->a_nvals;
+		}
 
-		assert( a != NULL );
+		memberof_saved_member_set( op, mc->key, vals );
 
-		memberof_saved_member_set( op, mc->key, a->a_nvals );
-
-		if ( attr_find( a->a_next, mc->ad ) != NULL ) {
+		if ( a && attr_find( a->a_next, mc->ad ) != NULL ) {
 			Debug( LDAP_DEBUG_ANY,
 				"%s: memberof_saveMember_cb(\"%s\"): "
 				"more than one occurrence of \"%s\" "
@@ -403,6 +410,7 @@ memberof_value_modify(
 	slap_callback	cb = { NULL, slap_null_cb, NULL, NULL };
 	Modifications	mod[ 2 ] = { { { 0 } } }, *ml;
 	struct berval	values[ 4 ], nvalues[ 4 ];
+	int		mcnt = 0;
 
 	op2.o_tag = LDAP_REQ_MODIFY;
 
@@ -414,23 +422,28 @@ memberof_value_modify(
 	op2.o_callback = &cb;
 	op2.o_dn = op->o_bd->be_rootdn;
 	op2.o_ndn = op->o_bd->be_rootndn;
+	op2.orm_modlist = NULL;
 
-	ml = &mod[ 0 ];
-	ml->sml_numvals = 1;
-	ml->sml_values = &values[ 0 ];
-	ml->sml_values[ 0 ] = mo->mo_dn;
-	BER_BVZERO( &ml->sml_values[ 1 ] );
-	ml->sml_nvalues = &nvalues[ 0 ];
-	ml->sml_nvalues[ 0 ] = mo->mo_ndn;
-	BER_BVZERO( &ml->sml_nvalues[ 1 ] );
-	ml->sml_desc = slap_schema.si_ad_modifiersName;
-	ml->sml_type = ml->sml_desc->ad_cname;
-	ml->sml_op = LDAP_MOD_REPLACE;
-	ml->sml_flags = SLAP_MOD_INTERNAL;
-	ml->sml_next = NULL;
-	op2.orm_modlist = ml;
+	if ( !BER_BVISNULL( &mo->mo_ndn ) ) {
+		ml = &mod[ mcnt ];
+		ml->sml_numvals = 1;
+		ml->sml_values = &values[ 0 ];
+		ml->sml_values[ 0 ] = mo->mo_dn;
+		BER_BVZERO( &ml->sml_values[ 1 ] );
+		ml->sml_nvalues = &nvalues[ 0 ];
+		ml->sml_nvalues[ 0 ] = mo->mo_ndn;
+		BER_BVZERO( &ml->sml_nvalues[ 1 ] );
+		ml->sml_desc = slap_schema.si_ad_modifiersName;
+		ml->sml_type = ml->sml_desc->ad_cname;
+		ml->sml_op = LDAP_MOD_REPLACE;
+		ml->sml_flags = SLAP_MOD_INTERNAL;
+		ml->sml_next = op2.orm_modlist;
+		op2.orm_modlist = ml;
 
-	ml = &mod[ 1 ];
+		mcnt++;
+	}
+
+	ml = &mod[ mcnt ];
 	ml->sml_numvals = 1;
 	ml->sml_values = &values[ 2 ];
 	BER_BVZERO( &ml->sml_values[ 1 ] );
@@ -439,44 +452,71 @@ memberof_value_modify(
 	ml->sml_desc = ad;
 	ml->sml_type = ml->sml_desc->ad_cname;
 	ml->sml_flags = SLAP_MOD_INTERNAL;
-	ml->sml_next = NULL;
-	op2.orm_modlist->sml_next = ml;
+	ml->sml_next = op2.orm_modlist;
+	op2.orm_modlist = ml;
 
 	if ( new_ndn != NULL ) {
 		assert( !BER_BVISNULL( new_dn ) );
 		assert( !BER_BVISNULL( new_ndn ) );
 
-		ml = &mod[ 1 ];
+		ml = &mod[ mcnt ];
 		ml->sml_op = LDAP_MOD_ADD;
 
 		ml->sml_values[ 0 ] = *new_dn;
 		ml->sml_nvalues[ 0 ] = *new_ndn;
 
 		(void)op->o_bd->be_modify( &op2, &rs2 );
+		if ( rs2.sr_err != LDAP_SUCCESS ) {
+			char buf[ SLAP_TEXT_BUFLEN ];
+			snprintf( buf, sizeof( buf ),
+				"memberof_value_modify %s=\"%s\" failed err=%d text=%s",
+				ad->ad_cname.bv_val, new_dn->bv_val, rs2.sr_err,
+				rs2.sr_text ? rs2.sr_text : "" );
+			Debug( LDAP_DEBUG_ANY, "%s: %s\n",
+				op->o_log_prefix, buf, 0 );
+		}
 
-		assert( op2.orm_modlist == &mod[ 0 ] );
-		assert( op2.orm_modlist->sml_next == &mod[ 1 ] );
-		ml = op2.orm_modlist->sml_next->sml_next;
+		assert( op2.orm_modlist == &mod[ mcnt ] );
+		assert( mcnt == 0 || op2.orm_modlist->sml_next == &mod[ 0 ] );
+		ml = op2.orm_modlist->sml_next;
+		if ( mcnt == 1 ) {
+			assert( ml == &mod[ 0 ] );
+			ml = ml->sml_next;
+		}
 		if ( ml != NULL ) {
 			slap_mods_free( ml, 1 );
 		}
+
+		mod[ 0 ].sml_next = NULL;
 	}
 
 	if ( old_ndn != NULL ) {
 		assert( !BER_BVISNULL( old_dn ) );
 		assert( !BER_BVISNULL( old_ndn ) );
 
-		ml = &mod[ 1 ];
+		ml = &mod[ mcnt ];
 		ml->sml_op = LDAP_MOD_DELETE;
 
 		ml->sml_values[ 0 ] = *old_dn;
 		ml->sml_nvalues[ 0 ] = *old_ndn;
 
 		(void)op->o_bd->be_modify( &op2, &rs2 );
+		if ( rs2.sr_err != LDAP_SUCCESS ) {
+			char buf[ SLAP_TEXT_BUFLEN ];
+			snprintf( buf, sizeof( buf ),
+				"memberof_value_modify %s=\"%s\" failed err=%d text=%s",
+				ad->ad_cname.bv_val, old_dn->bv_val, rs2.sr_err,
+				rs2.sr_text ? rs2.sr_text : "" );
+			Debug( LDAP_DEBUG_ANY, "%s: %s\n",
+				op->o_log_prefix, buf, 0 );
+		}
 
-		assert( op2.orm_modlist == &mod[ 0 ] );
-		assert( op2.orm_modlist->sml_next == &mod[ 1 ] );
-		ml = op2.orm_modlist->sml_next->sml_next;
+		assert( op2.orm_modlist == &mod[ mcnt ] );
+		ml = op2.orm_modlist->sml_next;
+		if ( mcnt == 1 ) {
+			assert( ml == &mod[ 0 ] );
+			ml = ml->sml_next;
+		}
 		if ( ml != NULL ) {
 			slap_mods_free( ml, 1 );
 		}
@@ -528,7 +568,7 @@ memberof_op_add( Operation *op, SlapReply *rs )
 
 	if ( MEMBEROF_DANGLING_CHECK( mo )
 			&& !get_relax( op )
-			&& is_entry_objectclass( op->ora_e, mo->mo_oc_group, 0 ) )
+			&& is_entry_objectclass_or_sub( op->ora_e, mo->mo_oc_group ) )
 	{
 		op->o_dn = op->o_bd->be_rootdn;
 		op->o_dn = op->o_bd->be_rootndn;
@@ -545,11 +585,7 @@ memberof_op_add( Operation *op, SlapReply *rs )
 			assert( a->a_nvals != NULL );
 
 			for ( i = 0; !BER_BVISNULL( &a->a_nvals[ i ] ); i++ ) {
-				Entry		*e;
-
-				/* FIXME: entry_get_rw does not pass
-				 * thru overlays yet; when it does, we
-				 * might need to make a copy of the DN */
+				Entry		*e = NULL;
 
 				rc = be_entry_get_rw( op, &a->a_nvals[ i ],
 						NULL, NULL, 0, &e );
@@ -559,7 +595,7 @@ memberof_op_add( Operation *op, SlapReply *rs )
 				}
 
 				if ( MEMBEROF_DANGLING_ERROR( mo ) ) {
-					rc = rs->sr_err = LDAP_CONSTRAINT_VIOLATION;
+					rc = rs->sr_err = mo->mo_dangling_err;
 					rs->sr_text = "adding non-existing object "
 						"as group member";
 					send_ldap_result( op, rs );
@@ -637,7 +673,7 @@ memberof_op_add( Operation *op, SlapReply *rs )
 				}
 
 				if ( MEMBEROF_DANGLING_ERROR( mo ) ) {
-					rc = rs->sr_err = LDAP_CONSTRAINT_VIOLATION;
+					rc = rs->sr_err = mo->mo_dangling_err;
 					rs->sr_text = "adding non-existing object "
 						"as memberof";
 					send_ldap_result( op, rs );
@@ -824,7 +860,7 @@ memberof_op_modify( Operation *op, SlapReply *rs )
 						}
 		
 						if ( MEMBEROF_DANGLING_ERROR( mo ) ) {
-							rc = rs->sr_err = LDAP_CONSTRAINT_VIOLATION;
+							rc = rs->sr_err = mo->mo_dangling_err;
 							rs->sr_text = "adding non-existing object "
 								"as group member";
 							send_ldap_result( op, rs );
@@ -921,7 +957,7 @@ memberof_op_modify( Operation *op, SlapReply *rs )
 						}
 
 						if ( MEMBEROF_DANGLING_ERROR( mo ) ) {
-							rc = rs->sr_err = LDAP_CONSTRAINT_VIOLATION;
+							rc = rs->sr_err = mo->mo_dangling_err;
 							rs->sr_text = "deleting non-existing object "
 								"as memberof";
 							send_ldap_result( op, rs );
@@ -1032,7 +1068,7 @@ memberof_op_modify( Operation *op, SlapReply *rs )
 				op->o_bd->bd_info = (BackendInfo *)on;
 				if ( rc != LDAP_SUCCESS ) {
 					if ( MEMBEROF_DANGLING_ERROR( mo ) ) {
-						rc = rs->sr_err = LDAP_CONSTRAINT_VIOLATION;
+						rc = rs->sr_err = mo->mo_dangling_err;
 						rs->sr_text = "adding non-existing object "
 							"as memberof";
 						send_ldap_result( op, rs );
@@ -1149,7 +1185,7 @@ memberof_res_add( Operation *op, SlapReply *rs )
 		}
 	}
 
-	if ( is_entry_objectclass( op->ora_e, mo->mo_oc_group, 0 ) ) {
+	if ( is_entry_objectclass_or_sub( op->ora_e, mo->mo_oc_group ) ) {
 		Attribute	*a;
 
 		for ( a = attrs_find( op->ora_e->e_attrs, mo->mo_ad_member );
@@ -1191,6 +1227,7 @@ memberof_res_delete( Operation *op, SlapReply *rs )
 					NULL, NULL );
 		}
 
+		memberof_saved_member_set( op, &saved_memberof_vals, NULL );
  		ber_bvarray_free( vals );
 	}
 
@@ -1204,6 +1241,7 @@ memberof_res_delete( Operation *op, SlapReply *rs )
 						NULL, NULL );
 			}
 
+			memberof_saved_member_set( op, &saved_member_vals, NULL );
 	 		ber_bvarray_free( vals );
 		}
 	}
@@ -1475,9 +1513,13 @@ memberof_db_init(
 	ConfigReply	*cr )
 {
 	slap_overinst	*on = (slap_overinst *)be->bd_info;
-	memberof_t	tmp_mo = { 0 }, *mo;
+	memberof_t		*mo;
 
 	mo = (memberof_t *)ch_calloc( 1, sizeof( memberof_t ) );
+
+	/* safe default */
+	mo->mo_dangling_err = LDAP_CONSTRAINT_VIOLATION;
+
 	on->on_bi.bi_private = (void *)mo;
 
 	return 0;
@@ -1487,12 +1529,16 @@ enum {
 	MO_DN = 1,
 	MO_DANGLING,
 	MO_REFINT,
+	MO_GROUP_OC,
+	MO_MEMBER_AD,
+	MO_MEMBER_OF_AD,
 #if 0
 	MO_REVERSE,
 #endif
-	MO_GROUP_OC,
-	MO_MEMBER_AD,
-	MO_MEMBER_OF_AD
+
+	MO_DANGLING_ERROR,
+
+	MO_LAST
 };
 
 static ConfigDriver mo_cf_gen;
@@ -1558,6 +1604,13 @@ static ConfigTable mo_cfg[] = {
 		NULL, NULL },
 #endif
 
+	{ "memberof-dangling-error", "error code",
+		2, 2, 0, ARG_MAGIC|MO_DANGLING_ERROR, mo_cf_gen,
+		"( OLcfgOvAt:18.7 NAME 'olcMemberOfDanglingError' "
+			"DESC 'Error code returned in case of dangling back reference' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )",
+		NULL, NULL },
+
 	{ NULL, NULL, 0, 0, 0, ARG_IGNORED }
 };
 
@@ -1569,6 +1622,7 @@ static ConfigOCs mo_ocs[] = {
 		"MAY ( "
 			"olcMemberOfDN "
 			"$ olcMemberOfDangling "
+			"$ olcMemberOfDanglingError"
 			"$ olcMemberOfRefInt "
 			"$ olcMemberOfGroupOC "
 			"$ olcMemberOfMemberAD "
@@ -1671,6 +1725,25 @@ mo_cf_gen( ConfigArgs *c )
 			}
 			break;
 
+		case MO_DANGLING_ERROR:
+			if ( mo->mo_flags & MEMBEROF_FDANGLING_ERROR ) {
+				char buf[ SLAP_TEXT_BUFLEN ];
+				enum_to_verb( slap_ldap_response_code, mo->mo_dangling_err, &bv );
+				if ( BER_BVISNULL( &bv ) ) {
+					bv.bv_len = snprintf( buf, sizeof( buf ), "0x%x", mo->mo_dangling_err );
+					if ( bv.bv_len < sizeof( buf ) ) {
+						bv.bv_val = buf;
+					} else {
+						rc = 1;
+						break;
+					}
+				}
+				value_add_one( &c->rvalue_vals, &bv );
+			} else {
+				rc = 1;
+			}
+			break;
+
 		case MO_REFINT:
 			c->value_int = MEMBEROF_REFINT( mo );
 			break;
@@ -1728,6 +1801,15 @@ mo_cf_gen( ConfigArgs *c )
 
 			mo->mo_flags &= ~MEMBEROF_FDANGLING_MASK;
 			mo->mo_flags |= dangling_mode[ i ].mask;
+			break;
+
+		case MO_DANGLING_ERROR:
+			i = verb_to_mask( c->argv[ 1 ], slap_ldap_response_code );
+			if ( !BER_BVISNULL( &slap_ldap_response_code[ i ].word ) ) {
+				mo->mo_dangling_err = slap_ldap_response_code[ i ].mask;
+			} else if ( lutil_atoix( &mo->mo_dangling_err, c->argv[ 1 ], 0 ) ) {
+				return 1;
+			}
 			break;
 
 		case MO_REFINT:
@@ -1868,7 +1950,7 @@ memberof_db_open(
 		}
 	}
 
-    if( ! mo->mo_oc_group ){
+	if( ! mo->mo_oc_group ){
 		mo->mo_oc_group = oc_find( SLAPD_GROUP_CLASS );
 		if ( mo->mo_oc_group == NULL ) {
 			Debug( LDAP_DEBUG_ANY,
@@ -1879,7 +1961,7 @@ memberof_db_open(
 		}
 	}
 
-	if ( BER_BVISNULL( &mo->mo_dn ) ) {
+	if ( BER_BVISNULL( &mo->mo_dn ) && !BER_BVISNULL( &be->be_rootdn ) ) {
 		ber_dupbv( &mo->mo_dn, &be->be_rootdn );
 		ber_dupbv( &mo->mo_ndn, &be->be_rootndn );
 	}

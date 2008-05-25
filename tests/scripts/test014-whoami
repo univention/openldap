@@ -1,8 +1,8 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test014-whoami,v 1.23.2.2 2007/08/31 23:14:09 quanah Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test014-whoami,v 1.23.2.4 2008/02/11 23:44:27 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2007 The OpenLDAP Foundation.
+## Copyright 1998-2008 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -428,7 +428,7 @@ esac
 
 BINDDN="cn=Bjorn Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com"
 BINDPW=bjorn
-AUTHZID="dn:"
+AUTHZID="dn:cn=don't!"
 echo "Testing ldapwhoami as ${BINDDN} for ${AUTHZID} (no authzTo; should fail)..."
 $LDAPWHOAMI -h $LOCALHOST -p $PORT1 -D "$BINDDN" -w $BINDPW \
 	-e \!authzid="$AUTHZID"

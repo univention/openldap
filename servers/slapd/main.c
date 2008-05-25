@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.239.2.10 2007/11/08 19:30:04 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.239.2.12 2008/02/12 00:46:46 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -736,6 +736,13 @@ unhandled_option:;
 		SERVICE_EXIT( ERROR_SERVICE_SPECIFIC_ERROR, 20 );
 		goto destroy;
 	}
+	/* Library defaults to full certificate checking. This is correct when
+	 * a client is verifying a server because all servers should have a
+	 * valid cert. But few clients have valid certs, so we want our default
+	 * to be no checking. The config file can override this as usual.
+	 */
+	rc = LDAP_OPT_X_TLS_NEVER;
+	(void) ldap_pvt_tls_set_option( slap_tls_ld, LDAP_OPT_X_TLS_REQUIRE_CERT, &rc );
 #endif
 
 	rc = slap_init( serverMode, serverName );

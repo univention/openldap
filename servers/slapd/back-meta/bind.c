@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/bind.c,v 1.95.2.12 2007/10/18 00:20:07 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/bind.c,v 1.95.2.15 2008/04/14 21:24:34 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2007 The OpenLDAP Foundation.
+ * Copyright 1999-2008 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -145,7 +145,7 @@ meta_back_bind( Operation *op, SlapReply *rs )
 			rc = LDAP_SUCCESS;
 			gotit = 1;
 
-		} else if ( isroot == 0 ) {
+		} else if ( !isroot ) {
 			/*
 			 * A bind operation is expected to have
 			 * ONE CANDIDATE ONLY!
@@ -249,10 +249,15 @@ meta_back_bind( Operation *op, SlapReply *rs )
 			meta_back_print_conntree( mi, "<<< meta_back_bind" );
 #endif /* META_BACK_PRINT_CONNTREE */
 			if ( lerr == 0 ) {
+#if 0
+				/* NOTE: a connection cannot be privileged
+				 * and be in the avl tree at the same time
+				 */
 				if ( isroot ) {
 					LDAP_BACK_CONN_ISPRIV_SET( mc );
 					LDAP_BACK_PCONN_SET( mc, op );
 				}
+#endif
 				LDAP_BACK_CONN_CACHED_SET( mc );
 
 			} else {
@@ -509,7 +514,7 @@ meta_back_single_bind(
 		ldap_pvt_thread_yield();
 	}
 
-	ldap_back_controls_free( op, rs, &ctrls );
+	mi->mi_ldap_extra->controls_free( op, rs, &ctrls );
 
 	meta_back_bind_op_result( op, rs, mc, candidate, msgid, LDAP_BACK_DONTSEND );
 	if ( rs->sr_err != LDAP_SUCCESS ) {
@@ -1553,7 +1558,7 @@ meta_back_proxy_authz_bind( metaconn_t *mc, int candidate, Operation *op, SlapRe
  *
  * if any needs to be added, it is prepended to existing ones,
  * in a newly allocated array.  The companion function
- * ldap_back_controls_free() must be used to restore the original
+ * mi->mi_ldap_extra->controls_free() must be used to restore the original
  * status of op->o_ctrls.
  */
 int
@@ -1595,7 +1600,7 @@ meta_back_controls_add(
 	/* put controls that go __before__ existing ones here */
 
 	/* proxyAuthz for identity assertion */
-	switch ( ldap_back_proxy_authz_ctrl( op, rs, &msc->msc_bound_ndn,
+	switch ( mi->mi_ldap_extra->proxy_authz_ctrl( op, rs, &msc->msc_bound_ndn,
 		mt->mt_version, &mt->mt_idassert, &c[ j1 ] ) )
 	{
 	case SLAP_CB_CONTINUE:

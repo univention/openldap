@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/add.c,v 1.51.2.5 2007/08/31 23:14:03 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/add.c,v 1.51.2.7 2008/02/12 00:25:47 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2007 The OpenLDAP Foundation.
+ * Copyright 1999-2008 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -183,13 +183,13 @@ retry:;
 		do_retry = 0;
 		if ( meta_back_retry( op, rs, &mc, candidate, LDAP_BACK_SENDERR ) ) {
 			/* if the identity changed, there might be need to re-authz */
-			(void)ldap_back_controls_free( op, rs, &ctrls );
+			(void)mi->mi_ldap_extra->controls_free( op, rs, &ctrls );
 			goto retry;
 		}
 	}
 
 cleanup:;
-	(void)ldap_back_controls_free( op, rs, &ctrls );
+	(void)mi->mi_ldap_extra->controls_free( op, rs, &ctrls );
 
 	for ( --i; i >= 0; --i ) {
 		free( attrs[ i ]->mod_bvalues );

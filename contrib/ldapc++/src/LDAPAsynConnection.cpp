@@ -1,3 +1,4 @@
+// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPAsynConnection.cpp,v 1.13.2.6 2008/04/14 23:09:26 quanah Exp $
 /*
  * Copyright 2000-2006, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -24,15 +25,20 @@
 
 using namespace std;
 
-LDAPAsynConnection::LDAPAsynConnection(const string& hostname, int port,
+LDAPAsynConnection::LDAPAsynConnection(const string& url, int port,
                                LDAPConstraints *cons ){
     DEBUG(LDAP_DEBUG_CONSTRUCT,"LDAPAsynConnection::LDAPAsynConnection()"
             << endl);
     DEBUG(LDAP_DEBUG_CONSTRUCT | LDAP_DEBUG_PARAMETER,
-            "   host:" << hostname << endl << "   port:" << port << endl);
+            "   URL:" << url << endl << "   port:" << port << endl);
     cur_session=0;
     m_constr = 0;
-    this->init(hostname, port);
+    // Is this an LDAP URI?
+    if ( url.find("://") == std::string::npos ) {
+    	this->init(url, port);
+    } else {
+    	this->initialize(url);
+    }
     this->setConstraints(cons);
 }
 
@@ -93,6 +99,41 @@ LDAPMessageQueue* LDAPAsynConnection::bind(const string& dn,
         delete req;
         throw;
     }
+}
+
+LDAPMessageQueue* LDAPAsynConnection::saslBind(const std::string &mech,
+		const std::string &cred,
+		const LDAPConstraints *cons)
+{
+    DEBUG(LDAP_DEBUG_TRACE, "LDAPAsynConnection::saslBind()" <<  endl);
+    LDAPSaslBindRequest *req = new LDAPSaslBindRequest(mech, cred, this, cons);
+    try{
+        LDAPMessageQueue *ret = req->sendRequest();
+        return ret;
+    }catch(LDAPException e){
+        delete req;
+        throw;
+    }
+
+}
+
+LDAPMessageQueue* LDAPAsynConnection::saslInteractiveBind(
+                        const std::string &mech,
+                        int flags,
+                        SaslInteractionHandler *sih,
+                        const LDAPConstraints *cons)
+{
+    DEBUG(LDAP_DEBUG_TRACE, "LDAPAsynConnection::saslInteractiveBind" 
+            << std::endl);
+    LDAPSaslInteractiveBind *req = 
+            new LDAPSaslInteractiveBind(mech, flags, sih, this, cons);
+    try {
+        LDAPMessageQueue *ret = req->sendRequest();
+        return ret;
+    }catch(LDAPException e){
+        delete req;
+        throw;
+    } 
 }
 
 LDAPMessageQueue* LDAPAsynConnection::search(const string& base,int scope, 

@@ -1,5 +1,11 @@
-#include<iostream>
-#include<sstream>
+// $OpenLDAP: pkg/ldap/contrib/ldapc++/examples/readSchema.cpp,v 1.1.6.3 2008/04/14 23:18:59 quanah Exp $
+/*
+ * Copyright 2008, OpenLDAP Foundation, All Rights Reserved.
+ * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
+ */
+
+#include <iostream>
+#include <sstream>
 #include "LDAPConnection.h"
 #include "LDAPConstraints.h"
 #include "LDAPSearchReference.h"
@@ -9,10 +15,9 @@
 #include "LDAPEntry.h"
 #include "LDAPException.h"
 #include "LDAPModification.h"
-#include "LDAPReferralException.h"
 #include "LDAPSchema.h"
 
-#include"debug.h"
+#include "debug.h"
 
 int main(){
     LDAPConnection *lc=new LDAPConnection("192.168.3.128",389);

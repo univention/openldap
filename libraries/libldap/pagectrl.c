@@ -1,6 +1,6 @@
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * Copyright 2006 Hans Leidekker
  * All rights reserved.
  *
@@ -256,7 +256,7 @@ ldap_parse_page_control(
 
 	ld->ld_errno = ldap_parse_pageresponse_control( ld, c, countp, &cookie );
 	if ( ld->ld_errno == LDAP_SUCCESS ) {
-		*cookiep = LDAP_MALLOC( sizeof( struct berval * ) );
+		*cookiep = LDAP_MALLOC( sizeof( struct berval ) );
 		if ( *cookiep == NULL ) {
 			ld->ld_errno = LDAP_NO_MEMORY;
 		} else {

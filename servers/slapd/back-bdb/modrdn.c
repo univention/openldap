@@ -1,8 +1,8 @@
 /* modrdn.c - bdb backend modrdn routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modrdn.c,v 1.185.2.6 2007/12/06 05:43:27 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modrdn.c,v 1.185.2.11 2008/05/01 21:39:35 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2007 The OpenLDAP Foundation.
+ * Copyright 2000-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -134,7 +134,8 @@ retry:	/* transaction retry */
 
 		rs->sr_err = TXN_ABORT( ltid );
 		ltid = NULL;
-		op->o_private = NULL;
+		LDAP_SLIST_REMOVE( &op->o_extra, &opinfo.boi_oe, OpExtra, oe_next );
+		opinfo.boi_oe.oe_key = NULL;
 		op->o_do_not_cache = opinfo.boi_acl_cache;
 		if( rs->sr_err != 0 ) {
 			rs->sr_err = LDAP_OTHER;
@@ -165,12 +166,11 @@ retry:	/* transaction retry */
 
 	locker = TXN_ID ( ltid );
 
-	opinfo.boi_bdb = op->o_bd;
+	opinfo.boi_oe.oe_key = bdb;
 	opinfo.boi_txn = ltid;
-	opinfo.boi_locker = locker;
 	opinfo.boi_err = 0;
 	opinfo.boi_acl_cache = op->o_do_not_cache;
-	op->o_private = &opinfo;
+	LDAP_SLIST_INSERT_HEAD( &op->o_extra, &opinfo.boi_oe, oe_next );
 
 	/* get entry */
 	rs->sr_err = bdb_dn2entry( op, ltid, &op->o_req_ndn, &ei, 1,
@@ -560,6 +560,9 @@ retry:	/* transaction retry */
 	case DB_NOTFOUND:
 		break;
 	case 0:
+		/* Allow rename to same DN */
+		if ( nei == ei )
+			break;
 		rs->sr_err = LDAP_ALREADY_EXISTS;
 		goto return_results;
 	default:
@@ -737,6 +740,8 @@ retry:	/* transaction retry */
 		} else {
 			rs->sr_err = LDAP_X_NO_OPERATION;
 			ltid = NULL;
+			/* Only free attrs if they were dup'd.  */
+			if ( dummy.e_attrs == e->e_attrs ) dummy.e_attrs = NULL;
 			goto return_results;
 		}
 
@@ -760,7 +765,8 @@ retry:	/* transaction retry */
 	}
  
 	ltid = NULL;
-	op->o_private = NULL;
+	LDAP_SLIST_REMOVE( &op->o_extra, &opinfo.boi_oe, OpExtra, oe_next );
+	opinfo.boi_oe.oe_key = NULL;
  
 	if( rs->sr_err != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE,
@@ -819,7 +825,9 @@ done:
 	if( ltid != NULL ) {
 		TXN_ABORT( ltid );
 	}
-	op->o_private = NULL;
+	if ( opinfo.boi_oe.oe_key ) {
+		LDAP_SLIST_REMOVE( &op->o_extra, &opinfo.boi_oe, OpExtra, oe_next );
+	}
 
 	if( preread_ctrl != NULL && (*preread_ctrl) != NULL ) {
 		slap_sl_free( (*preread_ctrl)->ldctl_value.bv_val, op->o_tmpmemctx );

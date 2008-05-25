@@ -1,8 +1,8 @@
 /* id2entry.c - routines to deal with the id2entry database */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/id2entry.c,v 1.72.2.3 2007/08/31 23:14:01 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/id2entry.c,v 1.72.2.6 2008/05/01 21:39:35 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2007 The OpenLDAP Foundation.
+ * Copyright 2000-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -242,7 +242,8 @@ int bdb_entry_release(
 	int rw )
 {
 	struct bdb_info *bdb = (struct bdb_info *) op->o_bd->be_private;
-	struct bdb_op_info *boi = NULL;
+	struct bdb_op_info *boi;
+	OpExtra *oex;
  
 	/* slapMode : SLAP_SERVER_MODE, SLAP_TOOL_MODE,
 			SLAP_TRUNCATE_MODE, SLAP_UNDEFINED_MODE */
@@ -257,7 +258,10 @@ int bdb_entry_release(
 #endif
 		}
 		/* free entry and reader or writer lock */
-		boi = (struct bdb_op_info *)op->o_private;
+		LDAP_SLIST_FOREACH( oex, &op->o_extra, oe_next ) {
+			if ( oex->oe_key == bdb ) break;
+		}
+		boi = (struct bdb_op_info *)oex;
 
 		/* lock is freed with txn */
 		if ( !boi || boi->boi_txn ) {
@@ -274,8 +278,8 @@ int bdb_entry_release(
 				}
 			}
 			if ( !boi->boi_locks ) {
+				LDAP_SLIST_REMOVE( &op->o_extra, &boi->boi_oe, OpExtra, oe_next );
 				op->o_tmpfree( boi, op->o_tmpmemctx );
-				op->o_private = NULL;
 			}
 		}
 	} else {
@@ -328,15 +332,19 @@ int bdb_entry_get(
 		"=> bdb_entry_get: oc: \"%s\", at: \"%s\"\n",
 		oc ? oc->soc_cname.bv_val : "(null)", at_name, 0);
 
-	if( op ) boi = (struct bdb_op_info *) op->o_private;
-	if( boi != NULL && op->o_bd->be_private == boi->boi_bdb->be_private ) {
-		txn = boi->boi_txn;
-		locker = boi->boi_locker;
+	if( op ) {
+		OpExtra *oex;
+		LDAP_SLIST_FOREACH( oex, &op->o_extra, oe_next ) {
+			if ( oex->oe_key == bdb ) break;
+		}
+		boi = (struct bdb_op_info *)oex;
+		if ( boi )
+			txn = boi->boi_txn;
 	}
 
 	if ( txn != NULL ) {
 		locker = TXN_ID ( txn );
-	} else if ( !locker ) {
+	} else {
 		rc = LOCK_ID ( bdb->bi_dbenv, &locker );
 		free_lock_id = 1;
 		switch(rc) {
@@ -408,8 +416,8 @@ return_results:
 			if ( op ) {
 				if ( !boi ) {
 					boi = op->o_tmpcalloc(1,sizeof(struct bdb_op_info),op->o_tmpmemctx);
-					boi->boi_bdb = op->o_bd;
-					op->o_private = boi;
+					boi->boi_oe.oe_key = bdb;
+					LDAP_SLIST_INSERT_HEAD( &op->o_extra, &boi->boi_oe, oe_next );
 				}
 				if ( !boi->boi_txn ) {
 					struct bdb_lock_info *bli;

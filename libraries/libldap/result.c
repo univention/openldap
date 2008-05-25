@@ -1,8 +1,8 @@
 /* result.c - wait for an ldap result */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/result.c,v 1.124.2.8 2007/10/17 20:14:11 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/result.c,v 1.124.2.10 2008/02/11 23:26:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -322,7 +322,7 @@ wait4msg(
 		}
 #endif /* LDAP_DEBUG */
 
-        	if ( ( *result = chkResponseList( ld, msgid, all ) ) != NULL ) {
+		if ( ( *result = chkResponseList( ld, msgid, all ) ) != NULL ) {
 			rc = (*result)->lm_msgtype;
 
 		} else {
@@ -350,7 +350,7 @@ wait4msg(
 			ldap_pvt_thread_mutex_unlock( &ld->ld_conn_mutex );
 #endif
 
-		    	if ( !lc_ready ) {
+			if ( !lc_ready ) {
 				rc = ldap_int_select( ld, tvp );
 #ifdef LDAP_DEBUG
 				if ( rc == -1 ) {

@@ -1,8 +1,8 @@
 /* back-ldap.h - ldap backend header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.88.2.6 2007/08/31 23:14:02 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.88.2.8 2008/02/12 00:25:47 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2007 The OpenLDAP Foundation.
+ * Copyright 1999-2008 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -423,6 +423,12 @@ typedef enum ldap_back_send_t {
 #ifndef LDAP_BACK_PRINT_CONNTREE
 #define LDAP_BACK_PRINT_CONNTREE 0
 #endif /* !LDAP_BACK_PRINT_CONNTREE */
+
+typedef struct ldap_extra_t {
+	int (*proxy_authz_ctrl)( Operation *op, SlapReply *rs, struct berval *bound_ndn,
+		int version, slap_idassert_t *si, LDAPControl	*ctrl );
+	int (*controls_free)( Operation *op, SlapReply *rs, LDAPControl ***pctrls );
+} ldap_extra_t;
 
 LDAP_END_DECL
 

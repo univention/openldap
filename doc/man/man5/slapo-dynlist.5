@@ -1,7 +1,7 @@
 .TH SLAPO-DYNLIST 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2007 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2008 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-dynlist.5,v 1.7.2.2 2007/08/31 23:13:53 quanah Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-dynlist.5,v 1.7.2.4 2008/05/01 21:19:41 quanah Exp $
 .SH NAME
 slapo-dynlist \- Dynamic List overlay to slapd
 .SH SYNOPSIS
@@ -50,7 +50,7 @@ occurrences, and it must appear after the
 .B overlay
 directive.
 .TP
-.B dynlist-attrset <group-oc> <URL-ad> [<member-ad>]
+.B dynlist-attrset <group-oc> <URL-ad> [[<mapped-ad>:]<member-ad> ...]
 The value 
 .B <group-oc> 
 is the name of the objectClass that triggers the dynamic expansion of the
@@ -82,6 +82,15 @@ of the URI were present in the
 entry as values of the
 .B <member-ad>
 attribute.
+
+Alternatively, 
+.B <mapped-ad>:<member-ad>
+can be used to remap attributes obtained through expansion. 
+.B <member-ad>
+attributes are not filled by expanded DN, but are remapped as
+.B <mapped-ad> 
+attributes. Multiple mapping statements can be used.
+
 .LP
 The dynlist overlay may be used with any backend, but it is mainly 
 intended for use with local storage backends.
@@ -173,3 +182,5 @@ overlay supports dynamic configuration via
 .SH ACKNOWLEDGEMENTS
 .P
 This module was written in 2004 by Pierangelo Masarati for SysNet s.n.c.
+.P
+Attribute remapping was contributed in 2008 by Emmanuel Dreyfus.

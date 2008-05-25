@@ -1,8 +1,8 @@
 /* operation.c - routines to deal with pending ldap operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.75.2.4 2007/11/07 20:58:38 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.75.2.8 2008/02/12 20:48:44 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -117,13 +117,10 @@ slap_op_free( Operation *op, void *ctx )
 	op->o_controls = opbuf->ob_controls;
 
 	if ( ctx ) {
-		Operation *op2;
-		void *otmp = NULL;
-		ldap_pvt_thread_pool_getkey( ctx, (void *)slap_op_free, &otmp, NULL );
-		op2 = otmp;
+		void *op2 = NULL;
+		ldap_pvt_thread_pool_setkey( ctx, (void *)slap_op_free,
+			op, slap_op_q_destroy, &op2, NULL );
 		LDAP_STAILQ_NEXT( op, o_next ) = op2;
-		ldap_pvt_thread_pool_setkey( ctx, (void *)slap_op_free, (void *)op,
-			slap_op_q_destroy );
 	} else {
 		ber_memfree_x( op, NULL );
 	}
@@ -132,8 +129,8 @@ slap_op_free( Operation *op, void *ctx )
 void
 slap_op_time(time_t *t, int *nop)
 {
-	*t = slap_get_time();
 	ldap_pvt_thread_mutex_lock( &slap_op_mutex );
+	*t = slap_get_time();
 	if ( *t == last_time ) {
 		*nop = ++last_incr;
 	} else {
@@ -160,8 +157,8 @@ slap_op_alloc(
 		if ( otmp ) {
 			op = otmp;
 			otmp = LDAP_STAILQ_NEXT( op, o_next );
-			ldap_pvt_thread_pool_setkey( ctx, (void *)slap_op_free, otmp,
-				slap_op_q_destroy );
+			ldap_pvt_thread_pool_setkey( ctx, (void *)slap_op_free,
+				otmp, slap_op_q_destroy, NULL, NULL );
 		}
 	}
 	if (!op) {

@@ -1,8 +1,8 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test042-valsort,v 1.4.2.4 2007/08/31 23:14:09 quanah Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test042-valsort,v 1.4.2.5 2008/02/11 23:26:51 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 2004-2007 The OpenLDAP Foundation.
+## Copyright 2004-2008 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without

@@ -1,8 +1,8 @@
 /* index.c - routines for dealing with attribute indexes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/index.c,v 1.61.2.4 2007/12/01 18:10:47 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/index.c,v 1.61.2.7 2008/02/11 23:26:45 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2007 The OpenLDAP Foundation.
+ * Copyright 2000-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -477,7 +477,7 @@ bdb_index_entry(
 {
 	int rc;
 	Attribute *ap = e->e_attrs;
-#ifdef LDAP_COMP_MATCH
+#if 0 /* ifdef LDAP_COMP_MATCH */
 	ComponentReference *cr_list = NULL;
 	ComponentReference *cr = NULL, *dupped_cr = NULL;
 	void* decoded_comp;
@@ -499,7 +499,7 @@ bdb_index_entry(
 
 	/* add each attribute to the indexes */
 	for ( ; ap != NULL; ap = ap->a_next ) {
-#ifdef LDAP_COMP_MATCH
+#if 0 /* ifdef LDAP_COMP_MATCH */
 		AttrInfo *ai;
 		/* see if attribute has components to be indexed */
 		ai = bdb_attr_mask( op->o_bd->be_private, ap->a_desc->ad_type->sat_ad );

@@ -1,8 +1,8 @@
 /* chain.c - chain LDAP operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/chain.c,v 1.52.2.6 2007/09/14 21:59:28 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/chain.c,v 1.52.2.7 2008/02/11 23:26:46 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2007 The OpenLDAP Foundation.
+ * Copyright 2003-2008 The OpenLDAP Foundation.
  * Portions Copyright 2003 Howard Chu.
  * All rights reserved.
  *

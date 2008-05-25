@@ -1,8 +1,8 @@
 /* result.c - routines to send ldap results, errors, and referrals */
-/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.289.2.10 2007/12/10 18:10:39 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.289.2.13 2008/04/14 23:43:59 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -522,14 +522,20 @@ clean2:;
 		(void)slap_cleanup_play( op, rs );
 	}
 
-	if ( rs->sr_matched && rs->sr_flags & REP_MATCHED_MUSTBEFREED ) {
-		free( (char *)rs->sr_matched );
-		rs->sr_matched = NULL;
+	if ( rs->sr_flags & REP_MATCHED_MUSTBEFREED ) {
+		rs->sr_flags ^= REP_MATCHED_MUSTBEFREED; /* paranoia */
+		if ( rs->sr_matched ) {
+			free( (char *)rs->sr_matched );
+			rs->sr_matched = NULL;
+		}
 	}
 
-	if ( rs->sr_ref && rs->sr_flags & REP_REF_MUSTBEFREED ) {
-		ber_bvarray_free( rs->sr_ref );
-		rs->sr_ref = NULL;
+	if ( rs->sr_flags & REP_REF_MUSTBEFREED ) {
+		rs->sr_flags ^= REP_REF_MUSTBEFREED; /* paranoia */
+		if ( rs->sr_ref ) {
+			ber_bvarray_free( rs->sr_ref );
+			rs->sr_ref = NULL;
+		}
 	}
 
 	return rc;
@@ -625,6 +631,14 @@ slap_send_ldap_result( Operation *op, SlapReply *rs )
 	rs->sr_msgid = (rs->sr_tag != LBER_SEQUENCE) ? op->o_msgid : 0;
 
 abandon:
+	if ( rs->sr_flags & REP_REF_MUSTBEFREED ) {
+		if ( rs->sr_ref == NULL ) {
+			rs->sr_flags ^= REP_REF_MUSTBEFREED;
+			ber_bvarray_free( oref );
+		}
+		oref = NULL; /* send_ldap_response() will free rs->sr_ref if != NULL */
+	}
+
 	if ( send_ldap_response( op, rs ) == SLAP_CB_CONTINUE ) {
 		if ( op->o_tag == LDAP_REQ_SEARCH ) {
 			char nbuf[64];
@@ -743,8 +757,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 
 	/* Every 64 entries, check for thread pool pause */
 	if ( ( ( rs->sr_nentries & 0x3f ) == 0x3f ) &&
-		ldap_pvt_thread_pool_query( &connection_pool,
-			LDAP_PVT_THREAD_POOL_PARAM_PAUSING, &i ) == 0 && i )
+		ldap_pvt_thread_pool_pausing( &connection_pool ) > 0 )
 	{
 		return LDAP_BUSY;
 	}

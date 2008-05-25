@@ -1,8 +1,8 @@
 /* search.c - search operation */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.246.2.9 2007/11/20 18:46:34 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.246.2.14 2008/05/01 21:39:35 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2007 The OpenLDAP Foundation.
+ * Copyright 2000-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -322,11 +322,16 @@ bdb_search( Operation *op, SlapReply *rs )
 	DB_LOCK		lock;
 	struct	bdb_op_info	*opinfo = NULL;
 	DB_TXN			*ltid = NULL;
+	OpExtra *oex;
 
 	Debug( LDAP_DEBUG_TRACE, "=> " LDAP_XSTRING(bdb_search) "\n", 0, 0, 0);
 	attrs = op->oq_search.rs_attrs;
 
-	opinfo = (struct bdb_op_info *) op->o_private;
+	LDAP_SLIST_FOREACH( oex, &op->o_extra, oe_next ) {
+		if ( oex->oe_key == bdb )
+			break;
+	}
+	opinfo = (struct bdb_op_info *) oex;
 
 	manageDSAit = get_manageDSAit( op );
 
@@ -998,7 +1003,7 @@ static void *search_stack( Operation *op )
 	void *ret = NULL;
 
 	if ( op->o_threadctx ) {
-		ldap_pvt_thread_pool_getkey( op->o_threadctx, search_stack,
+		ldap_pvt_thread_pool_getkey( op->o_threadctx, (void *)search_stack,
 			&ret, NULL );
 	} else {
 		ret = bdb->bi_search_stack;
@@ -1008,8 +1013,8 @@ static void *search_stack( Operation *op )
 		ret = ch_malloc( bdb->bi_search_stack_depth * BDB_IDL_UM_SIZE
 			* sizeof( ID ) );
 		if ( op->o_threadctx ) {
-			ldap_pvt_thread_pool_setkey( op->o_threadctx, search_stack,
-				ret, search_stack_free );
+			ldap_pvt_thread_pool_setkey( op->o_threadctx, (void *)search_stack,
+				ret, search_stack_free, NULL, NULL );
 		} else {
 			bdb->bi_search_stack = ret;
 		}
@@ -1160,10 +1165,6 @@ parse_paged_cookie( Operation *op, SlapReply *rs )
 			goto done;
 		}
 
-	} else {
-		/* Initial request.  Initialize state. */
-		ps->ps_cookie = 0;
-		ps->ps_count = 0;
 	}
 
 done:;

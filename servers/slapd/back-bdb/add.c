@@ -1,8 +1,8 @@
 /* add.c - ldap BerkeleyDB back-end add routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/add.c,v 1.152.2.6 2007/11/11 19:33:12 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/add.c,v 1.152.2.10 2008/05/01 21:39:35 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2007 The OpenLDAP Foundation.
+ * Copyright 2000-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@ bdb_add(Operation *op, SlapReply *rs )
 	AttributeDescription *children = slap_schema.si_ad_children;
 	AttributeDescription *entry = slap_schema.si_ad_entry;
 	DB_TXN		*ltid = NULL, *lt2;
+	ID eid = NOID;
 	struct bdb_op_info opinfo = {0};
 	int subentry;
 	BDB_LOCKER	locker = 0, rlocker = 0;
@@ -92,7 +93,6 @@ txnReturn:
 
 	ctrls[num_ctrls] = 0;
 
-
 	/* check entry's schema */
 	rs->sr_err = entry_schema_check( op, op->oq_add.rs_e, NULL,
 		get_relax(op), 1, &rs->sr_text, textbuf, textlen );
@@ -115,20 +115,6 @@ txnReturn:
 
 	subentry = is_entry_subentry( op->oq_add.rs_e );
 
-	/*
-	 * acquire an ID outside of the operation transaction
-	 * to avoid serializing adds.
-	 */
-	rs->sr_err = bdb_next_id( op->o_bd, NULL, &op->oq_add.rs_e->e_id );
-	if( rs->sr_err != 0 ) {
-		Debug( LDAP_DEBUG_TRACE,
-			LDAP_XSTRING(bdb_add) ": next_id failed (%d)\n",
-			rs->sr_err, 0, 0 );
-		rs->sr_err = LDAP_OTHER;
-		rs->sr_text = "internal error";
-		goto return_results;
-	}
-
 	/* Get our thread locker ID */
 	rs->sr_err = LOCK_ID( bdb->bi_dbenv, &rlocker );
 
@@ -143,7 +129,8 @@ retry:	/* transaction retry */
 		}
 		rs->sr_err = TXN_ABORT( ltid );
 		ltid = NULL;
-		op->o_private = NULL;
+		LDAP_SLIST_REMOVE( &op->o_extra, &opinfo.boi_oe, OpExtra, oe_next );
+		opinfo.boi_oe.oe_key = NULL;
 		op->o_do_not_cache = opinfo.boi_acl_cache;
 		if( rs->sr_err != 0 ) {
 			rs->sr_err = LDAP_OTHER;
@@ -172,13 +159,12 @@ retry:	/* transaction retry */
 
 	locker = TXN_ID ( ltid );
 
-	opinfo.boi_bdb = op->o_bd;
+	opinfo.boi_oe.oe_key = bdb;
 	opinfo.boi_txn = ltid;
-	opinfo.boi_locker = locker;
 	opinfo.boi_err = 0;
 	opinfo.boi_acl_cache = op->o_do_not_cache;
-	op->o_private = &opinfo;
-	
+	LDAP_SLIST_INSERT_HEAD( &op->o_extra, &opinfo.boi_oe, oe_next );
+
 	/*
 	 * Get the parent dn and see if the corresponding entry exists.
 	 */
@@ -316,6 +302,19 @@ retry:	/* transaction retry */
 		goto return_results;;
 	}
 
+	if ( eid == NOID ) {
+		rs->sr_err = bdb_next_id( op->o_bd, &eid );
+		if( rs->sr_err != 0 ) {
+			Debug( LDAP_DEBUG_TRACE,
+				LDAP_XSTRING(bdb_add) ": next_id failed (%d)\n",
+				rs->sr_err, 0, 0 );
+			rs->sr_err = LDAP_OTHER;
+			rs->sr_text = "internal error";
+			goto return_results;
+		}
+		op->oq_add.rs_e->e_id = eid;
+	}
+
 	/* nested transaction */
 	rs->sr_err = TXN_BEGIN( bdb->bi_dbenv, ltid, &lt2, 
 		bdb->bi_db_opflags );
@@ -440,7 +439,8 @@ retry:	/* transaction retry */
 	}
 
 	ltid = NULL;
-	op->o_private = NULL;
+	LDAP_SLIST_REMOVE( &op->o_extra, &opinfo.boi_oe, OpExtra, oe_next );
+	opinfo.boi_oe.oe_key = NULL;
 
 	if ( rs->sr_err != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE,
@@ -466,7 +466,9 @@ return_results:
 	if( ltid != NULL ) {
 		TXN_ABORT( ltid );
 	}
-	op->o_private = NULL;
+	if ( opinfo.boi_oe.oe_key ) {
+		LDAP_SLIST_REMOVE( &op->o_extra, &opinfo.boi_oe, OpExtra, oe_next );
+	}
 
 	if( success == LDAP_SUCCESS ) {
 		/* We own the entry now, and it can be purged at will

@@ -1,8 +1,8 @@
 /* ldap_thr_debug.h - preprocessor magic for LDAP_THREAD_DEBUG */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/ldap_thr_debug.h,v 1.3.2.2 2007/08/31 23:13:56 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/ldap_thr_debug.h,v 1.3.2.5 2008/02/11 23:26:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2007 The OpenLDAP Foundation.
+ * Copyright 2005-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -119,7 +119,7 @@
 #define	ldap_pvt_thread_pool_resume		ldap_int_thread_pool_resume
 #define	ldap_pvt_thread_pool_destroy	ldap_int_thread_pool_destroy
 #define	ldap_pvt_thread_pool_getkey		ldap_int_thread_pool_getkey
-#define	ldap_pvt_thread_pool_setkey		ldap_int_thread_pool_setkey
+#define	ldap_pvt_thread_pool_setkey	ldap_int_thread_pool_setkey
 #define	ldap_pvt_thread_pool_purgekey	ldap_int_thread_pool_purgekey
 #define	ldap_pvt_thread_pool_context	ldap_int_thread_pool_context
 #define	ldap_pvt_thread_pool_context_reset ldap_int_thread_pool_context_reset

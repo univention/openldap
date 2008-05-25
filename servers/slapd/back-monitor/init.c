@@ -1,8 +1,8 @@
 /* init.c - initialize monitor backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/init.c,v 1.125.2.4 2007/09/29 09:27:01 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/init.c,v 1.125.2.6 2008/04/24 08:13:39 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2007 The OpenLDAP Foundation.
+ * Copyright 2001-2008 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -356,7 +356,7 @@ monitor_back_register_database_limbo(
 
 	el.el_type = LIMBO_DATABASE;
 
-	el.el_be = be;
+	el.el_be = be->bd_self;
 	el.el_ndn = ndn;
 	
 	for ( elpp = &mi->mi_entry_limbo;

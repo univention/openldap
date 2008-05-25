@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.163.2.6 2007/09/04 00:39:45 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/saslauthz.c,v 1.163.2.8 2008/02/11 23:26:44 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * Portions Copyright 2000 Mark Adamson, Carnegie Mellon.
  * All rights reserved.
  *
@@ -1665,7 +1665,7 @@ slap_sasl_match( Operation *opx, struct berval *rule,
 
 	Debug( LDAP_DEBUG_TRACE,
 	   "===>slap_sasl_match: comparing DN %s to rule %s\n",
-		assertDN->bv_val, rule->bv_val, 0 );
+		assertDN->bv_len ? assertDN->bv_val : "(null)", rule->bv_val, 0 );
 
 	/* NOTE: don't normalize rule if authz syntax is enabled */
 	rc = slap_parseURI( opx, rule, &base, &op.o_req_ndn,
@@ -2038,8 +2038,13 @@ int slap_sasl_authorized( Operation *op,
 	int rc = LDAP_INAPPROPRIATE_AUTH;
 
 	/* User binding as anonymous */
-	if ( authzDN == NULL ) {
+	if ( !authzDN || !authzDN->bv_len || !authzDN->bv_val ) {
 		rc = LDAP_SUCCESS;
+		goto DONE;
+	}
+
+	/* User is anonymous */
+	if ( !authcDN || !authcDN->bv_len || !authcDN->bv_val ) {
 		goto DONE;
 	}
 

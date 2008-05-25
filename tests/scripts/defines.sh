@@ -1,8 +1,8 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.141.2.9 2007/11/20 19:11:27 quanah Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.141.2.12 2008/04/14 21:51:34 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2007 The OpenLDAP Foundation.
+## Copyright 1998-2008 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -77,6 +77,7 @@ CLIENTDIR=../clients/tools
 # conf
 CONF=$DATADIR/slapd.conf
 CONFTWO=$DATADIR/slapd2.conf
+CONF2DB=$DATADIR/slapd-2db.conf
 MCONF=$DATADIR/slapd-master.conf
 COMPCONF=$DATADIR/slapd-component.conf
 PWCONF=$DATADIR/slapd-pw.conf
@@ -204,6 +205,7 @@ URI6="ldap://${LOCALHOST}:$PORT6/"
 
 # LDIF
 LDIF=$DATADIR/test.ldif
+LDIFADD1=$DATADIR/do_add.1
 LDIFGLUED=$DATADIR/test-glued.ldif
 LDIFORDERED=$DATADIR/test-ordered.ldif
 LDIFORDEREDCP=$DATADIR/test-ordered-cp.ldif

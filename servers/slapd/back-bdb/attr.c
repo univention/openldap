@@ -1,8 +1,8 @@
 /* attr.c - backend routines for dealing with attributes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/attr.c,v 1.36.2.2 2007/08/31 23:14:01 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/attr.c,v 1.36.2.3 2008/02/11 23:26:45 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2007 The OpenLDAP Foundation.
+ * Copyright 2000-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

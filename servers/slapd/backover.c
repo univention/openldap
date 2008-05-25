@@ -1,8 +1,8 @@
 /* backover.c - backend overlay routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backover.c,v 1.71.2.5 2007/08/31 23:13:58 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backover.c,v 1.71.2.8 2008/04/24 08:13:39 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2007 The OpenLDAP Foundation.
+ * Copyright 2003-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,42 +28,6 @@
 #include "config.h"
 
 static slap_overinst *overlays;
-
-enum db_which {
-	db_open = 0,
-	db_close,
-	db_destroy,
-	db_last
-};
-
-static int
-over_db_func(
-	BackendDB *be,
-	enum db_which which
-)
-{
-	slap_overinfo *oi = be->bd_info->bi_private;
-	slap_overinst *on = oi->oi_list;
-	BackendInfo *bi_orig = be->bd_info;
-	BI_db_open **func;
-	int rc = 0;
-
-	func = &oi->oi_orig->bi_db_open;
-	if ( func[which] ) {
-		be->bd_info = oi->oi_orig;
-		rc = func[which]( be, NULL );
-	}
-
-	for (; on && rc == 0; on=on->on_next) {
-		be->bd_info = &on->on_bi;
-		func = &on->on_bi.bi_db_open;
-		if (func[which]) {
-			rc = func[which]( be, NULL );
-		}
-	}
-	be->bd_info = bi_orig;
-	return rc;
-}
 
 static int
 over_db_config(
@@ -172,7 +136,25 @@ over_db_open(
 	ConfigReply *cr
 )
 {
-	return over_db_func( be, db_open );
+	slap_overinfo *oi = be->bd_info->bi_private;
+	slap_overinst *on = oi->oi_list;
+	BackendDB db = *be;
+	int rc = 0;
+
+	db.be_flags |= SLAP_DBFLAG_OVERLAY;
+	db.bd_info = oi->oi_orig;
+	if ( db.bd_info->bi_db_open ) {
+		rc = db.bd_info->bi_db_open( &db, cr );
+	}
+
+	for (; on && rc == 0; on=on->on_next) {
+		db.bd_info = &on->on_bi;
+		if ( db.bd_info->bi_db_open ) {
+			rc = db.bd_info->bi_db_open( &db, cr );
+		}
+	}
+
+	return rc;
 }
 
 static int
@@ -189,13 +171,13 @@ over_db_close(
 	for (; on && rc == 0; on=on->on_next) {
 		be->bd_info = &on->on_bi;
 		if ( be->bd_info->bi_db_close ) {
-			rc = be->bd_info->bi_db_close( be, NULL );
+			rc = be->bd_info->bi_db_close( be, cr );
 		}
 	}
 
 	if ( oi->oi_orig->bi_db_close ) {
 		be->bd_info = oi->oi_orig;
-		rc = be->bd_info->bi_db_close( be, NULL );
+		rc = be->bd_info->bi_db_close( be, cr );
 	}
 
 	be->bd_info = bi_orig;
@@ -210,17 +192,29 @@ over_db_destroy(
 {
 	slap_overinfo *oi = be->bd_info->bi_private;
 	slap_overinst *on = oi->oi_list, *next;
+	BackendInfo *bi_orig = be->bd_info;
 	int rc;
 
-	rc = over_db_func( be, db_destroy );
+	be->bd_info = oi->oi_orig;
+	if ( be->bd_info->bi_db_destroy ) {
+		rc = be->bd_info->bi_db_destroy( be, cr );
+	}
 
+	for (; on && rc == 0; on=on->on_next) {
+		be->bd_info = &on->on_bi;
+		if ( be->bd_info->bi_db_destroy ) {
+			rc = be->bd_info->bi_db_destroy( be, cr );
+		}
+	}
+
+	on = oi->oi_list;
 	if ( on ) {
 		for (next = on->on_next; on; on=next) {
 			next = on->on_next;
 			free( on );
 		}
 	}
-
+	be->bd_info = bi_orig;
 	free( oi );
 	return rc;
 }
@@ -1248,10 +1242,10 @@ overlay_config( BackendDB *be, const char *ov, int idx, BackendInfo **res )
 
 	} else {
 		if ( overlay_is_inst( be, ov ) ) {
-			Debug( LDAP_DEBUG_ANY, "overlay_config(): "
-				"overlay \"%s\" already in list\n",
-				ov, 0, 0 );
 			if ( SLAPO_SINGLE( be ) ) {
+				Debug( LDAP_DEBUG_ANY, "overlay_config(): "
+					"overlay \"%s\" already in list\n",
+					ov, 0, 0 );
 				return 1;
 			}
 		}

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/add.c,v 1.50.2.4 2007/08/31 23:14:05 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/add.c,v 1.50.2.6 2008/02/11 23:26:48 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2007 The OpenLDAP Foundation.
+ * Copyright 1999-2008 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -794,7 +794,7 @@ backsql_add_attr(
 		int		prc = LDAP_SUCCESS;
 		/* first parameter #, parameter order */
 		SQLUSMALLINT	pno, po;
-		char		logbuf[] = "val[18446744073709551615UL], id=18446744073709551615UL";
+		char		logbuf[ STRLENOF("val[], id=") + 2*LDAP_PVT_INTTYPE_CHARS(unsigned long)];
 		
 		/*
 		 * Do not deal with the objectClass that is used

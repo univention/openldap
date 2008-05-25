@@ -1,8 +1,8 @@
 ## Makefile for OpenLDAP Administrator's Guide
-# $OpenLDAP: pkg/openldap-guide/admin/Makefile,v 1.5.2.6 2007/11/29 22:51:25 quanah Exp $
+# $OpenLDAP: pkg/openldap-guide/admin/Makefile,v 1.5.2.9 2008/04/14 20:43:48 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 2005-2007 The OpenLDAP Foundation.
+## Copyright 2005-2008 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -21,6 +21,7 @@ sdf-src: \
 	../plain.sdf \
 	../preamble.sdf \
 	abstract.sdf \
+	access-control.sdf \
 	appendix-changes.sdf \
 	appendix-common-errors.sdf \
 	appendix-configs.sdf \
@@ -61,11 +62,14 @@ sdf-img: \
 	config_dit.png \
 	config_local.png \
 	config_ref.png \
-	config_repl.gif \
+	config_repl.png \
 	dual_dc.png \
 	intro_dctree.png \
 	intro_tree.png \
-	refint.png 
+	refint.png \
+	set-following-references.png \
+	set-memberUid.png \
+	set-recursivegroup.png 
 
 guide.html: guide.sdf sdf-src sdf-img
 	sdf -2html guide.sdf

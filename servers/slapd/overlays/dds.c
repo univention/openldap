@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dds.c,v 1.7.2.7 2007/12/10 17:51:41 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dds.c,v 1.7.2.9 2008/02/11 23:26:48 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2007 The OpenLDAP Foundation.
+ * Copyright 2005-2008 The OpenLDAP Foundation.
  * Portions Copyright 2005-2006 SysNet s.n.c.
  * All rights reserved.
  *
@@ -395,7 +395,7 @@ dds_op_add( Operation *op, SlapReply *rs )
 	/* handle dynamic object operational attr(s) */
 	if ( is_dynamicObject ) {
 		time_t		ttl, expire;
-		char		ttlbuf[] = "31557600";
+		char		ttlbuf[STRLENOF("31557600") + 1];
 		char		tsbuf[ LDAP_LUTIL_GENTIME_BUFSIZE ];
 		struct berval	bv;
 
@@ -414,10 +414,12 @@ dds_op_add( Operation *op, SlapReply *rs )
 
 		ttl = DDS_DEFAULT_TTL( di );
 
+		/* assert because should be checked at configure */
 		assert( ttl <= DDS_RF2589_MAX_TTL );
 
 		bv.bv_val = ttlbuf;
 		bv.bv_len = snprintf( ttlbuf, sizeof( ttlbuf ), "%ld", ttl );
+		assert( bv.bv_len < sizeof( ttlbuf ) );
 
 		/* FIXME: apparently, values in op->ora_e are malloc'ed
 		 * on the thread's slab; works fine by chance,
@@ -1004,7 +1006,7 @@ dds_op_extended( Operation *op, SlapReply *rs )
 		slap_callback	sc = { 0 };
 		Modifications	ttlmod = { { 0 } };
 		struct berval	ttlvalues[ 2 ];
-		char		ttlbuf[] = "31557600";
+		char		ttlbuf[STRLENOF("31557600") + 1];
 
 		rs->sr_err = slap_parse_refresh( op->ore_reqdata, NULL, &ttl,
 			&rs->sr_text, NULL );

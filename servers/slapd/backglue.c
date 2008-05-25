@@ -1,8 +1,8 @@
 /* backglue.c - backend glue */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.112.2.8 2007/11/15 00:34:01 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.112.2.11 2008/04/14 21:15:02 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2007 The OpenLDAP Foundation.
+ * Copyright 2001-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -620,6 +620,7 @@ glue_open (
 	glueinfo		*gi = on->on_bi.bi_private;
 	static int glueOpened = 0;
 	int i, j, same, bsame = 0, rc = 0;
+	ConfigReply cr = {0};
 
 	if (glueOpened) return 0;
 
@@ -650,7 +651,7 @@ glue_open (
 					gi->gi_n[i].gn_be->bd_info );
 			/* Let backend.c take care of the rest of startup */
 			if ( !rc )
-				rc = backend_startup_one( gi->gi_n[i].gn_be, NULL );
+				rc = backend_startup_one( gi->gi_n[i].gn_be, &cr );
 			if ( rc ) break;
 		}
 		if ( !rc && !bsame && on->on_info->oi_orig->bi_open )
@@ -791,6 +792,49 @@ glue_tool_entry_next (
 	return rc;
 }
 
+static ID
+glue_tool_dn2id_get (
+	BackendDB *b0,
+	struct berval *dn
+)
+{
+	BackendDB *be, b2;
+	int rc = -1;
+
+	b2 = *b0;
+	b2.bd_info = (BackendInfo *)glue_tool_inst( b0->bd_info );
+	be = glue_back_select (&b2, dn);
+	if ( be == &b2 ) be = &toolDB;
+
+	if (!be->be_dn2id_get)
+		return NOID;
+
+	if (!glueBack) {
+		if ( be->be_entry_open ) {
+			rc = be->be_entry_open (be, glueMode);
+		}
+		if (rc != 0) {
+			return NOID;
+		}
+	} else if (be != glueBack) {
+		/* If this entry belongs in a different branch than the
+		 * previous one, close the current database and open the
+		 * new one.
+		 */
+		if ( glueBack->be_entry_close ) {
+			glueBack->be_entry_close (glueBack);
+		}
+		if ( be->be_entry_open ) {
+			rc = be->be_entry_open (be, glueMode);
+		}
+		if (rc != 0) {
+			return NOID;
+		}
+	}
+	glueBack = be;
+	return be->be_dn2id_get (be, dn);
+}
+
 static Entry *
 glue_tool_entry_get (
 	BackendDB *b0,
@@ -845,6 +889,19 @@ glue_tool_entry_put (
 	}
 	glueBack = be;
 	return be->be_entry_put (be, e, text);
+}
+
+static ID
+glue_tool_entry_modify (
+	BackendDB *b0,
+	Entry *e,
+	struct berval *text
+)
+{
+	if (!glueBack || !glueBack->be_entry_modify)
+		return NOID;
+
+	return glueBack->be_entry_modify (glueBack, e, text);
 }
 
 static int
@@ -920,16 +977,16 @@ glue_db_init(
 		oi->oi_bi.bi_tool_entry_next = glue_tool_entry_next;
 	if ( bi->bi_tool_entry_get )
 		oi->oi_bi.bi_tool_entry_get = glue_tool_entry_get;
+	if ( bi->bi_tool_dn2id_get )
+		oi->oi_bi.bi_tool_dn2id_get = glue_tool_dn2id_get;
 	if ( bi->bi_tool_entry_put )
 		oi->oi_bi.bi_tool_entry_put = glue_tool_entry_put;
 	if ( bi->bi_tool_entry_reindex )
 		oi->oi_bi.bi_tool_entry_reindex = glue_tool_entry_reindex;
+	if ( bi->bi_tool_entry_modify )
+		oi->oi_bi.bi_tool_entry_modify = glue_tool_entry_modify;
 	if ( bi->bi_tool_sync )
 		oi->oi_bi.bi_tool_sync = glue_tool_sync;
-
-	/*FIXME : need to add support */
-	oi->oi_bi.bi_tool_dn2id_get = 0;
-	oi->oi_bi.bi_tool_entry_modify = 0;
 
 	SLAP_DBFLAGS( be ) |= SLAP_DBFLAG_GLUE_INSTANCE;
 

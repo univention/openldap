@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/admin/appendix-changes.sdf,v 1.8.2.3 2007/11/07 23:01:35 ghenry Exp $
-# Copyright 2007 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP: pkg/openldap-guide/admin/appendix-changes.sdf,v 1.8.2.6 2008/04/14 22:36:18 quanah Exp $
+# Copyright 2007-2008 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Changes Since Previous Release
@@ -15,6 +15,7 @@ asked on the OpenLDAP mailing lists and scenarios discussed there, we have added
 * {{SECT:When should I use LDAP?}}
 * {{SECT:When should I not use LDAP?}}
 * {{SECT:LDAP vs RDBMS}}
+* {{SECT:Access Control}}
 * {{SECT:Backends}}
 * {{SECT:Overlays}}
 * {{SECT:Replication}}
@@ -178,6 +179,10 @@ H3: New features in slapd
 * monitoring of back-{b,h}db: cache fill-in, non-indexed searches,
 * session tracking control (draft-wahl-ldap-session)
 * subtree delete in back-sql (draft-armijo-ldap-treedelete)
+* sorted values in multivalued attributes for faster matching 
+* lightweight dispatcher for greater throughput under heavy load and on
+multiprocessor machines. (33% faster than 2.3 on AMD quad-socket dual-core server.)
+
 
 H3: New features in libldap
 

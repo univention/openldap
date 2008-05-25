@@ -1,8 +1,8 @@
 /* modify.c - bdb backend modify routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modify.c,v 1.156.2.6 2007/12/10 17:54:46 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modify.c,v 1.156.2.11 2008/05/01 21:39:35 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2007 The OpenLDAP Foundation.
+ * Copyright 2000-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -283,7 +283,7 @@ int bdb_modify_internal(
 				/* attribute was completely deleted */
 				vals = ap->a_nvals;
 			}
-			if ( !BER_BVISEMPTY( vals )) {
+			if ( !BER_BVISNULL( vals )) {
 				rc = bdb_index_values( op, tid, ap->a_desc,
 					vals, e->e_id, SLAP_INDEX_DELETE_OP );
 				if ( rc != LDAP_SUCCESS ) {
@@ -410,7 +410,8 @@ retry:	/* transaction retry */
 
 		rs->sr_err = TXN_ABORT( ltid );
 		ltid = NULL;
-		op->o_private = NULL;
+		LDAP_SLIST_REMOVE( &op->o_extra, &opinfo.boi_oe, OpExtra, oe_next );
+		opinfo.boi_oe.oe_key = NULL;
 		op->o_do_not_cache = opinfo.boi_acl_cache;
 		if( rs->sr_err != 0 ) {
 			rs->sr_err = LDAP_OTHER;
@@ -439,12 +440,11 @@ retry:	/* transaction retry */
 
 	locker = TXN_ID ( ltid );
 
-	opinfo.boi_bdb = op->o_bd;
+	opinfo.boi_oe.oe_key = bdb;
 	opinfo.boi_txn = ltid;
-	opinfo.boi_locker = locker;
 	opinfo.boi_err = 0;
 	opinfo.boi_acl_cache = op->o_do_not_cache;
-	op->o_private = &opinfo;
+	LDAP_SLIST_INSERT_HEAD( &op->o_extra, &opinfo.boi_oe, oe_next );
 
 	/* get entry or ancestor */
 	rs->sr_err = bdb_dn2entry( op, ltid, &op->o_req_ndn, &ei, 1,
@@ -667,7 +667,8 @@ retry:	/* transaction retry */
 		rs->sr_err = TXN_COMMIT( ltid, 0 );
 	}
 	ltid = NULL;
-	op->o_private = NULL;
+	LDAP_SLIST_REMOVE( &op->o_extra, &opinfo.boi_oe, OpExtra, oe_next );
+	opinfo.boi_oe.oe_key = NULL;
 
 	if( rs->sr_err != 0 ) {
 		Debug( LDAP_DEBUG_TRACE,
@@ -706,7 +707,9 @@ done:
 	if( ltid != NULL ) {
 		TXN_ABORT( ltid );
 	}
-	op->o_private = NULL;
+	if ( opinfo.boi_oe.oe_key ) {
+		LDAP_SLIST_REMOVE( &op->o_extra, &opinfo.boi_oe, OpExtra, oe_next );
+	}
 
 	if( e != NULL ) {
 		bdb_unlocked_cache_return_entry_w (&bdb->bi_cache, e);
@@ -720,5 +723,8 @@ done:
 		slap_sl_free( (*postread_ctrl)->ldctl_value.bv_val, op->o_tmpmemctx );
 		slap_sl_free( *postread_ctrl, op->o_tmpmemctx );
 	}
+
+	rs->sr_text = NULL;
+
 	return rs->sr_err;
 }

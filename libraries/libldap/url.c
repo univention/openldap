@@ -1,8 +1,8 @@
 /* LIBLDAP url.c -- LDAP URL (RFC 4516) related routines */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/url.c,v 1.94.2.4 2007/08/31 23:13:56 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/url.c,v 1.94.2.8 2008/02/11 23:41:37 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -582,19 +582,17 @@ desc2str_len( LDAPURLDesc *u )
 	len += sep;
 
 	if ( u->lud_port ) {
-		char	buf[] = ":65535";
+		unsigned p = u->lud_port;
+		if ( p > 65535 )
+			return -1;
 
-		len += snprintf( buf, sizeof( buf ), ":%d", u->lud_port );
-		if ( u->lud_host && u->lud_host[0] ) {
-			len += strlen( u->lud_host );
-		}
+		len += (p > 999 ? 5 + (p > 9999) : p > 99 ? 4 : 2 + (p > 9));
+	}
 
-	} else {
-		if ( u->lud_host && u->lud_host[0] ) {
-			len += hex_escape_len( u->lud_host, URLESC_SLASH );
-			if ( !is_ipc && strchr( u->lud_host, ':' )) {
-				len += 2;	/* IPv6, [] */
-			}
+	if ( u->lud_host && u->lud_host[0] ) {
+		len += hex_escape_len( u->lud_host, URLESC_SLASH );
+		if ( !is_ipc && strchr( u->lud_host, ':' )) {
+			len += 2;	/* IPv6, [] */
 		}
 	}
 
@@ -644,14 +642,16 @@ desc2str( LDAPURLDesc *u, char *s, int len )
 	}
 
 	if ( u->lud_port ) {
-		len -= sprintf( s, "%s://%s%s%s:%d%n", u->lud_scheme,
+		sofar = sprintf( s, "%s://%s%s%s:%d", u->lud_scheme,
 				is_v6 ? "[" : "",
 				u->lud_host ? u->lud_host : "",
 				is_v6 ? "]" : "",
-				u->lud_port, &sofar );
+				u->lud_port );
+		len -= sofar;
 
 	} else {
-		len -= sprintf( s, "%s://%n", u->lud_scheme, &sofar );
+		sofar = sprintf( s, "%s://", u->lud_scheme );
+		len -= sofar;
 		if ( u->lud_host && u->lud_host[0] ) {
 			if ( is_v6 ) {
 				s[sofar++] = '[';

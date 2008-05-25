@@ -1,8 +1,8 @@
 /* config.c - configuration file handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.441.2.10 2007/11/08 19:30:04 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.441.2.16 2008/04/14 22:20:28 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -496,9 +496,6 @@ init_config_attrs(ConfigTable *ct) {
 			fprintf( stderr, "init_config_attrs: register_at failed\n" );
 			return code;
 		}
-#ifndef LDAP_DEVEL
-		ct[i].ad->ad_type->sat_flags |= SLAP_AT_HIDE;
-#endif
 	}
 
 	return 0;
@@ -514,9 +511,6 @@ init_config_ocs( ConfigOCs *ocs ) {
 			fprintf( stderr, "init_config_ocs: register_oc failed\n" );
 			return code;
 		}
-#ifndef LDAP_DEVEL
-		ocs[i].co_oc->soc_flags |= SLAP_OC_HIDE;
-#endif
 	}
 	return 0;
 }
@@ -843,6 +837,10 @@ read_config_file(const char *fname, int depth, ConfigArgs *cf, ConfigTable *cft)
 	rc = 0;
 
 done:
+	if ( cf ) {
+		cf->be = c->be;
+		cf->bi = c->bi;
+	}
 	ch_free(c->tline);
 	fclose(fp);
 	ch_free(c->argv);
@@ -1001,6 +999,140 @@ enum_to_verb(slap_verbmasks *v, slap_mask_t m, struct berval *bv) {
 		}
 	}
 	return -1;
+}
+
+/* register a new verbmask */
+static int
+slap_verbmask_register( slap_verbmasks *vm_, slap_verbmasks **vmp, struct berval *bv, int mask )
+{
+	slap_verbmasks	*vm = *vmp;
+	int		i;
+
+	/* check for duplicate word */
+	/* NOTE: we accept duplicate codes; the first occurrence will be used
+	 * when mapping from mask to verb */
+	i = verb_to_mask( bv->bv_val, vm );
+	if ( !BER_BVISNULL( &vm[ i ].word ) ) {
+		return -1;
+	}
+
+	for ( i = 0; !BER_BVISNULL( &vm[ i ].word ); i++ )
+		;
+
+	if ( vm == vm_ ) {
+		/* first time: duplicate array */
+		vm = ch_calloc( i + 2, sizeof( slap_verbmasks ) );
+		for ( i = 0; !BER_BVISNULL( &vm_[ i ].word ); i++ )
+		{
+			ber_dupbv( &vm[ i ].word, &vm_[ i ].word );
+			*((slap_mask_t*)&vm[ i ].mask) = vm_[ i ].mask;
+		}
+
+	} else {
+		vm = ch_realloc( vm, (i + 2) * sizeof( slap_verbmasks ) );
+	}
+
+	ber_dupbv( &vm[ i ].word, bv );
+	*((slap_mask_t*)&vm[ i ].mask) = mask;
+
+	BER_BVZERO( &vm[ i+1 ].word );
+
+	*vmp = vm;
+
+	return i;
+}
+
+static slap_verbmasks slap_ldap_response_code_[] = {
+	{ BER_BVC("success"),				LDAP_SUCCESS },
+
+	{ BER_BVC("operationsError"),			LDAP_OPERATIONS_ERROR },
+	{ BER_BVC("protocolError"),			LDAP_PROTOCOL_ERROR },
+	{ BER_BVC("timelimitExceeded"),			LDAP_TIMELIMIT_EXCEEDED },
+	{ BER_BVC("sizelimitExceeded"),			LDAP_SIZELIMIT_EXCEEDED },
+	{ BER_BVC("compareFalse"),			LDAP_COMPARE_FALSE },
+	{ BER_BVC("compareTrue"),			LDAP_COMPARE_TRUE },
+
+	{ BER_BVC("authMethodNotSupported"),		LDAP_AUTH_METHOD_NOT_SUPPORTED },
+	{ BER_BVC("strongAuthNotSupported"),		LDAP_STRONG_AUTH_NOT_SUPPORTED },
+	{ BER_BVC("strongAuthRequired"),		LDAP_STRONG_AUTH_REQUIRED },
+	{ BER_BVC("strongerAuthRequired"),		LDAP_STRONGER_AUTH_REQUIRED },
+#if 0 /* not LDAPv3 */
+	{ BER_BVC("partialResults"),			LDAP_PARTIAL_RESULTS },
+#endif
+
+	{ BER_BVC("referral"),				LDAP_REFERRAL },
+	{ BER_BVC("adminlimitExceeded"),		LDAP_ADMINLIMIT_EXCEEDED },
+	{ BER_BVC("unavailableCriticalExtension"),	LDAP_UNAVAILABLE_CRITICAL_EXTENSION },
+	{ BER_BVC("confidentialityRequired"),		LDAP_CONFIDENTIALITY_REQUIRED },
+	{ BER_BVC("saslBindInProgress"),		LDAP_SASL_BIND_IN_PROGRESS },
+
+	{ BER_BVC("noSuchAttribute"),			LDAP_NO_SUCH_ATTRIBUTE },
+	{ BER_BVC("undefinedType"),			LDAP_UNDEFINED_TYPE },
+	{ BER_BVC("inappropriateMatching"),		LDAP_INAPPROPRIATE_MATCHING },
+	{ BER_BVC("constraintViolation"),		LDAP_CONSTRAINT_VIOLATION },
+	{ BER_BVC("typeOrValueExists"),			LDAP_TYPE_OR_VALUE_EXISTS },
+	{ BER_BVC("invalidSyntax"),			LDAP_INVALID_SYNTAX },
+
+	{ BER_BVC("noSuchObject"),			LDAP_NO_SUCH_OBJECT },
+	{ BER_BVC("aliasProblem"),			LDAP_ALIAS_PROBLEM },
+	{ BER_BVC("invalidDnSyntax"),			LDAP_INVALID_DN_SYNTAX },
+#if 0 /* not LDAPv3 */
+	{ BER_BVC("isLeaf"),				LDAP_IS_LEAF },
+#endif
+	{ BER_BVC("aliasDerefProblem"),			LDAP_ALIAS_DEREF_PROBLEM },
+
+	{ BER_BVC("proxyAuthzFailure"),			LDAP_X_PROXY_AUTHZ_FAILURE },
+	{ BER_BVC("inappropriateAuth"),			LDAP_INAPPROPRIATE_AUTH },
+	{ BER_BVC("invalidCredentials"),		LDAP_INVALID_CREDENTIALS },
+	{ BER_BVC("insufficientAccess"),		LDAP_INSUFFICIENT_ACCESS },
+
+	{ BER_BVC("busy"),				LDAP_BUSY },
+	{ BER_BVC("unavailable"),			LDAP_UNAVAILABLE },
+	{ BER_BVC("unwillingToPerform"),		LDAP_UNWILLING_TO_PERFORM },
+	{ BER_BVC("loopDetect"),			LDAP_LOOP_DETECT },
+
+	{ BER_BVC("namingViolation"),			LDAP_NAMING_VIOLATION },
+	{ BER_BVC("objectClassViolation"),		LDAP_OBJECT_CLASS_VIOLATION },
+	{ BER_BVC("notAllowedOnNonleaf"),		LDAP_NOT_ALLOWED_ON_NONLEAF },
+	{ BER_BVC("notAllowedOnRdn"),			LDAP_NOT_ALLOWED_ON_RDN },
+	{ BER_BVC("alreadyExists"),			LDAP_ALREADY_EXISTS },
+	{ BER_BVC("noObjectClassMods"),			LDAP_NO_OBJECT_CLASS_MODS },
+	{ BER_BVC("resultsTooLarge"),			LDAP_RESULTS_TOO_LARGE },
+	{ BER_BVC("affectsMultipleDsas"),		LDAP_AFFECTS_MULTIPLE_DSAS },
+
+	{ BER_BVC("other"),				LDAP_OTHER },
+
+	/* extension-specific */
+
+	{ BER_BVC("cupResourcesExhausted"),		LDAP_CUP_RESOURCES_EXHAUSTED },
+	{ BER_BVC("cupSecurityViolation"),		LDAP_CUP_SECURITY_VIOLATION },
+	{ BER_BVC("cupInvalidData"),			LDAP_CUP_INVALID_DATA },
+	{ BER_BVC("cupUnsupportedScheme"),		LDAP_CUP_UNSUPPORTED_SCHEME },
+	{ BER_BVC("cupReloadRequired"),			LDAP_CUP_RELOAD_REQUIRED },
+
+	{ BER_BVC("cancelled"),				LDAP_CANCELLED },
+	{ BER_BVC("noSuchOperation"),			LDAP_NO_SUCH_OPERATION },
+	{ BER_BVC("tooLate"),				LDAP_TOO_LATE },
+	{ BER_BVC("cannotCancel"),			LDAP_CANNOT_CANCEL },
+
+	{ BER_BVC("assertionFailed"),			LDAP_ASSERTION_FAILED },
+
+	{ BER_BVC("proxiedAuthorizationDenied"),	LDAP_PROXIED_AUTHORIZATION_DENIED },
+
+	{ BER_BVC("syncRefreshRequired"),		LDAP_SYNC_REFRESH_REQUIRED },
+
+	{ BER_BVC("noOperation"),			LDAP_X_NO_OPERATION },
+
+	{ BER_BVNULL,				0 }
+};
+
+slap_verbmasks *slap_ldap_response_code = slap_ldap_response_code_;
+
+int
+slap_ldap_response_code_register( struct berval *bv, int err )
+{
+	return slap_verbmask_register( slap_ldap_response_code_,
+		&slap_ldap_response_code, bv, err );
 }
 
 #ifdef HAVE_TLS
@@ -1264,19 +1396,18 @@ slap_cf_aux_table_unparse( void *src, struct berval *bv, slap_cf_aux_table *tab0
 int
 slap_tls_get_config( LDAP *ld, int opt, char **val )
 {
+#ifdef HAVE_TLS
 	slap_verbmasks *keys;
 	int i, ival;
 
 	*val = NULL;
 	switch( opt ) {
-#ifdef HAVE_TLS
 	case LDAP_OPT_X_TLS_CRLCHECK:
 		keys = crlkeys;
 		break;
 	case LDAP_OPT_X_TLS_REQUIRE_CERT:
 		keys = vfykeys;
 		break;
-#endif
 	default:
 		return -1;
 	}
@@ -1287,6 +1418,7 @@ slap_tls_get_config( LDAP *ld, int opt, char **val )
 			return 0;
 		}
 	}
+#endif
 	return -1;
 }
 

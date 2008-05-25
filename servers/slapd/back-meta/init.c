@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/init.c,v 1.58.2.5 2007/08/31 23:14:03 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/init.c,v 1.58.2.8 2008/04/14 22:46:48 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2007 The OpenLDAP Foundation.
+ * Copyright 1999-2008 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -99,6 +99,10 @@ meta_back_db_init(
  		return -1;
  	}
 
+	/* set default flags */
+	mi->mi_flags =
+		META_BACK_F_DEFER_ROOTDN_BIND;
+
 	/*
 	 * At present the default is no default target;
 	 * this may change
@@ -134,6 +138,7 @@ meta_back_db_open(
 	ConfigReply	*cr )
 {
 	metainfo_t	*mi = (metainfo_t *)be->be_private;
+	BackendInfo *bi;
 
 	int		i,
 			not_always = 0,
@@ -147,6 +152,15 @@ meta_back_db_open(
 			0, 0, 0 );
 		return 1;
 	}
+
+	bi = backend_info( "ldap" );
+	if ( !bi || !bi->bi_extra ) {
+		Debug( LDAP_DEBUG_ANY,
+			"meta_back_db_open: needs back-ldap\n",
+			0, 0, 0 );
+		return 1;
+	}
+	mi->mi_ldap_extra = (ldap_extra_t *)bi->bi_extra;
 
 	for ( i = 0; i < mi->mi_ntargets; i++ ) {
 		slap_bindconf	sb = { BER_BVNULL };

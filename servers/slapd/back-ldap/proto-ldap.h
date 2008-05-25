@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/proto-ldap.h,v 1.15.2.5 2007/08/31 23:14:02 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/proto-ldap.h,v 1.15.2.6 2008/02/11 23:26:46 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2007 The OpenLDAP Foundation.
+ * Copyright 2003-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

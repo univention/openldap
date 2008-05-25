@@ -1,8 +1,8 @@
 /* readw.c - deal with read waiters subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/rww.c,v 1.36.2.2 2007/08/31 23:14:03 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/rww.c,v 1.36.2.4 2008/02/11 23:26:47 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2007 The OpenLDAP Foundation.
+ * Copyright 2001-2008 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -162,7 +162,7 @@ monitor_subsys_rww_update(
 	struct berval	nrdn;
 
 	Attribute	*a;
-	char 		buf[] = "+9223372036854775807L";
+	char 		buf[LDAP_PVT_INTTYPE_CHARS(long)];
 	long		num = 0;
 	ber_len_t	len;
 

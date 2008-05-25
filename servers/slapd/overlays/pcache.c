@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.88.2.13 2007/11/27 19:56:43 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.88.2.16 2008/04/14 21:13:44 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2007 The OpenLDAP Foundation.
+ * Copyright 2003-2008 The OpenLDAP Foundation.
  * Portions Copyright 2003 IBM Corporation.
  * Portions Copyright 2003 Symas Corporation.
  * All rights reserved.
@@ -2663,7 +2663,7 @@ static int pcache_db_open2( slap_overinst *on, ConfigReply *cr );
 static int
 pc_ldadd_cleanup( ConfigArgs *c )
 {
-	slap_overinst *on = c->private;
+	slap_overinst *on = c->ca_private;
 	return pcache_db_open2( on, &c->reply );
 }
 
@@ -2685,7 +2685,7 @@ pc_ldadd( CfEntryInfo *p, Entry *e, ConfigArgs *ca )
 		ca->cleanup = pc_ldadd_cleanup;
 	else
 		cm->defer_db_open = 0;
-	ca->private = on;
+	ca->ca_private = on;
 	return LDAP_SUCCESS;
 }
 
@@ -3209,7 +3209,7 @@ pcache_db_open2(
 	query_manager*  qm = cm->qm;
 	int rc;
 
-	rc = backend_startup_one( &cm->db, NULL );
+	rc = backend_startup_one( &cm->db, cr );
 	if ( rc == 0 ) {
 		cm->defer_db_open = 0;
 	}

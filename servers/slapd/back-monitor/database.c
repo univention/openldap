@@ -1,8 +1,8 @@
 /* database.c - deals with database subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/database.c,v 1.80.2.7 2007/10/08 09:48:15 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/database.c,v 1.80.2.9 2008/02/11 23:26:47 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2007 The OpenLDAP Foundation.
+ * Copyright 2001-2008 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -835,6 +835,7 @@ monitor_subsys_database_modify(
 	
 							BER_BVZERO( &a->a_vals[ k - 1 ] );
 							BER_BVZERO( &a->a_nvals[ k - 1 ] );
+							a->a_numvals--;
 						}
 					}
 				}
@@ -860,8 +861,15 @@ monitor_subsys_database_modify(
 	
 							BER_BVZERO( &a->a_vals[ k - 1 ] );
 							BER_BVZERO( &a->a_nvals[ k - 1 ] );
+							a->a_numvals--;
 						}
 					}
+				}
+
+				if ( a->a_vals == NULL ) {
+					assert( a->a_numvals == 0 );
+
+					attr_delete( &e->e_attrs, mi->mi_ad_restrictedOperation );
 				}
 			}
 		}

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/tests/progs/slapd-addel.c,v 1.41.2.4 2007/08/31 23:14:08 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/tests/progs/slapd-addel.c,v 1.41.2.6 2008/04/14 21:43:13 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2007 The OpenLDAP Foundation.
+ * Copyright 1999-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -278,7 +278,10 @@ get_add_entry( char *filename, LDAPMod ***mods )
 
 			if (( nl = strchr( line, '\r' )) || ( nl = strchr( line, '\n' )))
 				*nl = '\0';
-			entry = strdup( line );
+			nl = line;
+			if ( !strncasecmp( nl, "dn: ", 4 ))
+				nl += 4;
+			entry = strdup( nl );
 
 		}
 

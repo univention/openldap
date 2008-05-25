@@ -1,6 +1,6 @@
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2007 The OpenLDAP Foundation.
+ * Copyright 1999-2008 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Mararati.
  * All rights reserved.
@@ -235,7 +235,7 @@ int backsql_free_db_conn( Operation *op, SQLHDBC dbh );
  * util.c
  */
 
-extern char 
+extern const char 
 	backsql_def_oc_query[],
 	backsql_def_needs_select_oc_query[],
 	backsql_def_at_query[],
@@ -246,8 +246,7 @@ extern char
 	backsql_def_subtree_cond[],
 	backsql_def_upper_subtree_cond[],
 	backsql_id_query[],
-	backsql_def_concat_func[];
-extern char 
+	backsql_def_concat_func[],
 	backsql_check_dn_ru_query[];
 
 struct berbuf * backsql_strcat_x( struct berbuf *dest, void *memctx, ... );

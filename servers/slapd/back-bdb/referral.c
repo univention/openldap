@@ -1,8 +1,8 @@
 /* referral.c - BDB backend referral handler */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/referral.c,v 1.42.2.3 2007/08/31 23:14:01 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/referral.c,v 1.42.2.6 2008/04/16 16:41:17 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2007 The OpenLDAP Foundation.
+ * Copyright 2000-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,8 +65,8 @@ dn2entry_retry:
 	case 0:
 		break;
 	case LDAP_BUSY:
-		send_ldap_error( op, rs, LDAP_BUSY, "ldap server busy" );
 		LOCK_ID_FREE ( bdb->bi_dbenv, locker );
+		rs->sr_text = "ldap server busy";
 		return LDAP_BUSY;
 	case DB_LOCK_DEADLOCK:
 	case DB_LOCK_NOTGRANTED:
@@ -76,13 +76,13 @@ dn2entry_retry:
 			LDAP_XSTRING(bdb_referrals)
 			": dn2entry failed: %s (%d)\n",
 			db_strerror(rc), rc, 0 ); 
-		send_ldap_error( op, rs, LDAP_OTHER, "internal error" );
 		LOCK_ID_FREE ( bdb->bi_dbenv, locker );
-		return rs->sr_err;
+		rs->sr_text = "internal error";
+		return LDAP_OTHER;
 	}
 
 	if ( rc == DB_NOTFOUND ) {
-		rc = 0;
+		rc = LDAP_SUCCESS;
 		rs->sr_matched = NULL;
 		if ( e != NULL ) {
 			Debug( LDAP_DEBUG_TRACE,
@@ -93,7 +93,7 @@ dn2entry_retry:
 			if( is_entry_referral( e ) ) {
 				BerVarray ref = get_entry_referrals( op, e );
 				rc = LDAP_OTHER;
-				rs->sr_ref = referral_rewrite( ref, NULL,
+				rs->sr_ref = referral_rewrite( ref, &e->e_name,
 					&op->o_req_dn, LDAP_SCOPE_DEFAULT );
 				ber_bvarray_free( ref );
 				if ( rs->sr_ref ) {
@@ -104,10 +104,6 @@ dn2entry_retry:
 
 			bdb_cache_return_entry_r (bdb, e, &lock);
 			e = NULL;
-		} else if ( !be_issuffix( op->o_bd, &op->o_req_ndn ) && default_referral != NULL ) {
-			rc = LDAP_OTHER;
-			rs->sr_ref = referral_rewrite( default_referral,
-				NULL, &op->o_req_dn, LDAP_SCOPE_DEFAULT );
 		}
 
 		if( rs->sr_ref != NULL ) {
@@ -117,9 +113,7 @@ dn2entry_retry:
 			ber_bvarray_free( rs->sr_ref );
 			rs->sr_ref = NULL;
 		} else if ( rc != LDAP_SUCCESS ) {
-			rs->sr_err = rc;
 			rs->sr_text = rs->sr_matched ? "bad referral object" : NULL;
-			send_ldap_result( op, rs );
 		}
 
 		LOCK_ID_FREE ( bdb->bi_dbenv, locker );
@@ -148,8 +142,8 @@ dn2entry_retry:
 			ber_bvarray_free( rs->sr_ref );
 			rs->sr_ref = NULL;
 		} else {
-			send_ldap_error( op, rs, LDAP_OTHER, "bad referral object" );
-			rc = rs->sr_err;
+			rc = LDAP_OTHER;
+			rs->sr_text = "bad referral object";
 		}
 
 		rs->sr_matched = NULL;

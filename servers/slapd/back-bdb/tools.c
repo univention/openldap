@@ -1,8 +1,8 @@
 /* tools.c - tools for slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/tools.c,v 1.105.2.8 2007/12/13 07:05:24 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/tools.c,v 1.105.2.10 2008/02/12 00:34:58 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2007 The OpenLDAP Foundation.
+ * Copyright 2000-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -364,7 +364,7 @@ static int bdb_tool_next_id(
 				ei = &eidummy;
 			}
 		}
-		rc = bdb_next_id( op->o_bd, tid, &e->e_id );
+		rc = bdb_next_id( op->o_bd, &e->e_id );
 		if ( rc ) {
 			snprintf( text->bv_val, text->bv_len,
 				"next_id failed: %s (%d)",

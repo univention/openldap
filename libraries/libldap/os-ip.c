@@ -1,8 +1,8 @@
 /* os-ip.c -- platform-specific TCP & UDP related code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.118.2.3 2007/08/31 23:13:55 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.118.2.7 2008/04/15 00:00:36 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * Portions Copyright 1999 Lars Uffmann.
  * All rights reserved.
  *
@@ -575,7 +575,7 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
 
 		(void)memset((char *)&sin, '\0', sizeof sin);
 		sin.sin_family = AF_INET;
-		sin.sin_port = htons((short) port);
+		sin.sin_port = htons((unsigned short) port);
 
 		if( use_hp ) {
 			AC_MEMCPY( &sin.sin_addr, hp->h_addr_list[i],

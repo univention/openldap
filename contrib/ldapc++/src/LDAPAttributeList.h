@@ -1,3 +1,4 @@
+// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPAttributeList.h,v 1.9.6.2 2008/04/14 23:09:26 quanah Exp $
 /*
  * Copyright 2000-2002, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -84,12 +85,17 @@ class LDAPAttributeList{
 	 */
 	const LDAPAttribute* getAttributeByName(const std::string& name) const;
 
-
         /**
          * Adds one element to the end of the list.
          * @param attr The attribute to add to the list.
          */
         void addAttribute(const LDAPAttribute& attr);
+
+        /**
+         * Replace an Attribute in the List
+         * @param attr The attribute to add to the list.
+         */
+        void replaceAttribute(const LDAPAttribute& attr);
 
         /**
          * Translates the list of Attributes to a 0-terminated array of

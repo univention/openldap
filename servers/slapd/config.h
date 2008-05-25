@@ -1,8 +1,8 @@
 /* config.h - configuration abstraction structure */
-/* $OpenLDAP: pkg/ldap/servers/slapd/config.h,v 1.34.2.4 2007/09/29 08:01:42 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/config.h,v 1.34.2.11 2008/04/14 18:25:54 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,15 +19,17 @@
 
 #include<ac/string.h>
 
+LDAP_BEGIN_DECL
+
 typedef struct ConfigTable {
-	char *name;
-	char *what;
+	const char *name;
+	const char *what;
 	int min_args;
 	int max_args;
 	int length;
 	unsigned int arg_type;
 	void *arg_item;
-	char *attribute;
+	const char *attribute;
 	AttributeDescription *ad;
 	void *notify;
 } ConfigTable;
@@ -97,7 +99,7 @@ typedef int (ConfigCfAdd)(
 	Operation *op, SlapReply *rs, Entry *parent, struct config_args_s *ca );
 
 typedef struct ConfigOCs {
-	char *co_def;
+	const char *co_def;
 	ConfigType co_type;
 	ConfigTable *co_table;
 	ConfigLDAPadd *co_ldadd;
@@ -108,10 +110,10 @@ typedef struct ConfigOCs {
 
 typedef int (ConfigDriver)(struct config_args_s *c);
 
-typedef struct config_reply_s {
+struct config_reply_s {
 	int err;
 	char msg[SLAP_TEXT_BUFLEN];
-} ConfigReply;
+};
 
 typedef struct config_args_s {
 	int argc;
@@ -121,7 +123,7 @@ typedef struct config_args_s {
 	char *tline;
 	const char *fname;
 	int lineno;
-	char log[MAXPATHLEN + STRLENOF(": line 18446744073709551615") + 1];
+	char log[MAXPATHLEN + STRLENOF(": line ") + LDAP_PVT_INTTYPE_CHARS(unsigned long)];
 #define cr_msg reply.msg
 	ConfigReply reply;
 	int depth;
@@ -150,7 +152,7 @@ typedef struct config_args_s {
 	BackendDB *be;
 	BackendInfo *bi;
 	Entry *ca_entry;	/* entry being modified */
-	void *private;	/* anything */
+	void *ca_private;	/* anything */
 	ConfigDriver *cleanup;
 	ConfigType table;	/* which config table did we come from */
 } ConfigArgs;
@@ -195,5 +197,10 @@ int config_shadow( ConfigArgs *c, int flag );
 	assert( ( ( (last) - 1 ) & ARGS_USERLAND ) == ( (last) - 1 ) );
 
 #define	SLAP_X_ORDERED_FMT	"{%d}"
+
+extern slap_verbmasks *slap_ldap_response_code;
+extern int slap_ldap_response_code_register( struct berval *bv, int err );
+
+LDAP_END_DECL
 
 #endif /* CONFIG_H */

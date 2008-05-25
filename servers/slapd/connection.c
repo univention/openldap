@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.358.2.11 2007/11/27 20:11:48 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.358.2.16 2008/04/21 18:51:10 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2007 The OpenLDAP Foundation.
+ * Copyright 1998-2008 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -971,12 +971,13 @@ conn_counter_init( Operation *op, void *ctx )
 	slap_counters_t *sc;
 	void *vsc = NULL;
 
-	if ( ldap_pvt_thread_pool_getkey( ctx, conn_counter_init, &vsc, NULL ) || !vsc ) {
+	if ( ldap_pvt_thread_pool_getkey(
+			ctx, (void *)conn_counter_init, &vsc, NULL ) || !vsc ) {
 		vsc = ch_malloc( sizeof( slap_counters_t ));
 		sc = vsc;
 		slap_counters_init( sc );
-		ldap_pvt_thread_pool_setkey( ctx, conn_counter_init, vsc,
-			conn_counter_destroy );
+		ldap_pvt_thread_pool_setkey( ctx, (void*)conn_counter_init, vsc,
+			conn_counter_destroy, NULL, NULL );
 
 		ldap_pvt_thread_mutex_lock( &slap_counters.sc_mutex );
 		sc->sc_next = slap_counters.sc_next;
@@ -1620,6 +1621,9 @@ connection_resched( Connection *conn )
 {
 	Operation *op;
 
+	if( conn->c_writewaiter )
+		return 0;
+
 	if( conn->c_conn_state == SLAP_C_CLOSING ) {
 		Debug( LDAP_DEBUG_TRACE, "connection_resched: "
 			"attempting closing conn=%lu sd=%d\n",
@@ -1628,7 +1632,7 @@ connection_resched( Connection *conn )
 		return 0;
 	}
 
-	if( conn->c_conn_state != SLAP_C_ACTIVE || conn->c_writewaiter ) {
+	if( conn->c_conn_state != SLAP_C_ACTIVE ) {
 		/* other states need different handling */
 		return 0;
 	}
@@ -1896,6 +1900,27 @@ connection_fake_init(
 }
 
 void
+operation_fake_init(
+	Connection *conn,
+	Operation *op,
+	void *ctx,
+	int newmem )
+{
+	/* set memory context */
+	op->o_tmpmemctx = slap_sl_mem_create(SLAP_SLAB_SIZE, SLAP_SLAB_STACK, ctx,
+		newmem );
+	op->o_tmpmfuncs = &slap_sl_mfuncs;
+	op->o_threadctx = ctx;
+	op->o_tid = ldap_pvt_thread_pool_tid( ctx );
+
+	op->o_counters = &slap_counters;
+	op->o_conn = conn;
+	op->o_connid = op->o_conn->c_connid;
+	connection_init_log_prefix( op );
+}
+
+
+void
 connection_fake_init2(
 	Connection *conn,
 	OperationBuffer *opbuf,
@@ -1917,17 +1942,7 @@ connection_fake_init2(
 	op->o_hdr = &opbuf->ob_hdr;
 	op->o_controls = opbuf->ob_controls;
 
-	/* set memory context */
-	op->o_tmpmemctx = slap_sl_mem_create(SLAP_SLAB_SIZE, SLAP_SLAB_STACK, ctx,
-		newmem );
-	op->o_tmpmfuncs = &slap_sl_mfuncs;
-	op->o_threadctx = ctx;
-	op->o_tid = ldap_pvt_thread_pool_tid( ctx );
-
-	op->o_counters = &slap_counters;
-	op->o_conn = conn;
-	op->o_connid = op->o_conn->c_connid;
-	connection_init_log_prefix( op );
+	operation_fake_init( conn, op, ctx, newmem );
 
 #ifdef LDAP_SLAPI
 	if ( slapi_plugins_used ) {
@@ -1935,15 +1950,15 @@ connection_fake_init2(
 		void *ebx = NULL;
 
 		/* Use thread keys to make sure these eventually get cleaned up */
-		if ( ldap_pvt_thread_pool_getkey( ctx, connection_fake_init, &ebx,
-			NULL )) {
+		if ( ldap_pvt_thread_pool_getkey( ctx, (void *)connection_fake_init,
+				&ebx, NULL )) {
 			eb = ch_malloc( sizeof( *eb ));
 			slapi_int_create_object_extensions( SLAPI_X_EXT_CONNECTION, conn );
 			slapi_int_create_object_extensions( SLAPI_X_EXT_OPERATION, op );
 			eb->eb_conn = conn->c_extensions;
 			eb->eb_op = op->o_hdr->oh_extensions;
-			ldap_pvt_thread_pool_setkey( ctx, connection_fake_init, eb,
-				connection_fake_destroy );
+			ldap_pvt_thread_pool_setkey( ctx, (void *)connection_fake_init,
+				eb, connection_fake_destroy, NULL, NULL );
 		} else {
 			eb = ebx;
 			conn->c_extensions = eb->eb_conn;
