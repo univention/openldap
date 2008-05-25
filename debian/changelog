@@ -13,7 +13,10 @@ openldap2.3 (2.4.9-1) unstable; urgency=low
   * Galician, thanks to Jacobo Tarrio <jtarrio@trasno.net>.  Closes: #480218.
   * Japanese, thanks to Kenshi Muto <kmuto@debian.org>.  Closes: #480247.
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 25 May 2008 11:58:39 +0200
+  [ Matthijs Mohlmann ]
+  * Bump Standards-Version to 3.7.3
+
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 25 May 2008 18:49:01 +0200
 
 openldap2.3 (2.4.7-6) unstable; urgency=low
 
