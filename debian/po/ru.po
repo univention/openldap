@@ -13,18 +13,17 @@
 # Yuri Kozlov <kozlov.y@gmail.com>, 2007, 2008.
 msgid ""
 msgstr ""
-"Project-Id-Version: 2.4.7-3\n"
+"Project-Id-Version: openldap2.3 2.4.7-6.4\n"
 "Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
 "POT-Creation-Date: 2008-02-09 10:32-0800\n"
-"PO-Revision-Date: 2008-01-23 20:45+0300\n"
+"PO-Revision-Date: 2008-05-11 08:49+0400\n"
 "Last-Translator: Yuri Kozlov <kozlov.y@gmail.com>\n"
 "Language-Team: Russian <debian-l10n-russian@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms:  nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
-"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms:  nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #. Type: boolean
 #. Description
@@ -188,8 +187,7 @@ msgstr "Название организации:"
 msgid ""
 "Please enter the name of the organization to use in the base DN of your LDAP "
 "directory."
-msgstr ""
-"Введите название организации для использования в базовом DN каталога LDAP."
+msgstr "Введите название организации для использования в базовом DN каталога LDAP."
 
 #. Type: password
 #. Description
@@ -434,7 +432,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:19001
 msgid "TLSCipherSuite values have changed"
-msgstr ""
+msgstr "Изменились значения для TLSCipherSuite"
 
 #. Type: error
 #. Description
@@ -445,6 +443,10 @@ msgid ""
 "used, which has been changed from OpenSSL to GnuTLS.  As a result, your "
 "existing TLSCipherSuite setting will not work with this package."
 msgstr ""
+"При обновлении в настройке slapd был найден параметр \"TLSCipherSuite\". "
+"Допустимые значения этого параметра, определяемые авторами SSL, были "
+"изменены при переходе с OpenSSL на GnuTLS. В результате, имеющаяся "
+"настройка TLSCipherSuite не заработает с этим пакетом."
 
 #. Type: error
 #. Description
@@ -455,3 +457,8 @@ msgid ""
 "output of 'gnutls-cli -l' in the gnutls-bin package for the list of ciphers "
 "supported by GnuTLS."
 msgstr ""
+"Данная настройка будет автоматически закомментирована. Если "
+"для какого-то специфичного шифрования вам требуется её использовать, "
+"то список поддерживаемых GnuTLS алгоритмов можно посмотреть, "
+"запустив команду 'gnutls-cli -l' из пакета gnutls-bin."
+
