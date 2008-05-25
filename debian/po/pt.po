@@ -14,7 +14,7 @@ msgstr ""
 "Language-Team: Portuguese <traduz@debianpt.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
-"Content-Transfer-Encoding: 8bit"
+"Content-Transfer-Encoding: 8bit\n"
 
 #. Type: boolean
 #. Description
@@ -78,10 +78,10 @@ msgid ""
 "be reimported. If you select \"never\", no dump will be done."
 msgstr ""
 "Seleccionar \"sempre\" fará com as bases de dados sejam despejadas "
-"incondicionalmente antes de uma actualização. Seleccionar \"quando "
-"necessário\" irá apenas despejar a base de dados se a nova versão for "
-"incompatível com o formato da base de dados antiga e for necessário "
-"reimporta-la. Se seleccionar \"nunca\", não será feito qualquer despejo."
+"incondicionalmente antes de uma actualização. Seleccionar \"quando necessário"
+"\" irá apenas despejar a base de dados se a nova versão for incompatível com "
+"o formato da base de dados antiga e for necessário reimporta-la. Se "
+"seleccionar \"nunca\", não será feito qualquer despejo."
 
 #. Type: string
 #. Description
@@ -144,10 +144,10 @@ msgid ""
 "later."
 msgstr ""
 "A configuração que inseriu é inválida. Assegure-se que o nome do domínio DNS "
-"tem uma sintaxe válida, que a organização é preenchida e que as palavras-chave de "
-"admininostrador coincidem. Se decidir não tentar novamente a configuração, o servidor "
-"de LDAP não ficará configurado. Corra \"dpkg-reconfigure slapd\" se quiser "
-"tentar novamente mais tarde."
+"tem uma sintaxe válida, que a organização é preenchida e que as palavras-"
+"chave de admininostrador coincidem. Se decidir não tentar novamente a "
+"configuração, o servidor de LDAP não ficará configurado. Corra \"dpkg-"
+"reconfigure slapd\" se quiser tentar novamente mais tarde."
 
 #. Type: string
 #. Description
@@ -231,8 +231,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:11001
 msgid "Do you want the database to be removed when slapd is purged?"
-msgstr ""
-"Quer que a base de dados seja removida quando o slapd for purgado?"
+msgstr "Quer que a base de dados seja removida quando o slapd for purgado?"
 
 #. Type: boolean
 #. Description
@@ -251,8 +250,8 @@ msgid ""
 msgstr ""
 "O protocolo obsoleto LDAPv2 está desactivado por pré-definição no slapd. Os "
 "programas e utilizadores devem actualizar para LDAPv3. Se tiver programas "
-"antigos que não conseguem usar LDAPv3, deverá seleccionar esta opção e "
-"será adicionado 'allow bin_v2' ao seu ficheiro slapd.conf."
+"antigos que não conseguem usar LDAPv3, deverá seleccionar esta opção e será "
+"adicionado 'allow bin_v2' ao seu ficheiro slapd.conf."
 
 #. Type: boolean
 #. Description
@@ -295,9 +294,9 @@ msgid ""
 "be caused by an incorrect configuration file (for example, missing "
 "'moduleload' lines to support the backend database)."
 msgstr ""
-"O programa 'slapcat' falhou enquanto extraía o directório LDAP. Isto pode ter "
-"sido causado por um ficheiro de configuração incorrecto (por exemplo, linhas "
-"'moduleload' em falta para suportar o backend da base de dados)."
+"O programa 'slapcat' falhou enquanto extraía o directório LDAP. Isto pode "
+"ter sido causado por um ficheiro de configuração incorrecto (por exemplo, "
+"linhas 'moduleload' em falta para suportar o backend da base de dados)."
 
 #. Type: error
 #. Description
@@ -310,11 +309,11 @@ msgid ""
 "you should move the old database files back into place, fix whatever caused "
 "slapcat to fail, and run:"
 msgstr ""
-"Esta falha irá fazer com que o 'slapadd' falhe também mais tarde. Os ficheiros "
-"antigos da base de dados serão movidos para /var/backups. Se quiser "
-"tentar novamente esta actualização, deverá mover os ficheiros antigos da base "
-"de dados antiga de volta para o seu lugar, corrigir o que possa ter causado "
-"a falha do slapcat, e executar:"
+"Esta falha irá fazer com que o 'slapadd' falhe também mais tarde. Os "
+"ficheiros antigos da base de dados serão movidos para /var/backups. Se "
+"quiser tentar novamente esta actualização, deverá mover os ficheiros antigos "
+"da base de dados antiga de volta para o seu lugar, corrigir o que possa ter "
+"causado a falha do slapcat, e executar:"
 
 #. Type: error
 #. Description
@@ -411,9 +410,9 @@ msgid ""
 "need to migrate your replicas to use the syncrepl protocol instead."
 msgstr ""
 "Foi encontrada, durante a actualização, uma ou mais opções \"replica\" do "
-"slurpd na sua configuração do slapd. Devido ao slurpd estar obsoleto a partir "
-"do OpenLDAP 2.4, terá de migrar as suas réplicas para usar o protocolo "
-"syncrepl, em seu lugar."
+"slurpd na sua configuração do slapd. Devido ao slurpd estar obsoleto a "
+"partir do OpenLDAP 2.4, terá de migrar as suas réplicas para usar o "
+"protocolo syncrepl, em seu lugar."
 
 #. Type: error
 #. Description
@@ -426,8 +425,8 @@ msgid ""
 msgstr ""
 "A conversão do slurpd para o protocolo syncrepl (pull-based) não poderá ser "
 "feita automaticamente e terá de configurar manualmente os seus servidores "
-"replicados.  Por favor, para mais detalhes veja "
-"http://www.openldap.org/doc/admin24/syncrepl.html ."
+"replicados.  Por favor, para mais detalhes veja http://www.openldap.org/doc/"
+"admin24/syncrepl.html ."
 
 #. Type: error
 #. Description
@@ -460,7 +459,6 @@ msgid ""
 "supported by GnuTLS."
 msgstr ""
 "Esta opção foi comentada automaticamente para si. Se tiver necessidades "
-"específicas de encriptação que necessitem que esta opção seja reactivada, veja "
-"o output de 'gnutls-cli -l' que existe no pacote gnutls-bin, para obter a lista "
-"de cifras suportadas pelo GnuTLS."
-
+"específicas de encriptação que necessitem que esta opção seja reactivada, "
+"veja o output de 'gnutls-cli -l' que existe no pacote gnutls-bin, para obter "
+"a lista de cifras suportadas pelo GnuTLS."

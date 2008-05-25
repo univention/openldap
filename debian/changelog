@@ -28,7 +28,7 @@ openldap2.3 (2.4.9-1) unstable; urgency=low
   * Bump Standards-Version to 3.7.3
   * Add versioned build dependency on libgnutls-dev (Closes: #466558)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 25 May 2008 20:06:07 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 25 May 2008 22:02:51 +0200
 
 openldap2.3 (2.4.7-6.3) unstable; urgency=low
 
