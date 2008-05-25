@@ -1,6 +1,5 @@
 man-slapd -p0
 evolution-ntlm
-libldap_r-link
 add-autogen-sh
 slapi-errorlog-file -p0
 ldapi-socket-place -p0
@@ -9,7 +8,4 @@ index-files-created-as-root -p0
 sasl-default-path -p0
 libldap-symbol-versions
 gnutls-ciphers
-entryCSN-backwards-compatibility
-slapd-tlsverifyclient-default -p0
 getaddrinfo-is-threadsafe
-sasl-cleartext-strncasecmp -p0
