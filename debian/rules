@@ -135,6 +135,7 @@ binary-arch: install-stamp
 
 	dh_installdirs -a
 	cp -al $(installdir) $(tmpdir)
+	sh debian/make_smbk5pwd
 
 	dh_install -a
 	chmod 0755 $(CURDIR)/debian/slapd/usr/share/slapd/ldiftopasswd

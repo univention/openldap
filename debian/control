@@ -7,7 +7,7 @@ Build-Depends: debhelper (>= 5), libdb4.2-dev, libgcrypt-dev,
  libgnutls-dev (>= 1.7), unixodbc-dev, libncurses5-dev, libperl-dev (>= 5.8.0),
  libsasl2-dev, libslp-dev, libltdl3-dev (>= 1.4.3),
  libwrap0-dev, perl, debconf-utils, po-debconf, quilt (>= 0.40),
- autotools-dev, libtool, automake, autoconf, groff-base
+ autotools-dev, libtool, automake, autoconf, groff-base, heimdal-dev (>= 1.0.1-5)
 Build-Conflicts: libbind-dev, bind-dev, libicu-dev
 Standards-Version: 3.7.3
 Homepage: http://www.openldap.org/
@@ -92,3 +92,14 @@ Description: Debugging information for the OpenLDAP server (slapd)
  primarily to permit better backtraces and crash dump analysis after
  problems with the libraries. GDB will find this debug information
  automatically.
+
+Package: slapd-smbk5pwd
+Section: net
+Priority: extra
+Architecture: any
+Depends: slapd (= ${binary:Version}), libkadm5srv8-heimdal (>= 1.0.1-5), libkrb5-22-heimdal (>= 1.0.1-5), libroken18-heimdal (>= 1.0.1-5), libasn1-8-heimdal (>= 1.0.1-5), libhx509-1-heimdal (>= 1.0.1-5), libhdb9-heimdal (>= 1.0.1-5)
+Description: Keeps Samba and Kerberos passwords in sync within slapd.
+ Extends the PasswordModify Extended Operationto update Kerberos keys
+ and Samba password hashes for an LDAP user. The Kerberos support is
+ written for Heimdal using its hdb-ldap backend. The Samba support is
+ written using the Samba 3.0 LDAP schema.
