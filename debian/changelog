@@ -14,10 +14,12 @@ openldap2.3 (2.4.9-1) unstable; urgency=low
   * Japanese, thanks to Kenshi Muto <kmuto@debian.org>.  Closes: #480247.
 
   [ Matthijs Mohlmann ]
+  * New upstream release.
+    (Closes: #471867, #474161)
   * Bump Standards-Version to 3.7.3
   * Add versioned build dependency on libgnutls-dev (Closes: #466558)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 25 May 2008 18:54:19 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 25 May 2008 18:56:11 +0200
 
 openldap2.3 (2.4.7-6) unstable; urgency=low
 
