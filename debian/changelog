@@ -18,6 +18,8 @@ openldap2.3 (2.4.9-1) unstable; urgency=low
   * Portuguese, thanks to Tiago Fernandes <tjg.fernandes@gmail.com>
     (Closes: #481126)
   * Russian, thanks to Yuri Kozlov <kozlov.y@gmail.com> (Closes: #481214)
+  * Dutch, thanks to "cobaco (aka Bart Cornelis)" <cobaco@skolelinux.no>.
+    Closes: #483014.
 
   [ Matthijs Mohlmann ]
   * New upstream release.
