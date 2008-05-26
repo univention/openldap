@@ -21,10 +21,15 @@ openldap2.3 (2.4.9-1) unstable; urgency=low
 
   [ Matthijs Mohlmann ]
   * New upstream release.
-    (Closes: #471867, #474161, #414650, #457261, #464024, #464877, #479237,
-             #471225)
+    - Bad entryUUID no longer crashes slapd.  (Closes: #471867)
+    - Fix assertion failure in some modify operations.  (Closes: #474161)
+    - Mention index in slapd.conf's man page.  (Closes: #414650)
+    - Fixes to slapd include handling.  (Closes: #457261)
+    - Fix syncrepl cookie truncation.  (Closes: #464024)
+    - Fix memory allocation in ldap_parse_page_control.  (Closes: #464877)
+    - Fix slapd crash when accessed by multiple threads.  (Closes: #479237)
   * Acknowledge NMU.
-    (Closes: #474976, #475856, #474652, #465875)
+    (Closes: #474976, #471225, #475856, #474652, #465875)
   * Bump Standards-Version to 3.7.3
   * Add versioned build dependency on libgnutls-dev (Closes: #466558)
 
