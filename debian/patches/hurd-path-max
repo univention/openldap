@@ -1,0 +1,18 @@
+GNU Hurd doesn't have PATH_MAX.  Use MAXPATHLEN instead, which is
+defined by OpenLDAP portably in include/ac/param.h.  Patch from
+Samuel Thibault.
+
+Debian Bug#475744
+ITS #5531
+
+--- ./servers/slapd/back-bdb/monitor.c.orig	2008-04-12 11:08:22.540562000 -0400
++++ ./servers/slapd/back-bdb/monitor.c	2008-04-12 11:08:18.580562000 -0400
+@@ -395,7 +395,7 @@
+ 	{
+ 		struct berval	bv, nbv;
+ 		ber_len_t	pathlen = 0, len = 0;
+-		char		path[ PATH_MAX ] = { '\0' };
++		char		path[ MAXPATHLEN ] = { '\0' };
+ 		char		*fname = bdb->bi_dbenv_home,
+ 				*ptr;
+ 
