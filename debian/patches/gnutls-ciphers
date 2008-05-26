@@ -5,10 +5,8 @@ colon-separated list in TLSCipherSuite.
 
 Addresses ITS#5341.
 
-Index: trunk/libraries/libldap/tls.c
-===================================================================
---- trunk.orig/libraries/libldap/tls.c
-+++ trunk/libraries/libldap/tls.c
+--- openldap.orig/libraries/libldap/tls.c
++++ openldap/libraries/libldap/tls.c
 @@ -300,6 +300,7 @@
  		for (i=0; i<n_ciphers; i++) {
  			if ( !strncasecmp( ciphers[i].name, ptr, len )) {
@@ -17,7 +15,7 @@ Index: trunk/libraries/libldap/tls.c
  				break;
  			}
  		}
-@@ -330,6 +331,7 @@
+@@ -331,6 +332,7 @@
  			 * only appear once in each list.
  			 */
  			if ( !strncasecmp( ciphers[i].name, ptr, len )) {

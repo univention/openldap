@@ -13,7 +13,7 @@ owner, which is an even better fix.
 
 --- doc/man/man8/slapindex.8.orig
 +++ doc/man/man8/slapindex.8
-@@ -129,6 +129,10 @@
+@@ -131,6 +131,10 @@
  should not be running (at least, not in read-write
  mode) when you do this to ensure consistency of the database.
  .LP

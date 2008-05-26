@@ -5,7 +5,7 @@ Debian-specific.
 
 --- doc/man/man5/slapd-bdb.5.orig
 +++ doc/man/man5/slapd-bdb.5
-@@ -97,7 +97,7 @@
+@@ -116,7 +116,7 @@
  associated indexes live.
  A separate directory must be specified for each database.
  The default is

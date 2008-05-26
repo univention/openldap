@@ -100,7 +100,7 @@ libber.
 +rm -f conftest*])])
 --- openldap.orig/configure.in
 +++ openldap/configure.in
-@@ -1858,6 +1858,13 @@
+@@ -1863,6 +1863,13 @@
  fi
  AC_SUBST(LTSTATIC)dnl
  

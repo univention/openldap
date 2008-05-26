@@ -14,7 +14,7 @@ interest upstream.
  #endif /* _LDAP_CONFIG_H */
 --- servers/slapd/sasl.c.orig
 +++ servers/slapd/sasl.c
-@@ -1181,12 +1181,38 @@
+@@ -1071,12 +1071,38 @@
  };
  #endif
  
