@@ -92,14 +92,3 @@ Description: Debugging information for the OpenLDAP server (slapd)
  primarily to permit better backtraces and crash dump analysis after
  problems with the libraries. GDB will find this debug information
  automatically.
-
-#Package: slapd-smbk5pwd
-#Section: net
-#Priority: extra
-#Architecture: any
-#Depends: slapd (= ${binary:Version}), libkadm5srv8-heimdal (>= 1.0.1-5), libkrb5-22-heimdal (>= 1.0.1-5), libroken18-heimdal (>= 1.0.1-5), libasn1-8-heimdal (>= 1.0.1-5), libhx509-1-heimdal (>= 1.0.1-5), libhdb9-heimdal (>= 1.0.1-5)
-#Description: Keeps Samba and Kerberos passwords in sync within slapd.
-# Extends the PasswordModify Extended Operationto update Kerberos keys
-# and Samba password hashes for an LDAP user. The Kerberos support is
-# written for Heimdal using its hdb-ldap backend. The Samba support is
-# written using the Samba 3.0 LDAP schema.
