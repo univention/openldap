@@ -1,6 +1,0 @@
-debian/tmp/usr/lib/ldap/smbk5pwd.la usr/lib/ldap
-debian/tmp/usr/lib/ldap/smbk5pwd.so.0.0.0 usr/lib/ldap
-debian/tmp/usr/lib/ldap/smbk5pwd.so.0.0 usr/lib/ldap
-debian/tmp/usr/lib/ldap/smbk5pwd.so.0 usr/lib/ldap
-debian/tmp/usr/lib/ldap/smbk5pwd.so usr/lib/ldap
-debian/tmp/usr/share/doc/slapd-smbk5pwd/README.gz usr/share/doc/slapd-smbk5pwd
