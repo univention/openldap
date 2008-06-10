@@ -142,11 +142,11 @@ msgid ""
 "server will not be set up. Run 'dpkg-reconfigure slapd' if you want to retry "
 "later."
 msgstr ""
-"La configurazione inserita non è valida. Assicurarsi che il nome di "
-"dominio DNS sia sintatticamente corretto, che il nome dell'organizzazione "
-"non sia stato lasciato in bianco e che le password di amministrazione "
-"coincidano. Se si decide di non riprovare la configurazione, il server LDAP "
-"non verrà impostato. In seguito, per riprovare la configurazione, usare \"dpkg-"
+"La configurazione inserita non è valida. Assicurarsi che il nome di dominio "
+"DNS sia sintatticamente corretto, che il nome dell'organizzazione non sia "
+"stato lasciato in bianco e che le password di amministrazione coincidano. Se "
+"si decide di non riprovare la configurazione, il server LDAP non verrà "
+"impostato. In seguito, per riprovare la configurazione, usare \"dpkg-"
 "reconfigure slapd\"."
 
 #. Type: string
@@ -193,7 +193,8 @@ msgstr "Password dell'amministratore:"
 #. Description
 #: ../slapd.templates:8001
 msgid "Please enter the password for the admin entry in your LDAP directory."
-msgstr "Inserire la password per l'amministratore della propria directory LDAP."
+msgstr ""
+"Inserire la password per l'amministratore della propria directory LDAP."
 
 #. Type: password
 #. Description
@@ -293,9 +294,9 @@ msgid ""
 "'moduleload' lines to support the backend database)."
 msgstr ""
 "Il programma \"slapcat\" ha riportato un errore durante l'estrazione della "
-"directory LDAP. L'errore potrebbe essere causato da un file di configurazione "
-"sbagliato (per esempio, la mancanza delle righe \"moduleload\" per il "
-"supporto al database di backend)."
+"directory LDAP. L'errore potrebbe essere causato da un file di "
+"configurazione sbagliato (per esempio, la mancanza delle righe \"moduleload"
+"\" per il supporto al database di backend)."
 
 #. Type: error
 #. Description
@@ -397,8 +398,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:18001
 msgid "slurpd is obsolete; replicas must be reconfigured by hand"
-msgstr ""
-"slurpd è obsoleto; le repliche devono essere riconfigurate manualmente"
+msgstr "slurpd è obsoleto; le repliche devono essere riconfigurate manualmente"
 
 #. Type: error
 #. Description

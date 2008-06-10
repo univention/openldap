@@ -23,7 +23,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms:  nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms:  nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
+"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #. Type: boolean
 #. Description
@@ -187,7 +188,8 @@ msgstr "Название организации:"
 msgid ""
 "Please enter the name of the organization to use in the base DN of your LDAP "
 "directory."
-msgstr "Введите название организации для использования в базовом DN каталога LDAP."
+msgstr ""
+"Введите название организации для использования в базовом DN каталога LDAP."
 
 #. Type: password
 #. Description
@@ -445,8 +447,8 @@ msgid ""
 msgstr ""
 "При обновлении в настройке slapd был найден параметр \"TLSCipherSuite\". "
 "Допустимые значения этого параметра, определяемые авторами SSL, были "
-"изменены при переходе с OpenSSL на GnuTLS. В результате, имеющаяся "
-"настройка TLSCipherSuite не заработает с этим пакетом."
+"изменены при переходе с OpenSSL на GnuTLS. В результате, имеющаяся настройка "
+"TLSCipherSuite не заработает с этим пакетом."
 
 #. Type: error
 #. Description
@@ -457,8 +459,7 @@ msgid ""
 "output of 'gnutls-cli -l' in the gnutls-bin package for the list of ciphers "
 "supported by GnuTLS."
 msgstr ""
-"Данная настройка будет автоматически закомментирована. Если "
-"для какого-то специфичного шифрования вам требуется её использовать, "
-"то список поддерживаемых GnuTLS алгоритмов можно посмотреть, "
-"запустив команду 'gnutls-cli -l' из пакета gnutls-bin."
-
+"Данная настройка будет автоматически закомментирована. Если для какого-то "
+"специфичного шифрования вам требуется её использовать, то список "
+"поддерживаемых GnuTLS алгоритмов можно посмотреть, запустив команду 'gnutls-"
+"cli -l' из пакета gnutls-bin."
