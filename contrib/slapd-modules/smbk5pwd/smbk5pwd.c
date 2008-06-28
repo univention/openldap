@@ -1,5 +1,5 @@
 /* smbk5pwd.c - Overlay for managing Samba and Heimdal passwords */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/smbk5pwd/smbk5pwd.c,v 1.17.2.10 2008/04/14 21:58:37 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/smbk5pwd/smbk5pwd.c,v 1.17.2.11 2008/05/27 20:01:46 quanah Exp $ */
 /*
  * Copyright 2004-2005 by Howard Chu, Symas Corp.
  * All rights reserved.
@@ -114,7 +114,7 @@ static const char hex[] = "0123456789abcdef";
 /* From liblutil/passwd.c... */
 static void lmPasswd_to_key(
 	const char *lmPasswd,
-	des_cblock *key)
+	DES_cblock *key)
 {
 	const unsigned char *lpw = (const unsigned char *)lmPasswd;
 	unsigned char *k = (unsigned char *)key;
@@ -162,10 +162,10 @@ static void lmhash(
 )
 {
 	char UcasePassword[15];
-	des_cblock key;
-	des_key_schedule schedule;
-	des_cblock StdText = "KGS!@#$%";
-	des_cblock hbuf[2];
+	DES_cblock key;
+	DES_key_schedule schedule;
+	DES_cblock StdText = "KGS!@#$%";
+	DES_cblock hbuf[2];
 
 	strncpy( UcasePassword, passwd->bv_val, 14 );
 	UcasePassword[14] = '\0';

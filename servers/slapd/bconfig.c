@@ -1,5 +1,5 @@
 /* bconfig.c - the config backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/bconfig.c,v 1.202.2.30 2008/04/14 22:20:28 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/bconfig.c,v 1.202.2.31 2008/06/02 18:00:53 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2008 The OpenLDAP Foundation.
@@ -2140,13 +2140,13 @@ config_overlay(ConfigArgs *c) {
 		assert(0);
 	}
 	if(c->argv[1][0] == '-' && overlay_config(c->be, &c->argv[1][1],
-		c->valx, &c->bi)) {
+		c->valx, &c->bi, &c->reply)) {
 		/* log error */
 		Debug( LDAP_DEBUG_ANY,
 			"%s: (optional) %s overlay \"%s\" configuration failed.\n",
 			c->log, c->be == frontendDB ? "global " : "", &c->argv[1][1]);
 		return 1;
-	} else if(overlay_config(c->be, c->argv[1], c->valx, &c->bi)) {
+	} else if(overlay_config(c->be, c->argv[1], c->valx, &c->bi, &c->reply)) {
 		return(1);
 	}
 	return(0);

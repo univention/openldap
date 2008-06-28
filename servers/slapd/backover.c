@@ -1,5 +1,5 @@
 /* backover.c - backend overlay routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backover.c,v 1.71.2.8 2008/04/24 08:13:39 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backover.c,v 1.71.2.9 2008/06/02 18:00:53 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2008 The OpenLDAP Foundation.
@@ -1143,7 +1143,7 @@ overlay_move( BackendDB *be, slap_overinst *on, int idx )
 
 /* add an overlay to a particular backend. */
 int
-overlay_config( BackendDB *be, const char *ov, int idx, BackendInfo **res )
+overlay_config( BackendDB *be, const char *ov, int idx, BackendInfo **res, ConfigReply *cr )
 {
 	slap_overinst *on = NULL, *on2 = NULL, **prev;
 	slap_overinfo *oi = NULL;
@@ -1278,7 +1278,7 @@ overlay_config( BackendDB *be, const char *ov, int idx, BackendInfo **res )
 	if ( on2->on_bi.bi_db_init ) {
 		int rc;
 		be->bd_info = (BackendInfo *)on2;
-		rc = on2->on_bi.bi_db_init( be, NULL );
+		rc = on2->on_bi.bi_db_init( be, cr);
 		be->bd_info = (BackendInfo *)oi;
 		if ( rc ) {
 			*prev = on2->on_next;

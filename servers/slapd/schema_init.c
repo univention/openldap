@@ -1,5 +1,5 @@
 /* schema_init.c - init builtin schema */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_init.c,v 1.386.2.20 2008/04/14 20:01:31 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_init.c,v 1.386.2.21 2008/05/20 00:00:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -2273,6 +2273,8 @@ integerFilter(
 
 	keys[0].bv_len = index_intlen;
 	keys[0].bv_val = slap_sl_malloc( index_intlen, ctx );
+	keys[1].bv_len = 0;
+	keys[1].bv_val = NULL;
 
 	iv.bv_len = value->bv_len < index_intlen_strlen + INDEX_INTLEN_CHOP-1
 		? value->bv_len : index_intlen_strlen + INDEX_INTLEN_CHOP-1;

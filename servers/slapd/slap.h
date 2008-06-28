@@ -1,5 +1,5 @@
 /* slap.h - stand alone ldap server include file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.764.2.26 2008/04/24 08:13:39 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.764.2.27 2008/05/20 00:07:05 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -1371,8 +1371,8 @@ typedef struct Access {
 #define ACL_PRIV_SET(m,p)		do { (m) |=  (p); } while(0)
 #define ACL_PRIV_CLR(m,p)		do { (m) &= ~(p); } while(0)
 
-#define ACL_INIT(m)			ACL_PRIV_ASSIGN(m, ACL_PRIV_NONE)
-#define ACL_INVALIDATE(m)		ACL_PRIV_ASSIGN(m, ACL_PRIV_INVALID)
+#define ACL_INIT(m)			ACL_PRIV_ASSIGN((m), ACL_PRIV_NONE)
+#define ACL_INVALIDATE(m)		ACL_PRIV_ASSIGN((m), ACL_PRIV_INVALID)
 
 #define ACL_GRANT(m,a)			ACL_PRIV_ISSET((m),ACL_ACCESS2PRIV(a))
 
@@ -2687,7 +2687,7 @@ typedef struct OperationBuffer {
 
 #define send_ldap_error( op, rs, err, text ) do { \
 		(rs)->sr_err = err; (rs)->sr_text = text; \
-		(op->o_conn->c_send_ldap_result)( op, rs ); \
+		((op)->o_conn->c_send_ldap_result)( op, rs ); \
 	} while (0)
 #define send_ldap_discon( op, rs, err, text ) do { \
 		(rs)->sr_err = err; (rs)->sr_text = text; \

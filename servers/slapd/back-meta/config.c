@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.74.2.10 2008/04/14 22:46:48 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.74.2.11 2008/05/22 16:32:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2008 The OpenLDAP Foundation.
@@ -1239,7 +1239,7 @@ idassert-authzFrom	"dn:<rootdn>"
 			return 1;
 		}
 
-		if ( mi->mi_ntargets ) {
+		if ( mi->mi_ntargets == 0 ) {
 			mi->mi_flags |= LDAP_BACK_F_QUARANTINE;
 
 		} else {

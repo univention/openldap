@@ -1,12 +1,15 @@
-openldap2.3 (2.4.9-2) UNRELEASED; urgency=low
+openldap2.3 (2.4.10-1) UNRELEASED; urgency=low
+
+  [ Steve Langasek ]
+  * New upstream release.
+    - Clean up ld_defconn if it was freed, fixing an assertion failure in
+      various clients.  Closes: #469232.
+  * Drop spurious build-dependency on heimdal-dev, introduced accidentally
+    as part of an aborted attempt to build the smbk5pwd overlay.
 
   [ Matthijs Mohlmann ]
   * All manpages in category 5 were missing, wrong directory.
     (Closes: #474976, #483631, #483633)
-
-  [ Steve Langasek ]
-  * Drop spurious build-dependency on heimdal-dev, introduced accidentally
-    as part of an aborted attempt to build the smbk5pwd overlay.
 
  -- Matthijs Mohlmann <matthijs@cacholong.nl>  Fri, 30 May 2008 08:58:35 +0200
 

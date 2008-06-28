@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/ppolicy.c,v 1.75.2.11 2008/02/13 01:58:56 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/ppolicy.c,v 1.75.2.12 2008/06/02 18:00:53 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2008 The OpenLDAP Foundation.
@@ -2093,7 +2093,12 @@ ppolicy_db_init(
 		for (i=0; pwd_UsSchema[i].def; i++) {
 			code = slap_str2ad( pwd_UsSchema[i].def, pwd_UsSchema[i].ad, &err );
 			if ( code ) {
-				fprintf( stderr, "User Schema Load failed %d: %s\n", code, err );
+				if ( cr ){
+					snprintf( cr->msg, sizeof(cr->msg), 
+						"User Schema load failed for attribute \"%s\". Error code %d: %s",
+						pwd_UsSchema[i].def, code, err );
+					fprintf( stderr, "%s\n", cr->msg );
+				}
 				return code;
 			}
 		}

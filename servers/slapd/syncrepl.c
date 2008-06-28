@@ -1,5 +1,5 @@
 /* syncrepl.c -- Replication Engine which uses the LDAP Sync protocol */
-/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.254.2.32 2008/05/01 22:01:03 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.254.2.34 2008/05/29 22:54:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2008 The OpenLDAP Foundation.
@@ -568,15 +568,22 @@ do_syncrep1(
 		op->o_tls_ssf = ldap_pvt_tls_get_strength( ssl );
 	}
 #endif /* HAVE_TLS */
-	ldap_get_option( si->si_ld, LDAP_OPT_X_SASL_SSF, &op->o_sasl_ssf );
+	{
+		ber_len_t ssf; /* ITS#5403, 3864 LDAP_OPT_X_SASL_SSF probably ought
+						  to use sasl_ssf_t but currently uses ber_len_t */
+		ldap_get_option( si->si_ld, LDAP_OPT_X_SASL_SSF, &ssf );
+		op->o_sasl_ssf = ssf;
+	}
 	op->o_ssf = ( op->o_sasl_ssf > op->o_tls_ssf )
 		?  op->o_sasl_ssf : op->o_tls_ssf;
 
 	ldap_set_option( si->si_ld, LDAP_OPT_TIMELIMIT, &si->si_tlimit );
 
 	si->si_syncCookie.rid = si->si_rid;
-	si->si_syncCookie.sid = SLAP_SINGLE_SHADOW( si->si_be ) ? -1 :
-		slap_serverID;
+
+	/* whenever there are multiple data sources possible, advertise sid */
+	si->si_syncCookie.sid = ( SLAP_MULTIMASTER( si->si_be ) || si->si_be != si->si_wbe ) ?
+		slap_serverID : -1;
 
 	/* We've just started up, or the remote server hasn't sent us
 	 * any meaningful state.
@@ -1235,7 +1242,8 @@ do_syncrepl(
 	 *
 	 * Typically there is a single syncprov mastering the entire
 	 * glued tree. In that case, our contextCSN updates should
-	 * go to the master DB.
+	 * go to the master DB. But if there is no syncprov on the
+	 * master DB, then nothing special is needed here.
 	 *
 	 * Alternatively, there may be individual syncprov overlays
 	 * on each glued branch. In that case, each syncprov only
@@ -1244,7 +1252,11 @@ do_syncrepl(
 	 */
 	if ( !si->si_wbe ) {
 		if ( SLAP_GLUE_SUBORDINATE( be ) && !overlay_is_inst( be, "syncprov" )) {
-			si->si_wbe = select_backend( &be->be_nsuffix[0], 1 );
+			BackendDB * top_be = select_backend( &be->be_nsuffix[0], 1 );
+			if ( overlay_is_inst( top_be, "syncprov" ))
+				si->si_wbe = select_backend( &be->be_nsuffix[0], 1 );
+			else
+				si->si_wbe = be;
 		} else {
 			si->si_wbe = be;
 		}
