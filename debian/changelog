@@ -5,6 +5,7 @@ openldap2.3 (2.4.10-1) UNRELEASED; urgency=low
     - Clean up ld_defconn if it was freed, fixing an assertion failure in
       various clients.  Closes: #469232.
     - Fixes slapd syncrepl hang on back-config.  Closes: #471253.
+    - Drop patch hurd-path-max, integrated upstream.
   * Drop spurious build-dependency on heimdal-dev, introduced accidentally
     as part of an aborted attempt to build the smbk5pwd overlay.
 

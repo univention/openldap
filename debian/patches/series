@@ -9,4 +9,3 @@ sasl-default-path -p0
 libldap-symbol-versions
 gnutls-ciphers
 getaddrinfo-is-threadsafe
-hurd-path-max
