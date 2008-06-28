@@ -17,7 +17,7 @@ Index: trunk/libraries/libldap/os-ip.c
 ===================================================================
 --- trunk.orig/libraries/libldap/os-ip.c
 +++ trunk/libraries/libldap/os-ip.c
-@@ -471,17 +471,8 @@
+@@ -477,17 +477,8 @@
  	hints.ai_socktype = socktype;
  	snprintf(serv, sizeof serv, "%d", port );
  
