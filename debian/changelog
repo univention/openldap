@@ -1,4 +1,4 @@
-openldap2.3 (2.4.10-2) UNRELEASED; urgency=low
+openldap2.3 (2.4.10-1) UNRELEASED; urgency=low
 
   [ Steve Langasek ]
   * New upstream release.
