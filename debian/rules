@@ -33,6 +33,7 @@ CONFIG		= $(shell grep -v "^\#" debian/configure.options)
 installdir	:= $(CURDIR)/debian/install
 tmpdir		:= $(CURDIR)/debian/tmp
 builddir	:= $(CURDIR)/debian/build
+slapddir	:= $(CURDIR)/debian/slapd/usr/sbin
 
 MAKEVARS	:= DESTDIR=$(installdir) STRIP=
 
@@ -149,6 +150,12 @@ binary-arch: install-stamp
 	dh_strip -pslapd --dbg-package=slapd-dbg
 	dh_strip -pldap-utils
 	dh_link -a
+
+	# hardlink these so not confined by apparmor
+	for f in slapacl slapadd slapauth slapcat slapdn slapindex slappasswd slaptest ; do \
+	    ln -f $(slapddir)/slapd $(slapddir)/$$f ; \
+	done ;
+
 	dh_compress -a
 	dh_fixperms -a
 	# ideally we would do this and not have any libldap-2.4.so.2 links
