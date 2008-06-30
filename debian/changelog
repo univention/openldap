@@ -1,4 +1,4 @@
-openldap2.3 (2.4.10-1) UNRELEASED; urgency=low
+openldap2.3 (2.4.10-1) unstable; urgency=low
 
   [ Steve Langasek ]
   * New upstream release.
@@ -20,7 +20,7 @@ openldap2.3 (2.4.10-1) UNRELEASED; urgency=low
   * All manpages in category 5 were missing, wrong directory.
     (Closes: #474976, #483631, #483633)
 
- -- Steve Langasek <vorlon@debian.org>  Sun, 29 Jun 2008 00:16:09 -0700
+ -- Steve Langasek <vorlon@debian.org>  Mon, 30 Jun 2008 04:28:34 -0700
 
 openldap2.3 (2.4.9-1) unstable; urgency=low
 
