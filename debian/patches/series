@@ -9,3 +9,4 @@ sasl-default-path -p0
 libldap-symbol-versions
 gnutls-ciphers
 getaddrinfo-is-threadsafe
+no_backend_inter-linking -p0
