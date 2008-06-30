@@ -14,6 +14,7 @@ openldap2.3 (2.4.10-1) UNRELEASED; urgency=low
   * New patch, no_backend_inter-linking, to fix the meta backend to not
     try to look up symbols in external objects (back_ldap) that it
     doesn't link against.
+  * Turn on 'make test' during builds, now that back_meta is fixed.
 
   [ Matthijs Mohlmann ]
   * All manpages in category 5 were missing, wrong directory.

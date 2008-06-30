@@ -101,6 +101,7 @@ build-arch: build-stamp
 build-indep:
 build-stamp: configure-stamp
 	$(MAKE) -C $(builddir) $(MAKEVARS)
+	$(MAKE) -C $(builddir) test
 	touch $@
 
 # Check all built libraries for unresolved symbols except for the libslapi
