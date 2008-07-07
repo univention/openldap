@@ -13,8 +13,8 @@
 # Yuri Kozlov <kozlov.y@gmail.com>, 2007, 2008.
 msgid ""
 msgstr ""
-"Project-Id-Version: openldap2.3 2.4.7-6.4\n"
-"Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
+"Project-Id-Version: openldap 2.4.7-6.4\n"
+"Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2008-02-09 10:32-0800\n"
 "PO-Revision-Date: 2008-05-11 08:49+0400\n"
 "Last-Translator: Yuri Kozlov <kozlov.y@gmail.com>\n"

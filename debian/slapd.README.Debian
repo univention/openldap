@@ -182,6 +182,6 @@ Modifications Compared to Upstream
   For the exact patches applied to the upstream source and references to
   the relevant upstream ITS numbers, Debian bugs, and upstream
   synchronization status, see the debian/patches directory in the
-  openldap2.3 source package.
+  openldap source package.
 
  -- Russ Allbery <rra@debian.org>, Thu, 14 Feb 2008 18:47:07 -0800

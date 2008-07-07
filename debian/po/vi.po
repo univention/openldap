@@ -4,8 +4,8 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: openldap2.3 2.4.7-6.4\n"
-"Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
+"Project-Id-Version: openldap 2.4.7-6.4\n"
+"Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2008-02-09 10:32-0800\n"
 "PO-Revision-Date: 2008-05-09 00:24+0930\n"
 "Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"

@@ -32,7 +32,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: openldap 2.3.30\n"
-"Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
+"Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2008-02-09 10:32-0800\n"
 "PO-Revision-Date: 2008-01-13 00:52-0800\n"
 "Last-Translator: Steve Langasek <vorlon@debian.org>\n"

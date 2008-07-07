@@ -1,12 +1,12 @@
-# Italian (it) translation of debconf templates for openldap2.3
+# Italian (it) translation of debconf templates for openldap
 # Copyright (C) 2006 Software in the Public Interest
-# This file is distributed under the same license as the openldap2.3 package.
+# This file is distributed under the same license as the openldap package.
 # Luca Monducci <luca.mo@tiscali.it>, 2007-2008.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: openldap2.3 2.4.7 italian debconf templates\n"
-"Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
+"Project-Id-Version: openldap 2.4.7 italian debconf templates\n"
+"Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2008-02-09 10:32-0800\n"
 "PO-Revision-Date: 2008-04-22 21:55+0200\n"
 "Last-Translator: Luca Monducci <luca.mo@tiscali.it>\n"

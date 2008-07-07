@@ -1,4 +1,4 @@
-Source: openldap2.3
+Source: openldap
 Section: net
 Priority: optional
 Maintainer: Debian OpenLDAP Maintainers <pkg-openldap-devel@lists.alioth.debian.org>

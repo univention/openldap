@@ -1,13 +1,13 @@
-# Portuguese translation for openldap2.3 debconf messages.
+# Portuguese translation for openldap debconf messages.
 # Copyright (C) Tiago Fernandes <tjg.fernandes@gmail.com>, 2006
-# This file is distributed under the same license as the Openldap2.3 package.
+# This file is distributed under the same license as the openldap package.
 # Tiago Fernandes <tjg.fernandes@gmail.com>, 2006-2008.
 #
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: openldap2.3 2.3.38-2\n"
-"Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
+"Project-Id-Version: openldap 2.3.38-2\n"
+"Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2008-02-09 10:32-0800\n"
 "PO-Revision-Date: 2008-05-12 21:10+0100\n"
 "Last-Translator: Tiago Fernandes <tjg.fernandes@gmail.com>\n"

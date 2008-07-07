@@ -61,10 +61,10 @@ get-orig-source:
 	    file=`basename "$$schema"`; \
 	    rm openldap-$(VERSION)/servers/slapd/schema/$$file; \
 	done
-	mv openldap-$(VERSION) openldap2.3_$(VERSION).orig
-	tar cf openldap2.3_$(VERSION).orig.tar openldap2.3_$(VERSION).orig
-	rm -r openldap2.3_$(VERSION).orig
-	gzip -9 openldap2.3_$(VERSION).orig.tar
+	mv openldap-$(VERSION) openldap_$(VERSION).orig
+	tar cf openldap_$(VERSION).orig.tar openldap_$(VERSION).orig
+	rm -r openldap_$(VERSION).orig
+	gzip -9 openldap_$(VERSION).orig.tar
 
 configure: configure-stamp
 configure-stamp: $(QUILT_STAMPFN)

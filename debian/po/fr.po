@@ -1,12 +1,12 @@
-# Translation of openldap2.3 debconf templates to French
+# Translation of openldap debconf templates to French
 # Copyright (C) 2006-2008 Christian Perrier <bubulle@debian.org>
-# This file is distributed under the same license as the openldap2.3 package.
+# This file is distributed under the same license as the openldap package.
 #
 # Christian Perrier <bubulle@debian.org>, 2006-2008.
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"Report-Msgid-Bugs-To: openldap2.3@packages.debian.org\n"
+"Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2008-02-09 10:32-0800\n"
 "PO-Revision-Date: 2008-03-10 19:56+0100\n"
 "Last-Translator: Christian Perrier <bubulle@debian.org>\n"
