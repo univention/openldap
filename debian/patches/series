@@ -10,3 +10,4 @@ libldap-symbol-versions
 gnutls-ciphers
 getaddrinfo-is-threadsafe
 no_backend_inter-linking -p0
+CVE-2008-2952_BER-decoding-assertion -p0
