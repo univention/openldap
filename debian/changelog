@@ -10,6 +10,10 @@ openldap (2.4.10-3) UNRELEASED; urgency=low
     built-in with bash.  Thanks, Daniel Schepler.  (Closes: #490754)
   * Unless DFSG_NONFREE is set, also check whether the upstream schemas
     with RFC comments are included.
+  * Update standards version to 3.8.0.
+    - Include debian/README.source pointing to the quilt README.source.
+    - Wrap Uploaders for readability.
+  * Wrap slapd's Depends for readability.
 
  -- Steve Langasek <vorlon@debian.org>  Mon, 07 Jul 2008 00:10:16 -0700
 

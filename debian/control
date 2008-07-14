@@ -2,14 +2,19 @@ Source: openldap
 Section: net
 Priority: optional
 Maintainer: Debian OpenLDAP Maintainers <pkg-openldap-devel@lists.alioth.debian.org>
-Uploaders: Roland Bauerschmidt <rb@debian.org>, Stephen Frost <sfrost@debian.org>, Steve Langasek <vorlon@debian.org>, Torsten Landschoff <torsten@debian.org>, Matthijs Mohlmann <matthijs@cacholong.nl>, Russ Allbery <rra@debian.org>
+Uploaders: Roland Bauerschmidt <rb@debian.org>,
+ Stephen Frost <sfrost@debian.org>,
+ Steve Langasek <vorlon@debian.org>,
+ Torsten Landschoff <torsten@debian.org>,
+ Matthijs Mohlmann <matthijs@cacholong.nl>,
+ Russ Allbery <rra@debian.org>
 Build-Depends: debhelper (>= 5), libdb4.2-dev, libgcrypt-dev,
  libgnutls-dev (>= 1.7), unixodbc-dev, libncurses5-dev, libperl-dev (>= 5.8.0),
  libsasl2-dev, libslp-dev, libltdl3-dev (>= 1.4.3),
  libwrap0-dev, perl, debconf-utils, po-debconf, quilt (>= 0.40),
  autotools-dev, libtool, automake, autoconf, groff-base, time
 Build-Conflicts: libbind-dev, bind-dev, libicu-dev
-Standards-Version: 3.7.3
+Standards-Version: 3.8.0
 Homepage: http://www.openldap.org/
 Vcs-Svn: svn://svn.debian.org/pkg-openldap/openldap/trunk
 Vcs-Browser: http://svn.debian.org/wsvn/pkg-openldap/openldap/trunk
@@ -19,7 +24,9 @@ Section: net
 Priority: optional
 Architecture: any
 Pre-Depends: debconf (>= 0.5) | debconf-2.0
-Depends: ${shlibs:Depends}, libldap-2.4-2 (= ${binary:Version}), coreutils (>= 4.5.1-1), psmisc, perl (>> 5.8.0) | libmime-base64-perl, adduser
+Depends: ${shlibs:Depends}, libldap-2.4-2 (= ${binary:Version}),
+ coreutils (>= 4.5.1-1), psmisc, perl (>> 5.8.0) | libmime-base64-perl,
+ adduser
 Recommends: libsasl2-modules
 Suggests: ldap-utils
 Conflicts: umich-ldapd, ldap-server, libltdl3 (= 1.5.4-1)
