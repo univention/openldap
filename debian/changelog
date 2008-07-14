@@ -1,8 +1,13 @@
 openldap (2.4.10-3) UNRELEASED; urgency=low
 
+  [ Steve Langasek ]
   * New patch, CVE-2008-2952_BER-decoding-assertion, to fix a remote DoS
     vulnerability in the BER decoder.  Addresses CVE-2008-2952,
     closes: #488710.
+
+  [ Russ Allbery ]
+  * Add Build-Depends on time, used by the test suite and only a shell
+    built-in with bash.  Thanks, Daniel Schepler.  (Closes: #490754)
 
  -- Steve Langasek <vorlon@debian.org>  Mon, 07 Jul 2008 00:10:16 -0700
 
