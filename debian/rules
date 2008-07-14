@@ -68,14 +68,15 @@ get-orig-source:
 
 configure: configure-stamp
 configure-stamp: $(QUILT_STAMPFN)
-	# Check if we include the RFCs and Internet-Drafts (which are non
-	# DFSG-free).  You can set DFSG_NONFREE to build the packages from the
-	# unchanged upstream sources but Debian can not ship the RFCs in main
-	# so this test is here to make sure it does not get in by accident
-	# again. -- Torsten
+	# Check if we include the RFCs, Internet-Drafts, or upstream schemas
+	# with RFC text (which are non DFSG-free).  You can set DFSG_NONFREE
+	# to build the packages from the unchanged upstream sources but Debian
+	# can not ship the RFCs in main so this test is here to make sure it
+	# does not get in by accident again. -- Torsten
 	if [ -z "$(DFSG_NONFREE)" ]; then \
 	    if [ -e doc/drafts ]; then exit 1; fi; \
 	    if [ -e doc/rfc ]; then exit 1; fi; \
+	    if [ -e servers/slapd/schema/core.schema ]; then exit 1; fi; \
 	fi
 
 	# Copy our stripped schema versions into where upstream expects them.
