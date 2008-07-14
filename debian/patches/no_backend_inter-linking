@@ -6,10 +6,8 @@ are here, so it doesn't fail with Debian libltdl.
 
 Addresses ITS#5355.
 
-Index: servers/slapd/back-meta/config.c
-===================================================================
---- servers/slapd/back-meta/config.c.orig
-+++ servers/slapd/back-meta/config.c
+--- openldap.orig/servers/slapd/back-meta/config.c
++++ openldap/servers/slapd/back-meta/config.c
 @@ -1089,7 +1089,7 @@
  			}
  			cargv[ 2 ] = binddn;
@@ -46,10 +44,8 @@ Index: servers/slapd/back-meta/config.c
  			Debug( LDAP_DEBUG_ANY,
  				"%s line %d: %s.\n",
  				fname, lineno, buf );
-Index: servers/slapd/back-meta/init.c
-===================================================================
---- servers/slapd/back-meta/init.c.orig
-+++ servers/slapd/back-meta/init.c
+--- openldap.orig/servers/slapd/back-meta/init.c
++++ openldap/servers/slapd/back-meta/init.c
 @@ -93,6 +93,15 @@
  {
  	metainfo_t	*mi;
@@ -117,10 +113,8 @@ Index: servers/slapd/back-meta/init.c
  		}
  	}
  
-Index: servers/slapd/back-ldap/back-ldap.h
-===================================================================
---- servers/slapd/back-ldap/back-ldap.h.orig
-+++ servers/slapd/back-ldap/back-ldap.h
+--- openldap.orig/servers/slapd/back-ldap/back-ldap.h
++++ openldap/servers/slapd/back-ldap/back-ldap.h
 @@ -428,6 +428,11 @@
  	int (*proxy_authz_ctrl)( Operation *op, SlapReply *rs, struct berval *bound_ndn,
  		int version, slap_idassert_t *si, LDAPControl	*ctrl );
@@ -133,10 +127,8 @@ Index: servers/slapd/back-ldap/back-ldap.h
  } ldap_extra_t;
  
  LDAP_END_DECL
-Index: servers/slapd/back-ldap/init.c
-===================================================================
---- servers/slapd/back-ldap/init.c.orig
-+++ servers/slapd/back-ldap/init.c
+--- openldap.orig/servers/slapd/back-ldap/init.c
++++ openldap/servers/slapd/back-ldap/init.c
 @@ -34,7 +34,12 @@
  
  static const ldap_extra_t ldap_extra = {
@@ -151,10 +143,8 @@ Index: servers/slapd/back-ldap/init.c
  };
  
  int
-Index: servers/slapd/back-ldap/proto-ldap.h
-===================================================================
---- servers/slapd/back-ldap/proto-ldap.h.orig
-+++ servers/slapd/back-ldap/proto-ldap.h
+--- openldap.orig/servers/slapd/back-ldap/proto-ldap.h
++++ openldap/servers/slapd/back-ldap/proto-ldap.h
 @@ -63,22 +63,6 @@
  
  extern ldapconn_t * ldap_back_conn_delete( ldapinfo_t *li, ldapconn_t *lc );

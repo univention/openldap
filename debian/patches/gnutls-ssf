@@ -3,8 +3,8 @@ GnuTLS returns the cipher strength in bytes and OpenLDAP expects bits.
 Debian Bug#473796
 Upstream ITS #5585
 
---- libraries/libldap/tls.c.orig
-+++ libraries/libldap/tls.c
+--- openldap.orig/libraries/libldap/tls.c
++++ openldap/libraries/libldap/tls.c
 @@ -2796,7 +2796,7 @@
  	gnutls_cipher_algorithm_t c;
  

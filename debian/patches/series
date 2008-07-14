@@ -1,14 +1,14 @@
-man-slapd -p0
+man-slapd 
 evolution-ntlm
 add-autogen-sh
-slapi-errorlog-file -p0
-ldapi-socket-place -p0
-wrong-database-location -p0
-index-files-created-as-root -p0
-sasl-default-path -p0
+slapi-errorlog-file 
+ldapi-socket-place 
+wrong-database-location 
+index-files-created-as-root 
+sasl-default-path 
 libldap-symbol-versions
 gnutls-ciphers
 getaddrinfo-is-threadsafe
-no_backend_inter-linking -p0
-CVE-2008-2952_BER-decoding-assertion -p0
-gnutls-ssf -p0
+no_backend_inter-linking 
+CVE-2008-2952_BER-decoding-assertion 
+gnutls-ssf 

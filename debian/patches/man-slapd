@@ -4,8 +4,8 @@ for slapd.
 
 Debian-specific.
 
---- doc/man/man8/slapd.8.orig
-+++ doc/man/man8/slapd.8
+--- openldap.orig/doc/man/man8/slapd.8
++++ openldap/doc/man/man8/slapd.8
 @@ -5,7 +5,7 @@
  .SH NAME
  slapd \- Stand-alone LDAP Daemon
