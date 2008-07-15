@@ -809,15 +809,6 @@ config_obsolete_schemacheck() {						# {{{
 }
 
 # }}}
-update_path_argsfile_pidfile() {	# {{{
-	# If $SLAPD_CONF is a directory, the user is using cn=config.  Assume
-	# they know what they're doing.
-	if [ -d "$SLAPD_CONF" ]; then return 0; fi
-
-	write_slapd_conf "$SLAPD_CONF" 's|^(argsfile\s+).*|$1/var/run/slapd/slapd.args|'
-	write_slapd_conf "$SLAPD_CONF" 's|^(pidfile\s+).*|$1/var/run/slapd/slapd.pid|'
-}
-# }}}
 configure_v2_protocol_support() {					# {{{
 # Adds the "allow bind_v2" directive to the configuration if the user decided
 # he wants to have ldap v2 enabled.

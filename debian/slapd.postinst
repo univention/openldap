@@ -32,17 +32,6 @@ postinst_upgrade_configuration() {					# {{{
 
 	configure_v2_protocol_support
 
-	if previous_version_older 2.3.25-1; then
-		update_path_argsfile_pidfile
-
-		# Directory /var/run/slapd is suddenly gone, dpkg removes it
-		# because it's now generated from the postinst scripts. See
-		# create_ldap_directories.
-		if [ ! -d "/var/run/slapd" ]; then
-			mkdir -m 0755 /var/run/slapd
-		fi
-	fi
-
 	if previous_version_older 2.4.7-4; then
 		if ! migrate_checkpoint_and_slurpd; then
 			db_input critical slapd/slurpd_obsolete || true

@@ -4,6 +4,9 @@ openldap (2.4.10-3) UNRELEASED; urgency=low
   * New patch, CVE-2008-2952_BER-decoding-assertion, to fix a remote DoS
     vulnerability in the BER decoder.  Addresses CVE-2008-2952,
     closes: #488710.
+  * debian/slapd.scripts-common, debian/slapd.postinst: drop
+    update_path_argsfile_pidfile function, not needed for updates from etch
+    or newer.
 
   [ Russ Allbery ]
   * Apply upstream patch to convert GnuTLS cipher strength from bytes to
