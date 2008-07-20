@@ -4,10 +4,6 @@ set -e
 
 . /usr/share/debconf/confmodule
 
-# Set seen flag of this question to false to get it asked if someone disagrees
-# with the upgrade from ldbm to bdb backend.
-db_fset slapd/migrate_ldbm_to_bdb seen false
-
 #DEBHELPER#
 
 exit 0

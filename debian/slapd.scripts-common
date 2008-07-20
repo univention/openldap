@@ -17,37 +17,6 @@
 # for example. Therefore we must give the user exact control over what we
 # are doing.
 
-configure_ldbm_to_bdb_migration() {					# {{{
-# If there are any LDBM databases in use we suggest to the user to migrate
-# to the more stable and better maintained BDB backend.
-# Usage: configure_ldbm_to_bdb_migration
-
-	if [ -f "$SLAPD_CONF" ] && grep -qE \
-			-e '^moduleload[[:space:]]+back_ldbm' \
-			-e '^(database|backend)[[:space:]]+ldbm' \
-			"$SLAPD_CONF"; then
-		db_input critical slapd/migrate_ldbm_to_bdb || true
-		db_go || true
-	else
-		# Nothing to migrate
-		db_set slapd/migrate_ldbm_to_bdb false
-	fi
-}
-# }}}
-break_on_ldbm_to_bdb_migration_disagree() { # {{{
-  if [ -f "$SLAPD_CONF" ] && grep -qE \
-      -e '^moduleload[[:space:]]+back_ldbm' \
-      -e '^(database|backend)[[:space:]]+ldbm' \
-      "$SLAPD_CONF"; then
-    db_get slapd/migrate_ldbm_to_bdb
-    if [ "$RET" = "false" ]; then
-      db_fset slapd/migrate_ldbm_to_bdb seen false
-      return 1
-    fi
-    return 0
-  fi
-  return 0
-} # }}}
 database_dumping_enabled() {						# {{{
 # Check if the user has enabled database dumping for the current situation.
 # Return success if yes.
@@ -789,7 +758,7 @@ create_new_directory() {						# {{{
 config_migrate_backend() {						# {{{
 # Changes all uses of one backend to another (like ldbm to bdb) in the 
 # configuration file. This includes the moduleload, backend and database
-# directives.  
+# directives.  This function is currently unused.
 # Usage: migrate_databases <old-backend> <new-backend>
 
 	local old new
@@ -1013,7 +982,7 @@ upgrade_supported_from_backend() {					# {{{
 # our scripts.
 # Usage: if upgrade_supported_from_backend "backend"; then ... fi
 
-	case "$1" in ldbm|bdb|hdb) return 0; esac
+	case "$1" in bdb|hdb) return 0; esac
 	return 1
 }
 

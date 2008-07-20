@@ -7,6 +7,9 @@ openldap (2.4.10-3) UNRELEASED; urgency=low
   * debian/slapd.scripts-common, debian/slapd.postinst: drop
     update_path_argsfile_pidfile function, not needed for updates from etch
     or newer.
+  * Drop the code to check for and upgrade ldbm databases.  The etch
+    release of slapd had already dropped support for them and direct
+    upgrades from sarge are not supported.
 
   [ Russ Allbery ]
   * Apply upstream patch to convert GnuTLS cipher strength from bytes to

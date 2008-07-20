@@ -50,14 +50,6 @@ postinst_upgrade_configuration() {					# {{{
 	if database_format_changed; then
 		# During upgrading we have to load the old data
 		move_incompatible_databases_away
-		# Change the configuration if we want to migrate DBs
-		db_get slapd/migrate_ldbm_to_bdb
-		if [ "$RET" = "true" ]; then
-			config_migrate_backend ldbm bdb
-			# Make sure we don't dump the DB for migration 
-			# again...
-			db_set slapd/migrate_ldbm_to_bdb false
-		fi
 		load_databases
 	fi
 

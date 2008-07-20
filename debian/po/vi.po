@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap 2.4.7-6.4\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2008-02-09 10:32-0800\n"
+"POT-Creation-Date: 2008-07-19 19:11-0700\n"
 "PO-Revision-Date: 2008-05-09 00:24+0930\n"
 "Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
 "Language-Team: Vietnamese <vi-VN@googlegroups.com>\n"
@@ -320,57 +320,15 @@ msgstr ""
 "Sau đó, hãy di chuyển các tập tin cơ sở dữ liệu sang một vùng sao lưu, rồi "
 "thử chạy trình slapadd từ nơi « $location »."
 
-#. Type: boolean
-#. Description
-#: ../slapd.templates:16001
-msgid "Change backend type from LDBM to BDB?"
-msgstr "Thay đổi kiểu hậu phương từ LDBM thành BDB không?"
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:16001
-msgid ""
-"The LDBM backend type has serious stability problems and has been deprecated "
-"by OpenLDAP as of 2.2. It is no longer supported by the OpenLDAP packages."
-msgstr ""
-"Kiểu hậu phương LDBM không ổn định nên bị phản đối bởi OpenLDAP kể từ phiên "
-"bản 2.2. Vì thế nó không còn được gói OpenLDAP hỗ trợ lại."
-
-# When using the BDB backend make sure you configure BDB properly. For
-# information to do so, see /usr/share/doc/slapd/README.DB_CONFIG.gz
-#. Type: boolean
-#. Description
-#: ../slapd.templates:16001
-msgid ""
-"When the BDB backend is used, it must be configured properly. For more "
-"information, see /usr/share/doc/slapd/README.DB_CONFIG.gz."
-msgstr ""
-"Để sử dụng hậu phương BDB, nó phải được cấu hình cho đúng. Muốn tìm thêm "
-"thông tin thì xem tập tin Đọc Đi « /usr/share/doc/slapd/README.DB_CONFIG.gz »."
-
-# If you enable this option an attempt will be made to update your
-# configuration to use BDB instead of LDBM and convert your databases.
-#. Type: boolean
-#. Description
-#: ../slapd.templates:16001
-msgid ""
-"If you enable this option, an attempt will be made to update the "
-"configuration to use BDB instead of LDBM and convert the databases. If you "
-"do not enable this option, the upgrade will be aborted."
-msgstr ""
-"Bật tùy chọn này thì tiến trình thử cập nhật cấu hình để sử dụng BDB thay "
-"cho LDBM và chuyển đổi các cơ sở dữ liệu. Không bật tùy chọn này thì hủy bỏ "
-"nâng cấp."
-
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:16001
 msgid "Database backend to use:"
 msgstr "Hậu phương cơ sở dữ liệu cần dùng:"
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:16001
 msgid ""
 "The HDB backend is recommended. HDB and BDB use similar storage formats, but "
 "HDB adds support for subtree renames. Both support the same configuration "
@@ -386,7 +344,7 @@ msgstr ""
 # DB_CONFIG.gz
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:16001
 msgid ""
 "In either case, you should review the resulting database configuration for "
 "your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more details."
@@ -397,13 +355,13 @@ msgstr ""
 
 #. Type: error
 #. Description
-#: ../slapd.templates:18001
+#: ../slapd.templates:17001
 msgid "slurpd is obsolete; replicas must be reconfigured by hand"
 msgstr "slurpd quá cũ ; mỗi bản sao phải được cấu hình lại bằng tay"
 
 #. Type: error
 #. Description
-#: ../slapd.templates:18001
+#: ../slapd.templates:17001
 msgid ""
 "One or more slurpd \"replica\" options were found in your slapd config when "
 "upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, you will "
@@ -415,7 +373,7 @@ msgstr ""
 
 #. Type: error
 #. Description
-#: ../slapd.templates:18001
+#: ../slapd.templates:17001
 msgid ""
 "The conversion from slurpd to the pull-based syncrepl protocol cannot be "
 "done automatically and you will need to configure your replica servers by "
@@ -429,13 +387,13 @@ msgstr ""
 
 #. Type: error
 #. Description
-#: ../slapd.templates:19001
+#: ../slapd.templates:18001
 msgid "TLSCipherSuite values have changed"
 msgstr "Giá trị TLSCipherSuite bị thay đổi"
 
 #. Type: error
 #. Description
-#: ../slapd.templates:19001
+#: ../slapd.templates:18001
 msgid ""
 "A \"TLSCipherSuite\" option was found in your slapd config when upgrading. "
 "The values allowed for this option are determined by the SSL implementation "
@@ -450,7 +408,7 @@ msgstr ""
 
 #. Type: error
 #. Description
-#: ../slapd.templates:19001
+#: ../slapd.templates:18001
 msgid ""
 "This setting has been automatically commented out for you.  If you have "
 "specific encryption needs that require this option to be re-enabled, see the "

@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap 2.3.30\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2008-02-09 10:32-0800\n"
+"POT-Creation-Date: 2008-07-19 19:11-0700\n"
 "PO-Revision-Date: 2008-01-13 00:52-0800\n"
 "Last-Translator: Steve Langasek <vorlon@debian.org>\n"
 "Language-Team: Debian l10n Spanish <debian-l10n-spanish@lists.debian.org>\n"
@@ -359,56 +359,15 @@ msgstr ""
 "Mueva los ficheros de la base de datos de nuevo al área de la copia de "
 "seguridad e intente utilizar «slapadd» en $location."
 
-#. Type: boolean
-#. Description
-#: ../slapd.templates:16001
-msgid "Change backend type from LDBM to BDB?"
-msgstr "¿Desea cambiar el tipo de motor de LDBM a BDB?"
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:16001
-#, fuzzy
-msgid ""
-"The LDBM backend type has serious stability problems and has been deprecated "
-"by OpenLDAP as of 2.2. It is no longer supported by the OpenLDAP packages."
-msgstr ""
-"El motor de tipo LDBM tiene problemas serios de estabilidad y ha quedado "
-"obsoleto en OpenLDAP desde la versión 2.2. Ya no se soporta en los paquetes "
-"de OpenLDAP."
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:16001
-msgid ""
-"When the BDB backend is used, it must be configured properly. For more "
-"information, see /usr/share/doc/slapd/README.DB_CONFIG.gz."
-msgstr ""
-"Cuando use el motor BDB hay que configurarlo adecuadamente. Véase /usr/share/"
-"doc/slapd/README.DB_CONFIG.gz para más información."
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:16001
-#, fuzzy
-msgid ""
-"If you enable this option, an attempt will be made to update the "
-"configuration to use BDB instead of LDBM and convert the databases. If you "
-"do not enable this option, the upgrade will be aborted."
-msgstr ""
-"Si habilita esta opción se intentará actualizar la configuración para "
-"utilizar BDB en lugar de LDBM y convertir sus bases de datos. Si no la "
-"habilita, se abortará la actualización."
-
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:16001
 msgid "Database backend to use:"
 msgstr "Motor de base de datos a utilizar:"
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:16001
 #, fuzzy
 msgid ""
 "The HDB backend is recommended. HDB and BDB use similar storage formats, but "
@@ -422,7 +381,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:16001
 #, fuzzy
 msgid ""
 "In either case, you should review the resulting database configuration for "
@@ -433,13 +392,13 @@ msgstr ""
 
 #. Type: error
 #. Description
-#: ../slapd.templates:18001
+#: ../slapd.templates:17001
 msgid "slurpd is obsolete; replicas must be reconfigured by hand"
 msgstr "slurpd es obsoleto; hay que configurar las réplicas a mano"
 
 #. Type: error
 #. Description
-#: ../slapd.templates:18001
+#: ../slapd.templates:17001
 msgid ""
 "One or more slurpd \"replica\" options were found in your slapd config when "
 "upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, you will "
@@ -448,7 +407,7 @@ msgstr ""
 
 #. Type: error
 #. Description
-#: ../slapd.templates:18001
+#: ../slapd.templates:17001
 msgid ""
 "The conversion from slurpd to the pull-based syncrepl protocol cannot be "
 "done automatically and you will need to configure your replica servers by "
@@ -458,13 +417,13 @@ msgstr ""
 
 #. Type: error
 #. Description
-#: ../slapd.templates:19001
+#: ../slapd.templates:18001
 msgid "TLSCipherSuite values have changed"
 msgstr ""
 
 #. Type: error
 #. Description
-#: ../slapd.templates:19001
+#: ../slapd.templates:18001
 msgid ""
 "A \"TLSCipherSuite\" option was found in your slapd config when upgrading. "
 "The values allowed for this option are determined by the SSL implementation "
@@ -474,7 +433,7 @@ msgstr ""
 
 #. Type: error
 #. Description
-#: ../slapd.templates:19001
+#: ../slapd.templates:18001
 msgid ""
 "This setting has been automatically commented out for you.  If you have "
 "specific encryption needs that require this option to be re-enabled, see the "

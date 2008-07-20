@@ -12,8 +12,6 @@ set -e
 # slapcat out the data so we can use it in postinst to do the upgrade
 
 if [ "$MODE" = upgrade ]; then
-	configure_ldbm_to_bdb_migration
-	break_on_ldbm_to_bdb_migration_disagree
 	dump_databases
 fi
 
