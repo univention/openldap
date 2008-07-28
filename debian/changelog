@@ -25,6 +25,10 @@ openldap (2.4.10-3) UNRELEASED; urgency=low
     - Wrap Uploaders for readability.
   * Wrap slapd's Depends for readability.
 
+  [ Updated debconf translations ]
+  * Swedish, thanks to Martin Ågren <martin.agren@gmail.com>.
+    Closes: #492748.
+
  -- Steve Langasek <vorlon@debian.org>  Mon, 07 Jul 2008 00:10:16 -0700
 
 openldap (2.4.10-2) unstable; urgency=low
