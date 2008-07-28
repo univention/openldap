@@ -1,4 +1,4 @@
-openldap (2.4.10-3) UNRELEASED; urgency=low
+openldap (2.4.10-3) unstable; urgency=low
 
   [ Steve Langasek ]
   * New patch, CVE-2008-2952_BER-decoding-assertion, to fix a remote DoS
@@ -29,7 +29,7 @@ openldap (2.4.10-3) UNRELEASED; urgency=low
   * Swedish, thanks to Martin Ågren <martin.agren@gmail.com>.
     Closes: #492748.
 
- -- Steve Langasek <vorlon@debian.org>  Mon, 07 Jul 2008 00:10:16 -0700
+ -- Steve Langasek <vorlon@debian.org>  Mon, 28 Jul 2008 15:26:06 -0700
 
 openldap (2.4.10-2) unstable; urgency=low
 
