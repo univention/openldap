@@ -1,3 +1,12 @@
+openldap (2.4.10-4) UNRELEASED; urgency=low
+
+  * New patch, back-perl-init, which updates the calling conventions
+    around initialization and shutdown of the Perl interpreter to match
+    the current perlembed recommendations.  Fixes probable hangs on HPPA
+    in back-perl.  Thanks, Niko Tyni.  (Closes: #495069)
+
+ -- Russ Allbery <rra@debian.org>  Fri, 15 Aug 2008 17:11:10 -0700
+
 openldap (2.4.10-3) unstable; urgency=low
 
   [ Steve Langasek ]
