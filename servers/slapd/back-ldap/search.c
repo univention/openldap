@@ -1,5 +1,5 @@
 /* search.c - ldap backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.201.2.10 2008/05/18 09:23:53 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.201.2.11 2008/07/10 00:28:39 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2008 The OpenLDAP Foundation.
@@ -363,6 +363,11 @@ retry:
 			}
 
 		} else if ( rc == LDAP_RES_SEARCH_REFERENCE ) {
+			if ( LDAP_BACK_NOREFS( li ) ) {
+				ldap_msgfree( res );
+				continue;
+			}
+
 			do_retry = 0;
 			rc = ldap_parse_reference( lc->lc_ld, res,
 					&references, &rs->sr_ctrls, 1 );

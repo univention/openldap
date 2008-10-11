@@ -1,5 +1,5 @@
 /* unique.c - attribute uniqueness module */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/unique.c,v 1.20.2.8 2008/05/27 21:05:56 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/unique.c,v 1.20.2.9 2008/07/09 23:45:53 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2008 The OpenLDAP Foundation.
@@ -238,15 +238,15 @@ unique_new_domain_uri ( unique_domain_uri **urip,
 	}
 
 	if (url_desc->lud_filter) {
-		Filter * f;
-		ber_str2bv( url_desc->lud_filter, 0, 1, &uri->filter );
-		f = str2filter( uri->filter.bv_val );
+		Filter *f = str2filter( url_desc->lud_filter );
 		if ( !f ) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
 				  "unique: bad filter");
 			rc = ARG_BAD_CONF;
 			goto exit;
 		}
+		/* make sure the strfilter is in normal form (ITS#5581) */
+		filter2bv( f, &uri->filter );
 		filter_free( f );
 	}
 exit:

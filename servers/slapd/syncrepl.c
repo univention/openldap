@@ -1,5 +1,5 @@
 /* syncrepl.c -- Replication Engine which uses the LDAP Sync protocol */
-/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.254.2.34 2008/05/29 22:54:56 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.254.2.37 2008/07/10 00:52:39 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2008 The OpenLDAP Foundation.
@@ -689,8 +689,8 @@ compare_csns( struct sync_cookie *sc1, struct sync_cookie *sc2, int *which )
 		return -1;
 	}
 
-	for (i=0; i<sc1->numcsns; i++) {
-		for (j=0; j<sc2->numcsns; j++) {
+	for (j=0; j<sc2->numcsns; j++) {
+		for (i=0; i<sc1->numcsns; i++) {
 			if ( sc1->sids[i] != sc2->sids[j] )
 				continue;
 			value_match( &match, slap_schema.si_ad_entryCSN,
@@ -702,6 +702,11 @@ compare_csns( struct sync_cookie *sc1, struct sync_cookie *sc2, int *which )
 				return match;
 			}
 			break;
+		}
+		if ( i == sc1->numcsns ) {
+			/* sc2 has a sid sc1 lacks */
+			*which = j;
+			return -1;
 		}
 	}
 	return match;
@@ -2733,6 +2738,7 @@ syncrepl_updateCookie(
 	mod.sml_op = LDAP_MOD_REPLACE;
 	mod.sml_desc = slap_schema.si_ad_contextCSN;
 	mod.sml_type = mod.sml_desc->ad_cname;
+	mod.sml_flags = SLAP_MOD_INTERNAL;
 	mod.sml_nvalues = NULL;
 	mod.sml_next = NULL;
 
@@ -2876,6 +2882,14 @@ attr_cmp( Operation *op, Attribute *old, Attribute *new,
 				}
 			}
 		}
+
+		/* Don't delete/add an objectClass, always use the replace op.
+		 * Modify would fail if provider has replaced entry with a new,
+		 * and the new explicitly includes a superior of a class that was
+		 * only included implicitly in the old entry.  Ref ITS#5517.
+		 */
+		if ( nn && no < o && old->a_desc == slap_schema.si_ad_objectClass )
+			no = o;
 
 		i = j;
 		/* all old values were deleted, just use the replace op */

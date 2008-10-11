@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/ppolicy.c,v 1.75.2.12 2008/06/02 18:00:53 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/ppolicy.c,v 1.75.2.14 2008/07/10 00:55:07 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2008 The OpenLDAP Foundation.
@@ -214,7 +214,7 @@ static ConfigDriver ppolicy_cf_default;
 
 static ConfigTable ppolicycfg[] = {
 	{ "ppolicy_default", "policyDN", 2, 2, 0,
-	  ARG_DN|ARG_MAGIC|PPOLICY_DEFAULT, ppolicy_cf_default,
+	  ARG_DN|ARG_QUOTE|ARG_MAGIC|PPOLICY_DEFAULT, ppolicy_cf_default,
 	  "( OLcfgOvAt:12.1 NAME 'olcPPolicyDefault' "
 	  "DESC 'DN of a pwdPolicy object for uncustomized objects' "
 	  "SYNTAX OMsDN SINGLE-VALUE )", NULL, NULL },
@@ -1581,7 +1581,7 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 				}
 			}
 
-		} else if ( !is_at_operational( ml->sml_desc->ad_type ) ) {
+		} else if ( !(ml->sml_flags & SLAP_MOD_INTERNAL) && !is_at_operational( ml->sml_desc->ad_type ) ) {
 			mod_pw_only = 0;
 			/* modifying something other than password */
 		}

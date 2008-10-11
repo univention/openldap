@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/syncprov.c,v 1.147.2.29 2008/05/29 22:57:32 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/syncprov.c,v 1.147.2.34 2008/07/10 00:13:08 quanah Exp $ */
 /* syncprov.c - syncrepl provider */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
@@ -1181,6 +1181,7 @@ syncprov_matchops( Operation *op, opcookie *opc, int saveit )
 		sprev = ss, ss=snext)
 	{
 		Operation op2;
+		Opheader oh;
 		syncmatches *sm;
 		int found = 0;
 
@@ -1230,7 +1231,10 @@ syncprov_matchops( Operation *op, opcookie *opc, int saveit )
 
 		if ( fc.fscope ) {
 			op2 = *ss->s_op;
-			op2.o_hdr = op->o_hdr;
+			oh = *op->o_hdr;
+			oh.oh_conn = ss->s_op->o_conn;
+			oh.oh_connid = ss->s_op->o_connid;
+			op2.o_hdr = &oh;
 			op2.o_extra = op->o_extra;
 		}
 
@@ -1334,7 +1338,7 @@ syncprov_checkpoint( Operation *op, SlapReply *rs, slap_overinst *on )
 	mod.sml_nvalues = NULL;
 	mod.sml_desc = slap_schema.si_ad_contextCSN;
 	mod.sml_op = LDAP_MOD_REPLACE;
-	mod.sml_flags = 0;
+	mod.sml_flags = SLAP_MOD_INTERNAL;
 	mod.sml_next = NULL;
 
 	cb.sc_response = slap_null_cb;
@@ -1573,14 +1577,16 @@ syncprov_playlog( Operation *op, SlapReply *rs, sessionlog *sl,
 		if ( delcsn[0].bv_len ) {
 			slap_compose_sync_cookie( op, &cookie, delcsn, srs->sr_state.rid,
 				srs->sr_state.sid );
-		}
 
-		Debug( LDAP_DEBUG_SYNC, "syncprov_playlog: cookie=%s\n", cookie.bv_val, 0, 0 );
+			Debug( LDAP_DEBUG_SYNC, "syncprov_playlog: cookie=%s\n", cookie.bv_val, 0, 0 );
+		}
 
 		uuids[ndel].bv_val = NULL;
 		syncprov_sendinfo( op, rs, LDAP_TAG_SYNC_ID_SET,
 			delcsn[0].bv_len ? &cookie : NULL, 0, uuids, 1 );
-		op->o_tmpfree( cookie.bv_val, op->o_tmpmemctx );
+		if ( delcsn[0].bv_len ) {
+			op->o_tmpfree( cookie.bv_val, op->o_tmpmemctx );
+		}
 	}
 	op->o_tmpfree( uuids, op->o_tmpmemctx );
 }
@@ -2319,6 +2325,15 @@ no_change:		if ( !(op->o_sync_mode & SLAP_SYNC_PERSIST) ) {
 				send_ldap_error( op, rs, LDAP_SYNC_REFRESH_REQUIRED, "sync cookie is stale" );
 				return rs->sr_err;
 			}
+			if ( srs->sr_state.ctxcsn ) {
+				ber_bvarray_free_x( srs->sr_state.ctxcsn, op->o_tmpmemctx );
+				srs->sr_state.ctxcsn = NULL;
+			}
+			if ( srs->sr_state.sids ) {
+				slap_sl_free( srs->sr_state.sids, op->o_tmpmemctx );
+				srs->sr_state.sids = NULL;
+			}
+			srs->sr_state.numcsns = 0;
 		} else {
 			gotstate = 1;
 			/* If changed and doing Present lookup, send Present UUIDs */
@@ -2497,7 +2512,11 @@ static ConfigOCs spocs[] = {
 		"NAME 'olcSyncProvConfig' "
 		"DESC 'SyncRepl Provider configuration' "
 		"SUP olcOverlayConfig "
-		"MAY ( olcSpCheckpoint $ olcSpSessionlog $ olcSpNoPresent ) )",
+		"MAY ( olcSpCheckpoint "
+			"$ olcSpSessionlog "
+			"$ olcSpNoPresent "
+			"$ olcSpReloadHint "
+		") )",
 			Cft_Overlay, spcfg },
 	{ NULL, 0, NULL }
 };

@@ -1,4 +1,8 @@
-openldap (2.4.10-4) UNRELEASED; urgency=low
+openldap (2.4.11-1) UNRELEASED; urgency=low
+
+  * New upstream version (closes: #499560).
+    - Fixes a crash with syncrepl and delcsn (closes: #491066).
+    - Fix CRL handling with GnuTLS (closes: #498410).
 
   [ Russ Allbery ]
   * New patch, back-perl-init, which updates the calling conventions
