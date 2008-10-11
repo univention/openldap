@@ -11,11 +11,13 @@ SASL and DIGEST-MD5, it's not very appealing.
 Bug#457374 filed against evolution-data-server asking if this support is
 still required on 2007-12-21.
 
---- openldap.orig/include/ldap.h
-+++ openldap/include/ldap.h
-@@ -2343,5 +2343,25 @@
- 
- #endif /* LDAP_CONTROL_X_SESSION_TRACKING */
+Index: trunk/include/ldap.h
+===================================================================
+--- trunk.orig/include/ldap.h
++++ trunk/include/ldap.h
+@@ -2359,5 +2359,25 @@
+ 	int		iscritical,
+ 	LDAPControl	**ctrlp ));
  
 +/*
 + * hacks for NTLM
@@ -39,8 +41,10 @@ still required on 2007-12-21.
 +
  LDAP_END_DECL
  #endif /* _LDAP_H */
+Index: trunk/libraries/libldap/ntlm.c
+===================================================================
 --- /dev/null
-+++ openldap/libraries/libldap/ntlm.c
++++ trunk/libraries/libldap/ntlm.c
 @@ -0,0 +1,138 @@
 +/* $OpenLDAP: pkg/ldap/libraries/libldap/ntlm.c,v 1.1.4.10 2002/01/04 20:38:21 kurt Exp $ */
 +/*
@@ -180,43 +184,47 @@ still required on 2007-12-21.
 + return( ld->ld_errno );
 +}
 +
---- openldap.orig/libraries/libldap/Makefile.in
-+++ openldap/libraries/libldap/Makefile.in
+Index: trunk/libraries/libldap/Makefile.in
+===================================================================
+--- trunk.orig/libraries/libldap/Makefile.in
++++ trunk/libraries/libldap/Makefile.in
 @@ -26,7 +26,7 @@
  	request.c os-ip.c url.c pagectrl.c sortctrl.c vlvctrl.c \
  	init.c options.c print.c string.c util-int.c schema.c \
  	charray.c tls.c os-local.c dnssrv.c utf-8.c utf-8-conv.c \
--	turn.c ppolicy.c dds.c txn.c ldap_sync.c stctrl.c
-+	turn.c ppolicy.c dds.c txn.c ldap_sync.c stctrl.c ntlm.c
+-	turn.c ppolicy.c dds.c txn.c ldap_sync.c stctrl.c \
++	turn.c ppolicy.c dds.c txn.c ldap_sync.c stctrl.c ntlm.c \
+ 	assertion.c
  
  OBJS	= bind.lo open.lo result.lo error.lo compare.lo search.lo \
- 	controls.lo messages.lo references.lo extended.lo cyrus.lo \
-@@ -37,7 +37,7 @@
+@@ -38,7 +38,7 @@
  	request.lo os-ip.lo url.lo pagectrl.lo sortctrl.lo vlvctrl.lo \
  	init.lo options.lo print.lo string.lo util-int.lo schema.lo \
  	charray.lo tls.lo os-local.lo dnssrv.lo utf-8.lo utf-8-conv.lo \
--	turn.lo ppolicy.lo dds.lo txn.lo ldap_sync.lo stctrl.lo
-+	turn.lo ppolicy.lo dds.lo txn.lo ldap_sync.lo stctrl.lo ntlm.lo
+-	turn.lo ppolicy.lo dds.lo txn.lo ldap_sync.lo stctrl.lo \
++	turn.lo ppolicy.lo dds.lo txn.lo ldap_sync.lo stctrl.lo ntlm.lo \
+ 	assertion.lo
  
  LDAP_INCDIR= ../../include       
- LDAP_LIBDIR= ../../libraries
---- openldap.orig/libraries/libldap_r/Makefile.in
-+++ openldap/libraries/libldap_r/Makefile.in
+Index: trunk/libraries/libldap_r/Makefile.in
+===================================================================
+--- trunk.orig/libraries/libldap_r/Makefile.in
++++ trunk/libraries/libldap_r/Makefile.in
 @@ -28,7 +28,7 @@
  	request.c os-ip.c url.c pagectrl.c sortctrl.c vlvctrl.c \
  	init.c options.c print.c string.c util-int.c schema.c \
  	charray.c tls.c os-local.c dnssrv.c utf-8.c utf-8-conv.c \
--	turn.c ppolicy.c dds.c txn.c ldap_sync.c stctrl.c
-+	turn.c ppolicy.c dds.c txn.c ldap_sync.c stctrl.c ntlm.c
+-	turn.c ppolicy.c dds.c txn.c ldap_sync.c stctrl.c \
++	turn.c ppolicy.c dds.c txn.c ldap_sync.c stctrl.c ntlm.c \
+ 	assertion.c
  SRCS	= threads.c rdwr.c rmutex.c tpool.c rq.c \
  	thr_posix.c thr_cthreads.c thr_thr.c thr_lwp.c thr_nt.c \
- 	thr_pth.c thr_stub.c thr_debug.c
-@@ -44,7 +44,7 @@
+@@ -45,7 +45,7 @@
  	request.lo os-ip.lo url.lo pagectrl.lo sortctrl.lo vlvctrl.lo \
  	init.lo options.lo print.lo string.lo util-int.lo schema.lo \
  	charray.lo tls.lo os-local.lo dnssrv.lo utf-8.lo utf-8-conv.lo \
--	turn.lo ppolicy.lo dds.lo txn.lo ldap_sync.lo stctrl.lo
-+	turn.lo ppolicy.lo dds.lo txn.lo ldap_sync.lo stctrl.lo ntlm.lo
+-	turn.lo ppolicy.lo dds.lo txn.lo ldap_sync.lo stctrl.lo \
++	turn.lo ppolicy.lo dds.lo txn.lo ldap_sync.lo stctrl.lo ntlm.lo \
+ 	assertion.lo
  
  LDAP_INCDIR= ../../include       
- LDAP_LIBDIR= ../../libraries
