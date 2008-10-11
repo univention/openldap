@@ -14,6 +14,7 @@ openldap (2.4.11-1) UNRELEASED; urgency=low
   * Drop the conflict with libldap2, which is not the standard means of
     handling symbol conflicts in Debian and which causes serious upgrade
     problems from etch.  Closes: #487211.
+  * Drop patch no_backend_inter-linking, applied upstream.
 
  -- Russ Allbery <rra@debian.org>  Fri, 15 Aug 2008 17:11:10 -0700
 

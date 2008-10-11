@@ -9,7 +9,6 @@ sasl-default-path
 libldap-symbol-versions
 gnutls-ciphers
 getaddrinfo-is-threadsafe
-no_backend_inter-linking 
 CVE-2008-2952_BER-decoding-assertion 
 gnutls-ssf 
 back-perl-init
