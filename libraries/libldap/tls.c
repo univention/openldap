@@ -300,7 +300,6 @@ tls_parse_ciphers( tls_ctx *ctx, char *suites )
 		for (i=0; i<n_ciphers; i++) {
 			if ( !strncasecmp( ciphers[i].name, ptr, len )) {
 				num++;
-				ptr = end + 1;
 				break;
 			}
 		}
@@ -332,7 +331,6 @@ tls_parse_ciphers( tls_ctx *ctx, char *suites )
 			 * only appear once in each list.
 			 */
 			if ( !strncasecmp( ciphers[i].name, ptr, len )) {
-				ptr = end + 1;
 				for (j=0; j<nkx; j++)
 					if ( kx[j] == ciphers[i].kx )
 						break;
