@@ -1,4 +1,4 @@
-openldap (2.4.11-1) UNRELEASED; urgency=low
+openldap (2.4.11-1) unstable; urgency=low
 
   * New upstream version (closes: #499560).
     - Fixes a crash with syncrepl and delcsn (closes: #491066).
@@ -18,7 +18,7 @@ openldap (2.4.11-1) UNRELEASED; urgency=low
     handling symbol conflicts in Debian and which causes serious upgrade
     problems from etch.  Closes: #487211.
 
- -- Russ Allbery <rra@debian.org>  Fri, 15 Aug 2008 17:11:10 -0700
+ -- Steve Langasek <vorlon@debian.org>  Sat, 11 Oct 2008 01:53:55 -0700
 
 openldap (2.4.10-3) unstable; urgency=low
 
