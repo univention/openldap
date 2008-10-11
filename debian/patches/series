@@ -9,5 +9,4 @@ sasl-default-path
 libldap-symbol-versions
 gnutls-ciphers
 getaddrinfo-is-threadsafe
-gnutls-ssf 
 back-perl-init

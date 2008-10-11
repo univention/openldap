@@ -3,8 +3,9 @@ openldap (2.4.11-1) UNRELEASED; urgency=low
   * New upstream version (closes: #499560).
     - Fixes a crash with syncrepl and delcsn (closes: #491066).
     - Fix CRL handling with GnuTLS (closes: #498410).
-    - Drop patches no_backend_inter-linking and
-      CVE-2008-2952_BER-decoding-assertion, applied upstream.
+    - Drop patches no_backend_inter-linking,
+      CVE-2008-2952_BER-decoding-assertion, and gnutls-ssf, applied
+      upstream.
 
   [ Russ Allbery ]
   * New patch, back-perl-init, which updates the calling conventions
