@@ -1,8 +1,8 @@
 /* unique.c - attribute uniqueness module */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/unique.c,v 1.20.2.9 2008/07/09 23:45:53 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/unique.c,v 1.20.2.14 2009/01/22 00:01:13 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2008 The OpenLDAP Foundation.
+ * Copyright 2004-2009 The OpenLDAP Foundation.
  * Portions Copyright 2004,2006-2007 Symas Corporation.
  * All rights reserved.
  *
@@ -197,6 +197,15 @@ unique_new_domain_uri ( unique_domain_uri **urip,
 			goto exit;
 		}
 
+		if ( be->be_nsuffix == NULL ) {
+			snprintf( c->cr_msg, sizeof( c->cr_msg ),
+				  "suffix must be set" );
+			Debug ( LDAP_DEBUG_CONFIG, "unique config: %s\n",
+				c->cr_msg, NULL, NULL );
+			rc = ARG_BAD_CONF;
+			goto exit;
+		}
+
 		if ( !dnIsSuffix ( &uri->ndn, &be->be_nsuffix[0] ) ) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
 				  "dn <%s> is not a suffix of backend base dn <%s>",
@@ -239,6 +248,7 @@ unique_new_domain_uri ( unique_domain_uri **urip,
 
 	if (url_desc->lud_filter) {
 		Filter *f = str2filter( url_desc->lud_filter );
+		char *ptr;
 		if ( !f ) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
 				  "unique: bad filter");
@@ -248,6 +258,14 @@ unique_new_domain_uri ( unique_domain_uri **urip,
 		/* make sure the strfilter is in normal form (ITS#5581) */
 		filter2bv( f, &uri->filter );
 		filter_free( f );
+		ptr = strstr( uri->filter.bv_val, "(?=" /*)*/ );
+		if ( ptr != NULL && ptr <= ( uri->filter.bv_val - STRLENOF( "(?=" /*)*/ ) + uri->filter.bv_len ) )
+		{
+			snprintf( c->cr_msg, sizeof( c->cr_msg ),
+				  "unique: bad filter");
+			rc = ARG_BAD_CONF;
+			goto exit;
+		}
 	}
 exit:
 	uri->next = *urip;
@@ -401,6 +419,14 @@ unique_cf_base( ConfigArgs *c )
 		if ( domains ) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
 				  "cannot set legacy attrs when URIs are present" );
+			Debug ( LDAP_DEBUG_CONFIG, "unique config: %s\n",
+				c->cr_msg, NULL, NULL );
+			rc = ARG_BAD_CONF;
+			break;
+		}
+		if ( be->be_nsuffix == NULL ) {
+			snprintf( c->cr_msg, sizeof( c->cr_msg ),
+				  "suffix must be set" );
 			Debug ( LDAP_DEBUG_CONFIG, "unique config: %s\n",
 				c->cr_msg, NULL, NULL );
 			rc = ARG_BAD_CONF;
@@ -956,9 +982,16 @@ unique_search(
 	unique_counter uq = { NULL, 0 };
 	int rc;
 
-	Debug(LDAP_DEBUG_TRACE, "==> unique_search %s\n", key, 0, 0);
+	Debug(LDAP_DEBUG_TRACE, "==> unique_search %s\n", key->bv_val, 0, 0);
 
 	nop->ors_filter = str2filter_x(nop, key->bv_val);
+	if(nop->ors_filter == NULL) {
+		op->o_bd->bd_info = (BackendInfo *) on->on_info;
+		send_ldap_error(op, rs, LDAP_OTHER,
+			"unique_search invalid filter");
+		return(rs->sr_err);
+	}
+
 	nop->ors_filterstr = *key;
 
 	cb.sc_response	= (slap_response*)count_attr_cb;
@@ -980,7 +1013,7 @@ unique_search(
 
 	nop->o_bd = on->on_info->oi_origdb;
 	rc = nop->o_bd->be_search(nop, &nrs);
-	filter_free_x(nop, nop->ors_filter);
+	filter_free_x(nop, nop->ors_filter, 1);
 	op->o_tmpfree( key->bv_val, op->o_tmpmemctx );
 
 	if(rc != LDAP_SUCCESS && rc != LDAP_NO_SUCH_OBJECT) {

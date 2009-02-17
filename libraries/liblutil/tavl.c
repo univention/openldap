@@ -1,8 +1,8 @@
 /* avl.c - routines to implement an avl tree */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/tavl.c,v 1.12.2.4 2008/02/11 23:26:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/tavl.c,v 1.12.2.6 2009/01/22 00:00:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2008 The OpenLDAP Foundation.
+ * Copyright 2005-2009 The OpenLDAP Foundation.
  * Portions Copyright (c) 2005 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
@@ -448,13 +448,13 @@ tavl_free( Avlnode *root, AVL_FREE dfree )
 /*
  * tavl_find2 - returns Avlnode instead of data pointer.
  * tavl_find3 - as above, but returns Avlnode even if no match is found.
- *				also return the last comparison result in ret.
+ *				also set *ret = last comparison result, or -1 if root == NULL.
  */
 Avlnode *
 tavl_find3( Avlnode *root, const void *data, AVL_CMP fcmp, int *ret )
 {
-	int	cmp, dir;
-	Avlnode *prev;
+	int	cmp = -1, dir;
+	Avlnode *prev = root;
 
 	while ( root != 0 && (cmp = (*fcmp)( data, root->avl_data )) != 0 ) {
 		prev = root;

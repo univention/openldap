@@ -1,8 +1,8 @@
 /*  ldap-int.h - defines & prototypes internal to the LDAP library */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.168.2.7 2008/02/11 23:26:41 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.168.2.13 2009/02/02 22:53:14 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -121,6 +121,7 @@ LDAP_BEGIN_DECL
 #define LDAP_BOOL_RESTART		1
 #define LDAP_BOOL_TLS			3
 #define	LDAP_BOOL_CONNECT_ASYNC		4
+#define	LDAP_BOOL_SASL_NOCANON		5
 
 #define LDAP_BOOLEANS	unsigned long
 #define LDAP_BOOL(n)	((LDAP_BOOLEANS)1 << (n))
@@ -154,11 +155,16 @@ struct ldaptls {
 	char		*lt_cacertfile;
 	char		*lt_cacertdir;
 	char		*lt_ciphersuite;
-#ifdef HAVE_GNUTLS
 	char		*lt_crlfile;
-#endif
+	char		*lt_randfile;	/* OpenSSL only */
+	int		lt_protocol_min;
 };
 #endif
+
+typedef struct ldaplist {
+	struct ldaplist *ll_next;
+	void *ll_data;
+} ldaplist;
 
 /*
  * structure representing get/set'able options
@@ -199,9 +205,12 @@ struct ldapoptions {
 #define ldo_tls_cacertfile	ldo_tls_info.lt_cacertfile
 #define ldo_tls_cacertdir	ldo_tls_info.lt_cacertdir
 #define ldo_tls_ciphersuite	ldo_tls_info.lt_ciphersuite
+#define ldo_tls_protocol_min	ldo_tls_info.lt_protocol_min
 #define ldo_tls_crlfile	ldo_tls_info.lt_crlfile
+#define ldo_tls_randfile	ldo_tls_info.lt_randfile
    	int			ldo_tls_mode;
    	int			ldo_tls_require_cert;
+	int			ldo_tls_impl;
 #ifdef HAVE_OPENSSL_CRL
    	int			ldo_tls_crlcheck;
 #endif
@@ -222,6 +231,15 @@ struct ldapoptions {
 	struct sasl_security_properties	ldo_sasl_secprops;
 #endif
 
+#ifdef HAVE_GSSAPI
+	unsigned gssapi_flags;
+
+	unsigned ldo_gssapi_flags;
+#define LDAP_GSSAPI_OPT_DO_NOT_FREE_GSS_CONTEXT	0x0001
+#define LDAP_GSSAPI_OPT_ALLOW_REMOTE_PRINCIPAL	0x0002
+	unsigned ldo_gssapi_options;
+#endif
+
 	int		ldo_refhoplimit;	/* limit on referral nesting */
 
 	/* LDAPv3 server and client controls */
@@ -236,6 +254,9 @@ struct ldapoptions {
 	LDAP_URLLIST_PROC *ldo_urllist_proc;
 	void *ldo_urllist_params;
 
+	/* LDAP connection callback stack */
+	ldaplist *ldo_conn_cbs;
+
 	LDAP_BOOLEANS ldo_booleans;	/* boolean options */
 };
 
@@ -248,6 +269,9 @@ typedef struct ldap_conn {
 #ifdef HAVE_CYRUS_SASL
 	void		*lconn_sasl_authctx;	/* context for bind */
 	void		*lconn_sasl_sockctx;	/* for security layer */
+#endif
+#ifdef HAVE_GSSAPI
+	void		*lconn_gss_ctx;		/* gss_ctx_id_t */
 #endif
 	int			lconn_refcnt;
 	time_t		lconn_created;	/* time */
@@ -393,6 +417,9 @@ LDAP_V ( ldap_pvt_thread_mutex_t ) ldap_int_resolv_mutex;
 #ifdef HAVE_CYRUS_SASL
 LDAP_V( ldap_pvt_thread_mutex_t ) ldap_int_sasl_mutex;
 #endif
+#ifdef HAVE_GSSAPI
+LDAP_V( ldap_pvt_thread_mutex_t ) ldap_int_gssapi_mutex;
+#endif
 #endif
 
 #ifdef LDAP_R_COMPILE
@@ -503,7 +530,7 @@ LDAP_F (void) ldap_int_ip_init( void );
 LDAP_F (int) ldap_int_timeval_dup( struct timeval **dest,
 	const struct timeval *tm );
 LDAP_F (int) ldap_connect_to_host( LDAP *ld, Sockbuf *sb,
-	int proto, const char *host, int port, int async );
+	int proto, LDAPURLDesc *srv, int async );
 LDAP_F (int) ldap_int_poll( LDAP *ld, ber_socket_t s,
 	struct timeval *tvp );
 
@@ -522,12 +549,15 @@ LDAP_F (void) ldap_mark_select_clear( LDAP *ld, Sockbuf *sb );
 LDAP_F (int) ldap_is_read_ready( LDAP *ld, Sockbuf *sb );
 LDAP_F (int) ldap_is_write_ready( LDAP *ld, Sockbuf *sb );
 
+LDAP_F (int) ldap_int_connect_cbs( LDAP *ld, Sockbuf *sb,
+	ber_socket_t *s, LDAPURLDesc *srv, struct sockaddr *addr );
+
 /*
  * in os-local.c
  */
 #ifdef LDAP_PF_LOCAL
 LDAP_F (int) ldap_connect_to_path( LDAP *ld, Sockbuf *sb,
-	const char *path, int async );
+	LDAPURLDesc *srv, int async );
 #endif /* LDAP_PF_LOCAL */
 
 /*
@@ -572,6 +602,7 @@ LDAP_F (BerElement *) ldap_build_search_req LDAP_P((
 	LDAPControl **cctrls,
 	ber_int_t timelimit,
 	ber_int_t sizelimit,
+	ber_int_t deref,
 	ber_int_t *msgidp));
 
 

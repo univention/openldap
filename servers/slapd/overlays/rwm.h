@@ -1,8 +1,8 @@
 /* rwm.h - dn rewrite/attribute mapping header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwm.h,v 1.15.2.3 2008/02/11 23:26:48 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwm.h,v 1.15.2.5 2009/01/22 00:01:13 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -175,7 +175,7 @@ rwm_referral_rewrite(
 	void			*cookie,
 	BerVarray		a_vals,
 	BerVarray		*pa_nvals );
-extern int rwm_dnattr_result_rewrite( dncookie *dc, BerVarray a_vals );
+extern int rwm_dnattr_result_rewrite( dncookie *dc, BerVarray a_vals, BerVarray a_nvals );
 extern int rwm_referral_result_rewrite( dncookie *dc, BerVarray a_vals );
 
 LDAP_END_DECL

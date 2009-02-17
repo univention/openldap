@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.380.2.12 2008/05/27 20:12:44 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.380.2.22 2009/02/13 02:35:39 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * Portions Copyright 2007 by Howard Chu, Symas Corporation.
  * All rights reserved.
  *
@@ -79,7 +79,11 @@ Listener **slap_listeners = NULL;
 #define SLAPD_LISTEN_BACKLOG 1024
 #endif /* ! SLAPD_LISTEN_BACKLOG */
 
-static ber_socket_t wake_sds[2];
+static ber_socket_t wake_sds[2]
+#ifdef HAVE_WINSOCK
+	= { INVALID_SOCKET, INVALID_SOCKET }
+#endif /* HAVE_WINSOCK */
+	;
 static int emfile;
 
 static volatile int waking;
@@ -1641,8 +1645,14 @@ int
 slapd_daemon_destroy( void )
 {
 	connections_destroy();
-	tcp_close( SLAP_FD2SOCK(wake_sds[1]) );
-	tcp_close( SLAP_FD2SOCK(wake_sds[0]) );
+#ifdef HAVE_WINSOCK
+	if ( wake_sds[1] != INVALID_SOCKET && wake_sds[1] != wake_sds[0] )
+#endif /* HAVE_WINSOCK */
+		tcp_close( SLAP_FD2SOCK(wake_sds[1]) );
+#ifdef HAVE_WINSOCK
+	if ( wake_sds[0] != INVALID_SOCKET )
+#endif /* HAVE_WINSOCK */
+		tcp_close( SLAP_FD2SOCK(wake_sds[0]) );
 	sockdestroy();
 
 #ifdef HAVE_SLP
@@ -2291,7 +2301,7 @@ slapd_daemon_task(
 						Debug( LDAP_DEBUG_ANY,
 							"daemon: "
 							SLAP_EVENT_FNAME
-							"failed count %d "
+							" failed count %d "
 							"err (%d): %s\n",
 							ebadf, err,
 							sock_errstr( err ) );
@@ -2485,7 +2495,7 @@ slapd_daemon_task(
 #endif /* LDAP_DEBUG */
 
 		for ( i = 0; i < ns; i++ ) {
-			int rc = 1, fd;
+			int rc = 1, fd, w = 0;
 
 			if ( SLAP_EVENT_IS_LISTENER( i ) ) {
 				rc = slap_listener_activate( SLAP_EVENT_LISTENER( i ) );
@@ -2503,7 +2513,7 @@ slapd_daemon_task(
 					char c[BUFSIZ];
 					waking = 0;
 					tcp_read( SLAP_FD2SOCK(wake_sds[0]), c, sizeof(c) );
-					break;
+					continue;
 				}
 
 				if ( SLAP_EVENT_IS_WRITE( i ) ) {
@@ -2512,6 +2522,7 @@ slapd_daemon_task(
 						fd, 0, 0 );
 
 					SLAP_EVENT_CLR_WRITE( i );
+					w = 1;
 
 					/*
 					 * NOTE: it is possible that the connection was closed
@@ -2531,9 +2542,17 @@ slapd_daemon_task(
 
 					SLAP_EVENT_CLR_READ( i );
 					connection_read_activate( fd );
-				} else {
+				} else if ( !w ) {
 					Debug( LDAP_DEBUG_CONNS,
 						"daemon: hangup on %d\n", fd, 0, 0 );
+					if ( SLAP_SOCK_IS_ACTIVE( fd )) {
+#ifdef HAVE_EPOLL
+						/* Don't keep reporting the hangup
+						 */
+						SLAP_EPOLL_SOCK_SET( fd, EPOLLET );
+#endif
+						connection_hangup( fd );
+					}
 				}
 			}
 		}
@@ -2572,9 +2591,12 @@ slapd_daemon_task(
 		connections_shutdown();
 	}
 
-	Debug( LDAP_DEBUG_ANY,
-		"slapd shutdown: waiting for %d threads to terminate\n",
-		ldap_pvt_thread_pool_backload( &connection_pool ), 0, 0 );
+	if ( LogTest( LDAP_DEBUG_ANY )) {
+		int t = ldap_pvt_thread_pool_backload( &connection_pool );
+		Debug( LDAP_DEBUG_ANY,
+			"slapd shutdown: waiting for %d operations/tasks to finish\n",
+			t, 0, 0 );
+	}
 	ldap_pvt_thread_pool_destroy( &connection_pool, 1 );
 
 	free( slap_listeners );

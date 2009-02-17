@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/conn.c,v 1.86.2.15 2008/04/14 21:19:57 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/conn.c,v 1.86.2.17 2009/01/22 00:01:07 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -289,11 +289,12 @@ meta_back_init_one_conn(
 	 * don't return the connection */
 	if ( mt->mt_isquarantined ) {
 		slap_retry_info_t	*ri = &mt->mt_quarantine;
-		int			dont_retry = 1;
+		int			dont_retry = 0;
 
 		if ( mt->mt_quarantine.ri_interval ) {
 			ldap_pvt_thread_mutex_lock( &mt->mt_quarantine_mutex );
-			if ( mt->mt_isquarantined == LDAP_BACK_FQ_YES ) {
+			dont_retry = ( mt->mt_isquarantined > LDAP_BACK_FQ_NO );
+			if ( dont_retry ) {
 				dont_retry = ( ri->ri_num[ ri->ri_idx ] == SLAP_RETRYNUM_TAIL
 					|| slap_get_time() < ri->ri_last + ri->ri_interval[ ri->ri_idx ] );
 				if ( !dont_retry ) {
@@ -307,9 +308,10 @@ meta_back_init_one_conn(
 						Debug( LDAP_DEBUG_ANY, "%s %s.\n",
 							op->o_log_prefix, buf, 0 );
 					}
+
+					mt->mt_isquarantined = LDAP_BACK_FQ_RETRYING;
 				}
 
-				mt->mt_isquarantined = LDAP_BACK_FQ_RETRYING;
 			}
 			ldap_pvt_thread_mutex_unlock( &mt->mt_quarantine_mutex );
 		}

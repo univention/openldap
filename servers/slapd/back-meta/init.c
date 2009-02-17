@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/init.c,v 1.58.2.10 2008/07/09 23:48:40 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/init.c,v 1.58.2.12 2009/01/30 19:07:40 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -53,7 +53,10 @@ meta_back_initialize(
 		SLAP_BFLAG_DYNAMIC |
 #endif /* LDAP_DYNAMIC_OBJECTS */
 #endif
-		0;
+
+		/* back-meta recognizes RFC4525 increment;
+		 * let the remote server complain, if needed (ITS#5912) */
+		SLAP_BFLAG_INCREMENT;
 
 	bi->bi_open = meta_back_open;
 	bi->bi_config = 0;

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.88.2.17 2008/07/08 21:09:37 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.88.2.28 2009/01/26 21:50:09 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2008 The OpenLDAP Foundation.
+ * Copyright 2003-2009 The OpenLDAP Foundation.
  * Portions Copyright 2003 IBM Corporation.
  * Portions Copyright 2003 Symas Corporation.
  * All rights reserved.
@@ -182,6 +182,7 @@ typedef struct cache_manager_s {
 	unsigned long	num_cached_queries; 		/* total number of cached queries */
 	unsigned long   max_queries;			/* upper bound on # of cached queries */
 	int		save_queries;			/* save cached queries across restarts */
+	int	check_cacheability;		/* check whether a query is cacheable */
 	int 	numattrsets;			/* number of attribute sets */
 	int 	cur_entries;			/* current number of entries cached */
 	int 	max_entries;			/* max number of entries cached */
@@ -264,17 +265,17 @@ query2url( Operation *op, CachedQuery *q, struct berval *urlbv )
 {
 	struct berval	bv_scope,
 			bv_filter;
-	char		attrset_buf[ 32 ],
-			expiry_buf[ 32 ],
+	char		attrset_buf[ LDAP_PVT_INTTYPE_CHARS( unsigned long ) ],
+			expiry_buf[ LDAP_PVT_INTTYPE_CHARS( unsigned long ) ],
 			*ptr;
 	ber_len_t	attrset_len,
 			expiry_len;
 
 	ldap_pvt_scope2bv( q->scope, &bv_scope );
 	filter2bv_x( op, q->filter, &bv_filter );
-	attrset_len = snprintf( attrset_buf, sizeof( attrset_buf ),
+	attrset_len = sprintf( attrset_buf,
 		"%lu", (unsigned long)q->qtemp->attr_set_index );
-	expiry_len = snprintf( expiry_buf, sizeof( expiry_buf ),
+	expiry_len = sprintf( expiry_buf,
 		"%lu", (unsigned long)q->expiry_time );
 
 	urlbv->bv_len = STRLENOF( "ldap:///" )
@@ -587,13 +588,12 @@ static int lex_bvcmp( struct berval *bv1, struct berval *bv2 )
 	return len;
 }
 
-/* compare the first value in each filter */
-static int pcache_filter_cmp( const void *v1, const void *v2 )
+/* compare the current value in each filter */
+static int pcache_filter_cmp( Filter *f1, Filter *f2 )
 {
-	const CachedQuery *q1 = v1, *q2 =v2;
 	int rc, weight1, weight2;
 
-	switch( q1->first->f_choice ) {
+	switch( f1->f_choice ) {
 	case LDAP_FILTER_PRESENT:
 		weight1 = 0;
 		break;
@@ -605,7 +605,7 @@ static int pcache_filter_cmp( const void *v1, const void *v2 )
 	default:
 		weight1 = 2;
 	}
-	switch( q2->first->f_choice ) {
+	switch( f2->f_choice ) {
 	case LDAP_FILTER_PRESENT:
 		weight2 = 0;
 		break;
@@ -620,54 +620,78 @@ static int pcache_filter_cmp( const void *v1, const void *v2 )
 	rc = weight1 - weight2;
 	if ( !rc ) {
 		switch( weight1 ) {
-		case 0:	return 0;
+		case 0:
+			break;
 		case 1:
-			rc = lex_bvcmp( &q1->first->f_av_value, &q2->first->f_av_value );
+			rc = lex_bvcmp( &f1->f_av_value, &f2->f_av_value );
 			break;
 		case 2:
-			if ( q1->first->f_choice == LDAP_FILTER_SUBSTRINGS ) {
+			if ( f1->f_choice == LDAP_FILTER_SUBSTRINGS ) {
 				rc = 0;
-				if ( !BER_BVISNULL( &q1->first->f_sub_initial )) {
-					if ( !BER_BVISNULL( &q2->first->f_sub_initial )) {
-						rc = lex_bvcmp( &q1->first->f_sub_initial,
-							&q2->first->f_sub_initial );
+				if ( !BER_BVISNULL( &f1->f_sub_initial )) {
+					if ( !BER_BVISNULL( &f2->f_sub_initial )) {
+						rc = lex_bvcmp( &f1->f_sub_initial,
+							&f2->f_sub_initial );
 					} else {
 						rc = 1;
 					}
-				} else if ( !BER_BVISNULL( &q2->first->f_sub_initial )) {
+				} else if ( !BER_BVISNULL( &f2->f_sub_initial )) {
 					rc = -1;
 				}
 				if ( rc ) break;
-				if ( q1->first->f_sub_any ) {
-					if ( q2->first->f_sub_any ) {
-						rc = lex_bvcmp( q1->first->f_sub_any,
-							q2->first->f_sub_any );
+				if ( f1->f_sub_any ) {
+					if ( f2->f_sub_any ) {
+						rc = lex_bvcmp( f1->f_sub_any,
+							f2->f_sub_any );
 					} else {
 						rc = 1;
 					}
-				} else if ( q2->first->f_sub_any ) {
+				} else if ( f2->f_sub_any ) {
 					rc = -1;
 				}
 				if ( rc ) break;
-				if ( !BER_BVISNULL( &q1->first->f_sub_final )) {
-					if ( !BER_BVISNULL( &q2->first->f_sub_final )) {
-						rc = lex_bvcmp( &q1->first->f_sub_final,
-							&q2->first->f_sub_final );
+				if ( !BER_BVISNULL( &f1->f_sub_final )) {
+					if ( !BER_BVISNULL( &f2->f_sub_final )) {
+						rc = lex_bvcmp( &f1->f_sub_final,
+							&f2->f_sub_final );
 					} else {
 						rc = 1;
 					}
-				} else if ( !BER_BVISNULL( &q2->first->f_sub_final )) {
+				} else if ( !BER_BVISNULL( &f2->f_sub_final )) {
 					rc = -1;
 				}
 			} else {
-				rc = lex_bvcmp( &q1->first->f_mr_value,
-					&q2->first->f_mr_value );
+				rc = lex_bvcmp( &f1->f_mr_value,
+					&f2->f_mr_value );
 			}
 			break;
 		}
+		if ( !rc ) {
+			f1 = f1->f_next;
+			f2 = f2->f_next;
+			if ( f1 || f2 ) {
+				if ( !f1 )
+					rc = -1;
+				else if ( !f2 )
+					rc = 1;
+				else {
+					while ( f1->f_choice == LDAP_FILTER_AND || f1->f_choice == LDAP_FILTER_OR )
+						f1 = f1->f_and;
+					while ( f2->f_choice == LDAP_FILTER_AND || f2->f_choice == LDAP_FILTER_OR )
+						f2 = f2->f_and;
+					rc = pcache_filter_cmp( f1, f2 );
+				}
+			}
+		}
 	}
-
 	return rc;
+}
+
+/* compare filters in each query */
+static int pcache_query_cmp( const void *v1, const void *v2 )
+{
+	const CachedQuery *q1 = v1, *q2 =v2;
+	return pcache_filter_cmp( q1->first, q2->first );
 }
 
 /* add query on top of LRU list */
@@ -921,7 +945,7 @@ find_filter( Operation *op, Avlnode *root, Filter *inputf, Filter *first )
 		ptr = tavl_end( root, 1 );
 		dir = TAVL_DIR_LEFT;
 	} else {
-		ptr = tavl_find3( root, &cq, pcache_filter_cmp, &ret );
+		ptr = tavl_find3( root, &cq, pcache_query_cmp, &ret );
 		dir = (first->f_choice == LDAP_FILTER_GE) ? TAVL_DIR_LEFT :
 			TAVL_DIR_RIGHT;
 	}
@@ -1226,7 +1250,7 @@ add_query(
 	new_cached_query->prev = NULL;
 	new_cached_query->qbase = qbase;
 	rc = tavl_insert( &qbase->scopes[query->scope], new_cached_query,
-		pcache_filter_cmp, avl_dup_error );
+		pcache_query_cmp, avl_dup_error );
 	if ( rc == 0 ) {
 		qbase->queries++;
 		if (templ->query == NULL)
@@ -1272,7 +1296,7 @@ remove_from_template (CachedQuery* qc, QueryTemplate* template)
 		qc->next->prev = qc->prev;
 		qc->prev->next = qc->next;
 	}
-	tavl_delete( &qc->qbase->scopes[qc->scope], qc, pcache_filter_cmp );
+	tavl_delete( &qc->qbase->scopes[qc->scope], qc, pcache_query_cmp );
 	qc->qbase->queries--;
 	if ( qc->qbase->queries == 0 ) {
 		avl_delete( &template->qbase, qc->qbase, pcache_dn_cmp );
@@ -1593,6 +1617,7 @@ struct search_info {
 	Query query;
 	QueryTemplate *qtemp;
 	AttributeName*  save_attrs;	/* original attributes, saved for response */
+	int swap_saved_attrs;
 	int max;
 	int over;
 	int count;
@@ -1695,7 +1720,7 @@ pcache_remove_entries_from_cache(
 	Filter		f = { 0 };
 	char		filtbuf[ LDAP_LUTIL_UUIDSTR_BUFSIZE + STRLENOF( "(entryUUID=)" ) ];
 	AttributeAssertion ava = ATTRIBUTEASSERTION_INIT;
-	AttributeName	attrs[ 2 ] = { 0 };
+	AttributeName	attrs[ 2 ] = {{{ 0 }}};
 	int		s, rc;
 
 	if ( op == NULL ) {
@@ -1810,7 +1835,7 @@ pcache_remove_entry_queries_from_cache(
 	Filter			f = { 0 };
 	char			filter_str[ LDAP_LUTIL_UUIDSTR_BUFSIZE + STRLENOF( "(queryId=)" ) ];
 	AttributeAssertion	ava = ATTRIBUTEASSERTION_INIT;
-	AttributeName		attrs[ 2 ] = { 0 };
+	AttributeName		attrs[ 2 ] = {{{ 0 }}};
 	int			rc;
 
 	BerVarray		vals = NULL;
@@ -1960,6 +1985,14 @@ pcache_op_cleanup( Operation *op, SlapReply *rs ) {
 		 * limit, empty the chain and ignore the rest.
 		 */
 		if ( !si->over ) {
+			/* check if the entry contains undefined
+			 * attributes/objectClasses (ITS#5680) */
+			if ( cm->check_cacheability && test_filter( op, rs->sr_entry, si->query.filter ) != LDAP_COMPARE_TRUE ) {
+				Debug( pcache_debug, "%s: query not cacheable because of schema issues in DN \"%s\"\n",
+					op->o_log_prefix, rs->sr_entry->e_name.bv_val, 0 );
+				goto over;
+			}
+
 			if ( si->count < si->max ) {
 				si->count++;
 				e = entry_dup( rs->sr_entry );
@@ -1968,6 +2001,7 @@ pcache_op_cleanup( Operation *op, SlapReply *rs ) {
 				si->tail = e;
 
 			} else {
+over:;
 				si->over = 1;
 				si->count = 0;
 				for (;si->head; si->head=e) {
@@ -1984,7 +2018,7 @@ pcache_op_cleanup( Operation *op, SlapReply *rs ) {
 	if ( rs->sr_type == REP_RESULT || 
 		op->o_abandon || rs->sr_err == SLAPD_ABANDON )
 	{
-		if ( si->save_attrs != NULL ) {
+		if ( si->swap_saved_attrs ) {
 			rs->sr_attrs = si->save_attrs;
 			op->ors_attrs = si->save_attrs;
 		}
@@ -2067,7 +2101,7 @@ pcache_response(
 {
 	struct search_info *si = op->o_callback->sc_private;
 
-	if ( si->save_attrs != NULL ) {
+	if ( si->swap_saved_attrs ) {
 		rs->sr_attrs = si->save_attrs;
 		op->ors_attrs = si->save_attrs;
 	}
@@ -2164,7 +2198,7 @@ add_filter_attrs(
 	}
 	BER_BVZERO( &(*new_attrs)[j].an_name );
 
-	return count;
+	return j;
 }
 
 /* NOTE: this is a quick workaround to let pcache minimally interact
@@ -2305,6 +2339,9 @@ pcache_op_search(
 		return rs->sr_err;
 	}
 
+	/* pickup runtime ACL changes */
+	cm->db.be_acl = op->o_bd->be_acl;
+
 	tempstr.bv_val = op->o_tmpalloc( op->ors_filterstr.bv_len+1, op->o_tmpmemctx );
 	tempstr.bv_len = 0;
 	if ( filter2template( op, op->ors_filter, &tempstr, &filter_attrs,
@@ -2416,6 +2453,7 @@ pcache_op_search(
 		}
 		si->head = NULL;
 		si->tail = NULL;
+		si->swap_saved_attrs = 1;
 		si->save_attrs = op->ors_attrs;
 
 		op->ors_attrs = qtemp->t_attrs.attrs;
@@ -2634,16 +2672,12 @@ static ConfigTable pccfg[] = {
 		"( OLcfgOvAt:2.6 NAME 'olcProxySaveQueries' "
 			"DESC 'Save cached queries for hot restart' "
 			"SYNTAX OMsBoolean )", NULL, NULL },
+	{ "proxyCheckCacheability", "TRUE|FALSE",
+		2, 2, 0, ARG_ON_OFF|ARG_OFFSET, (void *)offsetof(cache_manager, check_cacheability),
+		"( OLcfgOvAt:2.7 NAME 'olcProxyCheckCacheability' "
+			"DESC 'Check whether the results of a query are cacheable, e.g. for schema issues' "
+			"SYNTAX OMsBoolean )", NULL, NULL },
 
-	{ NULL, NULL, 0, 0, 0, ARG_IGNORED }
-};
-
-/* Need to no-op this keyword for dynamic config */
-static ConfigTable pcdummy[] = {
-	{ "", "", 0, 0, 0, ARG_IGNORED,
-		NULL, "( OLcfgGlAt:13 NAME 'olcDatabase' "
-			"DESC 'The backend type for a database instance' "
-			"SUP olcBackend SINGLE-VALUE X-ORDERED 'SIBLINGS' )", NULL, NULL },
 	{ NULL, NULL, 0, 0, 0, ARG_IGNORED }
 };
 
@@ -2653,12 +2687,12 @@ static ConfigOCs pcocs[] = {
 		"DESC 'ProxyCache configuration' "
 		"SUP olcOverlayConfig "
 		"MUST ( olcProxyCache $ olcProxyAttrset $ olcProxyTemplate ) "
-		"MAY ( olcProxyResponseCB $ olcProxyCacheQueries $ olcProxySaveQueries ) )",
+		"MAY ( olcProxyResponseCB $ olcProxyCacheQueries $ olcProxySaveQueries $ olcProxyCheckCacheability ) )",
 		Cft_Overlay, pccfg, NULL, pc_cfadd },
 	{ "( OLcfgOvOc:2.2 "
 		"NAME 'olcPcacheDatabase' "
 		"DESC 'Cache database configuration' "
-		"AUXILIARY )", Cft_Misc, pcdummy, pc_ldadd },
+		"AUXILIARY )", Cft_Misc, olcDatabaseDummy, pc_ldadd },
 	{ NULL, 0, NULL }
 };
 
@@ -2704,7 +2738,7 @@ pc_cfadd( Operation *op, SlapReply *rs, Entry *p, ConfigArgs *ca )
 	/* FIXME: should not hardcode "olcDatabase" here */
 	bv.bv_len = snprintf( ca->cr_msg, sizeof( ca->cr_msg ),
 		"olcDatabase=%s", cm->db.bd_info->bi_type );
-	if ( bv.bv_len < 0 || bv.bv_len >= sizeof( ca->cr_msg ) ) {
+	if ( bv.bv_len >= sizeof( ca->cr_msg ) ) {
 		return -1;
 	}
 	bv.bv_val = ca->cr_msg;
@@ -3137,7 +3171,7 @@ pcache_db_init(
 	cm->db = *be;
 	SLAP_DBFLAGS(&cm->db) |= SLAP_DBFLAG_NO_SCHEMA_CHECK;
 	cm->db.be_private = NULL;
-	cm->db.be_pcl_mutexp = &cm->db.be_pcl_mutex;
+	cm->db.bd_self = &cm->db;
 	cm->qm = qm;
 	cm->numattrsets = 0;
 	cm->num_entries_limit = 5;
@@ -3146,6 +3180,7 @@ pcache_db_init(
 	cm->cur_entries = 0;
 	cm->max_queries = 10000;
 	cm->save_queries = 0;
+	cm->check_cacheability = 0;
 	cm->response_cb = PCACHE_RESPONSE_CB_TAIL;
 	cm->defer_db_open = 1;
 	cm->cc_period = 1000;
@@ -3249,7 +3284,7 @@ pcache_db_open2(
 			BerVarray	vals = NULL;
 			Filter		f = { 0 }, f2 = { 0 };
 			AttributeAssertion	ava = ATTRIBUTEASSERTION_INIT;
-			AttributeName	attrs[ 2 ] = { 0 };
+			AttributeName	attrs[ 2 ] = {{{ 0 }}};
 
 			connection_fake_init( &conn, &opbuf, thrctx );
 			op = &opbuf.ob_op;
@@ -3415,7 +3450,7 @@ pcache_db_close(
 		slap_callback	cb = { 0 };
 
 		SlapReply	rs = { REP_RESULT };
-		Modifications	mod = { 0 };
+		Modifications	mod = {{ 0 }};
 
 		thrctx = ldap_pvt_thread_pool_context();
 
@@ -3788,8 +3823,8 @@ pcache_exop_query_delete(
 
 	struct berval	uuid = BER_BVNULL,
 			*uuidp = NULL;
-	char		buf[ SLAP_TEXT_BUFLEN ] = { '\0' };
-	int		len = 0;
+	char		buf[ SLAP_TEXT_BUFLEN ];
+	unsigned	len;
 	ber_tag_t	tag = LBER_DEFAULT;
 
 	if ( LogTest( LDAP_DEBUG_STATS ) ) {
@@ -3807,7 +3842,7 @@ pcache_exop_query_delete(
 		assert( !BER_BVISNULL( &op->o_req_ndn ) );
 		len = snprintf( buf, sizeof( buf ), " dn=\"%s\"", op->o_req_ndn.bv_val );
 
-		if ( !BER_BVISNULL( &uuid ) ) {
+		if ( !BER_BVISNULL( &uuid ) && len < sizeof( buf ) ) {
 			snprintf( &buf[ len ], sizeof( buf ) - len, " queryId=\"%s\"", uuid.bv_val );
 		}
 
@@ -3977,11 +4012,6 @@ pcache_initialize()
 	code = config_register_schema( pccfg, pcocs );
 	if ( code ) return code;
 
-	{
-		const char *text;
-		code = slap_str2ad( "olcDatabase", &pcdummy[0].ad, &text );
-		if ( code ) return code;
-	}
 	return overlay_register( &pcache );
 }
 

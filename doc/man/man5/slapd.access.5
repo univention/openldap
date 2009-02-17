@@ -1,7 +1,7 @@
 .TH SLAPD.ACCESS 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.access.5,v 1.70.2.10 2008/07/09 00:48:35 quanah Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.access.5,v 1.70.2.16 2009/02/02 22:45:18 quanah Exp $
 .SH NAME
 slapd.access \- access configuration for slapd, the stand-alone LDAP daemon
 .SH SYNOPSIS
@@ -54,11 +54,18 @@ are then used.
 If no access controls are present, the default policy
 allows anyone and everyone to read anything but restricts
 updates to rootdn.  (e.g., "access to * by * read").
-The rootdn can always read and write EVERYTHING!
+.LP
+When dealing with an access list, because the global access list is 
+effectively appended to each per-database list, if the resulting 
+list is non-empty then the access list will end with an implicit 
+.B access to * by * none
+directive. If there are no access directives applicable to a backend, 
+then a default read is used.
+.LP
+.B Be warned: the rootdn can always read and write EVERYTHING!
 .LP
 For entries not held in any backend (such as a root DSE), the
-directives of the first backend (and any global directives) are
-used.
+global directives are used.
 .LP
 Arguments that should be replaced by actual text are shown in
 brackets <>.
@@ -369,6 +376,10 @@ ranging from 0 to 9 (where 0 matches the entire string),
 or the form
 .BR ${<digit>+} ,
 for submatches higher than 9.
+Substring substitution from attribute value can
+be done in 
+using the form
+.BR ${v<digit>+} .
 Since the dollar character is used to indicate a substring replacement,
 the dollar character that is used to indicate match up to the end of
 the string must be escaped by a second dollar character, e.g.
@@ -728,7 +739,8 @@ modifier.
 An example is the
 .B selfwrite
 access to the member attribute of a group, which allows one to add/delete
-its own DN from the member list of a group, without affecting other members.
+its own DN from the member list of a group, while being not allowed
+to affect other members.
 .LP
 The 
 .B level 
@@ -910,7 +922,15 @@ When adding the suffix entry of a database,
 .B add
 access to
 .B children
-of the empty DN ("") is required.
+of the empty DN ("") is required. Also if
+Add content ACL checking has been configured on
+the database (see the
+.BR slapd.conf (5)
+or
+.BR slapd-config (5)
+manual page),
+.B add (=a)
+will be required on all of the attributes being added.
 
 .LP
 The 

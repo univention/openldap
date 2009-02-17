@@ -1,8 +1,8 @@
 /* result.c - routines to send ldap results, errors, and referrals */
-/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.289.2.14 2008/05/28 16:28:18 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.289.2.21 2009/01/26 20:48:05 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -137,27 +137,53 @@ static long send_ldap_ber(
 	BerElement *ber )
 {
 	ber_len_t bytes;
+	long ret = 0;
+	int closing = 0;
 
 	ber_get_option( ber, LBER_OPT_BER_BYTES_TO_WRITE, &bytes );
 
 	/* write only one pdu at a time - wait til it's our turn */
-	ldap_pvt_thread_mutex_lock( &conn->c_write_mutex );
+	ldap_pvt_thread_mutex_lock( &conn->c_write1_mutex );
+	if ( connection_state_closing( conn )) {
+		ldap_pvt_thread_mutex_unlock( &conn->c_write1_mutex );
+		return 0;
+	}
+	while ( conn->c_writers > 0 ) {
+		ldap_pvt_thread_cond_wait( &conn->c_write1_cv, &conn->c_write1_mutex );
+	}
+	/* connection was closed under us */
+	if ( conn->c_writers < 0 ) {
+		closing = 1;
+		/* we're the last waiter, let the closer continue */
+		if ( conn->c_writers == -1 )
+			ldap_pvt_thread_cond_signal( &conn->c_write1_cv );
+	}
 
-	/* lock the connection */ 
-	ldap_pvt_thread_mutex_lock( &conn->c_mutex );
+	conn->c_writers++;
+
+	if ( closing ) {
+		ldap_pvt_thread_mutex_unlock( &conn->c_write1_mutex );
+		return 0;
+	}
 
 	/* write the pdu */
 	while( 1 ) {
 		int err;
 
-		if ( connection_state_closing( conn ) ) {
-			ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
-			ldap_pvt_thread_mutex_unlock( &conn->c_write_mutex );
-
-			return 0;
+		/* lock the connection */ 
+		if ( ldap_pvt_thread_mutex_trylock( &conn->c_mutex )) {
+			ldap_pvt_thread_mutex_unlock( &conn->c_write1_mutex );
+			ldap_pvt_thread_mutex_lock( &conn->c_write1_mutex );
+			if ( conn->c_writers < 0 ) {
+				ret = 0;
+				break;
+			}
+			continue;
 		}
 
 		if ( ber_flush2( conn->c_sb, ber, LBER_FLUSH_FREE_NEVER ) == 0 ) {
+			ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
+			ret = bytes;
 			break;
 		}
 
@@ -173,26 +199,42 @@ static long send_ldap_ber(
 		    err, sock_errstr(err), 0 );
 
 		if ( err != EWOULDBLOCK && err != EAGAIN ) {
+			conn->c_writers--;
+			ldap_pvt_thread_mutex_unlock( &conn->c_write1_mutex );
 			connection_closing( conn, "connection lost on write" );
 
 			ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
-			ldap_pvt_thread_mutex_unlock( &conn->c_write_mutex );
-
-			return( -1 );
+			return -1;
 		}
 
 		/* wait for socket to be write-ready */
+		ldap_pvt_thread_mutex_lock( &conn->c_write2_mutex );
 		conn->c_writewaiter = 1;
 		slapd_set_write( conn->c_sd, 1 );
 
-		ldap_pvt_thread_cond_wait( &conn->c_write_cv, &conn->c_mutex );
+		ldap_pvt_thread_mutex_unlock( &conn->c_write1_mutex );
+		ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
+		ldap_pvt_thread_cond_wait( &conn->c_write2_cv, &conn->c_write2_mutex );
 		conn->c_writewaiter = 0;
+		ldap_pvt_thread_mutex_unlock( &conn->c_write2_mutex );
+		ldap_pvt_thread_mutex_lock( &conn->c_write1_mutex );
+		if ( conn->c_writers < 0 ) {
+			ret = 0;
+			break;
+		}
 	}
 
-	ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
-	ldap_pvt_thread_mutex_unlock( &conn->c_write_mutex );
+	if ( conn->c_writers < 0 ) {
+		conn->c_writers++;
+		if ( !conn->c_writers )
+			ldap_pvt_thread_cond_signal( &conn->c_write1_cv );
+	} else {
+		conn->c_writers--;
+		ldap_pvt_thread_cond_signal( &conn->c_write1_cv );
+	}
+	ldap_pvt_thread_mutex_unlock( &conn->c_write1_mutex );
 
-	return bytes;
+	return ret;
 }
 
 static int
@@ -538,6 +580,14 @@ clean2:;
 		}
 	}
 
+	if ( rs->sr_flags & REP_CTRLS_MUSTBEFREED ) {
+		rs->sr_flags ^= REP_CTRLS_MUSTBEFREED; /* paranoia */
+		if ( rs->sr_ctrls ) {
+			slap_free_ctrls( op, rs->sr_ctrls );
+			rs->sr_ctrls = NULL;
+		}
+	}
+
 	return rc;
 }
 
@@ -641,14 +691,10 @@ abandon:
 
 	if ( send_ldap_response( op, rs ) == SLAP_CB_CONTINUE ) {
 		if ( op->o_tag == LDAP_REQ_SEARCH ) {
-			char nbuf[64];
-			snprintf( nbuf, sizeof nbuf, "%d nentries=%d",
-				rs->sr_err, rs->sr_nentries );
-
 			Statslog( LDAP_DEBUG_STATS,
-			"%s SEARCH RESULT tag=%lu err=%s text=%s\n",
-				op->o_log_prefix, rs->sr_tag, nbuf,
-				rs->sr_text ? rs->sr_text : "", 0 );
+				"%s SEARCH RESULT tag=%lu err=%d nentries=%d text=%s\n",
+				op->o_log_prefix, rs->sr_tag, rs->sr_err,
+				rs->sr_nentries, rs->sr_text ? rs->sr_text : "" );
 		} else {
 			Statslog( LDAP_DEBUG_STATS,
 				"%s RESULT tag=%lu err=%d text=%s\n",
@@ -739,7 +785,6 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 	BerElement	*ber = (BerElement *) &berbuf;
 	Attribute	*a;
 	int		i, j, rc = LDAP_UNAVAILABLE, bytes;
-	char		*edn;
 	int		userattrs;
 	AccessControlState acl_state = ACL_STATE_INIT;
 	int			 attrsonly;
@@ -801,8 +846,6 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 		rc = LDAP_INSUFFICIENT_ACCESS;
 		goto error_return;
 	}
-
-	edn = rs->sr_entry->e_nname.bv_val;
 
 	if ( op->o_res_ber ) {
 		/* read back control or LDAP_CONNECTIONLESS */
@@ -1190,6 +1233,9 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 		goto error_return;
 	}
 
+	Statslog( LDAP_DEBUG_STATS2, "%s ENTRY dn=\"%s\"\n",
+	    op->o_log_prefix, rs->sr_entry->e_nname.bv_val, 0, 0, 0 );
+
 	if ( rs->sr_flags & REP_ENTRY_MUSTRELEASE ) {
 		be_entry_release_rw( op, rs->sr_entry, 0 );
 		rs->sr_flags ^= REP_ENTRY_MUSTRELEASE;
@@ -1216,9 +1262,6 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 		ldap_pvt_mp_add_ulong( op->o_counters->sc_pdu, 1 );
 		ldap_pvt_thread_mutex_unlock( &op->o_counters->sc_mutex );
 	}
-
-	Statslog( LDAP_DEBUG_STATS2, "%s ENTRY dn=\"%s\"\n",
-	    op->o_log_prefix, edn, 0, 0, 0 );
 
 	Debug( LDAP_DEBUG_TRACE,
 		"<= send_search_entry: conn %lu exit.\n", op->o_connid, 0, 0 );
@@ -1265,6 +1308,7 @@ slap_send_search_reference( Operation *op, SlapReply *rs )
 	BerElement	*ber = (BerElement *) &berbuf;
 	int rc = 0;
 	int bytes;
+	char *edn = rs->sr_entry ? rs->sr_entry->e_name.bv_val : "(null)";
 
 	AttributeDescription *ad_ref = slap_schema.si_ad_ref;
 	AttributeDescription *ad_entry = slap_schema.si_ad_entry;
@@ -1279,7 +1323,7 @@ slap_send_search_reference( Operation *op, SlapReply *rs )
 
 	Debug( LDAP_DEBUG_TRACE,
 		"=> send_search_reference: dn=\"%s\"\n",
-		rs->sr_entry ? rs->sr_entry->e_name.bv_val : "(null)", 0, 0 );
+		edn, 0, 0 );
 
 	if (  rs->sr_entry && ! access_allowed( op, rs->sr_entry,
 		ad_entry, NULL, ACL_READ, NULL ) )
@@ -1305,7 +1349,7 @@ slap_send_search_reference( Operation *op, SlapReply *rs )
 	if( op->o_domain_scope ) {
 		Debug( LDAP_DEBUG_ANY,
 			"send_search_reference: domainScope control in (%s)\n", 
-			rs->sr_entry->e_dn, 0, 0 );
+			edn, 0, 0 );
 		rc = 0;
 		goto rel;
 	}
@@ -1313,7 +1357,7 @@ slap_send_search_reference( Operation *op, SlapReply *rs )
 	if( rs->sr_ref == NULL ) {
 		Debug( LDAP_DEBUG_ANY,
 			"send_search_reference: null ref in (%s)\n", 
-			rs->sr_entry ? rs->sr_entry->e_dn : "(null)", 0, 0 );
+			edn, 0, 0 );
 		rc = 1;
 		goto rel;
 	}
@@ -1363,6 +1407,7 @@ slap_send_search_reference( Operation *op, SlapReply *rs )
 
 	rc = 0;
 	if ( rs->sr_flags & REP_ENTRY_MUSTRELEASE ) {
+		assert( rs->sr_entry != NULL );
 		be_entry_release_rw( op, rs->sr_entry, 0 );
 		rs->sr_flags ^= REP_ENTRY_MUSTRELEASE;
 		rs->sr_entry = NULL;
@@ -1512,8 +1557,8 @@ int slap_read_controls(
 	LDAPControl c;
 	Operation myop;
 
-	Debug( LDAP_DEBUG_ANY, "slap_read_controls: (%s) %s\n",
-		oid->bv_val, e->e_dn, 0 );
+	Debug( LDAP_DEBUG_ANY, "%s slap_read_controls: (%s) %s\n",
+		op->o_log_prefix, oid->bv_val, e->e_dn );
 
 	rs->sr_entry = e;
 	rs->sr_attrs = ( oid == &slap_pre_read_bv ) ?
@@ -1538,7 +1583,7 @@ int slap_read_controls(
 
 	rc = ber_flatten2( ber, &c.ldctl_value, 0 );
 
-	if( rc == LBER_ERROR ) return LDAP_OTHER;
+	if( rc == -1 ) return LDAP_OTHER;
 
 	c.ldctl_oid = oid->bv_val;
 	c.ldctl_iscritical = 0;

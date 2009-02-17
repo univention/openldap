@@ -1,8 +1,8 @@
 /* idl.c - ldap id list handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/idl.c,v 1.124.2.7 2008/02/11 23:26:45 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/idl.c,v 1.124.2.9 2009/01/22 00:01:05 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -502,7 +502,7 @@ int
 bdb_idl_fetch_key(
 	BackendDB	*be,
 	DB			*db,
-	BDB_LOCKER locker,
+	DB_TXN		*txn,
 	DBT			*key,
 	ID			*ids,
 	DBC                     **saved_cursor,
@@ -575,13 +575,12 @@ bdb_idl_fetch_key(
 
 	/* If we're not reusing an existing cursor, get a new one */
 	if( opflag != DB_NEXT ) {
-		rc = db->cursor( db, NULL, &cursor, bdb->bi_db_opflags );
+		rc = db->cursor( db, txn, &cursor, bdb->bi_db_opflags );
 		if( rc != 0 ) {
 			Debug( LDAP_DEBUG_ANY, "=> bdb_idl_fetch_key: "
 				"cursor failed: %s (%d)\n", db_strerror(rc), rc, 0 );
 			return rc;
 		}
-		CURSOR_SETLOCKER( cursor, locker );
 	} else {
 		cursor = *saved_cursor;
 	}

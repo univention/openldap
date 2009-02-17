@@ -1,7 +1,7 @@
 .TH SLAPD-LDAP 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-ldap.5,v 1.41.2.8 2008/07/10 00:28:39 quanah Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-ldap.5,v 1.41.2.12 2009/01/30 20:08:05 quanah Exp $
 .SH NAME
 slapd-ldap \- LDAP backend to slapd
 .SH SYNOPSIS
@@ -36,6 +36,15 @@ allowed to authorize by means of appropriate
 rules; see 
 .BR slapd.conf (5)
 for details.
+
+The proxy instance of
+.BR slapd (8)
+must contain schema information for the attributes and objectClasses
+used in filters, request DN and request-related data in general.
+It should also contain schema information for the data returned
+by the proxied server.
+It is the responsibility of the proxy administrator to keep the schema
+of the proxy lined up with that of the proxied server.
 
 .LP
 Note: When looping back to the same instance of
@@ -392,6 +401,17 @@ do not return search reference responses.
 By default, they are returned unless request is LDAPv2.
 
 .TP
+.B noundeffilter <NO|yes>
+If
+.BR yes ,
+return success instead of searching if a filter is undefined or contains
+undefined portions.
+By default, the search is propagated after replacing undefined portions
+with
+.BR (!(objectClass=*)) ,
+which corresponds to the empty result set.
+
+.TP
 .B protocol\-version {0,2,3}
 This directive indicates what protocol version must be used to contact
 the remote server.
@@ -689,6 +709,7 @@ ETCDIR/slapd.conf
 default slapd configuration file
 .SH SEE ALSO
 .BR slapd.conf (5),
+.BR slapd\-config (5),
 .BR slapd\-meta (5),
 .BR slapo\-chain (5),
 .BR slapo\-pcache (5),

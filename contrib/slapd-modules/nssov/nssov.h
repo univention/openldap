@@ -1,8 +1,8 @@
 /* nssov.h - NSS overlay header file */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/nssov.h,v 1.1.2.1 2008/07/08 18:53:57 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/nssov.h,v 1.1.2.3 2009/01/22 00:00:45 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008 The OpenLDAP Foundation.
+ * Copyright 2008-2009 The OpenLDAP Foundation.
  * Portions Copyright 2008 Howard Chu.
  */
 
@@ -277,7 +277,7 @@ int nssov_shadow_all(nssov_info *ni,TFILE *fp,Operation *op);
 	op->ors_slimit = SLAP_NO_LIMIT; \
     /* do the internal search */ \
 	op->o_bd->be_search( op, &rs ); \
-	filter_free_x( op, op->ors_filter ); \
+	filter_free_x( op, op->ors_filter, 1 ); \
     return 0; \
   }
 

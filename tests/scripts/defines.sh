@@ -1,8 +1,8 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.141.2.12 2008/04/14 21:51:34 quanah Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.141.2.15 2009/01/22 00:01:18 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2008 The OpenLDAP Foundation.
+## Copyright 1998-2009 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -131,6 +131,7 @@ DDSCONF=$DATADIR/slapd-dds.conf
 PASSWDCONF=$DATADIR/slapd-passwd.conf
 UNDOCONF=$DATADIR/slapd-config-undo.conf
 NAKEDCONF=$DATADIR/slapd-config-naked.conf
+VALREGEXCONF=$DATADIR/slapd-valregex.conf
 
 DYNAMICCONF=$DATADIR/slapd-dynamic.ldif
 
@@ -162,6 +163,8 @@ TOOLPROTO="-P 3"
 # cmds
 LDIFFILTER=$SRCDIR/scripts/acfilter.sh
 CONFFILTER=$SRCDIR/scripts/conf.sh
+
+MONITORDATA=$SRCDIR/scripts/monitor_data.sh
 
 SLAPADD="$TESTWD/../servers/slapd/slapd -Ta -d 0 $LDAP_VERBOSE"
 SLAPCAT="$TESTWD/../servers/slapd/slapd -Tc -d 0 $LDAP_VERBOSE"

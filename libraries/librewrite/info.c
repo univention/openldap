@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/info.c,v 1.15.2.3 2008/02/11 23:26:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/info.c,v 1.15.2.5 2009/01/22 00:00:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2008 The OpenLDAP Foundation.
+ * Copyright 2000-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -216,7 +216,7 @@ rewrite_session(
 
 		case REWRITE_MODE_COPY_INPUT:
 			*result = strdup( string );
-			rc = REWRITE_REGEXEC_OK;
+			rc = ( *result != NULL ) ? REWRITE_REGEXEC_OK : REWRITE_REGEXEC_ERR;
 			goto rc_return;
 
 		case REWRITE_MODE_USE_DEFAULT:

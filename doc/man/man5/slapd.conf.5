@@ -1,7 +1,7 @@
 .TH SLAPD.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.239.2.18 2008/05/29 22:54:56 quanah Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.239.2.27 2009/01/22 00:00:50 kurt Exp $
 .SH NAME
 slapd.conf \- configuration file for slapd, the stand-alone LDAP daemon
 .SH SYNOPSIS
@@ -226,7 +226,7 @@ or a set of identities; it can take five forms:
 .B dn[.<dnstyle>]:<pattern>
 .RE
 .RS
-.B u[<mech>[<realm>]]:<pattern>
+.B u[.<mech>[/<realm>]]:<pattern>
 .RE
 .RS
 .B group[/objectClass[/attributeType]]:<pattern>
@@ -314,7 +314,8 @@ to explicitly set the type of identity specification that is being used.
 A subset of these rules can be used as third arg in the 
 .B authz-regexp
 statement (see below); significantly, the 
-.I URI
+.IR URI ,
+provided it results in exactly one entry,
 and the
 .I dn.exact:<dn> 
 forms.
@@ -322,8 +323,10 @@ forms.
 .TP
 .B authz-regexp <match> <replace>
 Used by the authentication framework to convert simple user names,
-such as provided by SASL subsystem, to an LDAP DN used for
-authorization purposes.  Note that the resultant DN need not refer
+such as provided by SASL subsystem, or extracted from certificates
+in case of cert-based SASL EXTERNAL, or provided within the RFC 4370
+"proxied authorization" control, to an LDAP DN used for
+authorization purposes.  Note that the resulting DN need not refer
 to an existing entry to be considered valid.  When an authorization
 request is received from the SASL subsystem, the SASL 
 .BR USERNAME ,
@@ -424,6 +427,12 @@ upon StartTLS operation receipt.
 .B tls_authc
 disallows the StartTLS operation if authenticated (see also
 .BR tls_2_anon ).
+.B proxy_authz_non_critical
+disables acceptance of the proxied authorization control (RFC4370)
+when criticality is FALSE.
+.B dontusecopy_non_critical
+disables acceptance of the dontUseCopy control (a work in progress)
+when criticality is FALSE.
 .HP
 .hy 0
 .B ditcontentrule "(\ <oid>\
@@ -507,6 +516,37 @@ Note: Indexing support depends on the particular backend in use. Also,
 changing these settings will generally require deleting any indices that
 depend on these parameters and recreating them with
 .BR slapindex (8).
+
+.HP
+.hy 0
+.B ldapsyntax "(\ <oid>\
+ [DESC\ <description>]\
+ [X-SUBST <substitute\-syntax>]\ )"
+.RS
+Specify an LDAP syntax using the LDAPv3 syntax defined in RFC 4512.
+The slapd parser extends the RFC 4512 definition by allowing string
+forms as well as numeric OIDs to be used for the syntax OID.
+(See the
+.B objectidentifier
+description.) 
+The slapd parser also honors the
+.B X-SUBST
+extension (an OpenLDAP-specific extension), which allows to use the
+.B ldapsyntax
+statement to define a non-implemented syntax along with another syntax,
+the extension value
+.IR substitute\-syntax ,
+as its temporary replacement.
+The
+.I substitute\-syntax
+must be defined.
+This allows to define attribute types that make use of non-implemented syntaxes
+using the correct syntax OID.
+Unless 
+.B X-SUBST
+is used, this configuration statement would result in an error,
+since no handlers would be associated to the resulting syntax structure.
+.RE
 
 .TP
 .B localSSF <SSF>
@@ -1121,6 +1161,21 @@ should be one of
 or
 .BR sql ,
 depending on which backend will serve the database.
+
+LDAP operations, even subtree searches, normally access only one
+database.
+That can be changed by gluing databases together with the
+.B subordinate
+keyword.
+Access controls and some overlays can also involve multiple databases.
+.TP
+.B add_content_acl on | off
+Controls whether Add operations will perform ACL checks on
+the content of the entry being added. This check is off
+by default. See the
+.BR slapd.access (5)
+manual page for more details on ACL requirements for
+Add operations.
 .TP
 .B hidden on | off
 Controls whether the database will be used to answer
@@ -1138,23 +1193,33 @@ createTimestamp attributes for entries. It also controls
 the entryCSN and entryUUID attributes, which are needed
 by the syncrepl provider. By default, lastmod is on.
 .TP
-.B limits <who> <limit> [<limit> [...]]
-Specify time and size limits based on who initiated an operation.
+.B limits <selector> <limit> [<limit> [...]]
+Specify time and size limits based on the operation's initiator or
+base DN.
 The argument
-.B who
+.B <selector>
 can be any of
 .RS
 .RS
 .TP
-anonymous | users | [dn[.<style>]=]<pattern> | group[/oc[/at]]=<pattern>
+anonymous | users | [<dnspec>=]<pattern> | group[/oc[/at]]=<pattern>
 
 .RE
 with
 .RS
 .TP
+<dnspec> ::= dn[.<type>][.<style>]
+.TP
+<type>  ::= self | this
+.TP
 <style> ::= exact | base | onelevel | subtree | children | regex | anonymous
 
 .RE
+DN type
+.B self
+is the default and means the bound user, while
+.B this
+means the base DN of the operation.
 The term
 .B anonymous
 matches all unauthenticated clients.
@@ -1188,7 +1253,7 @@ field is ignored.
 The same behavior is obtained by using the 
 .B anonymous
 form of the
-.B who
+.B <selector>
 clause.
 The term
 .BR group ,
@@ -1290,7 +1355,7 @@ If it is set to the keyword
 .IR unlimited , 
 no limit is applied (the default).
 If it is set to
-.IR disable ,
+.IR disabled ,
 the search is not even performed; this can be used to disallow searches
 for a specific set of users.
 If no limit specifier is set, the value is assigned to the
@@ -1302,7 +1367,7 @@ limit is set to
 to preserve the original behavior.
 
 In case of no match, the global limits are used.
-The default values are the same of
+The default values are the same as for
 .B sizelimit
 and
 .BR timelimit ;
@@ -1459,8 +1524,12 @@ and \fB{CRYPT}\fP passwords are not recommended.  If empty
 Specify the DN suffix of queries that will be passed to this 
 backend database.  Multiple suffix lines can be given and at least one is 
 required for each database definition.
+
 If the suffix of one database is "inside" that of another, the database
 with the inner suffix must come first in the configuration file.
+You may also want to glue such databases together with the
+.B subordinate
+keyword.
 .TP
 .B subordinate [advertise]
 Specify that the current backend database is a subordinate of another
@@ -1625,6 +1694,9 @@ For example, retry="60 10 300 3" lets the consumer retry every 60 seconds
 for the first 10 times and then retry every 300 seconds for the next 3
 times before stop retrying. The `+' in <# of retries> means indefinite
 number of retries until success.
+If no 
+.B retry
+was specified, by default syncrepl retries every hour forever.
 
 The schema checking can be enforced at the LDAP Sync
 consumer site by turning on the

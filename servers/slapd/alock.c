@@ -1,8 +1,8 @@
 /* alock.c - access lock library */
-/* $OpenLDAP: pkg/ldap/servers/slapd/alock.c,v 1.5.2.7 2008/02/11 23:26:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/alock.c,v 1.5.2.10 2009/01/22 00:00:59 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2008 The OpenLDAP Foundation.
+ * Copyright 2005-2009 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -24,6 +24,7 @@
 #if SLAPD_BDB || SLAPD_HDB
 
 #include "alock.h"
+#include "lutil.h"
 
 #include <ac/stdlib.h>
 #include <ac/string.h>
@@ -177,7 +178,7 @@ alock_read_iattr ( unsigned char * bufptr )
 	assert (bufptr != NULL);
 
 	bufptr += sizeof (unsigned long int);
-	for (count=0; count <= sizeof (unsigned long int); ++count) {
+	for (count=0; count <= (int) sizeof (unsigned long int); ++count) {
 		val <<= 8;
 		val += (unsigned long int) *bufptr--;
 	}
@@ -239,6 +240,9 @@ alock_read_slot ( alock_info_t * info,
 
 	if (slot_data->al_appname) free (slot_data->al_appname);
 	slot_data->al_appname = calloc (1, ALOCK_MAX_APPNAME);
+	if (slot_data->al_appname == NULL) {
+		return -1;
+	}
 	strncpy (slot_data->al_appname, (char *)slotbuf+32, ALOCK_MAX_APPNAME-1);
 	(slot_data->al_appname) [ALOCK_MAX_APPNAME-1] = '\0';
 
@@ -335,6 +339,7 @@ alock_open ( alock_info_t * info,
 	char * filename;
 	int res, max_slot;
 	int dirty_count, live_count, nosave;
+	char *ptr;
 
 	assert (info != NULL);
 	assert (appname != NULL);
@@ -345,12 +350,19 @@ alock_open ( alock_info_t * info,
 	slot_data.al_stamp = time(NULL);
 	slot_data.al_pid = getpid();
 	slot_data.al_appname = calloc (1, ALOCK_MAX_APPNAME);
+	if (slot_data.al_appname == NULL) {
+		return ALOCK_UNSTABLE;
+	}
 	strncpy (slot_data.al_appname, appname, ALOCK_MAX_APPNAME-1);
 	slot_data.al_appname [ALOCK_MAX_APPNAME-1] = '\0';
 
 	filename = calloc (1, strlen (envdir) + strlen ("/alock") + 1);
-	strcpy (filename, envdir);
-	strcat (filename, "/alock");
+	if (filename == NULL ) {
+		free (slot_data.al_appname);
+		return ALOCK_UNSTABLE;
+	}
+	ptr = lutil_strcopy(filename, envdir);
+	lutil_strcopy(ptr, "/alock");
 	info->al_fd = open (filename, O_CREAT|O_RDWR, 0666);
 	free (filename);
 	if (info->al_fd < 0) {

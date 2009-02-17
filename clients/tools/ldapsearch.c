@@ -1,8 +1,8 @@
 /* ldapsearch -- a tool for searching LDAP directories */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapsearch.c,v 1.234.2.9 2008/02/12 19:59:52 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapsearch.c,v 1.234.2.18 2009/01/22 00:00:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -126,11 +126,16 @@ usage( void )
 	fprintf( stderr, _("  -E [!]<ext>[=<extparam>] search extensions (! indicates criticality)\n"));
 	fprintf( stderr, _("             [!]domainScope              (domain scope)\n"));
 	fprintf( stderr, _("             !dontUseCopy                (Don't Use Copy)\n"));
-	fprintf( stderr, _("             [!]mv=<filter>              (matched values filter)\n"));
-	fprintf( stderr, _("             [!]pr=<size>[/prompt|noprompt]   (paged results/prompt)\n"));
-	fprintf( stderr, _("             [!]subentries[=true|false]  (subentries)\n"));
-	fprintf( stderr, _("             [!]sync=ro[/<cookie>]            (LDAP Sync refreshOnly)\n"));
-	fprintf( stderr, _("                     rp[/<cookie>][/<slimit>] (LDAP Sync refreshAndPersist)\n"));
+	fprintf( stderr, _("             [!]mv=<filter>              (RFC 3876 matched values filter)\n"));
+	fprintf( stderr, _("             [!]pr=<size>[/prompt|noprompt] (RFC 2696 paged results/prompt)\n"));
+	fprintf( stderr, _("             [!]sss=[-]<attr[:OID]>[/[-]<attr[:OID]>...]\n"));
+	fprintf( stderr, _("                                         (RFC 2891 server side sorting)\n"));
+	fprintf( stderr, _("             [!]subentries[=true|false]  (RFC 3672 subentries)\n"));
+	fprintf( stderr, _("             [!]sync=ro[/<cookie>]       (RFC 4533 LDAP Sync refreshOnly)\n"));
+	fprintf( stderr, _("                     rp[/<cookie>][/<slimit>] (refreshAndPersist)\n"));
+#ifdef LDAP_CONTROL_X_DEREF
+	fprintf( stderr, _("             [!]deref=derefAttr:attr[,...][;derefAttr:attr[,...][;...]]\n"));
+#endif
 	fprintf( stderr, _("             [!]<oid>=:<value>           (generic control; no response handling)\n"));
 	fprintf( stderr, _("  -F prefix  URL prefix for files (default: %s)\n"), def_urlpre);
 	fprintf( stderr, _("  -l limit   time limit (in seconds, or \"none\" or \"max\") for search\n"));
@@ -199,6 +204,9 @@ static int dontUseCopy = 0;
 
 static int domainScope = 0;
 
+static int sss = 0;
+static LDAPSortKey **sss_keys = NULL;
+
 static int ldapsync = 0;
 static struct berval sync_cookie = { 0, NULL };
 static int sync_slimit = -1;
@@ -217,6 +225,12 @@ static int npagedpartial;
 static LDAPControl *c = NULL;
 static int nctrls = 0;
 static int save_nctrls = 0;
+
+#ifdef LDAP_CONTROL_X_DEREF
+static int derefcrit;
+static LDAPDerefSpec *ds;
+static struct berval derefval;
+#endif
 
 static int
 ctrl_add( void )
@@ -251,7 +265,7 @@ urlize(char *url)
 
 
 const char options[] = "a:Ab:cE:F:l:Ls:S:tT:uz:"
-	"Cd:D:e:f:h:H:IMnO:o:p:P:QR:U:vVw:WxX:y:Y:Z";
+	"Cd:D:e:f:h:H:IMnNO:o:p:P:QR:U:vVw:WxX:y:Y:Z";
 
 int
 handle_private_option( int i )
@@ -395,6 +409,31 @@ handle_private_option( int i )
 
 			domainScope = 1 + crit;
 
+		} else if ( strcasecmp( control, "sss" ) == 0 ) {
+			char *keyp;
+			if( sss ) {
+				fprintf( stderr,
+					_("server side sorting control previously specified\n"));
+				exit( EXIT_FAILURE );
+			}
+			if( cvalue == NULL ) {
+				fprintf( stderr,
+			         _("missing specification of sss control\n") );
+				exit( EXIT_FAILURE );
+			}
+			keyp = cvalue;
+			while ( ( keyp = strchr(keyp, '/') ) != NULL ) {
+				*keyp++ = ' ';
+			}
+			if ( ldap_create_sort_keylist( &sss_keys, cvalue )) {
+				fprintf( stderr,
+					_("server side sorting control value \"%s\" invalid\n"),
+					cvalue );
+				exit( EXIT_FAILURE );
+			}
+
+			sss = 1 + crit;
+
 		} else if ( strcasecmp( control, "subentries" ) == 0 ) {
 			if( subentries ) {
 				fprintf( stderr,
@@ -460,6 +499,51 @@ handle_private_option( int i )
 				exit( EXIT_FAILURE );
 			}
 			if ( crit ) ldapsync *= -1;
+
+#ifdef LDAP_CONTROL_X_DEREF
+		} else if ( strcasecmp( control, "deref" ) == 0 ) {
+			int ispecs;
+			char **specs;
+
+			/* cvalue is something like
+			 *
+			 * derefAttr:attr[,attr[...]][;derefAttr:attr[,attr[...]]]"
+			 */
+
+			specs = ldap_str2charray( cvalue, ";" );
+			if ( specs == NULL ) {
+				fprintf( stderr, _("deref specs \"%s\" invalid\n"),
+					cvalue );
+				exit( EXIT_FAILURE );
+			}
+			for ( ispecs = 0; specs[ ispecs ] != NULL; ispecs++ )
+				/* count'em */
+
+			ds = ldap_memcalloc( ispecs + 1, sizeof( LDAPDerefSpec ) );
+			if ( ds == NULL ) {
+				perror( "malloc" );
+				exit( EXIT_FAILURE );
+			}
+
+			for ( ispecs = 0; specs[ ispecs ] != NULL; ispecs++ ) {
+				char *ptr;
+
+				ptr = strchr( specs[ ispecs ], ':' );
+				if ( ptr == NULL ) {
+					fprintf( stderr, _("deref specs \"%s\" invalid\n"),
+						cvalue );
+					exit( EXIT_FAILURE );
+				}
+
+				ds[ ispecs ].derefAttr = specs[ ispecs ];
+				*ptr++ = '\0';
+				ds[ ispecs ].attributes = ldap_str2charray( ptr, "," );
+			}
+
+			derefcrit = 1 + crit;
+
+			ldap_memfree( specs );
+#endif /* LDAP_CONTROL_X_DEREF */
 
 		} else if ( tool_is_oid( control ) ) {
 			if ( ctrl_add() ) {
@@ -751,9 +835,13 @@ getNextPage:
 #ifdef LDAP_CONTROL_DONTUSECOPY
 		|| dontUseCopy
 #endif
+#ifdef LDAP_CONTROL_X_DEREF
+		|| derefcrit
+#endif
 		|| domainScope
 		|| pagedResults
 		|| ldapsync
+		|| sss
 		|| subentries
 		|| valuesReturnFilter )
 	{
@@ -825,13 +913,13 @@ getNextPage:
 							&sync_cookie );
 			}
 
-			if ( err == LBER_ERROR ) {
+			if ( err == -1 ) {
 				ber_free( syncber, 1 );
 				fprintf( stderr, _("ldap sync control encoding error!\n") );
 				return EXIT_FAILURE;
 			}
 
-			if ( ber_flatten( syncber, &syncbvalp ) == LBER_ERROR ) {
+			if ( ber_flatten( syncber, &syncbvalp ) == -1 ) {
 				return EXIT_FAILURE;
 			}
 
@@ -886,6 +974,52 @@ getNextPage:
 			c[i].ldctl_iscritical = pagedResults > 1;
 			i++;
 		}
+
+		if ( sss ) {
+			if ( ctrl_add() ) {
+				return EXIT_FAILURE;
+			}
+
+			if ( ldap_create_sort_control_value( ld,
+				sss_keys, &c[i].ldctl_value ) )
+			{
+				return EXIT_FAILURE;
+			}
+
+			c[i].ldctl_oid = LDAP_CONTROL_SORTREQUEST;
+			c[i].ldctl_iscritical = sss > 1;
+			i++;
+		}
+
+#ifdef LDAP_CONTROL_X_DEREF
+		if ( derefcrit ) {
+			if ( derefval.bv_val == NULL ) {
+				int i;
+
+				assert( ds != NULL );
+
+				if ( ldap_create_deref_control_value( ld, ds, &derefval ) != LDAP_SUCCESS ) {
+					return EXIT_FAILURE;
+				}
+
+				for ( i = 0; ds[ i ].derefAttr != NULL; i++ ) {
+					ldap_memfree( ds[ i ].derefAttr );
+					ldap_charray_free( ds[ i ].attributes );
+				}
+				ldap_memfree( ds );
+				ds = NULL;
+			}
+
+			if ( ctrl_add() ) {
+				exit( EXIT_FAILURE );
+			}
+
+			c[ i ].ldctl_iscritical = derefcrit > 1;
+			c[ i ].ldctl_oid = LDAP_CONTROL_X_DEREF;
+			c[ i ].ldctl_value = derefval;
+			i++;
+		}
+#endif /* LDAP_CONTROL_X_DEREF */
 	}
 
 	tool_server_controls( ld, c, i );
@@ -968,6 +1102,16 @@ getNextPage:
 				(pagedResults > 1) ? _("critical ") : "", 
 				pageSize );
 		}
+		if ( sss ) {
+			printf(_("\n# with server side sorting %scontrol"),
+				sss > 1 ? _("critical ") : "" );
+		}
+#ifdef LDAP_CONTROL_X_DEREF
+		if ( sss ) {
+			printf(_("\n# with dereference %scontrol"),
+				sss > 1 ? _("critical ") : "" );
+		}
+#endif
 
 		printf( _("\n#\n\n") );
 
@@ -1051,6 +1195,12 @@ getNextPage:
 	if ( control != NULL ) {
 		ber_memfree( control );
 	}
+	if ( sss_keys != NULL ) {
+		ldap_free_sort_keylist( sss_keys );
+	}
+	if ( derefval.bv_val != NULL ) {
+		ldap_memfree( derefval.bv_val );
+	}
 
 	if ( c ) {
 		for ( ; save_nctrls-- > 0; ) {
@@ -1092,14 +1242,15 @@ static int dosearch(
 	int			cancel_msgid = -1;
 
 	if( filtpatt != NULL ) {
-		size_t max_fsize = strlen( filtpatt ) + strlen( value ) + 1;
+		size_t max_fsize = strlen( filtpatt ) + strlen( value ) + 1, outlen;
 		filter = malloc( max_fsize );
 		if( filter == NULL ) {
 			perror( "malloc" );
 			return EXIT_FAILURE;
 		}
 
-		if( snprintf( filter, max_fsize, filtpatt, value ) >= max_fsize ) {
+		outlen = snprintf( filter, max_fsize, filtpatt, value );
+		if( outlen >= max_fsize ) {
 			fprintf( stderr, "Bad filter pattern: \"%s\"\n", filtpatt );
 			free( filter );
 			return EXIT_FAILURE;
@@ -1564,7 +1715,7 @@ static int print_result(
 
 						tool_write_ldif( LDIF_PUT_TEXT,
 							"text", line,
-							next ? next - line : strlen( line ) );
+							next ? (size_t) (next - line) : strlen( line ));
 
 						line = next ? next + 1 : NULL;
 					}

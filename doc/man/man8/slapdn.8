@@ -1,6 +1,7 @@
 .TH SLAPDN 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2004-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2004-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.\" $OpenLDAP: pkg/ldap/doc/man/man8/slapdn.8,v 1.6.2.9 2009/01/30 19:34:31 quanah Exp $
 .SH NAME
 slapdn \- Check a list of string-represented LDAP DNs based on schema syntax
 .SH SYNOPSIS
@@ -23,7 +24,7 @@ and that loaded via
 .BR slapd.conf (5).
 It opens the
 .BR slapd.conf (5)
-configuration file, reads in the schema definitions, and then
+configuration file or the slapd-config (5) backend, reads in the schema definitions, and then
 parses the 
 .B DN
 list given on the command-line.

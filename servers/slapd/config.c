@@ -1,8 +1,8 @@
 /* config.c - configuration file handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.441.2.16 2008/04/14 22:20:28 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.441.2.20 2009/02/13 03:16:59 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -86,7 +86,6 @@ int slapi_plugins_used = 0;
 
 static int fp_getline(FILE *fp, ConfigArgs *c);
 static void fp_getline_init(ConfigArgs *c);
-static int fp_parse_line(ConfigArgs *c);
 
 static char	*strtok_quote(char *line, char *sep, char **quote_ptr);
 static char *strtok_quote_ldif(char **line);
@@ -716,7 +715,7 @@ read_config_file(const char *fname, int depth, ConfigArgs *cf, ConfigTable *cft)
 
 		c->argc = 0;
 		ch_free( c->tline );
-		if ( fp_parse_line( c ) ) {
+		if ( config_fp_parse_line( c ) ) {
 			rc = 1;
 			goto done;
 		}
@@ -1200,6 +1199,7 @@ static slap_cf_aux_table bindkey[] = {
 	{ BER_BVC("tls_cacertdir="), offsetof(slap_bindconf, sb_tls_cacertdir), 's', 1, NULL },
 	{ BER_BVC("tls_reqcert="), offsetof(slap_bindconf, sb_tls_reqcert), 's', 1, NULL },
 	{ BER_BVC("tls_cipher_suite="), offsetof(slap_bindconf, sb_tls_cipher_suite), 's', 1, NULL },
+	{ BER_BVC("tls_protocol_min="), offsetof(slap_bindconf, sb_tls_protocol_min), 's', 1, NULL },
 #ifdef HAVE_OPENSSL_CRL
 	{ BER_BVC("tls_crlcheck="), offsetof(slap_bindconf, sb_tls_crlcheck), 's', 1, NULL },
 #endif
@@ -1408,6 +1408,14 @@ slap_tls_get_config( LDAP *ld, int opt, char **val )
 	case LDAP_OPT_X_TLS_REQUIRE_CERT:
 		keys = vfykeys;
 		break;
+	case LDAP_OPT_X_TLS_PROTOCOL_MIN: {
+		char buf[8];
+		ldap_pvt_tls_get_option( ld, opt, &ival );
+		snprintf( buf, sizeof( buf ), "%d.%d",
+			( ival >> 8 ) & 0xff, ival & 0xff );
+		*val = ch_strdup( buf );
+		return 0;
+		}
 	default:
 		return -1;
 	}
@@ -1519,6 +1527,10 @@ void bindconf_free( slap_bindconf *bc ) {
 		ch_free( bc->sb_tls_cipher_suite );
 		bc->sb_tls_cipher_suite = NULL;
 	}
+	if ( bc->sb_tls_protocol_min ) {
+		ch_free( bc->sb_tls_protocol_min );
+		bc->sb_tls_protocol_min = NULL;
+	}
 #ifdef HAVE_OPENSSL_CRL
 	if ( bc->sb_tls_crlcheck ) {
 		ch_free( bc->sb_tls_crlcheck );
@@ -1570,6 +1582,7 @@ static struct {
 	{ "tls_cacert", offsetof(slap_bindconf, sb_tls_cacert), LDAP_OPT_X_TLS_CACERTFILE },
 	{ "tls_cacertdir", offsetof(slap_bindconf, sb_tls_cacertdir), LDAP_OPT_X_TLS_CACERTDIR },
 	{ "tls_cipher_suite", offsetof(slap_bindconf, sb_tls_cipher_suite), LDAP_OPT_X_TLS_CIPHER_SUITE },
+	{ "tls_protocol_min", offsetof(slap_bindconf, sb_tls_protocol_min), LDAP_OPT_X_TLS_PROTOCOL_MIN },
 	{0, 0}
 };
 
@@ -1600,6 +1613,17 @@ int bindconf_tls_set( slap_bindconf *bc, LDAP *ld )
 			Debug( LDAP_DEBUG_ANY,
 				"bindconf_tls_set: failed to set tls_reqcert to %s\n",
 					bc->sb_tls_reqcert, 0, 0 );
+			res = -1;
+		} else
+			newctx = 1;
+	}
+	if ( bc->sb_tls_protocol_min ) {
+		rc = ldap_int_tls_config( ld, LDAP_OPT_X_TLS_PROTOCOL_MIN,
+			bc->sb_tls_protocol_min );
+		if ( rc ) {
+			Debug( LDAP_DEBUG_ANY,
+				"bindconf_tls_set: failed to set tls_protocol_min to %s\n",
+					bc->sb_tls_protocol_min, 0, 0 );
 			res = -1;
 		} else
 			newctx = 1;
@@ -1930,8 +1954,8 @@ fp_getline( FILE *fp, ConfigArgs *c )
 	return(line[0] ? 1 : 0);
 }
 
-static int
-fp_parse_line(ConfigArgs *c)
+int
+config_fp_parse_line(ConfigArgs *c)
 {
 	char *token;
 	static char *const hide[] = {
@@ -1984,7 +2008,7 @@ config_destroy( )
 		if ( frontendDB->be_schemadn.bv_val )
 			free( frontendDB->be_schemadn.bv_val );
 		if ( frontendDB->be_acl )
-			acl_destroy( frontendDB->be_acl, NULL );
+			acl_destroy( frontendDB->be_acl );
 	}
 	free( line );
 	if ( slapd_args_file )

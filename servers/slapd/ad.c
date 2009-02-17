@@ -1,8 +1,8 @@
 /* ad.c - routines for dealing with attribute descriptions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.95.2.4 2008/02/11 23:26:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.95.2.7 2009/02/09 16:01:20 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,6 +64,8 @@ static Attr_option lang_option = { BER_BVC("lang-"), 1 };
 static Attr_option *options = &lang_option;
 static int option_count = 1;
 
+static int msad_range_hack = 0;
+
 static Attr_option *ad_find_option_definition( const char *opt, int optlen );
 
 static int ad_keystring(
@@ -76,7 +78,9 @@ static int ad_keystring(
 	}
 
 	for( i=1; i<bv->bv_len; i++ ) {
-		if( !AD_CHAR( bv->bv_val[i] ) ) {
+		if( !AD_CHAR( bv->bv_val[i] )) {
+			if ( msad_range_hack && bv->bv_val[i] == '=' )
+				continue;
 			return 1;
 		}
 	}
@@ -234,7 +238,8 @@ int slap_bv2ad(
 		} else if ( ad_find_option_definition( opt, optlen ) ) {
 			int i;
 
-			if( opt[optlen-1] == '-' ) {
+			if( opt[optlen-1] == '-' ||
+				( opt[optlen-1] == '=' && msad_range_hack )) {
 				desc.ad_flags |= SLAP_DESC_TAG_RANGE;
 			}
 
@@ -817,7 +822,10 @@ undef_promote(
 
 			*u_ad = (*u_ad)->ad_next;
 
+			tmp->ad_type = nat;
 			tmp->ad_next = NULL;
+			/* ad_cname was contiguous, no leak here */
+			tmp->ad_cname = nat->sat_cname;
 			*n_ad = tmp;
 			n_ad = &tmp->ad_next;
 		} else {
@@ -1175,6 +1183,11 @@ ad_define_option( const char *name, const char *fname, int lineno )
 	optlen = 0;
 	do {
 		if ( !DESC_CHAR( name[optlen] ) ) {
+			/* allow trailing '=', same as '-' */
+			if ( name[optlen] == '=' && !name[optlen+1] ) {
+				msad_range_hack = 1;
+				continue;
+			}
 			Debug( LDAP_DEBUG_ANY,
 			       "%s: line %d: illegal option name \"%s\"\n",
 				    fname, lineno, name );
@@ -1201,7 +1214,8 @@ ad_define_option( const char *name, const char *fname, int lineno )
 
 	options[i].name.bv_val = ch_strdup( name );
 	options[i].name.bv_len = optlen;
-	options[i].prefix = (name[optlen-1] == '-');
+	options[i].prefix = (name[optlen-1] == '-') ||
+ 		(name[optlen-1] == '=');
 
 	if ( i != option_count &&
 	     options[i].prefix &&

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.239.2.13 2008/05/20 00:10:40 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.239.2.16 2009/02/06 01:03:12 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -792,7 +792,7 @@ unhandled_option:;
 		}
 	}
 
-	if ( glue_sub_attach( ) != 0 ) {
+	if ( glue_sub_attach( 0 ) != 0 ) {
 		Debug( LDAP_DEBUG_ANY,
 		    "subordinate config error\n",
 		    0, 0, 0 );
@@ -1030,6 +1030,8 @@ stop:
 		ch_free( configdir );
 	if ( urls )
 		ch_free( urls );
+	if ( global_host )
+		ch_free( global_host );
 
 	/* kludge, get symbols referenced */
 	tavl_free( NULL, NULL );

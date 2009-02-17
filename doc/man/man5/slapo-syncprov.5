@@ -1,7 +1,7 @@
 .TH SLAPO-SYNCPROV 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2004-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2004-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-syncprov.5,v 1.9.2.4 2008/02/11 23:26:40 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-syncprov.5,v 1.9.2.7 2009/01/30 20:08:06 quanah Exp $
 .SH NAME
 slapo-syncprov \- Sync Provider overlay to slapd
 .SH SYNOPSIS
@@ -41,8 +41,8 @@ time have passed
 since the last checkpoint. Checkpointing is disabled by default.
 .TP
 .B syncprov-sessionlog <ops>
-Specify a session log for recording information about write operations made
-on the database.  The
+Configures an in-memory session log for recording information about write
+operations made on the database.  The
 .B <ops>
 specifies the number of operations that are recorded in the log. All write
 operations (except Adds) are recorded in the log.
@@ -68,6 +68,7 @@ ETCDIR/slapd.conf
 default slapd configuration file
 .SH SEE ALSO
 .BR slapd.conf (5),
+.BR slapd\-config (5),
 .BR slapo-accesslog (5).
 OpenLDAP Administrator's Guide.
 .SH ACKNOWLEDGEMENTS

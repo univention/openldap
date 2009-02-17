@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/ppolicy.c,v 1.75.2.14 2008/07/10 00:55:07 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/ppolicy.c,v 1.75.2.20 2009/01/22 00:01:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2008 The OpenLDAP Foundation.
+ * Copyright 2004-2009 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Howard Chu, Symas Corporation.
  * Portions Copyright 2004 Hewlett-Packard Company.
  * All rights reserved.
@@ -362,20 +362,14 @@ account_locked( Operation *op, Entry *e,
 static const char ppolicy_ctrl_oid[] = LDAP_CONTROL_PASSWORDPOLICYRESPONSE;
 
 static LDAPControl *
-create_passcontrol( int exptime, int grace, LDAPPasswordPolicyError err )
+create_passcontrol( Operation *op, int exptime, int grace, LDAPPasswordPolicyError err )
 {
-	char berbuf[LBER_ELEMENT_SIZEOF], bb2[LBER_ELEMENT_SIZEOF];
-	BerElement *ber = (BerElement *)berbuf, *b2 = (BerElement *)bb2;
-	LDAPControl *c;
+	BerElementBuffer berbuf, bb2;
+	BerElement *ber = (BerElement *) &berbuf, *b2 = (BerElement *) &bb2;
+	LDAPControl c = { 0 }, *cp;
 	struct berval bv;
 
-	c = ch_calloc( sizeof( LDAPControl ), 1 );
-	if ( c == NULL ) {
-		return NULL;
-	}
-	c->ldctl_oid = (char *)ppolicy_ctrl_oid;
-	c->ldctl_iscritical = 0;
-	BER_BVZERO( &c->ldctl_value );
+	BER_BVZERO( &c.ldctl_value );
 
 	ber_init2( ber, NULL, LBER_USE_DER );
 	ber_printf( ber, "{" /*}*/ );
@@ -401,12 +395,18 @@ create_passcontrol( int exptime, int grace, LDAPPasswordPolicyError err )
 	}
 	ber_printf( ber, /*{*/ "N}" );
 
-	if (ber_flatten2( ber, &(c->ldctl_value), 1 ) == LBER_DEFAULT) {
-		ch_free(c);
-		c = NULL;
+	if (ber_flatten2( ber, &c.ldctl_value, 0 ) == -1) {
+		return NULL;
 	}
+	cp = op->o_tmpalloc( sizeof( LDAPControl ) + c.ldctl_value.bv_len, op->o_tmpmemctx );
+	cp->ldctl_oid = (char *)ppolicy_ctrl_oid;
+	cp->ldctl_iscritical = 0;
+	cp->ldctl_value.bv_val = (char *)&cp[1];
+	cp->ldctl_value.bv_len = c.ldctl_value.bv_len;
+	AC_MEMCPY( cp->ldctl_value.bv_val, c.ldctl_value.bv_val, c.ldctl_value.bv_len );
 	(void)ber_free_buf(ber);
-	return c;
+	
+	return cp;
 }
 
 static LDAPControl **
@@ -678,7 +678,7 @@ parse_pwdhistory( struct berval *bv, char **oid, time_t *oldtime, struct berval 
 {
 	char *ptr;
 	struct berval nv, npw;
-	int i, j;
+	ber_len_t i, j;
 	
 	assert (bv && (bv->bv_len > 0) && (bv->bv_val) && oldtime && oldpw );
 
@@ -854,8 +854,7 @@ ctrls_cleanup( Operation *op, SlapReply *rs, LDAPControl **oldctrls )
 
 	for ( n = 0; rs->sr_ctrls[n]; n++ ) {
 		if ( rs->sr_ctrls[n]->ldctl_oid == ppolicy_ctrl_oid ) {
-			ch_free( rs->sr_ctrls[n]->ldctl_value.bv_val );
-			ch_free( rs->sr_ctrls[n] );
+			op->o_tmpfree( rs->sr_ctrls[n], op->o_tmpmemctx );
 			rs->sr_ctrls[n] = (LDAPControl *)(-1);
 			break;
 		}
@@ -1138,7 +1137,7 @@ locked:
 		if ( ppb->pErr == PP_accountLocked && !pi->use_lockout ) {
 			ppb->pErr = PP_noError;
 		}
-		ctrl = create_passcontrol( warn, ngut, ppb->pErr );
+		ctrl = create_passcontrol( op, warn, ngut, ppb->pErr );
 		ppb->oldctrls = add_passcontrol( op, rs, ctrl );
 		op->o_callback->sc_cleanup = ppolicy_ctrls_cleanup;
 	}
@@ -1251,7 +1250,7 @@ ppolicy_restrict(
 			"connection restricted to password changing only\n", 0, 0, 0);
 		if ( send_ctrl ) {
 			LDAPControl *ctrl = NULL;
-			ctrl = create_passcontrol( -1, -1, PP_changeAfterReset );
+			ctrl = create_passcontrol( op, -1, -1, PP_changeAfterReset );
 			oldctrls = add_passcontrol( op, rs, ctrl );
 		}
 		op->o_bd->bd_info = (BackendInfo *)on->on_info;
@@ -1317,7 +1316,7 @@ ppolicy_add(
 				op->o_bd->bd_info = (BackendInfo *)on->on_info;
 				if ( send_ctrl ) {
 					LDAPControl *ctrl = NULL;
-					ctrl = create_passcontrol( -1, -1, pErr );
+					ctrl = create_passcontrol( op, -1, -1, pErr );
 					oldctrls = add_passcontrol( op, rs, ctrl );
 				}
 				send_ldap_error( op, rs, rc, "Password fails quality checking policy" );
@@ -1406,7 +1405,9 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 	struct berval		newpw = BER_BVNULL, oldpw = BER_BVNULL,
 				*bv, cr[2];
 	LDAPPasswordPolicyError pErr = PP_noError;
+	LDAPControl		*ctrl = NULL;
 	LDAPControl 		**oldctrls = NULL;
+	int			is_pwdexop = 0;
 
 	op->o_bd->bd_info = (BackendInfo *)on->on_info;
 	rc = be_entry_get_rw( op, &op->o_req_ndn, NULL, NULL, 0, &e );
@@ -1526,6 +1527,7 @@ ppolicy_modify( Operation *op, SlapReply *rs )
 				req_pwdexop_s *qpw = sc->sc_private;
 				newpw = qpw->rs_new;
 				oldpw = qpw->rs_old;
+				is_pwdexop = 1;
 			   	break;
 			}
 		}
@@ -2010,14 +2012,21 @@ return_results:
 	op->o_bd->bd_info = (BackendInfo *)on->on_info;
 	be_entry_release_r( op, e );
 	if ( send_ctrl ) {
-		LDAPControl *ctrl = NULL;
-
-		ctrl = create_passcontrol( -1, -1, pErr );
+		ctrl = create_passcontrol( op, -1, -1, pErr );
 		oldctrls = add_passcontrol( op, rs, ctrl );
 	}
 	send_ldap_result( op, rs );
 	if ( send_ctrl ) {
-		ctrls_cleanup( op, rs, oldctrls );
+		if ( is_pwdexop ) {
+			if ( rs->sr_flags & REP_CTRLS_MUSTBEFREED ) {
+				op->o_tmpfree( oldctrls, op->o_tmpmemctx );
+			}
+			oldctrls = NULL;
+			rs->sr_flags |= REP_CTRLS_MUSTBEFREED;
+
+		} else {
+			ctrls_cleanup( op, rs, oldctrls );
+		}
 	}
 	return rs->sr_err;
 }
@@ -2084,6 +2093,16 @@ ppolicy_db_init(
 )
 {
 	slap_overinst *on = (slap_overinst *) be->bd_info;
+
+	if ( SLAP_ISGLOBALOVERLAY( be ) ) {
+		/* do not allow slapo-ppolicy to be global by now (ITS#5858) */
+		if ( cr ){
+			snprintf( cr->msg, sizeof(cr->msg), 
+				"slapo-ppolicy cannot be global" );
+			fprintf( stderr, "%s\n", cr->msg );
+		}
+		return 1;
+	}
 
 	/* Has User Schema been initialized yet? */
 	if ( !pwd_UsSchema[0].ad[0] ) {

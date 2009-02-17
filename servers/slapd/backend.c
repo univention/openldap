@@ -1,8 +1,8 @@
 /* backend.c - routines for dealing with back-end databases */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.362.2.17 2008/04/24 08:13:39 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.362.2.26 2009/01/30 19:00:12 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -261,8 +261,6 @@ int backend_startup(Backend *be)
 				return rc;
 			}
 		}
-		/* append global access controls */
-		acl_append( &be->be_acl, frontendDB->be_acl, -1 );
 
 		return backend_startup_one( be, &cr );
 	}
@@ -310,8 +308,6 @@ int backend_startup(Backend *be)
 				"has no suffix\n",
 				i, be->bd_info->bi_type, 0 );
 		}
-		/* append global access controls */
-		acl_append( &be->be_acl, frontendDB->be_acl, -1 );
 
 		rc = backend_startup_one( be, &cr );
 
@@ -349,11 +345,13 @@ int backend_shutdown( Backend *be )
 		}
 
 		if ( be->bd_info->bi_db_close ) {
-			be->bd_info->bi_db_close( be, NULL );
+			rc = be->bd_info->bi_db_close( be, NULL );
+			if ( rc ) return rc;
 		}
 
 		if( be->bd_info->bi_close ) {
-			be->bd_info->bi_close( be->bd_info );
+			rc = be->bd_info->bi_close( be->bd_info );
+			if ( rc ) return rc;
 		}
 
 		return 0;
@@ -451,7 +449,7 @@ void backend_destroy_one( BackendDB *bd, int dynamic )
 	if ( !BER_BVISNULL( &bd->be_rootpw ) ) {
 		free( bd->be_rootpw.bv_val );
 	}
-	acl_destroy( bd->be_acl, frontendDB->be_acl );
+	acl_destroy( bd->be_acl );
 	limits_destroy( bd->be_limits );
 	if ( !BER_BVISNULL( &bd->be_update_ndn ) ) {
 		ch_free( bd->be_update_ndn.bv_val );
@@ -502,7 +500,8 @@ int backend_destroy(void)
 		if ( !BER_BVISNULL( &bd->be_rootpw ) ) {
 			free( bd->be_rootpw.bv_val );
 		}
-		acl_destroy( bd->be_acl, frontendDB->be_acl );
+		acl_destroy( bd->be_acl );
+		frontendDB = NULL;
 	}
 
 	return 0;
@@ -594,8 +593,7 @@ backend_db_init(
 	be->be_requires = frontendDB->be_requires;
 	be->be_ssf_set = frontendDB->be_ssf_set;
 
-	be->be_pcl_mutexp = &be->be_pcl_mutex;
-	ldap_pvt_thread_mutex_init( be->be_pcl_mutexp );
+	ldap_pvt_thread_mutex_init( &be->be_pcl_mutex );
 
  	/* assign a default depth limit for alias deref */
 	be->be_max_deref_depth = SLAPD_DEFAULT_MAXDEREFDEPTH; 
@@ -614,6 +612,9 @@ backend_db_init(
 			nbackends--;
 		}
 	} else {
+		if ( !bi->bi_nDB ) {
+			backend_init_controls( bi );
+		}
 		bi->bi_nDB++;
 	}
 	return( be );
@@ -946,6 +947,14 @@ backend_check_controls(
 
 			case LDAP_COMPARE_FALSE:
 				if ( !op->o_bd->be_ctrls[cid] && (*ctrls)->ldctl_iscritical ) {
+#ifdef SLAP_CONTROL_X_WHATFAILED
+					if ( get_whatFailed( op ) ) {
+						char *oids[ 2 ];
+						oids[ 0 ] = (*ctrls)->ldctl_oid;
+						oids[ 1 ] = NULL;
+						slap_ctrl_whatFailed_add( op, rs, oids );
+					}
+#endif
 					/* RFC 4511 allows unavailableCriticalExtension to be
 					 * returned when the server is unwilling to perform
 					 * an operation extended by a recognized critical
@@ -996,13 +1005,19 @@ backend_check_restrictions(
 	slap_mask_t requires;
 	slap_mask_t opflag;
 	slap_mask_t exopflag = 0;
-	slap_ssf_set_t *ssf;
+	slap_ssf_set_t ssfs, *ssf;
 	int updateop = 0;
 	int starttls = 0;
 	int session = 0;
 
+	restrictops = frontendDB->be_restrictops;
+	requires = frontendDB->be_requires;
+	ssfs = frontendDB->be_ssf_set;
+	ssf = &ssfs;
+
 	if ( op->o_bd ) {
-		int	rc = SLAP_CB_CONTINUE;
+		slap_ssf_t *fssf, *bssf;
+		int	rc = SLAP_CB_CONTINUE, i;
 
 		if ( op->o_bd->be_chk_controls ) {
 			rc = ( *op->o_bd->be_chk_controls )( op, rs );
@@ -1016,14 +1031,13 @@ backend_check_restrictions(
 			return rs->sr_err;
 		}
 
-		restrictops = op->o_bd->be_restrictops;
-		requires = op->o_bd->be_requires;
-		ssf = &op->o_bd->be_ssf_set;
-
-	} else {
-		restrictops = frontendDB->be_restrictops;
-		requires = frontendDB->be_requires;
-		ssf = &frontendDB->be_ssf_set;
+		restrictops |= op->o_bd->be_restrictops;
+		requires |= op->o_bd->be_requires;
+		bssf = &op->o_bd->be_ssf_set.sss_ssf;
+		fssf = &ssfs.sss_ssf;
+		for ( i=0; i<sizeof(ssfs)/sizeof(slap_ssf_t); i++ ) {
+			if ( bssf[i] ) fssf[i] = bssf[i];
+		}
 	}
 
 	switch( op->o_tag ) {
@@ -1496,7 +1510,7 @@ fe_acl_group(
 						{
 							rc = 0;
 						}
-						filter_free_x( op, filter );
+						filter_free_x( op, filter, 1 );
 					}
 loopit:
 					ldap_free_urldesc( ludp );

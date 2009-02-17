@@ -1,8 +1,8 @@
 /* ldapexop.c -- a tool for performing well-known extended operations */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapexop.c,v 1.9.2.3 2008/02/11 23:26:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapexop.c,v 1.9.2.5 2009/01/22 00:00:42 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2008 The OpenLDAP Foundation.
+ * Copyright 2005-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@ usage( void )
 
 
 const char options[] = ""
-	"d:D:e:h:H:InO:o:p:QR:U:vVw:WxX:y:Y:Z";
+	"d:D:e:h:H:InNO:o:p:QR:U:vVw:WxX:y:Y:Z";
 
 int
 handle_private_option( int i )

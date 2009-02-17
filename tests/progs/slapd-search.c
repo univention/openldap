@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/tests/progs/slapd-search.c,v 1.41.2.7 2008/02/11 23:26:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/tests/progs/slapd-search.c,v 1.41.2.10 2009/02/10 17:13:05 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -363,7 +363,7 @@ do_random( char *uri, char *manager, struct berval *passwd,
 		break;
 	}
 
-	fprintf( stderr, " PID=%ld - Search done (%d).\n", (long) pid, rc );
+	fprintf( stderr, "  PID=%ld - Search done (%d).\n", (long) pid, rc );
 
 	if ( ld != NULL ) {
 		ldap_unbind_ext( ld, NULL, NULL );
@@ -443,11 +443,11 @@ retry:;
 		}
 
 		if ( rc ) {
-			unsigned first = tester_ignore_err( rc );
+			int first = tester_ignore_err( rc );
 			/* if ignore.. */
 			if ( first ) {
 				/* only log if first occurrence */
-				if ( force < 2 || first == 1 ) {
+				if ( ( force < 2 && first > 0 ) || abs(first) == 1 ) {
 					tester_ldap_error( ld, "ldap_search_ext_s", NULL );
 				}
 				continue;
@@ -472,7 +472,7 @@ retry:;
 		*ldp = ld;
 
 	} else {
-		fprintf( stderr, " PID=%ld - Search done (%d).\n", (long) pid, rc );
+		fprintf( stderr, "  PID=%ld - Search done (%d).\n", (long) pid, rc );
 
 		if ( ld != NULL ) {
 			ldap_unbind_ext( ld, NULL, NULL );

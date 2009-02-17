@@ -1,7 +1,7 @@
 .TH SLAPD-CONFIG 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-config.5,v 1.13.2.9 2008/05/29 22:54:56 quanah Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-config.5,v 1.13.2.13 2009/01/22 00:00:50 kurt Exp $
 .SH NAME
 slapd-config \- configuration backend to slapd
 .SH SYNOPSIS
@@ -1204,7 +1204,7 @@ See
 .BR olcLimits
 for an explanation of the different flags.
 .TP
-.B olcSortVals <attr> [...]
+.B olcSortVals: <attr> [...]
 Specify a list of multi-valued attributes whose values will always
 be maintained in sorted order. Using this option will allow Modify,
 Compare, and filter evaluations on these attributes to be performed
@@ -1234,6 +1234,14 @@ which they are defined.  They are supported by every
 type of backend. All of the Global Database Options may also be
 used here.
 .TP
+.B olcAddContentAcl: TRUE | FALSE
+Controls whether Add operations will perform ACL checks on
+the content of the entry being added. This check is off
+by default. See the
+.BR slapd.access (5)
+manual page for more details on ACL requirements for
+Add operations.
+.TP
 .B olcHidden: TRUE | FALSE
 Controls whether the database will be used to answer
 queries. A database that is hidden will never be
@@ -1250,23 +1258,33 @@ createTimestamp attributes for entries. It also controls
 the entryCSN and entryUUID attributes, which are needed
 by the syncrepl provider. By default, olcLastMod is TRUE.
 .TP
-.B olcLimits: <who> <limit> [<limit> [...]]
-Specify time and size limits based on who initiated an operation.
+.B olcLimits: <selector> <limit> [<limit> [...]]
+Specify time and size limits based on the operation's initiator or
+base DN.
 The argument
-.B who
+.B <selector>
 can be any of
 .RS
 .RS
 .TP
-anonymous | users | [dn[.<style>]=]<pattern> | group[/oc[/at]]=<pattern>
+anonymous | users | [<dnspec>=]<pattern> | group[/oc[/at]]=<pattern>
 
 .RE
 with
 .RS
 .TP
+<dnspec> ::= dn[.<type>][.<style>]
+.TP
+<type>  ::= self | this
+.TP
 <style> ::= exact | base | onelevel | subtree | children | regex | anonymous
 
 .RE
+DN type
+.B self
+is the default and means the bound user, while
+.B this
+means the base DN of the operation.
 The term
 .B anonymous
 matches all unauthenticated clients.
@@ -1300,7 +1318,7 @@ field is ignored.
 The same behavior is obtained by using the 
 .B anonymous
 form of the
-.B who
+.B <selector>
 clause.
 The term
 .BR group ,
@@ -1414,7 +1432,7 @@ limit is set to
 to preserve the original behavior.
 
 In case of no match, the global limits are used.
-The default values are the same as
+The default values are the same as for
 .B olcSizeLimit
 and
 .BR olcTimeLimit ;
@@ -1569,8 +1587,12 @@ See the Overlays section below for more details.
 Specify the DN suffix of queries that will be passed to this 
 backend database.  Multiple suffix lines can be given and at least one is 
 required for each database definition.
+
 If the suffix of one database is "inside" that of another, the database
 with the inner suffix must come first in the configuration file.
+You may also want to glue such databases together with the
+.B olcSubordinate
+attribute.
 .HP
 .hy 0
 .B olcSyncrepl: rid=<replica ID>

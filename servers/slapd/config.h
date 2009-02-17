@@ -1,8 +1,8 @@
 /* config.h - configuration abstraction structure */
-/* $OpenLDAP: pkg/ldap/servers/slapd/config.h,v 1.34.2.11 2008/04/14 18:25:54 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/config.h,v 1.34.2.14 2009/02/13 03:16:59 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -171,6 +171,8 @@ typedef struct config_args_s {
 #define value_dn values.v_dn.vdn_dn
 #define value_ndn values.v_dn.vdn_ndn
 
+int config_fp_parse_line(ConfigArgs *c);
+
 int config_register_schema(ConfigTable *ct, ConfigOCs *co);
 int config_del_vals(ConfigTable *cf, ConfigArgs *c);
 int config_get_vals(ConfigTable *ct, ConfigArgs *c);
@@ -200,6 +202,8 @@ int config_shadow( ConfigArgs *c, int flag );
 
 extern slap_verbmasks *slap_ldap_response_code;
 extern int slap_ldap_response_code_register( struct berval *bv, int err );
+
+extern ConfigTable olcDatabaseDummy[];
 
 LDAP_END_DECL
 

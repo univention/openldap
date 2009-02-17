@@ -1,8 +1,8 @@
 /* entry.c - routines for dealing with entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.148.2.7 2008/02/11 23:43:39 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.148.2.9 2009/01/22 00:01:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -725,8 +725,8 @@ ber_len_t entry_flatsize(Entry *e, int norm)
  */
 int entry_encode(Entry *e, struct berval *bv)
 {
-	ber_len_t len, dnlen, ndnlen;
-	int i, nattrs, nvals;
+	ber_len_t len, dnlen, ndnlen, i;
+	int nattrs, nvals;
 	Attribute *a;
 	unsigned char *ptr;
 

@@ -1,8 +1,8 @@
 /* op.c - relay backend operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-relay/op.c,v 1.15.2.6 2008/02/12 01:03:16 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-relay/op.c,v 1.15.2.8 2009/02/13 02:57:29 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2008 The OpenLDAP Foundation.
+ * Copyright 2004-2009 The OpenLDAP Foundation.
  * Portions Copyright 2004 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -74,7 +74,7 @@ relay_back_select_backend( Operation *op, SlapReply *rs, slap_mask_t fail_mode )
 
 	if ( bd == NULL && !BER_BVISNULL( &op->o_req_ndn ) ) {
 		bd = select_backend( &op->o_req_ndn, 1 );
-		if ( bd == op->o_bd ) {
+		if ( bd->be_private == op->o_bd->be_private ) {
 			Debug( LDAP_DEBUG_ANY,
 				"%s: back-relay for DN=\"%s\" would call self.\n",
 				op->o_log_prefix, op->o_req_dn.bv_val, 0 );

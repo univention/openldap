@@ -1,5 +1,5 @@
 /* group.c - group lookup routines */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/group.c,v 1.1.2.1 2008/07/08 18:53:57 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/group.c,v 1.1.2.2 2008/11/10 22:39:09 quanah Exp $ */
 /*
  * Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
@@ -191,26 +191,31 @@ static int write_group(nssov_group_cbp *cbp,Entry *entry)
 			i += a->a_numvals;
 		if ( b )
 			i += b->a_numvals;
-		if ( i )
+		if ( i ) {
 			members = cbp->op->o_tmpalloc( (i+1) * sizeof(struct berval), cbp->op->o_tmpmemctx );
 			
-		if ( a ) {
-			for (i=0; i<a->a_numvals; i++) {
-				if (isvalidusername(&a->a_vals[i])) {
-					ber_dupbv_x(&members[j],&a->a_vals[i],cbp->op->o_tmpmemctx);
-					j++;
+			if ( a ) {
+				for (i=0; i<a->a_numvals; i++) {
+					if (isvalidusername(&a->a_vals[i])) {
+						ber_dupbv_x(&members[j],&a->a_vals[i],cbp->op->o_tmpmemctx);
+						j++;
+					}
 				}
 			}
-		}
-		a = b;
-		if ( a ) {
-			for (i=0; i<a->a_numvals; i++) {
-				if (nssov_dn2uid(cbp->op,cbp->ni,&a->a_nvals[i],&members[j]))
-					j++;
+			a = b;
+			if ( a ) {
+				for (i=0; i<a->a_numvals; i++) {
+					if (nssov_dn2uid(cbp->op,cbp->ni,&a->a_nvals[i],&members[j]))
+						j++;
+				}
 			}
+			nummembers = j;
+			BER_BVZERO(&members[j]);
+		} else {
+			members=NULL;
+			nummembers = 0;
 		}
-		nummembers = j;
-		BER_BVZERO(&members[j]);
+
 	} else {
 		members=NULL;
 		nummembers = 0;

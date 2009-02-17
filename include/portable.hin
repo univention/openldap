@@ -4,7 +4,7 @@
 /* begin of portable.h.pre */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation
+ * Copyright 1998-2009 The OpenLDAP Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -190,6 +190,9 @@
 /* Define to 1 if you have the `getdtablesize' function. */
 #undef HAVE_GETDTABLESIZE
 
+/* Define to 1 if you have the `geteuid' function. */
+#undef HAVE_GETEUID
+
 /* Define to 1 if you have the `getgrgid' function. */
 #undef HAVE_GETGRGID
 
@@ -249,6 +252,18 @@
 
 /* Define to 1 if you have the <grp.h> header file. */
 #undef HAVE_GRP_H
+
+/* define if you have GSSAPI */
+#undef HAVE_GSSAPI
+
+/* Define to 1 if you have the <gssapi/gssapi.h> header file. */
+#undef HAVE_GSSAPI_GSSAPI_H
+
+/* Define to 1 if you have the <gssapi.h> header file. */
+#undef HAVE_GSSAPI_H
+
+/* Define to 1 if you have the `gss_oid_to_str' function. */
+#undef HAVE_GSS_OID_TO_STR
 
 /* Define to 1 if you have the `hstrerror' function. */
 #undef HAVE_HSTRERROR
@@ -945,6 +960,9 @@
 /* define to support cn=Monitor backend */
 #undef SLAPD_MONITOR
 
+/* define to support NDB backend */
+#undef SLAPD_NDB
+
 /* define to support NULL backend */
 #undef SLAPD_NULL
 
@@ -954,11 +972,17 @@
 /* define for Audit Logging overlay */
 #undef SLAPD_OVER_AUDITLOG
 
+/* define for Collect overlay */
+#undef SLAPD_OVER_COLLECT
+
 /* define for Attribute Constraint overlay */
 #undef SLAPD_OVER_CONSTRAINT
 
 /* define for Dynamic Directory Services overlay */
 #undef SLAPD_OVER_DDS
+
+/* define for Dynamic Directory Services overlay */
+#undef SLAPD_OVER_DEREF
 
 /* define for Dynamic Group overlay */
 #undef SLAPD_OVER_DYNGROUP

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.276.2.9 2008/04/14 22:05:06 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.276.2.11 2009/01/30 19:07:40 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -268,6 +268,7 @@ fe_op_modify( Operation *op, SlapReply *rs )
 	if ( op->orm_increment && !SLAP_INCREMENT( op->o_bd ) ) {
 		send_ldap_error( op, rs, LDAP_UNWILLING_TO_PERFORM,
 			"modify/increment not supported in context" );
+		goto cleanup;
 	}
 
 	/*

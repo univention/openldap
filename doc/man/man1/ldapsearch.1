@@ -1,6 +1,6 @@
 .TH LDAPSEARCH 1 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man1/ldapsearch.1,v 1.59.2.5 2008/02/11 23:26:39 kurt Exp $
-.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" $OpenLDAP: pkg/ldap/doc/man/man1/ldapsearch.1,v 1.59.2.8 2009/01/22 00:00:48 kurt Exp $
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldapsearch \- LDAP search tool
@@ -188,6 +188,7 @@ Use simple authentication instead of SASL.
 .TP
 .BI \-D \ binddn
 Use the Distinguished Name \fIbinddn\fP to bind to the LDAP directory.
+For SASL Binds, the server is expected to ignore this value.
 .TP
 .B \-W
 Prompt for simple authentication.
@@ -274,6 +275,7 @@ Search extensions:
   [!]domainScope                               (domain scope)
   [!]mv=<filter>                               (matched values filter)
   [!]pr=<size>[/prompt|noprompt]       (paged results/prompt)
+  [!]sss=[-]<attr[:OID]>[/[-]<attr[:OID]>...]  (server side sorting)
   [!]subentries[=true|false]           (subentries)
   [!]sync=ro[/<cookie>]                        (LDAP Sync refreshOnly)
           rp[/<cookie>][/<slimit>]     (LDAP Sync refreshAndPersist)

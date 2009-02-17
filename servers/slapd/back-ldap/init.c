@@ -1,8 +1,8 @@
 /* init.c - initialize ldap backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/init.c,v 1.99.2.8 2008/07/09 23:36:23 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/init.c,v 1.99.2.11 2009/01/30 19:07:40 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2008 The OpenLDAP Foundation.
+ * Copyright 2003-2009 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -62,7 +62,10 @@ ldap_back_initialize( BackendInfo *bi )
 		 * and the entryTtl attribute */
 		SLAP_BFLAG_DYNAMIC |
 #endif /* LDAP_DYNAMIC_OBJECTS */
-		0;
+
+		/* back-ldap recognizes RFC4525 increment;
+		 * let the remote server complain, if needed (ITS#5912) */
+		SLAP_BFLAG_INCREMENT;
 
 	bi->bi_open = ldap_back_open;
 	bi->bi_config = 0;
@@ -233,14 +236,10 @@ ldap_back_db_open( BackendDB *be, ConfigReply *cr )
 	if ( rc != 0 ) {
 		/* ignore by now */
 		rc = 0;
-#if 0
-		goto fail;
-#endif
 	}
 
 	li->li_flags |= LDAP_BACK_F_ISOPEN;
 
-fail:;
 	return rc;
 }
 

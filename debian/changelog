@@ -1,3 +1,11 @@
+openldap (2.4.11-2) UNRELEASED; urgency=low
+
+  * New upstream version
+    - Fixes a bug with the pcache overlay not returning cached entries
+      (closes: #497697)
+
+ -- Steve Langasek <vorlon@debian.org>  Tue, 17 Feb 2009 09:41:22 -0800
+
 openldap (2.4.11-1) unstable; urgency=low
 
   * New upstream version (closes: #499560).

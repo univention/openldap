@@ -1,7 +1,7 @@
 .TH SLAPO-DDS 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2005-2008 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 2005-2009 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-dds.5,v 1.1.2.4 2008/02/11 23:26:40 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-dds.5,v 1.1.2.8 2009/01/30 20:08:05 quanah Exp $
 .SH NAME
 slapo-dds \- Dynamic Directory Services overlay to slapd
 .SH SYNOPSIS
@@ -53,7 +53,11 @@ overlay to the current database:
 .B overlay dds
 
 .LP
-The 
+The database must have a
+.B rootdn
+specified, otherwise, the
+.B dds
+overlay will not be able to delete expired objects. The 
 .B dds
 overlay may be used with any backend that implements the 
 .BR add ,
@@ -155,7 +159,7 @@ overlay turns refresh extended operation into an internal modification to
 the value of the
 .B entryTtl
 attribute with the
-.B manageDIT
+.B relax
 control set.
 
 RFC 2589 recommends that anonymous clients should not be allowed to refresh
@@ -261,6 +265,7 @@ ETCDIR/slapd.conf
 default slapd configuration file
 .SH SEE ALSO
 .BR slapd.conf (5),
+.BR slapd\-config (5),
 .BR slapd (8).
 .SH AUTHOR
 Implemented by Pierangelo Masarati.

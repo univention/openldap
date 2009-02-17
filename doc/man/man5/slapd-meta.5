@@ -1,8 +1,8 @@
 .TH SLAPD-META 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2008 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2009 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-meta.5,v 1.46.2.11 2008/07/10 00:28:39 quanah Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-meta.5,v 1.46.2.14 2009/01/22 00:00:50 kurt Exp $
 .\"
 .\" Portions of this document should probably be moved to slapd-ldap(5)
 .\" and maybe manual pages for librewrite.
@@ -37,6 +37,15 @@ These features, although useful in many scenarios, may result in
 excessive overhead for some applications, so its use should be
 carefully considered.
 In the examples section, some typical scenarios will be discussed.
+
+The proxy instance of
+.BR slapd (8)
+must contain schema information for the attributes and objectClasses
+used in filters, request DN and request-related data in general.
+It should also contain schema information for the data returned
+by the proxied server.
+It is the responsibility of the proxy administrator to keep the schema
+of the proxy lined up with that of the proxied server.
 
 .LP
 Note: When looping back to the same instance of \fBslapd\fP(8), 
@@ -133,6 +142,19 @@ If
 .BR yes ,
 do not return search reference responses.
 By default, they are returned unless request is LDAPv2.
+If set before any target specification, it affects all targets, unless
+overridden by any per-target directive.
+
+.TP
+.B noundeffilter <NO|yes>
+If
+.BR yes ,
+return success instead of searching if a filter is undefined or contains
+undefined portions.
+By default, the search is propagated after replacing undefined portions
+with
+.BR (!(objectClass=*)) ,
+which corresponds to the empty result set.
 If set before any target specification, it affects all targets, unless
 overridden by any per-target directive.
 

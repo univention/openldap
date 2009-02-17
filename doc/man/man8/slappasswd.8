@@ -1,7 +1,7 @@
 .TH SLAPPASSWD 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" $OpenLDAP: pkg/ldap/doc/man/man8/slappasswd.8,v 1.21.2.5 2008/02/11 23:26:40 kurt Exp $
-.\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.\" $OpenLDAP: pkg/ldap/doc/man/man8/slappasswd.8,v 1.21.2.9 2009/01/30 20:08:06 quanah Exp $
 .SH NAME
 slappasswd \- OpenLDAP password utility
 .SH SYNOPSIS
@@ -19,11 +19,14 @@ slappasswd \- OpenLDAP password utility
 .B Slappasswd
 is used to generate an userPassword value
 suitable for use with
-.BR ldapmodify (1)
-or
+.BR ldapmodify (1),
 .BR slapd.conf (5)
 .I rootpw
+configuration directive or the 
+.BR slapd-config (5) 
+.I olcRootPW
 configuration directive.
+.
 .SH OPTIONS
 .TP
 .B \-v
@@ -157,8 +160,9 @@ were clear text passwords.
 .SH "SEE ALSO"
 .BR ldappasswd (1),
 .BR ldapmodify (1),
-.BR slapd (8)
-.BR slapd.conf (5)
+.BR slapd (8),
+.BR slapd.conf (5),
+.BR slapd\-config (5),
 .B RFC 2307
 .B RFC 4519
 .B RFC 3112

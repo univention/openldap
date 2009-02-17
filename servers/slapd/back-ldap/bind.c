@@ -1,8 +1,8 @@
 /* bind.c - ldap backend bind function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.162.2.17 2008/04/14 20:02:21 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.162.2.21 2009/01/22 00:01:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -1637,8 +1637,6 @@ ldap_back_op_result(
 	char		**refs = NULL;
 	LDAPControl	**ctrls = NULL;
 
-#define	ERR_OK(err) ((err) == LDAP_SUCCESS || (err) == LDAP_COMPARE_FALSE || (err) == LDAP_COMPARE_TRUE)
-
 	rs->sr_text = NULL;
 	rs->sr_matched = NULL;
 	rs->sr_ref = NULL;
@@ -1647,7 +1645,7 @@ ldap_back_op_result(
 	/* if the error recorded in the reply corresponds
 	 * to a successful state, get the error from the
 	 * remote server response */
-	if ( ERR_OK( rs->sr_err ) ) {
+	if ( LDAP_ERR_OK( rs->sr_err ) ) {
 		int		rc;
 		struct timeval	tv;
 		LDAPMessage	*res = NULL;
@@ -1800,7 +1798,7 @@ retry:;
 	/* if the error in the reply structure is not
 	 * LDAP_SUCCESS, try to map it from client 
 	 * to server error */
-	if ( !ERR_OK( rs->sr_err ) ) {
+	if ( !LDAP_ERR_OK( rs->sr_err ) ) {
 		rs->sr_err = slap_map_api2result( rs );
 
 		/* internal ops ( op->o_conn == NULL ) 
@@ -1825,8 +1823,8 @@ retry:;
 		}
 
 	} else if ( op->o_conn &&
-		( ( ( sendok & LDAP_BACK_SENDOK ) && ERR_OK( rs->sr_err ) )
-			|| ( ( sendok & LDAP_BACK_SENDERR ) && rs->sr_err != LDAP_SUCCESS ) ) )
+		( ( ( sendok & LDAP_BACK_SENDOK ) && LDAP_ERR_OK( rs->sr_err ) )
+			|| ( ( sendok & LDAP_BACK_SENDERR ) && !LDAP_ERR_OK( rs->sr_err ) ) ) )
 	{
 		send_ldap_result( op, rs );
 	}
@@ -1859,7 +1857,7 @@ retry:;
 		rs->sr_ctrls = NULL;
 	}
 
-	return( ERR_OK( rs->sr_err ) ? LDAP_SUCCESS : rs->sr_err );
+	return( LDAP_ERR_OK( rs->sr_err ) ? LDAP_SUCCESS : rs->sr_err );
 }
 
 /* return true if bound, false if failed */
@@ -2208,7 +2206,9 @@ ldap_back_proxy_authz_bind(
 		 * so that referral chasing is attempted using the right
 		 * identity */
 		LDAP_BACK_CONN_ISBOUND_SET( lc );
-		ber_bvreplace( &lc->lc_bound_ndn, binddn );
+		if ( !BER_BVISNULL( binddn ) ) {
+			ber_bvreplace( &lc->lc_bound_ndn, binddn );
+		}
 
 		if ( !BER_BVISNULL( &lc->lc_cred ) ) {
 			memset( lc->lc_cred.bv_val, 0,
@@ -2216,8 +2216,10 @@ ldap_back_proxy_authz_bind(
 		}
 
 		if ( LDAP_BACK_SAVECRED( li ) ) {
-			ber_bvreplace( &lc->lc_cred, bindcred );
-			ldap_set_rebind_proc( lc->lc_ld, li->li_rebind_f, lc );
+			if ( !BER_BVISNULL( bindcred ) ) {
+				ber_bvreplace( &lc->lc_cred, bindcred );
+				ldap_set_rebind_proc( lc->lc_ld, li->li_rebind_f, lc );
+			}
 
 		} else {
 			lc->lc_cred.bv_len = 0;
@@ -2613,7 +2615,7 @@ ldap_back_controls_add(
 		goto done;
 	}
 
-	assert( j1 + j1 <= sizeof( c )/sizeof(LDAPControl) );
+	assert( j1 + j2 <= (int) (sizeof( c )/sizeof( c[0] )) );
 
 	if ( op->o_ctrls ) {
 		for ( n = 0; op->o_ctrls[ n ]; n++ )

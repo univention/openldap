@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dds.c,v 1.7.2.9 2008/02/11 23:26:48 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dds.c,v 1.7.2.11 2009/01/22 00:01:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2008 The OpenLDAP Foundation.
+ * Copyright 2005-2009 The OpenLDAP Foundation.
  * Portions Copyright 2005-2006 SysNet s.n.c.
  * All rights reserved.
  *
@@ -185,7 +185,7 @@ dds_expire( void *ctx, dds_info_t *di )
 
 done_search:;
 	op->o_tmpfree( op->ors_filterstr.bv_val, op->o_tmpmemctx );
-	filter_free_x( op, op->ors_filter );
+	filter_free_x( op, op->ors_filter, 1 );
 
 	rc = rs.sr_err;
 	switch ( rs.sr_err ) {
@@ -1671,7 +1671,7 @@ dds_count( void *ctx, BackendDB *be )
 
 done_search:;
 	op->o_tmpfree( op->ors_filterstr.bv_val, op->o_tmpmemctx );
-	filter_free_x( op, op->ors_filter );
+	filter_free_x( op, op->ors_filter, 1 );
 
 	rc = rs.sr_err;
 	switch ( rs.sr_err ) {

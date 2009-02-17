@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/admin/slapdconf2.sdf,v 1.20.2.12 2008/04/14 22:37:01 quanah Exp $
-# Copyright 2005-2008 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP: pkg/openldap-guide/admin/slapdconf2.sdf,v 1.20.2.18 2009/02/06 16:38:31 quanah Exp $
+# Copyright 2005-2009 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Configuring slapd
@@ -125,7 +125,7 @@ keywords, using the keyword as the attribute name, with the "olc"
 prefix attached.
 
 A configuration directive may take arguments.  If so, the arguments are
-separated by white space.  If an argument contains white space,
+separated by whitespace.  If an argument contains whitespace,
 the argument should be enclosed in double quotes {{EX:"like this"}}.
 In the descriptions that follow, arguments that should be replaced
 by actual text are shown in brackets {{EX:<>}}.
@@ -171,45 +171,65 @@ to work (except for the two statistics levels, which are always
 enabled). Log levels may be specified as integers or by keyword.
 Multiple log levels may be used and the levels are additive.
 To display what levels
-correspond to what kind of debugging, invoke slapd with {{EX:-?}}
+correspond to what kind of debugging, invoke slapd with {{EX:-d?}}
 or consult the table below. The possible values for <level> are:
 
 !block table; colaligns="RL"; align=Center; \
 	title="Table 5.1: Debugging Levels"
-Level	Keyword	Description
--1	Any	enable all debugging
-0		no debugging
-1	Trace	trace function calls
-2	Packets	debug packet handling
-4	Args	heavy trace debugging
-8	Conns	connection management
-16	BER	print out packets sent and received
-32	Filter	search filter processing
-64	Config	configuration processing
-128	ACL	access control list processing
-256	Stats	stats log connections/operations/results
-512	Stats2	stats log entries sent
-1024	Shell	print communication with shell backends
-2048	Parse	print entry parsing debugging
-4096	Cache	database cache processing
-8192	Index	database indexing
-16384	Sync	syncrepl consumer processing
+Level	Keyword		Description
+-1	any		enable all debugging
+0			no debugging
+1	(0x1 trace)	trace function callss
+2	(0x2 packets)	debug packet handling
+4	(0x4 args)	heavy trace debugging
+8	(0x8 conns)	connection management
+16	(0x10 BER)	print out packets sent and received
+32	(0x20 filter)	search filter processing
+64	(0x40 config)	configuration processing
+128	(0x80 ACL)	access control list processing
+256	(0x100 stats)	stats log connections/operations/results
+512	(0x200 stats2)	stats log entries sent
+1024	(0x400 shell)	print communication with shell backends
+2048	(0x800 parse)	print entry parsing debugging
+16384	(0x4000 sync)	syncrepl consumer processing
+32768	(0x8000 none)	only messages that get logged whatever log level is set
 !endblock
 
-\Example:
+The desired log level can be input as a single integer that
+combines the (ORed) desired levels, both in decimal or in hexadecimal 
+notation, as a list of integers (that are ORed internally), or as a list of the names that are shown between brackets, such that
 
-E: olcLogLevel: -1
+>		olcLogLevel 129
+>		olcLogLevel 0x81
+>		olcLogLevel 128 1
+>		olcLogLevel 0x80 0x1
+>		olcLogLevel acl trace
+
+are equivalent.
+
+\Examples:
+
+E: olcLogLevel -1
 
 This will cause lots and lots of debugging information to be
 logged.
 
-E: olcLogLevel: Conns Filter
+E: olcLogLevel conns filter
 
 Just log the connection and search filter processing.
 
+E: olcLogLevel none
+
+Log those messages that are logged regardless of the configured loglevel. This
+differs from setting the log level to 0, when no logging occurs. At least the
+{{EX:None}} level is required to have high priority messages logged.
+
 \Default:
 
-E: olcLogLevel: Stats
+E: olcLogLevel stats
+
+Basic stats logging is configured by default. However, if no olcLogLevel is
+defined, no logging occurs (equivalent to a 0 level).
 
 
 H4: olcReferral <URI>
@@ -474,6 +494,8 @@ from a search operation.
 
 >	olcSizeLimit: 500
 
+See the {{SECT:Limits}} section of this guide and slapd-config(5)
+for more details.
 
 
 H4: olcSuffix: <dn suffix>
@@ -667,6 +689,9 @@ exceeded timelimit will be returned.
 \Default:
 
 >	olcTimeLimit: 3600
+
+See the {{SECT:Limits}} section of this guide and slapd-config(5)
+for more details.
 
 
 H4: olcUpdateref: <URL>
@@ -885,10 +910,11 @@ full indexing and so a separate slapindex run is not needed. With
 this option, slapadd does no indexing and slapindex must be used.
 
 
-H4: olcDbMode: <integer>
+H4: olcDbMode: { <octal> | <symbolic> }
 
 This directive specifies the file protection mode that newly
-created database index files should have.
+created database index files should have. This can be in the form
+{{EX:0600}} or {{EX:-rw-------}}
 
 \Default:
 

@@ -1,8 +1,8 @@
 /* readw.c - deal with read waiters subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/rww.c,v 1.36.2.4 2008/02/11 23:26:47 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/rww.c,v 1.36.2.5 2009/01/22 00:01:08 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2008 The OpenLDAP Foundation.
+ * Copyright 2001-2009 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *

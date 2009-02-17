@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/utils.c,v 1.33.2.17 2008/02/11 23:26:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/utils.c,v 1.33.2.23 2009/01/22 00:00:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -77,6 +77,13 @@ char* lutil_progname( const char* name, int argc, char *argv[] )
 	LUTIL_SLASHPATH( argv[0] );
 	progname = strrchr ( argv[0], *LDAP_DIRSEP );
 	progname = progname ? &progname[1] : argv[0];
+#ifdef _WIN32
+	{
+		size_t len = strlen( progname );
+		if ( len > 4 && strcasecmp( &progname[len - 4], ".exe" ) == 0 )
+			progname[len - 4] = '\0';
+	}
+#endif
 	return progname;
 }
 
@@ -296,23 +303,6 @@ lutil_gettime( struct lutil_tm *tm )
 	GetSystemTime( &st );
 	QueryPerformanceCounter( &count );
 
-	/* We assume Windows has at least a vague idea of
-	 * when a second begins. So we align our microsecond count
-	 * with the Windows millisecond count using this offset.
-	 * We retain the submillisecond portion of our own count.
-	 */
-	if ( !cFreq.QuadPart ) {
-		long long t;
-		int usec;
-		QueryPerformanceFrequency( &cFreq );
-
-		t = count.QuadPart * 1000000;
-		t /= cFreq.QuadPart;
-		usec = t % 10000000;
-		usec /= 1000;
-		offset = ( usec - st.wMilliseconds ) * 1000;
-	}
-
 	/* It shouldn't ever go backwards, but multiple CPUs might
 	 * be able to hit in the same tick.
 	 */
@@ -323,14 +313,42 @@ lutil_gettime( struct lutil_tm *tm )
 		prevCount = count;
 	}
 
+	/* We assume Windows has at least a vague idea of
+	 * when a second begins. So we align our microsecond count
+	 * with the Windows millisecond count using this offset.
+	 * We retain the submillisecond portion of our own count.
+	 *
+	 * Note - this also assumes that the relationship between
+	 * the PerformanceCouunter and SystemTime stays constant;
+	 * that assumption breaks if the SystemTime is adjusted by
+	 * an external action.
+	 */
+	if ( !cFreq.QuadPart ) {
+		long long t;
+		int usec;
+		QueryPerformanceFrequency( &cFreq );
+
+		/* just get sub-second portion of counter */
+		t = count.QuadPart % cFreq.QuadPart;
+
+		/* convert to microseconds */
+		t *= 1000000;
+		usec = t / cFreq.QuadPart;
+
+		offset = usec - st.wMilliseconds * 1000;
+	}
+
 	tm->tm_usub = subs;
 
 	/* convert to microseconds */
+	count.QuadPart %= cFreq.QuadPart;
 	count.QuadPart *= 1000000;
 	count.QuadPart /= cFreq.QuadPart;
 	count.QuadPart -= offset;
 
 	tm->tm_usec = count.QuadPart % 1000000;
+	if ( tm->tm_usec < 0 )
+		tm->tm_usec += 1000000;
 
 	/* any difference larger than microseconds is
 	 * already reflected in st
@@ -419,6 +437,21 @@ lutil_strncopy(
 	
 	while ((*a++ = *b++) && n-- > 0) ;
 	return a-1;
+}
+
+/* memcopy is like memcpy except it returns a pointer to the byte past
+ * the end of the result buffer, set to NULL. This allows fast construction
+ * of catenated buffers.  Provided for API consistency with lutil_str*copy().
+ */
+char *
+lutil_memcopy(
+	char *a,
+	const char *b,
+	size_t n
+)
+{
+	AC_MEMCPY(a, b, n);
+	return a + n;
 }
 
 #ifndef HAVE_MKSTEMP
@@ -677,7 +710,6 @@ lutil_str2bin( struct berval *in, struct berval *out, void *ctx )
 {
 	char *pin, *pout, ctmp;
 	char *end;
-	long l;
 	int i, chunk, len, rc = 0, hex = 0;
 	if ( !out || !out->bv_val || out->bv_len < in->bv_len )
 		return -1;
@@ -700,38 +732,40 @@ lutil_str2bin( struct berval *in, struct berval *out, void *ctx )
 	}
 	if ( hex ) {
 #define HEXMAX	(2 * sizeof(long))
+		unsigned long l;
 		/* Convert a longword at a time, but handle leading
 		 * odd bytes first
 		 */
-		chunk = len & (HEXMAX-1);
+		chunk = len % HEXMAX;
 		if ( !chunk )
 			chunk = HEXMAX;
 
 		while ( len ) {
+			int ochunk;
 			ctmp = pin[chunk];
 			pin[chunk] = '\0';
 			errno = 0;
-			l = strtol( pin, &end, 16 );
+			l = strtoul( pin, &end, 16 );
 			pin[chunk] = ctmp;
 			if ( errno )
 				return -1;
-			chunk++;
-			chunk >>= 1;
-			for ( i = chunk; i>=0; i-- ) {
+			ochunk = (chunk + 1)/2;
+			for ( i = ochunk - 1; i >= 0; i-- ) {
 				pout[i] = l & 0xff;
 				l >>= 8;
 			}
 			pin += chunk;
-			pout += sizeof(long);
+			pout += ochunk;
 			len -= chunk;
 			chunk = HEXMAX;
 		}
-		out->bv_len = pout + len - out->bv_val;
+		out->bv_len = pout - out->bv_val;
 	} else {
 	/* Decimal */
 		char tmpbuf[64], *tmp;
 		lutil_int_decnum num;
 		int neg = 0;
+		long l;
 
 		len = in->bv_len;
 		pin = in->bv_val;
@@ -921,7 +955,7 @@ lutil_snprintf( char *buf, ber_len_t bufsize, char **next, ber_len_t *len, LDAP_
 		*len = ret;
 	}
 
-	if ( ret >= bufsize ) {
+	if ( (unsigned) ret >= bufsize ) {
 		if ( next ) {
 			*next = &buf[ bufsize - 1 ];
 		}

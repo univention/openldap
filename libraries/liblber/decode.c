@@ -1,8 +1,8 @@
 /* decode.c - ber input decoding routines */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/decode.c,v 1.105.2.4 2008/02/11 23:26:41 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/decode.c,v 1.105.2.6 2009/01/22 00:00:53 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -69,7 +69,7 @@ ber_decode_oid( BerValue *in, BerValue *out )
 		val |= der[i] & 0x7f;
 		if ( !( der[i] & 0x80 )) {
 			if ( ptr == NULL ) {
-				/* Initial "x.y": val=x*40+y, x<=2, y<40 if x=2 */
+				/* Initial "x.y": val=x*40+y, x<=2, y<40 if x<2 */
 				ptr = out->bv_val;
 				val1 = (val < 80 ? val/40 : 2);
 				val -= val1*40;

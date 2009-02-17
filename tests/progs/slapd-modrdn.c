@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/tests/progs/slapd-modrdn.c,v 1.22.2.5 2008/02/11 23:26:50 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/tests/progs/slapd-modrdn.c,v 1.22.2.7 2009/01/22 00:01:17 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -298,7 +298,7 @@ retry:;
 	}
 
 done:;
-	fprintf( stderr, " PID=%ld - Modrdn done (%d).\n", (long) pid, rc );
+	fprintf( stderr, "  PID=%ld - Modrdn done (%d).\n", (long) pid, rc );
 
 	ldap_unbind_ext( ld, NULL, NULL );
 }

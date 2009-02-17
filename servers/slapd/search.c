@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/search.c,v 1.181.2.5 2008/04/14 22:16:16 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/search.c,v 1.181.2.8 2009/01/22 00:01:03 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -180,7 +180,7 @@ do_search(
 
 	if ( StatslogTest( LDAP_DEBUG_STATS ) ) {
 		char abuf[BUFSIZ/2], *ptr = abuf;
-		int len = 0, alen;
+		unsigned len = 0, alen;
 
 		sprintf(abuf, "scope=%d deref=%d", op->ors_scope, op->ors_deref);
 		Statslog( LDAP_DEBUG_STATS,
@@ -227,7 +227,7 @@ return_results:;
 		op->o_tmpfree( op->ors_filterstr.bv_val, op->o_tmpmemctx );
 	}
 	if ( op->ors_filter != NULL) {
-		filter_free_x( op, op->ors_filter );
+		filter_free_x( op, op->ors_filter, 1 );
 	}
 	if ( op->ors_attrs != NULL ) {
 		op->o_tmpfree( op->ors_attrs, op->o_tmpmemctx );

@@ -1,8 +1,8 @@
 .TH SLAPO-RETCODE 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2008 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2009 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-retcode.5,v 1.9.2.4 2008/07/12 05:49:03 quanah Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-retcode.5,v 1.9.2.8 2009/01/30 20:08:06 quanah Exp $
 .SH NAME
 slapo-retcode \- return code overlay to slapd
 .SH SYNOPSIS
@@ -227,6 +227,8 @@ The auxiliary objectclass to alter the behavior of existing objects:
 .nf
 overlay         retcode
 retcode-parent  "ou=RetCodes,dc=example,dc=com"
+
+# retcode.conf is found in tests/data/ of the source tree
 include         ./retcode.conf
 
 # Wait 10 seconds, then return success (0x00)
@@ -244,7 +246,12 @@ ETCDIR/slapd.conf
 default slapd configuration file
 .SH SEE ALSO
 .BR slapd.conf (5),
-.BR slapd (8),
+.BR slapd\-config (5),
+.BR slapd (8).
+The
+.BR slapo-retcode (5)
+overlay supports dynamic configuration via
+.BR back-config .
 .SH ACKNOWLEDGEMENTS
 .P
 This module was written in 2005 by Pierangelo Masarati for SysNet s.n.c.

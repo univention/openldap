@@ -1,8 +1,8 @@
 /* slapcommon.c - common routine for the slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.c,v 1.73.2.7 2008/02/11 23:26:44 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.c,v 1.73.2.10 2009/02/06 01:03:12 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -564,7 +564,7 @@ slap_tool_init(
 	}
 
 	if ( use_glue ) {
-		rc = glue_sub_attach();
+		rc = glue_sub_attach( 0 );
 
 		if ( rc != 0 ) {
 			fprintf( stderr,
@@ -740,13 +740,16 @@ startup:;
 	}
 }
 
-void slap_tool_destroy( void )
+int slap_tool_destroy( void )
 {
+	int rc = 0;
 	if ( !dryrun ) {
 		if ( need_shutdown ) {
-			slap_shutdown( be );
+			if ( slap_shutdown( be ))
+				rc = EXIT_FAILURE;
 		}
-		slap_destroy();
+		if ( slap_destroy())
+			rc = EXIT_FAILURE;
 	}
 #ifdef SLAPD_MODULES
 	if ( slapMode == SLAP_SERVER_MODE ) {
@@ -772,4 +775,5 @@ void slap_tool_destroy( void )
 	if ( ldiffp && ldiffp != &dummy ) {
 		ldif_close( ldiffp );
 	}
+	return rc;
 }

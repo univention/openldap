@@ -1,8 +1,8 @@
 /* database.c - deals with database subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/database.c,v 1.80.2.10 2008/05/26 18:57:01 ando Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/database.c,v 1.80.2.12 2009/01/22 00:01:08 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2008 The OpenLDAP Foundation.
+ * Copyright 2001-2009 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -160,12 +160,12 @@ monitor_subsys_database_init_one(
 				"monitor_subsys_database_init: "
 				"missing suffix for %s\n",
 				rdnval, 0, 0 );
-			return -1;
+		} else {
+			attr_merge( e, slap_schema.si_ad_namingContexts,
+				be->be_suffix, be->be_nsuffix );
+			attr_merge( e_database, slap_schema.si_ad_namingContexts,
+				be->be_suffix, be->be_nsuffix );
 		}
-		attr_merge( e, slap_schema.si_ad_namingContexts,
-				be->be_suffix, be->be_nsuffix );
-		attr_merge( e_database, slap_schema.si_ad_namingContexts,
-				be->be_suffix, be->be_nsuffix );
 	}
 
 	(void)init_readOnly( mi, e, be->be_restrictops );

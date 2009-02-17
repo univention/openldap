@@ -1,8 +1,8 @@
 /* dn.c - routines for dealing with distinguished names */
-/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.182.2.8 2008/02/11 23:26:44 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.182.2.10 2009/01/22 00:01:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1077,7 +1077,7 @@ dn_rdnlen(
 
 	p = ber_bvchr( dn_in, ',' );
 
-	return p ? p - dn_in->bv_val : dn_in->bv_len;
+	return p ? (ber_len_t) (p - dn_in->bv_val) : dn_in->bv_len;
 }
 
 

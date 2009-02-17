@@ -1,6 +1,7 @@
 .TH SLAPACL 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2004-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2004-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.\" $OpenLDAP: pkg/ldap/doc/man/man8/slapacl.8,v 1.8.2.10 2009/02/04 18:53:59 quanah Exp $
 .SH NAME
 slapacl \- Check access to a list of attributes.
 .SH SYNOPSIS
@@ -18,14 +19,18 @@ slapacl \- Check access to a list of attributes.
 .LP
 .SH DESCRIPTION
 .LP
-.B Slapacl
-is used to check the behavior of the slapd in verifying access to data
-according to ACLs, as specified in 
-.BR slapd.access (5).
+.B slapacl
+is used to check the behavior of 
+.BR slapd (8) 
+by verifying access to directory data according to the access control list
+directives defined in its configuration.
+.
 It opens the
 .BR slapd.conf (5)
-configuration file, reads in the 
-.B access
+configuration file or the 
+.BR slapd-config (5) 
+backend, reads in the  
+.B access/olcAccess
 directives, and then parses the 
 .B attr
 list given on the command-line; if none is given, access to the
@@ -156,7 +161,7 @@ The command
 .LP
 .nf
 .ft tt
-	SBINDIR/slapacl -f /ETCDIR/slapd.conf -v \\
+	SBINDIR/slapacl -f ETCDIR/slapd.conf -v \\
             -U bjorn -b "o=University of Michigan,c=US" \\
 	    "o/read:University of Michigan"
 

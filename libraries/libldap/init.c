@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/init.c,v 1.102.2.5 2008/02/11 23:26:41 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/init.c,v 1.102.2.11 2009/01/26 23:29:53 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,6 +17,10 @@
 
 #include <stdio.h>
 #include <ac/stdlib.h>
+
+#ifdef HAVE_GETEUID
+#include <ac/unistd.h>
+#endif
 
 #include <ac/socket.h>
 #include <ac/string.h>
@@ -46,6 +50,8 @@ struct ldapoptions ldap_int_global_options =
 
 #define ATTR_OPT_TV	8
 #define ATTR_OPT_INT	9
+
+#define ATTR_GSSAPI	10
 
 struct ol_keyvalue {
 	const char *		key;
@@ -100,6 +106,13 @@ static const struct ol_attribute {
 	{1, ATTR_STRING,	"SASL_AUTHZID",		NULL,
 		offsetof(struct ldapoptions, ldo_def_sasl_authzid)},
 	{0, ATTR_SASL,		"SASL_SECPROPS",	NULL,	LDAP_OPT_X_SASL_SECPROPS},
+	{0, ATTR_BOOL,		"SASL_NOCANON",	NULL,	LDAP_BOOL_SASL_NOCANON},
+#endif
+
+#ifdef HAVE_GSSAPI
+	{0, ATTR_GSSAPI,"GSSAPI_SIGN",			NULL,	LDAP_OPT_SIGN},
+	{0, ATTR_GSSAPI,"GSSAPI_ENCRYPT",		NULL,	LDAP_OPT_ENCRYPT},
+	{0, ATTR_GSSAPI,"GSSAPI_ALLOW_REMOTE_PRINCIPAL",NULL,	LDAP_OPT_X_GSSAPI_ALLOW_REMOTE_PRINCIPAL},
 #endif
 
 #ifdef HAVE_TLS
@@ -110,12 +123,13 @@ static const struct ol_attribute {
   	{0, ATTR_TLS,	"TLS_REQCERT",		NULL,	LDAP_OPT_X_TLS_REQUIRE_CERT},
 	{0, ATTR_TLS,	"TLS_RANDFILE",		NULL,	LDAP_OPT_X_TLS_RANDOM_FILE},
 	{0, ATTR_TLS,	"TLS_CIPHER_SUITE",	NULL,	LDAP_OPT_X_TLS_CIPHER_SUITE},
+	{0, ATTR_TLS,	"TLS_PROTOCOL_MIN",	NULL,	LDAP_OPT_X_TLS_PROTOCOL_MIN},
 
 #ifdef HAVE_OPENSSL_CRL
 	{0, ATTR_TLS,	"TLS_CRLCHECK",		NULL,	LDAP_OPT_X_TLS_CRLCHECK},
 #endif
 #ifdef HAVE_GNUTLS
-	{0, ATTR_TLS,	"TLS_CRL",			NULL,	LDAP_OPT_X_TLS_CRLFILE},
+	{0, ATTR_TLS,	"TLS_CRLFILE",			NULL,	LDAP_OPT_X_TLS_CRLFILE},
 #endif
         
 #endif
@@ -123,7 +137,7 @@ static const struct ol_attribute {
 	{0, ATTR_NONE,		NULL,		NULL,	0}
 };
 
-#define MAX_LDAP_ATTR_LEN  sizeof("TLS_CIPHER_SUITE")
+#define MAX_LDAP_ATTR_LEN  sizeof("GSSAPI_ALLOW_REMOTE_PRINCIPAL")
 #define MAX_LDAP_ENV_PREFIX_LEN 8
 
 static void openldap_ldap_init_w_conf(
@@ -252,6 +266,11 @@ static void openldap_ldap_init_w_conf(
 			case ATTR_SASL:
 #ifdef HAVE_CYRUS_SASL
 			   	ldap_int_sasl_config( gopts, attrs[i].offset, opt );
+#endif
+				break;
+			case ATTR_GSSAPI:
+#ifdef HAVE_GSSAPI
+				ldap_int_gssapi_config( gopts, attrs[i].offset, opt );
 #endif
 				break;
 			case ATTR_TLS:
@@ -616,6 +635,12 @@ void ldap_int_initialize( struct ldapoptions *gopts, int *dbglvl )
 #endif
 
 	openldap_ldap_init_w_sysconf(LDAP_CONF_FILE);
+
+#ifdef HAVE_GETEUID
+	if ( geteuid() != getuid() )
+		return;
+#endif
+
 	openldap_ldap_init_w_userconf(LDAP_USERRC_FILE);
 
 	{

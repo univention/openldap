@@ -1,8 +1,8 @@
 .TH SLAPO-RWM 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2008 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2009 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2004, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-rwm.5,v 1.14.2.5 2008/05/19 23:44:27 quanah Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-rwm.5,v 1.14.2.8 2009/01/30 20:08:06 quanah Exp $
 .\"
 .\" Portions of this document should probably be moved to slapd-ldap(5)
 .\" and maybe manual pages for librewrite.
@@ -355,8 +355,9 @@ modifyDN             modify
 modifyAttrDN         modify AVA (DN portion of "ref" excluded)
 referralAttrDN       add/modify DN portion of referrals
                      (default to none)
-modrDN               modrdn
-newSuperiorDN        modrdn
+renameDN             modrdn (the old DN)
+newSuperiorDN        modrdn (the new parent DN, if any)
+newRDN               modrdn (the new relative DN)
 deleteDN             delete
 exopPasswdDN         password modify extended operation DN
 .fi
@@ -649,6 +650,7 @@ ETCDIR/slapd.conf
 default slapd configuration file
 .SH SEE ALSO
 .BR slapd.conf (5),
+.BR slapd\-config (5),
 .BR slapd\-ldap (5),
 .BR slapd\-meta (5),
 .BR slapd\-relay (5),

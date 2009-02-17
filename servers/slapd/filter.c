@@ -1,8 +1,8 @@
 /* filter.c - routines for parsing and dealing with filters */
-/* $OpenLDAP: pkg/ldap/servers/slapd/filter.c,v 1.134.2.12 2008/02/18 22:25:47 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/filter.c,v 1.134.2.16 2009/01/22 00:01:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -385,6 +385,19 @@ get_ssa(
 
 	rc = LDAP_PROTOCOL_ERROR;
 
+	if ( ssa.sa_desc->ad_type->sat_substr == NULL ) {
+		for ( tag = ber_first_element( ber, &len, &last );
+			tag != LBER_DEFAULT;
+			tag = ber_next_element( ber, &len, last ) )
+		{
+			/* eat all */
+			rc = ber_scanf( ber, "x" );
+		}
+
+		rc = LDAP_INVALID_SYNTAX;
+		goto return_error;
+	}
+
 	for ( tag = ber_first_element( ber, &len, &last );
 		tag != LBER_DEFAULT;
 		tag = ber_next_element( ber, &len, last ) )
@@ -478,6 +491,7 @@ return_error:
 			return rc;
 		}
 
+		*text = NULL;
 		rc = LDAP_SUCCESS;
 	}
 
@@ -491,7 +505,7 @@ return_error:
 }
 
 void
-filter_free_x( Operation *op, Filter *f )
+filter_free_x( Operation *op, Filter *f, int freeme )
 {
 	Filter	*p, *next;
 
@@ -530,7 +544,7 @@ filter_free_x( Operation *op, Filter *f )
 	case LDAP_FILTER_NOT:
 		for ( p = f->f_list; p != NULL; p = next ) {
 			next = p->f_next;
-			filter_free_x( op, p );
+			filter_free_x( op, p, 1 );
 		}
 		break;
 
@@ -547,7 +561,9 @@ filter_free_x( Operation *op, Filter *f )
 		break;
 	}
 
-	op->o_tmpfree( f, op->o_tmpmemctx );
+	if ( freeme ) {
+		op->o_tmpfree( f, op->o_tmpmemctx );
+	}
 }
 
 void
@@ -559,7 +575,7 @@ filter_free( Filter *f )
 	op.o_hdr = &ohdr;
 	op.o_tmpmemctx = slap_sl_context( f );
 	op.o_tmpmfuncs = &slap_sl_mfuncs;
-	filter_free_x( &op, f );
+	filter_free_x( &op, f, 1 );
 }
 
 void

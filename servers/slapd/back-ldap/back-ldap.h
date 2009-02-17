@@ -1,8 +1,8 @@
 /* back-ldap.h - ldap backend header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.88.2.10 2008/07/10 00:28:39 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.88.2.13 2009/01/22 00:01:06 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2008 The OpenLDAP Foundation.
+ * Copyright 1999-2009 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -316,6 +316,7 @@ typedef struct ldapinfo_t {
 #endif /* SLAP_CONTROL_X_SESSION_TRACKING */
 
 #define LDAP_BACK_F_NOREFS		(0x00080000U)
+#define LDAP_BACK_F_NOUNDEFFILTER	(0x00100000U)
 
 #define	LDAP_BACK_ISSET_F(ff,f)		( ( (ff) & (f) ) == (f) )
 #define	LDAP_BACK_ISMASK_F(ff,m,f)	( ( (ff) & (m) ) == (f) )
@@ -356,6 +357,7 @@ typedef struct ldapinfo_t {
 #endif /* SLAP_CONTROL_X_SESSION_TRACKING */
 
 #define	LDAP_BACK_NOREFS(li)		LDAP_BACK_ISSET( (li), LDAP_BACK_F_NOREFS)
+#define	LDAP_BACK_NOUNDEFFILTER(li)	LDAP_BACK_ISSET( (li), LDAP_BACK_F_NOUNDEFFILTER)
 
 	int			li_version;
 
@@ -390,6 +392,8 @@ typedef struct ldapinfo_t {
 	time_t			li_idle_timeout;
 	time_t			li_timeout[ SLAP_OP_LAST ];
 } ldapinfo_t;
+
+#define	LDAP_ERR_OK(err) ((err) == LDAP_SUCCESS || (err) == LDAP_COMPARE_FALSE || (err) == LDAP_COMPARE_TRUE)
 
 typedef enum ldap_back_send_t {
 	LDAP_BACK_DONTSEND		= 0x00,

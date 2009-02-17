@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.239.2.12 2008/02/12 00:54:34 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.239.2.16 2009/01/22 00:01:03 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -117,7 +117,7 @@ slap_sasl_log(
 	}
 
 	Debug( level, "SASL [conn=%ld] %s: %s\n",
-		conn ? conn->c_connid: -1,
+		conn ? (long) conn->c_connid: -1L,
 		label, message );
 
 
@@ -397,7 +397,8 @@ slap_auxprop_store(
 	Operation op = {0};
 	Opheader oph;
 	SlapReply rs = {REP_RESULT};
-	int rc, i, j;
+	int rc, i;
+	unsigned j;
 	Connection *conn = NULL;
 	const struct propval *pr;
 	Modifications *modlist = NULL, **modtail = &modlist, *mod;
@@ -554,7 +555,7 @@ slap_sasl_canonicalize(
 	*out_len = 0;
 
 	Debug( LDAP_DEBUG_ARGS, "SASL Canonicalize [conn=%ld]: %s=\"%s\"\n",
-		conn ? conn->c_connid : -1,
+		conn ? (long) conn->c_connid : -1L,
 		(flags & SASL_CU_AUTHID) ? "authcid" : "authzid",
 		in ? in : "<empty>");
 
@@ -636,7 +637,7 @@ slap_sasl_canonicalize(
 	prop_set( props, names[0], dn.bv_val, dn.bv_len );
 
 	Debug( LDAP_DEBUG_ARGS, "SASL Canonicalize [conn=%ld]: %s=\"%s\"\n",
-		conn ? conn->c_connid : -1, names[0]+1,
+		conn ? (long) conn->c_connid : -1L, names[0]+1,
 		dn.bv_val ? dn.bv_val : "<EMPTY>" );
 
 	/* Not needed any more, SASL has copied it */
@@ -679,7 +680,7 @@ slap_sasl_authorize(
 
 	Debug( LDAP_DEBUG_ARGS, "SASL proxy authorize [conn=%ld]: "
 		"authcid=\"%s\" authzid=\"%s\"\n",
-		conn ? conn->c_connid : -1, auth_identity, requested_user );
+		conn ? (long) conn->c_connid : -1L, auth_identity, requested_user );
 	if ( conn->c_sasl_dn.bv_val ) {
 		BER_BVZERO( &conn->c_sasl_dn );
 	}
@@ -709,7 +710,7 @@ slap_sasl_authorize(
 	if ( rc != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE, "SASL Proxy Authorize [conn=%ld]: "
 			"proxy authorization disallowed (%d)\n",
-			(long) (conn ? conn->c_connid : -1), rc, 0 );
+			conn ? (long) conn->c_connid : -1L, rc, 0 );
 
 		sasl_seterror( sconn, 0, "not authorized" );
 		return SASL_NOAUTHZ;
@@ -729,7 +730,7 @@ ok:
 
 	Debug( LDAP_DEBUG_TRACE, "SASL Authorize [conn=%ld]: "
 		" proxy authorization allowed authzDN=\"%s\"\n",
-		(long) (conn ? conn->c_connid : -1), 
+		conn ? (long) conn->c_connid : -1L, 
 		authzDN.bv_val ? authzDN.bv_val : "", 0 );
 	return SASL_OK;
 } 
@@ -1044,7 +1045,7 @@ slapd_rw_apply( void *private, const char *filter, struct berval *val )
 		}
 		rc = REWRITE_ERR;
 	}
-	filter_free_x( op, op->ors_filter );
+	filter_free_x( op, op->ors_filter, 1 );
 	op->o_tmpfree( op->ors_filterstr.bv_val, op->o_tmpmemctx );
 	return rc;
 }

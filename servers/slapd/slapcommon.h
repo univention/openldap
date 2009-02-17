@@ -1,8 +1,8 @@
 /* slapcommon.h - common definitions for the slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.h,v 1.14.2.4 2008/02/11 23:26:44 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.h,v 1.14.2.6 2009/01/22 00:01:03 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2008 The OpenLDAP Foundation.
+ * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -101,6 +101,6 @@ void slap_tool_init LDAP_P((
 	int tool,
 	int argc, char **argv ));
 
-void slap_tool_destroy LDAP_P((void));
+int slap_tool_destroy LDAP_P((void));
 
 #endif /* SLAPCOMMON_H_ */
