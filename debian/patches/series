@@ -9,3 +9,4 @@ sasl-default-path
 libldap-symbol-versions
 getaddrinfo-is-threadsafe
 back-perl-init
+no-crlcheck-for-gnutls
