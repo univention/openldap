@@ -7,6 +7,5 @@ wrong-database-location
 index-files-created-as-root 
 sasl-default-path 
 libldap-symbol-versions
-gnutls-ciphers
 getaddrinfo-is-threadsafe
 back-perl-init
