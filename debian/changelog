@@ -8,6 +8,8 @@ openldap (2.4.11-2) UNRELEASED; urgency=low
       fixed upstream in 2.4.8.  The fix applied in 2.4.8 didn't match the
       patch from the bug report, so this should be watched for regressions.
   * Build against db4.7 instead of db4.2 at last!  Closes: #421946.
+  * Build with --disable-ndb, to avoid a misbuild when libmysqlclient is
+    installed in the build environment.
 
  -- Steve Langasek <vorlon@debian.org>  Tue, 17 Feb 2009 09:41:22 -0800
 

@@ -121,6 +121,7 @@
 #--enable-relay  	  enable relay backend no|yes|mod [yes]
 #--enable-shell	  enable shell backend no|yes|mod [no]
 #--enable-sql	  enable sql backend no|yes|mod [no]
+--disable-ndb
 #
 #SLAPD Overlay Options:
 #--enable-overlays	  enable all available overlays no|yes|mod
