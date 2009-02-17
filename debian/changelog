@@ -3,6 +3,7 @@ openldap (2.4.11-2) UNRELEASED; urgency=low
   * New upstream version
     - Fixes a bug with the pcache overlay not returning cached entries
       (closes: #497697)
+    - Update evolution-ntlm patch to apply to current Makefiles.
   * Build against db4.7 instead of db4.2 at last!  Closes: #421946.
 
  -- Steve Langasek <vorlon@debian.org>  Tue, 17 Feb 2009 09:41:22 -0800
