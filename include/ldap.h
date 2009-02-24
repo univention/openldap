@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.312.2.18 2009/01/26 23:29:53 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.312.2.19 2009/02/17 19:14:41 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -1343,6 +1343,22 @@ ldap_perror LDAP_P((	/* deprecated, use ldap_err2string */
 	LDAP *ld,
 	LDAP_CONST char *s ));
 #endif
+
+
+/*
+ * gssapi.c:
+ */
+LDAP_F( int )
+ldap_gssapi_bind LDAP_P((
+	LDAP *ld,
+	LDAP_CONST char *dn,
+	LDAP_CONST char *creds ));
+
+LDAP_F( int )
+ldap_gssapi_bind_s LDAP_P((
+	LDAP *ld,
+	LDAP_CONST char *dn,
+	LDAP_CONST char *creds ));
 
 
 /*

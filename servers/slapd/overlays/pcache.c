@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.88.2.28 2009/01/26 21:50:09 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.88.2.32 2009/02/19 00:28:24 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2009 The OpenLDAP Foundation.
@@ -1976,7 +1976,7 @@ pcache_op_cleanup( Operation *op, SlapReply *rs ) {
 		Entry *e;
 
 		/* don't return more entries than requested by the client */
-		if ( si->slimit && rs->sr_nentries >= si->slimit ) {
+		if ( si->slimit > 0 && rs->sr_nentries >= si->slimit ) {
 			si->slimit_exceeded = 1;
 		}
 
@@ -1991,6 +1991,19 @@ pcache_op_cleanup( Operation *op, SlapReply *rs ) {
 				Debug( pcache_debug, "%s: query not cacheable because of schema issues in DN \"%s\"\n",
 					op->o_log_prefix, rs->sr_entry->e_name.bv_val, 0 );
 				goto over;
+			}
+
+			/* check for malformed entries: attrs with no values */
+			{
+				Attribute *a = rs->sr_entry->e_attrs;
+				for (; a; a=a->a_next) {
+					if ( !a->a_numvals ) {
+						Debug( pcache_debug, "%s: query not cacheable because of attrs without values in DN \"%s\" (%s)\n",
+						op->o_log_prefix, rs->sr_entry->e_name.bv_val,
+						a->a_desc->ad_cname.bv_val );
+						goto over;
+					}
+				}
 			}
 
 			if ( si->count < si->max ) {
@@ -2168,8 +2181,8 @@ add_filter_attrs(
 		(*new_attrs)[i].an_desc = attrs->attrs[i].an_desc;
 	}
 	BER_BVZERO( &(*new_attrs)[i].an_name );
-	alluser = an_find(*new_attrs, &AllUser);
-	allop = an_find(*new_attrs, &AllOper);
+	alluser = an_find( *new_attrs, slap_bv_all_user_attrs );
+	allop = an_find( *new_attrs, slap_bv_all_operational_attrs );
 
 	j = i;
 	for ( i=0; i<fattr_cnt; i++ ) {
@@ -2447,7 +2460,7 @@ pcache_op_search(
 		si->slimit = 0;
 		si->slimit_exceeded = 0;
 		si->caching_reason = PC_IGNORE;
-		if ( op->ors_slimit && op->ors_slimit < cm->num_entries_limit ) {
+		if ( op->ors_slimit > 0 && op->ors_slimit < cm->num_entries_limit ) {
 			si->slimit = op->ors_slimit;
 			op->ors_slimit = cm->num_entries_limit;
 		}

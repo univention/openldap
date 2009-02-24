@@ -1,5 +1,5 @@
 /* tls.c - Handle tls/ssl. */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/tls2.c,v 1.4.2.3 2009/02/08 06:06:04 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/tls2.c,v 1.4.2.6 2009/02/17 20:47:40 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -143,7 +143,6 @@ void
 ldap_pvt_tls_destroy( void )
 {
 	struct ldapoptions *lo = LDAP_INT_GLOBAL_OPT();   
-	int i;
 
 	ldap_int_tls_destroy( lo );
 
@@ -179,8 +178,6 @@ tls_init(tls_impl *impl )
 int
 ldap_pvt_tls_init( void )
 {
-	struct ldapoptions *lo = LDAP_INT_GLOBAL_OPT();   
-
 	return tls_init( tls_imp );
 }
 
@@ -190,7 +187,7 @@ ldap_pvt_tls_init( void )
 static int
 ldap_int_tls_init_ctx( struct ldapoptions *lo, int is_server )
 {
-	int i, rc = 0;
+	int rc = 0;
 	tls_impl *ti = tls_imp;
 	struct ldaptls lts = lo->ldo_tls_info;
 
@@ -562,6 +559,7 @@ ldap_int_tls_config( LDAP *ld, int option, const char *arg )
 		}
 		return ldap_pvt_tls_set_option( ld, option, &i );
 		}
+#ifdef HAVE_OPENSSL_CRL
 	case LDAP_OPT_X_TLS_CRLCHECK:	/* OpenSSL only */
 		i = -1;
 		if ( strcasecmp( arg, "none" ) == 0 ) {
@@ -575,6 +573,7 @@ ldap_int_tls_config( LDAP *ld, int option, const char *arg )
 			return ldap_pvt_tls_set_option( ld, option, &i );
 		}
 		return -1;
+#endif
 	}
 	return -1;
 }
@@ -638,9 +637,11 @@ ldap_pvt_tls_get_option( LDAP *ld, int option, void *arg )
 	case LDAP_OPT_X_TLS_REQUIRE_CERT:
 		*(int *)arg = lo->ldo_tls_require_cert;
 		break;
+#ifdef HAVE_OPENSSL_CRL
 	case LDAP_OPT_X_TLS_CRLCHECK:	/* OpenSSL only */
 		*(int *)arg = lo->ldo_tls_crlcheck;
 		break;
+#endif
 	case LDAP_OPT_X_TLS_CIPHER_SUITE:
 		*(char **)arg = lo->ldo_tls_ciphersuite ?
 			LDAP_STRDUP( lo->ldo_tls_ciphersuite ) : NULL;
@@ -648,7 +649,7 @@ ldap_pvt_tls_get_option( LDAP *ld, int option, void *arg )
 	case LDAP_OPT_X_TLS_PROTOCOL_MIN:
 		*(int *)arg = lo->ldo_tls_protocol_min;
 		break;
-	case LDAP_OPT_X_TLS_RANDOM_FILE:	/* OpenSSL only */
+	case LDAP_OPT_X_TLS_RANDOM_FILE:
 		*(char **)arg = lo->ldo_tls_randfile ?
 			LDAP_STRDUP( lo->ldo_tls_randfile ) : NULL;
 		break;
@@ -764,6 +765,7 @@ ldap_pvt_tls_set_option( LDAP *ld, int option, void *arg )
 			return 0;
 		}
 		return -1;
+#ifdef HAVE_OPENSSL_CRL
 	case LDAP_OPT_X_TLS_CRLCHECK:	/* OpenSSL only */
 		if ( !arg ) return -1;
 		switch( *(int *) arg ) {
@@ -774,6 +776,7 @@ ldap_pvt_tls_set_option( LDAP *ld, int option, void *arg )
 			return 0;
 		}
 		return -1;
+#endif
 	case LDAP_OPT_X_TLS_CIPHER_SUITE:
 		if ( lo->ldo_tls_ciphersuite ) LDAP_FREE( lo->ldo_tls_ciphersuite );
 		lo->ldo_tls_ciphersuite = arg ? LDAP_STRDUP( (char *) arg ) : NULL;
@@ -783,14 +786,12 @@ ldap_pvt_tls_set_option( LDAP *ld, int option, void *arg )
 		if ( !arg ) return -1;
 		lo->ldo_tls_protocol_min = *(int *)arg;
 		return 0;
-
-	case LDAP_OPT_X_TLS_RANDOM_FILE:	/* OpenSSL only */
+	case LDAP_OPT_X_TLS_RANDOM_FILE:
 		if ( ld != NULL )
 			return -1;
 		if ( lo->ldo_tls_randfile ) LDAP_FREE (lo->ldo_tls_randfile );
 		lo->ldo_tls_randfile = arg ? LDAP_STRDUP( (char *) arg ) : NULL;
 		break;
-
 	case LDAP_OPT_X_TLS_NEWCTX:
 		if ( !arg ) return -1;
 		if ( lo->ldo_tls_ctx )

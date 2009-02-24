@@ -1,5 +1,5 @@
 /*  ldap-int.h - defines & prototypes internal to the LDAP library */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.168.2.13 2009/02/02 22:53:14 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.168.2.14 2009/02/17 21:02:51 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -693,6 +693,16 @@ LDAP_F (void) ldap_int_tls_destroy LDAP_P(( struct ldapoptions *lo ));
  */
 LDAP_F (char **) ldap_value_dup LDAP_P((
 	char *const *vals ));
+
+/*
+ *	in gssapi.c
+ */
+#ifdef HAVE_GSSAPI
+LDAP_F(int) ldap_int_gssapi_get_option LDAP_P(( LDAP *ld, int option, void *arg ));
+LDAP_F(int) ldap_int_gssapi_set_option LDAP_P(( LDAP *ld, int option, void *arg ));
+LDAP_F(int) ldap_int_gssapi_config LDAP_P(( struct ldapoptions *lo, int option, const char *arg ));
+LDAP_F(void) ldap_int_gssapi_close LDAP_P(( LDAP *ld, LDAPConn *lc ));
+#endif 
 
 LDAP_END_DECL
 

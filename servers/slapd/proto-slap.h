@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.670.2.40 2009/02/06 01:03:12 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.670.2.41 2009/02/17 19:14:41 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -190,6 +190,15 @@ LDAP_SLAPD_V( AttributeName * ) slap_anlist_no_attrs;
 LDAP_SLAPD_V( AttributeName * ) slap_anlist_all_user_attributes;
 LDAP_SLAPD_V( AttributeName * ) slap_anlist_all_operational_attributes;
 LDAP_SLAPD_V( AttributeName * ) slap_anlist_all_attributes;
+
+LDAP_SLAPD_V( struct berval * ) slap_bv_no_attrs;
+LDAP_SLAPD_V( struct berval * ) slap_bv_all_user_attrs;
+LDAP_SLAPD_V( struct berval * ) slap_bv_all_operational_attrs;
+
+/* deprecated; only defined for backward compatibility */
+#define NoAttrs		(*slap_bv_no_attrs)
+#define AllUser		(*slap_bv_all_user_attrs)
+#define AllOper		(*slap_bv_all_operational_attrs)
 
 /*
  * add.c
@@ -1953,10 +1962,6 @@ LDAP_SLAPD_V (ldap_pvt_thread_mutex_t)	oc_undef_mutex;
 LDAP_SLAPD_V (ber_socket_t)	dtblsize;
 
 LDAP_SLAPD_V (int)		use_reverse_lookup;
-
-LDAP_SLAPD_V (struct berval)	AllUser;
-LDAP_SLAPD_V (struct berval)	AllOper;
-LDAP_SLAPD_V (struct berval)	NoAttrs;
 
 /*
  * operations

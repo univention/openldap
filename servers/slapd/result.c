@@ -1,5 +1,5 @@
 /* result.c - routines to send ldap results, errors, and referrals */
-/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.289.2.21 2009/01/26 20:48:05 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.289.2.22 2009/02/17 19:14:41 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -1656,9 +1656,9 @@ slap_attr_flags( AttributeName *an )
 		flags |= ( SLAP_OPATTRS_NO | SLAP_USERATTRS_YES );
 
 	} else {
-		flags |= an_find( an, &AllOper )
+		flags |= an_find( an, slap_bv_all_operational_attrs )
 			? SLAP_OPATTRS_YES : SLAP_OPATTRS_NO;
-		flags |= an_find( an, &AllUser )
+		flags |= an_find( an, slap_bv_all_user_attrs )
 			? SLAP_USERATTRS_YES : SLAP_USERATTRS_NO;
 	}
 

@@ -1,5 +1,5 @@
 /* syncrepl.c -- Replication Engine which uses the LDAP Sync protocol */
-/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.254.2.61 2009/02/10 16:43:11 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.254.2.63 2009/02/17 21:17:20 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2009 The OpenLDAP Foundation.
@@ -2876,6 +2876,9 @@ syncrepl_updateCookie(
 	Backend *be = op->o_bd;
 	Modifications mod;
 	struct berval first = BER_BVNULL;
+#ifdef CHECK_CSN
+	Syntax *syn = slap_schema.si_ad_contextCSN->ad_type->sat_syntax;
+#endif
 
 	int rc, i, j;
 	ber_len_t len;
@@ -2891,6 +2894,15 @@ syncrepl_updateCookie(
 	mod.sml_next = NULL;
 
 	ldap_pvt_thread_mutex_lock( &si->si_cookieState->cs_mutex );
+
+#ifdef CHECK_CSN
+	for ( i=0; i<syncCookie->numcsns; i++ ) {
+		assert( !syn->ssyn_validate( syn, syncCookie->ctxcsn+i ));
+	}
+	for ( i=0; i<si->si_cookieState->cs_num; i++ ) {
+		assert( !syn->ssyn_validate( syn, si->si_cookieState->cs_vals+i ));
+	}
+#endif
 
 	/* clone the cookieState CSNs so we can Replace the whole thing */
 	mod.sml_numvals = si->si_cookieState->cs_num;
@@ -2993,6 +3005,12 @@ syncrepl_updateCookie(
 	BER_BVZERO( &op->o_csn );
 	if ( mod.sml_next ) slap_mods_free( mod.sml_next, 1 );
 	op->o_tmpfree( mod.sml_values, op->o_tmpmemctx );
+
+#ifdef CHECK_CSN
+	for ( i=0; i<si->si_cookieState->cs_num; i++ ) {
+		assert( !syn->ssyn_validate( syn, si->si_cookieState->cs_vals+i ));
+	}
+#endif
 
 	return rc;
 }
@@ -4307,13 +4325,22 @@ add_syncrepl(
 			BER_BVISNULL( &si->si_bindconf.sb_uri ) ?
 			"(null)" : si->si_bindconf.sb_uri.bv_val, 0, 0 );
 		if ( c->be->be_syncinfo ) {
+			syncinfo_t *sip;
+
 			si->si_cookieState = c->be->be_syncinfo->si_cookieState;
+
+			// add new syncrepl to end of list (same order as when deleting)
+			for ( sip = c->be->be_syncinfo; sip->si_next; sip = sip->si_next );
+			sip->si_next = si;
 		} else {
 			si->si_cookieState = ch_calloc( 1, sizeof( cookie_state ));
 			ldap_pvt_thread_mutex_init( &si->si_cookieState->cs_mutex );
+
+			c->be->be_syncinfo = si;
 		}
-		si->si_next = c->be->be_syncinfo;
-		c->be->be_syncinfo = si;
+
+		si->si_next = NULL;
+
 		return 0;
 	}
 }

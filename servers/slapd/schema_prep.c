@@ -1,5 +1,5 @@
 /* schema_prep.c - load builtin schema */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.169.2.11 2009/01/22 00:01:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.169.2.12 2009/02/22 05:51:52 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -449,7 +449,7 @@ static struct slap_schema_ad_map {
 			"EQUALITY objectIdentifierMatch "
 			"SYNTAX 1.3.6.1.4.1.1466.115.121.1.38 "
 			"SINGLE-VALUE NO-USER-MODIFICATION USAGE directoryOperation )",
-		NULL, SLAP_AT_MANAGEABLE,
+		NULL, 0,
 		oidValidate, objectClassPretty,
 		NULL, NULL, objectSubClassMatch,
 			objectSubClassIndexer, objectSubClassFilter,

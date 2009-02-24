@@ -1,5 +1,5 @@
 /* result.c - wait for an ldap result */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/result.c,v 1.124.2.17 2009/02/10 23:42:16 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/result.c,v 1.124.2.18 2009/02/17 21:02:51 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -106,7 +106,6 @@ ldap_result(
 	struct timeval *timeout,
 	LDAPMessage **result )
 {
-	LDAPMessage	*lm;
 	int		rc;
 
 	assert( ld != NULL );
@@ -1384,7 +1383,6 @@ ldap_abandoned( LDAP *ld, ber_int_t msgid, int *idxp )
 
 	assert( idxp != NULL );
 	assert( msgid >= 0 );
-	assert( ld->ld_nabandoned >= 0 );
 
 	return ldap_int_bisect_find( ld->ld_abandoned, ld->ld_nabandoned, msgid, idxp );
 }

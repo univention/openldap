@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/ldap_pvt.h,v 1.91.2.9 2009/02/02 22:53:14 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap_pvt.h,v 1.91.2.10 2009/02/17 19:14:41 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -285,6 +285,11 @@ LDAP_F (int) ldap_open_internal_connection LDAP_P((
 	struct ldap **ldp, ber_socket_t *fdp ));
 LDAP_F (int) ldap_init_fd LDAP_P((
 	ber_socket_t fd, int proto, LDAP_CONST char *url, struct ldap **ldp ));
+
+/* sasl.c */
+LDAP_F (int) ldap_pvt_sasl_generic_install LDAP_P(( Sockbuf *sb,
+	struct sb_sasl_generic_install *install_arg ));
+LDAP_F (void) ldap_pvt_sasl_generic_remove LDAP_P(( Sockbuf *sb ));
 
 /* search.c */
 LDAP_F( int ) ldap_pvt_put_filter LDAP_P((

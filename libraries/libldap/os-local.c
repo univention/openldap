@@ -1,5 +1,5 @@
 /* os-local.c -- platform-specific domain socket code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.44.2.7 2009/01/22 00:00:55 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.44.2.8 2009/02/17 21:02:51 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -149,7 +149,7 @@ ldap_pvt_is_socket_ready(LDAP *ld, int s)
 		== AC_SOCKET_ERROR )
 	{
 		/* XXX: needs to be replace with ber_stream_read() */
-		int rc = read(s, &ch, 1);
+		(void)read(s, &ch, 1);
 		TRACE;
 		return -1;
 	}

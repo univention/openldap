@@ -1,5 +1,5 @@
 /* schema_check.c - routines to enforce schema definitions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_check.c,v 1.103.2.9 2009/02/05 19:35:54 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_check.c,v 1.103.2.10 2009/02/22 20:56:29 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -881,7 +881,7 @@ entry_naming_check(
 				SLAP_MR_ATTRIBUTE_VALUE_NORMALIZED_MATCH,
 				&ava->la_value, NULL, NULL );
 
-			if( rc != 0 ) {
+			if ( rc != 0 ) {
 				switch( rc ) {
 				case LDAP_INAPPROPRIATE_MATCHING:
 					snprintf( textbuf, textlen, 
@@ -895,8 +895,16 @@ entry_naming_check(
 					break;
 				case LDAP_NO_SUCH_ATTRIBUTE:
 					if ( add_naming ) {
-						add = 1;
-						rc = LDAP_SUCCESS;
+						if ( is_at_single_value( desc->ad_type ) ) {
+							snprintf( textbuf, textlen, 
+								"value of single-valued naming attribute '%s' conflicts with value present in entry",
+								ava->la_attr.bv_val );
+
+						} else {
+							add = 1;
+							rc = LDAP_SUCCESS;
+						}
+
 					} else {
 						snprintf( textbuf, textlen, 
 							"value of naming attribute '%s' is not present in entry",

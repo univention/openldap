@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/back-meta.h,v 1.64.2.12 2009/01/22 00:01:07 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/back-meta.h,v 1.64.2.13 2009/02/17 19:14:41 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.
@@ -317,6 +317,8 @@ typedef struct metatarget_t {
 
 #define	META_BACK_TGT_NOREFS(mt)		META_BACK_TGT_ISSET( (mt), LDAP_BACK_F_NOREFS )
 #define	META_BACK_TGT_NOUNDEFFILTER(mt)		META_BACK_TGT_ISSET( (mt), LDAP_BACK_F_NOUNDEFFILTER )
+
+	slap_mask_t		mt_rep_flags;
 
 	int			mt_version;
 	time_t			mt_network_timeout;

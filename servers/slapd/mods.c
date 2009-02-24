@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/mods.c,v 1.59.2.8 2009/02/11 00:57:40 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/mods.c,v 1.59.2.9 2009/02/22 22:45:32 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -263,13 +263,18 @@ modify_delete_vindex(
 		goto return_result;
 	}
 
+	if ( a->a_desc == slap_schema.si_ad_objectClass ) {
+		/* Needed by ITS#5517,ITS#5963 */
+		flags = SLAP_MR_EQUALITY | SLAP_MR_VALUE_OF_ATTRIBUTE_SYNTAX;
+
+	} else {
+		flags = SLAP_MR_EQUALITY | SLAP_MR_VALUE_OF_ASSERTION_SYNTAX;
+	}
 	if ( mod->sm_nvalues ) {
-		flags = SLAP_MR_EQUALITY | SLAP_MR_VALUE_OF_ASSERTION_SYNTAX
-			| SLAP_MR_ASSERTED_VALUE_NORMALIZED_MATCH
+		flags |= SLAP_MR_ASSERTED_VALUE_NORMALIZED_MATCH
 			| SLAP_MR_ATTRIBUTE_VALUE_NORMALIZED_MATCH;
 		cvals = mod->sm_nvalues;
 	} else {
-		flags = SLAP_MR_EQUALITY | SLAP_MR_VALUE_OF_ASSERTION_SYNTAX;
 		cvals = mod->sm_values;
 	}
 

@@ -1,5 +1,5 @@
 /* backover.c - backend overlay routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backover.c,v 1.71.2.18 2009/02/13 03:16:59 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backover.c,v 1.71.2.19 2009/02/20 00:26:01 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2009 The OpenLDAP Foundation.
@@ -140,24 +140,21 @@ over_db_open(
 {
 	slap_overinfo *oi = be->bd_info->bi_private;
 	slap_overinst *on = oi->oi_list;
-	BackendInfo *bi_orig = be->bd_info;
+	BackendDB db = *be;
 	int rc = 0;
 
-	be->be_flags |= SLAP_DBFLAG_OVERLAY;
-	be->bd_info = oi->oi_orig;
-	if ( be->bd_info->bi_db_open ) {
-		rc = be->bd_info->bi_db_open( be, cr );
+	db.be_flags |= SLAP_DBFLAG_OVERLAY;
+	db.bd_info = oi->oi_orig;
+	if ( db.bd_info->bi_db_open ) {
+		rc = db.bd_info->bi_db_open( &db, cr );
 	}
 
 	for (; on && rc == 0; on=on->on_next) {
-		be->bd_info = &on->on_bi;
-		if ( be->bd_info->bi_db_open ) {
-			rc = be->bd_info->bi_db_open( be, cr );
+		db.bd_info = &on->on_bi;
+		if ( db.bd_info->bi_db_open ) {
+			rc = db.bd_info->bi_db_open( &db, cr );
 		}
 	}
-
-	be->bd_info = bi_orig;
-	be->be_flags ^= SLAP_DBFLAG_OVERLAY;
 
 	return rc;
 }

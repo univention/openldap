@@ -1,5 +1,5 @@
 /* rwmmap.c - rewrite/mapping routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmmap.c,v 1.31.2.11 2009/02/05 19:42:04 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmmap.c,v 1.31.2.12 2009/02/17 19:14:42 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.
@@ -120,6 +120,15 @@ rwm_mapping( struct ldapmap *map, struct berval *s, struct ldapmapping **m, int 
 	}
 
 	assert( m != NULL );
+
+	/* let special attrnames slip through (ITS#5760) */
+	if ( bvmatch( s, slap_bv_no_attrs )
+		|| bvmatch( s, slap_bv_all_user_attrs )
+		|| bvmatch( s, slap_bv_all_operational_attrs ) )
+	{
+		*m = NULL;
+		return 0;
+	}
 
 	if ( remap == RWM_REMAP ) {
 		tree = map->remap;
@@ -312,7 +321,7 @@ rwm_map_attrnames(
 
 	if ( j == 0 && i != 0 ) {
 		memset( &(*anp)[0], 0, sizeof( AttributeName ) );
-		BER_BVSTR( &(*anp)[0].an_name, LDAP_NO_ATTRS );
+		(*anp)[0].an_name = *slap_bv_no_attrs;
 		j = 1;
 	}
 	memset( &(*anp)[j], 0, sizeof( AttributeName ) );

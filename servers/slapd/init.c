@@ -1,5 +1,5 @@
 /* init.c - initialize various things */
-/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.97.2.10 2009/01/22 00:01:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.97.2.11 2009/02/17 19:14:41 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -54,10 +54,6 @@ int		ldap_syslog_level = LOG_DEBUG;
 #endif
 
 BerVarray default_referral = NULL;
-
-struct berval AllUser = BER_BVC( LDAP_ALL_USER_ATTRIBUTES );
-struct berval AllOper = BER_BVC( LDAP_ALL_OPERATIONAL_ATTRIBUTES );
-struct berval NoAttrs = BER_BVC( LDAP_NO_ATTRS );
 
 /*
  * global variables that need mutex protection

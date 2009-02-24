@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/search.c,v 1.146.2.18 2009/02/11 00:20:01 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/search.c,v 1.146.2.21 2009/02/20 01:15:05 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.
@@ -1222,7 +1222,7 @@ really_bad:;
 					 * are passed without checks */
 					rs->sr_err = ldap_parse_intermediate( msc->msc_ld,
 						msg,
-						&rs->sr_rspoid,
+						(char **)&rs->sr_rspoid,
 						&rs->sr_rspdata,
 						&rs->sr_ctrls,
 						0 );
@@ -1236,7 +1236,7 @@ really_bad:;
 					slap_send_ldap_intermediate( op, rs );
 
 					if ( rs->sr_rspoid != NULL ) {
-						ber_memfree( rs->sr_rspoid );
+						ber_memfree( (char *)rs->sr_rspoid );
 						rs->sr_rspoid = NULL;
 					}
 
@@ -2080,19 +2080,34 @@ remove_oc:;
 
 			attr->a_nvals = ch_malloc( ( last + 1 ) * sizeof( struct berval ) );
 			for ( i = 0; i<last; i++ ) {
-				attr->a_desc->ad_type->sat_equality->smr_normalize(
+				/* if normalizer fails, drop this value */
+				if ( attr->a_desc->ad_type->sat_equality->smr_normalize(
 					SLAP_MR_VALUE_OF_ATTRIBUTE_SYNTAX,
 					attr->a_desc->ad_type->sat_syntax,
 					attr->a_desc->ad_type->sat_equality,
 					&attr->a_vals[i], &attr->a_nvals[i],
-					NULL );
+					NULL )) {
+					LBER_FREE( attr->a_vals[i].bv_val );
+					if ( --last == i ) {
+						BER_BVZERO( &attr->a_vals[ i ] );
+						break;
+					}
+					attr->a_vals[i] = attr->a_vals[last];
+					BER_BVZERO( &attr->a_vals[last] );
+					i--;
+				}
 			}
 			BER_BVZERO( &attr->a_nvals[i] );
+			if ( last == 0 ) {
+				attr_free( attr );
+				goto next_attr;
+			}
 
 		} else {
 			attr->a_nvals = attr->a_vals;
 		}
 
+		attr->a_numvals = last;
 		*attrp = attr;
 		attrp = &attr->a_next;
 next_attr:;
@@ -2147,7 +2162,7 @@ next_attr:;
 	rs->sr_entry = &ent;
 	rs->sr_attrs = op->ors_attrs;
 	rs->sr_operational_attrs = NULL;
-	rs->sr_flags = 0;
+	rs->sr_flags = mi->mi_targets[ target ]->mt_rep_flags;
 	rs->sr_err = LDAP_SUCCESS;
 	rc = send_search_entry( op, rs );
 	switch ( rc ) {

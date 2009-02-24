@@ -1,5 +1,5 @@
 /* dynlist.c - dynamic list overlay */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dynlist.c,v 1.20.2.25 2009/01/30 19:10:13 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dynlist.c,v 1.20.2.26 2009/02/17 19:14:41 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2009 The OpenLDAP Foundation.
@@ -266,8 +266,8 @@ dynlist_sc_update( Operation *op, SlapReply *rs )
 	}
 
 #ifndef SLAP_OPATTRS
-	opattrs = ( rs->sr_attrs == NULL ) ? 0 : an_find( rs->sr_attrs, &AllOper );
-	userattrs = ( rs->sr_attrs == NULL ) ? 1 : an_find( rs->sr_attrs, &AllUser );
+	opattrs = ( rs->sr_attrs == NULL ) ? 0 : an_find( rs->sr_attrs, slap_bv_operational_attrs );
+	userattrs = ( rs->sr_attrs == NULL ) ? 1 : an_find( rs->sr_attrs, slap_bv_user_attrs );
 #else /* SLAP_OPATTRS */
 	opattrs = SLAP_OPATTRS( rs->sr_attr_flags );
 	userattrs = SLAP_USERATTRS( rs->sr_attr_flags );
@@ -416,8 +416,8 @@ dynlist_prepare_entry( Operation *op, SlapReply *rs, dynlist_info_t *dli )
 	}
 
 #ifndef SLAP_OPATTRS
-	opattrs = ( rs->sr_attrs == NULL ) ? 0 : an_find( rs->sr_attrs, &AllOper );
-	userattrs = ( rs->sr_attrs == NULL ) ? 1 : an_find( rs->sr_attrs, &AllUser );
+	opattrs = ( rs->sr_attrs == NULL ) ? 0 : an_find( rs->sr_attrs, slap_bv_operational_attrs );
+	userattrs = ( rs->sr_attrs == NULL ) ? 1 : an_find( rs->sr_attrs, slap_bv_user_attrs );
 #else /* SLAP_OPATTRS */
 	opattrs = SLAP_OPATTRS( rs->sr_attr_flags );
 	userattrs = SLAP_USERATTRS( rs->sr_attr_flags );

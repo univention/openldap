@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/search.c,v 1.76.2.8 2009/02/02 22:53:14 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/search.c,v 1.76.2.9 2009/02/20 00:28:32 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -315,7 +315,8 @@ ldap_build_search_req(
 #endif
 	{
 	    err = ber_printf( ber, "{it{seeiib", *idp,
-		LDAP_REQ_SEARCH, base, (ber_int_t) scope, ld->ld_deref,
+		LDAP_REQ_SEARCH, base, (ber_int_t) scope,
+		(deref < 0) ? ld->ld_deref : deref,
 		(sizelimit < 0) ? ld->ld_sizelimit : sizelimit,
 		(timelimit < 0) ? ld->ld_timelimit : timelimit,
 		attrsonly );

@@ -1,5 +1,5 @@
 /* init.c - initialize relay backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-relay/init.c,v 1.19.2.6 2009/01/22 00:01:10 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-relay/init.c,v 1.19.2.7 2009/02/20 00:26:02 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2009 The OpenLDAP Foundation.
@@ -224,11 +224,11 @@ relay_back_db_open( Backend *be, ConfigReply *cr )
 		}
 
 		/* inherit controls */
-		AC_MEMCPY( be->be_ctrls, ri->ri_bd->be_ctrls, sizeof( be->be_ctrls ) );
+		AC_MEMCPY( be->bd_self->be_ctrls, ri->ri_bd->be_ctrls, sizeof( be->be_ctrls ) );
 
 	} else {
 		/* inherit all? */
-		AC_MEMCPY( be->be_ctrls, frontendDB->be_ctrls, sizeof( be->be_ctrls ) );
+		AC_MEMCPY( be->bd_self->be_ctrls, frontendDB->be_ctrls, sizeof( be->be_ctrls ) );
 	}
 
 	return 0;

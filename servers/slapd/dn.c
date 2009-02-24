@@ -1,5 +1,5 @@
 /* dn.c - routines for dealing with distinguished names */
-/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.182.2.10 2009/01/22 00:01:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.182.2.11 2009/02/23 02:12:09 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -250,21 +250,8 @@ AVA_Sort( LDAPRDN rdn, int nAVAs )
 			ava_j = rdn[ j ];
 			a = strcmp( ava_i->la_attr.bv_val, ava_j->la_attr.bv_val );
 
-			if ( a == 0 ) {
-				int		d;
-
-				d = ava_i->la_value.bv_len - ava_j->la_value.bv_len;
-
-				a = memcmp( ava_i->la_value.bv_val, 
-						ava_j->la_value.bv_val,
-						d <= 0 ? ava_i->la_value.bv_len 
-							: ava_j->la_value.bv_len );
-
-				if ( a == 0 ) {
-					a = d;
-				}
-			}
-			/* Duplicates are not allowed */
+			/* RFC4512 does not allow multiple AVAs
+			 * with the same attribute type in RDN (ITS#5968) */
 			if ( a == 0 )
 				return LDAP_INVALID_DN_SYNTAX;
 

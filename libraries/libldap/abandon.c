@@ -1,5 +1,5 @@
 /* abandon.c */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/abandon.c,v 1.41.2.10 2009/01/22 00:00:54 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/abandon.c,v 1.41.2.11 2009/02/17 21:02:51 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -349,7 +349,6 @@ ldap_int_bisect_find( ber_int_t *v, ber_len_t n, ber_int_t id, int *idxp )
 			end,
 			rc = 0;
 
-	assert( n >= 0 );
 	assert( id >= 0 );
 
 	begin = 0;
@@ -410,7 +409,6 @@ ldap_int_bisect_insert( ber_int_t **vp, ber_len_t *np, int id, int idx )
 
 	assert( vp != NULL );
 	assert( np != NULL );
-	assert( *np >= 0 );
 	assert( idx >= 0 );
 	assert( (unsigned) idx <= *np );
 
@@ -451,7 +449,6 @@ ldap_int_bisect_delete( ber_int_t **vp, ber_len_t *np, int id, int idx )
 
 	assert( vp != NULL );
 	assert( np != NULL );
-	assert( *np >= 0 );
 	assert( idx >= 0 );
 	assert( (unsigned) idx < *np );
 

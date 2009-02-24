@@ -1,5 +1,5 @@
 /* init.c - initialize bdb backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.247.2.17 2009/01/22 00:01:05 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.247.2.19 2009/02/19 22:19:15 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2009 The OpenLDAP Foundation.
@@ -111,6 +111,7 @@ bdb_db_open( BackendDB *be, ConfigReply *cr )
 	Entry *e = NULL;
 	int do_recover = 0, do_alock_recover = 0;
 	int alockt, quick = 0;
+	int do_retry = 1;
 
 	if ( be->be_suffix == NULL ) {
 		Debug( LDAP_DEBUG_ANY,
@@ -332,7 +333,7 @@ shm_retry:
 		/* Regular open failed, probably a missing shm environment.
 		 * Start over, do a recovery.
 		 */
-		if ( !do_recover && bdb->bi_shm_key ) {
+		if ( !do_recover && bdb->bi_shm_key && do_retry ) {
 			bdb->bi_dbenv->close( bdb->bi_dbenv, 0 );
 			rc = db_env_create( &bdb->bi_dbenv, 0 );
 			if( rc == 0 ) {
@@ -340,6 +341,7 @@ shm_retry:
 					": database \"%s\": "
 					"shared memory env open failed, assuming stale env.\n",
 					be->be_suffix[0].bv_val, 0, 0 );
+				do_retry = 0;
 				goto shm_retry;
 			}
 		}
