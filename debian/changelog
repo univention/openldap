@@ -10,6 +10,8 @@ openldap (2.4.15-1) unstable; urgency=low
   * Build against db4.7 instead of db4.2 at last!  Closes: #421946.
   * Build with --disable-ndb, to avoid a misbuild when libmysqlclient is
     installed in the build environment.
+  * Add -D_GNU_SOURCE to CFLAGS, apparently required for building with
+    current headers in unstable
 
  -- Steve Langasek <vorlon@debian.org>  Tue, 24 Feb 2009 14:27:35 -0800
 

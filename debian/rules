@@ -6,7 +6,7 @@
 # want the checks for DFSG-freeness.
 #DFSG_NONFREE = 1
 
-CFLAGS = -Wall -g -D_FILE_OFFSET_BITS=64
+CFLAGS = -Wall -g -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 INSTALL = install
 INSTALL_FILE    = $(INSTALL) -p    -o root -g root  -m  644
 INSTALL_PROGRAM = $(INSTALL) -p    -o root -g root  -m  755
