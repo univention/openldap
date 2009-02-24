@@ -1,4 +1,4 @@
-openldap (2.4.15-1) UNRELEASED; urgency=low
+openldap (2.4.15-1) unstable; urgency=low
 
   * New upstream version
     - Fixes a bug with the pcache overlay not returning cached entries
@@ -11,7 +11,7 @@ openldap (2.4.15-1) UNRELEASED; urgency=low
   * Build with --disable-ndb, to avoid a misbuild when libmysqlclient is
     installed in the build environment.
 
- -- Steve Langasek <vorlon@debian.org>  Tue, 17 Feb 2009 09:41:22 -0800
+ -- Steve Langasek <vorlon@debian.org>  Tue, 24 Feb 2009 14:27:35 -0800
 
 openldap (2.4.11-1) unstable; urgency=low
 
