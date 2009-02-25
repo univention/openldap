@@ -1,3 +1,9 @@
+openldap (2.4.15-2) UNRELEASED; urgency=low
+
+  * Update priority of libldap-2.4-2 to match the archive override.
+
+ -- Steve Langasek <vorlon@debian.org>  Tue, 24 Feb 2009 17:35:17 -0800
+
 openldap (2.4.15-1) unstable; urgency=low
 
   * New upstream version

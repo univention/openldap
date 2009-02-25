@@ -54,7 +54,7 @@ Description: OpenLDAP utilities
 
 Package: libldap-2.4-2
 Section: libs
-Priority: optional
+Priority: standard
 Architecture: any
 Conflicts: ldap-utils (<= 2.1.23-1)
 Depends: ${shlibs:Depends}
