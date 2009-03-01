@@ -1,6 +1,9 @@
 openldap (2.4.15-2) UNRELEASED; urgency=low
 
   * Update priority of libldap-2.4-2 to match the archive override.
+  * Add the missing ldapexop and ldapurl tools to ldap-utils, as well as the
+    ldapurl(1) manpage.  Thanks to Peter Marschall for the patch.
+    Closes: #496749.
 
  -- Steve Langasek <vorlon@debian.org>  Tue, 24 Feb 2009 17:35:17 -0800
 
