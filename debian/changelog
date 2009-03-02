@@ -6,6 +6,8 @@ openldap (2.4.15-2) UNRELEASED; urgency=low
     Closes: #496749.
   * Bump build-dependency on debhelper to 6 instead of 5, since that's
     what we're using.  Closes: #498116.
+  * Set the default SLAPD_SERVICES to ldap:/// ldapi:///, instead of using
+    the built-in default of ldap:/// only.
 
  -- Steve Langasek <vorlon@debian.org>  Tue, 24 Feb 2009 17:35:17 -0800
 
