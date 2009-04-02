@@ -1,7 +1,8 @@
-# slapd translation to spanish
-# Copyright (C) 2006 Software in the Public Interest
-# Copyright (C) 2008 Steve Langasek <vorlon@debian.org>
-# This file is distributed under the same license as the slapd package.
+# openldap po-debconf translation to Spanish
+# Copyright 2006 Rudy Godoy <rudy@kernel-panik.org>
+# Copyright 2008 Steve Langasek <vorlon@debian.org>
+# Copyright 2009 Francisco Javier Cuadrado <fcocuadrado@gmail.com>
+# This file is distributed under the same license as the openldap package.
 #
 # Changes:
 # - Initial translation
@@ -10,11 +11,15 @@
 # - Reviewer
 #       Javier Fernandez-Sanguino
 #
-#  Traductores, si no conoce el formato PO, merece la pena leer la
-#  documentación de gettext, especialmente las secciones dedicadas a este
-#  formato, por ejemplo ejecutando:
-#         info -n '(gettext)PO Files'
-#         info -n '(gettext)Header Entry'
+# - Updates
+#       Steve Langasek <vorlon@debian.org>, 2008
+#       Francisco Javier Cuadrado <fcocuadrado@gmail.com>, 2009
+#
+# Traductores, si no conocen el formato PO, merece la pena leer la
+# documentación de gettext, especialmente las secciones dedicadas a este
+# formato, por ejemplo ejecutando:
+#       info -n '(gettext)PO Files'
+#       info -n '(gettext)Header Entry'
 #
 # Equipo de traducción al español, por favor lean antes de traducir
 # los siguientes documentos:
@@ -28,14 +33,13 @@
 #   /usr/share/doc/po-debconf/README-trans
 #   o http://www.debian.org/intl/l10n/po-debconf/README-trans
 #
-#
 msgid ""
 msgstr ""
-"Project-Id-Version: openldap 2.3.30\n"
+"Project-Id-Version: openldap 2.4.15-1\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2008-07-19 19:11-0700\n"
-"PO-Revision-Date: 2008-01-13 00:52-0800\n"
-"Last-Translator: Steve Langasek <vorlon@debian.org>\n"
+"PO-Revision-Date: 2009-03-20 13:48+0100\n"
+"Last-Translator: Francisco Javier Cuadrado <fcocuadrado@gmail.com>\n"
 "Language-Team: Debian l10n Spanish <debian-l10n-spanish@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -148,7 +152,7 @@ msgid ""
 "will move the old database files out of the way before creating a new "
 "database."
 msgstr ""
-"Existen ficheros en /var/lib/ldap que probablemente interrumpan el proceso "
+"Existen ficheros en «/var/lib/ldap» que probablemente interrumpan el proceso "
 "de configuración. Si activa esta opción, se moverá los ficheros de las bases "
 "de datos antiguas antes de crear una nueva base de datos."
 
@@ -183,7 +187,6 @@ msgstr "Introduzca su nombre de dominio DNS:"
 #. Type: string
 #. Description
 #: ../slapd.templates:6001
-#, fuzzy
 msgid ""
 "The DNS domain name is used to construct the base DN of the LDAP directory. "
 "For example, 'foo.example.org' will create the directory with 'dc=foo, "
@@ -196,20 +199,18 @@ msgstr ""
 #. Type: string
 #. Description
 #: ../slapd.templates:7001
-#, fuzzy
 msgid "Organization name:"
-msgstr "Introduzca el nombre de su organización:"
+msgstr "Nombre de la organización:"
 
 #. Type: string
 #. Description
 #: ../slapd.templates:7001
-#, fuzzy
 msgid ""
 "Please enter the name of the organization to use in the base DN of your LDAP "
 "directory."
 msgstr ""
-"Por favor especifique el nombre de la organización que usar en el DN base de "
-"su directorio LDAP."
+"Introduzca el nombre de la organización a utilizar en el DN base del "
+"directorio LDAP."
 
 #. Type: password
 #. Description
@@ -271,25 +272,25 @@ msgstr "¿Permitir el protocolo LDAPv2?"
 #. Type: boolean
 #. Description
 #: ../slapd.templates:13001
-#, fuzzy
 msgid ""
 "The obsolete LDAPv2 protocol is disabled by default in slapd. Programs and "
 "users should upgrade to LDAPv3.  If you have old programs which can't use "
 "LDAPv3, you should select this option and 'allow bind_v2' will be added to "
 "your slapd.conf file."
 msgstr ""
-"El protocolo obsoleto LDAPv2 se queda deshabilitado por omisión en slapd. "
-"Los programas y los usuarios han de actualizarse a LDAPv3. Debe seleccionar "
-"esta opción si aún tiene programas antiguos que no saben utilizar LDAPv3. Si "
-"lo hace, se añadirá la opción «allow bind_v2» al fichero de configuración "
-"slapd.conf."
+"El protocolo obsoleto LDAPv2 se ha desactivado de manera predeterminada en "
+"slapd. Los programas y los usuarios deberían actualizarse a LDAPv3. Debe "
+"seleccionar esta opción si aún tiene programas antiguos que no utilicen "
+"LDAPv3. Si lo hace, se añadirá la opción «allow bind_v2» al fichero de "
+"configuración «slapd.conf»."
 
 #. Type: boolean
 #. Description
 #: ../slapd.templates:14001
-#, fuzzy
 msgid "Back up current database and create a new one?"
-msgstr "¿Desea mover la base de datos actual y crear una nueva?"
+msgstr ""
+"¿Desea crear una copia de seguridad de la base de datos actual y crear una "
+"nueva?"
 
 #. Type: boolean
 #. Description
@@ -321,15 +322,14 @@ msgstr "Se produjo un error mientras se actualizaba su directorio LDAP. "
 #. Type: error
 #. Description
 #: ../slapd.templates:15001
-#, fuzzy
 msgid ""
 "The 'slapcat' program failed while extracting the LDAP directory. This may "
 "be caused by an incorrect configuration file (for example, missing "
 "'moduleload' lines to support the backend database)."
 msgstr ""
 "El programa «slapcat» falló mientras extraía el directorio LDAP. Este fallo "
-"puede deberse a un archivo de configuración incorrecto (por ejemplo, una "
-"falta de líneas «moduleload» necesarias para el motor del base de datos)."
+"puede deberse a un fichero de configuración incorrecto (por ejemplo, que "
+"falte alguna línea «moduleload» necesaria para el motor del base de datos)."
 
 #. Type: error
 #. Description
@@ -368,27 +368,25 @@ msgstr "Motor de base de datos a utilizar:"
 #. Type: select
 #. Description
 #: ../slapd.templates:16001
-#, fuzzy
 msgid ""
 "The HDB backend is recommended. HDB and BDB use similar storage formats, but "
 "HDB adds support for subtree renames. Both support the same configuration "
 "options."
 msgstr ""
-"Se recomienda el motor HDB. Los motores HDB y BDB usan formatos de "
-"almacenaje semejantes, pero HDB añade soporte para cambios de nombre de "
-"subárboles («subtree renames»).  Ambos soportan las mismas opciones de "
+"Se recomienda el motor HDB. Los motores HDB y BDB utilizan formatos de "
+"almacenamiento semejantes, pero HDB permite realizar cambios de nombre de "
+"subárboles («subtree renames»).  Ambos tienen las mismas opciones de "
 "configuración."
 
 #. Type: select
 #. Description
 #: ../slapd.templates:16001
-#, fuzzy
 msgid ""
 "In either case, you should review the resulting database configuration for "
 "your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more details."
 msgstr ""
-"En cualquier caso, debe revisar la configuración de base de datos que "
-"resulte. Véase en /usr/share/doc/slapd/README.DB_CONFIG.gz para más detalles."
+"En cualquier caso, debe revisar la configuración de la base de datos. Vea en "
+"«/usr/share/doc/slapd/README.DB_CONFIG.gz» para más detalles."
 
 #. Type: error
 #. Description
@@ -404,6 +402,10 @@ msgid ""
 "upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, you will "
 "need to migrate your replicas to use the syncrepl protocol instead."
 msgstr ""
+"Se han encontrado una o más opciones de «replica» de slurpd en la "
+"configuración de slapd durante la actualización. Ya que slurpd está obsoleto "
+"desde la versión 2.4 de OpenLDAP, tendrá que migrar sus réplicas para "
+"utilizar el protocolo syncrepl."
 
 #. Type: error
 #. Description
@@ -414,12 +416,16 @@ msgid ""
 "hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for "
 "details."
 msgstr ""
+"La conversión desde slurpd al protocolo syncrepl no se puede realizar "
+"automáticamente y tendrá que configurar sus servidores de réplica a mano. "
+"Visite «http://www.openldap.org/doc/admin24/syncrepl.html» para más "
+"información."
 
 #. Type: error
 #. Description
 #: ../slapd.templates:18001
 msgid "TLSCipherSuite values have changed"
-msgstr ""
+msgstr "Los valores de TLSCipherSuite han cambiado"
 
 #. Type: error
 #. Description
@@ -430,6 +436,11 @@ msgid ""
 "used, which has been changed from OpenSSL to GnuTLS.  As a result, your "
 "existing TLSCipherSuite setting will not work with this package."
 msgstr ""
+"Se ha encontrado una opción «TLSCipherSuite» en la configuración de slapd "
+"durante la actualización. Los valores permitidos para esta opción vienen "
+"determinados por la implementación de SSL utilizada, que ha cambiado de "
+"OpenSSL a GnuTLS. Como resultado, su configuración actual de TLSCipherSuite "
+"no funcionará con este paquete."
 
 #. Type: error
 #. Description
@@ -440,3 +451,7 @@ msgid ""
 "output of 'gnutls-cli -l' in the gnutls-bin package for the list of ciphers "
 "supported by GnuTLS."
 msgstr ""
+"Este valor se ha comentado automáticamente. Si necesita alguna opción de "
+"cifrado específica que requiera esta reactivar esta opción, consulte la "
+"salida de «gnutls -cli -l», del paquete gnutls-bin, para la lista de cifrados "
+"que puede utilizar GnuTLS."
