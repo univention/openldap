@@ -8,6 +8,8 @@ openldap (2.4.15-2) UNRELEASED; urgency=low
     what we're using.  Closes: #498116.
   * Set the default SLAPD_SERVICES to ldap:/// ldapi:///, instead of using
     the built-in default of ldap:/// only.
+  * Build-depend on libltdl-dev | libltdl3-dev (>= 1.4.3), for the package
+    name change.  Closes: #522965.
 
   [ Updated debconf translations ]
   * Spanish, thanks to Francisco Javier Cuadrado <fcocuadrado@gmail.com>.
