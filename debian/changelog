@@ -1,4 +1,4 @@
-openldap (2.4.17-1) UNRELEASED; urgency=low
+openldap (2.4.17-1) unstable; urgency=low
 
   * New upstream version.
     - Fixes FTBFS on ia64 with -fPIE. Closes: #524770.
@@ -18,7 +18,7 @@ openldap (2.4.17-1) UNRELEASED; urgency=low
   * Spanish, thanks to Francisco Javier Cuadrado <fcocuadrado@gmail.com>.
     Closes: #521804.
 
- -- Steve Langasek <vorlon@debian.org>  Tue, 24 Feb 2009 17:35:17 -0800
+ -- Steve Langasek <vorlon@debian.org>  Tue, 28 Jul 2009 10:17:15 -0700
 
 openldap (2.4.15-1) unstable; urgency=low
 
