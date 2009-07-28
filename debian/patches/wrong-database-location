@@ -3,28 +3,34 @@ Move the default slapd database location to /var/lib/ldap instead of
 
 Debian-specific.
 
+Index: openldap/doc/man/man5/slapd-bdb.5
+===================================================================
 --- openldap.orig/doc/man/man5/slapd-bdb.5
 +++ openldap/doc/man/man5/slapd-bdb.5
-@@ -116,7 +116,7 @@
+@@ -133,7 +133,7 @@
  associated indexes live.
  A separate directory must be specified for each database.
  The default is
--.BR LOCALSTATEDIR/openldap-data .
+-.BR LOCALSTATEDIR/openldap\-data .
 +.BR LOCALSTATEDIR/lib/ldap .
  .TP
  .B dirtyread
  Allow reads of modified but not yet committed data.
+Index: openldap/doc/man/man5/slapd.conf.5
+===================================================================
 --- openldap.orig/doc/man/man5/slapd.conf.5
 +++ openldap/doc/man/man5/slapd.conf.5
-@@ -1765,7 +1765,7 @@
+@@ -1850,7 +1850,7 @@
  # The database directory MUST exist prior to
  # running slapd AND should only be accessible
  # by the slapd/tools. Mode 0700 recommended.
--directory LOCALSTATEDIR/openldap-data
+-directory LOCALSTATEDIR/openldap\-data
 +directory LOCALSTATEDIR/lib/ldap
  # Indices to maintain
  index     objectClass  eq
  index     cn,sn,mail   pres,eq,approx,sub
+Index: openldap/include/ldap_defaults.h
+===================================================================
 --- openldap.orig/include/ldap_defaults.h
 +++ openldap/include/ldap_defaults.h
 @@ -47,7 +47,7 @@
@@ -36,6 +42,8 @@ Debian-specific.
  #define SLAPD_DEFAULT_DB_MODE		0600
  #define SLAPD_DEFAULT_UCDATA		LDAP_DATADIR LDAP_DIRSEP "ucdata"
  	/* default max deref depth for aliases */
+Index: openldap/servers/slapd/Makefile.in
+===================================================================
 --- openldap.orig/servers/slapd/Makefile.in
 +++ openldap/servers/slapd/Makefile.in
 @@ -430,9 +430,9 @@
@@ -50,13 +58,15 @@ Debian-specific.
  	$(INSTALL) $(INSTALLFLAGS) -m 600 $(srcdir)/DB_CONFIG \
  		$(DESTDIR)$(sysconfdir)/DB_CONFIG.example
  
+Index: openldap/doc/man/man5/slapd-config.5
+===================================================================
 --- openldap.orig/doc/man/man5/slapd-config.5
 +++ openldap/doc/man/man5/slapd-config.5
-@@ -1855,7 +1855,7 @@
+@@ -1885,7 +1885,7 @@
  # The database directory MUST exist prior to
  # running slapd AND should only be accessible
  # by the slapd/tools. Mode 0700 recommended.
--olcDbDirectory: LOCALSTATEDIR/openldap-data
+-olcDbDirectory: LOCALSTATEDIR/openldap\-data
 +olcDbDirectory: LOCALSTATEDIR/lib/ldap
  # Indices to maintain
  olcDbIndex:     objectClass  eq

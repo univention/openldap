@@ -8,4 +8,3 @@ index-files-created-as-root
 sasl-default-path 
 libldap-symbol-versions
 getaddrinfo-is-threadsafe
-back-perl-init
