@@ -1,5 +1,5 @@
 /* thr_stub.c - stubs for the threads */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_stub.c,v 1.27.2.9 2009/01/22 00:00:56 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_stub.c,v 1.27.2.10 2009/06/27 18:47:17 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -163,6 +163,14 @@ ldap_pvt_thread_pool_submit (
 	ldap_pvt_thread_start_t *start_routine, void *arg )
 {
 	(start_routine)(NULL, arg);
+	return(0);
+}
+
+int
+ldap_pvt_thread_pool_retract (
+	ldap_pvt_thread_pool_t *pool,
+	ldap_pvt_thread_start_t *start_routine, void *arg )
+{
 	return(0);
 }
 

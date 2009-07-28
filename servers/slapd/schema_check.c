@@ -1,5 +1,5 @@
 /* schema_check.c - routines to enforce schema definitions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_check.c,v 1.103.2.10 2009/02/22 20:56:29 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_check.c,v 1.103.2.11 2009/05/06 19:06:16 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -797,7 +797,7 @@ entry_naming_check(
 	if ( ldap_bv2rdn( &e->e_name, &rdn, (char **)&p,
 		LDAP_DN_FORMAT_LDAP ) )
 	{
-		*text = "unrecongized attribute type(s) in RDN";
+		*text = "unrecognized attribute type(s) in RDN";
 		return LDAP_INVALID_DN_SYNTAX;
 	}
 

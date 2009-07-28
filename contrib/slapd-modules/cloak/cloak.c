@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/cloak/cloak.c,v 1.2.2.1 2009/01/21 01:15:37 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/cloak/cloak.c,v 1.2.2.2 2009/03/17 16:42:59 quanah Exp $ */
 /* cloak.c - Overlay to hide some attribute except if explicitely requested */
 /* 
  * Copyright 2008 Emmanuel Dreyfus
@@ -269,8 +269,8 @@ cloak_search( Operation *op, SlapReply *rs )
 
 	sc = op->o_tmpcalloc( 1, sizeof( *sc ), op->o_tmpmemctx );
 	sc->sc_response = cloak_search_cb;
-	sc->sc_cleanup = NULL;
-	sc->sc_next = NULL;
+	sc->sc_cleanup = slap_freeself_cb;
+	sc->sc_next = op->o_callback;
 	sc->sc_private = ci;
 	op->o_callback = sc;
 

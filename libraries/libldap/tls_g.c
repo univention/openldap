@@ -1,5 +1,5 @@
 /* tls_g.c - Handle tls/ssl using GNUTLS. */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/tls_g.c,v 1.6.2.2 2009/02/10 16:41:01 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/tls_g.c,v 1.6.2.5 2009/04/29 01:25:43 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2009 The OpenLDAP Foundation.
@@ -35,6 +35,8 @@
 #include <ac/unistd.h>
 #include <ac/param.h>
 #include <ac/dirent.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "ldap-int.h"
 #include "ldap-tls.h"
@@ -290,6 +292,31 @@ tlsg_ctx_free ( tls_ctx *ctx )
 	ber_memfree ( c );
 }
 
+static int
+tlsg_getfile( const char *path, gnutls_datum_t *buf )
+{
+	int rc = -1, fd;
+	struct stat st;
+
+	fd = open( path, O_RDONLY );
+	if ( fd >= 0 && fstat( fd, &st ) == 0 ) {
+		buf->size = st.st_size;
+		buf->data = LDAP_MALLOC( st.st_size + 1 );
+		if ( buf->data ) {
+			rc = read( fd, buf->data, st.st_size );
+			close( fd );
+			if ( rc < st.st_size )
+				rc = -1;
+			else
+				rc = 0;
+		}
+	}
+	return rc;
+}
+
+/* This is the GnuTLS default */
+#define	VERIFY_DEPTH	6
+
 /*
  * initialize a new TLS context
  */
@@ -322,11 +349,58 @@ tlsg_ctx_init( struct ldapoptions *lo, struct ldaptls *lt, int is_server )
 	}
 
 	if ( lo->ldo_tls_certfile && lo->ldo_tls_keyfile ) {
-		rc = gnutls_certificate_set_x509_key_file( 
-			ctx->cred,
-			lt->lt_certfile,
-			lt->lt_keyfile,
+		gnutls_x509_privkey_t key;
+		gnutls_datum_t buf;
+		gnutls_x509_crt_t certs[VERIFY_DEPTH];
+		unsigned int max = VERIFY_DEPTH;
+
+		rc = gnutls_x509_privkey_init( &key );
+		if ( rc ) return -1;
+
+		/* OpenSSL builds the cert chain for us, but GnuTLS
+		 * expects it to be present in the certfile. If it's
+		 * not, we have to build it ourselves. So we have to
+		 * do some special checks here...
+		 */
+		rc = tlsg_getfile( lt->lt_keyfile, &buf );
+		if ( rc ) return -1;
+		rc = gnutls_x509_privkey_import( key, &buf,
 			GNUTLS_X509_FMT_PEM );
+		LDAP_FREE( buf.data );
+		if ( rc < 0 ) return rc;
+
+		rc = tlsg_getfile( lt->lt_certfile, &buf );
+		if ( rc ) return -1;
+		rc = gnutls_x509_crt_list_import( certs, &max, &buf,
+			GNUTLS_X509_FMT_PEM, 0 );
+		LDAP_FREE( buf.data );
+		if ( rc < 0 ) return rc;
+
+		/* If there's only one cert and it's not self-signed,
+		 * then we have to build the cert chain.
+		 */
+		if ( max == 1 && !gnutls_x509_crt_check_issuer( certs[0], certs[0] )) {
+			gnutls_x509_crt_t *cas;
+			unsigned int i, j, ncas;
+
+			gnutls_certificate_get_x509_cas( ctx->cred, &cas, &ncas );
+			for ( i = 1; i<VERIFY_DEPTH; i++ ) {
+				for ( j = 0; j<ncas; j++ ) {
+					if ( gnutls_x509_crt_check_issuer( certs[i-1], cas[j] )) {
+						certs[i] = cas[j];
+						max++;
+						/* If this CA is self-signed, we're done */
+						if ( gnutls_x509_crt_check_issuer( cas[j], cas[j] ))
+							j = ncas;
+						break;
+					}
+				}
+				/* only continue if we found a CA and it was not self-signed */
+				if ( j == ncas )
+					break;
+			}
+		}
+		rc = gnutls_certificate_set_x509_key( ctx->cred, certs, max, key );
 		if ( rc ) return -1;
 	} else if ( lo->ldo_tls_certfile || lo->ldo_tls_keyfile ) {
 		Debug( LDAP_DEBUG_ANY, 
@@ -349,6 +423,13 @@ tlsg_ctx_init( struct ldapoptions *lo, struct ldaptls *lt, int is_server )
 		if ( rc < 0 ) return -1;
 		rc = 0;
 	}
+
+	/* FIXME: ITS#5992 - this should go be configurable,
+	 * and V1 CA certs should be phased out ASAP.
+	 */
+	gnutls_certificate_set_verify_flags( ctx->cred,
+		GNUTLS_VERIFY_ALLOW_X509_V1_CA_CRT );
+
 	if ( is_server ) {
 		gnutls_dh_params_init(&ctx->dh_params);
 		gnutls_dh_params_generate2(ctx->dh_params, DH_BITS);
@@ -402,9 +483,18 @@ tlsg_session_accept( tls_session *session )
 
 	rc = gnutls_handshake( s->session );
 	if ( rc == 0 && s->ctx->lo->ldo_tls_require_cert != LDAP_OPT_X_TLS_NEVER ) {
-		rc = tlsg_cert_verify( s );
-		if ( rc && s->ctx->lo->ldo_tls_require_cert == LDAP_OPT_X_TLS_ALLOW )
+		const gnutls_datum_t *peer_cert_list;
+		unsigned int list_size;
+
+		peer_cert_list = gnutls_certificate_get_peers( s->session, 
+						&list_size );
+		if ( !peer_cert_list && s->ctx->lo->ldo_tls_require_cert == LDAP_OPT_X_TLS_TRY ) 
 			rc = 0;
+		else {
+			rc = tlsg_cert_verify( s );
+			if ( rc && s->ctx->lo->ldo_tls_require_cert == LDAP_OPT_X_TLS_ALLOW )
+				rc = 0;
+		}
 	}
 	return rc;
 }
@@ -483,7 +573,7 @@ tlsg_session_my_dn( tls_session *session, struct berval *der_dn )
 
 	if (!x) return LDAP_INVALID_CREDENTIALS;
 	
-	bv.bv_val = x->data;
+	bv.bv_val = (char *) x->data;
 	bv.bv_len = x->size;
 
 	tlsg_x509_cert_dn( &bv, der_dn, 1 );
@@ -496,7 +586,7 @@ tlsg_session_peer_dn( tls_session *session, struct berval *der_dn )
 	tlsg_session *s = (tlsg_session *)session;
 	if ( !s->peer_der_dn.bv_val ) {
 		const gnutls_datum_t *peer_cert_list;
-		int list_size;
+		unsigned int list_size;
 		struct berval bv;
 
 		peer_cert_list = gnutls_certificate_get_peers( s->session, 
@@ -504,7 +594,7 @@ tlsg_session_peer_dn( tls_session *session, struct berval *der_dn )
 		if ( !peer_cert_list ) return LDAP_INVALID_CREDENTIALS;
 
 		bv.bv_len = peer_cert_list->size;
-		bv.bv_val = peer_cert_list->data;
+		bv.bv_val = (char *) peer_cert_list->data;
 
 		tlsg_x509_cert_dn( &bv, &s->peer_der_dn, 1 );
 	}
@@ -525,13 +615,11 @@ tlsg_session_chkhost( LDAP *ld, tls_session *session, const char *name_in )
 	tlsg_session *s = (tlsg_session *)session;
 	int i, ret;
 	const gnutls_datum_t *peer_cert_list;
-	int list_size;
-	struct berval bv;
+	unsigned int list_size;
 	char altname[NI_MAXHOST];
 	size_t altnamesize;
 
 	gnutls_x509_crt_t cert;
-	gnutls_datum_t *x;
 	const char *name;
 	char *ptr;
 	char *domain = NULL;
@@ -540,9 +628,8 @@ tlsg_session_chkhost( LDAP *ld, tls_session *session, const char *name_in )
 #else
 	struct in_addr addr;
 #endif
-	int n, len1 = 0, len2 = 0;
+	int len1 = 0, len2 = 0;
 	int ntype = IS_DNS;
-	time_t now = time(0);
 
 	if( ldap_int_hostname &&
 		( !name_in || !strcasecmp( name_in, "localhost" ) ) )
@@ -896,7 +983,6 @@ tlsg_sb_read( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 {
 	struct tls_data		*p;
 	ber_slen_t		ret;
-	int			err;
 
 	assert( sbiod != NULL );
 	assert( SOCKBUF_VALID( sbiod->sbiod_sb ) );
@@ -929,7 +1015,6 @@ tlsg_sb_write( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len)
 {
 	struct tls_data		*p;
 	ber_slen_t		ret;
-	int			err;
 
 	assert( sbiod != NULL );
 	assert( SOCKBUF_VALID( sbiod->sbiod_sb ) );
@@ -965,6 +1050,7 @@ tlsg_cert_verify( tlsg_session *ssl )
 	unsigned int status = 0;
 	int err;
 	time_t now = time(0);
+	time_t peertime;
 
 	err = gnutls_certificate_verify_peers2( ssl->session, &status );
 	if ( err < 0 ) {
@@ -977,12 +1063,24 @@ tlsg_cert_verify( tlsg_session *ssl )
 			status, 0,0 );
 		return -1;
 	}
-	if ( gnutls_certificate_expiration_time_peers( ssl->session ) < now ) {
+	peertime = gnutls_certificate_expiration_time_peers( ssl->session );
+	if ( peertime == (time_t) -1 ) {
+		Debug( LDAP_DEBUG_ANY, "TLS: gnutls_certificate_expiration_time_peers failed\n",
+			0, 0, 0 );
+		return -1;
+	}
+	if ( peertime < now ) {
 		Debug( LDAP_DEBUG_ANY, "TLS: peer certificate is expired\n",
 			0, 0, 0 );
 		return -1;
 	}
-	if ( gnutls_certificate_activation_time_peers( ssl->session ) > now ) {
+	peertime = gnutls_certificate_activation_time_peers( ssl->session );
+	if ( peertime == (time_t) -1 ) {
+		Debug( LDAP_DEBUG_ANY, "TLS: gnutls_certificate_activation_time_peers failed\n",
+			0, 0, 0 );
+		return -1;
+	}
+	if ( peertime > now ) {
 		Debug( LDAP_DEBUG_ANY, "TLS: peer certificate not yet active\n",
 			0, 0, 0 );
 		return -1;

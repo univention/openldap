@@ -1,5 +1,5 @@
 /* root_dse.c - Provides the Root DSA-Specific Entry */
-/* $OpenLDAP: pkg/ldap/servers/slapd/root_dse.c,v 1.113.2.9 2009/01/22 00:01:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/root_dse.c,v 1.113.2.11 2009/07/08 00:28:21 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.
@@ -277,8 +277,7 @@ fail:
 		}
 		for ( j = 0; be->be_suffix[j].bv_val != NULL; j++ ) {
 			if( attr_merge_one( e, ad_namingContexts,
-					&be->be_suffix[j],
-					&be->be_nsuffix[0] ) )
+					&be->be_suffix[j], NULL ) )
 			{
 				goto fail;
 			}
@@ -402,7 +401,7 @@ int
 root_dse_read_file( const char *fname )
 {
 	struct LDIFFP	*fp;
-	int rc = 0, lineno = 0, lmax = 0;
+	int rc = 0, lineno = 0, lmax = 0, ldifrc;
 	char	*buf = NULL;
 
 	if ( (fp = ldif_open( fname, "r" )) == NULL ) {
@@ -422,7 +421,7 @@ root_dse_read_file( const char *fname )
 	}
 	usr_attr->e_attrs = NULL;
 
-	while( ldif_read_record( fp, &lineno, &buf, &lmax ) ) {
+	while(( ldifrc = ldif_read_record( fp, &lineno, &buf, &lmax )) > 0 ) {
 		Entry *e = str2entry( buf );
 		Attribute *a;
 
@@ -430,7 +429,7 @@ root_dse_read_file( const char *fname )
 			Debug( LDAP_DEBUG_ANY, "root_dse_read_file: "
 				"could not parse entry (file=\"%s\" line=%d)\n",
 				fname, lineno, 0 );
-			rc = EXIT_FAILURE;
+			rc = LDAP_OTHER;
 			break;
 		}
 
@@ -441,7 +440,7 @@ root_dse_read_file( const char *fname )
 				"- dn=\"%s\" (file=\"%s\" line=%d)\n",
 				e->e_dn, fname, lineno );
 			entry_free( e );
-			rc = EXIT_FAILURE;
+			rc = LDAP_OTHER;
 			break;
 		}
 
@@ -463,6 +462,9 @@ root_dse_read_file( const char *fname )
 		entry_free( e );
 		if (rc) break;
 	}
+
+	if ( ldifrc < 0 )
+		rc = LDAP_OTHER;
 
 	if (rc) {
 		entry_free( usr_attr );

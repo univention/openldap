@@ -1,5 +1,5 @@
 /* dn2id.c - routines to deal with the dn2id index */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2id.c,v 1.137.2.16 2009/01/26 21:27:59 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2id.c,v 1.137.2.19 2009/06/19 21:55:57 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2009 The OpenLDAP Foundation.
@@ -529,8 +529,8 @@ int hdb_fix_dn(
 		}
 	}
 	BEI(e)->bei_modrdns = max;
-	ptr[-1] = '\0';
-	nptr[-1] = '\0';
+	if ( ptr > e->e_name.bv_val ) ptr[-1] = '\0';
+	if ( nptr > e->e_nname.bv_val ) nptr[-1] = '\0';
 
 	return 0;
 }
@@ -1102,7 +1102,7 @@ hdb_dn2idl_internal(
 		cx->rc = cx->dbc->c_close( cx->dbc );
 done_one:
 		bdb_cache_entryinfo_lock( cx->ei );
-		cx->ei->bei_state ^= CACHE_ENTRY_ONELEVEL;
+		cx->ei->bei_state &= ~CACHE_ENTRY_ONELEVEL;
 		bdb_cache_entryinfo_unlock( cx->ei );
 		if ( cx->rc )
 			return cx->rc;
@@ -1151,15 +1151,23 @@ gotit:
 				for ( cx->id = bdb_idl_first( save, &idcurs );
 					cx->id != NOID;
 					cx->id = bdb_idl_next( save, &idcurs )) {
-					cx->ei = bdb_cache_find_info( cx->bdb, cx->id );
-					if ( !cx->ei ||
-						( cx->ei->bei_state & CACHE_ENTRY_NO_KIDS ))
+					EntryInfo *ei2;
+					cx->ei = NULL;
+					if ( bdb_cache_find_id( cx->op, cx->txn, cx->id, &cx->ei,
+						ID_NOENTRY, NULL ))
 						continue;
-
-					BDB_ID2DISK( cx->id, &cx->nid );
-					hdb_dn2idl_internal( cx );
-					if ( !BDB_IDL_IS_ZERO( cx->tmp ))
-						nokids = 0;
+					if ( cx->ei ) {
+						ei2 = cx->ei;
+						if ( !( ei2->bei_state & CACHE_ENTRY_NO_KIDS )) {
+							BDB_ID2DISK( cx->id, &cx->nid );
+							hdb_dn2idl_internal( cx );
+							if ( !BDB_IDL_IS_ZERO( cx->tmp ))
+								nokids = 0;
+						}
+						bdb_cache_entryinfo_lock( ei2 );
+						ei2->bei_finders--;
+						bdb_cache_entryinfo_unlock( ei2 );
+					}
 				}
 				cx->depth--;
 				cx->op->o_tmpfree( save, cx->op->o_tmpmemctx );

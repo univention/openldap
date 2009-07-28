@@ -1,5 +1,5 @@
 /* common.c - common routines for the ldap client tools */
-/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.78.2.19 2009/02/05 23:05:03 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.78.2.22 2009/05/01 20:00:34 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -255,9 +255,11 @@ tool_destroy( void )
 		ber_memfree( binddn );
 	}
 
+#if 0	/* not yet */
 	if ( passwd.bv_val != NULL ) {
 		ber_memfree( passwd.bv_val );
 	}
+#endif
 }
 
 void
@@ -623,7 +625,7 @@ tool_args( int argc, char **argv )
 			} else if ( tool_is_oid( control ) ) {
 				LDAPControl	*tmpctrls, ctrl;
 
-				tmpctrls = (LDAPControl *)realloc( unknown_ctrls,
+				tmpctrls = (LDAPControl *)ber_memrealloc( unknown_ctrls,
 					(unknown_ctrls_num + 1)*sizeof( LDAPControl ) );
 				if ( tmpctrls == NULL ) {
 					fprintf( stderr, "%s: no memory?\n", prog );
@@ -1169,7 +1171,7 @@ tool_conn_setup( int dont, void (*private_setup)( LDAP * ) )
 					for ( i = 0; hosts[ i ] != NULL; i++ )
 						/* count'em */ ;
 
-					tmp = (char **)realloc( urls, sizeof( char * ) * ( nurls + i + 1 ) );
+					tmp = (char **)ber_memrealloc( urls, sizeof( char * ) * ( nurls + i + 1 ) );
 					if ( tmp == NULL ) {
 						fprintf( stderr,
 							"DNS SRV: out of memory?\n" );
@@ -1203,7 +1205,7 @@ dnssrv_free:;
 					ber_memfree( domain );
 
 				} else {
-					tmp = (char **)realloc( urls, sizeof( char * ) * ( nurls + 2 ) );
+					tmp = (char **)ber_memrealloc( urls, sizeof( char * ) * ( nurls + 2 ) );
 					if ( tmp == NULL ) {
 						fprintf( stderr,
 							"DNS SRV: out of memory?\n" );
@@ -1985,7 +1987,10 @@ print_deref( LDAP *ld, LDAPControl *ctrl )
 					}
 					*ptr++ = '=';
 					if ( k == -1 ) {
-						k = lutil_b64_ntop( dv->vals[ j ].bv_val, dv->vals[ j ].bv_len, ptr, buf + len - ptr );
+						k = lutil_b64_ntop(
+							(unsigned char *) dv->vals[ j ].bv_val,
+							dv->vals[ j ].bv_len,
+							ptr, buf + len - ptr );
 						assert( k >= 0 );
 						ptr += k;
 						

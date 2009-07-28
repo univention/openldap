@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/all,v 1.26.2.5 2009/01/22 00:01:18 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/all,v 1.26.2.7 2009/03/24 18:10:51 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2009 The OpenLDAP Foundation.
@@ -26,6 +26,14 @@ SLEEPTIME=10
 echo ">>>>> Executing all LDAP tests for $BACKEND"
 
 for CMD in $SRCDIR/scripts/test*; do
+	case "$CMD" in
+		*~)		continue;;
+		*.bak)	continue;;
+		*.orig)	continue;;
+		*.sav)	continue;;
+		*)		test -f "$CMD" || continue;;
+	esac
+
 	# remove cruft from prior test
 	if test $PRESERVE = yes ; then
 		/bin/rm -rf $TESTDIR/db.*

@@ -1,5 +1,5 @@
 /* at.c - routines for dealing with attribute types */
-/* $OpenLDAP: pkg/ldap/servers/slapd/at.c,v 1.84.2.9 2009/01/22 00:00:59 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/at.c,v 1.84.2.10 2009/03/17 17:11:57 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -1080,10 +1080,10 @@ register_at( const char *def, AttributeDescription **rad, int dupok )
 			freeit = 1;
 
 		} else {
-			ldap_attributetype_free( at );
 			Debug( LDAP_DEBUG_ANY,
 				"register_at: AttributeType \"%s\": %s, %s\n",
 				def, scherr2str(code), err );
+			ldap_attributetype_free( at );
 			return code;
 		}
 	}

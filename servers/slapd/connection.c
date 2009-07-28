@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.358.2.24 2009/01/30 18:51:16 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.358.2.31 2009/06/28 19:41:27 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -53,18 +53,22 @@ static unsigned long conn_nextid = 0;
 static const char conn_lost_str[] = "connection lost";
 
 /* structure state (protected by connections_mutex) */
-#define SLAP_C_UNINITIALIZED	0x00	/* MUST BE ZERO (0) */
-#define SLAP_C_UNUSED			0x01
-#define SLAP_C_USED				0x02
-#define	SLAP_C_PENDING			0x03
+enum sc_struct_state {
+	SLAP_C_UNINITIALIZED = 0,	/* MUST BE ZERO (0) */
+	SLAP_C_UNUSED,
+	SLAP_C_USED,
+	SLAP_C_PENDING
+};
 
 /* connection state (protected by c_mutex ) */
-#define SLAP_C_INVALID			0x00	/* MUST BE ZERO (0) */
-#define SLAP_C_INACTIVE			0x01	/* zero threads */
-#define SLAP_C_ACTIVE			0x02	/* one or more threads */
-#define SLAP_C_BINDING			0x03	/* binding */
-#define SLAP_C_CLOSING			0x04	/* closing */
-#define SLAP_C_CLIENT			0x05	/* outbound client conn */
+enum sc_conn_state {
+	SLAP_C_INVALID = 0,		/* MUST BE ZERO (0) */
+	SLAP_C_INACTIVE,		/* zero threads */
+	SLAP_C_CLOSING,			/* closing */
+	SLAP_C_ACTIVE,			/* one or more threads */
+	SLAP_C_BINDING,			/* binding */
+	SLAP_C_CLIENT			/* outbound client conn */
+};
 
 const char *
 connection_state2str( int state )
@@ -72,9 +76,9 @@ connection_state2str( int state )
 	switch( state ) {
 	case SLAP_C_INVALID:	return "!";
 	case SLAP_C_INACTIVE:	return "|";
+	case SLAP_C_CLOSING:	return "C";
 	case SLAP_C_ACTIVE:		return "";
 	case SLAP_C_BINDING:	return "B";
-	case SLAP_C_CLOSING:	return "C";
 	case SLAP_C_CLIENT:		return "L";
 	}
 
@@ -218,17 +222,23 @@ int connections_shutdown(void)
  */
 int connections_timeout_idle(time_t now)
 {
-	int i = 0;
+	int i = 0, writers = 0;
 	int connindex;
 	Connection* c;
+	time_t old;
+
+	old = slapd_get_writetime();
 
 	for( c = connection_first( &connindex );
 		c != NULL;
 		c = connection_next( c, &connindex ) )
 	{
 		/* Don't timeout a slow-running request or a persistent
-		 * outbound connection */
-		if( c->c_n_ops_executing || c->c_conn_state == SLAP_C_CLIENT ) {
+		 * outbound connection. But if it has a writewaiter, see
+		 * if the waiter has been there too long.
+		 */
+		if(( c->c_n_ops_executing && !c->c_writewaiter)
+			|| c->c_conn_state == SLAP_C_CLIENT ) {
 			continue;
 		}
 
@@ -237,9 +247,21 @@ int connections_timeout_idle(time_t now)
 			connection_closing( c, "idletimeout" );
 			connection_close( c );
 			i++;
+			continue;
+		}
+		if ( c->c_writewaiter ) {
+			writers = 1;
+			if( difftime( c->c_activitytime+global_writetimeout, now) < 0 ) {
+				/* close it */
+				connection_closing( c, "writetimeout" );
+				connection_close( c );
+				i++;
+			}
 		}
 	}
 	connection_done( c );
+	if ( !writers )
+		slapd_clr_writetime( old );
 
 	return i;
 }
@@ -677,19 +699,15 @@ connection_destroy( Connection *c )
 	}
 }
 
-int connection_state_closing( Connection *c )
+int connection_valid( Connection *c )
 {
 	/* c_mutex must be locked by caller */
 
-	int state;
 	assert( c != NULL );
-	assert( c->c_struct_state == SLAP_C_USED );
 
-	state = c->c_conn_state;
-
-	assert( state != SLAP_C_INVALID );
-
-	return state == SLAP_C_CLOSING;
+	return c->c_struct_state == SLAP_C_USED &&
+		c->c_conn_state >= SLAP_C_ACTIVE &&
+		c->c_conn_state <= SLAP_C_CLIENT;
 }
 
 static void connection_abandon( Connection *c )
@@ -1003,7 +1021,7 @@ conn_counter_init( Operation *op, void *ctx )
 static void *
 connection_operation( void *ctx, void *arg_v )
 {
-	int rc = LDAP_OTHER;
+	int rc = LDAP_OTHER, cancel;
 	Operation *op = arg_v;
 	SlapReply rs = {REP_RESULT};
 	ber_tag_t tag = op->o_tag;
@@ -1107,21 +1125,31 @@ operations_error:
 		INCR_OP_COMPLETED( opidx );
 	}
 
-	if ( op->o_cancel == SLAP_CANCEL_REQ ) {
-		if ( rc == SLAPD_ABANDON ) {
-			op->o_cancel = SLAP_CANCEL_ACK;
-		} else {
-			op->o_cancel = LDAP_TOO_LATE;
-		}
-	}
-
-	while ( op->o_cancel != SLAP_CANCEL_NONE &&
-		op->o_cancel != SLAP_CANCEL_DONE )
-	{
-		ldap_pvt_thread_yield();
-	}
-
 	ldap_pvt_thread_mutex_lock( &conn->c_mutex );
+
+	if ( opidx == SLAP_OP_BIND && conn->c_conn_state == SLAP_C_BINDING )
+		conn->c_conn_state = SLAP_C_ACTIVE;
+
+	cancel = op->o_cancel;
+	if ( cancel != SLAP_CANCEL_NONE && cancel != SLAP_CANCEL_DONE ) {
+		if ( cancel == SLAP_CANCEL_REQ ) {
+			op->o_cancel = rc == SLAPD_ABANDON
+				? SLAP_CANCEL_ACK : LDAP_TOO_LATE;
+		}
+
+		do {
+			/* Fake a cond_wait with thread_yield, then
+			 * verify the result properly mutex-protected.
+			 */
+			ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
+			do {
+				ldap_pvt_thread_yield();
+			} while ( (cancel = op->o_cancel) != SLAP_CANCEL_NONE
+					&& cancel != SLAP_CANCEL_DONE );
+			ldap_pvt_thread_mutex_lock( &conn->c_mutex );
+		} while ( (cancel = op->o_cancel) != SLAP_CANCEL_NONE
+				&& cancel != SLAP_CANCEL_DONE );
+	}
 
 	ber_set_option( op->o_ber, LBER_OPT_BER_MEMCTX, &memctx_null );
 
@@ -1251,24 +1279,6 @@ int connection_read_activate( ber_socket_t s )
 	}
 
 	return rc;
-}
-
-void
-connection_hangup( ber_socket_t s )
-{
-	Connection *c;
-
-	c = connection_get( s );
-	if ( c ) {
-		if ( c->c_conn_state == SLAP_C_CLIENT ) {
-			connection_return( c );
-			connection_read_activate( s );
-		} else {
-			connection_closing( c, "connection lost" );
-			connection_close( c );
-			connection_return( c );
-		}
-	}
 }
 
 static int
@@ -1527,6 +1537,9 @@ connection_input( Connection *conn , conn_readinfo *cri )
 	ctx = cri->ctx;
 	op = slap_op_alloc( ber, msgid, tag, conn->c_n_ops_received++, ctx );
 
+	Debug( LDAP_DEBUG_TRACE, "op tag 0x%lx, time %ld\n", tag,
+		(long) op->o_time, 0);
+
 	op->o_conn = conn;
 	/* clear state if the connection is being reused from inactive */
 	if ( conn->c_conn_state == SLAP_C_INACTIVE ) {
@@ -1712,8 +1725,6 @@ static int connection_bind_cleanup_cb( Operation *op, SlapReply *rs )
 static int connection_bind_cb( Operation *op, SlapReply *rs )
 {
 	ldap_pvt_thread_mutex_lock( &op->o_conn->c_mutex );
-	if ( op->o_conn->c_conn_state == SLAP_C_BINDING )
-		op->o_conn->c_conn_state = SLAP_C_ACTIVE;
 	op->o_conn->c_sasl_bind_in_progress =
 		( rs->sr_err == LDAP_SASL_BIND_IN_PROGRESS );
 
@@ -1966,6 +1977,8 @@ connection_fake_init2(
 	conn->c_send_ldap_result = slap_send_ldap_result;
 	conn->c_send_search_entry = slap_send_search_entry;
 	conn->c_send_search_reference = slap_send_search_reference;
+	conn->c_send_ldap_extended = slap_send_ldap_extended;
+	conn->c_send_ldap_intermediate = slap_send_ldap_intermediate;
 	conn->c_listener = (Listener *)&dummy_list;
 	conn->c_peer_domain = slap_empty_bv;
 	conn->c_peer_name = slap_empty_bv;

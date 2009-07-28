@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/build/man.mk,v 1.32.2.5 2009/01/22 00:00:41 kurt Exp $
+# $OpenLDAP: pkg/ldap/build/man.mk,v 1.32.2.6 2009/06/27 18:46:30 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2009 The OpenLDAP Foundation.
@@ -31,6 +31,7 @@ all-common:
 			-e 's%BINDIR%$(bindir)%' \
 			-e 's%LIBDIR%$(libdir)%' \
 			-e 's%LIBEXECDIR%$(libexecdir)%' \
+			-e 's%MODULEDIR%$(moduledir)%' \
 			-e 's%RELEASEDATE%$(RELEASEDATE)%' \
 				$(srcdir)/$$page \
 			| (cd $(srcdir); $(SOELIM) -) > $$page.$(TMP_SUFFIX); \

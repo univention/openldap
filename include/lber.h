@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/lber.h,v 1.99.2.5 2009/01/22 00:00:51 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/lber.h,v 1.99.2.6 2009/05/01 19:28:57 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -628,6 +628,14 @@ ber_str2bv LDAP_P((
 LBER_F( char * )
 ber_strdup LDAP_P((
 	LDAP_CONST char * ));
+
+LBER_F( ber_len_t )
+ber_strnlen LDAP_P((
+	LDAP_CONST char *s, ber_len_t len ));
+
+LBER_F( char * )
+ber_strndup LDAP_P((
+	LDAP_CONST char *s, ber_len_t l ));
 
 LBER_F( struct berval * )
 ber_bvreplace LDAP_P((

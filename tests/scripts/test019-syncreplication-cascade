@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test019-syncreplication-cascade,v 1.19.2.7 2009/01/27 23:53:16 hyc Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test019-syncreplication-cascade,v 1.19.2.9 2009/03/05 23:32:21 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2009 The OpenLDAP Foundation.
@@ -237,8 +237,8 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-echo "Waiting 25 seconds for syncrepl to receive changes..."
-sleep 25
+echo "Waiting $SLEEP2 seconds for syncrepl to receive changes..."
+sleep $SLEEP2
 
 echo "Using ldapmodify to modify master directory..."
 
@@ -341,8 +341,8 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-echo "Waiting 25 seconds for syncrepl to receive changes..."
-sleep 25
+echo "Waiting $SLEEP2 seconds for syncrepl to receive changes..."
+sleep $SLEEP2
 
 echo "Performing modify alone on provider..."
 $LDAPMODIFY -v -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
@@ -361,8 +361,8 @@ if test $RC != 0 ; then
         exit $RC
 fi      
 
-echo "Waiting 25 seconds for syncrepl to receive changes..."
-sleep 25
+echo "Waiting $SLEEP2 seconds for syncrepl to receive changes..."
+sleep $SLEEP2 
 
 echo "Using ldapsearch to read all the entries from the master..."
 $LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \

@@ -1,5 +1,5 @@
 /* bind.c - ldap backend bind function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.162.2.21 2009/01/22 00:01:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.162.2.22 2009/06/11 21:48:11 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.
@@ -691,8 +691,11 @@ ldap_back_prepare_conn( ldapconn_t *lc, Operation *op, SlapReply *rs, ldap_back_
 	}
 
 	ldap_pvt_thread_mutex_lock( &li->li_uri_mutex );
+	assert( li->li_uri_mutex_do_not_lock == 0 );
+	li->li_uri_mutex_do_not_lock = 1;
 	rs->sr_err = ldap_back_start_tls( ld, op->o_protocol, &is_tls,
 			li->li_uri, li->li_flags, li->li_nretries, &rs->sr_text );
+	li->li_uri_mutex_do_not_lock = 0;
 	ldap_pvt_thread_mutex_unlock( &li->li_uri_mutex );
 	if ( rs->sr_err != LDAP_SUCCESS ) {
 		ldap_unbind_ext( ld, NULL, NULL );
@@ -1581,13 +1584,19 @@ ldap_back_default_urllist(
 	*urllist = *url;
 	*url = NULL;
 
-	ldap_pvt_thread_mutex_lock( &li->li_uri_mutex );
+	if ( !li->li_uri_mutex_do_not_lock ) {
+		ldap_pvt_thread_mutex_lock( &li->li_uri_mutex );
+	}
+
 	if ( li->li_uri ) {
 		ch_free( li->li_uri );
 	}
 
 	ldap_get_option( ld, LDAP_OPT_URI, (void *)&li->li_uri );
-	ldap_pvt_thread_mutex_unlock( &li->li_uri_mutex );
+
+	if ( !li->li_uri_mutex_do_not_lock ) {
+		ldap_pvt_thread_mutex_unlock( &li->li_uri_mutex );
+	}
 
 	return LDAP_SUCCESS;
 }

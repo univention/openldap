@@ -1,5 +1,5 @@
 /* op.c - relay backend operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-relay/op.c,v 1.15.2.8 2009/02/13 02:57:29 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-relay/op.c,v 1.15.2.9 2009/06/02 23:08:35 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2009 The OpenLDAP Foundation.
@@ -457,15 +457,14 @@ relay_back_has_subordinates( Operation *op, Entry *e, int *hasSubs )
 {
 	SlapReply		rs = { 0 };
 	BackendDB		*bd;
-	int			rc = 1;
+	int			rc = LDAP_OTHER;
 
-	bd = relay_back_select_backend( op, &rs,
-		( LDAP_SUCCESS | RB_ERR ) );
+	bd = relay_back_select_backend( op, &rs, LDAP_OTHER );
 	/* FIXME: this test only works if there are no overlays, so
 	 * it is nearly useless; if made stricter, no nested back-relays
 	 * can be instantiated... too bad. */
 	if ( bd == NULL || bd == op->o_bd ) {
-		return 0;
+		return LDAP_OTHER;
 	}
 
 	if ( bd->be_has_subordinates ) {
@@ -477,7 +476,6 @@ relay_back_has_subordinates( Operation *op, Entry *e, int *hasSubs )
 	}
 
 	return rc;
-
 }
 
 int

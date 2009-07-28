@@ -1,5 +1,5 @@
 /* config.c - configuration file handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.441.2.20 2009/02/13 03:16:59 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.441.2.24 2009/06/02 23:41:32 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -62,7 +62,9 @@ slap_mask_t		global_allows = 0;
 slap_mask_t		global_disallows = 0;
 int		global_gentlehup = 0;
 int		global_idletimeout = 0;
+int		global_writetimeout = 0;
 char	*global_host = NULL;
+struct berval global_host_bv = BER_BVNULL;
 char	*global_realm = NULL;
 char	*sasl_host = NULL;
 char		**default_passwd_hash = NULL;
@@ -143,7 +145,7 @@ int config_check_vals(ConfigTable *Conf, ConfigArgs *c, int check_only ) {
 	}
 	if(Conf->min_args && (c->argc < Conf->min_args)) {
 		snprintf( c->cr_msg, sizeof( c->cr_msg ), "<%s> missing <%s> argument",
-			c->argv[0], Conf->what );
+			c->argv[0], Conf->what ? Conf->what : "" );
 		Debug(LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE, "%s: keyword %s\n", c->log, c->cr_msg, 0 );
 		return(ARG_BAD_CONF);
 	}
@@ -213,6 +215,16 @@ int config_check_vals(ConfigTable *Conf, ConfigArgs *c, int check_only ) {
 		if ( check_only ) {
 			ch_free( c->value_ndn.bv_val );
 			ch_free( c->value_dn.bv_val );
+		}
+	} else if(arg_type == ARG_ATDESC) {
+		const char *text = NULL;
+		c->value_ad = NULL;
+		rc = slap_str2ad( c->argv[1], &c->value_ad, &text );
+		if ( rc != LDAP_SUCCESS ) {
+			snprintf( c->cr_msg, sizeof( c->cr_msg ), "<%s> invalid AttributeDescription %d (%s)",
+				c->argv[0], rc, text );
+			Debug(LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE, "%s: %s\n" , c->log, c->cr_msg, 0);
+			return(ARG_BAD_CONF);
 		}
 	} else {	/* all numeric */
 		int j;
@@ -364,6 +376,9 @@ int config_set_vals(ConfigTable *Conf, ConfigArgs *c) {
 			case ARG_BERVAL:
 				*(struct berval *)ptr = c->value_bv;
 				break;
+			case ARG_ATDESC:
+				*(AttributeDescription **)ptr = c->value_ad;
+				break;
 		}
 	return(0);
 }
@@ -441,6 +456,8 @@ config_get_vals(ConfigTable *cf, ConfigArgs *c)
 			break;
 		case ARG_BERVAL:
 			ber_dupbv( &c->value_bv, (struct berval *)ptr ); break;
+		case ARG_ATDESC:
+			c->value_ad = *(AttributeDescription **)ptr; break;
 		}
 	}
 	if ( cf->arg_type & ARGS_TYPES) {
@@ -463,6 +480,13 @@ config_get_vals(ConfigTable *cf, ConfigArgs *c)
 		case ARG_BERVAL:
 			if ( !BER_BVISEMPTY( &c->value_bv )) {
 				bv = c->value_bv;
+			} else {
+				return 1;
+			}
+			break;
+		case ARG_ATDESC:
+			if ( c->value_ad ) {
+				bv = c->value_ad->ad_cname;
 			} else {
 				return 1;
 			}

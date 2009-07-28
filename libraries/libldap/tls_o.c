@@ -1,5 +1,5 @@
 /* tls_o.c - Handle tls/ssl using SSLeay or OpenSSL */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/tls_o.c,v 1.5.2.2 2009/02/10 16:41:01 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/tls_o.c,v 1.5.2.4 2009/07/01 23:04:49 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2009 The OpenLDAP Foundation.
@@ -77,7 +77,7 @@ static int tlso_seed_PRNG( const char *randfile );
 
 #ifdef LDAP_R_COMPILE
 /*
- * provide mutexes for the SSLeay library.
+ * provide mutexes for the OpenSSL library.
  */
 static ldap_pvt_thread_mutex_t	tlso_mutexes[CRYPTO_NUM_LOCKS];
 static ldap_pvt_thread_mutex_t	tlso_dh_mutex;
@@ -162,7 +162,8 @@ tlso_init( void )
 #endif
 
 	SSL_load_error_strings();
-	SSLeay_add_ssl_algorithms();
+	SSL_library_init();
+	OpenSSL_add_all_digests();
 
 	/* FIXME: mod_ssl does this */
 	X509V3_add_standard_extensions();
@@ -421,7 +422,7 @@ tlso_session_my_dn( tls_session *sess, struct berval *der_dn )
 	xn = X509_get_subject_name(x);
 	der_dn->bv_len = i2d_X509_NAME( xn, NULL );
 	der_dn->bv_val = xn->bytes->data;
-	X509_free(x);
+	/* Don't X509_free, the session is still using it */
 	return 0;
 }
 

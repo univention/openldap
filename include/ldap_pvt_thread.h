@@ -1,5 +1,5 @@
 /* ldap_pvt_thread.h - ldap threads header file */
-/* $OpenLDAP: pkg/ldap/include/ldap_pvt_thread.h,v 1.51.2.12 2009/01/22 00:00:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap_pvt_thread.h,v 1.51.2.13 2009/06/11 21:53:23 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -211,6 +211,12 @@ ldap_pvt_thread_pool_init LDAP_P((
 
 LDAP_F( int )
 ldap_pvt_thread_pool_submit LDAP_P((
+	ldap_pvt_thread_pool_t *pool,
+	ldap_pvt_thread_start_t *start,
+	void *arg ));
+
+LDAP_F( int )
+ldap_pvt_thread_pool_retract LDAP_P((
 	ldap_pvt_thread_pool_t *pool,
 	ldap_pvt_thread_start_t *start,
 	void *arg ));

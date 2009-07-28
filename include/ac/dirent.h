@@ -1,5 +1,5 @@
 /* Generic dirent.h */
-/* $OpenLDAP: pkg/ldap/include/ac/dirent.h,v 1.14.2.5 2009/01/22 00:00:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ac/dirent.h,v 1.14.2.6 2009/04/29 01:48:30 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -34,6 +34,9 @@ typedef struct DIR {
 	int first;
 	char buf[MAX_PATH+1];
 } DIR;
+DIR *opendir(const char *name);
+struct dirent *readdir(DIR *dir);
+int closedir(DIR *dir);
 #else
 # define dirent direct
 # define NAMLEN(dirent) (dirent)->d_namlen

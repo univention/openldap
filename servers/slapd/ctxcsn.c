@@ -1,5 +1,5 @@
 /* ctxcsn.c -- Context CSN Management Routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/ctxcsn.c,v 1.40.2.12 2009/02/17 00:06:01 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/ctxcsn.c,v 1.40.2.14 2009/03/13 19:53:40 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2009 The OpenLDAP Foundation.
@@ -26,8 +26,6 @@
 #include "slap.h"
 #include "lutil_ldap.h"
 
-const struct berval slap_ldapsync_bv = BER_BVC("ldapsync");
-const struct berval slap_ldapsync_cn_bv = BER_BVC("cn=ldapsync");
 int slap_serverID;
 
 /* maxcsn->bv_val must point to a char buf[LDAP_LUTIL_CSNSTR_BUFSIZE] */
@@ -40,6 +38,7 @@ slap_get_commit_csn(
 {
 	struct slap_csn_entry *csne, *committed_csne = NULL;
 	BackendDB *be = op->o_bd->bd_self;
+	int sid = -1;
 
 	if ( maxcsn ) {
 		assert( maxcsn->bv_val != NULL );
@@ -51,6 +50,10 @@ slap_get_commit_csn(
 
 	ldap_pvt_thread_mutex_lock( &be->be_pcl_mutex );
 
+	if ( !BER_BVISEMPTY( &op->o_csn )) {
+		sid = slap_parse_csn_sid( &op->o_csn );
+	}
+
 	LDAP_TAILQ_FOREACH( csne, be->be_pending_csn_list, ce_csn_link ) {
 		if ( csne->ce_opid == op->o_opid && csne->ce_connid == op->o_connid ) {
 			csne->ce_state = SLAP_CSN_COMMIT;
@@ -60,8 +63,10 @@ slap_get_commit_csn(
 	}
 
 	LDAP_TAILQ_FOREACH( csne, be->be_pending_csn_list, ce_csn_link ) {
-		if ( csne->ce_state == SLAP_CSN_COMMIT ) committed_csne = csne;
-		if ( csne->ce_state == SLAP_CSN_PENDING ) break;
+		if ( sid != -1 && sid == csne->ce_sid ) {
+			if ( csne->ce_state == SLAP_CSN_COMMIT ) committed_csne = csne;
+			if ( csne->ce_state == SLAP_CSN_PENDING ) break;
+		}
 	}
 
 	if ( maxcsn ) {
@@ -128,46 +133,6 @@ slap_graduate_commit_csn( Operation *op )
 	return;
 }
 
-static struct berval ocbva[] = {
-	BER_BVC("top"),
-	BER_BVC("subentry"),
-	BER_BVC("syncProviderSubentry"),
-	BER_BVNULL
-};
-
-Entry *
-slap_create_context_csn_entry(
-	Backend *be,
-	struct berval *context_csn )
-{
-	Entry* e;
-
-	struct berval bv;
-
-	e = entry_alloc();
-
-	attr_merge( e, slap_schema.si_ad_objectClass,
-		ocbva, NULL );
-	attr_merge_one( e, slap_schema.si_ad_structuralObjectClass,
-		&ocbva[1], NULL );
-	attr_merge_one( e, slap_schema.si_ad_cn,
-		(struct berval *)&slap_ldapsync_bv, NULL );
-
-	if ( context_csn ) {
-		attr_merge_one( e, slap_schema.si_ad_contextCSN,
-			context_csn, NULL );
-	}
-
-	BER_BVSTR( &bv, "{}" );
-	attr_merge_one( e, slap_schema.si_ad_subtreeSpecification, &bv, NULL );
-
-	build_new_dn( &e->e_name, &be->be_nsuffix[0],
-		(struct berval *)&slap_ldapsync_cn_bv, NULL );
-	ber_dupbv( &e->e_nname, &e->e_name );
-
-	return e;
-}
-
 void
 slap_queue_csn(
 	Operation *op,
@@ -185,6 +150,7 @@ slap_queue_csn(
 
 	ber_dupbv( &pending->ce_csn, csn );
 	ber_bvreplace_x( &op->o_csn, &pending->ce_csn, op->o_tmpmemctx );
+	pending->ce_sid = slap_parse_csn_sid( csn );
 	pending->ce_connid = op->o_connid;
 	pending->ce_opid = op->o_opid;
 	pending->ce_state = SLAP_CSN_PENDING;

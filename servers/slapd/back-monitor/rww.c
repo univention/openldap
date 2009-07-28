@@ -1,5 +1,5 @@
 /* readw.c - deal with read waiters subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/rww.c,v 1.36.2.5 2009/01/22 00:01:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/rww.c,v 1.36.2.6 2009/04/27 22:50:10 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2009 The OpenLDAP Foundation.
@@ -104,7 +104,7 @@ monitor_subsys_rww_init(
 		ber_dupbv( &monitor_rww[ i ].nrdn, &nrdn );
 	
 		BER_BVSTR( &bv, "0" );
-		attr_merge_normalize_one( e, mi->mi_ad_monitorCounter, &bv, NULL );
+		attr_merge_one( e, mi->mi_ad_monitorCounter, &bv, NULL );
 	
 		mp = monitor_entrypriv_create();
 		if ( mp == NULL ) {

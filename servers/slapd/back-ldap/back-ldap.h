@@ -1,5 +1,5 @@
 /* back-ldap.h - ldap backend header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.88.2.13 2009/01/22 00:01:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.88.2.14 2009/06/11 21:48:11 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.
@@ -245,6 +245,9 @@ typedef struct ldapinfo_t {
 	 * to be checked for the presence of a certain item */
 	BerVarray		li_bvuri;
 	ldap_pvt_thread_mutex_t	li_uri_mutex;
+	/* hack because when TLS is used we need to lock and let 
+	 * the li_urllist_f function to know it's locked */
+	int			li_uri_mutex_do_not_lock;
 
 	LDAP_REBIND_PROC	*li_rebind_f;
 	LDAP_URLLIST_PROC	*li_urllist_f;

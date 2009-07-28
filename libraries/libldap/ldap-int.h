@@ -1,5 +1,5 @@
 /*  ldap-int.h - defines & prototypes internal to the LDAP library */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.168.2.14 2009/02/17 21:02:51 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.168.2.15 2009/05/01 19:39:03 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -75,6 +75,9 @@
 
 #ifdef LDAP_DEBUG
 
+#define DebugTest( level ) \
+	( ldap_debug & level )
+
 #define Debug( level, fmt, arg1, arg2, arg3 ) \
 	do { if ( ldap_debug & level ) \
 	ldap_log_printf( NULL, (level), (fmt), (arg1), (arg2), (arg3) ); \
@@ -85,6 +88,7 @@
 
 #else
 
+#define DebugTest( level )                                    (0 == 1)
 #define Debug( level, fmt, arg1, arg2, arg3 )                 ((void)0)
 #define LDAP_Debug( subsystem, level, fmt, arg1, arg2, arg3 ) ((void)0)
 

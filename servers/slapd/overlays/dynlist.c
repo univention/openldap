@@ -1,5 +1,5 @@
 /* dynlist.c - dynamic list overlay */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dynlist.c,v 1.20.2.26 2009/02/17 19:14:41 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dynlist.c,v 1.20.2.27 2009/03/05 23:00:00 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2009 The OpenLDAP Foundation.
@@ -1262,8 +1262,8 @@ dl_cfgen( ConfigArgs *c )
 				}
 
 				*ptr++ = ' ';
-				ptr = lutil_strncopy( ptr, dli->dli_oc->soc_cname.bv_val,
-					dli->dli_oc->soc_cname.bv_len );
+				ptr = lutil_strncopy( ptr, dli->dli_ad->ad_cname.bv_val,
+					dli->dli_ad->ad_cname.bv_len );
 
 				for ( dlm = dli->dli_dlm; dlm; dlm = dlm->dlm_next ) {
 					ptr[ 0 ] = ' ';

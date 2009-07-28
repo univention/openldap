@@ -1,5 +1,5 @@
 /* backglue.c - backend glue */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.112.2.17 2009/02/11 00:49:55 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.112.2.19 2009/05/13 20:19:14 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2009 The OpenLDAP Foundation.
@@ -52,6 +52,8 @@ static slap_overinst	glue;
 
 static int glueMode;
 static BackendDB *glueBack;
+static BackendDB glueBackDone;
+#define GLUEBACK_DONE (&glueBackDone)
 
 static slap_response glue_op_response;
 
@@ -533,17 +535,18 @@ end_of_loop:;
 
 		break;
 	}
+
+	op->o_callback = cb.sc_next;
 	if ( op->o_abandon ) {
 		rs->sr_err = SLAPD_ABANDON;
 	} else {
-		op->o_callback = cb.sc_next;
 		rs->sr_err = gs.err;
 		rs->sr_matched = gs.matched;
 		rs->sr_ref = gs.refs;
-		rs->sr_ctrls = gs.ctrls;
-
-		send_ldap_result( op, rs );
 	}
+	rs->sr_ctrls = gs.ctrls;
+
+	send_ldap_result( op, rs );
 
 	op->o_bd = b0;
 	op->o_bd->bd_info = bi0;
@@ -591,7 +594,7 @@ glue_tool_entry_close (
 {
 	int rc = 0;
 
-	if (glueBack) {
+	if (glueBack && glueBack != GLUEBACK_DONE) {
 		if (!glueBack->be_entry_close)
 			return 0;
 		rc = glueBack->be_entry_close (glueBack);
@@ -740,6 +743,7 @@ glue_tool_entry_first (
 	slap_overinst	*on = glue_tool_inst( b0->bd_info );
 	glueinfo		*gi = on->on_bi.bi_private;
 	int i;
+	ID rc;
 
 	/* If we're starting from scratch, start at the most general */
 	if (!glueBack) {
@@ -759,7 +763,26 @@ glue_tool_entry_first (
 		glueBack->be_entry_open (glueBack, glueMode) != 0)
 		return NOID;
 
-	return glueBack->be_entry_first (glueBack);
+	rc = glueBack->be_entry_first (glueBack);
+	while ( rc == NOID ) {
+		if ( glueBack && glueBack->be_entry_close )
+			glueBack->be_entry_close (glueBack);
+		for (i=0; i<gi->gi_nodes; i++) {
+			if (gi->gi_n[i].gn_be == glueBack)
+				break;
+		}
+		if (i == 0) {
+			glueBack = GLUEBACK_DONE;
+			break;
+		} else {
+			glueBack = gi->gi_n[i-1].gn_be;
+			rc = glue_tool_entry_first (b0);
+			if ( glueBack == GLUEBACK_DONE ) {
+				break;
+			}
+		}
+	}
+	return rc;
 }
 
 static ID
@@ -786,11 +809,14 @@ glue_tool_entry_next (
 				break;
 		}
 		if (i == 0) {
-			glueBack = NULL;
+			glueBack = GLUEBACK_DONE;
 			break;
 		} else {
 			glueBack = gi->gi_n[i-1].gn_be;
 			rc = glue_tool_entry_first (b0);
+			if ( glueBack == GLUEBACK_DONE ) {
+				break;
+			}
 		}
 	}
 	return rc;

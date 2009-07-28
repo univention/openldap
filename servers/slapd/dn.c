@@ -1,5 +1,5 @@
 /* dn.c - routines for dealing with distinguished names */
-/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.182.2.11 2009/02/23 02:12:09 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.182.2.12 2009/04/28 00:52:05 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -220,10 +220,7 @@ rdnValidate(
 /*
  * AVA sorting inside a RDN
  *
- * rule: sort attributeTypes in alphabetical order; in case of multiple
- * occurrences of the same attributeType, sort values in byte order
- * (use memcmp, which implies alphabetical order in case of IA5 value;
- * this should guarantee the repeatability of the operation).
+ * Rule: sort attributeTypes in alphabetical order.
  *
  * Note: the sorting can be slightly improved by sorting first
  * by attribute type length, then by alphabetical order.

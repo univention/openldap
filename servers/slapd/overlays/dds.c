@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dds.c,v 1.7.2.11 2009/01/22 00:01:12 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dds.c,v 1.7.2.12 2009/06/11 18:21:52 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2009 The OpenLDAP Foundation.
@@ -243,10 +243,9 @@ done_search:;
 					de->de_ndn.bv_val, rs.sr_err );
 				break;
 			}
-	
+
 			if ( de != NULL ) {
 				*dep = de->de_next;
-				dep = &de->de_next;
 				op->o_tmpfree( de, op->o_tmpmemctx );
 			}
 		}

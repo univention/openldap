@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test033-glue-syncrepl,v 1.17.2.5 2009/01/22 00:01:19 kurt Exp $ */
+# $OpenLDAP: pkg/ldap/tests/scripts/test033-glue-syncrepl,v 1.17.2.6 2009/03/05 22:19:39 quanah Exp $ */
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2009 The OpenLDAP Foundation.
@@ -133,9 +133,8 @@ case $RC in
 	;;
 esac
 
-SLEEP=15
-echo "Waiting $SLEEP seconds for shadow subtrees to sync..."
-sleep $SLEEP
+echo "Waiting $SLEEP1 seconds for shadow subtrees to sync..."
+sleep $SLEEP1
 
 echo "Filtering original ldif used to create database..."
 . $LDIFFILTER < $GLUESYNCOUT > $LDIFFLT

@@ -1,5 +1,5 @@
 /* init.c - initialize bdb backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.247.2.19 2009/02/19 22:19:15 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.247.2.22 2009/06/19 21:53:42 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2009 The OpenLDAP Foundation.
@@ -223,6 +223,7 @@ bdb_db_open( BackendDB *be, ConfigReply *cr )
 			"Run manual recovery if errors are encountered.\n",
 			be->be_suffix[0].bv_val, 0, 0 );
 		do_recover = 0;
+		do_alock_recover = 0;
 		quick = alockt;
 	}
 
@@ -371,6 +372,11 @@ shm_retry:
 	/* Default dncache to 2x entrycache */
 	if ( bdb->bi_cache.c_maxsize && !bdb->bi_cache.c_eimax ) {
 		bdb->bi_cache.c_eimax = bdb->bi_cache.c_maxsize * 2;
+	}
+
+	/* dncache must be >= entrycache */
+	if ( bdb->bi_cache.c_eimax < bdb->bi_cache.c_maxsize ) {
+		bdb->bi_cache.c_eimax = bdb->bi_cache.c_maxsize;
 	}
 
 	if ( bdb->bi_idl_cache_max_size ) {
@@ -537,10 +543,23 @@ shm_retry:
 		rc = bdb_id2entry( be, NULL, 0, &e );
 	}
 	if ( !e ) {
+		struct berval gluebv = BER_BVC("glue");
+		Operation op = {0};
+		Opheader ohdr = {0};
 		e = entry_alloc();
 		e->e_id = 0;
 		ber_dupbv( &e->e_name, (struct berval *)&slap_empty_bv );
 		ber_dupbv( &e->e_nname, (struct berval *)&slap_empty_bv );
+		attr_merge_one( e, slap_schema.si_ad_objectClass,
+			&gluebv, NULL );
+		attr_merge_one( e, slap_schema.si_ad_structuralObjectClass,
+			&gluebv, NULL );
+		op.o_hdr = &ohdr;
+		op.o_bd = be;
+		op.ora_e = e;
+		op.o_dn = be->be_rootdn;
+		op.o_ndn = be->be_rootndn;
+		slap_add_opattrs( &op, NULL, NULL, 0, 0 );
 	}
 	e->e_ocflags = SLAP_OC_GLUE|SLAP_OC__END;
 	e->e_private = &bdb->bi_cache.c_dntree;

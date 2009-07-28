@@ -1,5 +1,5 @@
 /* slap.h - stand alone ldap server include file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.764.2.47 2009/02/10 17:03:11 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.764.2.49 2009/07/01 17:01:58 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -2371,6 +2371,7 @@ typedef struct PagedResultsState {
 
 struct slap_csn_entry {
 	struct berval ce_csn;
+	int ce_sid;
 	unsigned long ce_opid;
 	unsigned long ce_connid;
 #define SLAP_CSN_PENDING	1
@@ -2809,6 +2810,7 @@ struct Connection {
 
 	BerElement	*c_currentber;	/* ber we're attempting to read */
 	int			c_writers;		/* number of writers waiting */
+	char		c_writing;		/* someone is writing */
 
 	char		c_sasl_bind_in_progress;	/* multi-op bind in progress */
 	char		c_writewaiter;	/* true if blocked on write */

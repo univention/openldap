@@ -1,5 +1,5 @@
 /* schema_init.c - init builtin schema */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_init.c,v 1.386.2.31 2009/01/22 00:01:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_init.c,v 1.386.2.33 2009/05/08 00:27:00 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -156,8 +156,8 @@ enum {
 
 enum {
 	SLAP_X509_OPT_C_VERSION		= SLAP_X509_OPTION + 0,
-	SLAP_X509_OPT_C_ISSUERUNIQUEID	= SLAP_X509_OPTION + 1,
-	SLAP_X509_OPT_C_SUBJECTUNIQUEID	= SLAP_X509_OPTION + 2,
+	SLAP_X509_OPT_C_ISSUERUNIQUEID	= LBER_CLASS_CONTEXT + 1,
+	SLAP_X509_OPT_C_SUBJECTUNIQUEID	= LBER_CLASS_CONTEXT + 2,
 	SLAP_X509_OPT_C_EXTENSIONS	= SLAP_X509_OPTION + 3
 };
 
@@ -2814,6 +2814,7 @@ UUIDNormalize(
 
 		} else {
 			slap_sl_free( normalized->bv_val, ctx );
+			BER_BVZERO( normalized );
 			return LDAP_INVALID_SYNTAX;
 		}
 

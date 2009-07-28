@@ -1,5 +1,5 @@
 /* operation.c - deal with operation subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/operation.c,v 1.46.2.5 2009/01/22 00:01:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/operation.c,v 1.46.2.6 2009/04/27 22:50:10 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2009 The OpenLDAP Foundation.
@@ -86,8 +86,8 @@ monitor_subsys_ops_init(
 		return( -1 );
 	}
 
-	attr_merge_one( e_op, mi->mi_ad_monitorOpInitiated, &bv_zero, &bv_zero );
-	attr_merge_one( e_op, mi->mi_ad_monitorOpCompleted, &bv_zero, &bv_zero );
+	attr_merge_one( e_op, mi->mi_ad_monitorOpInitiated, &bv_zero, NULL );
+	attr_merge_one( e_op, mi->mi_ad_monitorOpCompleted, &bv_zero, NULL );
 
 	mp = ( monitor_entry_t * )e_op->e_private;
 	mp->mp_children = NULL;

@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/Makefile,v 1.1.2.1 2008/07/08 18:53:57 quanah Exp $
+# $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/Makefile,v 1.1.2.2 2009/06/03 20:46:54 quanah Exp $
 # Copyright 2008 Howard Chu, Symas Corp. All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@ all:	nssov.la
 XOBJS = tio.lo
 
 OBJS = alias.lo ether.lo group.lo host.lo netgroup.lo network.lo \
-	nssov.lo passwd.lo protocol.lo rpc.lo service.lo shadow.lo
+	nssov.lo passwd.lo protocol.lo rpc.lo service.lo shadow.lo pam.lo
 
 .SUFFIXES: .c .o .lo
 

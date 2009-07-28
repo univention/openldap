@@ -1,5 +1,5 @@
 /* entry.c - routines for dealing with entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.148.2.9 2009/01/22 00:01:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.148.2.10 2009/05/01 19:37:13 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -732,6 +732,7 @@ int entry_encode(Entry *e, struct berval *bv)
 
 	Debug( LDAP_DEBUG_TRACE, "=> entry_encode(0x%08lx): %s\n",
 		(long) e->e_id, e->e_dn, 0 );
+
 	dnlen = e->e_name.bv_len;
 	ndnlen = e->e_nname.bv_len;
 
@@ -782,6 +783,10 @@ int entry_encode(Entry *e, struct berval *bv)
 			}
 		}
 	}
+
+	Debug( LDAP_DEBUG_TRACE, "<= entry_encode(0x%08lx): %s\n",
+		(long) e->e_id, e->e_dn, 0 );
+
 	return 0;
 }
 

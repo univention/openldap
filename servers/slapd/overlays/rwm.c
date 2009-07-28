@@ -1,5 +1,5 @@
 /* rwm.c - rewrite/remap operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwm.c,v 1.70.2.24 2009/02/20 00:14:30 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwm.c,v 1.70.2.28 2009/05/01 19:51:07 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2009 The OpenLDAP Foundation.
@@ -823,7 +823,7 @@ rwm_entry_release_rw( Operation *op, Entry *e, int rw )
 	}
 
 	/* just free entry if (probably) ours */
-	if ( e->e_private == NULL ) {
+	if ( e->e_private == NULL && BER_BVISNULL( &e->e_bv ) ) {
 		entry_free( e );
 		return LDAP_SUCCESS;
 	}
@@ -847,6 +847,7 @@ rwm_entry_get_rw( Operation *op, struct berval *ndn,
 	SlapReply		rs = { REP_SEARCH };
 
 	rwm_op_state		ros = { 0 };
+	struct berval		mndn = BER_BVNULL;
 
 	if ( ((BackendInfo *)on->on_info->oi_orig)->bi_entry_get_rw == NULL ) {
 		return SLAP_CB_CONTINUE;
@@ -862,6 +863,8 @@ rwm_entry_get_rw( Operation *op, struct berval *ndn,
 		return LDAP_OTHER;
 	}
 
+	mndn = BER_BVISNULL( &ros.r_ndn ) ? *ndn : ros.r_ndn;
+
 	/* map attribute & objectClass */
 	if ( at != NULL ) {
 	}
@@ -874,8 +877,10 @@ rwm_entry_get_rw( Operation *op, struct berval *ndn,
 	op2.o_bd = &db;
 	op2.o_bd->bd_info = (BackendInfo *)on->on_info->oi_orig;
 	op2.ors_attrs = slap_anlist_all_attributes;
-	rc = op2.o_bd->bd_info->bi_entry_get_rw( &op2, &ros.r_ndn, oc, at, rw, ep );
+	rc = op2.o_bd->bd_info->bi_entry_get_rw( &op2, &mndn, oc, at, rw, ep );
 	if ( rc == LDAP_SUCCESS && *ep != NULL ) {
+		/* we assume be_entry_release() needs to be called */
+		rs.sr_flags = REP_ENTRY_MUSTRELEASE;
 		rs.sr_entry = *ep;
 
 		/* duplicate & release */
@@ -887,7 +892,7 @@ rwm_entry_get_rw( Operation *op, struct berval *ndn,
 		}
 	}
 
-	if ( ros.r_ndn.bv_val != ndn->bv_val ) {
+	if ( !BER_BVISNULL( &ros.r_ndn) && ros.r_ndn.bv_val != ndn->bv_val ) {
 		op->o_tmpfree( ros.r_ndn.bv_val, op->o_tmpmemctx );
 	}
 
@@ -1197,7 +1202,8 @@ rwm_attrs( Operation *op, SlapReply *rs, Attribute** a_first, int stripEntryDN )
 		int			last = -1;
 		Attribute		*a;
 
-		if ( op->ors_attrs != NULL && 
+		if ( ( rwmap->rwm_flags & RWM_F_DROP_UNREQUESTED_ATTRS ) &&
+				op->ors_attrs != NULL && 
 				!SLAP_USERATTRS( rs->sr_attr_flags ) &&
 				!ad_inlist( (*ap)->a_desc, op->ors_attrs ) )
 		{
@@ -1829,6 +1835,7 @@ enum {
 	RWM_CF_MAP,
 	RWM_CF_T_F_SUPPORT,
 	RWM_CF_NORMALIZE_MAPPED,
+	RWM_CF_DROP_UNREQUESTED,
 
 	RWM_CF_LAST
 };
@@ -1879,6 +1886,14 @@ static ConfigTable rwmcfg[] = {
 		2, 2, 0, ARG_MAGIC|ARG_ON_OFF|RWM_CF_NORMALIZE_MAPPED, rwm_cf_gen,
 		"( OLcfgOvAt:16.4 NAME 'olcRwmNormalizeMapped' "
 			"DESC 'Normalize mapped attributes/objectClasses' "
+			"SYNTAX OMsBoolean "
+			"SINGLE-VALUE )",
+		NULL, NULL },
+
+	{ "rwm-drop-unrequested-attrs", "true|false",
+		2, 2, 0, ARG_MAGIC|ARG_ON_OFF|RWM_CF_DROP_UNREQUESTED, rwm_cf_gen,
+		"( OLcfgOvAt:16.5 NAME 'olcRwmDropUnrequested' "
+			"DESC 'Drop unrequested attributes' "
 			"SYNTAX OMsBoolean "
 			"SINGLE-VALUE )",
 		NULL, NULL },
@@ -2051,6 +2066,10 @@ rwm_cf_gen( ConfigArgs *c )
 			c->value_int = ( rwmap->rwm_flags & RWM_F_NORMALIZE_MAPPED_ATTRS );
 			break;
 
+		case RWM_CF_DROP_UNREQUESTED:
+			c->value_int = ( rwmap->rwm_flags & RWM_F_DROP_UNREQUESTED_ATTRS );
+			break;
+
 		default:
 			assert( 0 );
 			rc = 1;
@@ -2143,6 +2162,10 @@ rwm_cf_gen( ConfigArgs *c )
 
 		case RWM_CF_NORMALIZE_MAPPED:
 			rwmap->rwm_flags &= ~RWM_F_NORMALIZE_MAPPED_ATTRS;
+			break;
+
+		case RWM_CF_DROP_UNREQUESTED:
+			rwmap->rwm_flags &= ~RWM_F_DROP_UNREQUESTED_ATTRS;
 			break;
 
 		default:
@@ -2325,6 +2348,14 @@ rwm_cf_gen( ConfigArgs *c )
 		}
 		break;
 
+	case RWM_CF_DROP_UNREQUESTED:
+		if ( c->value_int ) {
+			rwmap->rwm_flags |= RWM_F_DROP_UNREQUESTED_ATTRS;
+		} else {
+			rwmap->rwm_flags &= ~RWM_F_DROP_UNREQUESTED_ATTRS;
+		}
+		break;
+
 	default:
 		assert( 0 );
 		return 1;
@@ -2344,9 +2375,11 @@ rwm_db_init(
 
 	rwmap = (struct ldaprwmap *)ch_calloc( 1, sizeof( struct ldaprwmap ) );
 
+	/* default */
+	rwmap->rwm_flags = RWM_F_DROP_UNREQUESTED_ATTRS;
+
 	rc = rwm_info_init( &rwmap->rwm_rw );
 
-error_return:;
 	on->on_bi.bi_private = (void *)rwmap;
 
 	if ( rc ) {

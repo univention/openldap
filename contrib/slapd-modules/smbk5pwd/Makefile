@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/contrib/slapd-modules/smbk5pwd/Makefile,v 1.1 2004/04/02 11:06:38 hyc Exp $
+# $OpenLDAP: pkg/ldap/contrib/slapd-modules/smbk5pwd/Makefile,v 1.1.6.1 2009/04/27 23:36:57 quanah Exp $
 # Copyright 2004 Howard Chu, Symas Corp. All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,4 +34,12 @@ smbk5pwd.lo:	smbk5pwd.c
 
 smbk5pwd.la:	smbk5pwd.lo
 	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info 0:0:0 \
-	-rpath /usr/local/libexec/openldap -module -o $@ $? $(LIBS)
+	-rpath $(PREFIX)/lib -module -o $@ $? $(LIBS)
+
+clean:
+	rm -f smbk5pwd.lo smbk5pwd.la
+
+install: smbk5pwd.la
+	mkdir -p $(PREFIX)/lib/openldap
+	$(LIBTOOL) --mode=install cp smbk5pwd.la $(PREFIX)/lib/openldap
+	$(LIBTOOL) --finish $(PREFIX)/lib

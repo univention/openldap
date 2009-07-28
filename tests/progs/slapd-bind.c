@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/tests/progs/slapd-bind.c,v 1.18.2.10 2009/02/10 17:13:05 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/tests/progs/slapd-bind.c,v 1.18.2.11 2009/03/09 23:16:48 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.
@@ -591,7 +591,7 @@ novals:;
 
 	if ( dns ) {
 		for ( i = 0; i < ndns; i++ ) {
-			free( dns[i] );
+			ber_memfree( dns[i] );
 		}
 		free( dns );
 	}
@@ -599,7 +599,7 @@ novals:;
 	if ( creds ) {
 		for ( i = 0; i < ndns; i++ ) {
 			if ( creds[i].bv_val != nullstr ) {
-				free( creds[i].bv_val );
+				ber_memfree( creds[i].bv_val );
 			}
 		}
 		free( creds );

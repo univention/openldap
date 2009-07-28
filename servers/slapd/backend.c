@@ -1,5 +1,5 @@
 /* backend.c - routines for dealing with back-end databases */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.362.2.26 2009/01/30 19:00:12 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.362.2.27 2009/05/18 17:51:55 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -1296,7 +1296,8 @@ backend_check_restrictions(
 	}
 
 	if( ( restrictops & opflag )
-			|| ( exopflag && ( restrictops & exopflag ) ) ) {
+			|| ( exopflag && ( restrictops & exopflag ) )
+			|| (( restrictops & SLAP_RESTRICT_READONLY ) && updateop )) {
 		if( ( restrictops & SLAP_RESTRICT_OP_MASK) == SLAP_RESTRICT_OP_READS ) {
 			rs->sr_text = "read operations restricted";
 		} else if ( restrictops & exopflag ) {

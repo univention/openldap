@@ -1,5 +1,5 @@
 /* sl_malloc.c - malloc routines using a per-thread slab */
-/* $OpenLDAP: pkg/ldap/servers/slapd/sl_malloc.c,v 1.39.2.7 2009/01/22 00:01:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sl_malloc.c,v 1.39.2.9 2009/04/29 01:22:17 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2009 The OpenLDAP Foundation.
@@ -195,7 +195,7 @@ slap_sl_mem_create(
 			if (size > (char *)sh->sh_end - (char *)sh->sh_base) {
 				void	*newptr;
 
-				newptr = realloc( sh->sh_base, size );
+				newptr = ch_realloc( sh->sh_base, size );
 				if ( newptr == NULL ) return NULL;
 				sh->sh_base = newptr;
 			}
@@ -267,11 +267,19 @@ slap_sl_malloc(
 	int i, j;
 
 #ifdef SLAP_NO_SL_MALLOC
-	return ber_memalloc_x( size, NULL );
+	newptr = ber_memalloc_x( size, NULL );
+	if ( newptr ) return newptr;
+	assert( 0 );
+	exit( EXIT_FAILURE );
 #endif
 
 	/* ber_set_option calls us like this */
-	if (!ctx) return ber_memalloc_x(size, NULL);
+	if (!ctx) {
+		newptr = ber_memalloc_x( size, NULL );
+		if ( newptr ) return newptr;
+		assert( 0 );
+		exit( EXIT_FAILURE );
+	}
 
 	/* round up to doubleword boundary */
 	size += sizeof(ber_len_t) + pad;
@@ -375,7 +383,10 @@ slap_sl_realloc(void *ptr, ber_len_t size, void *ctx)
 		return slap_sl_malloc(size, ctx);
 
 #ifdef SLAP_NO_SL_MALLOC
-	return ber_memrealloc_x( ptr, size, NULL );
+	newptr = ber_memrealloc_x( ptr, size, NULL );
+	if ( newptr ) return newptr;
+	assert( 0 );
+	exit( EXIT_FAILURE );
 #endif
 
 	/* Not our memory? */

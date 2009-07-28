@@ -1,5 +1,5 @@
 /* io.c - ber general i/o routines */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/io.c,v 1.111.2.9 2009/01/22 00:00:53 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/io.c,v 1.111.2.10 2009/03/17 16:21:28 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -244,7 +244,7 @@ ber_flush2( Sockbuf *sb, BerElement *ber, int freeit )
 			"ber_flush2: %ld bytes to sd %ld%s\n",
 			towrite, (long) sb->sb_fd,
 			ber->ber_rwptr != ber->ber_buf ?  " (re-flush)" : "" );
-		ber_log_bprint( LDAP_DEBUG_PACKETS, sb->sb_debug,
+		ber_log_bprint( LDAP_DEBUG_BER, sb->sb_debug,
 			ber->ber_rwptr, towrite );
 	}
 

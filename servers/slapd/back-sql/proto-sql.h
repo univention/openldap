@@ -1,3 +1,4 @@
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/proto-sql.h,v 1.30.2.7 2009/06/02 22:31:40 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.
@@ -183,7 +184,7 @@ void backsql_entry_clean( Operation *op, Entry *e );
  * sql-wrap.h
  */
 
-RETCODE backsql_Prepare( SQLHDBC dbh, SQLHSTMT *sth, char* query, int timeout );
+RETCODE backsql_Prepare( SQLHDBC dbh, SQLHSTMT *sth, const char* query, int timeout );
 
 #define backsql_BindParamStr( sth, par_ind, io, str, maxlen ) 		\
 	SQLBindParameter( (sth), (SQLUSMALLINT)(par_ind), 		\

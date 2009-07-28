@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.141.2.15 2009/01/22 00:01:18 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.141.2.22 2009/04/28 00:48:08 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2009 The OpenLDAP Foundation.
@@ -46,6 +46,8 @@ WITH_SASL=${AC_WITH_SASL-no}
 USE_SASL=${SLAPD_USE_SASL-no}
 ACI=${AC_ACI_ENABLED-acino}
 THREADS=${AC_THREADS-threadsno}
+SLEEP1=${SLEEP1-7}
+SLEEP2=${SLEEP2-15}
 
 # dirs
 PROGDIR=./progs
@@ -267,6 +269,11 @@ METABASEDN="ou=Meta,$BASEDN"
 METAMANAGERDN="cn=Manager,$METABASEDN"
 VALSORTDN="cn=Manager,o=valsort"
 VALSORTBASEDN="o=valsort"
+MONITORDN="cn=Monitor"
+OPERATIONSMONITORDN="cn=Operations,$MONITORDN"
+CONNECTIONSMONITORDN="cn=Connections,$MONITORDN"
+DATABASESMONITORDN="cn=Databases,$MONITORDN"
+STATISTICSMONITORDN="cn=Statistics,$MONITORDN"
 
 # generated outputs
 SEARCHOUT=$TESTDIR/ldapsearch.out
@@ -279,6 +286,10 @@ INITOUT=$TESTDIR/init.out
 VALSORTOUT1=$DATADIR/valsort1.out
 VALSORTOUT2=$DATADIR/valsort2.out
 VALSORTOUT3=$DATADIR/valsort3.out
+MONITOROUT1=$DATADIR/monitor1.out
+MONITOROUT2=$DATADIR/monitor2.out
+MONITOROUT3=$DATADIR/monitor3.out
+MONITOROUT4=$DATADIR/monitor4.out
 
 SERVER1OUT=$TESTDIR/server1.out
 SERVER1FLT=$TESTDIR/server1.flt
@@ -339,7 +350,6 @@ ACIOUT=$DATADIR/aci.out
 DYNLISTOUT=$DATADIR/dynlist.out
 DDSOUT=$DATADIR/dds.out
 MEMBEROFOUT=$DATADIR/memberof.out
+MEMBEROFREFINTOUT=$DATADIR/memberof-refint.out
 SHTOOL="$SRCDIR/../build/shtool"
 
-# Just in case we linked the binaries dynamically
-LD_LIBRARY_PATH=$TESTWD/../libraries:${LD_LIBRARY_PATH} export LD_LIBRARY_PATH

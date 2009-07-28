@@ -1,5 +1,5 @@
 /* slapcommon.h - common definitions for the slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.h,v 1.14.2.6 2009/01/22 00:01:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.h,v 1.14.2.8 2009/06/02 22:36:18 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -26,6 +26,7 @@ enum slaptool {
 	SLAPDN,		/* DN check w/ syntax tool */
 	SLAPINDEX,	/* database index tool */
 	SLAPPASSWD,	/* password generation tool */
+	SLAPSCHEMA,	/* schema checking tool */
 	SLAPTEST,	/* slapd.conf test tool */
 	SLAPAUTH,	/* test authz-regexp and authc/authz stuff */
 	SLAPACL,	/* test acl */
@@ -34,6 +35,7 @@ enum slaptool {
 
 typedef struct tool_vars {
 	Backend *tv_be;
+	int tv_dbnum;
 	int tv_verbose;
 	int tv_quiet;
 	int tv_update_ctxcsn;
@@ -66,6 +68,7 @@ typedef struct tool_vars {
 extern tool_vars tool_globals;
 
 #define	be tool_globals.tv_be
+#define	dbnum tool_globals.tv_dbnum
 #define verbose tool_globals.tv_verbose
 #define quiet tool_globals.tv_quiet
 #define jumpline tool_globals.tv_jumpline

@@ -1,5 +1,5 @@
 /* search.cpp - tools for slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ndb/search.cpp,v 1.3.2.2 2009/01/22 00:01:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ndb/search.cpp,v 1.3.2.3 2009/06/12 18:36:51 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2009 The OpenLDAP Foundation.
@@ -634,6 +634,10 @@ int ndb_back_search( Operation *op, SlapReply *rs )
 	}
 
 	scan = txn->getNdbIndexScanOperation( "PRIMARY", DN2ID_TABLE );
+	if ( !scan ) {
+		rs->sr_err = LDAP_OTHER;
+		goto leave;
+	}
 	scan->readTuples( NdbOperation::LM_CommittedRead );
 	rc = ndb_dn2bound( scan, &rdns );
 

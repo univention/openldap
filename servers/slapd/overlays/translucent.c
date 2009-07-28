@@ -1,5 +1,5 @@
 /* translucent.c - translucent proxy module */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/translucent.c,v 1.13.2.26 2009/01/22 00:01:13 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/translucent.c,v 1.13.2.27 2009/06/08 19:27:05 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2009 The OpenLDAP Foundation.
@@ -1110,6 +1110,8 @@ static int translucent_search(Operation *op, SlapReply *rs) {
 	op->o_callback = &cb;
 
 	if ( fr || !fl ) {
+		AttributeName *attrs = op->ors_attrs;
+		op->ors_attrs = NULL;
 		op->o_bd = &ov->db;
 		tc.step |= RMT_SIDE;
 		if ( fl ) {
@@ -1118,6 +1120,7 @@ static int translucent_search(Operation *op, SlapReply *rs) {
 			filter2bv_x( op, fr, &op->ors_filterstr );
 		}
 		rc = ov->db.bd_info->bi_op_search(op, rs);
+		op->ors_attrs = attrs;
 		op->o_bd = tc.db;
 		if ( fl ) {
 			op->o_tmpfree( op->ors_filterstr.bv_val, op->o_tmpmemctx );
@@ -1133,6 +1136,8 @@ static int translucent_search(Operation *op, SlapReply *rs) {
 	op->ors_filterstr = fbv;
 	op->ors_filter = tc.orig;
 	op->o_callback = cb.sc_next;
+	rs->sr_attrs = op->ors_attrs;
+
 	/* Send out anything remaining on the list and finish */
 	if ( tc.step & USE_LIST ) {
 		if ( tc.list ) {

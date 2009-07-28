@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nops/nops.c,v 1.1.2.1 2008/05/27 20:00:51 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nops/nops.c,v 1.1.2.3 2009/04/28 00:51:12 quanah Exp $ */
 /* nops.c - Overlay to filter idempotent operations */
 /* 
  * Copyright 2008 Emmanuel Dreyfus
@@ -47,7 +47,6 @@ nops_rm_mod( Modifications **mods, Modifications *mod ) {
 		}
 	}
 
-	for (m = *mods; m; m = m->sml_next)
 	mod->sml_next = NULL;
 	slap_mods_free(mod, 1);
 
@@ -137,9 +136,13 @@ nops_modify( Operation *op, SlapReply *rs )
 	}
 
 	if ((m = op->orm_modlist) == NULL) {
+		slap_callback *cb = op->o_callback;
+
 		op->o_bd->bd_info = (BackendInfo *)(on->on_info);
-		send_ldap_error(op, rs, LDAP_SUCCESS, "");
-		return(rs->sr_err);
+		op->o_callback = NULL;
+                send_ldap_error(op, rs, LDAP_SUCCESS, "");
+		op->o_callback = cb;
+
 		return (rs->sr_err);
 	}
 

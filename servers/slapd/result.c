@@ -1,5 +1,5 @@
 /* result.c - routines to send ldap results, errors, and referrals */
-/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.289.2.22 2009/02/17 19:14:41 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.289.2.28 2009/07/01 17:01:58 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -133,38 +133,41 @@ slap_req2res( ber_tag_t tag )
 }
 
 static long send_ldap_ber(
-	Connection *conn,
+	Operation *op,
 	BerElement *ber )
 {
+	Connection *conn = op->o_conn;
 	ber_len_t bytes;
 	long ret = 0;
-	int closing = 0;
 
 	ber_get_option( ber, LBER_OPT_BER_BYTES_TO_WRITE, &bytes );
 
 	/* write only one pdu at a time - wait til it's our turn */
 	ldap_pvt_thread_mutex_lock( &conn->c_write1_mutex );
-	if ( connection_state_closing( conn )) {
+	if (( op->o_abandon && !op->o_cancel ) || !connection_valid( conn ) ||
+		conn->c_writers < 0 ) {
 		ldap_pvt_thread_mutex_unlock( &conn->c_write1_mutex );
 		return 0;
-	}
-	while ( conn->c_writers > 0 ) {
-		ldap_pvt_thread_cond_wait( &conn->c_write1_cv, &conn->c_write1_mutex );
-	}
-	/* connection was closed under us */
-	if ( conn->c_writers < 0 ) {
-		closing = 1;
-		/* we're the last waiter, let the closer continue */
-		if ( conn->c_writers == -1 )
-			ldap_pvt_thread_cond_signal( &conn->c_write1_cv );
 	}
 
 	conn->c_writers++;
 
-	if ( closing ) {
+	while ( conn->c_writers > 0 && conn->c_writing ) {
+		ldap_pvt_thread_cond_wait( &conn->c_write1_cv, &conn->c_write1_mutex );
+	}
+
+	/* connection was closed under us */
+	if ( conn->c_writers < 0 ) {
+		/* we're the last waiter, let the closer continue */
+		if ( conn->c_writers == -1 )
+			ldap_pvt_thread_cond_signal( &conn->c_write1_cv );
+		conn->c_writers++;
 		ldap_pvt_thread_mutex_unlock( &conn->c_write1_mutex );
 		return 0;
 	}
+
+	/* Our turn */
+	conn->c_writing = 1;
 
 	/* write the pdu */
 	while( 1 ) {
@@ -172,6 +175,10 @@ static long send_ldap_ber(
 
 		/* lock the connection */ 
 		if ( ldap_pvt_thread_mutex_trylock( &conn->c_mutex )) {
+			if ( !connection_valid(conn)) {
+				ret = 0;
+				break;
+			}
 			ldap_pvt_thread_mutex_unlock( &conn->c_write1_mutex );
 			ldap_pvt_thread_mutex_lock( &conn->c_write1_mutex );
 			if ( conn->c_writers < 0 ) {
@@ -200,6 +207,7 @@ static long send_ldap_ber(
 
 		if ( err != EWOULDBLOCK && err != EAGAIN ) {
 			conn->c_writers--;
+			conn->c_writing = 0;
 			ldap_pvt_thread_mutex_unlock( &conn->c_write1_mutex );
 			connection_closing( conn, "connection lost on write" );
 
@@ -210,7 +218,7 @@ static long send_ldap_ber(
 		/* wait for socket to be write-ready */
 		ldap_pvt_thread_mutex_lock( &conn->c_write2_mutex );
 		conn->c_writewaiter = 1;
-		slapd_set_write( conn->c_sd, 1 );
+		slapd_set_write( conn->c_sd, 2 );
 
 		ldap_pvt_thread_mutex_unlock( &conn->c_write1_mutex );
 		ldap_pvt_thread_mutex_unlock( &conn->c_mutex );
@@ -224,6 +232,7 @@ static long send_ldap_ber(
 		}
 	}
 
+	conn->c_writing = 0;
 	if ( conn->c_writers < 0 ) {
 		conn->c_writers++;
 		if ( !conn->c_writers )
@@ -414,7 +423,7 @@ send_ldap_response(
 	int		rc = LDAP_SUCCESS;
 	long	bytes;
 
-	if ( rs->sr_err == SLAPD_ABANDON || op->o_abandon ) {
+	if (( rs->sr_err == SLAPD_ABANDON || op->o_abandon ) && !op->o_cancel ) {
 		rc = SLAPD_ABANDON;
 		goto clean2;
 	}
@@ -436,9 +445,13 @@ send_ldap_response(
 		ber_set_option( ber, LBER_OPT_BER_MEMCTX, &op->o_tmpmemctx );
 	}
 
+	rc = rs->sr_err;
+	if ( rc == SLAPD_ABANDON && op->o_cancel )
+		rc = LDAP_CANCELLED;
+
 	Debug( LDAP_DEBUG_TRACE,
 		"send_ldap_response: msgid=%d tag=%lu err=%d\n",
-		rs->sr_msgid, rs->sr_tag, rs->sr_err );
+		rs->sr_msgid, rs->sr_tag, rc );
 
 	if( rs->sr_ref ) {
 		Debug( LDAP_DEBUG_ARGS, "send_ldap_response: ref=\"%s\"\n",
@@ -451,7 +464,7 @@ send_ldap_response(
 		op->o_protocol == LDAP_VERSION2 )
 	{
 		rc = ber_printf( ber, "t{ess" /*"}"*/,
-			rs->sr_tag, rs->sr_err,
+			rs->sr_tag, rc,
 		rs->sr_matched == NULL ? "" : rs->sr_matched,
 		rs->sr_text == NULL ? "" : rs->sr_text );
 	} else 
@@ -462,7 +475,7 @@ send_ldap_response(
 
 	} else {
 	    rc = ber_printf( ber, "{it{ess" /*"}}"*/,
-		rs->sr_msgid, rs->sr_tag, rs->sr_err,
+		rs->sr_msgid, rs->sr_tag, rc,
 		rs->sr_matched == NULL ? "" : rs->sr_matched,
 		rs->sr_text == NULL ? "" : rs->sr_text );
 	}
@@ -532,7 +545,7 @@ send_ldap_response(
 	}
 
 	/* send BER */
-	bytes = send_ldap_ber( op->o_conn, ber );
+	bytes = send_ldap_ber( op, ber );
 #ifdef LDAP_CONNECTIONLESS
 	if (!op->o_conn || op->o_conn->c_is_udp == 0)
 #endif
@@ -1243,7 +1256,7 @@ slap_send_search_entry( Operation *op, SlapReply *rs )
 	}
 
 	if ( op->o_res_ber == NULL ) {
-		bytes = send_ldap_ber( op->o_conn, ber );
+		bytes = send_ldap_ber( op, ber );
 		ber_free_buf( ber );
 
 		if ( bytes < 0 ) {
@@ -1416,7 +1429,7 @@ slap_send_search_reference( Operation *op, SlapReply *rs )
 #ifdef LDAP_CONNECTIONLESS
 	if (!op->o_conn || op->o_conn->c_is_udp == 0) {
 #endif
-	bytes = send_ldap_ber( op->o_conn, ber );
+	bytes = send_ldap_ber( op, ber );
 	ber_free_buf( ber );
 
 	if ( bytes < 0 ) {
@@ -1664,4 +1677,3 @@ slap_attr_flags( AttributeName *an )
 
 	return flags;
 }
-

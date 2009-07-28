@@ -1,5 +1,5 @@
 /* ldapsearch -- a tool for searching LDAP directories */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapsearch.c,v 1.234.2.18 2009/01/22 00:00:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapsearch.c,v 1.234.2.19 2009/03/09 23:16:48 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -1024,8 +1024,8 @@ getNextPage:
 
 	tool_server_controls( ld, c, i );
 
-	ber_free( seber, 1 );
-	ber_free( vrber, 1 );
+	if ( seber ) ber_free( seber, 1 );
+	if ( vrber ) ber_free( vrber, 1 );
 
 	/* step back to the original number of controls, so that 
 	 * those set while parsing args are preserved */

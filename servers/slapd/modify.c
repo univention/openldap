@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.276.2.11 2009/01/30 19:07:40 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.276.2.12 2009/03/05 18:16:29 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -808,7 +808,7 @@ slap_sort_vals(
 		}
 	}
 	done:
-	if ( i >= 0 )
+	if ( match == 0 && i >= 0 )
 		*dup = ix[i];
 
 	/* For sorted attributes, put the values in index order */

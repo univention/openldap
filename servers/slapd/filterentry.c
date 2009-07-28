@@ -1,5 +1,5 @@
 /* filterentry.c - apply a filter to an entry */
-/* $OpenLDAP: pkg/ldap/servers/slapd/filterentry.c,v 1.104.2.6 2009/01/22 00:01:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/filterentry.c,v 1.104.2.7 2009/06/02 23:09:42 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -546,7 +546,7 @@ test_ava_filter(
 	if ( ava->aa_desc == slap_schema.si_ad_hasSubordinates 
 		&& op && op->o_bd && op->o_bd->be_has_subordinates )
 	{
-		int	hasSubordinates;
+		int	hasSubordinates = 0;
 		struct berval hs;
 
 		if( type != LDAP_FILTER_EQUALITY &&

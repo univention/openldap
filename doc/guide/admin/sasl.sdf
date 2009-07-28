@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/openldap-guide/admin/sasl.sdf,v 1.34.2.9 2009/01/22 00:00:47 kurt Exp $
+# $OpenLDAP: pkg/openldap-guide/admin/sasl.sdf,v 1.34.2.10 2009/04/29 01:27:12 quanah Exp $
 # Copyright 1999-2009 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
@@ -652,7 +652,7 @@ To help produce more sweeping rules for {{EX:authzFrom}} and
 be DNs with regular expression characters in them. This means a
 source rule like
 
->	authzTo: dn.regex=^uid=[^,]*,dc=example,dc=com$
+>	authzTo: dn.regex:^uid=[^,]*,dc=example,dc=com$
 
 would allow that authenticated user to authorize to any DN that
 matches the regular expression pattern given. This regular expression

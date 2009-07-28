@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.312.2.19 2009/02/17 19:14:41 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.312.2.20 2009/03/05 20:20:47 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -282,6 +282,7 @@ typedef struct ldapcontrol {
 #define LDAP_SYNC_ADD					1
 #define LDAP_SYNC_MODIFY				2
 #define LDAP_SYNC_DELETE				3
+#define LDAP_SYNC_NEW_COOKIE			4
 
 
 /* Password policy Controls *//* work in progress */

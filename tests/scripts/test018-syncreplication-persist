@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test018-syncreplication-persist,v 1.38.2.8 2009/01/28 19:22:51 quanah Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test018-syncreplication-persist,v 1.38.2.10 2009/03/05 23:32:21 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2009 The OpenLDAP Foundation.
@@ -13,7 +13,7 @@
 ## top-level directory of the distribution or, alternatively, at
 ## <http://www.OpenLDAP.org/license.html>.
 
-if test "$BACKEND" != "bdb" && test "$BACKEND" != "hdb" ; then
+if test "$BACKEND" != "bdb" && test "$BACKEND" != "hdb" && test "$BACKEND" != "ldif"; then
 	echo "Test does not support $BACKEND"
 	exit 0
 fi
@@ -118,8 +118,8 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-echo "Waiting 15 seconds for syncrepl to receive changes..."
-sleep 15
+echo "Waiting $SLEEP1 seconds for syncrepl to receive changes..."
+sleep $SLEEP1
 
 echo "Stopping the provider, sleeping 10 seconds and restarting it..."
 kill -HUP "$PID"
@@ -148,8 +148,8 @@ for i in 0 1 2 3 4 5; do
 	sleep 5
 done
 
-echo "Waiting 15 seconds for consumer to reconnect..."
-sleep 15
+echo "Waiting $SLEEP1 seconds for consumer to reconnect..."
+sleep $SLEEP1
 
 if test $RC != 0 ; then
 	echo "ldapsearch failed ($RC)!"
@@ -269,8 +269,8 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-echo "Waiting 15 seconds for syncrepl to receive changes..."
-sleep 15
+echo "Waiting $SLEEP1 seconds for syncrepl to receive changes..."
+sleep $SLEEP1
 
 echo "Stopping consumer to test recovery..."
 kill -HUP $SLAVEPID
@@ -318,8 +318,8 @@ if test $WAIT != 0 ; then
 fi
 KILLPIDS="$PID $SLAVEPID"
 
-echo "Waiting 25 seconds for syncrepl to receive changes..."
-sleep 25
+echo "Waiting $SLEEP1 seconds for syncrepl to receive changes..."
+sleep $SLEEP1
 
 if test ! $BACKLDAP = "ldapno" ; then
 	echo "Try updating the consumer slapd..."
@@ -352,8 +352,8 @@ EOMODS
 		exit $RC
 	fi
 
-	echo "Waiting 15 seconds for syncrepl to receive changes..."
-	sleep 15
+	echo "Waiting $SLEEP1 seconds for syncrepl to receive changes..."
+	sleep $SLEEP1
 fi
 
 OPATTRS="entryUUID creatorsName createTimestamp modifiersName modifyTimestamp"

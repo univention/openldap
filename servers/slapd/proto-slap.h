@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.670.2.41 2009/02/17 19:14:41 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.670.2.49 2009/06/02 23:58:20 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -623,6 +623,10 @@ LDAP_SLAPD_V( struct slap_control_ids ) slap_cids;
 LDAP_SLAPD_F (void) slap_free_ctrls LDAP_P((
 	Operation *op,
 	LDAPControl **ctrls ));
+LDAP_SLAPD_F (int) slap_add_ctrls LDAP_P((
+	Operation *op,
+	SlapReply *rs,
+	LDAPControl **ctrls ));
 LDAP_SLAPD_F (int) slap_parse_ctrl LDAP_P((
 	Operation *op,
 	SlapReply *rs,
@@ -754,8 +758,7 @@ LDAP_SLAPD_F (Connection *) connection_init LDAP_P((
 
 LDAP_SLAPD_F (void) connection_closing LDAP_P((
 	Connection *c, const char *why ));
-LDAP_SLAPD_F (void) connection_hangup LDAP_P(( ber_socket_t fd ));
-LDAP_SLAPD_F (int) connection_state_closing LDAP_P(( Connection *c ));
+LDAP_SLAPD_F (int) connection_valid LDAP_P(( Connection *c ));
 LDAP_SLAPD_F (const char *) connection_state2str LDAP_P(( int state ))
 	LDAP_GCCATTR((const));
 
@@ -811,13 +814,10 @@ LDAP_SLAPD_F (ContentRule *) cr_bvfind LDAP_P((
  */
 
 LDAP_SLAPD_V( int ) slap_serverID;
-LDAP_SLAPD_V( const struct berval ) slap_ldapsync_bv;
-LDAP_SLAPD_V( const struct berval ) slap_ldapsync_cn_bv;
 LDAP_SLAPD_F (void) slap_get_commit_csn LDAP_P((
 	Operation *, struct berval *maxcsn, int *foundit ));
 LDAP_SLAPD_F (void) slap_rewind_commit_csn LDAP_P(( Operation * ));
 LDAP_SLAPD_F (void) slap_graduate_commit_csn LDAP_P(( Operation * ));
-LDAP_SLAPD_F (Entry *) slap_create_context_csn_entry LDAP_P(( Backend *, struct berval *));
 LDAP_SLAPD_F (int) slap_get_csn LDAP_P(( Operation *, struct berval *, int ));
 LDAP_SLAPD_F (void) slap_queue_csn LDAP_P(( Operation *, struct berval * ));
 
@@ -842,6 +842,8 @@ LDAP_SLAPD_F (void) slapd_set_write LDAP_P((ber_socket_t s, int wake));
 LDAP_SLAPD_F (void) slapd_clr_write LDAP_P((ber_socket_t s, int wake));
 LDAP_SLAPD_F (void) slapd_set_read LDAP_P((ber_socket_t s, int wake));
 LDAP_SLAPD_F (int) slapd_clr_read LDAP_P((ber_socket_t s, int wake));
+LDAP_SLAPD_F (void) slapd_clr_writetime LDAP_P((time_t old));
+LDAP_SLAPD_F (time_t) slapd_get_writetime LDAP_P((void));
 
 LDAP_SLAPD_V (volatile sig_atomic_t) slapd_abrupt_shutdown;
 LDAP_SLAPD_V (volatile sig_atomic_t) slapd_shutdown;
@@ -1143,6 +1145,8 @@ LDAP_SLAPD_F (int) limits_unparse_one LDAP_P((
 	struct slap_limits_set *limit, int which, struct berval *bv, ber_len_t buflen ));
 LDAP_SLAPD_F (int) limits_unparse LDAP_P(( 
 	struct slap_limits *limit, struct berval *bv, ber_len_t buflen ));
+LDAP_SLAPD_F (void) limits_free_one LDAP_P(( 
+	struct slap_limits	*lm ));
 LDAP_SLAPD_F (void) limits_destroy LDAP_P(( struct slap_limits **lm ));
 
 /*
@@ -1930,9 +1934,12 @@ LDAP_SLAPD_V (const char) 	Versionstr[];
 
 LDAP_SLAPD_V (int)		global_gentlehup;
 LDAP_SLAPD_V (int)		global_idletimeout;
+LDAP_SLAPD_V (int)		global_writetimeout;
 LDAP_SLAPD_V (char *)	global_host;
+LDAP_SLAPD_V (struct berval)	global_host_bv;
 LDAP_SLAPD_V (char *)	global_realm;
 LDAP_SLAPD_V (char *)	sasl_host;
+LDAP_SLAPD_V (char *)	slap_sasl_auxprops;
 LDAP_SLAPD_V (char **)	default_passwd_hash;
 LDAP_SLAPD_V (int)		lber_debug;
 LDAP_SLAPD_V (int)		ldap_syslog;

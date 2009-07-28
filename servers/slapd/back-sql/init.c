@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/init.c,v 1.73.2.5 2009/01/22 00:01:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/init.c,v 1.73.2.6 2009/06/02 22:28:46 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.
@@ -41,7 +41,9 @@ sql_back_initialize(
 #ifdef SLAP_CONTROL_X_TREE_DELETE
 		SLAP_CONTROL_X_TREE_DELETE,
 #endif /* SLAP_CONTROL_X_TREE_DELETE */
+#ifndef BACKSQL_ARBITRARY_KEY
 		LDAP_CONTROL_PAGEDRESULTS,
+#endif /* ! BACKSQL_ARBITRARY_KEY */
 		NULL
 	};
 

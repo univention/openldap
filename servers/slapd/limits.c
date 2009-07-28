@@ -1,5 +1,5 @@
 /* limits.c - routines to handle regex-based size and time limits */
-/* $OpenLDAP: pkg/ldap/servers/slapd/limits.c,v 1.73.2.10 2009/01/22 00:01:01 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/limits.c,v 1.73.2.11 2009/06/02 23:03:46 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -1325,6 +1325,19 @@ limits_check( Operation *op, SlapReply *rs )
 }
 
 void
+limits_free_one( 
+	struct slap_limits	*lm )
+{
+	if ( ( lm->lm_flags & SLAP_LIMITS_MASK ) == SLAP_LIMITS_REGEX )
+		regfree( &lm->lm_regex );
+
+	if ( !BER_BVISNULL( &lm->lm_pat ) )
+		ch_free( lm->lm_pat.bv_val );
+
+	ch_free( lm );
+}
+
+void
 limits_destroy( 
 	struct slap_limits	**lm )
 {
@@ -1335,13 +1348,7 @@ limits_destroy(
 	}
 
 	for ( i = 0; lm[ i ]; i++ ) {
-		if ( (lm[ i ]->lm_flags & SLAP_LIMITS_MASK) == SLAP_LIMITS_REGEX )
-			regfree( &lm[ i ]->lm_regex );
-
-		if ( !BER_BVISNULL( &lm[ i ]->lm_pat ) )
-			ch_free( lm[ i ]->lm_pat.bv_val );
-
-		ch_free( lm[ i ] );
+		limits_free_one( lm[ i ] );
 	}
 
 	ch_free( lm );

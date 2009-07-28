@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.137.2.14 2009/01/22 00:01:05 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.137.2.15 2009/05/07 20:20:33 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2009 The OpenLDAP Foundation.
@@ -501,7 +501,6 @@ void bdb_unlocked_cache_return_entry_rw( struct bdb_info *bdb, Entry *e, int rw 
 #define bdb_cache_delete			BDB_SYMBOL(cache_delete)
 #define bdb_cache_delete_cleanup	BDB_SYMBOL(cache_delete_cleanup)
 #define bdb_cache_find_id			BDB_SYMBOL(cache_find_id)
-#define bdb_cache_find_info			BDB_SYMBOL(cache_find_info)
 #define bdb_cache_find_ndn			BDB_SYMBOL(cache_find_ndn)
 #define bdb_cache_find_parent		BDB_SYMBOL(cache_find_parent)
 #define bdb_cache_modify			BDB_SYMBOL(cache_modify)
@@ -544,13 +543,10 @@ int bdb_cache_find_ndn(
 	struct berval   *ndn,
 	EntryInfo	**res
 );
-EntryInfo * bdb_cache_find_info(
-	struct bdb_info *bdb,
-	ID id
-);
 
 #define	ID_LOCKED	1
 #define	ID_NOCACHE	2
+#define	ID_NOENTRY	4
 int bdb_cache_find_id(
 	Operation *op,
 	DB_TXN	*tid,

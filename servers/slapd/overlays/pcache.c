@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.88.2.32 2009/02/19 00:28:24 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.88.2.34 2009/06/16 19:13:09 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2009 The OpenLDAP Foundation.
@@ -1175,6 +1175,8 @@ free_query (CachedQuery* qc)
 {
 	free(qc->q_uuid.bv_val);
 	filter_free(qc->filter);
+	ldap_pvt_thread_rdwr_destroy( &qc->rwlock );
+	memset(qc, 0, sizeof(*qc));
 	free(qc);
 }
 
@@ -1264,6 +1266,7 @@ add_query(
 		new_cached_query = find_filter( op, qbase->scopes[query->scope],
 							query->filter, first );
 		filter_free( query->filter );
+		query->filter = NULL;
 	}
 	Debug( pcache_debug, "TEMPLATE %p QUERIES++ %d\n",
 			(void *) templ, templ->no_of_queries, 0 );
@@ -2396,8 +2399,6 @@ pcache_op_search(
 	op->o_tmpfree( tempstr.bv_val, op->o_tmpmemctx );
 
 	if (answerable) {
-		/* Need to clear the callbacks of the original operation,
-		 * in case there are other overlays */
 		BackendDB	*save_bd = op->o_bd;
 		slap_callback	*save_cb = op->o_callback;
 
@@ -2410,7 +2411,12 @@ pcache_op_search(
 			send_ldap_result( op, rs );
 		} else {
 			op->o_bd = &cm->db;
-			op->o_callback = NULL;
+			if ( cm->response_cb == PCACHE_RESPONSE_CB_TAIL ) {
+				/* The cached entry was already processed by any
+				 * other overlays, so don't let it get processed again.
+				 */
+				op->o_callback = NULL;
+			}
 			i = cm->db.bd_info->bi_op_search( op, rs );
 		}
 		ldap_pvt_thread_rdwr_runlock(&answerable->rwlock);
@@ -2750,7 +2756,8 @@ pc_cfadd( Operation *op, SlapReply *rs, Entry *p, ConfigArgs *ca )
 
 	/* FIXME: should not hardcode "olcDatabase" here */
 	bv.bv_len = snprintf( ca->cr_msg, sizeof( ca->cr_msg ),
-		"olcDatabase=%s", cm->db.bd_info->bi_type );
+		"olcDatabase=" SLAP_X_ORDERED_FMT "%s",
+		0, cm->db.bd_info->bi_type );
 	if ( bv.bv_len >= sizeof( ca->cr_msg ) ) {
 		return -1;
 	}

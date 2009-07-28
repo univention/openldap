@@ -1,5 +1,5 @@
 /* bconfig.c - the config backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/bconfig.c,v 1.202.2.59 2009/02/13 03:16:59 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/bconfig.c,v 1.202.2.68 2009/06/08 18:24:59 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2009 The OpenLDAP Foundation.
@@ -320,7 +320,7 @@ static ConfigTable config_back_cf_table[] = {
 		&config_generic, "( OLcfgGlAt:7 NAME 'olcAuthzPolicy' "
 			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
-	{ "authz-regexp", NULL, 3, 3, 0, ARG_MAGIC|CFG_AZREGEXP|ARG_NO_INSERT,
+	{ "authz-regexp", "regexp> <DN", 3, 3, 0, ARG_MAGIC|CFG_AZREGEXP|ARG_NO_INSERT,
 		&config_generic, "( OLcfgGlAt:8 NAME 'olcAuthzRegexp' "
 			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString X-ORDERED 'VALUES' )", NULL, NULL },
@@ -455,7 +455,7 @@ static ConfigTable config_back_cf_table[] = {
 	{ "password-crypt-salt-format", "salt", 2, 2, 0, ARG_STRING|ARG_MAGIC|CFG_SALT,
 		&config_generic, "( OLcfgGlAt:35 NAME 'olcPasswordCryptSaltFormat' "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
-	{ "password-hash", "hash", 2, 2, 0, ARG_MAGIC,
+	{ "password-hash", "hash", 2, 0, 0, ARG_MAGIC,
 		&config_passwd_hash, "( OLcfgGlAt:36 NAME 'olcPasswordHash' "
 			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString )", NULL, NULL },
@@ -530,6 +530,14 @@ static ConfigTable config_back_cf_table[] = {
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "sasl-authz-policy", NULL, 2, 2, 0, ARG_MAGIC|CFG_AZPOLICY,
 		&config_generic, NULL, NULL, NULL },
+	{ "sasl-auxprops", NULL, 2, 0, 0,
+#ifdef HAVE_CYRUS_SASL
+		ARG_STRING|ARG_UNIQUE, &slap_sasl_auxprops,
+#else
+		ARG_IGNORED, NULL,
+#endif
+		"( OLcfgGlAt:89 NAME 'olcSaslAuxprops' "
+			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
 	{ "sasl-host", "host", 2, 2, 0,
 #ifdef HAVE_CYRUS_SASL
 		ARG_STRING|ARG_UNIQUE, &sasl_host,
@@ -706,6 +714,9 @@ static ConfigTable config_back_cf_table[] = {
 		&config_updateref, "( OLcfgDbAt:0.13 NAME 'olcUpdateRef' "
 			"EQUALITY caseIgnoreMatch "
 			"SUP labeledURI )", NULL, NULL },
+	{ "writetimeout", "timeout", 2, 2, 0, ARG_INT,
+		&global_writetimeout, "( OLcfgGlAt:88 NAME 'olcWriteTimeout' "
+			"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
 	{ NULL,	NULL, 0, 0, 0, ARG_IGNORED,
 		NULL, NULL, NULL, NULL }
 };
@@ -757,14 +768,14 @@ static ConfigOCs cf_ocs[] = {
 		 "olcPluginLogFile $ olcReadOnly $ olcReferral $ "
 		 "olcReplogFile $ olcRequires $ olcRestrict $ olcReverseLookup $ "
 		 "olcRootDSE $ "
-		 "olcSaslHost $ olcSaslRealm $ olcSaslSecProps $ "
+		 "olcSaslAuxprops $ olcSaslHost $ olcSaslRealm $ olcSaslSecProps $ "
 		 "olcSecurity $ olcServerID $ olcSizeLimit $ "
 		 "olcSockbufMaxIncoming $ olcSockbufMaxIncomingAuth $ "
 		 "olcThreads $ olcTimeLimit $ olcTLSCACertificateFile $ "
 		 "olcTLSCACertificatePath $ olcTLSCertificateFile $ "
 		 "olcTLSCertificateKeyFile $ olcTLSCipherSuite $ olcTLSCRLCheck $ "
 		 "olcTLSRandFile $ olcTLSVerifyClient $ olcTLSDHParamFile $ "
-		 "olcTLSCRLFile $ olcToolThreads $ "
+		 "olcTLSCRLFile $ olcToolThreads $ olcWriteTimeout $ "
 		 "olcObjectIdentifier $ olcAttributeTypes $ olcObjectClasses $ "
 		 "olcDitContentRules $ olcLdapSyntaxes ) )", Cft_Global },
 	{ "( OLcfgGlOc:2 "
@@ -893,8 +904,7 @@ config_generic(ConfigArgs *c) {
 			if ( !c->rvalue_vals ) rc = 1;
 			break;
 		case CFG_RO:
-			c->value_int = (c->be->be_restrictops & SLAP_RESTRICT_OP_WRITES) ==
-				SLAP_RESTRICT_OP_WRITES;
+			c->value_int = (c->be->be_restrictops & SLAP_RESTRICT_READONLY);
 			break;
 		case CFG_AZPOLICY:
 			c->value_string = ch_strdup( slap_sasl_getpolicy());
@@ -1378,6 +1388,36 @@ config_generic(ConfigArgs *c) {
 
 		case CFG_LIMITS:
 			/* FIXME: there is no limits_free function */
+			if ( c->valx < 0 ) {
+				limits_destroy( c->be->be_limits );
+				c->be->be_limits = NULL;
+
+			} else {
+				int cnt, num = -1;
+
+				if ( c->be->be_limits ) {
+					for ( num = 0; c->be->be_limits[ num ]; num++ )
+						/* just count */ ;
+				}
+
+				if ( c->valx >= num ) {
+					return 1;
+				}
+
+				if ( num == 1 ) {
+					limits_destroy( c->be->be_limits );
+					c->be->be_limits = NULL;
+
+				} else {
+					limits_free_one( c->be->be_limits[ c->valx ] );
+
+					for ( cnt = c->valx; cnt < num; cnt++ ) {
+						c->be->be_limits[ cnt ] = c->be->be_limits[ cnt + 1 ];
+					}
+				}
+			}
+			break;
+
 		case CFG_ATOPT:
 			/* FIXME: there is no ad_option_free function */
 		case CFG_ROOTDSE:
@@ -1466,9 +1506,9 @@ config_generic(ConfigArgs *c) {
 
 		case CFG_RO:
 			if(c->value_int)
-				c->be->be_restrictops |= SLAP_RESTRICT_OP_WRITES;
+				c->be->be_restrictops |= SLAP_RESTRICT_READONLY;
 			else
-				c->be->be_restrictops &= ~SLAP_RESTRICT_OP_WRITES;
+				c->be->be_restrictops &= ~SLAP_RESTRICT_READONLY;
 			break;
 
 		case CFG_AZPOLICY:
@@ -2887,7 +2927,7 @@ config_loglevel(ConfigArgs *c) {
 		int	level;
 
 		if ( isdigit((unsigned char)c->argv[i][0]) || c->argv[i][0] == '-' ) {
-			if( lutil_atoi( &level, c->argv[i] ) != 0 ) {
+			if( lutil_atoix( &level, c->argv[i], 0 ) != 0 ) {
 				snprintf( c->cr_msg, sizeof( c->cr_msg ), "<%s> unable to parse level", c->argv[0] );
 				Debug( LDAP_DEBUG_ANY, "%s: %s \"%s\"\n",
 					c->log, c->cr_msg, c->argv[i]);
@@ -3191,6 +3231,27 @@ config_include(ConfigArgs *c) {
 
 #ifdef HAVE_TLS
 static int
+config_tls_cleanup(ConfigArgs *c) {
+	int rc = 0;
+
+	if ( slap_tls_ld ) {
+		int opt = 1;
+
+		ldap_pvt_tls_ctx_free( slap_tls_ctx );
+
+		/* Force new ctx to be created */
+		rc = ldap_pvt_tls_set_option( slap_tls_ld, LDAP_OPT_X_TLS_NEWCTX, &opt );
+		if( rc == 0 ) {
+			/* The ctx's refcount is bumped up here */
+			ldap_pvt_tls_get_option( slap_tls_ld, LDAP_OPT_X_TLS_CTX, &slap_tls_ctx );
+			/* This is a no-op if it's already loaded */
+			load_extop( &slap_EXOP_START_TLS, 0, starttls_extop );
+		}
+	}
+	return rc;
+}
+
+static int
 config_tls_option(ConfigArgs *c) {
 	int flag;
 	LDAP *ld = slap_tls_ld;
@@ -3213,9 +3274,11 @@ config_tls_option(ConfigArgs *c) {
 	if (c->op == SLAP_CONFIG_EMIT) {
 		return ldap_pvt_tls_get_option( ld, flag, &c->value_string );
 	} else if ( c->op == LDAP_MOD_DELETE ) {
+		c->cleanup = config_tls_cleanup;
 		return ldap_pvt_tls_set_option( ld, flag, NULL );
 	}
 	ch_free(c->value_string);
+	c->cleanup = config_tls_cleanup;
 	return(ldap_pvt_tls_set_option(ld, flag, c->argv[1]));
 }
 
@@ -3237,9 +3300,11 @@ config_tls_config(ConfigArgs *c) {
 		return slap_tls_get_config( slap_tls_ld, flag, &c->value_string );
 	} else if ( c->op == LDAP_MOD_DELETE ) {
 		int i = 0;
+		c->cleanup = config_tls_cleanup;
 		return ldap_pvt_tls_set_option( slap_tls_ld, flag, &i );
 	}
 	ch_free( c->value_string );
+	c->cleanup = config_tls_cleanup;
 	if ( isdigit( (unsigned char)c->argv[1][0] ) ) {
 		if ( lutil_atoi( &i, c->argv[1] ) != 0 ) {
 			Debug(LDAP_DEBUG_ANY, "%s: "
@@ -4718,6 +4783,10 @@ config_back_add( Operation *op, SlapReply *rs )
 		}
 	}
 
+	if ( op->o_abandon ) {
+		rs->sr_err = SLAPD_ABANDON;
+		goto out;
+	}
 	ldap_pvt_thread_pool_pause( &connection_pool );
 
 	/* Strategy:
@@ -5158,8 +5227,13 @@ config_back_modify( Operation *op, SlapReply *rs )
 
 	slap_mods_opattrs( op, &op->orm_modlist, 1 );
 
-	if ( do_pause )
+	if ( do_pause ) {
+		if ( op->o_abandon ) {
+			rs->sr_err = SLAPD_ABANDON;
+			goto out;
+		}
 		ldap_pvt_thread_pool_pause( &connection_pool );
+	}
 
 	/* Strategy:
 	 * 1) perform the Modify on the cached Entry.
@@ -5323,6 +5397,10 @@ config_back_modrdn( Operation *op, SlapReply *rs )
 		goto out;
 	}
 
+	if ( op->o_abandon ) {
+		rs->sr_err = SLAPD_ABANDON;
+		goto out;
+	}
 	ldap_pvt_thread_pool_pause( &connection_pool );
 
 	if ( ce->ce_type == Cft_Schema ) {
@@ -5412,6 +5490,8 @@ config_back_delete( Operation *op, SlapReply *rs )
 		rs->sr_err = LDAP_NO_SUCH_OBJECT;
 	} else if ( ce->ce_kids ) {
 		rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
+	} else if ( op->o_abandon ) {
+		rs->sr_err = SLAPD_ABANDON;
 	} else if ( ce->ce_type == Cft_Overlay ){
 		char *iptr;
 		int count, ixold;

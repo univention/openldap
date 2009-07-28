@@ -1,5 +1,5 @@
 /* result.c - wait for an ldap result */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/result.c,v 1.124.2.18 2009/02/17 21:02:51 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/result.c,v 1.124.2.19 2009/03/05 19:07:21 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -845,6 +845,10 @@ nextresp2:
 				return( -1 );	/* fatal error */
 			}
 			lr->lr_res_errno = LDAP_SUCCESS; /* sucessfully chased referral */
+			if ( lr->lr_res_matched ) {
+				LDAP_FREE( lr->lr_res_matched );
+				lr->lr_res_matched = NULL;
+			}
 
 		} else {
 			if ( lr->lr_outrefcnt <= 0 && lr->lr_parent == NULL ) {
