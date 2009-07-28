@@ -2,6 +2,7 @@ openldap (2.4.17-1) UNRELEASED; urgency=low
 
   * New upstream version.
     - Fixes FTBFS on ia64 with -fPIE. Closes: #524770.
+    - Fixes some TLS issues with GnuTLS.  Closes: #505191.
   * Update priority of libldap-2.4-2 to match the archive override.
   * Add the missing ldapexop and ldapurl tools to ldap-utils, as well as the
     ldapurl(1) manpage.  Thanks to Peter Marschall for the patch.
