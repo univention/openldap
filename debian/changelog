@@ -4,6 +4,7 @@ openldap (2.4.17-2) UNRELEASED; urgency=low
     - add missing misc-depends on all packages
     - slapd, libldap-2.4-2-dbg sections changed to 'debug' to match archive
       overrides
+    - bump Standards-Version to 3.8.2, no changes required.
 
  -- Steve Langasek <vorlon@debian.org>  Tue, 28 Jul 2009 18:03:26 -0700
 
