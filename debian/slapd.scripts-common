@@ -160,7 +160,8 @@ load_databases() {							# {{{
 	for db in `get_database_list`; do
 		suffix=`get_suffix $db`
 		dbdir=`get_directory $db`
-		if ! is_empty_dir "$dbdir"; then
+		if ! is_empty_dir "$dbdir" &&
+		   ! dir_only_contains_DB_CONFIG "$dbdir"; then
 			echo >&2 \
 			  "  Directory $dbdir for $suffix not empty, aborting."
 			exit 1
@@ -169,13 +170,16 @@ load_databases() {							# {{{
 		file="$dir/$suffix.ldif"
 		echo -n "  - directory $suffix... " >&2
 
-		# If there is an old DB_CONFIG file, restore it before
-		# running slapadd
-		backupdir=`compute_backup_path -n "$dbdir" "$suffix"`
-		if [ -e "$backupdir"/DB_CONFIG ]; then
-			cp -a "$backupdir"/DB_CONFIG "$dbdir"/
-		else
-			copy_example_DB_CONFIG "$dbdir"/
+		# If there is no DB_CONFIG file in the database dir, but
+		# an old DB_CONFIG file in the backup dir,
+		# restore it before running slapadd
+		if [ ! -e "$dbdir"/DB_CONFIG ]; then
+			backupdir=`compute_backup_path -n "$dbdir" "$suffix"`
+			if [ -e "$backupdir"/DB_CONFIG ]; then
+				cp -a "$backupdir"/DB_CONFIG "$dbdir"/
+			else
+				copy_example_DB_CONFIG "$dbdir"/
+			fi
 		fi
 
 		capture_diagnostics slapadd -q -b "$suffix" -l "$file" \
@@ -1014,11 +1018,29 @@ is_empty_dir() {							# {{{
 # Check if a path refers to an empty directory
 # Usage: if is_empty_dir "$dir"; then ... fi
 
-	output=`find "$1" -type d -maxdepth 0 -empty 2>/dev/null`
+	output=`find "$1" -maxdepth 0 -type d -empty 2>/dev/null`
   	if [ "$output" ]; then
     		return 0
   	else
     		return 1
+  	fi
+}
+
+# }}}
+
+# }}}
+dir_only_contains_DB_CONFIG() {							# {{{
+# Check if a path refers to a directory
+# that is empty or contains only DB_CONFIG
+# Usage: if dir_only_contains_DB_CONFIG "$dir"; then ... fi
+
+	test -d "$1" || return 1
+
+	output=`find "$1" -mindepth 1 -maxdepth 1 2>/dev/null | grep -v /DB_CONFIG$`
+  	if [ "$output" ]; then
+    		return 1
+  	else
+    		return 0
   	fi
 }
 
