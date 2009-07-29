@@ -64,7 +64,7 @@ Description: OpenLDAP libraries
  Access Protocol) servers and clients.
 
 Package: libldap-2.4-2-dbg
-Section: libdevel
+Section: debug
 Priority: extra
 Architecture: any
 Depends: libldap-2.4-2 (= ${binary:Version}), ${misc:Depends}
@@ -89,7 +89,7 @@ Description: OpenLDAP development libraries
  dynamic linking.
 
 Package: slapd-dbg
-Section: net
+Section: debug
 Priority: extra
 Architecture: any
 Depends: slapd (= ${binary:Version}), ${misc:Depends}

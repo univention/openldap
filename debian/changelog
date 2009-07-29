@@ -2,6 +2,8 @@ openldap (2.4.17-2) UNRELEASED; urgency=low
 
   * Fix up the lintian warnings:
     - add missing misc-depends on all packages
+    - slapd, libldap-2.4-2-dbg sections changed to 'debug' to match archive
+      overrides
 
  -- Steve Langasek <vorlon@debian.org>  Tue, 28 Jul 2009 18:03:26 -0700
 
