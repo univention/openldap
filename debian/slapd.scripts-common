@@ -166,18 +166,27 @@ load_databases() {							# {{{
 			exit 1
 		fi
 
-		file="$dir/$suffix.ldif"
-		echo -n "  - directory $suffix... " >&2
-
-		# If there is an old DB_CONFIG file, restore it before
-		# running slapadd
-		backupdir=`compute_backup_path -n "$dbdir" "$suffix"`
-		if [ -e "$backupdir"/DB_CONFIG ]; then
-			cp -a "$backupdir"/DB_CONFIG "$dbdir"/
-		else
-			copy_example_DB_CONFIG "$dbdir"/
+		# If there is no DB_CONFIG file in the database dir, but
+		# an old DB_CONFIG file in the backup dir,
+		# restore it before running slapadd
+		if [ ! -e "$dbdir"/DB_CONFIG ]; then
+			backupdir=`compute_backup_path -n "$dbdir" "$suffix"`
+			if [ -e "$backupdir"/DB_CONFIG ]; then
+				echo -n "  - restoring DB_CONFIG for directory $suffix... " >&2
+				cp -a "$backupdir"/DB_CONFIG "$dbdir"/
+			else
+				copy_example_DB_CONFIG "$dbdir"/
+			fi
 		fi
+	done
 
+	parse_configuration_file
+	for db in `get_database_list`; do
+		suffix=`get_suffix $db`
+		dbdir=`get_directory $db`
+
+		file="$dir/$suffix.ldif"
+		echo -n "  - loading DB for directory $suffix... " >&2
 		capture_diagnostics slapadd -q -b "$suffix" -l "$file" \
 			|| failed=1
 		if [ "$failed" ]; then
@@ -563,6 +572,7 @@ move_old_database_away() {						# {{{
 # Move the old database away if it is still there
 #
 # In fact this function makes sure that the database directory is empty
+# with the exception of any DB_CONFIG file
 # and can be populated with a new database. If something is in the way
 # it is moved to a backup directory if the user accepted the debconf
 # option slapd/move_old_database. Otherwise we output a warning and let
@@ -1011,14 +1021,15 @@ is_initial_configuration() {						# {{{
 
 # }}}
 is_empty_dir() {							# {{{
-# Check if a path refers to an empty directory
+# Check if a path refers to a directory that is "empty" from the POV of slapd
+# (i.e., contains no files except for an optional DB_CONFIG).
 # Usage: if is_empty_dir "$dir"; then ... fi
 
-	output=`find "$1" -type d -maxdepth 0 -empty 2>/dev/null`
-  	if [ "$output" ]; then
-    		return 0
-  	else
+	output=`find "$1" -mindepth 1 -maxdepth 1 \! -name DB_CONFIG 2>/dev/null`
+	if [ -n "$output" ]; then
     		return 1
+	else
+		return 0
   	fi
 }
 
