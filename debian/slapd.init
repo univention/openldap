@@ -11,6 +11,8 @@
 # Specify path variable
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
+. /lib/lsb/init-functions
+
 # Kill me on all errors
 set -e
 
@@ -196,8 +198,11 @@ case "$1" in
   	stop_ldap
 	start_ldap
 	;;
+  status)
+	status_of_proc -p $SLAPD_PIDFILE $SLAPD slapd
+	;;
   *)
-  	echo "Usage: $0 {start|stop|restart|force-reload}"
+  	echo "Usage: $0 {start|stop|restart|force-reload|status}"
 	exit 1
 	;;
 esac
