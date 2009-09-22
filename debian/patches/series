@@ -8,3 +8,4 @@ index-files-created-as-root
 sasl-default-path 
 libldap-symbol-versions
 getaddrinfo-is-threadsafe
+do-not-second-guess-sonames

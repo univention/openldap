@@ -9,6 +9,10 @@ openldap (2.4.17-2) UNRELEASED; urgency=low
     declarations; thanks, Peter Marschall <peter@adpm.de>!  Closes: #517556
   * Add 'status' argument to init script; thanks to Peter Eisentraut
     <petere@debian.org>.  Closes: #545898.
+  * New patch, do-not-second-guess-sonames, to remove an incorrect check for
+    the Cyrus SASL version number at runtime.  If there's any reason this is
+    needed, it needs to be addressed in the cyrus-sasl soname and Debian
+    shlibs, not here.  Closes: #546885.
 
  -- Steve Langasek <vorlon@debian.org>  Tue, 28 Jul 2009 18:03:26 -0700
 
