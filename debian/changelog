@@ -1,4 +1,4 @@
-openldap (2.4.17-2) UNRELEASED; urgency=low
+openldap (2.4.17-2) unstable; urgency=low
 
   * Fix up the lintian warnings:
     - add missing misc-depends on all packages
@@ -14,7 +14,7 @@ openldap (2.4.17-2) UNRELEASED; urgency=low
     needed, it needs to be addressed in the cyrus-sasl soname and Debian
     shlibs, not here.  Closes: #546885.
 
- -- Steve Langasek <vorlon@debian.org>  Tue, 28 Jul 2009 18:03:26 -0700
+ -- Steve Langasek <vorlon@debian.org>  Tue, 22 Sep 2009 20:06:34 -0700
 
 openldap (2.4.17-1) unstable; urgency=low
 
