@@ -1,5 +1,6 @@
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/netscape.c,v 1.5.2.4 2009/01/22 00:00:46 kurt Exp $ */
-/*
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/netscape.c,v 1.5.2.5 2009/08/17 21:48:59 quanah Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
  * Copyright 1998-2009 The OpenLDAP Foundation.
  * All rights reserved.
  *

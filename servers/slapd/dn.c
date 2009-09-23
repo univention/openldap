@@ -1,5 +1,5 @@
 /* dn.c - routines for dealing with distinguished names */
-/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.182.2.12 2009/04/28 00:52:05 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.182.2.13 2009/08/12 23:38:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -1195,6 +1195,70 @@ dnIsSuffix(
 
 	/* compare */
 	return( strcmp( dn->bv_val + d, suffix->bv_val ) == 0 );
+}
+
+/*
+ * In place; assumes:
+ * - ndn is normalized
+ * - nbase is normalized
+ * - dnIsSuffix( ndn, nbase ) == TRUE
+ * - LDAP_SCOPE_DEFAULT == LDAP_SCOPE_SUBTREE
+ */
+int
+dnIsWithinScope( struct berval *ndn, struct berval *nbase, int scope )
+{
+	assert( ndn != NULL );
+	assert( nbase != NULL );
+	assert( !BER_BVISNULL( ndn ) );
+	assert( !BER_BVISNULL( nbase ) );
+
+	switch ( scope ) {
+	case LDAP_SCOPE_DEFAULT:
+	case LDAP_SCOPE_SUBTREE:
+		break;
+
+	case LDAP_SCOPE_BASE:
+		if ( ndn->bv_len != nbase->bv_len ) {
+			return 0;
+		}
+		break;
+
+	case LDAP_SCOPE_ONELEVEL: {
+		struct berval pndn;
+		dnParent( ndn, &pndn );
+		if ( pndn.bv_len != nbase->bv_len ) {
+			return 0;
+		}
+		} break;
+
+	case LDAP_SCOPE_SUBORDINATE:
+		if ( ndn->bv_len == nbase->bv_len ) {
+			return 0;
+		}
+		break;
+
+	/* unknown scope */
+	default:
+		return -1;
+	}
+
+	return 1;
+}
+
+/*
+ * In place; assumes:
+ * - ndn is normalized
+ * - nbase is normalized
+ * - LDAP_SCOPE_DEFAULT == LDAP_SCOPE_SUBTREE
+ */
+int
+dnIsSuffixScope( struct berval *ndn, struct berval *nbase, int scope )
+{
+	if ( !dnIsSuffix( ndn, nbase ) ) {
+		return 0;
+	}
+
+	return dnIsWithinScope( ndn, nbase, scope );
 }
 
 int

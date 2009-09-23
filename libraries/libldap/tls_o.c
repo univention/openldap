@@ -1,5 +1,5 @@
-/* tls_o.c - Handle tls/ssl using SSLeay or OpenSSL */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/tls_o.c,v 1.5.2.4 2009/07/01 23:04:49 quanah Exp $ */
+/* tls_o.c - Handle tls/ssl using OpenSSL */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/tls_o.c,v 1.5.2.7 2009/08/25 22:58:08 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2009 The OpenLDAP Foundation.
@@ -466,7 +466,7 @@ tlso_session_chkhost( LDAP *ld, tls_session *sess, const char *name_in )
 	X509 *x;
 	const char *name;
 	char *ptr;
-	int ntype = IS_DNS;
+	int ntype = IS_DNS, nlen;
 #ifdef LDAP_PF_INET6
 	struct in6_addr addr;
 #else
@@ -480,6 +480,7 @@ tlso_session_chkhost( LDAP *ld, tls_session *sess, const char *name_in )
 	} else {
 		name = name_in;
 	}
+	nlen = strlen(name);
 
 	x = tlso_get_cert(s);
 	if (!x) {
@@ -513,15 +514,14 @@ tlso_session_chkhost( LDAP *ld, tls_session *sess, const char *name_in )
 		ex = X509_get_ext(x, i);
 		alt = X509V3_EXT_d2i(ex);
 		if (alt) {
-			int n, len1 = 0, len2 = 0;
+			int n, len2 = 0;
 			char *domain = NULL;
 			GENERAL_NAME *gn;
 
 			if (ntype == IS_DNS) {
-				len1 = strlen(name);
 				domain = strchr(name, '.');
 				if (domain) {
-					len2 = len1 - (domain-name);
+					len2 = nlen - (domain-name);
 				}
 			}
 			n = sk_GENERAL_NAME_num(alt);
@@ -539,7 +539,7 @@ tlso_session_chkhost( LDAP *ld, tls_session *sess, const char *name_in )
 					if (sl == 0) continue;
 
 					/* Is this an exact match? */
-					if ((len1 == sl) && !strncasecmp(name, sn, len1)) {
+					if ((nlen == sl) && !strncasecmp(name, sn, nlen)) {
 						break;
 					}
 
@@ -579,13 +579,28 @@ tlso_session_chkhost( LDAP *ld, tls_session *sess, const char *name_in )
 
 	if (ret != LDAP_SUCCESS) {
 		X509_NAME *xn;
-		char buf[2048];
-		buf[0] = '\0';
+		X509_NAME_ENTRY *ne;
+		ASN1_OBJECT *obj;
+		ASN1_STRING *cn = NULL;
+		int navas;
+
+		/* find the last CN */
+		obj = OBJ_nid2obj( NID_commonName );
+		if ( !obj ) goto no_cn;	/* should never happen */
 
 		xn = X509_get_subject_name(x);
-		if( X509_NAME_get_text_by_NID( xn, NID_commonName,
-			buf, sizeof(buf)) == -1)
+		navas = X509_NAME_entry_count( xn );
+		for ( i=navas-1; i>=0; i-- ) {
+			ne = X509_NAME_get_entry( xn, i );
+			if ( !OBJ_cmp( ne->object, obj )) {
+				cn = X509_NAME_ENTRY_get_data( ne );
+				break;
+			}
+		}
+
+		if( !cn )
 		{
+no_cn:
 			Debug( LDAP_DEBUG_ANY,
 				"TLS: unable to get common name from peer certificate.\n",
 				0, 0, 0 );
@@ -596,21 +611,20 @@ tlso_session_chkhost( LDAP *ld, tls_session *sess, const char *name_in )
 			ld->ld_error = LDAP_STRDUP(
 				_("TLS: unable to get CN from peer certificate"));
 
-		} else if (strcasecmp(name, buf) == 0 ) {
+		} else if ( cn->length == nlen &&
+			strncasecmp( name, (char *) cn->data, nlen ) == 0 ) {
 			ret = LDAP_SUCCESS;
 
-		} else if (( buf[0] == '*' ) && ( buf[1] == '.' )) {
+		} else if (( cn->data[0] == '*' ) && ( cn->data[1] == '.' )) {
 			char *domain = strchr(name, '.');
 			if( domain ) {
-				size_t dlen = 0;
-				size_t sl;
+				int dlen;
 
-				sl = strlen(name);
-				dlen = sl - (domain-name);
-				sl = strlen(buf);
+				dlen = nlen - (domain-name);
 
 				/* Is this a wildcard match? */
-				if ((dlen == sl-1) && !strncasecmp(domain, &buf[1], dlen)) {
+				if ((dlen == cn->length-1) &&
+					!strncasecmp(domain, (char *) &cn->data[1], dlen)) {
 					ret = LDAP_SUCCESS;
 				}
 			}
@@ -618,8 +632,8 @@ tlso_session_chkhost( LDAP *ld, tls_session *sess, const char *name_in )
 
 		if( ret == LDAP_LOCAL_ERROR ) {
 			Debug( LDAP_DEBUG_ANY, "TLS: hostname (%s) does not match "
-				"common name in certificate (%s).\n", 
-				name, buf, 0 );
+				"common name in certificate (%.*s).\n", 
+				name, cn->length, cn->data );
 			ret = LDAP_CONNECT_ERROR;
 			if ( ld->ld_error ) {
 				LDAP_FREE( ld->ld_error );

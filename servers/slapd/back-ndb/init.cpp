@@ -1,5 +1,5 @@
 /* init.cpp - initialize ndb backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ndb/init.cpp,v 1.4.2.2 2009/01/22 00:01:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ndb/init.cpp,v 1.4.2.3 2009/07/22 19:45:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2009 The OpenLDAP Foundation.
@@ -130,7 +130,7 @@ ndb_db_open( BackendDB *be, ConfigReply *cr )
 		}
 	}
 	for ( i=0; i<ni->ni_nconns; i++ ) {
-		rc = ni->ni_cluster[i]->wait_until_ready( 30, 0 );
+		rc = ni->ni_cluster[i]->wait_until_ready( 30, 30 );
 		if ( rc ) {
 			snprintf( cr->msg, sizeof( cr->msg ),
 				"ndb_db_open: ni_cluster[%d]->wait failed (%d)",

@@ -1,5 +1,5 @@
 /* entry.c - routines for dealing with entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.148.2.10 2009/05/01 19:37:13 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.148.2.12 2009/08/14 21:04:55 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -936,19 +936,27 @@ int entry_decode(EntryHeader *eh, Entry **e)
 	return 0;
 }
 
-Entry *entry_dup( Entry *e )
+Entry *
+entry_dup2( Entry *dest, Entry *source )
 {
-	Entry *ret;
+	assert( dest != NULL );
+	assert( source != NULL );
 
-	ret = entry_alloc();
+	assert( dest->e_private == NULL );
 
-	ret->e_id = e->e_id;
-	ber_dupbv( &ret->e_name, &e->e_name );
-	ber_dupbv( &ret->e_nname, &e->e_nname );
-	ret->e_attrs = attrs_dup( e->e_attrs );
-	ret->e_ocflags = e->e_ocflags;
+	dest->e_id = source->e_id;
+	ber_dupbv( &dest->e_name, &source->e_name );
+	ber_dupbv( &dest->e_nname, &source->e_nname );
+	dest->e_attrs = attrs_dup( source->e_attrs );
+	dest->e_ocflags = source->e_ocflags;
 
-	return ret;
+	return dest;
+}
+
+Entry *
+entry_dup( Entry *e )
+{
+	return entry_dup2( entry_alloc(), e );
 }
 
 #if 1

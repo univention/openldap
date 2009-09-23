@@ -1,5 +1,5 @@
 /* init.c - initialize bdb backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.247.2.22 2009/06/19 21:53:42 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.247.2.23 2009/07/27 17:38:41 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2009 The OpenLDAP Foundation.
@@ -369,13 +369,10 @@ shm_retry:
 	}
 #endif
 
-	/* Default dncache to 2x entrycache */
-	if ( bdb->bi_cache.c_maxsize && !bdb->bi_cache.c_eimax ) {
-		bdb->bi_cache.c_eimax = bdb->bi_cache.c_maxsize * 2;
-	}
-
-	/* dncache must be >= entrycache */
-	if ( bdb->bi_cache.c_eimax < bdb->bi_cache.c_maxsize ) {
+	/* dncache defaults to 0 == unlimited
+	 * must be >= entrycache
+	 */
+	if ( bdb->bi_cache.c_eimax && bdb->bi_cache.c_eimax < bdb->bi_cache.c_maxsize ) {
 		bdb->bi_cache.c_eimax = bdb->bi_cache.c_maxsize;
 	}
 

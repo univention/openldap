@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/lber.h,v 1.99.2.6 2009/05/01 19:28:57 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/include/lber.h,v 1.99.2.8 2009/08/13 00:56:58 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -165,7 +165,6 @@ LBER_V( char ) ber_pvt_opt_on;
 
 typedef struct berelement BerElement;
 typedef struct sockbuf Sockbuf;
-typedef struct seqorset Seqorset;
 
 typedef struct sockbuf_io Sockbuf_IO;
 
@@ -229,10 +228,6 @@ LBER_F( void )
 ber_dump LDAP_P((
 	BerElement *ber, int inout ));
 
-LBER_F( void )
-ber_sos_dump LDAP_P((
-	Seqorset *sos ));
-
 /*
  * in decode.c:
  */
@@ -254,6 +249,16 @@ LBER_F( ber_tag_t )
 ber_peek_tag LDAP_P((
 	BerElement *ber,
 	ber_len_t *len ));
+
+LBER_F( ber_tag_t )
+ber_skip_element LDAP_P((
+	BerElement *ber,
+	struct berval *bv ));
+
+LBER_F( ber_tag_t )
+ber_peek_element LDAP_P((
+	LDAP_CONST BerElement *ber,
+	struct berval *bv ));
 
 LBER_F( ber_tag_t )
 ber_get_int LDAP_P((
@@ -434,7 +439,7 @@ ber_write LDAP_P((
 	BerElement *ber,
 	LDAP_CONST char *buf,
 	ber_len_t len,
-	int nosos ));
+	int zero ));	/* nonzero is unsupported from OpenLDAP 2.4.18 */
 
 LBER_F( void )
 ber_free LDAP_P((

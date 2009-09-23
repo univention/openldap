@@ -1,5 +1,5 @@
 /* ldapcompare.c -- LDAP compare tool */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapcompare.c,v 1.43.2.6 2009/01/22 00:00:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapcompare.c,v 1.43.2.7 2009/08/13 00:55:06 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -85,6 +85,8 @@ usage( void )
 	fprintf( stderr, _("Compare options:\n"));
 	fprintf( stderr, _("  -E [!]<ext>[=<extparam>] compare extensions (! indicates criticality)\n"));
 	fprintf( stderr, _("             !dontUseCopy                (Don't Use Copy)\n"));
+	fprintf( stderr, _("  -M         enable Manage DSA IT control (-MM to make critical)\n"));
+	fprintf( stderr, _("  -P version protocol version (default: 3)\n"));
 	fprintf( stderr, _("  -z         Quiet mode,"
 		" don't print anything, use return values\n"));
 	tool_common_usage();

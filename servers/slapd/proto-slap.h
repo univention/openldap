@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.670.2.49 2009/06/02 23:58:20 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.670.2.54 2009/08/25 22:44:25 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -851,6 +851,10 @@ LDAP_SLAPD_V (int) slapd_register_slp;
 LDAP_SLAPD_V (const char *) slapd_slp_attrs;
 LDAP_SLAPD_V (slap_ssf_t) local_ssf;
 LDAP_SLAPD_V (struct runqueue_s) slapd_rq;
+#ifdef LDAP_TCP_BUFFER
+LDAP_SLAPD_V (int) slapd_tcp_rmem;
+LDAP_SLAPD_V (int) slapd_tcp_wmem;
+#endif /* LDAP_TCP_BUFFER */
 
 #ifdef HAVE_WINSOCK
 LDAP_SLAPD_F (ber_socket_t) slapd_socknew(ber_socket_t s);
@@ -922,6 +926,12 @@ LDAP_SLAPD_F (int) rdnMatch LDAP_P((
 LDAP_SLAPD_F (int) dnIsSuffix LDAP_P((
 	const struct berval *dn, const struct berval *suffix ));
 
+LDAP_SLAPD_F (int) dnIsWithinScope LDAP_P((
+	struct berval *ndn, struct berval *nbase, int scope ));
+
+LDAP_SLAPD_F (int) dnIsSuffixScope LDAP_P((
+	struct berval *ndn, struct berval *nbase, int scope ));
+
 LDAP_SLAPD_F (int) dnIsOneLevelRDN LDAP_P(( struct berval *rdn ));
 
 LDAP_SLAPD_F (int) dnExtractRdn LDAP_P((
@@ -985,6 +995,7 @@ LDAP_SLAPD_F (int) entry_cmp LDAP_P(( Entry *a, Entry *b ));
 LDAP_SLAPD_F (int) entry_dn_cmp LDAP_P(( const void *v_a, const void *v_b ));
 LDAP_SLAPD_F (int) entry_id_cmp LDAP_P(( const void *v_a, const void *v_b ));
 LDAP_SLAPD_F (Entry *) entry_dup LDAP_P(( Entry *e ));
+LDAP_SLAPD_F (Entry *) entry_dup2 LDAP_P(( Entry *dest, Entry *src ));
 LDAP_SLAPD_F (Entry *) entry_dup_bv LDAP_P(( Entry *e ));
 LDAP_SLAPD_F (Entry *) entry_alloc LDAP_P((void));
 LDAP_SLAPD_F (int) entry_prealloc LDAP_P((int num));
@@ -1767,6 +1778,9 @@ LDAP_SLAPD_F (Filter *) str2filter_x LDAP_P(( Operation *op, const char *str ));
 
 LDAP_SLAPD_F (int)  syncrepl_add_glue LDAP_P(( 
 					Operation*, Entry* ));
+LDAP_SLAPD_F (void) syncrepl_diff_entry LDAP_P((
+	Operation *op, Attribute *old, Attribute *anew,
+	Modifications **mods, Modifications **ml, int is_ctx ));
 LDAP_SLAPD_F (void) syncinfo_free LDAP_P(( struct syncinfo_s *, int all ));
 
 /* syntax.c */

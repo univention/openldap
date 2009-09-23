@@ -1,5 +1,5 @@
 /* dynlist.c - dynamic list overlay */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dynlist.c,v 1.20.2.27 2009/03/05 23:00:00 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dynlist.c,v 1.20.2.28 2009/08/25 23:13:42 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2009 The OpenLDAP Foundation.
@@ -957,7 +957,7 @@ dynlist_db_config(
 		ObjectClass		*oc;
 		AttributeDescription	*ad = NULL,
 					*member_ad = NULL;
-		dynlist_map_t		*dlm = NULL;
+		dynlist_map_t		*dlm = NULL, *dlml = NULL;
 		const char		*text;
 
 		if ( argc < 3 ) {
@@ -997,7 +997,6 @@ dynlist_db_config(
 			AttributeDescription *member_ad = NULL;
 			AttributeDescription *mapped_ad = NULL;
 			dynlist_map_t *dlmp;
-			dynlist_map_t *dlml;
 
 
 			/*
@@ -1032,7 +1031,6 @@ dynlist_db_config(
 			dlmp = (dynlist_map_t *)ch_calloc( 1, sizeof( dynlist_map_t ) );
 			if ( dlm == NULL ) {
 				dlm = dlmp;
-				dlml = NULL;
 			}
 			dlmp->dlm_member_ad = member_ad;
 			dlmp->dlm_mapped_ad = mapped_ad;
@@ -1406,7 +1404,7 @@ dl_cfgen( ConfigArgs *c )
 		struct berval		nbase = BER_BVNULL;
 		Filter			*filter = NULL;
 		struct berval		uri = BER_BVNULL;
-		dynlist_map_t           *dlm = NULL;
+		dynlist_map_t           *dlm = NULL, *dlml = NULL;
 		const char		*text;
 
 		oc = oc_find( c->argv[ 1 ] );
@@ -1534,7 +1532,6 @@ done_uri:;
 			AttributeDescription *member_ad = NULL;
 			AttributeDescription *mapped_ad = NULL;
 			dynlist_map_t *dlmp;
-			dynlist_map_t *dlml;
 
 
 			/*
@@ -1572,7 +1569,6 @@ done_uri:;
 			dlmp = (dynlist_map_t *)ch_calloc( 1, sizeof( dynlist_map_t ) );
 			if ( dlm == NULL ) {
 				dlm = dlmp;
-				dlml = NULL;
 			}
 			dlmp->dlm_member_ad = member_ad;
 			dlmp->dlm_mapped_ad = mapped_ad;

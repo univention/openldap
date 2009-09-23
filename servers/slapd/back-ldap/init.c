@@ -1,5 +1,5 @@
 /* init.c - initialize ldap backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/init.c,v 1.99.2.11 2009/01/30 19:07:40 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/init.c,v 1.99.2.12 2009/08/26 00:50:19 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2009 The OpenLDAP Foundation.
@@ -39,7 +39,8 @@ static const ldap_extra_t ldap_extra = {
 	slap_idassert_parse_cf,
 	slap_retry_info_destroy,
 	slap_retry_info_parse,
-	slap_retry_info_unparse
+	slap_retry_info_unparse,
+	ldap_back_connid2str
 };
 
 int

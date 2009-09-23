@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.312.2.20 2009/03/05 20:20:47 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.312.2.23 2009/08/25 22:52:17 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -186,11 +186,19 @@ LDAP_BEGIN_DECL
 #define LDAP_OPT_X_SASL_MAXBUFSIZE		0x6109
 #define LDAP_OPT_X_SASL_MECHLIST		0x610a /* read-only */
 #define LDAP_OPT_X_SASL_NOCANON			0x610b
+#define LDAP_OPT_X_SASL_USERNAME		0x610c /* read-only */
 
 /* OpenLDAP GSSAPI options */
 #define LDAP_OPT_X_GSSAPI_DO_NOT_FREE_CONTEXT      0x6200
 #define LDAP_OPT_X_GSSAPI_ALLOW_REMOTE_PRINCIPAL   0x6201
 
+/*
+ * OpenLDAP per connection tcp-keepalive settings
+ * (Linux only, ignored where unsupported)
+ */
+#define LDAP_OPT_X_KEEPALIVE_IDLE		0x6300
+#define LDAP_OPT_X_KEEPALIVE_PROBES		0x6301
+#define LDAP_OPT_X_KEEPALIVE_INTERVAL	0x6302
 
 /* Private API Extensions -- reserved for application use */
 #define LDAP_OPT_PRIVATE_EXTENSION_BASE 0x7000  /* Private API inclusive */
@@ -246,7 +254,6 @@ typedef struct ldapcontrol {
 #define LDAP_CONTROL_PRE_READ			"1.3.6.1.1.13.1"		/* RFC 4527 */
 #define LDAP_CONTROL_POST_READ			"1.3.6.1.1.13.2"		/* RFC 4527 */
 
-/*  standard track - not implemented in slapd(8) */
 #define LDAP_CONTROL_SORTREQUEST    "1.2.840.113556.1.4.473" /* RFC 2891 */
 #define LDAP_CONTROL_SORTRESPONSE	"1.2.840.113556.1.4.474" /* RFC 2891 */
 
@@ -349,10 +356,9 @@ typedef struct ldapcontrol {
 #define LDAP_CONTROL_PERSIST_ENTRY_CHANGE_MODIFY	0x4
 #define LDAP_CONTROL_PERSIST_ENTRY_CHANGE_RENAME	0x8
 
-/* LDAP VLV *//* not implemented in slapd(8) */
+/* LDAP VLV */
 #define LDAP_CONTROL_VLVREQUEST    	"2.16.840.1.113730.3.4.9"
 #define LDAP_CONTROL_VLVRESPONSE    "2.16.840.1.113730.3.4.10"
-
 
 /* LDAP Unsolicited Notifications */
 #define	LDAP_NOTICE_OF_DISCONNECTION	"1.3.6.1.4.1.1466.20036" /* RFC 4511 */
@@ -617,6 +623,8 @@ typedef struct ldapcontrol {
 #define LDAP_NO_OBJECT_CLASS_MODS	0x45
 #define LDAP_RESULTS_TOO_LARGE		0x46 /* CLDAP */
 #define LDAP_AFFECTS_MULTIPLE_DSAS	0x47
+
+#define LDAP_VLV_ERROR				0x4C
 
 #define LDAP_OTHER					0x50
 

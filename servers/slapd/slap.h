@@ -1,5 +1,5 @@
 /* slap.h - stand alone ldap server include file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.764.2.49 2009/07/01 17:01:58 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.764.2.54 2009/08/25 22:44:25 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -62,7 +62,6 @@ LDAP_BEGIN_DECL
 #define LDAP_COLLECTIVE_ATTRIBUTES
 #define LDAP_COMP_MATCH
 #define LDAP_SYNC_TIMESTAMP
-#define SLAP_CONTROL_X_SORTEDRESULTS
 #define SLAP_CONTROL_X_SESSION_TRACKING
 #define SLAP_CONTROL_X_WHATFAILED
 #define SLAP_CONFIG_DELETE
@@ -843,10 +842,13 @@ struct AttributeDescription {
 #define SLAP_AD_PROXIED		0x01U
 #define	SLAP_AD_NOINSERT	0x02U
 
+#define	SLAP_AN_OCEXCLUDE	0x01
+#define	SLAP_AN_OCINITED	0x02
+
 struct AttributeName {
 	struct berval		an_name;
 	AttributeDescription	*an_desc;
-	int			an_oc_exclude;
+	int			an_flags;
 	ObjectClass		*an_oc;
 };
 
@@ -2062,9 +2064,9 @@ struct SlapReply {
 	BerVarray sr_ref;
 	LDAPControl **sr_ctrls;
 	union sr_u {
+		rep_search_s sru_search;
 		rep_sasl_s sru_sasl;
 		rep_extended_s sru_extended;
-		rep_search_s sru_search;
 	} sr_un;
 	slap_mask_t sr_flags;
 #define REP_ENTRY_MODIFIABLE	0x0001U
@@ -2353,7 +2355,6 @@ typedef struct slap_overinfo {
 } slap_overinfo;
 
 /* Should successive callbacks in a chain be processed? */
-#define	SLAP_CB_FREEME		0x04000
 #define	SLAP_CB_BYPASS		0x08800
 #define	SLAP_CB_CONTINUE	0x08000
 
@@ -2754,7 +2755,7 @@ typedef void (SEND_LDAP_INTERMEDIATE)(
 #define send_ldap_intermediate( op, rs ) \
 	((op)->o_conn->c_send_ldap_intermediate)( op, rs )
 
-typedef struct slap_listener Listener;
+typedef struct Listener Listener;
 
 /*
  * represents a connection from an ldap client
@@ -2901,7 +2902,7 @@ struct Connection {
 /*
  * listener; need to access it from monitor backend
  */
-struct slap_listener {
+struct Listener {
 	struct berval sl_url;
 	struct berval sl_name;
 	mode_t	sl_perms;
@@ -2916,6 +2917,13 @@ struct slap_listener {
 	ber_socket_t sl_sd;
 	Sockaddr sl_sa;
 #define sl_addr	sl_sa.sa_in_addr
+#ifdef LDAP_DEVEL
+#define LDAP_TCP_BUFFER
+#endif
+#ifdef LDAP_TCP_BUFFER
+	int	sl_tcp_rmem;	/* custom TCP read buffer size */
+	int	sl_tcp_wmem;	/* custom TCP write buffer size */
+#endif
 };
 
 /*

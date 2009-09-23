@@ -1,5 +1,5 @@
 /* init.c - initialize monitor backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/init.c,v 1.125.2.8 2009/01/22 00:01:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/init.c,v 1.125.2.10 2009/08/25 22:48:10 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2009 The OpenLDAP Foundation.
@@ -322,13 +322,6 @@ monitor_back_register_overlay_info(
 }
 
 int
-monitor_back_register_overlay(
-	BackendDB		*be )
-{
-	return -1;
-}
-
-int
 monitor_back_register_backend_limbo(
 	BackendInfo		*bi )
 {
@@ -338,7 +331,7 @@ monitor_back_register_backend_limbo(
 int
 monitor_back_register_database_limbo(
 	BackendDB		*be,
-	struct berval	*ndn )
+	struct berval		*ndn_out )
 {
 	entry_limbo_t	**elpp, el = { 0 };
 	monitor_info_t 	*mi;
@@ -357,7 +350,7 @@ monitor_back_register_database_limbo(
 	el.el_type = LIMBO_DATABASE;
 
 	el.el_be = be->bd_self;
-	el.el_ndn = ndn;
+	el.el_ndn = ndn_out;
 	
 	for ( elpp = &mi->mi_entry_limbo;
 			*elpp;
@@ -381,9 +374,41 @@ monitor_back_register_overlay_info_limbo(
 
 int
 monitor_back_register_overlay_limbo(
-	BackendDB		*be )
+	BackendDB		*be,
+	struct slap_overinst	*on,
+	struct berval		*ndn_out )
 {
-	return -1;
+	entry_limbo_t	**elpp, el = { 0 };
+	monitor_info_t 	*mi;
+
+	if ( be_monitor == NULL ) {
+		Debug( LDAP_DEBUG_ANY,
+			"monitor_back_register_overlay_limbo: "
+			"monitor database not configured.\n",
+			0, 0, 0 );
+		return -1;
+	}
+
+	mi = ( monitor_info_t * )be_monitor->be_private;
+
+
+	el.el_type = LIMBO_OVERLAY;
+
+	el.el_be = be->bd_self;
+	el.el_on = on;
+	el.el_ndn = ndn_out;
+	
+	for ( elpp = &mi->mi_entry_limbo;
+			*elpp;
+			elpp = &(*elpp)->el_next )
+		/* go to last */;
+
+	*elpp = (entry_limbo_t *)ch_malloc( sizeof( entry_limbo_t ) );
+
+	el.el_next = NULL;
+	**elpp = el;
+
+	return 0;
 }
 
 int
@@ -1903,6 +1928,15 @@ monitor_back_initialize(
 			"SINGLE-VALUE "
 			"USAGE dSAOperation )", SLAP_AT_HIDE,
 			offsetof(monitor_info_t, mi_ad_monitorRuntimeConfig) },
+		{ "( 1.3.6.1.4.1.4203.666.1.55.30 "
+			"NAME 'monitorSuperiorDN' "
+			"DESC 'monitor superior DN' "
+			/* "SUP distinguishedName " */
+			"EQUALITY distinguishedNameMatch "
+			"SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 "
+			"NO-USER-MODIFICATION "
+			"USAGE dSAOperation )", SLAP_AT_FINAL|SLAP_AT_HIDE,
+			offsetof(monitor_info_t, mi_ad_monitorSuperiorDN) },
 		{ NULL, 0, -1 }
 	};
 
@@ -2356,8 +2390,7 @@ monitor_back_db_open(
 	 * opens the monitor backend subsystems
 	 */
 	for ( ms = monitor_subsys; ms[ 0 ] != NULL; ms++ ) {
-		if ( ms[ 0 ]->mss_open && ( *ms[ 0 ]->mss_open )( be, ms[ 0 ] ) )
-		{
+		if ( ms[ 0 ]->mss_open && ms[ 0 ]->mss_open( be, ms[ 0 ] ) ) {
 			return( -1 );
 		}
 		ms[ 0 ]->mss_flags |= MONITOR_F_OPENED;
@@ -2425,7 +2458,7 @@ monitor_back_db_open(
 				break;
 
 			case LIMBO_OVERLAY:
-				rc = monitor_back_register_overlay( el->el_be );
+				rc = monitor_back_register_overlay( el->el_be, el->el_on, el->el_ndn );
 				break;
 
 			default:

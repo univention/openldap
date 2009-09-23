@@ -1,5 +1,5 @@
 /* translucent.c - translucent proxy module */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/translucent.c,v 1.13.2.27 2009/06/08 19:27:05 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/translucent.c,v 1.13.2.32 2009/08/25 23:05:25 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2009 The OpenLDAP Foundation.
@@ -158,7 +158,8 @@ translucent_cfadd( Operation *op, SlapReply *rs, Entry *e, ConfigArgs *ca )
 
 	/* FIXME: should not hardcode "olcDatabase" here */
 	bv.bv_len = snprintf( ca->cr_msg, sizeof( ca->cr_msg ),
-		"olcDatabase=%s", ov->db.bd_info->bi_type );
+		"olcDatabase=" SLAP_X_ORDERED_FMT "%s",
+		0, ov->db.bd_info->bi_type );
 	if ( bv.bv_len >= sizeof( ca->cr_msg ) ) {
 		return -1;
 	}
@@ -279,22 +280,6 @@ void glue_parent(Operation *op) {
 	op->o_tmpfree( ndn.bv_val, op->o_tmpmemctx );
 
 	return;
-}
-
-/*
-** dup_bervarray()
-**	copy a BerVarray;
-*/
-
-BerVarray dup_bervarray(BerVarray b) {
-	int i, len;
-	BerVarray nb;
-	for(len = 0; b[len].bv_val; len++);
-	nb = ch_malloc((len+1) * sizeof(BerValue));
-	for(i = 0; i < len; i++) ber_dupbv(&nb[i], &b[i]);
-	nb[len].bv_val = NULL;
-	nb[len].bv_len = 0;
-	return(nb);
 }
 
 /*
@@ -785,6 +770,8 @@ typedef struct trans_ctx {
 	Filter *orig;
 	Avlnode *list;
 	int step;
+	int slimit;
+	AttributeName *attrs;
 } trans_ctx;
 
 static int translucent_search_cb(Operation *op, SlapReply *rs) {
@@ -808,6 +795,13 @@ static int translucent_search_cb(Operation *op, SlapReply *rs) {
 
 	Debug(LDAP_DEBUG_TRACE, "==> translucent_search_cb: %s\n",
 		rs->sr_entry->e_name.bv_val, 0, 0);
+
+	op->ors_slimit = tc->slimit + ( tc->slimit > 0 ? 1 : 0 );
+	if ( op->ors_attrs == slap_anlist_all_attributes ) {
+		op->ors_attrs = tc->attrs;
+		rs->sr_attrs = tc->attrs;
+		rs->sr_attr_flags = slap_attr_flags( rs->sr_attrs );
+	}
 
 	on = tc->on;
 	ov = on->on_bi.bi_private;
@@ -834,6 +828,11 @@ static int translucent_search_cb(Operation *op, SlapReply *rs) {
 				if ( rc == LDAP_COMPARE_TRUE ) {
 					rs->sr_flags |= REP_ENTRY_MUSTBEFREED;
 					rs->sr_entry = re;
+
+					if ( tc->slimit >= 0 && rs->sr_nentries >= tc->slimit ) {
+						return LDAP_SIZELIMIT_EXCEEDED;
+					}
+
 					return SLAP_CB_CONTINUE;
 				} else {
 					entry_free( re );
@@ -883,12 +882,16 @@ static int translucent_search_cb(Operation *op, SlapReply *rs) {
 		for(ax = le->e_attrs; ax; ax = ax->a_next) {
 			for(a = re->e_attrs; a; a = a->a_next) {
 				if(a->a_desc == ax->a_desc) {
+					test_f = 1;
 					if(a->a_vals != a->a_nvals)
 						ber_bvarray_free(a->a_nvals);
 					ber_bvarray_free(a->a_vals);
-					a->a_vals = dup_bervarray(ax->a_vals);
-					a->a_nvals = (ax->a_vals == ax->a_nvals) ?
-						a->a_vals : dup_bervarray(ax->a_nvals);
+					ber_bvarray_dup_x( &a->a_vals, ax->a_vals, NULL );
+					if ( ax->a_vals == ax->a_nvals ) {
+						a->a_nvals = a->a_vals;
+					} else {
+						ber_bvarray_dup_x( &a->a_nvals, ax->a_nvals, NULL );
+					}
 					break;
 				}
 			}
@@ -963,6 +966,11 @@ static int translucent_search_cb(Operation *op, SlapReply *rs) {
 	}
 
 	op->o_bd = db;
+
+	if ( rc == SLAP_CB_CONTINUE && tc->slimit >= 0 && rs->sr_nentries >= tc->slimit ) {
+		return LDAP_SIZELIMIT_EXCEEDED;
+	}
+
 	return rc;
 }
 
@@ -1105,13 +1113,16 @@ static int translucent_search(Operation *op, SlapReply *rs) {
 	tc.orig = op->ors_filter;
 	tc.list = NULL;
 	tc.step = 0;
+	tc.slimit = op->ors_slimit;
+	tc.attrs = NULL;
 	fbv = op->ors_filterstr;
 
 	op->o_callback = &cb;
 
 	if ( fr || !fl ) {
-		AttributeName *attrs = op->ors_attrs;
-		op->ors_attrs = NULL;
+		tc.attrs = op->ors_attrs;
+		op->ors_slimit = SLAP_NO_LIMIT;
+		op->ors_attrs = slap_anlist_all_attributes;
 		op->o_bd = &ov->db;
 		tc.step |= RMT_SIDE;
 		if ( fl ) {
@@ -1120,7 +1131,7 @@ static int translucent_search(Operation *op, SlapReply *rs) {
 			filter2bv_x( op, fr, &op->ors_filterstr );
 		}
 		rc = ov->db.bd_info->bi_op_search(op, rs);
-		op->ors_attrs = attrs;
+		op->ors_attrs = tc.attrs;
 		op->o_bd = tc.db;
 		if ( fl ) {
 			op->o_tmpfree( op->ors_filterstr.bv_val, op->o_tmpmemctx );
@@ -1137,6 +1148,7 @@ static int translucent_search(Operation *op, SlapReply *rs) {
 	op->ors_filter = tc.orig;
 	op->o_callback = cb.sc_next;
 	rs->sr_attrs = op->ors_attrs;
+	rs->sr_attr_flags = slap_attr_flags( rs->sr_attrs );
 
 	/* Send out anything remaining on the list and finish */
 	if ( tc.step & USE_LIST ) {
@@ -1161,6 +1173,8 @@ static int translucent_search(Operation *op, SlapReply *rs) {
 		}
 		send_ldap_result( op, rs );
 	}
+
+	op->ors_slimit = tc.slimit;
 
 	/* Free in reverse order */
 	if ( fl )

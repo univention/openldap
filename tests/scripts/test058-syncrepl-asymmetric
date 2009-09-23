@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test058-syncrepl-asymmetric,v 1.1.2.2 2009/04/28 00:50:29 quanah Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test058-syncrepl-asymmetric,v 1.1.2.3 2009/08/13 00:50:43 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2009 The OpenLDAP Foundation.
@@ -2088,6 +2088,8 @@ if test $RC != 0 ; then
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit $RC
 fi
+
+sleep $SLEEP1
 
 echo "Checking contextCSN after site2 servers repopulated..."
 . $TESTDIR/checkcsn.sh

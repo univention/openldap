@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/options.c,v 1.75.2.10 2009/01/22 00:00:54 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/options.c,v 1.75.2.11 2009/08/12 23:40:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -342,6 +342,18 @@ ldap_get_option(
 	case LDAP_OPT_DEBUG_LEVEL:
 		* (int *) outvalue = lo->ldo_debug;
 		return LDAP_OPT_SUCCESS;
+	
+	case LDAP_OPT_X_KEEPALIVE_IDLE:
+		* (int *) outvalue = lo->ldo_keepalive_idle;
+		return LDAP_OPT_SUCCESS;
+
+	case LDAP_OPT_X_KEEPALIVE_PROBES:
+		* (int *) outvalue = lo->ldo_keepalive_probes;
+		return LDAP_OPT_SUCCESS;
+
+	case LDAP_OPT_X_KEEPALIVE_INTERVAL:
+		* (int *) outvalue = lo->ldo_keepalive_interval;
+		return LDAP_OPT_SUCCESS;
 
 	default:
 #ifdef HAVE_TLS
@@ -681,6 +693,9 @@ ldap_set_option(
 	case LDAP_OPT_TIMEOUT:
 	case LDAP_OPT_NETWORK_TIMEOUT:
 	case LDAP_OPT_CONNECT_CB:
+	case LDAP_OPT_X_KEEPALIVE_IDLE:
+	case LDAP_OPT_X_KEEPALIVE_PROBES :
+	case LDAP_OPT_X_KEEPALIVE_INTERVAL :
 		if(invalue == NULL) {
 			/* no place to set from */
 			return LDAP_OPT_ERROR;
@@ -770,6 +785,16 @@ ldap_set_option(
 			lo->ldo_conn_cbs = ll;
 		}
 		return LDAP_OPT_SUCCESS;
+	case LDAP_OPT_X_KEEPALIVE_IDLE:
+		lo->ldo_keepalive_idle = * (const int *) invalue;
+		return LDAP_OPT_SUCCESS;
+	case LDAP_OPT_X_KEEPALIVE_PROBES :
+		lo->ldo_keepalive_probes = * (const int *) invalue;
+		return LDAP_OPT_SUCCESS;
+	case LDAP_OPT_X_KEEPALIVE_INTERVAL :
+		lo->ldo_keepalive_interval = * (const int *) invalue;
+		return LDAP_OPT_SUCCESS;
+	
 	}
 	return LDAP_OPT_ERROR;
 }

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.74.2.17 2009/01/22 00:01:07 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.74.2.18 2009/08/14 20:54:14 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.
@@ -640,6 +640,10 @@ meta_back_db_config(
 		
 	/* save bind creds for referral rebinds? */
 	} else if ( strcasecmp( argv[ 0 ], "rebind-as-user" ) == 0 ) {
+		unsigned	*flagsp = mi->mi_ntargets ?
+				&mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_flags
+				: &mi->mi_flags;
+
 		if ( argc > 2 ) {
 			Debug( LDAP_DEBUG_ANY,
 	"%s: line %d: \"rebind-as-user {NO|yes}\" takes 1 argument.\n",
@@ -651,16 +655,16 @@ meta_back_db_config(
 			Debug( LDAP_DEBUG_ANY,
 	"%s: line %d: deprecated use of \"rebind-as-user {FALSE|true}\" with no arguments.\n",
 			    fname, lineno, 0 );
-			mi->mi_flags |= LDAP_BACK_F_SAVECRED;
+			*flagsp |= LDAP_BACK_F_SAVECRED;
 
 		} else {
 			switch ( check_true_false( argv[ 1 ] ) ) {
 			case 0:
-				mi->mi_flags &= ~LDAP_BACK_F_SAVECRED;
+				*flagsp &= ~LDAP_BACK_F_SAVECRED;
 				break;
 
 			case 1:
-				mi->mi_flags |= LDAP_BACK_F_SAVECRED;
+				*flagsp |= LDAP_BACK_F_SAVECRED;
 				break;
 
 			default:

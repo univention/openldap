@@ -1,5 +1,5 @@
 /* aclparse.c - routines to parse and check acl's */
-/* $OpenLDAP: pkg/ldap/servers/slapd/aclparse.c,v 1.198.2.10 2009/06/27 18:00:32 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/aclparse.c,v 1.198.2.11 2009/07/27 20:19:18 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -2774,7 +2774,7 @@ acl_unparse( AccessControl *a, struct berval *bv )
 		for ( an = a->acl_attrs; an && !BER_BVISNULL( &an->an_name ); an++ ) {
 			if ( ! first ) *ptr++ = ',';
 			if (an->an_oc) {
-				*ptr++ = an->an_oc_exclude ? '!' : '@';
+				*ptr++ = ( an->an_flags & SLAP_AN_OCEXCLUDE ) ? '!' : '@';
 				ptr = lutil_strcopy( ptr, an->an_oc->soc_cname.bv_val );
 
 			} else {

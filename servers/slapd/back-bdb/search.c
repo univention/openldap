@@ -1,5 +1,5 @@
 /* search.c - search operation */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.246.2.25 2009/05/13 20:20:38 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.246.2.26 2009/08/25 22:58:09 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2009 The OpenLDAP Foundation.
@@ -326,7 +326,8 @@ bdb_search( Operation *op, SlapReply *rs )
 	slap_mask_t	mask;
 	time_t		stoptime;
 	int		manageDSAit;
-	int		tentries = 0, nentries = 0;
+	int		tentries = 0;
+	unsigned	nentries = 0;
 	int		idflag = 0;
 
 	DB_LOCK		lock;

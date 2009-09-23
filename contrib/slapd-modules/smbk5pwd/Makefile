@@ -1,4 +1,7 @@
-# $OpenLDAP: pkg/ldap/contrib/slapd-modules/smbk5pwd/Makefile,v 1.1.6.1 2009/04/27 23:36:57 quanah Exp $
+# $OpenLDAP: pkg/ldap/contrib/slapd-modules/smbk5pwd/Makefile,v 1.1.6.3 2009/09/01 22:53:30 quanah Exp $
+# This work is part of OpenLDAP Software <http://www.openldap.org/>.
+#
+# Copyright 1998-2009 The OpenLDAP Foundation.
 # Copyright 2004 Howard Chu, Symas Corp. All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,6 +29,14 @@ SSL_LIB=-lcrypto
 LDAP_LIB=-lldap_r -llber
 LIBS=$(LDAP_LIB) $(HEIMDAL_LIB) $(SSL_LIB)
 
+prefix=/usr/local
+exec_prefix=$(prefix)
+ldap_subdir=/openldap
+
+libdir=$(exec_prefix)/lib
+libexecdir=$(exec_prefix)/libexec
+moduledir = $(libexecdir)$(ldap_subdir)
+
 all:	smbk5pwd.la
 
 
@@ -34,12 +45,11 @@ smbk5pwd.lo:	smbk5pwd.c
 
 smbk5pwd.la:	smbk5pwd.lo
 	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info 0:0:0 \
-	-rpath $(PREFIX)/lib -module -o $@ $? $(LIBS)
+	-rpath $(libdir) -module -o $@ $? $(LIBS)
 
 clean:
 	rm -f smbk5pwd.lo smbk5pwd.la
 
 install: smbk5pwd.la
-	mkdir -p $(PREFIX)/lib/openldap
-	$(LIBTOOL) --mode=install cp smbk5pwd.la $(PREFIX)/lib/openldap
-	$(LIBTOOL) --finish $(PREFIX)/lib
+	mkdir -p $(DESTDIR)$(moduledir)
+	$(LIBTOOL) --mode=install cp smbk5pwd.la $(DESTDIR)$(moduledir)

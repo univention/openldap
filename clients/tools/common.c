@@ -1,5 +1,5 @@
 /* common.c - common routines for the ldap client tools */
-/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.78.2.22 2009/05/01 20:00:34 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.78.2.27 2009/08/25 22:58:08 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -120,6 +120,9 @@ static int	chainingContinuation = -1;
 static int	sessionTracking = 0;
 struct berval	stValue;
 #endif /* LDAP_CONTROL_X_SESSION_TRACKING */
+ber_int_t vlvPos;
+ber_int_t vlvCount;
+struct berval *vlvContext;
 
 LDAPControl	*unknown_ctrls = NULL;
 int		unknown_ctrls_num = 0;
@@ -136,6 +139,7 @@ static int print_paged_results( LDAP *ld, LDAPControl *ctrl );
 static int print_ppolicy( LDAP *ld, LDAPControl *ctrl );
 #endif
 static int print_sss( LDAP *ld, LDAPControl *ctrl );
+static int print_vlv( LDAP *ld, LDAPControl *ctrl );
 #ifdef LDAP_CONTROL_X_DEREF
 static int print_deref( LDAP *ld, LDAPControl *ctrl );
 #endif
@@ -155,6 +159,7 @@ static struct tool_ctrls_t {
 	{ LDAP_CONTROL_PASSWORDPOLICYRESPONSE,		TOOL_ALL,	print_ppolicy },
 #endif
 	{ LDAP_CONTROL_SORTRESPONSE,	TOOL_SEARCH,	print_sss },
+	{ LDAP_CONTROL_VLVRESPONSE,		TOOL_SEARCH,	print_vlv },
 #ifdef LDAP_CONTROL_X_DEREF
 	{ LDAP_CONTROL_X_DEREF,				TOOL_SEARCH,	print_deref },
 #endif
@@ -266,7 +271,6 @@ void
 tool_common_usage( void )
 {
 	static const char *const descriptions[] = {
-N_("  -c         continuous operation mode (do not stop on errors)\n"),
 N_("  -d level   set LDAP debugging level to `level'\n"),
 N_("  -D binddn  bind DN\n"),
 N_("  -e [!]<ext>[=<extparam>] general extensions (! indicates criticality)\n")
@@ -297,18 +301,15 @@ N_("             [!]sessiontracking\n")
 N_("             abandon, cancel, ignore (SIGINT sends abandon/cancel,\n"
    "             or ignores response; if critical, doesn't wait for SIGINT.\n"
    "             not really controls)\n")
-N_("  -f file    read operations from `file'\n"),
 N_("  -h host    LDAP server\n"),
 N_("  -H URI     LDAP Uniform Resource Identifier(s)\n"),
 N_("  -I         use SASL Interactive mode\n"),
-N_("  -M         enable Manage DSA IT control (-MM to make critical)\n"),
 N_("  -n         show what would be done but don't actually do it\n"),
 N_("  -N         do not use reverse DNS to canonicalize SASL host name\n"),
 N_("  -O props   SASL security properties\n"),
 N_("  -o <opt>[=<optparam] general options\n"),
 N_("             nettimeout=<timeout> (in seconds, or \"none\" or \"max\")\n"),
 N_("  -p port    port on LDAP server\n"),
-N_("  -P version protocol version (default: 3)\n"),
 N_("  -Q         use SASL Quiet mode\n"),
 N_("  -R realm   SASL realm\n"),
 N_("  -U authcid SASL authentication identity\n"),
@@ -1917,11 +1918,51 @@ print_sss( LDAP *ld, LDAPControl *ctrl )
 	rc = ldap_parse_sortresponse_control( ld, ctrl, &err, &attr );
 	if ( rc == LDAP_SUCCESS ) {
 		char buf[ BUFSIZ ];
-		rc = snprintf( buf, sizeof(buf), "(%d) %s %s",
-			err, ldap_err2string(err), attr ? attr : "" );
+		rc = snprintf( buf, sizeof(buf), "(%d) %s%s%s",
+			err, ldap_err2string(err), attr ? " " : "", attr ? attr : "" );
 
 		tool_write_ldif( ldif ? LDIF_PUT_COMMENT : LDIF_PUT_VALUE,
 			"sortResult", buf, rc );
+	}
+
+	return rc;
+}
+
+static int
+print_vlv( LDAP *ld, LDAPControl *ctrl )
+{
+	int rc;
+	ber_int_t err;
+	struct berval bv;
+
+	rc = ldap_parse_vlvresponse_control( ld, ctrl, &vlvPos, &vlvCount,
+		&vlvContext, &err );
+	if ( rc == LDAP_SUCCESS ) {
+		char buf[ BUFSIZ ];
+
+		if ( vlvContext && vlvContext->bv_len > 0 ) {
+			bv.bv_len = LUTIL_BASE64_ENCODE_LEN(
+				vlvContext->bv_len ) + 1;
+			bv.bv_val = ber_memalloc( bv.bv_len + 1 );
+
+			bv.bv_len = lutil_b64_ntop(
+				(unsigned char *) vlvContext->bv_val,
+				vlvContext->bv_len,
+				bv.bv_val, bv.bv_len );
+		} else {
+			bv.bv_val = "";
+			bv.bv_len = 0;
+		}
+
+		rc = snprintf( buf, sizeof(buf), "pos=%d count=%d context=%s (%d) %s",
+			vlvPos, vlvCount, bv.bv_val,
+			err, ldap_err2string(err));
+
+		if ( bv.bv_len )
+			ber_memfree( bv.bv_val );
+
+		tool_write_ldif( ldif ? LDIF_PUT_COMMENT : LDIF_PUT_VALUE,
+			"vlvResult", buf, rc );
 	}
 
 	return rc;
@@ -1971,22 +2012,15 @@ print_deref( LDAP *ld, LDAPControl *ctrl )
 			if ( dv->vals != NULL ) {
 				int j;
 				for ( j = 0; dv->vals[ j ].bv_val != NULL; j++ ) {
-					int k;
-
-					for ( k = 0; k < dv->vals[ j ].bv_len; k++ ) {
-						if ( !isprint( dv->vals[ j ].bv_val[k] ) ) {
-							k = -1;
-							break;
-						}
-					}
+					int k = ldif_is_not_printable( dv->vals[ j ].bv_val, dv->vals[ j ].bv_len );
 
 					*ptr++ = '<';
 					ptr = lutil_strcopy( ptr, dv->type );
-					if ( k == -1 ) {
+					if ( k ) {
 						*ptr++ = ':';
 					}
 					*ptr++ = '=';
-					if ( k == -1 ) {
+					if ( k ) {
 						k = lutil_b64_ntop(
 							(unsigned char *) dv->vals[ j ].bv_val,
 							dv->vals[ j ].bv_len,
@@ -2004,7 +2038,7 @@ print_deref( LDAP *ld, LDAPControl *ctrl )
 		}
 		ptr = lutil_strncopy( ptr, dr->derefVal.bv_val, dr->derefVal.bv_len );
 		*ptr++ = '\n';
-		*ptr++ = '\0';
+		*ptr = '\0';
 		assert( ptr <= buf + len );
 
 		tool_write_ldif( LDIF_PUT_COMMENT, NULL, buf, ptr - buf);

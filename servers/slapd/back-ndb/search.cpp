@@ -1,5 +1,5 @@
 /* search.cpp - tools for slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ndb/search.cpp,v 1.3.2.3 2009/06/12 18:36:51 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ndb/search.cpp,v 1.3.2.4 2009/08/02 21:14:22 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2009 The OpenLDAP Foundation.
@@ -445,7 +445,7 @@ static int ndb_oc_search( Operation *op, SlapReply *rs, Ndb *ndb, NdbTransaction
 
 		dnNormalize( 0, NULL, NULL, &e.e_name, &e.e_nname, op->o_tmpmemctx );
 		{
-#ifdef notdef		/* NDBapi is broken here */
+#if 1	/* NDBapi was broken here but seems to work now */
 			Ndb::Key_part_ptr keys[2];
 			char xbuf[32];
 			keys[0].ptr = &eid;

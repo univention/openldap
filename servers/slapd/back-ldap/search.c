@@ -1,5 +1,5 @@
 /* search.c - ldap backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.201.2.21 2009/03/06 07:14:56 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.201.2.22 2009/08/25 22:58:09 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.
@@ -832,7 +832,9 @@ ldap_build_entry(
 					LBER_FREE( attr->a_nvals[i].bv_val );
 				LBER_FREE( attr->a_vals[i].bv_val );
 				attr->a_numvals--;
-				if ( i < attr->a_numvals ) {
+
+				assert( i >= 0 );
+				if ( (unsigned)i < attr->a_numvals ) {
 					attr->a_vals[i] = attr->a_vals[attr->a_numvals];
 					if ( attr->a_nvals != attr->a_vals )
 						attr->a_nvals[i] = attr->a_nvals[attr->a_numvals];

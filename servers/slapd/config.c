@@ -1,5 +1,5 @@
 /* config.c - configuration file handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.441.2.24 2009/06/02 23:41:32 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.441.2.26 2009/08/02 21:26:43 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -128,6 +128,7 @@ int config_check_vals(ConfigTable *Conf, ConfigArgs *c, int check_only ) {
 	int rc, arg_user, arg_type, arg_syn, iarg;
 	unsigned uiarg;
 	long larg;
+	unsigned long ularg;
 	ber_len_t barg;
 	
 	if(Conf->arg_type == ARG_IGNORED) {
@@ -260,6 +261,16 @@ int config_check_vals(ConfigTable *Conf, ConfigArgs *c, int check_only ) {
 					return(ARG_BAD_CONF);
 				}
 				break;
+			case ARG_ULONG:
+				if ( lutil_atoulx( &ularg, c->argv[1], 0 ) != 0 ) {
+					snprintf( c->cr_msg, sizeof( c->cr_msg ),
+						"<%s> unable to parse \"%s\" as unsigned long",
+						c->argv[0], c->argv[1] );
+					Debug(LDAP_DEBUG_CONFIG|LDAP_DEBUG_NONE, "%s: %s\n",
+						c->log, c->cr_msg, 0);
+					return(ARG_BAD_CONF);
+				}
+				break;
 			case ARG_BER_LEN_T: {
 				unsigned long	l;
 				if ( lutil_atoulx( &l, c->argv[1], 0 ) != 0 ) {
@@ -308,6 +319,7 @@ int config_check_vals(ConfigTable *Conf, ConfigArgs *c, int check_only ) {
 			case ARG_INT:		c->value_int = iarg;		break;
 			case ARG_UINT:		c->value_uint = uiarg;		break;
 			case ARG_LONG:		c->value_long = larg;		break;
+			case ARG_ULONG:		c->value_ulong = ularg;		break;
 			case ARG_BER_LEN_T:	c->value_ber_t = barg;		break;
 		}
 	}
@@ -359,6 +371,7 @@ int config_set_vals(ConfigTable *Conf, ConfigArgs *c) {
 			case ARG_INT: 		*(int*)ptr = c->value_int;			break;
 			case ARG_UINT: 		*(unsigned*)ptr = c->value_uint;			break;
 			case ARG_LONG:  	*(long*)ptr = c->value_long;			break;
+			case ARG_ULONG:  	*(unsigned long*)ptr = c->value_ulong;			break;
 			case ARG_BER_LEN_T: 	*(ber_len_t*)ptr = c->value_ber_t;			break;
 			case ARG_STRING: {
 				char *cc = *(char**)ptr;
@@ -449,6 +462,7 @@ config_get_vals(ConfigTable *cf, ConfigArgs *c)
 		case ARG_INT:	c->value_int = *(int *)ptr; break;
 		case ARG_UINT:	c->value_uint = *(unsigned *)ptr; break;
 		case ARG_LONG:	c->value_long = *(long *)ptr; break;
+		case ARG_ULONG:	c->value_ulong = *(unsigned long *)ptr; break;
 		case ARG_BER_LEN_T:	c->value_ber_t = *(ber_len_t *)ptr; break;
 		case ARG_STRING:
 			if ( *(char **)ptr )
@@ -467,6 +481,7 @@ config_get_vals(ConfigTable *cf, ConfigArgs *c)
 		case ARG_INT: bv.bv_len = snprintf(bv.bv_val, sizeof( c->log ), "%d", c->value_int); break;
 		case ARG_UINT: bv.bv_len = snprintf(bv.bv_val, sizeof( c->log ), "%u", c->value_uint); break;
 		case ARG_LONG: bv.bv_len = snprintf(bv.bv_val, sizeof( c->log ), "%ld", c->value_long); break;
+		case ARG_ULONG: bv.bv_len = snprintf(bv.bv_val, sizeof( c->log ), "%lu", c->value_ulong); break;
 		case ARG_BER_LEN_T: bv.bv_len = snprintf(bv.bv_val, sizeof( c->log ), "%ld", c->value_ber_t); break;
 		case ARG_ON_OFF: bv.bv_len = snprintf(bv.bv_val, sizeof( c->log ), "%s",
 			c->value_int ? "TRUE" : "FALSE"); break;
@@ -2110,4 +2125,67 @@ int config_generic_wrapper( Backend *be, const char *fname, int lineno,
 		rc = config_add_vals( ct, &c );
 	}
 	return rc;
+}
+
+/* See if the given URL (in plain and parsed form) matches
+ * any of the server's listener addresses. Return matching
+ * Listener or NULL for no match.
+ */
+Listener *config_check_my_url( const char *url, LDAPURLDesc *lud )
+{
+	Listener **l = slapd_get_listeners();
+	int i, isMe;
+
+	/* Try a straight compare with Listener strings */
+	for ( i=0; l && l[i]; i++ ) {
+		if ( !strcasecmp( url, l[i]->sl_url.bv_val )) {
+			return l[i];
+		}
+	}
+
+	isMe = 0;
+	/* If hostname is empty, or is localhost, or matches
+	 * our hostname, this url refers to this host.
+	 * Compare it against listeners and ports.
+	 */
+	if ( !lud->lud_host || !lud->lud_host[0] ||
+		!strncasecmp("localhost", lud->lud_host,
+			STRLENOF("localhost")) ||
+		!strcasecmp( global_host, lud->lud_host )) {
+
+		for ( i=0; l && l[i]; i++ ) {
+			LDAPURLDesc *lu2;
+			ldap_url_parse( l[i]->sl_url.bv_val, &lu2 );
+			do {
+				if ( strcasecmp( lud->lud_scheme,
+					lu2->lud_scheme ))
+					break;
+				if ( lud->lud_port != lu2->lud_port )
+					break;
+				/* Listener on ANY address */
+				if ( !lu2->lud_host || !lu2->lud_host[0] ) {
+					isMe = 1;
+					break;
+				}
+				/* URL on ANY address */
+				if ( !lud->lud_host || !lud->lud_host[0] ) {
+					isMe = 1;
+					break;
+				}
+				/* Listener has specific host, must
+				 * match it
+				 */
+				if ( !strcasecmp( lud->lud_host,
+					lu2->lud_host )) {
+					isMe = 1;
+					break;
+				}
+			} while(0);
+			ldap_free_urldesc( lu2 );
+			if ( isMe ) {
+				return l[i];
+			}
+		}
+	}
+	return NULL;
 }

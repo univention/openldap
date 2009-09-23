@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/search.c,v 1.181.2.8 2009/01/22 00:01:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/search.c,v 1.181.2.9 2009/07/27 20:19:18 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -152,7 +152,7 @@ do_search(
 		const char *dummy;	/* ignore msgs from bv2ad */
 		op->ors_attrs[i].an_desc = NULL;
 		op->ors_attrs[i].an_oc = NULL;
-		op->ors_attrs[i].an_oc_exclude = 0;
+		op->ors_attrs[i].an_flags = 0;
 		if ( slap_bv2ad( &op->ors_attrs[i].an_name,
 			&op->ors_attrs[i].an_desc, &dummy ) != LDAP_SUCCESS )
 		{

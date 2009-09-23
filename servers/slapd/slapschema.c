@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapschema.c,v 1.1.2.2 2009/06/02 22:36:18 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapschema.c,v 1.1.2.3 2009/07/22 20:28:47 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -49,6 +49,7 @@ slapschema( int argc, char **argv )
 	Connection conn = { 0 };
 	OperationBuffer	opbuf;
 	Operation *op = NULL;
+	void *thrctx;
 
 	slap_tool_init( progname, SLAPCAT, argc, argv );
 
@@ -78,7 +79,8 @@ slapschema( int argc, char **argv )
 		exit( EXIT_FAILURE );
 	}
 
-	connection_fake_init( &conn, &opbuf, &conn );
+	thrctx = ldap_pvt_thread_pool_context();
+	connection_fake_init( &conn, &opbuf, thrctx );
 	op = &opbuf.ob_op;
 	op->o_tmpmemctx = NULL;
 	op->o_bd = be;

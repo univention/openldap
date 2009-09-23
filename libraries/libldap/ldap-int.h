@@ -1,5 +1,5 @@
 /*  ldap-int.h - defines & prototypes internal to the LDAP library */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.168.2.15 2009/05/01 19:39:03 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.168.2.16 2009/08/12 23:40:55 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -243,6 +243,14 @@ struct ldapoptions {
 #define LDAP_GSSAPI_OPT_ALLOW_REMOTE_PRINCIPAL	0x0002
 	unsigned ldo_gssapi_options;
 #endif
+
+	/*
+	 * Per connection tcp-keepalive settings (Linux only,
+	 * ignored where unsupported)
+	 */
+	ber_int_t ldo_keepalive_idle;
+	ber_int_t ldo_keepalive_probes;
+	ber_int_t ldo_keepalive_interval;
 
 	int		ldo_refhoplimit;	/* limit on referral nesting */
 

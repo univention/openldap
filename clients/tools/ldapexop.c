@@ -1,5 +1,5 @@
 /* ldapexop.c -- a tool for performing well-known extended operations */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapexop.c,v 1.9.2.5 2009/01/22 00:00:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapexop.c,v 1.9.2.6 2009/08/14 20:51:14 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2009 The OpenLDAP Foundation.
@@ -43,6 +43,9 @@ usage( void )
 {
 	fprintf( stderr, _("Issue LDAP extended operations\n\n"));
 	fprintf( stderr, _("usage: %s [options] <oid|oid:data|oid::b64data>\n"), prog);
+	fprintf( stderr, _("       %s [options] whoami\n"), prog);
+	fprintf( stderr, _("       %s [options] cancel <id>\n"), prog);
+	fprintf( stderr, _("       %s [options] refresh <DN> [<ttl>]\n"), prog);
 	tool_common_usage();
 	exit( EXIT_FAILURE );
 }
@@ -152,8 +155,6 @@ main( int argc, char *argv[] )
 		case 2:
 			dn.bv_val = argv[ 1 ];
 			dn.bv_len = strlen( dn.bv_val );
-
-		case 1:
 			break;
 
 		default:

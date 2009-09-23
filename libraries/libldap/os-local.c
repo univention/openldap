@@ -1,5 +1,5 @@
 /* os-local.c -- platform-specific domain socket code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.44.2.8 2009/02/17 21:02:51 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.44.2.9 2009/08/12 23:48:32 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -234,7 +234,7 @@ sendcred:
 				msg.msg_accrights = (char *)fds;
 				msg.msg_accrightslen = sizeof(int);
 # endif /* HAVE_STRUCT_MSGHDR_MSG_CONTROL */
-				getpeername( s, sa, &salen );
+				getpeername( s, (struct sockaddr *) sa, &salen );
 				fchmod( fds[0], S_ISUID|S_IRWXU );
 				write( fds[1], sa, salen );
 				sendmsg( s, &msg, 0 );

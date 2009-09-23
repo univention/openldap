@@ -1,5 +1,5 @@
 /* result.c - routines to send ldap results, errors, and referrals */
-/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.289.2.28 2009/07/01 17:01:58 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.289.2.30 2009/08/13 00:02:37 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -302,11 +302,11 @@ send_ldap_controls( Operation *o, BerElement *ber, LDAPControl **c )
 
 		ber_printf( sber, "{e}", LDAP_UNWILLING_TO_PERFORM );
 
-		if( ber_flatten2( ber, &sorted.ldctl_value, 0 ) == -1 ) {
+		if( ber_flatten2( sber, &sorted.ldctl_value, 0 ) == -1 ) {
 			return -1;
 		}
 
-		(void) ber_free_buf( ber );
+		(void) ber_free_buf( sber );
 
 		rc = send_ldap_control( ber, &sorted );
 		if( rc == -1 ) return rc;
@@ -616,6 +616,7 @@ send_ldap_disconnect( Operation	*op, SlapReply *rs )
 	assert( LDAP_UNSOLICITED_ERROR( rs->sr_err ) );
 
 	rs->sr_type = REP_EXTENDED;
+	rs->sr_rspdata = NULL;
 
 	Debug( LDAP_DEBUG_TRACE,
 		"send_ldap_disconnect %d:%s\n",

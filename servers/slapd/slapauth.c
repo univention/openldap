@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapauth.c,v 1.10.2.5 2009/01/22 00:01:03 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapauth.c,v 1.10.2.6 2009/07/22 20:28:47 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2009 The OpenLDAP Foundation.
@@ -83,13 +83,15 @@ slapauth( int argc, char **argv )
 	Connection		conn = {0};
 	OperationBuffer	opbuf;
 	Operation		*op;
+	void			*thrctx;
 
 	slap_tool_init( progname, SLAPAUTH, argc, argv );
 
 	argv = &argv[ optind ];
 	argc -= optind;
 
-	connection_fake_init( &conn, &opbuf, &conn );
+	thrctx = ldap_pvt_thread_pool_context();
+	connection_fake_init( &conn, &opbuf, thrctx );
 	op = &opbuf.ob_op;
 
 	conn.c_sasl_bind_mech = mech;

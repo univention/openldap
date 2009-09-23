@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.133.2.13 2009/02/08 06:06:04 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.133.2.15 2009/08/25 23:04:13 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -1013,6 +1013,31 @@ ldap_int_sasl_get_option( LDAP *ld, int option, void *arg )
 			*(int *)arg = (int) LDAP_BOOL_GET(&ld->ld_options, LDAP_BOOL_SASL_NOCANON );
 			break;
 
+		case LDAP_OPT_X_SASL_USERNAME: {
+			int sc;
+			char *username;
+			sasl_conn_t *ctx;
+
+			if( ld->ld_defconn == NULL ) {
+				return -1;
+			}
+
+			ctx = ld->ld_defconn->lconn_sasl_authctx;
+
+			if ( ctx == NULL ) {
+				return -1;
+			}
+
+			sc = sasl_getprop( ctx, SASL_USERNAME,
+				(SASL_CONST void **)(char **) &username );
+
+			if ( sc != SASL_OK ) {
+				return -1;
+			}
+
+			*(char **)arg = username ? LDAP_STRDUP( username ) : NULL;
+		} break;
+
 		case LDAP_OPT_X_SASL_SECPROPS:
 			/* this option is write only */
 			return -1;
@@ -1034,6 +1059,7 @@ ldap_int_sasl_set_option( LDAP *ld, int option, void *arg )
 
 	switch ( option ) {
 	case LDAP_OPT_X_SASL_SSF:
+	case LDAP_OPT_X_SASL_USERNAME:
 		/* This option is read-only */
 		return -1;
 

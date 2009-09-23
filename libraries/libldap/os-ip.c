@@ -1,5 +1,5 @@
 /* os-ip.c -- platform-specific TCP & UDP related code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.118.2.15 2009/02/17 21:02:51 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.118.2.19 2009/08/14 20:31:32 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -141,6 +141,57 @@ ldap_int_prepare_socket(LDAP *ld, int s, int proto )
 			osip_debug( ld, "ldap_prepare_socket: "
 				"setsockopt(%d, SO_KEEPALIVE) failed (ignored).\n",
 				s, 0, 0 );
+		}
+		if ( ld->ld_options.ldo_keepalive_idle > 0 )
+		{
+#ifdef TCP_KEEPIDLE
+			if ( setsockopt( s, IPPROTO_TCP, TCP_KEEPIDLE,
+					(void*) &ld->ld_options.ldo_keepalive_idle,
+					sizeof(ld->ld_options.ldo_keepalive_idle) ) == AC_SOCKET_ERROR )
+			{
+				osip_debug( ld, "ldap_prepare_socket: "
+					"setsockopt(%d, TCP_KEEPIDLE) failed (ignored).\n",
+					s, 0, 0 );
+			}
+#else
+			osip_debug( ld, "ldap_prepare_socket: "
+					"sockopt TCP_KEEPIDLE not supported on this system.\n", 
+					0, 0, 0 );
+#endif /* TCP_KEEPIDLE */
+		}
+		if ( ld->ld_options.ldo_keepalive_probes > 0 )
+		{
+#ifdef TCP_KEEPCNT
+			if ( setsockopt( s, IPPROTO_TCP, TCP_KEEPCNT,
+					(void*) &ld->ld_options.ldo_keepalive_probes,
+					sizeof(ld->ld_options.ldo_keepalive_probes) ) == AC_SOCKET_ERROR )
+			{
+				osip_debug( ld, "ldap_prepare_socket: "
+					"setsockopt(%d, TCP_KEEPCNT) failed (ignored).\n",
+					s, 0, 0 );
+			}
+#else
+			osip_debug( ld, "ldap_prepare_socket: "
+					"sockopt TCP_KEEPCNT not supported on this system.\n", 
+					0, 0, 0 );
+#endif /* TCP_KEEPCNT */
+		}
+		if ( ld->ld_options.ldo_keepalive_interval > 0 )
+		{
+#ifdef TCP_KEEPINTVL
+			if ( setsockopt( s, IPPROTO_TCP, TCP_KEEPINTVL,
+					(void*) &ld->ld_options.ldo_keepalive_interval,
+					sizeof(ld->ld_options.ldo_keepalive_interval) ) == AC_SOCKET_ERROR )
+			{
+				osip_debug( ld, "ldap_prepare_socket: "
+					"setsockopt(%d, TCP_KEEPINTVL) failed (ignored).\n",
+					s, 0, 0 );
+			} 
+#else
+			osip_debug( ld, "ldap_prepare_socket: "
+					"sockopt TCP_KEEPINTVL not supported on this system.\n", 
+					0, 0, 0 );
+#endif /* TCP_KEEPINTVL */
 		}
 #endif /* SO_KEEPALIVE */
 #ifdef TCP_NODELAY

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/entry-id.c,v 1.67.2.8 2009/02/17 19:14:41 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/entry-id.c,v 1.67.2.10 2009/08/14 21:04:55 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.
@@ -934,15 +934,7 @@ backsql_id2entry( backsql_srch_info *bsi, backsql_entryID *eid )
 	memset( bsi->bsi_e, 0, sizeof( Entry ) );
 
 	if ( bi->sql_baseObject && BACKSQL_IS_BASEOBJECT_ID( &eid->eid_id ) ) {
-		Entry	*e;
-
-		e = entry_dup( bi->sql_baseObject );
-		if ( e == NULL ) {
-			return LDAP_NO_MEMORY;
-		}
-			
-		*bsi->bsi_e = *e;
-		free( e );
+		(void)entry_dup2( bsi->bsi_e, bi->sql_baseObject );
 		goto done;
 	}
 

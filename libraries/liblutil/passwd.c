@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/passwd.c,v 1.104.2.8 2009/07/06 19:31:49 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/passwd.c,v 1.104.2.9 2009/08/30 22:55:47 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -45,7 +45,14 @@ typedef des_key_schedule des_context;
 #define des_finish(key, schedule) 
 
 #elif defined(HAVE_MOZNSS)
-#	include <pk11pub.h>
+/*
+  hack hack hack
+  We need to define this here so that nspr/obsolete/protypes.h will not be included
+  if that file is included, it will create a uint32 typedef that will cause the
+  one in lutil_sha1.h to blow up
+*/
+#define PROTYPES_H 1
+#	include <nss/pk11pub.h>
 typedef PK11SymKey *des_key;
 typedef unsigned char des_data_block[8];
 typedef PK11Context *des_context[1];

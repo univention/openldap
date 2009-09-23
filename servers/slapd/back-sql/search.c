@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/search.c,v 1.117.2.11 2009/06/02 22:28:46 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/search.c,v 1.117.2.12 2009/08/13 00:28:18 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.
@@ -721,6 +721,16 @@ backsql_process_filter( backsql_srch_info *bsi, Filter *f )
 		goto done;
 	}
 
+	if ( f->f_choice & SLAPD_FILTER_UNDEFINED ) {
+		backsql_strfcat_x( &bsi->bsi_flt_where,
+			bsi->bsi_op->o_tmpmemctx,
+			"l",
+			(ber_len_t)STRLENOF( "1=0" ), "1=0" );
+		done = 1;
+		rc = 1;
+		goto done;
+	}
+
 	switch( f->f_choice ) {
 	case LDAP_FILTER_OR:
 		rc = backsql_process_filter_list( bsi, f->f_or, 
@@ -1194,6 +1204,14 @@ backsql_process_filter_attr( backsql_srch_info *bsi, Filter *f, backsql_at_map_r
 				"lb",
 				(ber_len_t)STRLENOF( " AND " ), " AND ",
 				&at->bam_join_where );
+	}
+
+	if ( f->f_choice & SLAPD_FILTER_UNDEFINED ) {
+		backsql_strfcat_x( &bsi->bsi_flt_where,
+			bsi->bsi_op->o_tmpmemctx,
+			"l",
+			(ber_len_t)STRLENOF( "1=0" ), "1=0" );
+		return 1;
 	}
 
 	switch ( f->f_choice ) {

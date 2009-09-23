@@ -1,5 +1,5 @@
 /* syncrepl.c -- Replication Engine which uses the LDAP Sync protocol */
-/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.254.2.80 2009/06/11 21:53:44 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.254.2.85 2009/08/25 23:43:35 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2009 The OpenLDAP Foundation.
@@ -1620,6 +1620,13 @@ syncrepl_message_to_op(
 	op->o_tag = LBER_DEFAULT;
 	op->o_bd = si->si_wbe;
 
+	if ( BER_BVISEMPTY( &bdn ) && !BER_BVISEMPTY( &op->o_bd->be_nsuffix[0] ) ) {
+		Debug( LDAP_DEBUG_ANY,
+			"syncrepl_message_to_op: %s got empty dn",
+			si->si_ridtxt, 0, 0 );
+		return LDAP_OTHER;
+	}
+
 	while (( rc = ldap_get_attribute_ber( si->si_ld, msg, ber, &bv, &bvals ) )
 		== LDAP_SUCCESS ) {
 		if ( bv.bv_val == NULL )
@@ -1855,6 +1862,13 @@ syncrepl_message_to_entry(
 			"syncrepl_message_to_entry: %s dn get failed (%d)",
 			si->si_ridtxt, rc, 0 );
 		return rc;
+	}
+
+	if ( BER_BVISEMPTY( &bdn ) && !BER_BVISEMPTY( &op->o_bd->be_nsuffix[0] ) ) {
+		Debug( LDAP_DEBUG_ANY,
+			"syncrepl_message_to_entry: %s got empty dn",
+			si->si_ridtxt, 0, 0 );
+		return LDAP_OTHER;
 	}
 
 	if ( syncstate == LDAP_SYNC_PRESENT || syncstate == LDAP_SYNC_DELETE ) {
@@ -3088,6 +3102,10 @@ syncrepl_updateCookie(
 	return rc;
 }
 
+/* Compare the attribute from the old entry to the one in the new
+ * entry. The Modifications from the new entry will either be left
+ * in place, or changed to an Add or Delete as needed.
+ */
 static void
 attr_cmp( Operation *op, Attribute *old, Attribute *new,
 	Modifications ***mret, Modifications ***mcur )
@@ -3231,6 +3249,86 @@ attr_cmp( Operation *op, Attribute *old, Attribute *new,
 	*mret = modtail;
 }
 
+/* Generate a set of modifications to change the old entry into the
+ * new one. On input ml is a list of modifications equivalent to
+ * the new entry. It will be massaged and the result will be stored
+ * in mods.
+ */
+void syncrepl_diff_entry( Operation *op, Attribute *old, Attribute *new,
+	Modifications **mods, Modifications **ml, int is_ctx)
+{
+	Modifications **modtail = mods;
+
+	/* We assume that attributes are saved in the same order
+	 * in the remote and local databases. So if we walk through
+	 * the attributeDescriptions one by one they should match in
+	 * lock step. If not, look for an add or delete.
+	 */
+	while ( old && new )
+	{
+		/* If we've seen this before, use its mod now */
+		if ( new->a_flags & SLAP_ATTR_IXADD ) {
+			attr_cmp( op, NULL, new, &modtail, &ml );
+			new = new->a_next;
+			continue;
+		}
+		/* Skip contextCSN */
+		if ( is_ctx && old->a_desc ==
+			slap_schema.si_ad_contextCSN ) {
+			old = old->a_next;
+			continue;
+		}
+
+		if ( old->a_desc != new->a_desc ) {
+			Modifications *mod;
+			Attribute *tmp;
+
+			/* If it's just been re-added later,
+			 * remember that we've seen it.
+			 */
+			tmp = attr_find( new, old->a_desc );
+			if ( tmp ) {
+				tmp->a_flags |= SLAP_ATTR_IXADD;
+			} else {
+				/* If it's a new attribute, pull it in.
+				 */
+				tmp = attr_find( old, new->a_desc );
+				if ( !tmp ) {
+					attr_cmp( op, NULL, new, &modtail, &ml );
+					new = new->a_next;
+					continue;
+				}
+				/* Delete old attr */
+				mod = ch_malloc( sizeof( Modifications ) );
+				mod->sml_op = LDAP_MOD_DELETE;
+				mod->sml_flags = 0;
+				mod->sml_desc = old->a_desc;
+				mod->sml_type = mod->sml_desc->ad_cname;
+				mod->sml_numvals = 0;
+				mod->sml_values = NULL;
+				mod->sml_nvalues = NULL;
+				*modtail = mod;
+				modtail = &mod->sml_next;
+			}
+			old = old->a_next;
+			continue;
+		}
+		/* kludge - always update modifiersName so that it
+		 * stays co-located with the other mod opattrs. But only
+		 * if we know there are other valid mods.
+		 */
+		if ( *mods && ( old->a_desc == slap_schema.si_ad_modifiersName ||
+			old->a_desc == slap_schema.si_ad_modifyTimestamp ))
+			attr_cmp( op, NULL, new, &modtail, &ml );
+		else
+			attr_cmp( op, old, new, &modtail, &ml );
+		new = new->a_next;
+		old = old->a_next;
+	}
+	*modtail = *ml;
+	*ml = NULL;
+}
+
 static int
 dn_callback(
 	Operation*	op,
@@ -3351,78 +3449,9 @@ dn_callback(
 					 */
 				}
 
-				modtail = &dni->mods;
-				ml = dni->modlist;
-
-				/* We assume that attributes are saved in the same order
-				 * in the remote and local databases. So if we walk through
-				 * the attributeDescriptions one by one they should match in
-				 * lock step. If not, look for an add or delete.
-				 */
-				for ( old = rs->sr_entry->e_attrs, new = dni->new_entry->e_attrs;
-						old && new; )
-				{
-					/* If we've seen this before, use its mod now */
-					if ( new->a_flags & SLAP_ATTR_IXADD ) {
-						attr_cmp( op, NULL, new, &modtail, &ml );
-						new = new->a_next;
-						continue;
-					}
-					/* Skip contextCSN */
-					if ( is_ctx && old->a_desc ==
-						slap_schema.si_ad_contextCSN ) {
-						old = old->a_next;
-						continue;
-					}
-
-					if ( old->a_desc != new->a_desc ) {
-						Modifications *mod;
-						Attribute *tmp;
-
-						/* If it's just been re-added later,
-						 * remember that we've seen it.
-						 */
-						tmp = attr_find( new, old->a_desc );
-						if ( tmp ) {
-							tmp->a_flags |= SLAP_ATTR_IXADD;
-						} else {
-							/* If it's a new attribute, pull it in.
-							 */
-							tmp = attr_find( old, new->a_desc );
-							if ( !tmp ) {
-								attr_cmp( op, NULL, new, &modtail, &ml );
-								new = new->a_next;
-								continue;
-							}
-							/* Delete old attr */
-							mod = ch_malloc( sizeof( Modifications ) );
-							mod->sml_op = LDAP_MOD_DELETE;
-							mod->sml_flags = 0;
-							mod->sml_desc = old->a_desc;
-							mod->sml_type = mod->sml_desc->ad_cname;
-							mod->sml_numvals = 0;
-							mod->sml_values = NULL;
-							mod->sml_nvalues = NULL;
-							*modtail = mod;
-							modtail = &mod->sml_next;
-						}
-						old = old->a_next;
-						continue;
-					}
-					/* kludge - always update modifiersName so that it
-					 * stays co-located with the other mod opattrs. But only
-					 * if we know there are other valid mods.
-					 */
-					if ( dni->mods && ( old->a_desc == slap_schema.si_ad_modifiersName ||
-						old->a_desc == slap_schema.si_ad_modifyTimestamp ))
-						attr_cmp( op, NULL, new, &modtail, &ml );
-					else
-						attr_cmp( op, old, new, &modtail, &ml );
-					new = new->a_next;
-					old = old->a_next;
-				}
-				*modtail = *ml;
-				*ml = NULL;
+				syncrepl_diff_entry( op, rs->sr_entry->e_attrs,
+					dni->new_entry->e_attrs, &dni->mods, dni->modlist,
+					is_ctx );
 			}
 		}
 	} else if ( rs->sr_type == REP_RESULT ) {
@@ -3729,12 +3758,14 @@ syncinfo_free( syncinfo_t *sie, int free_all )
 			}
 			ch_free( npe );
 		}
-		sie->si_cookieState->cs_ref--;
-		if ( !sie->si_cookieState->cs_ref ) {
-			ch_free( sie->si_cookieState->cs_sids );
-			ber_bvarray_free( sie->si_cookieState->cs_vals );
-			ldap_pvt_thread_mutex_destroy( &sie->si_cookieState->cs_mutex );
-			ch_free( sie->si_cookieState );
+		if ( sie->si_cookieState ) {
+			sie->si_cookieState->cs_ref--;
+			if ( !sie->si_cookieState->cs_ref ) {
+				ch_free( sie->si_cookieState->cs_sids );
+				ber_bvarray_free( sie->si_cookieState->cs_vals );
+				ldap_pvt_thread_mutex_destroy( &sie->si_cookieState->cs_mutex );
+				ch_free( sie->si_cookieState );
+			}
 		}
 		ch_free( sie );
 		sie = si_next;
@@ -3789,21 +3820,6 @@ enum {
 
 /* check */
 	GOT_REQUIRED		= (GOT_RID|GOT_PROVIDER|GOT_SEARCHBASE)
-};
-
-static struct {
-	struct berval key;
-	int val;
-} scopes[] = {
-	{ BER_BVC("base"), LDAP_SCOPE_BASE },
-	{ BER_BVC("one"), LDAP_SCOPE_ONELEVEL },
-	{ BER_BVC("onelevel"), LDAP_SCOPE_ONELEVEL },	/* OpenLDAP extension */
-	{ BER_BVC("children"), LDAP_SCOPE_SUBORDINATE },
-	{ BER_BVC("subord"), LDAP_SCOPE_SUBORDINATE },
-	{ BER_BVC("subordinate"), LDAP_SCOPE_SUBORDINATE },
-	{ BER_BVC("sub"), LDAP_SCOPE_SUBTREE },
-	{ BER_BVC("subtree"), LDAP_SCOPE_SUBTREE },	/* OpenLDAP extension */
-	{ BER_BVNULL, 0 }
 };
 
 static slap_verbmasks datamodes[] = {
@@ -4023,19 +4039,15 @@ parse_syncrepl_line(
 		{
 			int j;
 			val = c->argv[ i ] + STRLENOF( SCOPESTR "=" );
-			for ( j = 0; !BER_BVISNULL(&scopes[j].key); j++ ) {
-				if (!strcasecmp( val, scopes[j].key.bv_val ) ) {
-					si->si_scope = scopes[j].val;
-					break;
-				}
-			}
-			if ( BER_BVISNULL(&scopes[j].key) ) {
+			j = ldap_pvt_str2scope( val );
+			if ( j < 0 ) {
 				snprintf( c->cr_msg, sizeof( c->cr_msg ),
 					"Error: parse_syncrepl_line: "
 					"unknown scope \"%s\"", val);
 				Debug( LDAP_DEBUG_ANY, "%s: %s.\n", c->log, c->cr_msg, 0 );
 				return -1;
 			}
+			si->si_scope = j;
 			si->si_got |= GOT_SCOPE;
 		} else if ( !strncasecmp( c->argv[ i ], ATTRSONLYSTR,
 					STRLENOF( ATTRSONLYSTR ) ) )
@@ -4332,6 +4344,8 @@ add_syncrepl(
 	rc = parse_syncrepl_line( c, si );
 
 	if ( rc == 0 ) {
+		LDAPURLDesc *lud;
+
 		/* Must be LDAPv3 because we need controls */
 		switch ( si->si_bindconf.sb_version ) {
 		case 0:
@@ -4349,24 +4363,35 @@ add_syncrepl(
 			return 1;
 		}
 
+		if ( ldap_url_parse( si->si_bindconf.sb_uri.bv_val, &lud )) {
+			snprintf( c->cr_msg, sizeof( c->cr_msg ),
+				"<%s> invalid URL", c->argv[0] );
+			Debug( LDAP_DEBUG_ANY, "%s: %s %s\n",
+				c->log, c->cr_msg, si->si_bindconf.sb_uri.bv_val );
+			return 1;
+		}
+
 		si->si_be = c->be;
 		if ( slapMode & SLAP_SERVER_MODE ) {
-			Listener **l = slapd_get_listeners();
 			int isMe = 0;
-
-			/* check if URL points to current server. If so, ignore
-			 * this configuration. We require an exact match. Just
-			 * in case they really want to do this, they can vary
-			 * the case of the URL to allow it.
+			/* check if consumer points to current server and database.
+			 * If so, ignore this configuration.
 			 */
-			if ( l && !SLAP_DBHIDDEN( c->be ) ) {
+			if ( !SLAP_DBHIDDEN( c->be ) ) {
 				int i;
-				for ( i=0; l[i]; i++ ) {
-					if ( bvmatch( &l[i]->sl_url, &si->si_bindconf.sb_uri ) ) {
+				/* if searchbase doesn't match current DB suffix,
+				 * assume it's different
+				 */
+				for ( i=0; !BER_BVISNULL( &c->be->be_nsuffix[i] ); i++ ) {
+					if ( bvmatch( &si->si_base, &c->be->be_nsuffix[i] )) {
 						isMe = 1;
 						break;
 					}
 				}
+				/* if searchbase matches, see if URLs match */
+				if ( isMe && config_check_my_url( si->si_bindconf.sb_uri.bv_val,
+						lud ) == NULL )
+					isMe = 0;
 			}
 
 			if ( !isMe ) {
@@ -4385,6 +4410,7 @@ add_syncrepl(
 			/* mirrormode still needs to see this flag in tool mode */
 			rc = config_sync_shadow( c ) ? -1 : 0;
 		}
+		ldap_free_urldesc( lud );
 	}
 
 #ifdef HAVE_TLS
@@ -4425,7 +4451,7 @@ add_syncrepl(
 static void
 syncrepl_unparse( syncinfo_t *si, struct berval *bv )
 {
-	struct berval bc, uri;
+	struct berval bc, uri, bs;
 	char buf[BUFSIZ*2], *ptr;
 	ber_len_t len;
 	int i;
@@ -4479,13 +4505,10 @@ syncrepl_unparse( syncinfo_t *si, struct berval *bv )
 		ptr = lutil_strcopy( ptr, si->si_logbase.bv_val );
 		*ptr++ = '"';
 	}
-	for (i=0; !BER_BVISNULL(&scopes[i].key);i++) {
-		if ( si->si_scope == scopes[i].val ) {
-			if ( WHATSLEFT <= STRLENOF( " " SCOPESTR "=" ) + scopes[i].key.bv_len ) return;
-			ptr = lutil_strcopy( ptr, " " SCOPESTR "=" );
-			ptr = lutil_strcopy( ptr, scopes[i].key.bv_val );
-			break;
-		}
+	if ( ldap_pvt_scope2bv( si->si_scope, &bs ) == LDAP_SUCCESS ) {
+		if ( WHATSLEFT <= STRLENOF( " " SCOPESTR "=" ) + bs.bv_len ) return;
+		ptr = lutil_strcopy( ptr, " " SCOPESTR "=" );
+		ptr = lutil_strcopy( ptr, bs.bv_val );
 	}
 	if ( si->si_attrsonly ) {
 		if ( WHATSLEFT <= STRLENOF( " " ATTRSONLYSTR "=\"" "\"" ) ) return;

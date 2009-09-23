@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/search.c,v 1.146.2.22 2009/03/05 18:22:15 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/search.c,v 1.146.2.23 2009/08/14 20:54:14 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.
@@ -199,7 +199,7 @@ meta_search_dobind_init(
 		 * because the connection is not shared until bind is over */
 		if ( !BER_BVISNULL( &binddn ) ) {
 			ber_bvreplace( &msc->msc_bound_ndn, &binddn );
-			if ( LDAP_BACK_SAVECRED( mi ) && !BER_BVISNULL( &cred ) ) {
+			if ( META_BACK_TGT_SAVECRED( mt ) && !BER_BVISNULL( &cred ) ) {
 				if ( !BER_BVISNULL( &msc->msc_cred ) ) {
 					memset( msc->msc_cred.bv_val, 0,
 						msc->msc_cred.bv_len );

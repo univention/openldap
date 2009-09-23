@@ -1,5 +1,5 @@
 /* config.c - bdb backend configuration file routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/config.c,v 1.91.2.16 2009/01/22 00:01:05 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/config.c,v 1.91.2.18 2009/08/25 22:58:09 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2009 The OpenLDAP Foundation.
@@ -61,12 +61,12 @@ static ConfigTable bdbcfg[] = {
 			"DESC 'Directory for database content' "
 			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
-	{ "cachefree", "size", 2, 2, 0, ARG_UINT|ARG_OFFSET,
+	{ "cachefree", "size", 2, 2, 0, ARG_ULONG|ARG_OFFSET,
 		(void *)offsetof(struct bdb_info, bi_cache.c_minfree),
 		"( OLcfgDbAt:1.11 NAME 'olcDbCacheFree' "
 			"DESC 'Number of extra entries to free when max is reached' "
 			"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
-	{ "cachesize", "size", 2, 2, 0, ARG_UINT|ARG_OFFSET,
+	{ "cachesize", "size", 2, 2, 0, ARG_ULONG|ARG_OFFSET,
 		(void *)offsetof(struct bdb_info, bi_cache.c_maxsize),
 		"( OLcfgDbAt:1.1 NAME 'olcDbCacheSize' "
 			"DESC 'Entry cache size in entries' "
@@ -109,12 +109,12 @@ static ConfigTable bdbcfg[] = {
 		"( OLcfgDbAt:1.5 NAME 'olcDbDirtyRead' "
 		"DESC 'Allow reads of uncommitted data' "
 		"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
-	{ "dncachesize", "size", 2, 2, 0, ARG_UINT|ARG_OFFSET,
+	{ "dncachesize", "size", 2, 2, 0, ARG_ULONG|ARG_OFFSET,
 		(void *)offsetof(struct bdb_info, bi_cache.c_eimax),
 		"( OLcfgDbAt:1.12 NAME 'olcDbDNcacheSize' "
 			"DESC 'DN cache size' "
 			"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
-	{ "idlcachesize", "size", 2, 2, 0, ARG_UINT|ARG_OFFSET,
+	{ "idlcachesize", "size", 2, 2, 0, ARG_ULONG|ARG_OFFSET,
 		(void *)offsetof(struct bdb_info, bi_idl_cache_max_size),
 		"( OLcfgDbAt:1.6 NAME 'olcDbIDLcacheSize' "
 		"DESC 'IDL cache size in IDLs' "
@@ -487,7 +487,7 @@ bdb_cf_gen( ConfigArgs *c )
 			if ( bdb->bi_lock_detect != DB_LOCK_DEFAULT ) {
 				int i;
 				for (i=0; !BER_BVISNULL(&bdb_lockd[i].word); i++) {
-					if ( bdb->bi_lock_detect == bdb_lockd[i].mask ) {
+					if ( bdb->bi_lock_detect == (u_int32_t)bdb_lockd[i].mask ) {
 						value_add_one( &c->rvalue_vals, &bdb_lockd[i].word );
 						rc = 0;
 						break;
@@ -890,7 +890,7 @@ bdb_cf_gen( ConfigArgs *c )
 				c->log, c->argv[1] );
 			return 1;
 		}
-		bdb->bi_lock_detect = rc;
+		bdb->bi_lock_detect = (u_int32_t)rc;
 		break;
 
 	case BDB_SSTACK:

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.239.2.17 2009/06/02 22:09:53 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.239.2.18 2009/08/13 00:02:37 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -1540,7 +1540,7 @@ int slap_sasl_bind( Operation *op, SlapReply *rs )
 		}
 
 		/* Must send response using old security layer */
-		if (response.bv_len) rs->sr_sasldata = &response;
+		rs->sr_sasldata = (response.bv_len ? &response : NULL);
 		send_ldap_sasl( op, rs );
 		
 		/* Now dispose of the old security layer.

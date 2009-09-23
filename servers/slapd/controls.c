@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/controls.c,v 1.174.2.19 2009/04/29 01:55:17 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/controls.c,v 1.174.2.20 2009/07/27 20:19:18 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -1414,7 +1414,7 @@ parseReadAttrs(
 
 		an[i].an_desc = NULL;
 		an[i].an_oc = NULL;
-		an[i].an_oc_exclude = 0;
+		an[i].an_flags = 0;
 		rc = slap_bv2ad( &an[i].an_name, &an[i].an_desc, &dummy );
 		if ( rc == LDAP_SUCCESS ) {
 			an[i].an_name = an[i].an_desc->ad_cname;

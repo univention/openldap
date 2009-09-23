@@ -1,11 +1,29 @@
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/sha2/slapd-sha2.c,v 1.1.2.1 2009/01/26 21:07:06 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/sha2/slapd-sha2.c,v 1.1.2.3 2009/08/17 22:57:54 quanah Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>.
+ *
+ * Copyright 2009 The OpenLDAP Foundation.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
+ * Public License.
+ *
+ * A copy of this license is available in the file LICENSE in the
+ * top-level directory of the distribution or, alternatively, at
+ * <http://www.OpenLDAP.org/license.html>.
+ */
+/* ACKNOWLEDGEMENT:
+ * This work was initially developed by Jeff Turner for inclusion
+ * in OpenLDAP Software.
+ */
+
 #include <lber.h>
-#include <lber_pvt.h> // Required for BER_BVC
-#include <ac/string.h> // Required for BER_BVC dep
+#include <lber_pvt.h>
+#include <ac/string.h>
 #include "lutil.h"
 #include <stdint.h>
-#include <string.h>	/* memcpy()/memset() or bcopy()/bzero() */
-#include <assert.h>	/* assert() */
+#include <string.h>
+#include <assert.h>
 #include "sha2.h"
 
 #ifdef SLAPD_SHA2_DEBUG

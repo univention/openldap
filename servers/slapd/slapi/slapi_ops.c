@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_ops.c,v 1.111.2.6 2009/01/22 00:01:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_ops.c,v 1.111.2.7 2009/08/25 22:44:26 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2002-2009 The OpenLDAP Foundation.
@@ -33,7 +33,7 @@
 
 #ifdef LDAP_SLAPI
 
-static struct slap_listener slapi_listener = {
+static struct Listener slapi_listener = {
 	BER_BVC("slapi://"),
 	BER_BVC("slapi://")
 };

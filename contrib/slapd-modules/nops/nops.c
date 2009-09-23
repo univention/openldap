@@ -1,7 +1,9 @@
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nops/nops.c,v 1.1.2.3 2009/04/28 00:51:12 quanah Exp $ */
 /* nops.c - Overlay to filter idempotent operations */
-/* 
- * Copyright 2008 Emmanuel Dreyfus
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nops/nops.c,v 1.1.2.4 2009/08/17 21:48:57 quanah Exp $ */
+/* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
+ *
+ * Copyright 2008-2009 The OpenLDAP Foundation.
+ * Copyright 2008 Emmanuel Dreyfus.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -11,6 +13,10 @@
  * A copy of this license is available in the file LICENSE in the
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
+ */
+/* ACKNOWLEDGEMENTS:
+ * This work was originally developed by the Emmanuel Dreyfus for
+ * inclusion in OpenLDAP Software.
  */
 #include "portable.h"
 

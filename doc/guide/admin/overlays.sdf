@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/openldap-guide/admin/overlays.sdf,v 1.8.2.26 2009/01/22 00:00:47 kurt Exp $
+# $OpenLDAP: pkg/openldap-guide/admin/overlays.sdf,v 1.8.2.27 2009/08/25 23:01:58 quanah Exp $
 # Copyright 2007-2009 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
@@ -925,7 +925,7 @@ default policy object and if that object exists, then the policy defined in
 that object is applied.
 
 Please see {{slapo-ppolicy(5)}} for complete explanations of features and discussion of
- "Password Management Issues" at {{URL:http://www.connexitor.com/forums/viewtopic.php?f=6&t=25}}
+ "Password Management Issues" at {{URL:http://www.symas.com/blog/?page_id=66}}
 
 
 H3: Further Information

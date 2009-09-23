@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/init.c,v 1.102.2.11 2009/01/26 23:29:53 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/init.c,v 1.102.2.12 2009/08/12 23:40:55 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -545,6 +545,9 @@ void ldap_int_initialize_global_options( struct ldapoptions *gopts, int *dbglvl 
 	gopts->ldo_tls_connect_arg = NULL;
 	gopts->ldo_tls_require_cert = LDAP_OPT_X_TLS_DEMAND;
 #endif
+	gopts->ldo_keepalive_probes = 0;
+	gopts->ldo_keepalive_interval = 0;
+	gopts->ldo_keepalive_idle = 0;
 
 	gopts->ldo_valid = LDAP_INITIALIZED;
    	return;

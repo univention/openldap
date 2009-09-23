@@ -1,5 +1,5 @@
 /* tls_g.c - Handle tls/ssl using GNUTLS. */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/tls_g.c,v 1.6.2.5 2009/04/29 01:25:43 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/tls_g.c,v 1.6.2.6 2009/08/13 00:52:04 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2009 The OpenLDAP Foundation.
@@ -722,9 +722,24 @@ tlsg_session_chkhost( LDAP *ld, tls_session *session, const char *name_in )
 	if ( ret >= 0 ) {
 		ret = LDAP_SUCCESS;
 	} else {
-		altnamesize = sizeof(altname);
-		ret = gnutls_x509_crt_get_dn_by_oid( cert, CN_OID,
-			0, 0, altname, &altnamesize );
+		/* find the last CN */
+		i=0;
+		do {
+			altnamesize = 0;
+			ret = gnutls_x509_crt_get_dn_by_oid( cert, CN_OID,
+				i, 1, altname, &altnamesize );
+			if ( ret == GNUTLS_E_SHORT_MEMORY_BUFFER )
+				i++;
+			else
+				break;
+		} while ( 1 );
+
+		if ( i ) {
+			altnamesize = sizeof(altname);
+			ret = gnutls_x509_crt_get_dn_by_oid( cert, CN_OID,
+				i-1, 0, altname, &altnamesize );
+		}
+
 		if ( ret < 0 ) {
 			Debug( LDAP_DEBUG_ANY,
 				"TLS: unable to get common name from peer certificate.\n",
