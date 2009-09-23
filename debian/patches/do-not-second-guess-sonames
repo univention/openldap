@@ -4,7 +4,7 @@ there, not kludged around upstream here!
 
 Debian bug #546885
 
-To be forwarded upstream.
+Upstream ITS #6302 filed.
 
 Index: trunk/libraries/libldap/cyrus.c
 ===================================================================
