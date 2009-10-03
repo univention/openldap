@@ -1,6 +1,8 @@
 openldap (2.4.18-1) UNRELEASED; urgency=low
 
   * New upstream version
+  * Add upstream manpage for ldapexop; thanks to Peter Marschall
+    <peter@adpm.de>.  Closes: #549291.
 
  -- Steve Langasek <vorlon@debian.org>  Wed, 23 Sep 2009 10:57:07 -0700
 
