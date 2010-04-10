@@ -1,7 +1,7 @@
 .TH SLAPD.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.239.2.33 2009/08/25 22:44:24 quanah Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.239.2.37 2009/11/22 20:31:59 quanah Exp $
 .SH NAME
 slapd.conf \- configuration file for slapd, the stand-alone LDAP daemon
 .SH SYNOPSIS
@@ -161,6 +161,21 @@ attribute syntax OID.
 .B objectidentifier
 description.) 
 .RE
+.TP
+.B authid\-rewrite<cmd> <args>
+Used by the authentication framework to convert simple user names
+to an LDAP DN used for authorization purposes.
+Its purpose is analogous to that of
+.BR authz-regexp
+(see below).
+The prefix \fIauthid\-\fP is followed by a set of rules analogous
+to those described in
+.BR slapo\-rwm (5)
+for data rewriting (replace the \fIrwm\-\fP prefix with \fIauthid\-\fP).
+.B authid\-rewrite<cmd>
+and
+.B authz\-regexp
+rules should not be intermixed.
 .TP
 .B authz\-policy <policy>
 Used to specify which rules to use for Proxy Authorization.  Proxy
@@ -915,7 +930,8 @@ e.g. ldapi:// (and eventually IPSEC).  It is not normally used.
 .TP
 .B serverID <integer> [<URL>]
 Specify an integer ID from 0 to 4095 for this server (limited
-to 3 hexadecimal digits).
+to 3 hexadecimal digits).  The ID may also be specified as a
+hexadecimal ID by prefixing the value with "0x".
 These IDs are
 required when using multimaster replication and each master must have a
 unique ID. Note that this requirement also applies to separate masters
@@ -1601,6 +1617,11 @@ in order to work over all of the glued databases. E.g.
 	overlay syncprov
 .fi
 .RE
+.TP
+.B sync_use_subentry 
+Store the syncrepl contextCSN in a subentry instead of the context entry
+of the database. The subentry's RDN will be "cn=ldapsync". By default
+the contextCSN is stored in the context entry.
 .HP
 .hy 0
 .B syncrepl rid=<replica ID>
@@ -1657,8 +1678,8 @@ replication engine.
 identifies the current
 .B syncrepl
 directive within the replication consumer site.
-It is a non-negative integer not greater than 4095 (limited
-to three hexadecimal digits).
+It is a non-negative integer not greater than 999 (limited
+to three decimal digits).
 
 .B provider
 specifies the replication provider site containing the master content

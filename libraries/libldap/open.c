@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/open.c,v 1.110.2.10 2009/01/22 00:00:54 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/open.c,v 1.110.2.12 2009/11/18 22:19:02 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -271,6 +271,8 @@ ldap_init_fd(
 		ldap_unbind_ext( ld, NULL, NULL );
 		return( LDAP_NO_MEMORY );
 	}
+	if( url )
+		conn->lconn_server = ldap_url_dup( ld->ld_options.ldo_defludp );
 	ber_sockbuf_ctrl( conn->lconn_sb, LBER_SB_OPT_SET_FD, &fd );
 	ld->ld_defconn = conn;
 	++ld->ld_defconn->lconn_refcnt;	/* so it never gets closed/freed */

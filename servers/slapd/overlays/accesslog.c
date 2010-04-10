@@ -1,5 +1,5 @@
 /* accesslog.c - log operations for audit/history purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/accesslog.c,v 1.37.2.23 2009/03/05 18:26:47 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/accesslog.c,v 1.37.2.25 2009/11/24 05:50:11 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2009 The OpenLDAP Foundation.
@@ -580,11 +580,12 @@ log_old_lookup( Operation *op, SlapReply *rs )
 	a = attr_find( rs->sr_entry->e_attrs,
 		slap_schema.si_ad_entryCSN );
 	if ( a ) {
-		ber_len_t len = a->a_vals[0].bv_len;
-		if ( len > pd->csn.bv_len )
-			len = pd->csn.bv_len;
-		if ( memcmp( a->a_vals[0].bv_val, pd->csn.bv_val, len ) > 0 ) {
-			AC_MEMCPY( pd->csn.bv_val, a->a_vals[0].bv_val, len );
+		ber_len_t len = a->a_nvals[0].bv_len;
+		/* Paranoid len check, normalized CSNs are always the same length */
+		if ( len > LDAP_LUTIL_CSNSTR_BUFSIZE )
+			len = LDAP_LUTIL_CSNSTR_BUFSIZE;
+		if ( memcmp( a->a_nvals[0].bv_val, pd->csn.bv_val, len ) > 0 ) {
+			AC_MEMCPY( pd->csn.bv_val, a->a_nvals[0].bv_val, len );
 			pd->csn.bv_len = len;
 		}
 	}

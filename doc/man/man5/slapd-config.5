@@ -1,7 +1,7 @@
 .TH SLAPD-CONFIG 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-config.5,v 1.13.2.19 2009/08/25 22:44:24 quanah Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-config.5,v 1.13.2.23 2009/11/22 20:31:59 quanah Exp $
 .SH NAME
 slapd\-config \- configuration backend to slapd
 .SH SYNOPSIS
@@ -171,6 +171,22 @@ RFC 4520 reserves options beginning with `x\-' for private experiments.
 Other options should be registered with IANA, see RFC 4520 section 3.5.
 OpenLDAP also has the `binary' option built in, but this is a transfer
 option, not a tagging option.
+.TP
+.B olcAuthIDRewrite: <rewrite\-rule>
+Used by the authentication framework to convert simple user names
+to an LDAP DN used for authorization purposes.
+Its purpose is analogous to that of
+.BR olcAuthzRegexp
+(see below).
+The
+.B rewrite\-rule
+is a set of rules analogous to those described in
+.BR slapo\-rwm (5)
+for data rewriting (after stripping the \fIrwm\-\fP prefix).
+.B olcAuthIDRewrite
+and
+.B olcAuthzRegexp
+should not be intermixed.
 .TP
 .B olcAuthzPolicy: <policy>
 Used to specify which rules to use for Proxy Authorization.  Proxy
@@ -723,7 +739,10 @@ property specifies the maximum security layer receive buffer
 size allowed.  0 disables security layers.  The default is 65536.
 .TP
 .B olcServerID: <integer> [<URL>]
-Specify an integer ID from 0 to 4095 for this server. These IDs are
+Specify an integer ID from 0 to 4095 for this server (limited
+to 3 hexadecimal digits).  The ID may also be specified as a
+hexadecimal ID by prefixing the value with "0x".
+These IDs are
 required when using multimaster replication and each master must have a
 unique ID. Note that this requirement also applies to separate masters
 contributing to a glued set of databases.
@@ -1611,6 +1630,11 @@ with the inner suffix must come first in the configuration file.
 You may also want to glue such databases together with the
 .B olcSubordinate
 attribute.
+.TP
+.B olcSyncUseSubentry: TRUE | FALSE
+Store the syncrepl contextCSN in a subentry instead of the context entry
+of the database. The subentry's RDN will be "cn=ldapsync". The default is
+FALSE, meaning the contextCSN is stored in the context entry.
 .HP
 .hy 0
 .B olcSyncrepl: rid=<replica ID>
@@ -1668,7 +1692,7 @@ replication engine.
 identifies the current
 .B syncrepl
 directive within the replication consumer site.
-It is a non-negative integer having no more than three digits.
+It is a non-negative integer having no more than three decimal digits.
 
 .B provider
 specifies the replication provider site containing the master content

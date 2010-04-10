@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.141.2.22 2009/04/28 00:48:08 quanah Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.141.2.23 2009/12/04 18:38:02 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2009 The OpenLDAP Foundation.
@@ -192,7 +192,7 @@ LDAPWHOAMI="$CLIENTDIR/ldapwhoami $TOOLARGS"
 LDAPCOMPARE="$CLIENTDIR/ldapcompare $TOOLARGS"
 LDAPEXOP="$CLIENTDIR/ldapexop $TOOLARGS"
 SLAPDTESTER=$PROGDIR/slapd-tester
-LVL=${SLAPD_DEBUG-261}
+LVL=${SLAPD_DEBUG-0x4105}
 LOCALHOST=localhost
 BASEPORT=${SLAPD_BASEPORT-9010}
 PORT1=`expr $BASEPORT + 1`

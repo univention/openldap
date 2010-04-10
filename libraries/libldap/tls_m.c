@@ -1,5 +1,5 @@
 /* tls_m.c - Handle tls/ssl using Mozilla NSS. */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/tls_m.c,v 1.3.2.7 2009/08/30 22:55:46 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/tls_m.c,v 1.3.2.8 2009/10/30 17:48:17 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2009 The OpenLDAP Foundation.
@@ -2013,7 +2013,7 @@ tlsm_session_upflags( Sockbuf *sb, tls_session *session, int rc )
 }
 
 static char *
-tlsm_session_errmsg( int rc, char *buf, size_t len )
+tlsm_session_errmsg( tls_session *sess, int rc, char *buf, size_t len )
 {
 	int i;
 

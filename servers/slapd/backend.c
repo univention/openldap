@@ -1,5 +1,5 @@
 /* backend.c - routines for dealing with back-end databases */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.362.2.28 2009/08/25 23:10:31 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.362.2.30 2009/11/22 16:28:23 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -759,10 +759,10 @@ be_slurp_update( Operation *op )
 int
 be_shadow_update( Operation *op )
 {
-	/* This assumes that all internal ops (connid == -1) on a syncrepl
+	/* This assumes that all internal ops (connid <= -1000) on a syncrepl
 	 * database are syncrepl operations.
 	 */
-	return (( SLAP_SYNC_SHADOW( op->o_bd ) && op->o_connid == -1 ) ||
+	return ( ( SLAP_SYNC_SHADOW( op->o_bd ) && SLAPD_SYNC_IS_SYNCCONN( op->o_connid ) ) ||
 		( SLAP_SHADOW( op->o_bd ) && be_isupdate_dn( op->o_bd, &op->o_ndn ) ) );
 }
 

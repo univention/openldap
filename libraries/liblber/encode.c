@@ -1,5 +1,5 @@
 /* encode.c - ber output encoding routines */
-/* $OpenLDAP: pkg/ldap/libraries/liblber/encode.c,v 1.64.2.6 2009/08/13 00:56:58 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/encode.c,v 1.64.2.8 2009/10/31 00:01:23 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -151,6 +151,7 @@ ber_encode_oid( BerValue *in, BerValue *out )
 			der[j] = tmp;
 		}
 		der += len;
+
 		if ( ptr == inend )
 			break;
 
@@ -242,10 +243,10 @@ ber_put_ostring(
 	rc = ber_write( ber, (char *) ptr, &header[sizeof(header)] - ptr, 0 );
 	if ( rc >= 0 && ber_write( ber, str, len, 0 ) >= 0 ) {
 		/* length(tag + length + contents) */
-		rc += (int) len;
+		return rc + (int) len;
 	}
 
-	return rc;
+	return -1;
 }
 
 int
@@ -300,10 +301,10 @@ ber_put_bitstring(
 	rc = ber_write( ber, (char *) ptr, &header[sizeof(header)] - ptr, 0 );
 	if ( rc >= 0 && ber_write( ber, str, len, 0 ) >= 0 ) {
 		/* length(tag + length + unused bit count + bitstring) */
-		rc += (int) len;
+		return rc + (int) len;
 	}
 
-	return rc;
+	return -1;
 }
 
 int
@@ -454,7 +455,7 @@ ber_put_seqorset( BerElement *ber )
 
 	/* Store length, and close gap of leftover reserved length octets */
 	len = xlen - SOS_LENLEN;
-	if ( ber->ber_options & LBER_USE_DER ) {
+	if ( !(ber->ber_options & LBER_USE_DER) ) {
 		int i;
 		lenptr[0] = SOS_LENLEN - 1 + 0x80; /* length(length)-1 */
 		for( i = SOS_LENLEN; --i > 0; len >>= 8 ) {

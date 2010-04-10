@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapadd.c,v 1.36.2.13 2009/07/08 00:28:21 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapadd.c,v 1.36.2.15 2009/11/18 01:16:17 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -280,6 +280,13 @@ slapadd( int argc, char **argv )
 			struct berval nname;
 			char timebuf[ LDAP_LUTIL_GENTIME_BUFSIZE ];
 
+			enum {
+				GOT_NONE = 0x0,
+				GOT_CSN = 0x1,
+				GOT_UUID = 0x2,
+				GOT_ALL = (GOT_CSN|GOT_UUID)
+			} got = GOT_ALL;
+
 			vals[1].bv_len = 0;
 			vals[1].bv_val = NULL;
 
@@ -305,6 +312,7 @@ slapadd( int argc, char **argv )
 			if( attr_find( e->e_attrs, slap_schema.si_ad_entryUUID )
 				== NULL )
 			{
+				got &= ~GOT_UUID;
 				vals[0].bv_len = lutil_uuidstr( uuidbuf, sizeof( uuidbuf ) );
 				vals[0].bv_val = uuidbuf;
 				attr_merge_normalize_one( e, slap_schema.si_ad_entryUUID, vals, NULL );
@@ -328,6 +336,7 @@ slapadd( int argc, char **argv )
 			if( attr_find( e->e_attrs, slap_schema.si_ad_entryCSN )
 				== NULL )
 			{
+				got &= ~GOT_CSN;
 				vals[0] = csn;
 				attr_merge( e, slap_schema.si_ad_entryCSN, vals, NULL );
 			}
@@ -347,6 +356,19 @@ slapadd( int argc, char **argv )
 				attr_merge( e, slap_schema.si_ad_modifyTimestamp, vals, NULL );
 			}
 
+			if ( SLAP_SINGLE_SHADOW(be) && got != GOT_ALL ) {
+				char buf[SLAP_TEXT_BUFLEN];
+
+				snprintf( buf, sizeof(buf),
+					"%s%s%s",
+					( !(got & GOT_UUID) ? slap_schema.si_ad_entryUUID->ad_cname.bv_val : "" ),
+					( !(got & GOT_CSN) ? "," : "" ),
+					( !(got & GOT_CSN) ? slap_schema.si_ad_entryCSN->ad_cname.bv_val : "" ) );
+
+				Debug( LDAP_DEBUG_ANY, "%s: warning, missing attrs %s from entry dn=\"%s\"\n",
+					progname, buf, e->e_name.bv_val );
+			}
+
 			if ( update_ctxcsn ) {
 				int rc_sid;
 
@@ -356,8 +378,8 @@ slapadd( int argc, char **argv )
 				rc_sid = slap_parse_csn_sid( &attr->a_nvals[ 0 ] );
 				if ( rc_sid < 0 ) {
 					Debug( LDAP_DEBUG_ANY, "%s: could not "
-						"extract SID from entryCSN=%s\n",
-						progname, attr->a_nvals[ 0 ].bv_val, 0 );
+						"extract SID from entryCSN=%s, entry dn=\"%s\"\n",
+						progname, attr->a_nvals[ 0 ].bv_val, e->e_name.bv_val );
 
 				} else {
 					assert( rc_sid <= SLAP_SYNC_SID_MAX );
@@ -416,10 +438,32 @@ slapadd( int argc, char **argv )
 	}
 
 	if ( rc == EXIT_SUCCESS && update_ctxcsn && !dryrun && sid != SLAP_SYNC_SID_MAX + 1 ) {
-		ctxcsn_id = be->be_dn2id_get( be, be->be_nsuffix );
+		struct berval ctxdn;
+		if ( SLAP_SYNC_SUBENTRY( be )) {
+			build_new_dn( &ctxdn, &be->be_nsuffix[0],
+				(struct berval *)&slap_ldapsync_cn_bv, NULL );
+		} else {
+			ctxdn = be->be_nsuffix[0];
+		}
+		ctxcsn_id = be->be_dn2id_get( be, &ctxdn );
 		if ( ctxcsn_id == NOID ) {
-			fprintf( stderr, "%s: context entry is missing\n", progname );
-			rc = EXIT_FAILURE;
+			if ( SLAP_SYNC_SUBENTRY( be )) {
+				ctxcsn_e = slap_create_context_csn_entry( be, NULL );
+				for ( sid = 0; sid <= SLAP_SYNC_SID_MAX; sid++ ) {
+					if ( maxcsn[ sid ].bv_len ) {
+						attr_merge_one( ctxcsn_e, slap_schema.si_ad_contextCSN,
+							&maxcsn[ sid ], NULL );
+					}
+				}
+				ctxcsn_id = be->be_entry_put( be, ctxcsn_e, &bvtext );
+				if ( ctxcsn_id == NOID ) {
+					fprintf( stderr, "%s: couldn't create context entry\n", progname );
+					rc = EXIT_FAILURE;
+				}
+			} else {
+				fprintf( stderr, "%s: context entry is missing\n", progname );
+				rc = EXIT_FAILURE;
+			}
 		} else {
 			ctxcsn_e = be->be_entry_get( be, ctxcsn_id );
 			if ( ctxcsn_e != NULL ) {

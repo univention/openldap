@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/lutil.h,v 1.63.2.7 2009/01/22 00:00:52 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/lutil.h,v 1.63.2.8 2009/11/17 17:18:11 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -197,6 +197,8 @@ lutil_strncopy LDAP_P(( char *dst, const char *src, size_t n ));
 
 LDAP_LUTIL_F( char* )
 lutil_memcopy LDAP_P(( char *dst, const char *src, size_t n ));
+
+#define lutil_strbvcopy(a, bv) lutil_memcopy((a),(bv)->bv_val,(bv)->bv_len)
 
 struct tm;
 

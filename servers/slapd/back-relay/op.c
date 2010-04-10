@@ -1,5 +1,5 @@
 /* op.c - relay backend operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-relay/op.c,v 1.15.2.11 2009/08/12 23:58:52 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-relay/op.c,v 1.15.2.13 2009/11/02 18:27:43 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2009 The OpenLDAP Foundation.
@@ -75,14 +75,14 @@ typedef struct relay_callback {
 	BackendDB *rcb_bd;
 } relay_callback;
 
-int
+static int
 relay_back_cleanup_cb( Operation *op, SlapReply *rs )
 {
 	op->o_bd = ((relay_callback *) op->o_callback)->rcb_bd;
 	return SLAP_CB_CONTINUE;
 }
 
-int
+static int
 relay_back_response_cb( Operation *op, SlapReply *rs )
 {
 	relay_callback	*rcb = (relay_callback *) op->o_callback;
@@ -93,14 +93,21 @@ relay_back_response_cb( Operation *op, SlapReply *rs )
 	return SLAP_CB_CONTINUE;
 }
 
-#define relay_back_add_cb( rcb, op, bd )			\
-	{							\
+#define relay_back_add_cb( rcb, op ) {				\
 		(rcb)->rcb_sc.sc_next = (op)->o_callback;	\
 		(rcb)->rcb_sc.sc_response = relay_back_response_cb; \
 		(rcb)->rcb_sc.sc_cleanup = 0;			\
 		(rcb)->rcb_sc.sc_private = (op)->o_bd;		\
 		(op)->o_callback = (slap_callback *) (rcb);	\
-	}
+}
+
+#define relay_back_remove_cb( rcb, op ) {			\
+		slap_callback	**sc = &(op)->o_callback;	\
+		for ( ;; sc = &(*sc)->sc_next )			\
+			if ( *sc == (slap_callback *) (rcb) ) {	\
+				*sc = (*sc)->sc_next; break;	\
+			} else if ( *sc == NULL ) break;	\
+}
 
 /*
  * Select the backend database with the operation's DN.  On failure,
@@ -199,15 +206,11 @@ relay_back_op( Operation *op, SlapReply *rs, int which )
 	} else if ( (func = (&bd->be_bind)[which]) != 0 ) {
 		relay_callback	rcb;
 
-		relay_back_add_cb( &rcb, op, bd );
-
+		relay_back_add_cb( &rcb, op );
 		RELAY_WRAP_OP( op, bd, which, {
 			rc = func( op, rs );
 		});
-
-		if ( op->o_callback == (slap_callback *) &rcb ) {
-			op->o_callback = op->o_callback->sc_next;
-		}
+		relay_back_remove_cb( &rcb, op );
 
 	} else if ( fail_mode & RB_OPERR ) {
 		rs->sr_err = rc;

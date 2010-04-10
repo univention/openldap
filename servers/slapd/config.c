@@ -1,5 +1,5 @@
 /* config.c - configuration file handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.441.2.26 2009/08/02 21:26:43 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.441.2.31 2009/12/12 06:18:52 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -33,16 +33,13 @@
 #include <ac/signal.h>
 #include <ac/socket.h>
 #include <ac/errno.h>
+#include <ac/unistd.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
 
 #ifndef S_ISREG
 #define	S_ISREG(m)	(((m) & _S_IFMT) == _S_IFREG)
-#endif
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
 #endif
 
 #include "slap.h"
@@ -417,6 +414,7 @@ config_del_vals(ConfigTable *cf, ConfigArgs *c)
 
 	/* If there is no handler, just ignore it */
 	if ( cf->arg_type & ARG_MAGIC ) {
+		c->argv[0] = cf->ad->ad_cname.bv_val;
 		c->op = LDAP_MOD_DELETE;
 		c->type = cf->arg_type & ARGS_USERLAND;
 		rc = (*((ConfigDriver*)cf->arg_item))(c);
@@ -1212,8 +1210,32 @@ static slap_verbmasks versionkey[] = {
 	{ BER_BVNULL, 0 }
 };
 
+static int
+slap_sb_uri(
+	struct berval *val,
+	void *bcp,
+	slap_cf_aux_table *tab0,
+	const char *tabmsg,
+	int unparse )
+{
+	slap_bindconf *bc = bcp;
+	if ( unparse ) {
+		if ( bc->sb_uri.bv_len >= val->bv_len )
+			return -1;
+		val->bv_len = bc->sb_uri.bv_len;
+		AC_MEMCPY( val->bv_val, bc->sb_uri.bv_val, val->bv_len );
+	} else {
+		bc->sb_uri = *val;
+#ifdef HAVE_TLS
+		if ( ldap_is_ldaps_url( val->bv_val ))
+			bc->sb_tls_do_init = 1;
+#endif
+	}
+	return 0;
+}
+
 static slap_cf_aux_table bindkey[] = {
-	{ BER_BVC("uri="), offsetof(slap_bindconf, sb_uri), 'b', 1, NULL },
+	{ BER_BVC("uri="), 0, 'x', 1, slap_sb_uri },
 	{ BER_BVC("version="), offsetof(slap_bindconf, sb_version), 'i', 0, versionkey },
 	{ BER_BVC("bindmethod="), offsetof(slap_bindconf, sb_method), 'i', 0, methkey },
 	{ BER_BVC("timeout="), offsetof(slap_bindconf, sb_timeout_api), 'i', 0, NULL },
@@ -1226,21 +1248,20 @@ static slap_cf_aux_table bindkey[] = {
 	{ BER_BVC("authcID="), offsetof(slap_bindconf, sb_authcId), 'b', 1, NULL },
 	{ BER_BVC("authzID="), offsetof(slap_bindconf, sb_authzId), 'b', 1, (slap_verbmasks *)authzNormalize },
 #ifdef HAVE_TLS
-	{ BER_BVC("starttls="), offsetof(slap_bindconf, sb_tls), 'i', 0, tlskey },
-
-	/* NOTE: replace "13" with the actual index
+	/* NOTE: replace "12" with the actual index
 	 * of the first TLS-related line */
-#define aux_TLS (bindkey+13)	/* beginning of TLS keywords */
+#define aux_TLS (bindkey+12)	/* beginning of TLS keywords */
 
+	{ BER_BVC("starttls="), offsetof(slap_bindconf, sb_tls), 'i', 0, tlskey },
 	{ BER_BVC("tls_cert="), offsetof(slap_bindconf, sb_tls_cert), 's', 1, NULL },
 	{ BER_BVC("tls_key="), offsetof(slap_bindconf, sb_tls_key), 's', 1, NULL },
 	{ BER_BVC("tls_cacert="), offsetof(slap_bindconf, sb_tls_cacert), 's', 1, NULL },
 	{ BER_BVC("tls_cacertdir="), offsetof(slap_bindconf, sb_tls_cacertdir), 's', 1, NULL },
-	{ BER_BVC("tls_reqcert="), offsetof(slap_bindconf, sb_tls_reqcert), 's', 1, NULL },
-	{ BER_BVC("tls_cipher_suite="), offsetof(slap_bindconf, sb_tls_cipher_suite), 's', 1, NULL },
-	{ BER_BVC("tls_protocol_min="), offsetof(slap_bindconf, sb_tls_protocol_min), 's', 1, NULL },
+	{ BER_BVC("tls_reqcert="), offsetof(slap_bindconf, sb_tls_reqcert), 's', 0, NULL },
+	{ BER_BVC("tls_cipher_suite="), offsetof(slap_bindconf, sb_tls_cipher_suite), 's', 0, NULL },
+	{ BER_BVC("tls_protocol_min="), offsetof(slap_bindconf, sb_tls_protocol_min), 's', 0, NULL },
 #ifdef HAVE_OPENSSL_CRL
-	{ BER_BVC("tls_crlcheck="), offsetof(slap_bindconf, sb_tls_crlcheck), 's', 1, NULL },
+	{ BER_BVC("tls_crlcheck="), offsetof(slap_bindconf, sb_tls_crlcheck), 's', 0, NULL },
 #endif
 #endif
 	{ BER_BVNULL, 0, 0, 0, NULL }
@@ -1332,6 +1353,20 @@ slap_cf_aux_table_parse( const char *word, void *dst, slap_cf_aux_table *tab0, L
 
 				rc = lutil_atoulx( ulptr, val, 0 );
 				break;
+
+			case 'x':
+				if ( tab->aux != NULL ) {
+					struct berval value;
+					slap_cf_aux_table_parse_x *func = (slap_cf_aux_table_parse_x *)tab->aux;
+
+					ber_str2bv( val, 0, 1, &value );
+
+					rc = func( &value, (void *)((char *)dst + tab->off), tab, tabmsg, 0 );
+
+				} else {
+					rc = 1;
+				}
+				break;
 			}
 
 			if ( rc ) {
@@ -1420,6 +1455,26 @@ slap_cf_aux_table_unparse( void *src, struct berval *bv, slap_cf_aux_table *tab0
 			*ptr++ = ' ';
 			ptr = lutil_strcopy( ptr, tab->key.bv_val );
 			ptr += snprintf( ptr, sizeof( buf ) - ( ptr - buf ), "%lu", *ulptr );
+			break;
+
+		case 'x':
+			*ptr++ = ' ';
+			ptr = lutil_strcopy( ptr, tab->key.bv_val );
+			if ( tab->quote ) *ptr++ = '"';
+			if ( tab->aux != NULL ) {
+				struct berval value;
+				slap_cf_aux_table_parse_x *func = (slap_cf_aux_table_parse_x *)tab->aux;
+				int rc;
+
+				value.bv_val = ptr;
+				value.bv_len = buf + sizeof( buf ) - ptr;
+
+				rc = func( &value, (void *)((char *)src + tab->off), tab, "(unparse)", 1 );
+				if ( rc == 0 ) {
+					ptr += value.bv_len;
+				}
+			}
+			if ( tab->quote ) *ptr++ = '"';
 			break;
 
 		default:

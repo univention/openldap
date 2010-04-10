@@ -1,5 +1,5 @@
 /* config.c - ldap backend configuration file routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/config.c,v 1.115.2.14 2009/01/22 00:01:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/config.c,v 1.115.2.15 2009/09/29 21:47:37 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2009 The OpenLDAP Foundation.
@@ -2086,7 +2086,10 @@ ldap_back_exop_whoami(
 retry:
 		rs->sr_err = ldap_whoami( lc->lc_ld, ctrls, NULL, &msgid );
 		if ( rs->sr_err == LDAP_SUCCESS ) {
-			if ( ldap_result( lc->lc_ld, msgid, LDAP_MSG_ALL, NULL, &res ) == -1 ) {
+			/* by now, make sure no timeout is used (ITS#6282) */
+			struct timeval tv;
+			tv.tv_sec = -1;
+			if ( ldap_result( lc->lc_ld, msgid, LDAP_MSG_ALL, &tv, &res ) == -1 ) {
 				ldap_get_option( lc->lc_ld, LDAP_OPT_ERROR_NUMBER,
 					&rs->sr_err );
 				if ( rs->sr_err == LDAP_SERVER_DOWN && doretry ) {

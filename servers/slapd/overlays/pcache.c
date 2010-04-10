@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.88.2.40 2009/08/25 21:24:47 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.88.2.47 2009/11/23 16:24:55 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2009 The OpenLDAP Foundation.
@@ -768,6 +768,10 @@ url2query(
 		}
 		query.scope = lud->lud_scope;
 		query.filter = str2filter( lud->lud_filter );
+		if ( query.filter == NULL ) {
+			rc = -1;
+			goto error;
+		}
 
 		tempstr.bv_val = ch_malloc( strlen( lud->lud_filter ) + 1 );
 		tempstr.bv_len = 0;
@@ -823,6 +827,7 @@ static int
 merge_entry(
 	Operation		*op,
 	Entry			*e,
+	int			dup,
 	struct berval*		query_uuid )
 {
 	int		rc;
@@ -836,6 +841,8 @@ merge_entry(
 
 	slap_callback cb = { NULL, slap_null_cb, NULL, NULL };
 
+	if ( dup )
+		e = entry_dup( e );
 	attr = e->e_attrs;
 	e->e_attrs = NULL;
 
@@ -862,6 +869,7 @@ merge_entry(
 			modlist->sml_op = LDAP_MOD_ADD;
 			op->o_tag = LDAP_REQ_MODIFY;
 			op->orm_modlist = modlist;
+			op->o_managedsait = SLAP_CONTROL_CRITICAL;
 			op->o_bd->be_modify( op, &sreply );
 			slap_mods_free( modlist, 1 );
 		} else if ( rc == LDAP_REFERRAL ||
@@ -876,7 +884,7 @@ merge_entry(
 		}
 	} else {
 		if ( op->ora_e == e )
-			be_entry_release_w( op, e );
+			entry_free( e );
 		rc = 1;
 	}
 
@@ -2284,7 +2292,7 @@ cache_entries(
 			remove_query_and_data( op_tmp, rs, cm, &crp_uuid );
 		}
 
-		return_val = merge_entry(op_tmp, e, query_uuid);
+		return_val = merge_entry(op_tmp, e, 0, query_uuid);
 		ldap_pvt_thread_mutex_lock(&cm->cache_mutex);
 		cm->cur_entries += return_val;
 		Debug( pcache_debug,
@@ -2470,7 +2478,14 @@ pcache_response(
 			} else if ( rs->sr_err == LDAP_SIZELIMIT_EXCEEDED
 				&& si->qtemp->limitttl )
 			{
+				Entry *e;
+
 				si->caching_reason = PC_SIZELIMIT;
+				for (;si->head; si->head=e) {
+					e = si->head->e_private;
+					si->head->e_private = NULL;
+					entry_free(si->head);
+				}
 			}
 
 		} else if ( si->qtemp->negttl && !si->count && !si->over &&
@@ -2629,7 +2644,14 @@ pc_bind_attrs( Operation *op, Entry *e, QueryTemplate *temp,
 	}
 	*p2 = '\0';
 	op->o_tmpfree( vals, op->o_tmpmemctx );
-	return str2filter_x( op, fbv->bv_val );
+
+	/* FIXME: are we sure str2filter_x can't fail?
+	 * caller needs to check */
+	{
+		Filter *f = str2filter_x( op, fbv->bv_val );
+		assert( f != NULL );
+		return f;
+	}
 }
 
 /* Check if the requested entry is from the cache and has a valid
@@ -3189,7 +3211,7 @@ refresh_merge( Operation *op, SlapReply *rs )
 			/* No local entry, just add it. FIXME: we are not checking
 			 * the cache entry limit here
 			 */
-			 merge_entry( op, rs->sr_entry, &ri->ri_q->q_uuid );
+			 merge_entry( op, rs->sr_entry, 1, &ri->ri_q->q_uuid );
 		} else {
 			/* Entry exists, update it */
 			Entry ne;
@@ -4376,9 +4398,13 @@ pcache_db_init(
 	cm->check_cacheability = 0;
 	cm->response_cb = PCACHE_RESPONSE_CB_TAIL;
 	cm->defer_db_open = 1;
+	cm->cache_binds = 0;
 	cm->cc_period = 1000;
 	cm->cc_paused = 0;
 	cm->cc_arg = NULL;
+#ifdef PCACHE_MONITOR
+	cm->monitor_cb = NULL;
+#endif /* PCACHE_MONITOR */
 
 	qm->attr_sets = NULL;
 	qm->templates = NULL;
@@ -4484,7 +4510,7 @@ pcache_db_open2(
 			AttributeAssertion	ava = ATTRIBUTEASSERTION_INIT;
 			AttributeName	attrs[ 2 ] = {{{ 0 }}};
 
-			connection_fake_init( &conn, &opbuf, thrctx );
+			connection_fake_init2( &conn, &opbuf, thrctx, 0 );
 			op = &opbuf.ob_op;
 
 			op->o_bd = &cm->db;
@@ -4670,7 +4696,7 @@ pcache_db_close(
 
 		thrctx = ldap_pvt_thread_pool_context();
 
-		connection_fake_init( &conn, &opbuf, thrctx );
+		connection_fake_init2( &conn, &opbuf, thrctx, 0 );
 		op = &opbuf.ob_op;
 
 		if ( qm->templates != NULL ) {

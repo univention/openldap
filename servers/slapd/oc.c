@@ -1,5 +1,5 @@
 /* oc.c - object class routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/oc.c,v 1.77.2.10 2009/01/22 00:01:02 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/oc.c,v 1.77.2.11 2009/10/30 18:06:26 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -805,6 +805,10 @@ done:;
 
 		if ( soc->soc_allowed ) {
 			ch_free( soc->soc_allowed );
+		}
+
+		if ( soc->soc_oidmacro ) {
+			ch_free( soc->soc_oidmacro );
 		}
 
 		ch_free( soc );

@@ -1,5 +1,5 @@
 /* monitor.c - monitor bdb backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/monitor.c,v 1.19.2.13 2009/08/17 21:52:54 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/monitor.c,v 1.19.2.14 2009/10/30 18:07:18 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2009 The OpenLDAP Foundation.
@@ -280,8 +280,9 @@ bdb_monitor_initialize( void )
 			Debug( LDAP_DEBUG_ANY, LDAP_XSTRING(bdb_monitor_initialize)
 				": register_at failed\n",
 				0, 0, 0 );
+		} else {
+			(*s_at[ i ].ad)->ad_type->sat_flags |= SLAP_AT_HIDE;
 		}
-		(*s_at[ i ].ad)->ad_type->sat_flags |= SLAP_AT_HIDE;
 	}
 
 	for ( i = 0; s_oc[ i ].desc != NULL; i++ ) {
@@ -290,8 +291,9 @@ bdb_monitor_initialize( void )
 			Debug( LDAP_DEBUG_ANY, LDAP_XSTRING(bdb_monitor_initialize)
 				": register_oc failed\n",
 				0, 0, 0 );
+		} else {
+			(*s_oc[ i ].oc)->soc_flags |= SLAP_OC_HIDE;
 		}
-		(*s_oc[ i ].oc)->soc_flags |= SLAP_OC_HIDE;
 	}
 
 	return 0;

@@ -1,5 +1,5 @@
 /* nssov.h - NSS overlay header file */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/nssov.h,v 1.1.2.5 2009/08/17 21:48:58 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/nssov.h,v 1.1.2.6 2009/09/29 18:11:40 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2009 The OpenLDAP Foundation.
@@ -323,6 +323,7 @@ int pam_pwmod(nssov_info *ni,TFILE *fp,Operation *op);
     /* do the internal search */ \
 	op->o_bd->be_search( op, &rs ); \
 	filter_free_x( op, op->ors_filter, 1 ); \
+	WRITE_INT32(fp,NSLCD_RESULT_END); \
     return 0; \
   }
 

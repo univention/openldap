@@ -1,5 +1,5 @@
 /*  ldap-tls.h - TLS defines & prototypes internal to the LDAP library */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-tls.h,v 1.3.2.1 2009/01/26 23:29:53 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap-tls.h,v 1.3.2.2 2009/10/30 17:48:16 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2009 The OpenLDAP Foundation.
@@ -37,7 +37,7 @@ typedef tls_session *(TI_session_new)(tls_ctx *ctx, int is_server);
 typedef int (TI_session_connect)(LDAP *ld, tls_session *s);
 typedef int (TI_session_accept)(tls_session *s);
 typedef int (TI_session_upflags)(Sockbuf *sb, tls_session *s, int rc);
-typedef char *(TI_session_errmsg)(int rc, char *buf, size_t len );
+typedef char *(TI_session_errmsg)(tls_session *s, int rc, char *buf, size_t len );
 typedef int (TI_session_dn)(tls_session *sess, struct berval *dn);
 typedef int (TI_session_chkhost)(LDAP *ld, tls_session *s, const char *name_in);
 typedef int (TI_session_strength)(tls_session *sess);

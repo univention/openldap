@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.380.2.31 2009/08/25 22:44:25 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.380.2.33 2009/11/17 17:08:41 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -989,13 +989,17 @@ slapd_clr_read( ber_socket_t s, int wake )
 void
 slapd_set_read( ber_socket_t s, int wake )
 {
+	int do_wake = 1;
 	ldap_pvt_thread_mutex_lock( &slap_daemon.sd_mutex );
 
-	assert( SLAP_SOCK_IS_ACTIVE( s ));
-	if (!SLAP_SOCK_IS_READ( s )) SLAP_SOCK_SET_READ( s );
-
+	if( SLAP_SOCK_IS_ACTIVE( s ) && !SLAP_SOCK_IS_READ( s )) {
+		SLAP_SOCK_SET_READ( s );
+	} else {
+		do_wake = 0;
+	}
 	ldap_pvt_thread_mutex_unlock( &slap_daemon.sd_mutex );
-	WAKE_LISTENER(wake);
+	if ( do_wake )
+		WAKE_LISTENER(wake);
 }
 
 time_t
@@ -1620,6 +1624,7 @@ slapd_daemon_init( const char *urls )
 			"daemon: lutil_pair() failed rc=%d\n", rc, 0, 0 );
 		return rc;
 	}
+	ber_pvt_socket_set_nonblock( wake_sds[1], 1 );
 
 	SLAP_SOCK_INIT;
 

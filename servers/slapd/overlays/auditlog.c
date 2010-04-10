@@ -1,5 +1,5 @@
 /* auditlog.c - log modifications for audit/history purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/auditlog.c,v 1.7.2.8 2009/01/22 00:01:12 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/auditlog.c,v 1.7.2.9 2009/09/29 21:43:53 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2009 The OpenLDAP Foundation.
@@ -73,7 +73,7 @@ static int auditlog_response(Operation *op, SlapReply *rs) {
 	Attribute *a;
 	Modifications *m;
 	struct berval *b, *who = NULL;
-	char *what, *suffix;
+	char *what, *whatm, *suffix;
 	time_t stamp;
 	int i;
 
@@ -147,15 +147,15 @@ static int auditlog_response(Operation *op, SlapReply *rs) {
 	  case LDAP_REQ_MODIFY:
 		for(m = op->orm_modlist; m; m = m->sml_next) {
 			switch(m->sml_op & LDAP_MOD_OP) {
-				case LDAP_MOD_ADD:	 what = "add";		break;
-				case LDAP_MOD_REPLACE:	 what = "replace";	break;
-				case LDAP_MOD_DELETE:	 what = "delete";	break;
-				case LDAP_MOD_INCREMENT: what = "increment";	break;
+				case LDAP_MOD_ADD:	 whatm = "add";		break;
+				case LDAP_MOD_REPLACE:	 whatm = "replace";	break;
+				case LDAP_MOD_DELETE:	 whatm = "delete";	break;
+				case LDAP_MOD_INCREMENT: whatm = "increment";	break;
 				default:
 					fprintf(f, "# MOD_TYPE_UNKNOWN:%02x\n", m->sml_op & LDAP_MOD_OP);
 					continue;
 			}
-			fprintf(f, "%s: %s\n", what, m->sml_desc->ad_cname.bv_val);
+			fprintf(f, "%s: %s\n", whatm, m->sml_desc->ad_cname.bv_val);
 			if((b = m->sml_values) != NULL)
 			  for(i = 0; b[i].bv_val; i++)
 				fprint_ldif(f, m->sml_desc->ad_cname.bv_val, b[i].bv_val, b[i].bv_len);

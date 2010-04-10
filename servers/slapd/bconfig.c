@@ -1,5 +1,5 @@
 /* bconfig.c - the config backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/bconfig.c,v 1.202.2.74 2009/08/25 22:44:24 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/bconfig.c,v 1.202.2.84 2009/12/15 20:40:12 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2009 The OpenLDAP Foundation.
@@ -25,6 +25,7 @@
 #include <ac/ctype.h>
 #include <ac/errno.h>
 #include <sys/stat.h>
+#include <ac/unistd.h>
 
 #include "slap.h"
 
@@ -189,6 +190,7 @@ enum {
 	CFG_IX_INTLEN,
 	CFG_SYNTAX,
 	CFG_ACL_ADD,
+	CFG_SYNC_SUBENTRY,
 
 	CFG_LAST
 };
@@ -603,6 +605,10 @@ static ConfigTable config_back_cf_table[] = {
 		&config_suffix, "( OLcfgDbAt:0.10 NAME 'olcSuffix' "
 			"EQUALITY distinguishedNameMatch "
 			"SYNTAX OMsDN )", NULL, NULL },
+	{ "sync_use_subentry", NULL, 0, 0, 0, ARG_ON_OFF|ARG_DB|ARG_MAGIC|CFG_SYNC_SUBENTRY,
+		&config_generic, "( OLcfgDbAt:0.19 NAME 'olcSyncUseSubentry' "
+			"DESC 'Store sync context in a subentry' "
+			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
 	{ "syncrepl", NULL, 0, 0, 0, ARG_DB|ARG_MAGIC,
 		&syncrepl_config, "( OLcfgDbAt:0.11 NAME 'olcSyncrepl' "
 			"EQUALITY caseIgnoreMatch "
@@ -814,7 +820,7 @@ static ConfigOCs cf_ocs[] = {
 		 "olcMaxDerefDepth $ olcPlugin $ olcReadOnly $ olcReplica $ "
 		 "olcReplicaArgsFile $ olcReplicaPidFile $ olcReplicationInterval $ "
 		 "olcReplogFile $ olcRequires $ olcRestrict $ olcRootDN $ olcRootPW $ "
-		 "olcSchemaDN $ olcSecurity $ olcSizeLimit $ olcSyncrepl $ "
+		 "olcSchemaDN $ olcSecurity $ olcSizeLimit $ olcSyncUseSubentry $ olcSyncrepl $ "
 		 "olcTimeLimit $ olcUpdateDN $ olcUpdateRef $ olcMirrorMode $ "
 		 "olcMonitoring ) )",
 		 	Cft_Database, NULL, cfAddDatabase },
@@ -1084,6 +1090,9 @@ config_generic(ConfigArgs *c) {
 		case CFG_LASTMOD:
 			c->value_int = (SLAP_NOLASTMOD(c->be) == 0);
 			break;
+		case CFG_SYNC_SUBENTRY:
+			c->value_int = (SLAP_SYNC_SUBENTRY(c->be) != 0);
+			break;
 		case CFG_MIRRORMODE:
 			if ( SLAP_SHADOW(c->be))
 				c->value_int = (SLAP_SINGLE_SHADOW(c->be) == 0);
@@ -1196,6 +1205,7 @@ config_generic(ConfigArgs *c) {
 		case CFG_SSTR_IF_MAX:
 		case CFG_SSTR_IF_MIN:
 		case CFG_ACL_ADD:
+		case CFG_SYNC_SUBENTRY:
 			break;
 
 		/* no-ops, requires slapd restart */
@@ -1783,7 +1793,8 @@ sortval_reject:
 				ServerID *si, **sip;
 				LDAPURLDesc *lud;
 				int num;
-				if ( lutil_atoi( &num, c->argv[1] ) ||
+				if (( lutil_atoi( &num, c->argv[1] ) &&	
+					lutil_atoix( &num, c->argv[1], 16 )) ||
 					num < 0 || num > SLAP_SYNC_SID_MAX )
 				{
 					snprintf( c->cr_msg, sizeof( c->cr_msg ),
@@ -1828,7 +1839,7 @@ sortval_reject:
 					BER_BVZERO( &si->si_url );
 					slap_serverID = num;
 					Debug( LDAP_DEBUG_CONFIG,
-						"%s: SID=%d\n",
+						"%s: SID=0x%03x\n",
 						c->log, slap_serverID, 0 );
 				}
 				si->si_next = NULL;
@@ -1841,7 +1852,7 @@ sortval_reject:
 					if ( l ) {
 						slap_serverID = si->si_num;
 						Debug( LDAP_DEBUG_CONFIG,
-							"%s: SID=%d (listener=%s)\n",
+							"%s: SID=0x%03x (listener=%s)\n",
 							c->log, slap_serverID,
 							l->sl_url.bv_val );
 					}
@@ -1897,6 +1908,13 @@ sortval_reject:
 				SLAP_DBFLAGS(c->be) |= SLAP_DBFLAG_HIDDEN;
 			else
 				SLAP_DBFLAGS(c->be) &= ~SLAP_DBFLAG_HIDDEN;
+			break;
+
+		case CFG_SYNC_SUBENTRY:
+			if (c->value_int)
+				SLAP_DBFLAGS(c->be) |= SLAP_DBFLAG_SYNC_SUBENTRY;
+			else
+				SLAP_DBFLAGS(c->be) &= ~SLAP_DBFLAG_SYNC_SUBENTRY;
 			break;
 
 		case CFG_SSTR_IF_MAX:
@@ -1992,29 +2010,40 @@ sortval_reject:
 		case CFG_REWRITE: {
 			struct berval bv;
 			char *line;
-			
+			int rc = 0;
+
+			if ( c->op == LDAP_MOD_ADD ) {
+				c->argv++;
+				c->argc--;
+			}
 			if(slap_sasl_rewrite_config(c->fname, c->lineno, c->argc, c->argv))
-				return(1);
+				rc = 1;
+			if ( rc == 0 ) {
 
-			if ( c->argc > 1 ) {
-				char	*s;
+				if ( c->argc > 1 ) {
+					char	*s;
 
-				/* quote all args but the first */
-				line = ldap_charray2str( c->argv, "\" \"" );
-				ber_str2bv( line, 0, 0, &bv );
-				s = ber_bvchr( &bv, '"' );
-				assert( s != NULL );
-				/* move the trailing quote of argv[0] to the end */
-				AC_MEMCPY( s, s + 1, bv.bv_len - ( s - bv.bv_val ) );
-				bv.bv_val[ bv.bv_len - 1 ] = '"';
+					/* quote all args but the first */
+					line = ldap_charray2str( c->argv, "\" \"" );
+					ber_str2bv( line, 0, 0, &bv );
+					s = ber_bvchr( &bv, '"' );
+					assert( s != NULL );
+					/* move the trailing quote of argv[0] to the end */
+					AC_MEMCPY( s, s + 1, bv.bv_len - ( s - bv.bv_val ) );
+					bv.bv_val[ bv.bv_len - 1 ] = '"';
 
-			} else {
-				ber_str2bv( c->argv[ 0 ], 0, 1, &bv );
+				} else {
+					ber_str2bv( c->argv[ 0 ], 0, 1, &bv );
+				}
+
+				ber_bvarray_add( &authz_rewrites, &bv );
 			}
-			
-			ber_bvarray_add( &authz_rewrites, &bv );
+			if ( c->op == LDAP_MOD_ADD ) {
+				c->argv--;
+				c->argc++;
 			}
-			break;
+			return rc;
+			}
 #endif
 
 
@@ -2179,14 +2208,23 @@ config_sizelimit(ConfigArgs *c) {
 			rc = 1;
 		return rc;
 	} else if ( c->op == LDAP_MOD_DELETE ) {
-		/* Reset to defaults */
-		lim->lms_s_soft = SLAPD_DEFAULT_SIZELIMIT;
-		lim->lms_s_hard = 0;
-		lim->lms_s_unchecked = -1;
-		lim->lms_s_pr = 0;
-		lim->lms_s_pr_hide = 0;
-		lim->lms_s_pr_total = 0;
-		return 0;
+		/* Reset to defaults or values from frontend */
+		if ( c->be == frontendDB ) {
+			lim->lms_s_soft = SLAPD_DEFAULT_SIZELIMIT;
+			lim->lms_s_hard = 0;
+			lim->lms_s_unchecked = -1;
+			lim->lms_s_pr = 0;
+			lim->lms_s_pr_hide = 0;
+			lim->lms_s_pr_total = 0;
+		} else {
+			lim->lms_s_soft = frontendDB->be_def_limit.lms_s_soft;
+			lim->lms_s_hard = frontendDB->be_def_limit.lms_s_hard;
+			lim->lms_s_unchecked = frontendDB->be_def_limit.lms_s_unchecked;
+			lim->lms_s_pr = frontendDB->be_def_limit.lms_s_pr;
+			lim->lms_s_pr_hide = frontendDB->be_def_limit.lms_s_pr_hide;
+			lim->lms_s_pr_total = frontendDB->be_def_limit.lms_s_pr_total;
+		}
+		goto ok;
 	}
 	for(i = 1; i < c->argc; i++) {
 		if(!strncasecmp(c->argv[i], "size", 4)) {
@@ -2211,6 +2249,35 @@ config_sizelimit(ConfigArgs *c) {
 			lim->lms_s_hard = 0;
 		}
 	}
+
+ok:
+	if ( ( c->be == frontendDB ) && ( c->ca_entry ) ) {
+		/* This is a modification to the global limits apply it to
+		 * the other databases as needed */
+		AttributeDescription *ad=NULL;
+		const char *text = NULL;
+		CfEntryInfo *ce = c->ca_entry->e_private;
+
+		slap_str2ad(c->argv[0], &ad, &text);
+		/* if we got here... */
+		assert( ad != NULL );
+
+		if ( ce->ce_type == Cft_Global ){
+			ce = ce->ce_kids;
+		}
+		for (; ce; ce=ce->ce_sibs) {
+			Entry *dbe = ce->ce_entry;
+			if ( (ce->ce_type == Cft_Database) && (ce->ce_be != frontendDB)
+					&& (!attr_find(dbe->e_attrs, ad)) ) {
+				ce->ce_be->be_def_limit.lms_s_soft = lim->lms_s_soft;
+				ce->ce_be->be_def_limit.lms_s_hard = lim->lms_s_hard;
+				ce->ce_be->be_def_limit.lms_s_unchecked =lim->lms_s_unchecked;
+				ce->ce_be->be_def_limit.lms_s_pr =lim->lms_s_pr;
+				ce->ce_be->be_def_limit.lms_s_pr_hide =lim->lms_s_pr_hide;
+				ce->ce_be->be_def_limit.lms_s_pr_total =lim->lms_s_pr_total;
+			}
+		}
+	}
 	return(0);
 }
 
@@ -2230,10 +2297,15 @@ config_timelimit(ConfigArgs *c) {
 			rc = 1;
 		return rc;
 	} else if ( c->op == LDAP_MOD_DELETE ) {
-		/* Reset to defaults */
-		lim->lms_t_soft = SLAPD_DEFAULT_TIMELIMIT;
-		lim->lms_t_hard = 0;
-		return 0;
+		/* Reset to defaults or values from frontend */
+		if ( c->be == frontendDB ) {
+			lim->lms_t_soft = SLAPD_DEFAULT_TIMELIMIT;
+			lim->lms_t_hard = 0;
+		} else {
+			lim->lms_t_soft = frontendDB->be_def_limit.lms_t_soft;
+			lim->lms_t_hard = frontendDB->be_def_limit.lms_t_hard;
+		}
+		goto ok;
 	}
 	for(i = 1; i < c->argc; i++) {
 		if(!strncasecmp(c->argv[i], "time", 4)) {
@@ -2256,6 +2328,31 @@ config_timelimit(ConfigArgs *c) {
 				}
 			}
 			lim->lms_t_hard = 0;
+		}
+	}
+
+ok:
+	if ( ( c->be == frontendDB ) && ( c->ca_entry ) ) {
+		/* This is a modification to the global limits apply it to
+		 * the other databases as needed */
+		AttributeDescription *ad=NULL;
+		const char *text = NULL;
+		CfEntryInfo *ce = c->ca_entry->e_private;
+
+		slap_str2ad(c->argv[0], &ad, &text);
+		/* if we got here... */
+		assert( ad != NULL );
+
+		if ( ce->ce_type == Cft_Global ){
+			ce = ce->ce_kids;
+		}
+		for (; ce; ce=ce->ce_sibs) {
+			Entry *dbe = ce->ce_entry;
+			if ( (ce->ce_type == Cft_Database) && (ce->ce_be != frontendDB)
+					&& (!attr_find(dbe->e_attrs, ad)) ) {
+				ce->ce_be->be_def_limit.lms_t_soft = lim->lms_t_soft;
+				ce->ce_be->be_def_limit.lms_t_hard = lim->lms_t_hard;
+			}
 		}
 	}
 	return(0);
@@ -2481,7 +2578,7 @@ tcp_buffer_delete( BerVarray vals )
 }
 
 static int
-tcp_buffer_unparse( int idx, int size, int rw, Listener *l, struct berval *val )
+tcp_buffer_unparse( int size, int rw, Listener *l, struct berval *val )
 {
 	char buf[sizeof("2147483648")], *ptr;
 
@@ -2526,7 +2623,7 @@ tcp_buffer_unparse( int idx, int size, int rw, Listener *l, struct berval *val )
 }
 
 static int
-tcp_buffer_add_one( int argc, char **argv, int idx )
+tcp_buffer_add_one( int argc, char **argv )
 {
 	int rc = 0;
 	int size = -1, rw = 0;
@@ -2541,7 +2638,7 @@ tcp_buffer_add_one( int argc, char **argv, int idx )
 	}
 
 	/* unparse for later use */
-	rc = tcp_buffer_unparse( idx, size, rw, l, &val );
+	rc = tcp_buffer_unparse( size, rw, l, &val );
 	if ( rc != LDAP_SUCCESS ) {
 		return rc;
 	}
@@ -2579,8 +2676,7 @@ tcp_buffer_add_one( int argc, char **argv, int idx )
 
 	tcp_buffer = SLAP_REALLOC( tcp_buffer, sizeof( struct berval ) * ( tcp_buffer_num + 2 ) );
 	/* append */
-	idx = tcp_buffer_num;
-	tcp_buffer[ idx ] = val;
+	tcp_buffer[ tcp_buffer_num ] = val;
 
 	tcp_buffer_num++;
 	BER_BVZERO( &tcp_buffer[ tcp_buffer_num ] );
@@ -2625,7 +2721,7 @@ config_tcp_buffer( ConfigArgs *c )
 			}
 
 			/* unparse for later use */
-			rc = tcp_buffer_unparse( tcp_buffer_num, size, rw, l, &val );
+			rc = tcp_buffer_unparse( size, rw, l, &val );
 			if ( rc != LDAP_SUCCESS ) {
 				return 1;
 			}
@@ -2658,13 +2754,12 @@ done:;
 
 	} else {
 		int rc;
-		int idx;
 
-		rc = tcp_buffer_add_one( c->argc - 1, &c->argv[ 1 ], idx );
+		rc = tcp_buffer_add_one( c->argc - 1, &c->argv[ 1 ] );
 		if ( rc ) {
 			snprintf( c->cr_msg, sizeof( c->cr_msg ),
 				"<%s> unable to add value #%d",
-				c->argv[0], idx );
+				c->argv[0], tcp_buffer_num );
 			Debug( LDAP_DEBUG_ANY, "%s: %s\n",
 				c->log, c->cr_msg, 0 );
 			return 1;
@@ -3050,7 +3145,7 @@ static int
 loglevel_init( void )
 {
 	slap_verbmasks	lo[] = {
-		{ BER_BVC("Any"),	-1 },
+		{ BER_BVC("Any"),	(slap_mask_t) LDAP_DEBUG_ANY },
 		{ BER_BVC("Trace"),	LDAP_DEBUG_TRACE },
 		{ BER_BVC("Packets"),	LDAP_DEBUG_PACKETS },
 		{ BER_BVC("Args"),	LDAP_DEBUG_ARGS },
@@ -3202,9 +3297,11 @@ loglevel_print( FILE *out )
 
 	fprintf( out, "Installed log subsystems:\n\n" );
 	for ( i = 0; !BER_BVISNULL( &loglevel_ops[ i ].word ); i++ ) {
-		fprintf( out, "\t%-30s (%lu)\n",
-			loglevel_ops[ i ].word.bv_val,
-			loglevel_ops[ i ].mask );
+		unsigned mask = loglevel_ops[ i ].mask & 0xffffffffUL;
+		fprintf( out,
+			(mask == ((slap_mask_t) -1 & 0xffffffffUL)
+			 ? "\t%-30s (-1, 0xffffffff)\n" : "\t%-30s (%u, 0x%x)\n"),
+			loglevel_ops[ i ].word.bv_val, mask, mask );
 	}
 
 	fprintf( out, "\nNOTE: custom log subsystems may be later installed "
@@ -4576,6 +4673,7 @@ schema_destroy_one( ConfigArgs *ca, ConfigOCs **colst, int nocs,
 
 	ca->valx = -1;
 	ca->line = NULL;
+	ca->argc = 1;
 	if ( cfn->c_cr_head ) {
 		struct berval bv = BER_BVC("olcDitContentRules");
 		ad = NULL;
@@ -4675,6 +4773,9 @@ config_add_internal( CfBackInfo *cfb, Entry *e, ConfigArgs *ca, SlapReply *rs,
 			Debug( LDAP_DEBUG_TRACE, "%s: config_add_internal: "
 				"DN=\"%s\" already exists\n",
 				log_prefix, e->e_name.bv_val, 0 );
+			/* global schema ignores all writes */
+			if ( ce->ce_type == Cft_Schema && ce->ce_parent->ce_type == Cft_Global )
+				return LDAP_COMPARE_TRUE;
 			return LDAP_ALREADY_EXISTS;
 		}
 	}
@@ -4899,10 +5000,10 @@ config_add_internal( CfBackInfo *cfb, Entry *e, ConfigArgs *ca, SlapReply *rs,
 ok:
 	/* Newly added databases and overlays need to be started up */
 	if ( CONFIG_ONLINE_ADD( ca )) {
-		if ( colst[0]->co_type == Cft_Database ) {
+		if ( coptr->co_type == Cft_Database ) {
 			rc = backend_startup_one( ca->be, &ca->reply );
 
-		} else if ( colst[0]->co_type == Cft_Overlay ) {
+		} else if ( coptr->co_type == Cft_Overlay ) {
 			if ( ca->bi->bi_db_open ) {
 				BackendInfo *bi_orig = ca->be->bd_info;
 				ca->be->bd_info = ca->bi;
@@ -4928,7 +5029,7 @@ ok:
 	ce->ce_parent = last;
 	ce->ce_entry = entry_dup( e );
 	ce->ce_entry->e_private = ce;
-	ce->ce_type = colst[0]->co_type;
+	ce->ce_type = coptr->co_type;
 	ce->ce_be = ca->be;
 	ce->ce_bi = ca->bi;
 	ce->ce_private = ca->ca_private;
@@ -4973,12 +5074,12 @@ ok:
 
 done:
 	if ( rc ) {
-		if ( (colst[0]->co_type == Cft_Database) && ca->be ) {
+		if ( (coptr->co_type == Cft_Database) && ca->be ) {
 			if ( ca->be != frontendDB )
 				backend_destroy_one( ca->be, 1 );
-		} else if ( (colst[0]->co_type == Cft_Overlay) && ca->bi ) {
+		} else if ( (coptr->co_type == Cft_Overlay) && ca->bi ) {
 			overlay_destroy_one( ca->be, (slap_overinst *)ca->bi );
-		} else if ( colst[0]->co_type == Cft_Schema ) {
+		} else if ( coptr->co_type == Cft_Schema ) {
 			schema_destroy_one( ca, colst, nocs, last );
 		}
 	}
@@ -5160,7 +5261,14 @@ out2:;
 	ldap_pvt_thread_pool_resume( &connection_pool );
 
 out:;
-	send_ldap_result( op, rs );
+	{	int repl = op->o_dont_replicate;
+		if ( rs->sr_err == LDAP_COMPARE_TRUE ) {
+			rs->sr_err = LDAP_SUCCESS;
+			op->o_dont_replicate = 1;
+		}
+		send_ldap_result( op, rs );
+		op->o_dont_replicate = repl;
+	}
 	slap_graduate_commit_csn( op );
 	return rs->sr_err;
 }
@@ -5391,6 +5499,7 @@ config_modify_internal( CfEntryInfo *ce, Operation *op, SlapReply *rs,
 					}
 					ca->line = bv.bv_val;
 					ca->valx = d->idx[i];
+					config_parse_vals(ct, ca, d->idx[i] );
 					rc = config_del_vals( ct, ca );
 					if ( rc != LDAP_SUCCESS ) break;
 					if ( s )
@@ -5402,6 +5511,7 @@ config_modify_internal( CfEntryInfo *ce, Operation *op, SlapReply *rs,
 			} else {
 				ca->valx = -1;
 				ca->line = NULL;
+				ca->argc = 1;
 				rc = config_del_vals( ct, ca );
 				if ( rc ) rc = LDAP_OTHER;
 				if ( s )
@@ -5448,6 +5558,7 @@ out:
 					a->a_flags &= ~(SLAP_ATTR_IXDEL|SLAP_ATTR_IXADD);
 					ca->valx = -1;
 					ca->line = NULL;
+					ca->argc = 1;
 					config_del_vals( ct, ca );
 				}
 				for ( i=0; !BER_BVISNULL( &s->a_vals[i] ); i++ ) {
@@ -5462,6 +5573,7 @@ out:
 				ct = config_find_table( colst, nocs, a->a_desc, ca );
 				ca->valx = -1;
 				ca->line = NULL;
+				ca->argc = 1;
 				config_del_vals( ct, ca );
 				s = attr_find( save_attrs, a->a_desc );
 				if ( s ) {

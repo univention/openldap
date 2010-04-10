@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test057-memberof-refint,v 1.3.2.3 2009/06/30 00:34:05 quanah Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test057-memberof-refint,v 1.3.2.4 2009/10/30 23:56:26 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2009 The OpenLDAP Foundation.
@@ -19,6 +19,11 @@ echo "running defines.sh"
 
 if test $MEMBEROF = memberofno; then 
 	echo "Memberof overlay not available, test skipped"
+	exit 0
+fi 
+
+if test $REFINT = refintno; then 
+	echo "Referential Integrity overlay not available, test skipped"
 	exit 0
 fi 
 

@@ -1,5 +1,5 @@
 /* retcode.c - customizable response for client testing purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/retcode.c,v 1.18.2.10 2009/01/22 00:01:13 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/retcode.c,v 1.18.2.11 2009/11/22 19:39:43 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2009 The OpenLDAP Foundation.
@@ -256,6 +256,9 @@ retcode_op_internal( Operation *op, SlapReply *rs )
 		STRLENOF( "(objectClass=errAbsObject)" ),
 		1, &op2.ors_filterstr, op2.o_tmpmemctx );
 	op2.ors_filter = str2filter_x( &op2, op2.ors_filterstr.bv_val );
+
+	/* errAbsObject is defined by this overlay! */
+	assert( op2.ors_filter != NULL );
 
 	db.bd_info = on->on_info->oi_orig;
 	op2.o_bd = &db;

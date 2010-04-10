@@ -1,5 +1,5 @@
 /* translucent.c - translucent proxy module */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/translucent.c,v 1.13.2.32 2009/08/25 23:05:25 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/translucent.c,v 1.13.2.33 2009/12/02 19:32:38 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2009 The OpenLDAP Foundation.
@@ -585,7 +585,7 @@ static int translucent_compare(Operation *op, SlapReply *rs) {
 	slap_overinst *on = (slap_overinst *) op->o_bd->bd_info;
 	translucent_info *ov = on->on_bi.bi_private;
 	AttributeAssertion *ava = op->orc_ava;
-	Entry *e;
+	Entry *e = NULL;
 	BackendDB *db;
 	int rc;
 
@@ -852,6 +852,7 @@ static int translucent_search_cb(Operation *op, SlapReply *rs) {
 	} else {
 	/* Else we have remote, get local */
 		op->o_bd = tc->db;
+		le = NULL;
 		rc = overlay_entry_get_ov(op, &rs->sr_entry->e_nname, NULL, NULL, 0, &le, on);
 		if ( rc == LDAP_SUCCESS && le ) {
 			re = entry_dup( rs->sr_entry );

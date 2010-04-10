@@ -1,5 +1,5 @@
 /* back-relay.h - relay backend header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-relay/back-relay.h,v 1.6.2.5 2009/08/12 23:57:40 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-relay/back-relay.h,v 1.6.2.6 2009/10/31 00:15:21 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2009 The OpenLDAP Foundation.
@@ -23,8 +23,6 @@
 #define SLAPD_RELAY_H
 
 #include "proto-back-relay.h"
-
-/* String rewrite library */
 
 LDAP_BEGIN_DECL
 

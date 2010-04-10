@@ -1,5 +1,5 @@
 /* extended.c - ldap backend extended routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/extended.c,v 1.36.2.9 2009/01/22 00:01:06 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/extended.c,v 1.36.2.10 2009/09/29 21:47:37 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2009 The OpenLDAP Foundation.
@@ -190,7 +190,10 @@ retry:
 
 	if ( rc == LDAP_SUCCESS ) {
 		/* TODO: set timeout? */
-		if ( ldap_result( lc->lc_ld, msgid, LDAP_MSG_ALL, NULL, &res ) == -1 ) {
+		/* by now, make sure no timeout is used (ITS#6282) */
+		struct timeval tv;
+		tv.tv_sec = -1;
+		if ( ldap_result( lc->lc_ld, msgid, LDAP_MSG_ALL, &tv, &res ) == -1 ) {
 			ldap_get_option( lc->lc_ld, LDAP_OPT_ERROR_NUMBER, &rc );
 			rs->sr_err = rc;
 
@@ -316,7 +319,10 @@ retry:
 
 	if ( rc == LDAP_SUCCESS ) {
 		/* TODO: set timeout? */
-		if ( ldap_result( lc->lc_ld, msgid, LDAP_MSG_ALL, NULL, &res ) == -1 ) {
+		/* by now, make sure no timeout is used (ITS#6282) */
+		struct timeval tv;
+		tv.tv_sec = -1;
+		if ( ldap_result( lc->lc_ld, msgid, LDAP_MSG_ALL, &tv, &res ) == -1 ) {
 			ldap_get_option( lc->lc_ld, LDAP_OPT_ERROR_NUMBER, &rc );
 			rs->sr_err = rc;
 

@@ -1,5 +1,5 @@
 /* cache.c - routines to maintain an in-core cache of entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.120.2.32 2009/07/27 17:38:40 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.120.2.35 2009/11/04 15:47:44 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2009 The OpenLDAP Foundation.
@@ -106,10 +106,14 @@ bdb_cache_entryinfo_free( Cache *cache, EntryInfo *ei )
 }
 
 #define LRU_DEL( c, e ) do { \
-	if ( e == (c)->c_lruhead ) (c)->c_lruhead = e->bei_lruprev; \
-	if ( e == (c)->c_lrutail ) (c)->c_lrutail = e->bei_lruprev; \
-	e->bei_lrunext->bei_lruprev = e->bei_lruprev; \
-	e->bei_lruprev->bei_lrunext = e->bei_lrunext; \
+	if ( e == e->bei_lruprev ) { \
+		(c)->c_lruhead = (c)->c_lrutail = NULL; \
+	} else { \
+		if ( e == (c)->c_lruhead ) (c)->c_lruhead = e->bei_lruprev; \
+		if ( e == (c)->c_lrutail ) (c)->c_lrutail = e->bei_lruprev; \
+		e->bei_lrunext->bei_lruprev = e->bei_lruprev; \
+		e->bei_lruprev->bei_lrunext = e->bei_lrunext; \
+	} \
 	e->bei_lruprev = NULL; \
 } while ( 0 )
 
@@ -968,6 +972,9 @@ load1:
 				 */
 				if ( (*eip)->bei_state & CACHE_ENTRY_NOT_CACHED ) {
 					(*eip)->bei_state &= ~CACHE_ENTRY_NOT_CACHED;
+					ldap_pvt_thread_mutex_lock( &bdb->bi_cache.c_count_mutex );
+					++bdb->bi_cache.c_cursize;
+					ldap_pvt_thread_mutex_unlock( &bdb->bi_cache.c_count_mutex );
 				}
 				flag &= ~ID_NOCACHE;
 			}
@@ -1065,20 +1072,17 @@ load1:
 	if ( rc == 0 ) {
 		int purge = 0;
 
-		if ( bdb->bi_cache.c_cursize > bdb->bi_cache.c_maxsize ||
-			( bdb->bi_cache.c_eimax && bdb->bi_cache.c_leaves > bdb->bi_cache.c_eimax )) {
+		if (( load && !( flag & ID_NOCACHE )) || bdb->bi_cache.c_eimax ) {
 			ldap_pvt_thread_mutex_lock( &bdb->bi_cache.c_count_mutex );
-			if ( !bdb->bi_cache.c_purging ) {
-				if ( load && !( flag & ID_NOCACHE )) {
-					bdb->bi_cache.c_cursize++;
-					if ( bdb->bi_cache.c_cursize > bdb->bi_cache.c_maxsize ) {
-						purge = 1;
-						bdb->bi_cache.c_purging = 1;
-					}
-				} else if ( bdb->bi_cache.c_eimax && bdb->bi_cache.c_leaves > bdb->bi_cache.c_eimax ) {
+			if ( load && !( flag & ID_NOCACHE )) {
+				bdb->bi_cache.c_cursize++;
+				if ( !bdb->bi_cache.c_purging && bdb->bi_cache.c_cursize > bdb->bi_cache.c_maxsize ) {
 					purge = 1;
 					bdb->bi_cache.c_purging = 1;
 				}
+			} else if ( !bdb->bi_cache.c_purging && bdb->bi_cache.c_eimax && bdb->bi_cache.c_leaves > bdb->bi_cache.c_eimax ) {
+				purge = 1;
+				bdb->bi_cache.c_purging = 1;
 			}
 			ldap_pvt_thread_mutex_unlock( &bdb->bi_cache.c_count_mutex );
 		}

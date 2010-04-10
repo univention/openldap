@@ -1,5 +1,5 @@
 /* filterentry.c - apply a filter to an entry */
-/* $OpenLDAP: pkg/ldap/servers/slapd/filterentry.c,v 1.104.2.7 2009/06/02 23:09:42 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/filterentry.c,v 1.104.2.8 2009/11/18 01:26:53 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -169,7 +169,7 @@ static int test_mra_filter(
 
 	if ( op == NULL ) {
 		memctx = NULL;
-		memfree = slap_sl_free;
+		memfree = slap_sl_mfuncs.bmf_free;
 	} else {
 		memctx = op->o_tmpmemctx;
 		memfree = op->o_tmpfree;

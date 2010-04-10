@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dds.c,v 1.7.2.13 2009/08/13 00:47:41 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dds.c,v 1.7.2.14 2009/11/18 01:25:49 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2009 The OpenLDAP Foundation.
@@ -137,7 +137,7 @@ dds_expire( void *ctx, dds_info_t *di )
 	int		rc;
 	char		*extra = "";
 
-	connection_fake_init( &conn, &opbuf, ctx );
+	connection_fake_init2( &conn, &opbuf, ctx, 0 );
 	op = &opbuf.ob_op;
 
 	op->o_tag = LDAP_REQ_SEARCH;
@@ -1627,7 +1627,7 @@ dds_count( void *ctx, BackendDB *be )
 	int		rc;
 	char		*extra = "";
 
-	connection_fake_init( &conn, &opbuf, ctx );
+	connection_fake_init2( &conn, &opbuf, ctx, 0 );
 	op = &opbuf.ob_op;
 
 	op->o_tag = LDAP_REQ_SEARCH;

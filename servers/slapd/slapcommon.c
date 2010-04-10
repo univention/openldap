@@ -1,5 +1,5 @@
 /* slapcommon.c - common routine for the slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.c,v 1.73.2.16 2009/07/08 00:28:21 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.c,v 1.73.2.18 2009/11/24 00:51:40 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -92,7 +92,7 @@ usage( int tool, const char *progname )
 		break;
 
 	case SLAPTEST:
-		options = " [-u]\n";
+		options = " [-n databasenumber] [-u]\n";
 		break;
 
 	case SLAPSCHEMA:
@@ -268,7 +268,7 @@ slap_tool_init(
 		break;
 
 	case SLAPTEST:
-		options = "d:f:F:o:Quv";
+		options = "d:f:F:n:o:Quv";
 		mode |= SLAP_TOOL_READMAIN | SLAP_TOOL_READONLY;
 		break;
 
@@ -608,8 +608,11 @@ slap_tool_init(
 	}
 
 	switch ( tool ) {
-	case SLAPDN:
 	case SLAPTEST:
+		if ( dbnum >= 0 )
+			goto get_db;
+		/* FALLTHRU */
+	case SLAPDN:
 	case SLAPAUTH:
 		be = NULL;
 		goto startup;
@@ -733,6 +736,7 @@ slap_tool_init(
 		exit( EXIT_FAILURE );
 
 	} else {
+get_db:
 		LDAP_STAILQ_FOREACH( be, &backendDB, be_next ) {
 			if ( dbnum == 0 ) break;
 			dbnum--;
@@ -757,6 +761,11 @@ startup:;
 	if ( conffile != NULL ) {
 		ch_free( conffile );
 		conffile = NULL;
+	}
+
+	if ( confdir != NULL ) {
+		ch_free( confdir );
+		confdir = NULL;
 	}
 
 	if ( ldiffile != NULL ) {

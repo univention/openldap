@@ -1,5 +1,5 @@
 /* autogroup.c - automatic group overlay */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/autogroup/autogroup.c,v 1.2.2.4 2009/08/17 21:48:56 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/autogroup/autogroup.c,v 1.2.2.5 2009/09/29 21:52:13 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2007-2009 The OpenLDAP Foundation.
@@ -1451,6 +1451,10 @@ autogroup_db_open(
 	OperationBuffer 	opbuf;
 
 	Debug( LDAP_DEBUG_TRACE, "==> autogroup_db_open\n", 0, 0, 0);
+
+	if ( agi == NULL ) {
+		return 0;
+	}
 
 	connection_fake_init( &conn, &opbuf, thrctx );
 	op = &opbuf.ob_op;

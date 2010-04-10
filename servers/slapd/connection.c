@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.358.2.34 2009/08/28 22:39:45 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.358.2.39 2009/12/04 15:44:37 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -48,27 +48,9 @@ static ldap_pvt_thread_mutex_t connections_mutex;
 static Connection *connections = NULL;
 
 static ldap_pvt_thread_mutex_t conn_nextid_mutex;
-static unsigned long conn_nextid = 0;
+static unsigned long conn_nextid = SLAPD_SYNC_SYNCCONN_OFFSET;
 
 static const char conn_lost_str[] = "connection lost";
-
-/* structure state (protected by connections_mutex) */
-enum sc_struct_state {
-	SLAP_C_UNINITIALIZED = 0,	/* MUST BE ZERO (0) */
-	SLAP_C_UNUSED,
-	SLAP_C_USED,
-	SLAP_C_PENDING
-};
-
-/* connection state (protected by c_mutex ) */
-enum sc_conn_state {
-	SLAP_C_INVALID = 0,		/* MUST BE ZERO (0) */
-	SLAP_C_INACTIVE,		/* zero threads */
-	SLAP_C_CLOSING,			/* closing */
-	SLAP_C_ACTIVE,			/* one or more threads */
-	SLAP_C_BINDING,			/* binding */
-	SLAP_C_CLIENT			/* outbound client conn */
-};
 
 const char *
 connection_state2str( int state )
@@ -783,7 +765,9 @@ void connection_closing( Connection *c, const char *why )
 {
 	assert( connections != NULL );
 	assert( c != NULL );
-	assert( c->c_struct_state == SLAP_C_USED );
+
+	if ( c->c_struct_state != SLAP_C_USED ) return;
+
 	assert( c->c_conn_state != SLAP_C_INVALID );
 
 	/* c_mutex must be locked by caller */
@@ -816,7 +800,9 @@ connection_close( Connection *c )
 {
 	assert( connections != NULL );
 	assert( c != NULL );
-	assert( c->c_struct_state == SLAP_C_USED );
+
+	if ( c->c_struct_state != SLAP_C_USED ) return;
+
 	assert( c->c_conn_state == SLAP_C_CLOSING );
 
 	/* NOTE: c_mutex should be locked by caller */
@@ -1376,6 +1362,11 @@ connection_read( ber_socket_t s, conn_readinfo *cri )
 			    c->c_connid, (int) s, c->c_tls_ssf, c->c_ssf, 0 );
 			slap_sasl_external( c, c->c_tls_ssf, &authid );
 			if ( authid.bv_val ) free( authid.bv_val );
+		} else if ( rc == 1 && ber_sockbuf_ctrl( c->c_sb,
+			LBER_SB_OPT_NEEDS_WRITE, NULL )) {	/* need to retry */
+			slapd_set_write( s, 1 );
+			connection_return( c );
+			return 0;
 		}
 
 		/* if success and data is ready, fall thru to data input loop */
@@ -1874,6 +1865,14 @@ int connection_write(ber_socket_t s)
 			(long)s, 0, 0 );
 		return -1;
 	}
+
+#ifdef HAVE_TLS
+	if ( c->c_is_tls && c->c_needs_tls_accept ) {
+		connection_return( c );
+		connection_read_activate( s );
+		return 0;
+	}
+#endif
 
 	c->c_n_write++;
 

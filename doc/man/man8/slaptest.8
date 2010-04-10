@@ -1,7 +1,7 @@
 .TH SLAPTEST 8C "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" Copyright 2004-2009 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man8/slaptest.8,v 1.7.2.10 2009/06/03 01:42:01 quanah Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man8/slaptest.8,v 1.7.2.11 2009/09/29 19:05:44 quanah Exp $
 .SH NAME
 slaptest \- Check the suitability of the OpenLDAP slapd.conf file
 .SH SYNOPSIS
@@ -12,6 +12,8 @@ slaptest \- Check the suitability of the OpenLDAP slapd.conf file
 .BI \-f \ slapd.conf\fR]
 [\c
 .BI \-F \ confdir\fR]
+[\c
+.BI \-n dbnum\fR]
 [\c
 .BI \-o \ option\fR[ = value\fR]]
 [\c
@@ -61,6 +63,15 @@ default config directory before trying to use the default
 config file. If a valid config directory exists then the
 default config file is ignored. If dry-run mode is also specified,
 no conversion will occur.
+.TP
+.BI \-n \ dbnum
+Just open and test the \fIdbnum\fR-th database listed in the
+configuration file. 
+To only test the config database
+.BR slapd\-config (5),
+use 
+.B \-n 0
+as it is always the first database.
 .TP
 .BI \-o \ option\fR[ = value\fR]
 Specify an

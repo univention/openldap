@@ -23,7 +23,7 @@
 <DIV CLASS="title">
 <H1 CLASS="doc-title">OpenLDAP Software 2.4 Administrator's Guide</H1>
 <ADDRESS CLASS="doc-author">The OpenLDAP Project &lt;<A HREF="http://www.openldap.org/">http://www.openldap.org/</A>&gt;</ADDRESS>
-<ADDRESS CLASS="doc-modified">6 September 2009</ADDRESS>
+<ADDRESS CLASS="doc-modified">20 December 2009</ADDRESS>
 <BR CLEAR="All">
 </DIV>
 <DIV CLASS="contents">
@@ -810,83 +810,83 @@
 <BR>
 <A HREF="#Result Codes">H.2. Result Codes</A>
 <BR>
-<A HREF="#{{success (0)}}">H.3. <EM>success (0)</EM></A>
+<A HREF="#success (0)">H.3. success (0)</A>
 <BR>
-<A HREF="#{{operationsError (1)}}">H.4. <EM>operationsError (1)</EM></A>
+<A HREF="#operationsError (1)">H.4. operationsError (1)</A>
 <BR>
-<A HREF="#{{protocolError (2)}}">H.5. <EM>protocolError (2)</EM></A>
+<A HREF="#protocolError (2)">H.5. protocolError (2)</A>
 <BR>
-<A HREF="#{{timeLimitExceeded (3)}}">H.6. <EM>timeLimitExceeded (3)</EM></A>
+<A HREF="#timeLimitExceeded (3)">H.6. timeLimitExceeded (3)</A>
 <BR>
-<A HREF="#{{sizeLimitExceeded (4)}}">H.7. <EM>sizeLimitExceeded (4)</EM></A>
+<A HREF="#sizeLimitExceeded (4)">H.7. sizeLimitExceeded (4)</A>
 <BR>
-<A HREF="#{{compareFalse (5)}}">H.8. <EM>compareFalse (5)</EM></A>
+<A HREF="#compareFalse (5)">H.8. compareFalse (5)</A>
 <BR>
-<A HREF="#{{compareTrue (6)}}">H.9. <EM>compareTrue (6)</EM></A>
+<A HREF="#compareTrue (6)">H.9. compareTrue (6)</A>
 <BR>
-<A HREF="#{{authMethodNotSupported (7)}}">H.10. <EM>authMethodNotSupported (7)</EM></A>
+<A HREF="#authMethodNotSupported (7)">H.10. authMethodNotSupported (7)</A>
 <BR>
-<A HREF="#{{strongerAuthRequired (8)}}">H.11. <EM>strongerAuthRequired (8)</EM></A>
+<A HREF="#strongerAuthRequired (8)">H.11. strongerAuthRequired (8)</A>
 <BR>
-<A HREF="#{{referral (10)}}">H.12. <EM>referral (10)</EM></A>
+<A HREF="#referral (10)">H.12. referral (10)</A>
 <BR>
-<A HREF="#{{adminLimitExceeded (11)}}">H.13. <EM>adminLimitExceeded (11)</EM></A>
+<A HREF="#adminLimitExceeded (11)">H.13. adminLimitExceeded (11)</A>
 <BR>
-<A HREF="#{{unavailableCriticalExtension (12)}}">H.14. <EM>unavailableCriticalExtension (12)</EM></A>
+<A HREF="#unavailableCriticalExtension (12)">H.14. unavailableCriticalExtension (12)</A>
 <BR>
-<A HREF="#{{confidentialityRequired (13)}}">H.15. <EM>confidentialityRequired (13)</EM></A>
+<A HREF="#confidentialityRequired (13)">H.15. confidentialityRequired (13)</A>
 <BR>
-<A HREF="#{{saslBindInProgress (14)}}">H.16. <EM>saslBindInProgress (14)</EM></A>
+<A HREF="#saslBindInProgress (14)">H.16. saslBindInProgress (14)</A>
 <BR>
-<A HREF="#{{noSuchAttribute (16)}}">H.17. <EM>noSuchAttribute (16)</EM></A>
+<A HREF="#noSuchAttribute (16)">H.17. noSuchAttribute (16)</A>
 <BR>
-<A HREF="#{{undefinedAttributeType (17)}}">H.18. <EM>undefinedAttributeType (17)</EM></A>
+<A HREF="#undefinedAttributeType (17)">H.18. undefinedAttributeType (17)</A>
 <BR>
-<A HREF="#{{inappropriateMatching (18)}}">H.19. <EM>inappropriateMatching (18)</EM></A>
+<A HREF="#inappropriateMatching (18)">H.19. inappropriateMatching (18)</A>
 <BR>
-<A HREF="#{{constraintViolation (19)}}">H.20. <EM>constraintViolation (19)</EM></A>
+<A HREF="#constraintViolation (19)">H.20. constraintViolation (19)</A>
 <BR>
-<A HREF="#{{attributeOrValueExists (20)}}">H.21. <EM>attributeOrValueExists (20)</EM></A>
+<A HREF="#attributeOrValueExists (20)">H.21. attributeOrValueExists (20)</A>
 <BR>
-<A HREF="#{{invalidAttributeSyntax (21)}}">H.22. <EM>invalidAttributeSyntax (21)</EM></A>
+<A HREF="#invalidAttributeSyntax (21)">H.22. invalidAttributeSyntax (21)</A>
 <BR>
-<A HREF="#{{noSuchObject (32)}}">H.23. <EM>noSuchObject (32)</EM></A>
+<A HREF="#noSuchObject (32)">H.23. noSuchObject (32)</A>
 <BR>
-<A HREF="#{{aliasProblem (33)}}">H.24. <EM>aliasProblem (33)</EM></A>
+<A HREF="#aliasProblem (33)">H.24. aliasProblem (33)</A>
 <BR>
-<A HREF="#{{invalidDNSyntax (34)}}">H.25. <EM>invalidDNSyntax (34)</EM></A>
+<A HREF="#invalidDNSyntax (34)">H.25. invalidDNSyntax (34)</A>
 <BR>
-<A HREF="#{{aliasDereferencingProblem (36)}}">H.26. <EM>aliasDereferencingProblem (36)</EM></A>
+<A HREF="#aliasDereferencingProblem (36)">H.26. aliasDereferencingProblem (36)</A>
 <BR>
-<A HREF="#{{inappropriateAuthentication (48)}}">H.27. <EM>inappropriateAuthentication (48)</EM></A>
+<A HREF="#inappropriateAuthentication (48)">H.27. inappropriateAuthentication (48)</A>
 <BR>
-<A HREF="#{{invalidCredentials (49)}}">H.28. <EM>invalidCredentials (49)</EM></A>
+<A HREF="#invalidCredentials (49)">H.28. invalidCredentials (49)</A>
 <BR>
-<A HREF="#{{insufficientAccessRights (50)}}">H.29. <EM>insufficientAccessRights (50)</EM></A>
+<A HREF="#insufficientAccessRights (50)">H.29. insufficientAccessRights (50)</A>
 <BR>
-<A HREF="#{{busy (51)}}">H.30. <EM>busy (51)</EM></A>
+<A HREF="#busy (51)">H.30. busy (51)</A>
 <BR>
-<A HREF="#{{unavailable (52)}}">H.31. <EM>unavailable (52)</EM></A>
+<A HREF="#unavailable (52)">H.31. unavailable (52)</A>
 <BR>
-<A HREF="#{{unwillingToPerform (53)}}">H.32. <EM>unwillingToPerform (53)</EM></A>
+<A HREF="#unwillingToPerform (53)">H.32. unwillingToPerform (53)</A>
 <BR>
-<A HREF="#{{loopDetect (54)}}">H.33. <EM>loopDetect (54)</EM></A>
+<A HREF="#loopDetect (54)">H.33. loopDetect (54)</A>
 <BR>
-<A HREF="#{{namingViolation (64)}}">H.34. <EM>namingViolation (64)</EM></A>
+<A HREF="#namingViolation (64)">H.34. namingViolation (64)</A>
 <BR>
-<A HREF="#{{objectClassViolation (65)}}">H.35. <EM>objectClassViolation (65)</EM></A>
+<A HREF="#objectClassViolation (65)">H.35. objectClassViolation (65)</A>
 <BR>
-<A HREF="#{{notAllowedOnNonLeaf (66)}}">H.36. <EM>notAllowedOnNonLeaf (66)</EM></A>
+<A HREF="#notAllowedOnNonLeaf (66)">H.36. notAllowedOnNonLeaf (66)</A>
 <BR>
-<A HREF="#{{notAllowedOnRDN (67)}}">H.37. <EM>notAllowedOnRDN (67)</EM></A>
+<A HREF="#notAllowedOnRDN (67)">H.37. notAllowedOnRDN (67)</A>
 <BR>
-<A HREF="#{{entryAlreadyExists (68)}}">H.38. <EM>entryAlreadyExists (68)</EM></A>
+<A HREF="#entryAlreadyExists (68)">H.38. entryAlreadyExists (68)</A>
 <BR>
-<A HREF="#{{objectClassModsProhibited (69)}}">H.39. <EM>objectClassModsProhibited (69)</EM></A>
+<A HREF="#objectClassModsProhibited (69)">H.39. objectClassModsProhibited (69)</A>
 <BR>
-<A HREF="#{{affectsMultipleDSAs (71)}}">H.40. <EM>affectsMultipleDSAs (71)</EM></A>
+<A HREF="#affectsMultipleDSAs (71)">H.40. affectsMultipleDSAs (71)</A>
 <BR>
-<A HREF="#{{other (80)}}">H.41. <EM>other (80)</EM></A></UL>
+<A HREF="#other (80)">H.41. other (80)</A></UL>
 <BR>
 <A HREF="#Glossary">I. Glossary</A><UL>
 <A HREF="#Terms">I.1. Terms</A>
@@ -5219,17 +5219,23 @@ Members of a group
 <P>The configuration for a dynamic group is similar. Let's see an example which would automatically populate an <TT>allusers</TT> group with all the user accounts in the directory.</P>
 <P>In <TT>slapd.conf</TT>(5):</P>
 <PRE>
+       include /path/to/dyngroup.schema
+       ...
        overlay dynlist
-       dynlist-attrset groupOfNames labeledURI member
+       dynlist-attrset groupOfURLs labeledURI member
 </PRE>
+<OL>
+<LI>
+<LI>Note: We must include the <TT>dyngroup.schema</TT> file that defines the
+<LI><TT>groupOfURLs</TT> objectClass used in this example.</OL>
 <P>Let's apply it to the following entry:</P>
 <PRE>
        cn=allusers,ou=group,dc=example,dc=com
        cn: all
-       objectClass: groupOfNames
+       objectClass: groupOfURLs
        labeledURI: ldap:///ou=people,dc=example,dc=com??one?(objectClass=inetOrgPerson)
 </PRE>
-<P>The behavior is similar to the dynamic list configuration we had before: whenever an entry with the <TT>groupOfNames</TT> object class is retrieved, the search specified in the <TT>labeledURI</TT> attribute is performed. But this time, only the distinguished names of the results are added, and as values of the <TT>member</TT> attribute.</P>
+<P>The behavior is similar to the dynamic list configuration we had before: whenever an entry with the <TT>groupOfURLs</TT> object class is retrieved, the search specified in the <TT>labeledURI</TT> attribute is performed. But this time, only the distinguished names of the results are added, and as values of the <TT>member</TT> attribute.</P>
 <P>This is what we get:</P>
 <P><CENTER><IMG SRC="allusersgroup-en.png" ALIGN="center"></CENTER></P>
 <P ALIGN="Center">Figure X.Y: Dynamic Group for all users</P>
@@ -8923,8 +8929,8 @@ TCP Wrappers
 <P></P>
 <HR>
 <H1><A NAME="LDAP Result Codes">H. LDAP Result Codes</A></H1>
-<P>For the purposes of this guide, we have incorporated the standard LDAP result codes from <EM>Appendix A.  LDAP Result Codes</EM> of rfc4511, a copy of which can be found in <TT>doc/rfc</TT> of the OpenLDAP source code.</P>
-<P>We have expanded the description of each error in relation to the OpenLDAP toolsets. LDAP extensions may introduce extension-specific result codes, which are not part of rfc4511. OpenLDAP returns the result codes related to extensions it implements. Their meaning is documented in the extension they are related to.</P>
+<P>For the purposes of this guide, we have incorporated the standard LDAP result codes from <EM>Appendix A.  LDAP Result Codes</EM> of <A HREF="http://www.rfc-editor.org/rfc/rfc4511.txt">RFC4511</A>, a copy of which can be found in <TT>doc/rfc</TT> of the OpenLDAP source code.</P>
+<P>We have expanded the description of each error in relation to the OpenLDAP toolsets. LDAP extensions may introduce extension-specific result codes, which are not part of RFC4511. OpenLDAP returns the result codes related to extensions it implements. Their meaning is documented in the extension they are related to.</P>
 <H2><A NAME="Non-Error Result Codes">H.1. Non-Error Result Codes</A></H2>
 <P>These result codes (called &quot;non-error&quot; result codes) do not indicate an error condition:</P>
 <PRE>
@@ -8938,93 +8944,93 @@ TCP Wrappers
 <P>The <EM>referral</EM> and <EM>saslBindInProgress</EM> result codes indicate the client needs to take additional action to complete the operation.</P>
 <H2><A NAME="Result Codes">H.2. Result Codes</A></H2>
 <P>Existing LDAP result codes are described as follows:</P>
-<H2><A NAME="{{success (0)}}">H.3. <EM>success (0)</EM></A></H2>
+<H2><A NAME="success (0)">H.3. success (0)</A></H2>
 <P>Indicates the successful completion of an operation.</P>
 <P><HR WIDTH="80%" ALIGN="Left">
 <STRONG>Note: </STRONG>this code is not used with the Compare operation.  See <A HREF="#compareFalse (5)">compareFalse (5)</A> and <A HREF="#compareTrue (6)">compareTrue (6)</A>.
 <HR WIDTH="80%" ALIGN="Left"></P>
-<H2><A NAME="{{operationsError (1)}}">H.4. <EM>operationsError (1)</EM></A></H2>
+<H2><A NAME="operationsError (1)">H.4. operationsError (1)</A></H2>
 <P>Indicates that the operation is not properly sequenced with relation to other operations (of same or different type).</P>
-<P>For example, this code is returned if the client attempts to StartTLS [RFC4346] while there are other uncompleted operations or if a TLS layer was already installed.</P>
-<H2><A NAME="{{protocolError (2)}}">H.5. <EM>protocolError (2)</EM></A></H2>
+<P>For example, this code is returned if the client attempts to StartTLS (<A HREF="http://www.rfc-editor.org/rfc/rfc4511.txt">RFC4511</A> Section 4.14) while there are other uncompleted operations or if a TLS layer was already installed.</P>
+<H2><A NAME="protocolError (2)">H.5. protocolError (2)</A></H2>
 <P>Indicates the server received data that is not well-formed.</P>
 <P>For Bind operation only, this code is also used to indicate that the server does not support the requested protocol version.</P>
 <P>For Extended operations only, this code is also used to indicate that the server does not support (by design or configuration) the Extended operation associated with the <EM>requestName</EM>.</P>
 <P>For request operations specifying multiple controls, this may be used to indicate that the server cannot ignore the order of the controls as specified, or that the combination of the specified controls is invalid or unspecified.</P>
-<H2><A NAME="{{timeLimitExceeded (3)}}">H.6. <EM>timeLimitExceeded (3)</EM></A></H2>
+<H2><A NAME="timeLimitExceeded (3)">H.6. timeLimitExceeded (3)</A></H2>
 <P>Indicates that the time limit specified by the client was exceeded before the operation could be completed.</P>
-<H2><A NAME="{{sizeLimitExceeded (4)}}">H.7. <EM>sizeLimitExceeded (4)</EM></A></H2>
+<H2><A NAME="sizeLimitExceeded (4)">H.7. sizeLimitExceeded (4)</A></H2>
 <P>Indicates that the size limit specified by the client was exceeded before the operation could be completed.</P>
-<H2><A NAME="{{compareFalse (5)}}">H.8. <EM>compareFalse (5)</EM></A></H2>
+<H2><A NAME="compareFalse (5)">H.8. compareFalse (5)</A></H2>
 <P>Indicates that the Compare operation has successfully completed and the assertion has evaluated to FALSE or Undefined.</P>
-<H2><A NAME="{{compareTrue (6)}}">H.9. <EM>compareTrue (6)</EM></A></H2>
+<H2><A NAME="compareTrue (6)">H.9. compareTrue (6)</A></H2>
 <P>Indicates that the Compare operation has successfully completed and the assertion has evaluated to TRUE.</P>
-<H2><A NAME="{{authMethodNotSupported (7)}}">H.10. <EM>authMethodNotSupported (7)</EM></A></H2>
+<H2><A NAME="authMethodNotSupported (7)">H.10. authMethodNotSupported (7)</A></H2>
 <P>Indicates that the authentication method or mechanism is not supported.</P>
-<H2><A NAME="{{strongerAuthRequired (8)}}">H.11. <EM>strongerAuthRequired (8)</EM></A></H2>
+<H2><A NAME="strongerAuthRequired (8)">H.11. strongerAuthRequired (8)</A></H2>
 <P>Indicates the server requires strong(er) authentication in order to complete the operation.</P>
 <P>When used with the Notice of Disconnection operation, this code indicates that the server has detected that an established security association between the client and server has unexpectedly failed or been compromised.</P>
-<H2><A NAME="{{referral (10)}}">H.12. <EM>referral (10)</EM></A></H2>
-<P>Indicates that a referral needs to be chased to complete the operation (see Section 4.1.10).</P>
-<H2><A NAME="{{adminLimitExceeded (11)}}">H.13. <EM>adminLimitExceeded (11)</EM></A></H2>
+<H2><A NAME="referral (10)">H.12. referral (10)</A></H2>
+<P>Indicates that a referral needs to be chased to complete the operation (see <A HREF="http://www.rfc-editor.org/rfc/rfc4511.txt">RFC4511</A> Section 4.1.10).</P>
+<H2><A NAME="adminLimitExceeded (11)">H.13. adminLimitExceeded (11)</A></H2>
 <P>Indicates that an administrative limit has been exceeded.</P>
-<H2><A NAME="{{unavailableCriticalExtension (12)}}">H.14. <EM>unavailableCriticalExtension (12)</EM></A></H2>
-<P>Indicates a critical control is unrecognized (see Section 4.1.11).</P>
-<H2><A NAME="{{confidentialityRequired (13)}}">H.15. <EM>confidentialityRequired (13)</EM></A></H2>
+<H2><A NAME="unavailableCriticalExtension (12)">H.14. unavailableCriticalExtension (12)</A></H2>
+<P>Indicates a critical control is unrecognized (see <A HREF="http://www.rfc-editor.org/rfc/rfc4511.txt">RFC4511</A> Section 4.1.11).</P>
+<H2><A NAME="confidentialityRequired (13)">H.15. confidentialityRequired (13)</A></H2>
 <P>Indicates that data confidentiality protections are required.</P>
-<H2><A NAME="{{saslBindInProgress (14)}}">H.16. <EM>saslBindInProgress (14)</EM></A></H2>
-<P>Indicates the server requires the client to send a new bind request, with the same SASL mechanism, to continue the authentication process (see Section 4.2).</P>
-<H2><A NAME="{{noSuchAttribute (16)}}">H.17. <EM>noSuchAttribute (16)</EM></A></H2>
+<H2><A NAME="saslBindInProgress (14)">H.16. saslBindInProgress (14)</A></H2>
+<P>Indicates the server requires the client to send a new bind request, with the same SASL mechanism, to continue the authentication process (see <A HREF="http://www.rfc-editor.org/rfc/rfc4511.txt">RFC4511</A> Section 4.2).</P>
+<H2><A NAME="noSuchAttribute (16)">H.17. noSuchAttribute (16)</A></H2>
 <P>Indicates that the named entry does not contain the specified attribute or attribute value.</P>
-<H2><A NAME="{{undefinedAttributeType (17)}}">H.18. <EM>undefinedAttributeType (17)</EM></A></H2>
+<H2><A NAME="undefinedAttributeType (17)">H.18. undefinedAttributeType (17)</A></H2>
 <P>Indicates that a request field contains an unrecognized attribute description.</P>
-<H2><A NAME="{{inappropriateMatching (18)}}">H.19. <EM>inappropriateMatching (18)</EM></A></H2>
+<H2><A NAME="inappropriateMatching (18)">H.19. inappropriateMatching (18)</A></H2>
 <P>Indicates that an attempt was made (e.g., in an assertion) to use a matching rule not defined for the attribute type concerned.</P>
-<H2><A NAME="{{constraintViolation (19)}}">H.20. <EM>constraintViolation (19)</EM></A></H2>
+<H2><A NAME="constraintViolation (19)">H.20. constraintViolation (19)</A></H2>
 <P>Indicates that the client supplied an attribute value that does not conform to the constraints placed upon it by the data model.</P>
 <P>For example, this code is returned when multiple values are supplied to an attribute that has a SINGLE-VALUE constraint.</P>
-<H2><A NAME="{{attributeOrValueExists (20)}}">H.21. <EM>attributeOrValueExists (20)</EM></A></H2>
+<H2><A NAME="attributeOrValueExists (20)">H.21. attributeOrValueExists (20)</A></H2>
 <P>Indicates that the client supplied an attribute or value to be added to an entry, but the attribute or value already exists.</P>
-<H2><A NAME="{{invalidAttributeSyntax (21)}}">H.22. <EM>invalidAttributeSyntax (21)</EM></A></H2>
+<H2><A NAME="invalidAttributeSyntax (21)">H.22. invalidAttributeSyntax (21)</A></H2>
 <P>Indicates that a purported attribute value does not conform to the syntax of the attribute.</P>
-<H2><A NAME="{{noSuchObject (32)}}">H.23. <EM>noSuchObject (32)</EM></A></H2>
+<H2><A NAME="noSuchObject (32)">H.23. noSuchObject (32)</A></H2>
 <P>Indicates that the object does not exist in the DIT.</P>
-<H2><A NAME="{{aliasProblem (33)}}">H.24. <EM>aliasProblem (33)</EM></A></H2>
+<H2><A NAME="aliasProblem (33)">H.24. aliasProblem (33)</A></H2>
 <P>Indicates that an alias problem has occurred.  For example, the code may used to indicate an alias has been dereferenced that names no object.</P>
-<H2><A NAME="{{invalidDNSyntax (34)}}">H.25. <EM>invalidDNSyntax (34)</EM></A></H2>
+<H2><A NAME="invalidDNSyntax (34)">H.25. invalidDNSyntax (34)</A></H2>
 <P>Indicates that an LDAPDN or RelativeLDAPDN field (e.g., search base, target entry, ModifyDN newrdn, etc.) of a request does not conform to the required syntax or contains attribute values that do not conform to the syntax of the attribute's type.</P>
-<H2><A NAME="{{aliasDereferencingProblem (36)}}">H.26. <EM>aliasDereferencingProblem (36)</EM></A></H2>
+<H2><A NAME="aliasDereferencingProblem (36)">H.26. aliasDereferencingProblem (36)</A></H2>
 <P>Indicates that a problem occurred while dereferencing an alias.  Typically, an alias was encountered in a situation where it was not allowed or where access was denied.</P>
-<H2><A NAME="{{inappropriateAuthentication (48)}}">H.27. <EM>inappropriateAuthentication (48)</EM></A></H2>
+<H2><A NAME="inappropriateAuthentication (48)">H.27. inappropriateAuthentication (48)</A></H2>
 <P>Indicates the server requires the client that had attempted to bind anonymously or without supplying credentials to provide some form of credentials.</P>
-<H2><A NAME="{{invalidCredentials (49)}}">H.28. <EM>invalidCredentials (49)</EM></A></H2>
+<H2><A NAME="invalidCredentials (49)">H.28. invalidCredentials (49)</A></H2>
 <P>Indicates that the provided credentials (e.g., the user's name and password) are invalid.</P>
-<H2><A NAME="{{insufficientAccessRights (50)}}">H.29. <EM>insufficientAccessRights (50)</EM></A></H2>
+<H2><A NAME="insufficientAccessRights (50)">H.29. insufficientAccessRights (50)</A></H2>
 <P>Indicates that the client does not have sufficient access rights to perform the operation.</P>
-<H2><A NAME="{{busy (51)}}">H.30. <EM>busy (51)</EM></A></H2>
+<H2><A NAME="busy (51)">H.30. busy (51)</A></H2>
 <P>Indicates that the server is too busy to service the operation.</P>
-<H2><A NAME="{{unavailable (52)}}">H.31. <EM>unavailable (52)</EM></A></H2>
+<H2><A NAME="unavailable (52)">H.31. unavailable (52)</A></H2>
 <P>Indicates that the server is shutting down or a subsystem necessary to complete the operation is offline.</P>
-<H2><A NAME="{{unwillingToPerform (53)}}">H.32. <EM>unwillingToPerform (53)</EM></A></H2>
+<H2><A NAME="unwillingToPerform (53)">H.32. unwillingToPerform (53)</A></H2>
 <P>Indicates that the server is unwilling to perform the operation.</P>
-<H2><A NAME="{{loopDetect (54)}}">H.33. <EM>loopDetect (54)</EM></A></H2>
+<H2><A NAME="loopDetect (54)">H.33. loopDetect (54)</A></H2>
 <P>Indicates that the server has detected an internal loop (e.g., while dereferencing aliases or chaining an operation).</P>
-<H2><A NAME="{{namingViolation (64)}}">H.34. <EM>namingViolation (64)</EM></A></H2>
+<H2><A NAME="namingViolation (64)">H.34. namingViolation (64)</A></H2>
 <P>Indicates that the entry's name violates naming restrictions.</P>
-<H2><A NAME="{{objectClassViolation (65)}}">H.35. <EM>objectClassViolation (65)</EM></A></H2>
+<H2><A NAME="objectClassViolation (65)">H.35. objectClassViolation (65)</A></H2>
 <P>Indicates that the entry violates object class restrictions.</P>
-<H2><A NAME="{{notAllowedOnNonLeaf (66)}}">H.36. <EM>notAllowedOnNonLeaf (66)</EM></A></H2>
+<H2><A NAME="notAllowedOnNonLeaf (66)">H.36. notAllowedOnNonLeaf (66)</A></H2>
 <P>Indicates that the operation is inappropriately acting upon a non-leaf entry.</P>
-<H2><A NAME="{{notAllowedOnRDN (67)}}">H.37. <EM>notAllowedOnRDN (67)</EM></A></H2>
+<H2><A NAME="notAllowedOnRDN (67)">H.37. notAllowedOnRDN (67)</A></H2>
 <P>Indicates that the operation is inappropriately attempting to remove a value that forms the entry's relative distinguished name.</P>
-<H2><A NAME="{{entryAlreadyExists (68)}}">H.38. <EM>entryAlreadyExists (68)</EM></A></H2>
+<H2><A NAME="entryAlreadyExists (68)">H.38. entryAlreadyExists (68)</A></H2>
 <P>Indicates that the request cannot be fulfilled (added, moved, or renamed) as the target entry already exists.</P>
-<H2><A NAME="{{objectClassModsProhibited (69)}}">H.39. <EM>objectClassModsProhibited (69)</EM></A></H2>
+<H2><A NAME="objectClassModsProhibited (69)">H.39. objectClassModsProhibited (69)</A></H2>
 <P>Indicates that an attempt to modify the object class(es) of an entry's 'objectClass' attribute is prohibited.</P>
 <P>For example, this code is returned when a client attempts to modify the structural object class of an entry.</P>
-<H2><A NAME="{{affectsMultipleDSAs (71)}}">H.40. <EM>affectsMultipleDSAs (71)</EM></A></H2>
+<H2><A NAME="affectsMultipleDSAs (71)">H.40. affectsMultipleDSAs (71)</A></H2>
 <P>Indicates that the operation cannot be performed as it would affect multiple servers (DSAs).</P>
-<H2><A NAME="{{other (80)}}">H.41. <EM>other (80)</EM></A></H2>
+<H2><A NAME="other (80)">H.41. other (80)</A></H2>
 <P>Indicates the server has encountered an internal error.</P>
 <P></P>
 <HR>
@@ -10707,7 +10713,7 @@ PS
 </TR>
 <TR>
 <TD>
-<A HREF="http://www.rfc-editor.org/rfc/rfc4512.txt">RFC4511</A>
+<A HREF="http://www.rfc-editor.org/rfc/rfc4511.txt">RFC4511</A>
 </TD>
 <TD>
 Lightweight Directory Access Protocol (LDAP): The Protocol
@@ -10716,7 +10722,7 @@ Lightweight Directory Access Protocol (LDAP): The Protocol
 PS
 </TD>
 <TD>
-<A HREF="http://www.rfc-editor.org/rfc/rfc4512.txt">http://www.rfc-editor.org/rfc/rfc4512.txt</A>
+<A HREF="http://www.rfc-editor.org/rfc/rfc4511.txt">http://www.rfc-editor.org/rfc/rfc4511.txt</A>
 </TD>
 </TR>
 <TR>

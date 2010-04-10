@@ -1,5 +1,5 @@
 /* null.c - the null backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-null/null.c,v 1.18.2.8 2009/01/22 00:01:09 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-null/null.c,v 1.18.2.9 2009/12/16 19:09:37 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2002-2009 The OpenLDAP Foundation.
@@ -234,8 +234,6 @@ null_back_entry_get(
 	int rw,
 	Entry **ent )
 {
-	assert( *ent == NULL );
-
 	/* don't admit the object isn't there */
 	return oc || at ? LDAP_NO_SUCH_ATTRIBUTE : LDAP_BUSY;
 }

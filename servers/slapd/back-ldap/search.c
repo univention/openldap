@@ -1,5 +1,5 @@
 /* search.c - ldap backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.201.2.22 2009/08/25 22:58:09 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.201.2.23 2009/10/30 18:10:18 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2009 The OpenLDAP Foundation.
@@ -759,6 +759,7 @@ ldap_build_entry(
 						( oc = oc_bvfind_undef( &attr->a_vals[i] ) ) != NULL )
 				{
 					ber_dupbv( &pval, &oc->soc_cname );
+					rc = LDAP_SUCCESS;
 
 				} else {
 					LBER_FREE( attr->a_vals[i].bv_val );
@@ -770,8 +771,9 @@ ldap_build_entry(
 					BER_BVZERO( &attr->a_vals[last] );
 					i--;
 				}
+			}
 
-			} else if ( pretty ) {
+			if ( rc == LDAP_SUCCESS && pretty ) {
 				LBER_FREE( attr->a_vals[i].bv_val );
 				attr->a_vals[i] = pval;
 			}

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblber/lber-int.h,v 1.68.2.5 2009/08/02 21:06:34 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblber/lber-int.h,v 1.68.2.6 2009/10/30 18:38:27 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -97,7 +97,7 @@ struct berelement {
 	 *   ber_sos_ptr   NULL or write cursor for incomplete sequence or set.
 	 *   ber_sos_inner offset(seq/set length octets) if ber_sos_ptr!=NULL.
 	 *   ber_tag       Default tag for next ber_printf() element.
-	 *   ber_usertag   True after a ber_printf format char set ber_tag.
+	 *   ber_usertag   Boolean set by ber_printf "!" if it sets ber_tag.
 	 *   ber_len       Reused for ber_sos_inner.
 	 * When output to a Sockbuf:
 	 *   ber_ptr       End of encoded data to write.

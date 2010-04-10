@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/getdn.c,v 1.130.2.4 2009/01/22 00:00:54 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/getdn.c,v 1.130.2.5 2009/11/18 01:03:02 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -2131,10 +2131,8 @@ strval2str( struct berval *val, char *str, unsigned flags, ber_len_t *len )
 		
 		/*
 		 * The length was checked in strval2strlen();
-		 * LDAP_UTF8_CHARLEN() should suffice
 		 */
-		cl = LDAP_UTF8_CHARLEN2( &val->bv_val[ s ], cl );
-		assert( cl > 0 );
+		cl = LDAP_UTF8_CHARLEN( &val->bv_val[ s ] );
 		
 		/* 
 		 * there might be some chars we want to escape in form

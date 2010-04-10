@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.239.2.19 2009/06/02 23:39:54 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.239.2.20 2009/10/30 17:52:53 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -270,7 +270,18 @@ parse_debug_level( const char *arg, int *levelp, char ***unknowns )
 		ldap_charray_free( levels );
 
 	} else {
-		if ( lutil_atoix( &level, arg, 0 ) != 0 ) {
+		int rc;
+
+		if ( arg[0] == '-' ) {
+			rc = lutil_atoix( &level, arg, 0 );
+		} else {
+			unsigned ulevel;
+
+			rc = lutil_atoux( &ulevel, arg, 0 );
+			level = (int)ulevel;
+		}
+
+		if ( rc ) {
 			fprintf( stderr,
 				"unrecognized log level "
 				"\"%s\"\n", arg );

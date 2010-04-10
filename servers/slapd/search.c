@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/search.c,v 1.181.2.9 2009/07/27 20:19:18 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/search.c,v 1.181.2.10 2009/11/17 16:28:25 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2009 The OpenLDAP Foundation.
@@ -112,7 +112,7 @@ do_search(
 
 	rs->sr_err = dnPrettyNormal( NULL, &base, &op->o_req_dn, &op->o_req_ndn, op->o_tmpmemctx );
 	if( rs->sr_err != LDAP_SUCCESS ) {
-		Debug( LDAP_DEBUG_ANY, "%s do_search: invalid dn (%s)\n",
+		Debug( LDAP_DEBUG_ANY, "%s do_search: invalid dn: \"%s\"\n",
 			op->o_log_prefix, base.bv_val, 0 );
 		send_ldap_error( op, rs, LDAP_INVALID_DN_SYNTAX, "invalid DN" );
 		goto return_results;
