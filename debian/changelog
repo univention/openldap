@@ -1,10 +1,22 @@
-openldap (2.4.18-1) UNRELEASED; urgency=low
+openldap (2.4.21-1) unstable; urgency=low
 
-  * New upstream version
+  [ Steve Langasek ]
+  * New upstream version (Closes: #561144)
   * Add upstream manpage for ldapexop; thanks to Peter Marschall
     <peter@adpm.de>.  Closes: #549291.
 
- -- Steve Langasek <vorlon@debian.org>  Wed, 23 Sep 2009 10:57:07 -0700
+  [ Matthijs Mohlmann ]
+  * Ack NMU (Closes: #553432)
+
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat, 10 Apr 2010 16:56:42 +0200
+
+openldap (2.4.17-2.1) unstable; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * Fixed CVE-2009-3767: libraries/libldap/tls_o.c doesn't properly handle NULL
+    character in subject Common Name (Closes: #553432)
+
+ -- Giuseppe Iuculano <iuculano@debian.org>  Tue, 10 Nov 2009 19:09:45 +0100
 
 openldap (2.4.17-2) unstable; urgency=low
 
