@@ -7,8 +7,13 @@ openldap (2.4.21-1) unstable; urgency=low
 
   [ Matthijs Mohlmann ]
   * Ack NMU (Closes: #553432)
+  * Update Standards-Version to 3.8.4
+  * Fix NEWS entry to have the correct version number
+  * Improve the wording for the slapd/invalid_config question (Closes: #452834)
+  * Make lintian a bit more happy (Closes: #518660)
+  * Fix bashism (Closes: #518657)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat, 10 Apr 2010 18:27:44 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat, 10 Apr 2010 23:28:05 +0200
 
 openldap (2.4.17-2.1) unstable; urgency=high
 

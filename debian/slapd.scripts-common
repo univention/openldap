@@ -642,7 +642,7 @@ create_new_configuration() {						# {{{
 	# For the domain really.argh.org we create the basedn 
 	# dc=really,dc=argh,dc=org with the dc entry dc: really
 	db_get slapd/domain
-	local basedn="dc=`echo $RET | sed 's/^\.//; s/\./,dc=/g'`"
+	basedn="dc=`echo $RET | sed 's/^\.//; s/\./,dc=/g'`"
 	dc="`echo $RET | sed 's/^\.//; s/\..*$//'`"
 
 	db_get slapd/backend

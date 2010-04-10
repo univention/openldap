@@ -45,9 +45,10 @@ Type: boolean
 Default: true
 _Description: Retry configuration?
  The configuration you entered is invalid. Make sure that the DNS domain name
- is syntactically valid, the organization is not left empty and the admin
- passwords match. If you decide not to retry the configuration the LDAP server
- will not be set up. Run 'dpkg-reconfigure slapd' if you want to retry later.
+ is syntactically valid, the field for the organization is not left empty and
+ the admin passwords match. If you decide not to retry the configuration the
+ LDAP server will not be set up. Run 'dpkg-reconfigure slapd' if you want to
+ retry later.
 
 Template: slapd/domain
 Type: string

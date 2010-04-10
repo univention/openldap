@@ -4,6 +4,8 @@
 # manually rather than letting dh_makeshlibs deal with it because
 # dh_makeshlibs can't cope with the trick we're pulling with libldap_r.
 
+set -e
+
 if [ "$1" = "configure" ]; then
     ldconfig
 fi

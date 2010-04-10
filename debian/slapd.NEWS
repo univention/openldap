@@ -1,4 +1,4 @@
-openldap2.3 (2.3.20-1) unstable; urgency=low
+openldap2.3 (2.3.23-1) unstable; urgency=low
 
    The Debian slapd package no longer includes support for the LDBM backend.
    It has been disabled as a result of concerns over data loss and lack of

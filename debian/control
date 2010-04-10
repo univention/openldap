@@ -14,7 +14,7 @@ Build-Depends: debhelper (>= 6), libdb4.7-dev, libgcrypt-dev,
  libwrap0-dev, perl, debconf-utils, po-debconf, quilt (>= 0.40),
  autotools-dev, libtool, automake, autoconf, groff-base, time
 Build-Conflicts: libbind-dev, bind-dev, libicu-dev
-Standards-Version: 3.8.2
+Standards-Version: 3.8.4
 Homepage: http://www.openldap.org/
 Vcs-Svn: svn://svn.debian.org/pkg-openldap/openldap/trunk
 Vcs-Browser: http://svn.debian.org/wsvn/pkg-openldap/openldap/trunk
