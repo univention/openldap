@@ -3,10 +3,10 @@ Add /etc/ldap/sasl2 to the SASL configuration search path.
 Not submitted upstream.  Somewhat Debian-specific and probably not of
 interest upstream.
 
-Index: openldap/include/ldap_defaults.h
+Index: b/include/ldap_defaults.h
 ===================================================================
---- openldap.orig/include/ldap_defaults.h
-+++ openldap/include/ldap_defaults.h
+--- a/include/ldap_defaults.h
++++ b/include/ldap_defaults.h
 @@ -63,4 +63,6 @@
  	/* dn of the default "monitor" subentry */
  #define SLAPD_MONITOR_DN		"cn=Monitor"
@@ -14,11 +14,11 @@ Index: openldap/include/ldap_defaults.h
 +#define SASL_CONFIGPATH                        LDAP_SYSCONFDIR LDAP_DIRSEP "sasl2"
 +
  #endif /* _LDAP_CONFIG_H */
-Index: openldap/servers/slapd/sasl.c
+Index: b/servers/slapd/sasl.c
 ===================================================================
---- openldap.orig/servers/slapd/sasl.c
-+++ openldap/servers/slapd/sasl.c
-@@ -1093,12 +1093,38 @@
+--- a/servers/slapd/sasl.c
++++ b/servers/slapd/sasl.c
+@@ -1095,12 +1095,38 @@
  };
  #endif
  

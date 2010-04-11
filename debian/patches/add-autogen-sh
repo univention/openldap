@@ -4,8 +4,10 @@ modify the source for Autoconf.
 
 Debian-specific.
 
+Index: b/autogen.sh
+===================================================================
 --- /dev/null
-+++ openldap/autogen.sh
++++ b/autogen.sh
 @@ -0,0 +1,29 @@
 +#!/bin/sh
 +#

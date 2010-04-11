@@ -4,10 +4,10 @@ for slapd.
 
 Debian-specific.
 
-Index: openldap/doc/man/man8/slapd.8
+Index: b/doc/man/man8/slapd.8
 ===================================================================
---- openldap.orig/doc/man/man8/slapd.8
-+++ openldap/doc/man/man8/slapd.8
+--- a/doc/man/man8/slapd.8
++++ b/doc/man/man8/slapd.8
 @@ -5,7 +5,7 @@
  .SH NAME
  slapd \- Stand-alone LDAP Daemon

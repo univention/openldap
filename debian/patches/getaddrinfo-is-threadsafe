@@ -13,11 +13,11 @@ Not suitable for forwarding upstream; might be made suitable by adding a
 configure-time check for glibc and disabling the mutex only on known
 thread-safe implementations.
 
-Index: trunk/libraries/libldap/os-ip.c
+Index: b/libraries/libldap/os-ip.c
 ===================================================================
---- trunk.orig/libraries/libldap/os-ip.c
-+++ trunk/libraries/libldap/os-ip.c
-@@ -477,17 +477,8 @@
+--- a/libraries/libldap/os-ip.c
++++ b/libraries/libldap/os-ip.c
+@@ -592,17 +592,8 @@
  	hints.ai_socktype = socktype;
  	snprintf(serv, sizeof serv, "%d", port );
  
@@ -35,10 +35,10 @@ Index: trunk/libraries/libldap/os-ip.c
  	if ( err != 0 ) {
  		osip_debug(ld, "ldap_connect_to_host: getaddrinfo failed: %s\n",
  			AC_GAI_STRERROR(err), 0, 0);
-Index: trunk/libraries/libldap/util-int.c
+Index: b/libraries/libldap/util-int.c
 ===================================================================
---- trunk.orig/libraries/libldap/util-int.c
-+++ trunk/libraries/libldap/util-int.c
+--- a/libraries/libldap/util-int.c
++++ b/libraries/libldap/util-int.c
 @@ -224,13 +224,7 @@
  	int rc;
  #if defined( HAVE_GETNAMEINFO )

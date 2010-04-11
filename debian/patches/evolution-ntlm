@@ -11,11 +11,11 @@ SASL and DIGEST-MD5, it's not very appealing.
 Bug#457374 filed against evolution-data-server asking if this support is
 still required on 2007-12-21.
 
-Index: trunk/include/ldap.h
+Index: b/include/ldap.h
 ===================================================================
---- trunk.orig/include/ldap.h
-+++ trunk/include/ldap.h
-@@ -2461,5 +2461,25 @@
+--- a/include/ldap.h
++++ b/include/ldap.h
+@@ -2486,5 +2486,25 @@
  	LDAPControl	**ctrls,
  	LDAPDerefRes	**drp ));
  
@@ -41,10 +41,10 @@ Index: trunk/include/ldap.h
 +
  LDAP_END_DECL
  #endif /* _LDAP_H */
-Index: trunk/libraries/libldap/ntlm.c
+Index: b/libraries/libldap/ntlm.c
 ===================================================================
 --- /dev/null
-+++ trunk/libraries/libldap/ntlm.c
++++ b/libraries/libldap/ntlm.c
 @@ -0,0 +1,138 @@
 +/* $OpenLDAP: pkg/ldap/libraries/libldap/ntlm.c,v 1.1.4.10 2002/01/04 20:38:21 kurt Exp $ */
 +/*
@@ -184,10 +184,10 @@ Index: trunk/libraries/libldap/ntlm.c
 + return( ld->ld_errno );
 +}
 +
-Index: trunk/libraries/libldap/Makefile.in
+Index: b/libraries/libldap/Makefile.in
 ===================================================================
---- trunk.orig/libraries/libldap/Makefile.in
-+++ trunk/libraries/libldap/Makefile.in
+--- a/libraries/libldap/Makefile.in
++++ b/libraries/libldap/Makefile.in
 @@ -27,7 +27,7 @@
  	init.c options.c print.c string.c util-int.c schema.c \
  	charray.c os-local.c dnssrv.c utf-8.c utf-8-conv.c \
@@ -206,10 +206,10 @@ Index: trunk/libraries/libldap/Makefile.in
  	assertion.lo deref.lo
  
  LDAP_INCDIR= ../../include       
-Index: trunk/libraries/libldap_r/Makefile.in
+Index: b/libraries/libldap_r/Makefile.in
 ===================================================================
---- trunk.orig/libraries/libldap_r/Makefile.in
-+++ trunk/libraries/libldap_r/Makefile.in
+--- a/libraries/libldap_r/Makefile.in
++++ b/libraries/libldap_r/Makefile.in
 @@ -29,7 +29,7 @@
  	init.c options.c print.c string.c util-int.c schema.c \
  	charray.c os-local.c dnssrv.c utf-8.c utf-8-conv.c \

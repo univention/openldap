@@ -6,10 +6,10 @@ Debian bug #546885
 
 Upstream ITS #6302 filed.
 
-Index: trunk/libraries/libldap/cyrus.c
+Index: b/libraries/libldap/cyrus.c
 ===================================================================
---- trunk.orig/libraries/libldap/cyrus.c
-+++ trunk/libraries/libldap/cyrus.c
+--- a/libraries/libldap/cyrus.c
++++ b/libraries/libldap/cyrus.c
 @@ -78,28 +78,6 @@
  	/* XXX not threadsafe */
  	static int sasl_initialized = 0;
@@ -39,11 +39,11 @@ Index: trunk/libraries/libldap/cyrus.c
  	if ( sasl_initialized ) {
  		return 0;
  	}
-Index: trunk/servers/slapd/sasl.c
+Index: b/servers/slapd/sasl.c
 ===================================================================
---- trunk.orig/servers/slapd/sasl.c
-+++ trunk/servers/slapd/sasl.c
-@@ -1135,26 +1135,6 @@
+--- a/servers/slapd/sasl.c
++++ b/servers/slapd/sasl.c
+@@ -1137,26 +1137,6 @@
  #endif
  
  #ifdef HAVE_CYRUS_SASL

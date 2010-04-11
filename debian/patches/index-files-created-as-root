@@ -11,9 +11,11 @@ upstream discussion leans towards putting the check into the database
 backend and aborting if slapd is run as a different user than the database
 owner, which is an even better fix.
 
---- openldap.orig/doc/man/man8/slapindex.8
-+++ openldap/doc/man/man8/slapindex.8
-@@ -131,6 +131,10 @@
+Index: b/doc/man/man8/slapindex.8
+===================================================================
+--- a/doc/man/man8/slapindex.8
++++ b/doc/man/man8/slapindex.8
+@@ -148,6 +148,10 @@
  should not be running (at least, not in read-write
  mode) when you do this to ensure consistency of the database.
  .LP
@@ -24,8 +26,10 @@ owner, which is an even better fix.
  This command provides ample opportunity for the user to obtain
  and drink their favorite beverage.
  .SH EXAMPLES
---- openldap.orig/servers/slapd/slapindex.c
-+++ openldap/servers/slapd/slapindex.c
+Index: b/servers/slapd/slapindex.c
+===================================================================
+--- a/servers/slapd/slapindex.c
++++ b/servers/slapd/slapindex.c
 @@ -34,6 +34,8 @@
  int
  slapindex( int argc, char **argv )

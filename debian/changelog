@@ -1,7 +1,8 @@
 openldap (2.4.21-1) unstable; urgency=low
 
   [ Steve Langasek ]
-  * New upstream version (Closes: #561144, #465024, #502769, #528695, #564686)
+  * New upstream version
+    (Closes: #561144, #465024, #502769, #528695, #564686, #504728)
   * Add upstream manpage for ldapexop; thanks to Peter Marschall
     <peter@adpm.de>.  Closes: #549291.
 
@@ -12,8 +13,9 @@ openldap (2.4.21-1) unstable; urgency=low
   * Improve the wording for the slapd/invalid_config question (Closes: #452834)
   * Make lintian a bit more happy (Closes: #518660)
   * Fix bashism (Closes: #518657)
+  * Refresh all patches.
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat, 10 Apr 2010 23:28:05 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 11 Apr 2010 22:13:46 +0200
 
 openldap (2.4.17-2.1) unstable; urgency=high
 
