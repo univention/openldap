@@ -14,8 +14,9 @@ openldap (2.4.21-1) unstable; urgency=low
   * Make lintian a bit more happy (Closes: #518660)
   * Fix bashism (Closes: #518657)
   * Refresh all patches.
+  * Add patch from upstream (Closes: #549642)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 11 Apr 2010 22:13:46 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 11 Apr 2010 22:39:02 +0200
 
 openldap (2.4.17-2.1) unstable; urgency=high
 

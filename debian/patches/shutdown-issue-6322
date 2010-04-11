@@ -1,0 +1,35 @@
+Index: b/servers/slapd/daemon.c
+===================================================================
+--- a/servers/slapd/daemon.c
++++ b/servers/slapd/daemon.c
+@@ -1720,9 +1720,12 @@
+ 
+ 	for ( l = 0; slap_listeners[l] != NULL; l++ ) {
+ 		Listener *lr = slap_listeners[l];
++		slap_listeners[l] = NULL;
+ 
+ 		if ( lr->sl_sd != AC_SOCKET_INVALID ) {
+-			if ( remove ) slapd_remove( lr->sl_sd, NULL, 0, 0, 0 );
++			int s = lr->sl_sd;
++			lr->sl_sd = AC_SOCKET_INVALID;
++			if ( remove ) slapd_remove( s, NULL, 0, 0, 0 );
+ 
+ #ifdef LDAP_PF_LOCAL
+ 			if ( lr->sl_sa.sa_addr.sa_family == AF_LOCAL ) {
+@@ -1730,7 +1733,7 @@
+ 			}
+ #endif /* LDAP_PF_LOCAL */
+ 
+-			slapd_close( lr->sl_sd );
++			slapd_close( s );
+ 		}
+ 
+ 		if ( lr->sl_url.bv_val ) {
+@@ -1742,7 +1745,6 @@
+ 		}
+ 
+ 		free( lr );
+-		slap_listeners[l] = NULL;
+ 	}
+ }
+ 

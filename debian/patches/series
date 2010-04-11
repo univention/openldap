@@ -9,3 +9,4 @@ sasl-default-path
 libldap-symbol-versions
 getaddrinfo-is-threadsafe
 do-not-second-guess-sonames
+shutdown-issue-6322
