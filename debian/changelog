@@ -15,8 +15,9 @@ openldap (2.4.21-1) unstable; urgency=low
   * Fix bashism (Closes: #518657)
   * Refresh all patches.
   * Add patch from upstream (Closes: #549642)
+  * Reworked the configure.options a bit to include some more options.
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 11 Apr 2010 22:39:02 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Tue, 13 Apr 2010 21:52:20 +0200
 
 openldap (2.4.17-2.1) unstable; urgency=high
 

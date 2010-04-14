@@ -37,7 +37,6 @@
 #  --sbindir=DIR          system admin executables [EPREFIX/sbin]
 #  --libexecdir=DIR       program executables [EPREFIX/libexec]
 --libexecdir='${prefix}/lib'
-#  --datadir=DIR          read-only architecture-independent data [PREFIX/share]
 #  --sysconfdir=DIR       read-only single-machine data [PREFIX/etc]
 --sysconfdir=/etc
 #  --sharedstatedir=DIR   modifiable architecture-independent data [PREFIX/com]
@@ -46,9 +45,17 @@
 #  --libdir=DIR           object code libraries [EPREFIX/lib]
 #  --includedir=DIR       C header files [PREFIX/include]
 #  --oldincludedir=DIR    C header files for non-gcc [/usr/include]
-#  --infodir=DIR          info documentation [PREFIX/info]
-#  --mandir=DIR           man documentation [PREFIX/man]
+#  --datarootdir=DIR      read-only arch.-independent data root [PREFIX/share]
+#  --datadir=DIR          read-only architecture-independent data [DATAROOTDIR]
+#  --infodir=DIR          info documentation [DATAROOTDIR/info]
+#  --localedir=DIR        locale-dependent data [DATAROOTDIR/locale]
+#  --mandir=DIR           man documentation [DATAROOTDIR/man]
 --mandir='${prefix}/share/man'
+#  --docdir=DIR           documentation root [DATAROOTDIR/doc/PACKAGE]
+#  --htmldir=DIR          html documentation [DOCDIR]
+#  --dvidir=DIR           dvi documentation [DOCDIR]
+#  --pdfdir=DIR           pdf documentation [DOCDIR]
+#  --psdir=DIR            ps documentation [DOCDIR]
 #
 #Program names:
 #  --program-prefix=PREFIX            prepend PREFIX to installed program names
@@ -112,6 +119,8 @@
 #    --enable-ldap	  enable ldap backend no|yes|mod [no]
 #    --enable-meta	  enable metadirectory backend no|yes|mod [no]
 #    --enable-monitor	  enable monitor backend no|yes|mod [yes]
+#    --enable-ndb	  enable MySQL NDB Cluster backend no|yes|mod [no]
+--disable-ndb
 #    --enable-null	  enable null backend no|yes|mod [no]
 #    --enable-passwd	  enable passwd backend no|yes|mod [no]
 #    --enable-perl	  enable perl backend no|yes|mod [no]
@@ -119,15 +128,16 @@
 #    --enable-shell	  enable shell backend no|yes|mod [no]
 #    --enable-sock	  enable sock backend no|yes|mod [no]
 #    --enable-sql	  enable sql backend no|yes|mod [no]
---disable-ndb
 #
 #SLAPD Overlay Options:
 #    --enable-overlays	  enable all available overlays no|yes|mod
 --enable-overlays=mod
 #    --enable-accesslog	  In-Directory Access Logging overlay no|yes|mod [no]
 #    --enable-auditlog	  Audit Logging overlay no|yes|mod [no]
+#    --enable-collect	  Collect overlay no|yes|mod [no]
 #    --enable-constraint	  Attribute Constraint overlay no|yes|mod [no]
 #    --enable-dds  	  Dynamic Directory Services overlay no|yes|mod [no]
+#    --enable-deref	  Dereference overlay no|yes|mod [no]
 #    --enable-dyngroup	  Dynamic Group overlay no|yes|mod [no]
 #    --enable-dynlist	  Dynamic List overlay no|yes|mod [no]
 #    --enable-memberof	  Reverse Group Membership overlay no|yes|mod [no]
@@ -136,17 +146,16 @@
 #    --enable-refint	  Referential Integrity overlay no|yes|mod [no]
 #    --enable-retcode	  Return Code testing overlay no|yes|mod [no]
 #    --enable-rwm       	  Rewrite/Remap overlay no|yes|mod [no]
-#    --enable-seqmod	  Sequential Modify overlay no|yes|mod [yes]
+#    --enable-seqmod	  Sequential Modify overlay no|yes|mod [no]
+#    --enable-sssvlv	  ServerSideSort/VLV overlay no|yes|mod [no]
 #    --enable-syncprov	  Syncrepl Provider overlay no|yes|mod [yes]
 #    --enable-translucent  Translucent Proxy overlay no|yes|mod [no]
 #    --enable-unique       Attribute Uniqueness overlay no|yes|mod [no]
 #    --enable-valsort      Value Sorting overlay no|yes|mod [no]
 #
 #Library Generation & Linking Options
-#  --enable-static[=PKGS]
-#                          build static libraries [default=yes]
-#  --enable-shared[=PKGS]
-#                          build shared libraries [default=yes]
+#  --enable-static[=PKGS]  build static libraries [default=yes]
+#  --enable-shared[=PKGS]  build shared libraries [default=yes]
 #  --enable-fast-install[=PKGS]
 #                          optimize for fast installation [default=yes]
 #  --disable-dependency-tracking  speeds up one-time build
@@ -167,13 +176,12 @@
 --with-tls=gnutls
 #  --with-yielding-select  with implicitly yielding select [auto]
 #  --with-mp               with multiple precision statistics auto|longlong|long|bignum|gmp [auto]
-#  --with-odbc             with specific ODBC support iodbc|unixodbc|auto [auto]
+#  --with-odbc             with specific ODBC support iodbc|unixodbc|odbc32|auto [auto]
 --with-odbc=unixodbc
 #  --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
 #  --with-pic              try to use only PIC/non-PIC objects [default=use
 #                          both]
-#  --with-tags[=TAGS]
-#                          include additional configurations [automatic]
+#  --with-tags[=TAGS]      include additional configurations [automatic]
 #
 #See INSTALL file for further details.
 #
@@ -182,8 +190,9 @@
 #  CFLAGS      C compiler flags
 #  LDFLAGS     linker flags, e.g. -L<lib dir> if you have libraries in a
 #              nonstandard directory <lib dir>
-#  CPPFLAGS    C/C++ preprocessor flags, e.g. -I<include dir> if you have
-#              headers in a nonstandard directory <include dir>
+#  LIBS        libraries to pass to the linker, e.g. -l<library>
+#  CPPFLAGS    C/C++/Objective C preprocessor flags, e.g. -I<include dir> if
+#              you have headers in a nonstandard directory <include dir>
 #  CPP         C preprocessor
 #
 #Use these variables to override the choices made by `configure' or to help
