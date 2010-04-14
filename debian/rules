@@ -103,7 +103,7 @@ build-indep:
 build-stamp: configure-stamp
 	$(MAKE) -C $(builddir) $(MAKEVARS)
 ifeq (,$(findstring nocheck,$(DEB_BUILD_OPTIONS)))
-#	RESOLV_MULTI=off $(MAKE) -C $(builddir) test
+	RESOLV_MULTI=off $(MAKE) -C $(builddir) test
 endif
 	touch $@
 
