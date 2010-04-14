@@ -87,6 +87,7 @@
 #  --enable-slapd	  enable building slapd [yes]
 --enable-slapd
 #    --enable-dynacl	  enable run-time loadable ACL support (experimental) [no]
+--enable-dynacl
 #    --enable-aci	  enable per-object ACIs (experimental) no|yes|mod [no]
 --enable-aci
 #    --enable-cleartext	  enable cleartext passwords [yes]

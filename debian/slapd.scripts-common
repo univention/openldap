@@ -759,7 +759,7 @@ create_new_directory() {						# {{{
 		objectClass: organizationalRole
 		cn: admin
 		description: LDAP administrator
-		userPassword: {crypt}$adminpass
+		userPassword: $adminpass
 	EOF
 
 	echo "done." >&2
@@ -937,27 +937,7 @@ create_password_hash() {						# {{{
 # Create the password hash for the given password
 # Usage: hash=`create_password_hash "$password"`
 
-  	perl - "$1" <<'EOF'
-# ---------------
-sub GenRandom {
-	local ($len) = @_;
-      	local ($char, $data, @chars);
-      	@chars = split(//, "abcdefghijklmnopqrstuvwxyz"
-                         . "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
-    
-      	open(RD, "</dev/urandom") or die "Failed to open random source";
-      	$data = "";
-      	while ($len--) {
-        	read(RD, $char, 1) == 1 or die "Failed to read random data";
-		$data .= $chars[ord($char) % @chars];
-      	}
-    
-      	close(RD);
-      	return $data;
-}
-print crypt($ARGV[0], GenRandom(2));
-EOF
-# --------------
+	slappasswd -s $1
 }
 
 # }}}
