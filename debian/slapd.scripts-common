@@ -310,7 +310,7 @@ write_slapd_conf() {            # {{{
 		changeConfig($config, $regexp);'
 
 	# Use perl to execute the function above.
-	perl -e "$script" $conf $reg
+	perl -e "$script" "$conf" "$reg"
 }
 # }}}
 write_database_info() {							# {{{
@@ -688,6 +688,13 @@ create_new_slapd_conf() {						# {{{
 		-e "s/@SUFFIX@/$basedn/g" \
 		-e "s/@ADMIN@/cn=admin,$basedn/g" \
 		-e "s/@BACKEND@/$backend/g"
+
+	# Set a generated password if no password is given.
+	db_get slapd/internal/generated_adminpw
+	if [ ! -z "$RET" ]; then
+		write_slapd_conf "$conf_new" "s|^#\s(rootdn\s+\"cn=admin.*)|\$1\\nrootpw\ $RET|"
+	fi
+
 	install_new_slapd_conf "$conf_new"
 	echo "done." >&2
 
@@ -707,7 +714,7 @@ create_new_slapd_conf() {						# {{{
 EOF
 		exit 1
 	fi
-} 
+}
 # }}}
 noisy_slapadd() {							# {{{
 # Run slapadd and output the ldif file if something goes wrong.
@@ -916,20 +923,48 @@ set_defaults_for_unseen_entries() {
 crypt_admin_pass() {							# {{{
 # Store the encrypted admin password into the debconf db
 # Usage: crypt_admin_pass
-# XXX: This is the standard unix crypt. Maybe we can get something stronger?
 
-  	db_get slapd/password1
-    if [ ! -z "$RET" ]; then
-      db_set slapd/internal/adminpw `create_password_hash "$RET"`
-    fi
+	local adminpw;
+
+	db_get slapd/password1
+	if [ ! -z "$RET" ]; then
+		db_set slapd/internal/adminpw `create_password_hash "$RET"`
+	else
+
+		# Set the password.
+		adminpw=`generate_admin_pass`
+		db_set slapd/internal/generated_adminpw $adminpw
+		db_set slapd/internal/adminpw `create_password_hash "$adminpw"`
+	fi
+}
+
+generate_admin_pass() {
+# Generate a password, if no password given then generate one.
+# Usage: generate_admin_pass
+
+	perl << 'EOF'
+# --------
+sub generatePassword {
+	$length = shift;
+	$possible = 'abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+	$password = '';
+	while(length($password) < $length) {
+		$password.= substr($possible, (int(rand(length($possible)))), 1);
+	}
+	return $password;
+}
+print generatePassword(15);
+EOF
+# --------
 }
 
 wipe_admin_pass() {
 # Remove passwords after creating the initial ldap database.
 # Usage: wipe_admin_pass
-    db_set slapd/password1 ""
-    db_set slapd/password2 ""
-    db_set slapd/internal/adminpw ""
+	db_set slapd/password1 ""
+	db_set slapd/password2 ""
+	db_set slapd/internal/adminpw ""
+	db_set slapd/internal/generated_adminpw ""
 }
 
 # }}}

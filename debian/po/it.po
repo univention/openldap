@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap 2.4.7 italian debconf templates\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2010-04-11 15:18+0200\n"
+"POT-Creation-Date: 2010-04-16 15:49+0200\n"
 "PO-Revision-Date: 2008-04-22 21:55+0200\n"
 "Last-Translator: Luca Monducci <luca.mo@tiscali.it>\n"
 "Language-Team: Italian <debian-l10n-italian@lists.debian.org>\n"
@@ -239,13 +239,13 @@ msgstr "Eliminare il database in caso di rimozione completa di slapd?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:13001
+#: ../slapd.templates:14001
 msgid "Allow LDAPv2 protocol?"
 msgstr "Abilitare il protocollo LDAPv2?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:13001
+#: ../slapd.templates:14001
 msgid ""
 "The obsolete LDAPv2 protocol is disabled by default in slapd. Programs and "
 "users should upgrade to LDAPv3.  If you have old programs which can't use "
@@ -260,13 +260,13 @@ msgstr ""
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:14001
+#: ../slapd.templates:15001
 msgid "Back up current database and create a new one?"
 msgstr "Fare il backup del database attuale e crearne uno nuovo?"
 
 #. Type: boolean
 #. Description
-#: ../slapd.templates:14001
+#: ../slapd.templates:15001
 msgid ""
 "The directory suffix (domain) you specified doesn't match the one currently "
 "in /etc/ldap/slapd.conf. Changing the directory suffix requires moving aside "
@@ -281,20 +281,20 @@ msgstr ""
 
 #. Type: error
 #. Description
-#: ../slapd.templates:15001
+#: ../slapd.templates:16001
 msgid "slapcat failure during upgrade"
 msgstr "Problema con slapcat durante l'aggiornamento"
 
 #. Type: error
 #. Description
-#: ../slapd.templates:15001
+#: ../slapd.templates:16001
 msgid "An error occurred while upgrading the LDAP directory."
 msgstr ""
 "Si è verificato un errore durante l'aggiornamento della directory LDAP."
 
 #. Type: error
 #. Description
-#: ../slapd.templates:15001
+#: ../slapd.templates:16001
 msgid ""
 "The 'slapcat' program failed while extracting the LDAP directory. This may "
 "be caused by an incorrect configuration file (for example, missing "
@@ -309,7 +309,7 @@ msgstr ""
 #. Description
 #. This paragraph is followed by a (non translatable) paragraph
 #. containing a command line
-#: ../slapd.templates:15001
+#: ../slapd.templates:16001
 msgid ""
 "This failure will cause 'slapadd' to fail later as well. The old database "
 "files will be moved to /var/backups. If you want to try this upgrade again, "
@@ -325,7 +325,7 @@ msgstr ""
 #. Description
 #. Translators: keep "$location" unchanged. This is a variable that
 #. will be replaced by a directory name at execution
-#: ../slapd.templates:15001
+#: ../slapd.templates:16001
 msgid ""
 "Then move the database files back to a backup area and then try running "
 "slapadd from $location."
@@ -335,13 +335,13 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:17001
 msgid "Database backend to use:"
 msgstr "Database di backend da usare:"
 
 #. Type: select
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:17001
 msgid ""
 "The HDB backend is recommended. HDB and BDB use similar storage formats, but "
 "HDB adds support for subtree renames. Both support the same configuration "
@@ -353,7 +353,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:17001
 msgid ""
 "In either case, you should review the resulting database configuration for "
 "your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more details."
@@ -364,13 +364,13 @@ msgstr ""
 
 #. Type: error
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:18001
 msgid "slurpd is obsolete; replicas must be reconfigured by hand"
 msgstr "slurpd è obsoleto; le repliche devono essere riconfigurate manualmente"
 
 #. Type: error
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:18001
 msgid ""
 "One or more slurpd \"replica\" options were found in your slapd config when "
 "upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, you will "
@@ -383,7 +383,7 @@ msgstr ""
 
 #. Type: error
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:18001
 msgid ""
 "The conversion from slurpd to the pull-based syncrepl protocol cannot be "
 "done automatically and you will need to configure your replica servers by "
@@ -397,13 +397,13 @@ msgstr ""
 
 #. Type: error
 #. Description
-#: ../slapd.templates:18001
+#: ../slapd.templates:19001
 msgid "TLSCipherSuite values have changed"
 msgstr "Sono cambiati i valori di TLSCipherSuite"
 
 #. Type: error
 #. Description
-#: ../slapd.templates:18001
+#: ../slapd.templates:19001
 msgid ""
 "A \"TLSCipherSuite\" option was found in your slapd config when upgrading. "
 "The values allowed for this option are determined by the SSL implementation "
@@ -418,7 +418,7 @@ msgstr ""
 
 #. Type: error
 #. Description
-#: ../slapd.templates:18001
+#: ../slapd.templates:19001
 msgid ""
 "This setting has been automatically commented out for you.  If you have "
 "specific encryption needs that require this option to be re-enabled, see the "

@@ -89,6 +89,11 @@ Type: password
 Description: Encrypted admin password:
  Internal template, should never be displayed to users.
 
+Template: slapd/internal/generated_adminpw
+Type: password
+Description: Generated admin password:
+ Internal template, should never be displayed to users.
+
 Template: slapd/allow_ldap_v2
 Type: boolean
 Default: false

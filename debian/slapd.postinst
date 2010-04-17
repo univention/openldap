@@ -15,6 +15,7 @@ postinst_initial_configuration() {					# {{{
 	if manual_configuration_wanted; then
 		echo "  Omitting slapd configuration as requested." >&2
 	else
+		crypt_admin_pass
 		create_new_configuration
 		configure_v2_protocol_support
 	fi
