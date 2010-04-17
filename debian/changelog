@@ -19,8 +19,10 @@ openldap (2.4.21-1) unstable; urgency=low
   * Enable dynamic acls
   * Use slappasswd to create a secure password (Closes: #490930)
   * Set a rootdn and rootpw if no password is given by debconf (Closes: #231950)
+  * Better document the TLSCipherSuite in slapd.conf manpage (Closes: #563113)
+  * Better document the TLS_CIPHER_SUITE in ldap.conf manpage (Closes: #510346)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Fri, 16 Apr 2010 15:27:28 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat, 17 Apr 2010 21:34:02 +0200
 
 openldap (2.4.17-2.1) unstable; urgency=high
 
