@@ -40,15 +40,8 @@ fi
 
 # Stop processing if the config file is not there
 if [ ! -r "$SLAPD_CONF" ]; then
-  cat <<EOF >&2
-No configuration file was found for slapd at $SLAPD_CONF.
-If you have moved the slapd configuration file please modify
-/etc/default/slapd to reflect this.  If you chose to not
-configure slapd during installation then you need to do so
-prior to attempting to start slapd.
-An example slapd.conf is in /usr/share/slapd
-EOF
-  exit 0 # Should this be 1?
+  log_warning_msg "No configuration file was found for slapd at $SLAPD_CONF."
+  exit 1
 fi
 
 # Find out the name of slapd's pid file
@@ -70,10 +63,7 @@ fi
 # XXX: Breaks upgrading if there is no pidfile (invoke-rc.d stop will fail)
 # -- Torsten
 if [ -z "$SLAPD_PIDFILE" ]; then
-	cat <<EOF >&2
-The pidfile for slapd is neither specified in "$SLAPD_CONF" nor
-in /etc/default/slapd. Consequently, slapd will not be started.
-EOF
+	log_failure_msg "The pidfile for slapd has not been specified"
 	exit 1
 fi
 
@@ -109,33 +99,21 @@ check_for_no_start() {
 # Tell the user that something went wrong and give some hints for
 # resolving the problem.
 report_failure() {
+	log_end_msg 1
 	if [ -n "$reason" ]; then
-		echo " - failed: "
-		echo "$reason"
+		log_failure_msg "$reason"
 	else
-		echo " - failed."
-		cat <<EOF
-The operation failed but no output was produced. For hints on what went
-wrong please refer to the system's logfiles (e.g. /var/log/syslog) or
-try running the daemon in Debug mode like via "slapd -d 16383" (warning:
-this will create copious output).
-EOF
+		log_failure_msg "The operation failed but no output was produced."
 
 		if [ -n "$SLAPD_OPTIONS" -o \
 		     -n "$SLAPD_SERVICES" ]; then
-			cat << EOF
-
-Below, you can find the command line options used by this script to 
-run slapd. Do not forget to specify those options if you
-want to look to debugging output:
-EOF
-	                if [ -z "$SLAPD_SERVICES" ]; then
+			if [ -z "$SLAPD_SERVICES" ]; then
 				if [ -n "$SLAPD_OPTIONS" ]; then
-					echo "  slapd $SLAPD_OPTIONS"
+					log_failure_msg "Command line used: slapd $SLAPD_OPTIONS"
 				fi
-                	else
-                        	echo "  slapd -h '$SLAPD_SERVICES' $SLAPD_OPTIONS"
-                	fi
+			else
+				log_failure_msg "Command line used: slapd -h '$SLAPD_SERVICES' $SLAPD_OPTIONS"
+			fi
 		fi
 	fi
 }
@@ -143,7 +121,6 @@ EOF
 # Start the slapd daemon and capture the error message if any to 
 # $reason.
 start_slapd() {
-	echo -n " slapd"
 	if [ -z "$SLAPD_SERVICES" ]; then
 		reason="`start-stop-daemon --start --quiet --oknodo \
 			--pidfile "$SLAPD_PIDFILE" \
@@ -163,7 +140,6 @@ start_slapd() {
 # Stop the slapd daemon and capture the error message (if any) to
 # $reason.
 stop_slapd() {
-	echo -n " slapd"
 	reason="`start-stop-daemon --stop --quiet --oknodo --retry TERM/10 \
 		--pidfile "$SLAPD_PIDFILE" \
 		--exec $SLAPD 2>&1`"
@@ -171,20 +147,20 @@ stop_slapd() {
 
 # Start the OpenLDAP daemons
 start_ldap() {
-	echo -n "Starting OpenLDAP:"
 	trap 'report_failure' 0
+	log_daemon_msg "Starting OpenLDAP" "slapd"
 	start_slapd
 	trap "-" 0
-	echo .
+	log_end_msg 0
 }
 
 # Stop the OpenLDAP daemons
 stop_ldap() {
-	echo -n "Stopping OpenLDAP:"
 	trap 'report_failure' 0
+	log_daemon_msg "Stopping OpenLDAP" "slapd"
 	stop_slapd
 	trap "-" 0
-	echo .
+	log_end_msg 0
 }
 
 case "$1" in
