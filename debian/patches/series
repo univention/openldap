@@ -12,3 +12,4 @@ do-not-second-guess-sonames
 shutdown-issue-6322
 manpage-tlscyphersuite-additions
 smbk5pwd-makefile
+autogroup-makefile

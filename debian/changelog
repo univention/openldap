@@ -22,8 +22,9 @@ openldap (2.4.21-1) unstable; urgency=low
   * Better document the TLSCipherSuite in slapd.conf manpage (Closes: #563113)
   * Better document the TLS_CIPHER_SUITE in ldap.conf manpage (Closes: #510346)
   * Add smbk5pwd slapd module, used patch from Mark Hymers (Closes: #443073)
+  * Add autogroup slapd module, used patch from Mathieu Parent (Closes: #575900)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 18 Apr 2010 14:55:32 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 18 Apr 2010 15:15:34 +0200
 
 openldap (2.4.17-2.1) unstable; urgency=high
 
