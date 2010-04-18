@@ -102,6 +102,7 @@ build-arch: build-stamp
 build-indep:
 build-stamp: configure-stamp
 	$(MAKE) -C $(builddir) $(MAKEVARS)
+	$(MAKE) -C contrib/slapd-modules/smbk5pwd
 ifeq (,$(findstring nocheck,$(DEB_BUILD_OPTIONS)))
 	RESOLV_MULTI=off $(MAKE) -C $(builddir) test
 endif
@@ -114,6 +115,7 @@ endif
 install: install-stamp
 install-stamp: build-stamp
 	$(MAKE) -C $(builddir) $(MAKEVARS) install
+	$(MAKE) -C contrib/slapd-modules/smbk5pwd install DESTDIR=$(installdir)
 	for F in $(installdir)/usr/lib/*.so.*.*.*; do \
 	    if echo "$$F" | grep -q libslapi ; then \
 	        continue; \
@@ -197,6 +199,9 @@ clean: unpatch
 	rm -f contrib/ldapc++/config.sub contrib/ldapc++/config.guess
 	rm -rf $(builddir) $(builddir_notls) $(installdir)
 	rm -rf build/ltmain.sh autom4te.cache configure aclocal.m4
+	
+	# Clean the contrib directory
+	rm -rf contrib/slapd-modules/smbk5pwd/.libs contrib/slapd-modules/smbk5pwd/smbk5pwd.{lo,la,o}
 	dh_clean
 
 .PHONY: binary binary-arch binary-indep build build-arch build-indep clean

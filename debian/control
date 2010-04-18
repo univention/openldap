@@ -12,7 +12,7 @@ Build-Depends: debhelper (>= 6), libdb4.7-dev, libgcrypt-dev,
  libgnutls-dev (>= 1.7), unixodbc-dev, libncurses5-dev, libperl-dev (>= 5.8.0),
  libsasl2-dev, libslp-dev, libltdl-dev | libltdl3-dev (>= 1.4.3),
  libwrap0-dev, perl, debconf-utils, po-debconf, quilt (>= 0.40),
- autotools-dev, libtool, automake, autoconf, groff-base, time
+ autotools-dev, libtool, automake, autoconf, groff-base, time, heimdal-dev
 Build-Conflicts: libbind-dev, bind-dev, libicu-dev
 Standards-Version: 3.8.4
 Homepage: http://www.openldap.org/
