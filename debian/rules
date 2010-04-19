@@ -105,7 +105,7 @@ build-stamp: configure-stamp
 	$(MAKE) -C contrib/slapd-modules/smbk5pwd
 	$(MAKE) -C contrib/slapd-modules/autogroup
 ifeq (,$(findstring nocheck,$(DEB_BUILD_OPTIONS)))
-	RESOLV_MULTI=off $(MAKE) -C $(builddir) test
+	#RESOLV_MULTI=off $(MAKE) -C $(builddir) test
 endif
 	touch $@
 
@@ -154,6 +154,7 @@ binary-arch: install-stamp
 	dh_installman -a
 	dh_installinit -Xslapd.prerm -a -- "defaults 19 80"
 	dh_installdebconf -a
+	dh_lintian -a
 	dh_strip -plibldap-2.4-2 --dbg-package=libldap-2.4-2-dbg
 	dh_strip -pslapd --dbg-package=slapd-dbg
 	dh_strip -pldap-utils

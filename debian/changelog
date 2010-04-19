@@ -24,8 +24,9 @@ openldap (2.4.21-1) unstable; urgency=low
   * Add smbk5pwd slapd module, used patch from Mark Hymers (Closes: #443073)
   * Add autogroup slapd module, used patch from Mathieu Parent (Closes: #575900)
   * Add lsb logging, used patch from David Härdeman (Closes: #385898)
+  * Use dh_lintian to install the lintian-overrides
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 18 Apr 2010 15:41:07 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Mon, 19 Apr 2010 10:23:36 +0200
 
 openldap (2.4.17-2.1) unstable; urgency=high
 
