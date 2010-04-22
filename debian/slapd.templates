@@ -120,7 +120,7 @@ Type: error
 # This paragraph is followed by a (non translatable) paragraph
 # containing a command line
 #flag:comment:6
-# Translators: keep "$location" unchanged. This is a variable that
+# Translators: keep "${location}" unchanged. This is a variable that
 # will be replaced by a directory name at execution
 _Description: slapcat failure during upgrade
  An error occurred while upgrading the LDAP directory.
@@ -134,10 +134,10 @@ _Description: slapcat failure during upgrade
  again, you should move the old database files back into place, fix
  whatever caused slapcat to fail, and run:
  .
-  slapcat > $location
+  slapcat > ${location}
  .
  Then move the database files back to a backup area and then try running
- slapadd from $location.
+ slapadd from ${location}.
 
 Template: slapd/backend
 Type: select

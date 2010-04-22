@@ -144,6 +144,9 @@ dump_databases() {							# {{{
 		if [ "$failed" ]; then
 			rm -f "$file"
 			echo failed. >&2
+			db_subst slapd/upgrade_slapcat_failure location "$dir"
+			db_input critical slapd/upgrade_slapcat_failure || true
+			db_go || true
 			exit 1
 		fi
 		echo "done." >&2
