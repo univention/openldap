@@ -37,7 +37,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap 2.4.15-1\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2010-04-16 15:49+0200\n"
+"POT-Creation-Date: 2010-04-23 16:00+0200\n"
 "PO-Revision-Date: 2009-03-20 13:48+0100\n"
 "Last-Translator: Francisco Javier Cuadrado <fcocuadrado@gmail.com>\n"
 "Language-Team: Debian l10n Spanish <debian-l10n-spanish@lists.debian.org>\n"
@@ -356,12 +356,16 @@ msgstr ""
 
 #. Type: error
 #. Description
-#. Translators: keep "$location" unchanged. This is a variable that
+#. Translators: keep "${location}" unchanged. This is a variable that
 #. will be replaced by a directory name at execution
 #: ../slapd.templates:16001
+#, fuzzy
+#| msgid ""
+#| "Then move the database files back to a backup area and then try running "
+#| "slapadd from $location."
 msgid ""
 "Then move the database files back to a backup area and then try running "
-"slapadd from $location."
+"slapadd from ${location}."
 msgstr ""
 "Mueva los ficheros de la base de datos de nuevo al área de la copia de "
 "seguridad e intente utilizar «slapadd» en $location."
