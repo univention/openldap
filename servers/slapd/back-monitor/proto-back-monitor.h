@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/proto-back-monitor.h,v 1.33.2.7 2009/08/25 22:48:10 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/proto-back-monitor.h,v 1.33.2.8 2010/04/13 20:23:33 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2009 The OpenLDAP Foundation.
+ * Copyright 2001-2010 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *

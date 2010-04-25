@@ -1,8 +1,8 @@
 /* search.c - ldap backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.201.2.23 2009/10/30 18:10:18 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.201.2.26 2010/04/15 22:20:09 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2009 The OpenLDAP Foundation.
+ * Copyright 1999-2010 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -195,7 +195,8 @@ ldap_back_search(
 		for ( i = 0; !BER_BVISNULL( &op->ors_attrs[i].an_name ); i++ )
 			/* just count attrs */ ;
 
-		attrs = ch_malloc( ( i + 1 )*sizeof( char * ) );
+		attrs = op->o_tmpalloc( ( i + 1 )*sizeof( char * ),
+			op->o_tmpmemctx );
 		if ( attrs == NULL ) {
 			rs->sr_err = LDAP_NO_MEMORY;
 			rc = -1;
@@ -609,7 +610,7 @@ finish:;
 	}
 
 	if ( attrs ) {
-		ch_free( attrs );
+		op->o_tmpfree( attrs, op->o_tmpmemctx );
 	}
 
 	if ( lc != NULL ) {
@@ -743,12 +744,12 @@ ldap_build_entry(
 			int		rc;
 
 			if ( pretty ) {
-				rc = pretty( attr->a_desc->ad_type->sat_syntax,
+				rc = ordered_value_pretty( attr->a_desc,
 					&attr->a_vals[i], &pval, NULL );
 
 			} else {
-				rc = validate( attr->a_desc->ad_type->sat_syntax,
-					&attr->a_vals[i] );
+				rc = ordered_value_validate( attr->a_desc,
+					&attr->a_vals[i], 0 );
 			}
 
 			if ( rc != LDAP_SUCCESS ) {
@@ -792,9 +793,9 @@ ldap_build_entry(
 			for ( i = 0; i < last; i++ ) {
 				int		rc;
 
-				rc = attr->a_desc->ad_type->sat_equality->smr_normalize(
+				rc = ordered_value_normalize(
 					SLAP_MR_VALUE_OF_ATTRIBUTE_SYNTAX,
-					attr->a_desc->ad_type->sat_syntax,
+					attr->a_desc,
 					attr->a_desc->ad_type->sat_equality,
 					&attr->a_vals[i], &attr->a_nvals[i],
 					NULL );

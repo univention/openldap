@@ -1,8 +1,8 @@
 /* thr_lwp.c - wrappers around SunOS LWP threads */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_lwp.c,v 1.20.2.4 2009/01/22 00:00:56 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_lwp.c,v 1.20.2.5 2010/04/13 20:23:02 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

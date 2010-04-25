@@ -1,8 +1,8 @@
 /* nssov.h - NSS overlay header file */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/nssov.h,v 1.1.2.6 2009/09/29 18:11:40 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/nssov.h,v 1.1.2.8 2010/04/15 21:32:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2009 The OpenLDAP Foundation.
+ * Copyright 2008-2010 The OpenLDAP Foundation.
  * Portions Copyright 2008 Howard Chu.
  * All rights reserved.
  *
@@ -29,9 +29,9 @@
 #include <stdio.h>
 
 #include "nslcd.h"
-#include "nslcd-common.h"
-#include "common/tio.h"
-#include "compat/attrs.h"
+#include "nslcd-prot.h"
+#include "tio.h"
+#include "attrs.h"
 
 #undef PACKAGE_BUGREPORT
 #undef PACKAGE_NAME

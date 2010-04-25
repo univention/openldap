@@ -1,8 +1,8 @@
 /* init.c - initialize various things */
-/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.97.2.11 2009/02/17 19:14:41 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.97.2.13 2010/04/19 16:53:02 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,6 @@ BerVarray default_referral = NULL;
 ldap_pvt_thread_pool_t	connection_pool;
 int			connection_pool_max = SLAP_MAX_WORKER_THREADS;
 int		slap_tool_thread_max = 1;
-ldap_pvt_thread_mutex_t	gmtime_mutex;
 
 slap_counters_t			slap_counters, *slap_counters_list;
 
@@ -145,7 +144,6 @@ slap_init( int mode, const char *name )
 		LDAP_STAILQ_INIT( &slapd_rq.task_list );
 		LDAP_STAILQ_INIT( &slapd_rq.run_list );
 
-		ldap_pvt_thread_mutex_init( &gmtime_mutex );
 		slap_passwd_init();
 
 		rc = slap_sasl_init();

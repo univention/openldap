@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_pblock.c,v 1.63.2.10 2009/07/27 20:19:19 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_pblock.c,v 1.63.2.11 2010/04/13 20:23:51 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2009 The OpenLDAP Foundation.
+ * Copyright 2002-2010 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002-2003 IBM Corporation.
  * All rights reserved.
  *

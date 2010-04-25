@@ -1,5 +1,5 @@
 /* memberof.c - back-reference for group membership */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/memberof.c,v 1.2.2.20 2009/11/17 17:37:39 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/memberof.c,v 1.2.2.21 2010/04/15 20:11:24 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2007 Pierangelo Masarati <ando@sys-net.it>
@@ -580,6 +580,7 @@ memberof_op_add( Operation *op, SlapReply *rs )
 							sizeof( struct berval ) * ( j - i ) );
 					}
 					i--;
+					a->a_numvals--;
 				}
 			}
 

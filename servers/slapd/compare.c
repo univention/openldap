@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/compare.c,v 1.136.2.9 2009/01/22 00:01:00 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/compare.c,v 1.136.2.10 2010/04/13 20:23:12 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

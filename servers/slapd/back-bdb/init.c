@@ -1,8 +1,8 @@
 /* init.c - initialize bdb backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.247.2.23 2009/07/27 17:38:41 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/init.c,v 1.247.2.25 2010/04/14 22:59:10 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2009 The OpenLDAP Foundation.
+ * Copyright 2000-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -830,7 +830,8 @@ bdb_back_initialize(
 	 */
 	bi->bi_tool_entry_open = bdb_tool_entry_open;
 	bi->bi_tool_entry_close = bdb_tool_entry_close;
-	bi->bi_tool_entry_first = bdb_tool_entry_next;
+	bi->bi_tool_entry_first = backend_tool_entry_first;
+	bi->bi_tool_entry_first_x = bdb_tool_entry_first_x;
 	bi->bi_tool_entry_next = bdb_tool_entry_next;
 	bi->bi_tool_entry_get = bdb_tool_entry_get;
 	bi->bi_tool_entry_put = bdb_tool_entry_put;

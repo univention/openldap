@@ -1,8 +1,8 @@
 /* refint.c - referential integrity module */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/refint.c,v 1.19.2.12 2009/06/04 23:27:42 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/refint.c,v 1.19.2.13 2010/04/13 20:23:45 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2009 The OpenLDAP Foundation.
+ * Copyright 2004-2010 The OpenLDAP Foundation.
  * Portions Copyright 2004 Symas Corporation.
  * All rights reserved.
  *

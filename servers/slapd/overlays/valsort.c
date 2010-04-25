@@ -1,8 +1,8 @@
 /* valsort.c - sort attribute values */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/valsort.c,v 1.17.2.6 2009/01/22 00:01:13 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/valsort.c,v 1.17.2.8 2010/04/14 17:26:11 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2009 The OpenLDAP Foundation.
+ * Copyright 2005-2010 The OpenLDAP Foundation.
  * Portions copyright 2005 Symas Corporation.
  * All rights reserved.
  *
@@ -297,9 +297,19 @@ valsort_response( Operation *op, SlapReply *rs )
 		a = attr_find( rs->sr_entry->e_attrs, vi->vi_ad );
 		if ( !a ) continue;
 
-		if (( rs->sr_flags & ( REP_ENTRY_MODIFIABLE|REP_ENTRY_MUSTBEFREED )) !=
-			( REP_ENTRY_MODIFIABLE|REP_ENTRY_MUSTBEFREED )) {
-			rs->sr_entry = entry_dup( rs->sr_entry );
+		if (( rs->sr_flags & ( REP_ENTRY_MODIFIABLE|REP_ENTRY_MUSTBEFREED ) ) !=
+			( REP_ENTRY_MODIFIABLE|REP_ENTRY_MUSTBEFREED ) )
+		{
+			Entry *e;
+
+			e = entry_dup( rs->sr_entry );
+			if ( rs->sr_flags & REP_ENTRY_MUSTRELEASE ) {
+				overlay_entry_release_ov( op, rs->sr_entry, 0, on );
+				rs->sr_flags &= ~REP_ENTRY_MUSTRELEASE;
+			} else if ( rs->sr_flags & REP_ENTRY_MUSTBEFREED ) {
+				entry_free( rs->sr_entry );
+			}
+			rs->sr_entry = e;
 			rs->sr_flags |= REP_ENTRY_MODIFIABLE|REP_ENTRY_MUSTBEFREED;
 			a = attr_find( rs->sr_entry->e_attrs, vi->vi_ad );
 		}

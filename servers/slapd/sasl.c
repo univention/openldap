@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.239.2.20 2009/12/02 16:57:37 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.239.2.23 2010/04/15 18:41:32 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -258,7 +258,11 @@ sasl_ap_lookup( Operation *op, SlapReply *rs )
 	return LDAP_SUCCESS;
 }
 
+#if SASL_VERSION_FULL >= 0x020118
+static int
+#else
 static void
+#endif
 slap_auxprop_lookup(
 	void *glob_context,
 	sasl_server_params_t *sparams,
@@ -271,6 +275,7 @@ slap_auxprop_lookup(
 	int i, doit = 0;
 	Connection *conn = NULL;
 	lookup_info sl;
+	int rc = LDAP_SUCCESS;
 
 	sl.list = sparams->utils->prop_get( sparams->propctx );
 	sl.sparams = sparams;
@@ -399,13 +404,17 @@ slap_auxprop_lookup(
 				op->ors_slimit = 1;
 				op->ors_filter = &generic_filter;
 				op->ors_filterstr = generic_filterstr;
+				op->o_authz = conn->c_authz;
 				/* FIXME: we want all attributes, right? */
 				op->ors_attrs = NULL;
 
-				op->o_bd->be_search( op, &rs );
+				rc = op->o_bd->be_search( op, &rs );
 			}
 		}
 	}
+#if SASL_VERSION_FULL >= 0x020118
+	return rc != LDAP_SUCCESS ? SASL_FAIL : SASL_OK;
+#endif
 }
 
 #if SASL_VERSION_FULL >= 0x020110

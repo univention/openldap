@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.133.2.15 2009/08/25 23:04:13 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.133.2.16 2010/04/13 20:22:56 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

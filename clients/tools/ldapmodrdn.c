@@ -1,8 +1,8 @@
 /* ldapmodrdn.c - generic program to modify an entry's RDN using LDAP */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodrdn.c,v 1.116.2.8 2009/08/13 00:55:07 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodrdn.c,v 1.116.2.10 2010/04/15 22:16:50 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -193,19 +193,6 @@ main(int argc, char **argv)
 	}
 
 	ld = tool_conn_setup( 0, 0 );
-
-	if ( pw_file || want_bindpw ) {
-		if ( pw_file ) {
-			rc = lutil_get_filed_password( pw_file, &passwd );
-			if( rc ) {
-				retval = EXIT_FAILURE;
-				goto fail;
-			}
-		} else {
-			passwd.bv_val = getpassphrase( _("Enter LDAP Password: ") );
-			passwd.bv_len = passwd.bv_val ? strlen( passwd.bv_val ) : 0;
-		}
-	}
 
 	tool_bind( ld );
 

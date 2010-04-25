@@ -1,8 +1,8 @@
 /* translucent.c - translucent proxy module */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/translucent.c,v 1.13.2.33 2009/12/02 19:32:38 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/translucent.c,v 1.13.2.35 2010/04/15 20:02:30 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2009 The OpenLDAP Foundation.
+ * Copyright 2004-2010 The OpenLDAP Foundation.
  * Portions Copyright 2005 Symas Corporation.
  * All rights reserved.
  *
@@ -206,6 +206,7 @@ translucent_cf_gen( ConfigArgs *c )
 			ch_free( (*an)[i].an_name.bv_val );
 			do {
 				(*an)[i] = (*an)[i+1];
+				i++;
 			} while ( !BER_BVISNULL( &(*an)[i].an_name ));
 		}
 		return 0;

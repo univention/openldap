@@ -1,8 +1,8 @@
 /* nssov.c - nss-ldap overlay for slapd */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/nssov.c,v 1.1.2.5 2009/08/17 21:48:58 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/nssov.c,v 1.1.2.6 2010/04/13 20:22:28 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2009 The OpenLDAP Foundation.
+ * Copyright 2008-2010 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *

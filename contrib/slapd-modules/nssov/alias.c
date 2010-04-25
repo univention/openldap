@@ -1,8 +1,8 @@
 /* alias.c - mail alias lookup routines */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/alias.c,v 1.1.2.3 2009/08/17 21:48:57 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/alias.c,v 1.1.2.5 2010/04/15 21:32:56 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2009 The OpenLDAP Foundation.
+ * Copyright 2008-2010 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
@@ -83,7 +83,7 @@ static int write_alias(nssov_alias_cbp *cbp,Entry *entry)
 	/* for each name, write an entry */
 	for (i=0;!BER_BVISNULL(&names[i]);i++)
 	{
-		WRITE_INT32(cbp->fp,NSLCD_RESULT_SUCCESS);
+		WRITE_INT32(cbp->fp,NSLCD_RESULT_BEGIN);
 		WRITE_BERVAL(cbp->fp,&names[i]);
 		WRITE_BVARRAY(cbp->fp,members);
 	}
@@ -97,7 +97,7 @@ NSSOV_HANDLE(
 	char fbuf[1024];
 	struct berval filter = {sizeof(fbuf)};
 	filter.bv_val = fbuf;
-	READ_STRING_BUF2(fp,cbp.buf,sizeof(cbp.buf));
+	READ_STRING(fp,cbp.buf);
 	cbp.name.bv_len = tmpint32;
 	cbp.name.bv_val = cbp.buf;,
 	Debug(LDAP_DEBUG_TRACE,"nssov_alias_byname(%s)\n",cbp.name.bv_val,0,0);,

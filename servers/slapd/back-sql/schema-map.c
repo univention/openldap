@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/schema-map.c,v 1.59.2.9 2009/01/22 00:01:11 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/schema-map.c,v 1.59.2.10 2010/04/13 20:23:43 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2009 The OpenLDAP Foundation.
+ * Copyright 1999-2010 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.

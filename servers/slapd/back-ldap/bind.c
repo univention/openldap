@@ -1,8 +1,8 @@
 /* bind.c - ldap backend bind function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.162.2.25 2009/09/30 00:29:31 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.162.2.28 2010/04/19 19:28:15 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2009 The OpenLDAP Foundation.
+ * Copyright 1999-2010 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -1298,6 +1298,7 @@ ldap_back_dobind_int(
 	ber_int_t	msgid;
 	ber_tag_t	o_tag = op->o_tag;
 	slap_callback cb = {0};
+	char		*tmp_dn;
 
 	assert( lcp != NULL );
 	assert( retries >= 0 );
@@ -1462,8 +1463,18 @@ retry_lock:;
 #endif /* HAVE_CYRUS_SASL */
 
 retry:;
+	if ( BER_BVISNULL( &lc->lc_cred ) ) {
+		tmp_dn = "";
+		if ( !BER_BVISNULL( &lc->lc_bound_ndn ) && !BER_BVISEMPTY( &lc->lc_bound_ndn ) ) {
+			Debug( LDAP_DEBUG_ANY, "%s ldap_back_dobind_int: DN=\"%s\" without creds, binding anonymously",
+				op->o_log_prefix, lc->lc_bound_ndn.bv_val, 0 );
+		}
+
+	} else {
+		tmp_dn = lc->lc_bound_ndn.bv_val;
+	}
 	rs->sr_err = ldap_sasl_bind( lc->lc_ld,
-			BER_BVISNULL( &lc->lc_cred ) ? "" : lc->lc_bound_ndn.bv_val,
+			tmp_dn,
 			LDAP_SASL_SIMPLE, &lc->lc_cred,
 			NULL, NULL, &msgid );
 
@@ -2057,32 +2068,51 @@ ldap_back_is_proxy_authz( Operation *op, SlapReply *rs, ldap_back_send_t sendok,
 
 			goto done;
 
-		} else if ( li->li_idassert_authz && !be_isroot( op ) ) {
-			struct berval authcDN;
+		} else if ( !be_isroot( op ) ) {
+			if ( li->li_idassert_passthru ) {
+				struct berval authcDN;
 
-			if ( BER_BVISNULL( &ndn ) ) {
-				authcDN = slap_empty_bv;
-
-			} else {
-				authcDN = ndn;
-			}	
-			rs->sr_err = slap_sasl_matches( op, li->li_idassert_authz,
-					&authcDN, &authcDN );
-			if ( rs->sr_err != LDAP_SUCCESS ) {
-				if ( li->li_idassert_flags & LDAP_BACK_AUTH_PRESCRIPTIVE ) {
-					if ( sendok & LDAP_BACK_SENDERR ) {
-						send_ldap_result( op, rs );
-						dobind = -1;
-					}
+				if ( BER_BVISNULL( &ndn ) ) {
+					authcDN = slap_empty_bv;
 
 				} else {
-					rs->sr_err = LDAP_SUCCESS;
-					*binddn = slap_empty_bv;
-					*bindcred = slap_empty_bv;
+					authcDN = ndn;
+				}	
+				rs->sr_err = slap_sasl_matches( op, li->li_idassert_passthru,
+						&authcDN, &authcDN );
+				if ( rs->sr_err == LDAP_SUCCESS ) {
+					dobind = 0;
 					break;
 				}
+			}
 
-				goto done;
+			if ( li->li_idassert_authz ) {
+				struct berval authcDN;
+
+				if ( BER_BVISNULL( &ndn ) ) {
+					authcDN = slap_empty_bv;
+
+				} else {
+					authcDN = ndn;
+				}	
+				rs->sr_err = slap_sasl_matches( op, li->li_idassert_authz,
+						&authcDN, &authcDN );
+				if ( rs->sr_err != LDAP_SUCCESS ) {
+					if ( li->li_idassert_flags & LDAP_BACK_AUTH_PRESCRIPTIVE ) {
+						if ( sendok & LDAP_BACK_SENDERR ) {
+							send_ldap_result( op, rs );
+							dobind = -1;
+						}
+
+					} else {
+						rs->sr_err = LDAP_SUCCESS;
+						*binddn = slap_empty_bv;
+						*bindcred = slap_empty_bv;
+						break;
+					}
+
+					goto done;
+				}
 			}
 		}
 
@@ -2468,6 +2498,7 @@ ldap_back_proxy_authz_ctrl(
 	}
 
 	ctrl->ldctl_oid = LDAP_CONTROL_PROXY_AUTHZ;
+	ctrl->ldctl_iscritical = ( ( si->si_flags & LDAP_BACK_AUTH_PROXYAUTHZ_CRITICAL ) == LDAP_BACK_AUTH_PROXYAUTHZ_CRITICAL );
 
 	switch ( si->si_mode ) {
 	/* already in u:ID or dn:DN form */

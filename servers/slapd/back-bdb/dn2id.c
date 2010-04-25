@@ -1,8 +1,8 @@
 /* dn2id.c - routines to deal with the dn2id index */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2id.c,v 1.137.2.19 2009/06/19 21:55:57 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2id.c,v 1.137.2.21 2010/04/13 20:23:24 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2009 The OpenLDAP Foundation.
+ * Copyright 2000-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,6 +23,7 @@
 #include "idl.h"
 #include "lutil.h"
 
+#if 0
 #define bdb_dn2id_lock					BDB_SYMBOL(dn2id_lock)
 
 static int
@@ -48,6 +49,9 @@ bdb_dn2id_lock( struct bdb_info *bdb, struct berval *dn,
 					&lockobj, db_rw, lock);
 	return rc;
 }
+#else
+#define	bdb_dn2id_lock(a,b,c,d,e)	0
+#endif
 
 #ifndef BDB_HIER
 int

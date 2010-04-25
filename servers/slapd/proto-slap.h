@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.670.2.55 2009/11/18 01:16:16 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.670.2.60 2010/04/19 16:53:02 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -427,6 +427,8 @@ LDAP_SLAPD_F (int) backend_operational LDAP_P((
 	Operation *op,
 	SlapReply *rs 
 ));
+
+LDAP_SLAPD_F (ID) backend_tool_entry_first LDAP_P(( BackendDB *be ));
 
 LDAP_SLAPD_V(BackendInfo) slap_binfo[]; 
 
@@ -983,6 +985,8 @@ LDAP_SLAPD_F (void) entry_partsize LDAP_P(( Entry *e, ber_len_t *len,
 	int *nattrs, int *nvals, int norm ));
 
 LDAP_SLAPD_F (int) entry_header LDAP_P(( EntryHeader *eh ));
+LDAP_SLAPD_F (int) entry_decode_dn LDAP_P((
+	EntryHeader *eh, struct berval *dn, struct berval *ndn ));
 #ifdef SLAP_ZONE_ALLOC
 LDAP_SLAPD_F (int) entry_decode LDAP_P((
 						EntryHeader *eh, Entry **e, void *ctx ));
@@ -1512,6 +1516,10 @@ LDAP_SLAPD_F (int) get_alias_dn LDAP_P((
 /*
  * result.c
  */
+LDAP_SLAPD_F (void) rs_replace_entry LDAP_P(( Operation *op,
+	SlapReply *rs, slap_overinst *on, Entry *e ));
+LDAP_SLAPD_F (int) rs_ensure_entry_modifiable LDAP_P(( Operation *op,
+	SlapReply *rs, slap_overinst *on ));
 LDAP_SLAPD_F (void) slap_send_ldap_result LDAP_P(( Operation *op, SlapReply *rs ));
 LDAP_SLAPD_F (void) send_ldap_sasl LDAP_P(( Operation *op, SlapReply *rs ));
 LDAP_SLAPD_F (void) send_ldap_disconnect LDAP_P(( Operation *op, SlapReply *rs ));
@@ -1978,7 +1986,10 @@ LDAP_SLAPD_V (int)			slap_tool_thread_max;
 
 LDAP_SLAPD_V (ldap_pvt_thread_mutex_t)	entry2str_mutex;
 
-LDAP_SLAPD_V (ldap_pvt_thread_mutex_t)	gmtime_mutex;
+#ifndef LDAP_DEVEL
+	/* to be removed with 2.5 */
+#define gmtime_mutex ldap_int_gmtime_mutex
+#endif /* ! LDAP_DEVEL */
 
 LDAP_SLAPD_V (ldap_pvt_thread_mutex_t)	ad_undef_mutex;
 LDAP_SLAPD_V (ldap_pvt_thread_mutex_t)	oc_undef_mutex;

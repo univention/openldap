@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap_sync.c,v 1.2.2.5 2009/01/22 00:00:54 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/ldap_sync.c,v 1.2.2.6 2010/04/13 20:22:58 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2006-2009 The OpenLDAP Foundation.
+ * Copyright 2006-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
