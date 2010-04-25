@@ -108,7 +108,7 @@ Index: b/configure.in
 ===================================================================
 --- a/configure.in
 +++ b/configure.in
-@@ -1894,6 +1894,13 @@
+@@ -1895,6 +1895,13 @@
  fi
  AC_SUBST(LTSTATIC)dnl
  

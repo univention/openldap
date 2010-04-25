@@ -39,7 +39,7 @@ Index: b/libraries/libldap/util-int.c
 ===================================================================
 --- a/libraries/libldap/util-int.c
 +++ b/libraries/libldap/util-int.c
-@@ -224,13 +224,7 @@
+@@ -444,13 +444,7 @@
  	int rc;
  #if defined( HAVE_GETNAMEINFO )
  

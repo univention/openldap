@@ -43,7 +43,7 @@ Index: b/servers/slapd/sasl.c
 ===================================================================
 --- a/servers/slapd/sasl.c
 +++ b/servers/slapd/sasl.c
-@@ -1137,26 +1137,6 @@
+@@ -1146,26 +1146,6 @@
  #endif
  
  #ifdef HAVE_CYRUS_SASL

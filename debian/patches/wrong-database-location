@@ -20,7 +20,7 @@ Index: b/doc/man/man5/slapd.conf.5
 ===================================================================
 --- a/doc/man/man5/slapd.conf.5
 +++ b/doc/man/man5/slapd.conf.5
-@@ -1881,7 +1881,7 @@
+@@ -1899,7 +1899,7 @@
  # The database directory MUST exist prior to
  # running slapd AND should only be accessible
  # by the slapd/tools. Mode 0700 recommended.
@@ -62,7 +62,7 @@ Index: b/doc/man/man5/slapd-config.5
 ===================================================================
 --- a/doc/man/man5/slapd-config.5
 +++ b/doc/man/man5/slapd-config.5
-@@ -1919,7 +1919,7 @@
+@@ -1936,7 +1936,7 @@
  # The database directory MUST exist prior to
  # running slapd AND should only be accessible
  # by the slapd/tools. Mode 0700 recommended.

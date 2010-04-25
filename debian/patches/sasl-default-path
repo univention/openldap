@@ -18,7 +18,7 @@ Index: b/servers/slapd/sasl.c
 ===================================================================
 --- a/servers/slapd/sasl.c
 +++ b/servers/slapd/sasl.c
-@@ -1095,12 +1095,38 @@
+@@ -1104,12 +1104,38 @@
  };
  #endif
  
