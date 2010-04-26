@@ -1,0 +1,13 @@
+Index: b/libraries/liblutil/detach.c
+===================================================================
+--- a/libraries/liblutil/detach.c
++++ b/libraries/liblutil/detach.c
+@@ -128,7 +128,7 @@
+ 
+ #ifdef HAVE_SETSID
+ 		(void) setsid();
+-#elif TIOCNOTTY
++#elif defined(TIOCNOTTY)
+ 		if ( (sd = open( "/dev/tty", O_RDWR )) != -1 ) {
+ 			(void) ioctl( sd, TIOCNOTTY, NULL );
+ 			(void) close( sd );

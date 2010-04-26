@@ -12,3 +12,4 @@ do-not-second-guess-sonames
 manpage-tlscyphersuite-additions
 smbk5pwd-makefile
 autogroup-makefile
+issue-6534-patch
