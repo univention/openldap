@@ -3,8 +3,9 @@ openldap (2.4.22-1) unstable; urgency=low
   * New upstream version
   * Change to build dependency libdb4.8-dev instead of libdb4.7-dev
   * Fix a FTBFS on kfreebsd-* (Closes: #579221)
+  * Updated french translation thanks Christian Perrier (Closes: #579192)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Mon, 26 Apr 2010 22:03:32 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Tue, 27 Apr 2010 19:28:19 +0200
 
 openldap (2.4.21-1) unstable; urgency=low
 
