@@ -1,21 +1,24 @@
-# translation of openldap_2.4.10-2_sv.po to Swedish
-# Copyright (C) 2008
+# Translation of openldap debconf template to Swedish
+# Copyright (C) 2010 Martin Bagge <brother@bsnet.se>
 # This file is distributed under the same license as the openldap package.
 #
 # Martin Ågren <martin.agren@gmail.com>, 2008.
+# Martin Bagge <brother@bsnet.se>, 2010
 msgid ""
 msgstr ""
 "Project-Id-Version: openldap_2.4.10-2_sv\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2010-04-23 16:00+0200\n"
-"PO-Revision-Date: 2008-07-28 18:16+0200\n"
-"Last-Translator: Martin Ågren <martin.agren@gmail.com>\n"
+"POT-Creation-Date: 2010-05-10 22:53+0200\n"
+"PO-Revision-Date: 2010-05-03 22:26+0100\n"
+"Last-Translator: Martin Bagge <brother@bsnet.se>\n"
 "Language-Team: Swedish <debian-l10n-swedish@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms:  nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-Language: Swedish\n"
+"X-Poedit-Country: Sweden\n"
 
 #. Type: boolean
 #. Description
@@ -135,13 +138,6 @@ msgstr "Försöka konfigurera igen?"
 #. Type: boolean
 #. Description
 #: ../slapd.templates:5001
-#, fuzzy
-#| msgid ""
-#| "The configuration you entered is invalid. Make sure that the DNS domain "
-#| "name is syntactically valid, the organization is not left empty and the "
-#| "admin passwords match. If you decide not to retry the configuration the "
-#| "LDAP server will not be set up. Run 'dpkg-reconfigure slapd' if you want "
-#| "to retry later."
 msgid ""
 "The configuration you entered is invalid. Make sure that the DNS domain name "
 "is syntactically valid, the field for the organization is not left empty and "
@@ -149,11 +145,11 @@ msgid ""
 "LDAP server will not be set up. Run 'dpkg-reconfigure slapd' if you want to "
 "retry later."
 msgstr ""
-"Konfigurationen du har angett är ogiltig. Säkerställ att DNS-domännamnet är "
+"Konfigurationen du angav är ogiltig. Säkerställ att DNS-domännamnet är "
 "syntaktiskt giltigt, att organisationsfältet inte lämnats tomt och att "
-"administratörslösenorden matchar. Om du väljer att inte försöka konfigurera "
-"igen, kommer LDAP-servern inte att ställas in. Kör \"dpkg-reconfigure slapd"
-"\" om du vill försöka igen senare."
+"administratörslösenorden överrensstämmer. Om du väljer att inte försöka "
+"konfigurera igen kommer LDAP-servern inte att ha korrekta instääkningar. Kör "
+"\"dpkg-reconfigure slapd\" om du vill försöka igen senare."
 
 #. Type: string
 #. Description
@@ -320,16 +316,12 @@ msgstr ""
 #. Translators: keep "${location}" unchanged. This is a variable that
 #. will be replaced by a directory name at execution
 #: ../slapd.templates:16001
-#, fuzzy
-#| msgid ""
-#| "Then move the database files back to a backup area and then try running "
-#| "slapadd from $location."
 msgid ""
 "Then move the database files back to a backup area and then try running "
 "slapadd from ${location}."
 msgstr ""
 "Flytta sedan tillbaka databasfilerna till ett utrymme för säkerhetskopior "
-"och kör slapadd från $location."
+"och kör slapadd från ${location}."
 
 #. Type: select
 #. Description
