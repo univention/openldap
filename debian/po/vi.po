@@ -6,10 +6,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap 2.4.7-6.4\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2010-04-23 16:00+0200\n"
+"POT-Creation-Date: 2010-05-21 08:51+0200\n"
 "PO-Revision-Date: 2008-05-09 00:24+0930\n"
 "Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
 "Language-Team: Vietnamese <vi-VN@googlegroups.com>\n"
+"Language: vi\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -76,10 +77,10 @@ msgid ""
 "the new version is incompatible with the old database format and it needs to "
 "be reimported. If you select \"never\", no dump will be done."
 msgstr ""
-"Chọn mục « luôn luôn » thì gây ra các cơ sở dữ liệu bị đổ một cách không điều "
-"kiện trước khi nâng cấp. Chọn « khi cần thiết » thì chỉ đổ cơ sở dữ liệu nếu "
-"phiên bản mới không tương thích với định dạng cơ sở dữ liệu cũ và cần phải "
-"nhập lại nó. Còn chọn « không bao giờ » thì không đổ gì."
+"Chọn mục « luôn luôn » thì gây ra các cơ sở dữ liệu bị đổ một cách không "
+"điều kiện trước khi nâng cấp. Chọn « khi cần thiết » thì chỉ đổ cơ sở dữ "
+"liệu nếu phiên bản mới không tương thích với định dạng cơ sở dữ liệu cũ và "
+"cần phải nhập lại nó. Còn chọn « không bao giờ » thì không đổ gì."
 
 #. Type: string
 #. Description
@@ -101,8 +102,8 @@ msgstr ""
 "Ghi rõ tên thư mục vào đó cần xuất các cơ sở dữ liệu LDAP. Trong thư mục này "
 "thì tạo vài tập tin LDIF mà tương ứng với những cơ bản tìm kiếm nằm trên máy "
 "phục vụ. Hãy kiểm tra xem vẫn có đủ chỗ rỗng trong phân vùng đó. Lần đầu "
-"tiên gặp chuỗi « VERSION » (phiên bản) thì được thay thế bằng phiên bản từ đó "
-"bạn đang nâng cấp."
+"tiên gặp chuỗi « VERSION » (phiên bản) thì được thay thế bằng phiên bản từ "
+"đó bạn đang nâng cấp."
 
 #. Type: boolean
 #. Description
@@ -171,8 +172,8 @@ msgid ""
 "dc=example, dc=org' as base DN."
 msgstr ""
 "Tên miền DNS được dùng để cấu trúc tên miền cơ bản của thư mục LDAP. Chẳng "
-"hạn, « foo.thí_dụ.org » sẽ tạo thư mục có « dc=foo, dc=thí_dụ, dc=org » là tên "
-"miền cơ bản."
+"hạn, « foo.thí_dụ.org » sẽ tạo thư mục có « dc=foo, dc=thí_dụ, dc=org » là "
+"tên miền cơ bản."
 
 #. Type: string
 #. Description
@@ -252,8 +253,8 @@ msgid ""
 msgstr ""
 "Giao thức LDAPv2 (phiên bản 2) quá cũ bị tắt theo mặc định trong slapd. Các "
 "chương trình và người dùng đều nên nâng cấp lên LDAPv3 (phiên bản 3). Có "
-"chương trình cũ không thể dùng LDAPv3 thì bạn nên bật tùy chọn này và chuỗi « "
-"allow bind_v2 » sẽ được thêm vào tập tin cấu hình « slapd.conf »."
+"chương trình cũ không thể dùng LDAPv3 thì bạn nên bật tùy chọn này và chuỗi "
+"« allow bind_v2 » sẽ được thêm vào tập tin cấu hình « slapd.conf »."
 
 #. Type: boolean
 #. Description
@@ -271,8 +272,8 @@ msgid ""
 "want to back up and abandon the current database."
 msgstr ""
 "Bạn đã ghi rõ một hậu tố thư mục (miền) không khớp với điều hiện thời được "
-"ghi trong tập tin cấu hình « /etc/ldap/slapd.conf ». Việc thay đổi hậu tố thư "
-"mục cần thiết di chuyển cơ sở dữ liệu LDAP hiện thời ra rồi tạo một điều "
+"ghi trong tập tin cấu hình « /etc/ldap/slapd.conf ». Việc thay đổi hậu tố "
+"thư mục cần thiết di chuyển cơ sở dữ liệu LDAP hiện thời ra rồi tạo một điều "
 "mới. Hãy xác nhận nếu bạn muốn sao lưu và hủy cơ sở dữ liệu hiện thời không."
 
 #. Type: error
@@ -295,8 +296,8 @@ msgid ""
 "be caused by an incorrect configuration file (for example, missing "
 "'moduleload' lines to support the backend database)."
 msgstr ""
-"Chương trình « slapcat » bị lỗi trong khi giải nén mục LDAP. Có lẽ do tập tin "
-"cấu hình sai (v.d. thiếu dòng « moduleload » để hỗ trợ cơ sở dữ liệu hậu "
+"Chương trình « slapcat » bị lỗi trong khi giải nén mục LDAP. Có lẽ do tập "
+"tin cấu hình sai (v.d. thiếu dòng « moduleload » để hỗ trợ cơ sở dữ liệu hậu "
 "phương)."
 
 #. Type: error
@@ -311,9 +312,10 @@ msgid ""
 "slapcat to fail, and run:"
 msgstr ""
 "Sự thất bại này sẽ cũng gây ra tiến trình « slapadd » thất bại về sau. Các "
-"tập tin cơ sở dữ liệu cũ sẽ được di chuyển vào thư mục « /var/backups ». Muốn "
-"thử lại tiến trình nâng cấp thì bạn nên di chuyển các tập tin cơ sở dữ liệu "
-"cũ về nơi gốc, sửa chữa trường hợp gây ra slapcat bị lỗi, rồi chạy lệnh này:"
+"tập tin cơ sở dữ liệu cũ sẽ được di chuyển vào thư mục « /var/backups ». "
+"Muốn thử lại tiến trình nâng cấp thì bạn nên di chuyển các tập tin cơ sở dữ "
+"liệu cũ về nơi gốc, sửa chữa trường hợp gây ra slapcat bị lỗi, rồi chạy lệnh "
+"này:"
 
 #. Type: error
 #. Description
@@ -361,8 +363,8 @@ msgid ""
 "your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more details."
 msgstr ""
 "Trong cả trường hợp, bạn nên xem lại cấu hình cơ sở dữ liệu đã kết quả, kiểm "
-"tra nó thích hợp với trường hợp của bạn. Xem tài liệu Đọc Đi « /usr/share/doc/"
-"slapd/README.DB_CONFIG.gz » để tìm chi tiết."
+"tra nó thích hợp với trường hợp của bạn. Xem tài liệu Đọc Đi « /usr/share/"
+"doc/slapd/README.DB_CONFIG.gz » để tìm chi tiết."
 
 #. Type: error
 #. Description

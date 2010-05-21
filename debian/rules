@@ -206,8 +206,14 @@ clean: unpatch
 	rm -rf build/ltmain.sh autom4te.cache configure aclocal.m4
 	
 	# Clean the contrib directory
-	rm -rf contrib/slapd-modules/smbk5pwd/.libs contrib/slapd-modules/smbk5pwd/smbk5pwd.{lo,la,o}
-	rm -rf contrib/slapd-modules/autogroup/.libs contrib/slapd-modules/autogroup/autogroup.{lo,la,o}
+	rm -rf contrib/slapd-modules/smbk5pwd/.libs \
+		contrib/slapd-modules/smbk5pwd/smbk5pwd.lo \
+		contrib/slapd-modules/smbk5pwd/smbk5pwd.la \
+		contrib/slapd-modules/smbk5pwd/smbk5pwd.o
+	rm -rf contrib/slapd-modules/autogroup/.libs \
+		contrib/slapd-modules/autogroup/autogroup.lo \
+		contrib/slapd-modules/autogroup/autogroup.la \
+		contrib/slapd-modules/autogroup/autogroup.o
 	dh_clean
 
 .PHONY: binary binary-arch binary-indep build build-arch build-indep clean
