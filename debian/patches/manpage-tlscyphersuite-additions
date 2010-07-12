@@ -1,7 +1,7 @@
 Index: b/doc/man/man5/ldap.conf.5
 ===================================================================
---- a/doc/man/man5/ldap.conf.5
-+++ b/doc/man/man5/ldap.conf.5
+--- a/doc/man/man5/ldap.conf.5	2010-07-12 12:05:36.000000000 +0200
++++ b/doc/man/man5/ldap.conf.5	2010-07-12 12:07:32.000000000 +0200
 @@ -333,20 +333,36 @@
  .TP
  .B TLS_CIPHER_SUITE <cipher-suite-spec>
@@ -46,8 +46,8 @@ Index: b/doc/man/man5/ldap.conf.5
  Specifies the file to obtain random bits from when /dev/[u]random is
 Index: b/doc/man/man5/slapd.conf.5
 ===================================================================
---- a/doc/man/man5/slapd.conf.5
-+++ b/doc/man/man5/slapd.conf.5
+--- a/doc/man/man5/slapd.conf.5	2010-07-12 12:07:24.000000000 +0200
++++ b/doc/man/man5/slapd.conf.5	2010-07-12 12:07:32.000000000 +0200
 @@ -1029,22 +1029,37 @@
  .TP
  .B TLSCipherSuite <cipher-suite-spec>

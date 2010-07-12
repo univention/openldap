@@ -5,8 +5,8 @@ interest upstream.
 
 Index: b/include/ldap_defaults.h
 ===================================================================
---- a/include/ldap_defaults.h
-+++ b/include/ldap_defaults.h
+--- a/include/ldap_defaults.h	2010-07-12 12:07:24.000000000 +0200
++++ b/include/ldap_defaults.h	2010-07-12 12:07:27.000000000 +0200
 @@ -63,4 +63,6 @@
  	/* dn of the default "monitor" subentry */
  #define SLAPD_MONITOR_DN		"cn=Monitor"
@@ -16,8 +16,8 @@ Index: b/include/ldap_defaults.h
  #endif /* _LDAP_CONFIG_H */
 Index: b/servers/slapd/sasl.c
 ===================================================================
---- a/servers/slapd/sasl.c
-+++ b/servers/slapd/sasl.c
+--- a/servers/slapd/sasl.c	2010-07-12 12:05:39.000000000 +0200
++++ b/servers/slapd/sasl.c	2010-07-12 12:07:27.000000000 +0200
 @@ -1104,12 +1104,38 @@
  };
  #endif

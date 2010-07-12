@@ -6,8 +6,8 @@ Debian-specific.
 
 Index: b/doc/man/man8/slapd.8
 ===================================================================
---- a/doc/man/man8/slapd.8
-+++ b/doc/man/man8/slapd.8
+--- a/doc/man/man8/slapd.8	2010-07-12 12:05:43.000000000 +0200
++++ b/doc/man/man8/slapd.8	2010-07-12 12:07:18.000000000 +0200
 @@ -5,7 +5,7 @@
  .SH NAME
  slapd \- Stand-alone LDAP Daemon

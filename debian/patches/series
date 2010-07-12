@@ -13,3 +13,4 @@ manpage-tlscyphersuite-additions
 smbk5pwd-makefile
 autogroup-makefile
 issue-6534-patch
+ldap-conf-tls-cacertdir

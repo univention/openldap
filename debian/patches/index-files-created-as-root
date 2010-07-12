@@ -13,8 +13,8 @@ owner, which is an even better fix.
 
 Index: b/doc/man/man8/slapindex.8
 ===================================================================
---- a/doc/man/man8/slapindex.8
-+++ b/doc/man/man8/slapindex.8
+--- a/doc/man/man8/slapindex.8	2010-07-12 12:05:40.000000000 +0200
++++ b/doc/man/man8/slapindex.8	2010-07-12 12:07:26.000000000 +0200
 @@ -148,6 +148,10 @@
  should not be running (at least, not in read-write
  mode) when you do this to ensure consistency of the database.
@@ -28,8 +28,8 @@ Index: b/doc/man/man8/slapindex.8
  .SH EXAMPLES
 Index: b/servers/slapd/slapindex.c
 ===================================================================
---- a/servers/slapd/slapindex.c
-+++ b/servers/slapd/slapindex.c
+--- a/servers/slapd/slapindex.c	2010-07-12 12:05:39.000000000 +0200
++++ b/servers/slapd/slapindex.c	2010-07-12 12:07:26.000000000 +0200
 @@ -34,6 +34,8 @@
  int
  slapindex( int argc, char **argv )

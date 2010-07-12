@@ -8,8 +8,8 @@ Upstream ITS #6302 filed.
 
 Index: b/libraries/libldap/cyrus.c
 ===================================================================
---- a/libraries/libldap/cyrus.c
-+++ b/libraries/libldap/cyrus.c
+--- a/libraries/libldap/cyrus.c	2010-07-12 12:05:37.000000000 +0200
++++ b/libraries/libldap/cyrus.c	2010-07-12 12:07:31.000000000 +0200
 @@ -78,28 +78,6 @@
  	/* XXX not threadsafe */
  	static int sasl_initialized = 0;
@@ -41,8 +41,8 @@ Index: b/libraries/libldap/cyrus.c
  	}
 Index: b/servers/slapd/sasl.c
 ===================================================================
---- a/servers/slapd/sasl.c
-+++ b/servers/slapd/sasl.c
+--- a/servers/slapd/sasl.c	2010-07-12 12:07:27.000000000 +0200
++++ b/servers/slapd/sasl.c	2010-07-12 12:07:31.000000000 +0200
 @@ -1146,26 +1146,6 @@
  #endif
  

@@ -5,8 +5,8 @@ Debian-specific.
 
 Index: b/doc/man/man5/slapd-bdb.5
 ===================================================================
---- a/doc/man/man5/slapd-bdb.5
-+++ b/doc/man/man5/slapd-bdb.5
+--- a/doc/man/man5/slapd-bdb.5	2010-07-12 12:05:40.000000000 +0200
++++ b/doc/man/man5/slapd-bdb.5	2010-07-12 12:07:24.000000000 +0200
 @@ -133,7 +133,7 @@
  associated indexes live.
  A separate directory must be specified for each database.
@@ -18,8 +18,8 @@ Index: b/doc/man/man5/slapd-bdb.5
  Allow reads of modified but not yet committed data.
 Index: b/doc/man/man5/slapd.conf.5
 ===================================================================
---- a/doc/man/man5/slapd.conf.5
-+++ b/doc/man/man5/slapd.conf.5
+--- a/doc/man/man5/slapd.conf.5	2010-07-12 12:05:41.000000000 +0200
++++ b/doc/man/man5/slapd.conf.5	2010-07-12 12:07:24.000000000 +0200
 @@ -1899,7 +1899,7 @@
  # The database directory MUST exist prior to
  # running slapd AND should only be accessible
@@ -31,8 +31,8 @@ Index: b/doc/man/man5/slapd.conf.5
  index     cn,sn,mail   pres,eq,approx,sub
 Index: b/include/ldap_defaults.h
 ===================================================================
---- a/include/ldap_defaults.h
-+++ b/include/ldap_defaults.h
+--- a/include/ldap_defaults.h	2010-07-12 12:07:23.000000000 +0200
++++ b/include/ldap_defaults.h	2010-07-12 12:07:24.000000000 +0200
 @@ -47,7 +47,7 @@
  	/* location of the default slapd config file */
  #define SLAPD_DEFAULT_CONFIGFILE	LDAP_SYSCONFDIR LDAP_DIRSEP "slapd.conf"
@@ -44,8 +44,8 @@ Index: b/include/ldap_defaults.h
  	/* default max deref depth for aliases */
 Index: b/servers/slapd/Makefile.in
 ===================================================================
---- a/servers/slapd/Makefile.in
-+++ b/servers/slapd/Makefile.in
+--- a/servers/slapd/Makefile.in	2010-07-12 12:05:40.000000000 +0200
++++ b/servers/slapd/Makefile.in	2010-07-12 12:07:24.000000000 +0200
 @@ -430,9 +430,9 @@
  
  install-db-config: FORCE
@@ -60,9 +60,9 @@ Index: b/servers/slapd/Makefile.in
  
 Index: b/doc/man/man5/slapd-config.5
 ===================================================================
---- a/doc/man/man5/slapd-config.5
-+++ b/doc/man/man5/slapd-config.5
-@@ -1936,7 +1936,7 @@
+--- a/doc/man/man5/slapd-config.5	2010-07-12 12:05:40.000000000 +0200
++++ b/doc/man/man5/slapd-config.5	2010-07-12 12:07:24.000000000 +0200
+@@ -1943,7 +1943,7 @@
  # The database directory MUST exist prior to
  # running slapd AND should only be accessible
  # by the slapd/tools. Mode 0700 recommended.

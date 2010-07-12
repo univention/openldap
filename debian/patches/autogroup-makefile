@@ -1,7 +1,7 @@
 Index: b/contrib/slapd-modules/autogroup/Makefile
 ===================================================================
---- a/contrib/slapd-modules/autogroup/Makefile
-+++ b/contrib/slapd-modules/autogroup/Makefile
+--- a/contrib/slapd-modules/autogroup/Makefile	2010-07-12 12:05:36.000000000 +0200
++++ b/contrib/slapd-modules/autogroup/Makefile	2010-07-12 12:07:34.000000000 +0200
 @@ -1,6 +1,6 @@
 -LIBTOOL=../../../libtool
 +LIBTOOL=../../../debian/build/libtool

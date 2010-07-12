@@ -15,8 +15,8 @@ thread-safe implementations.
 
 Index: b/libraries/libldap/os-ip.c
 ===================================================================
---- a/libraries/libldap/os-ip.c
-+++ b/libraries/libldap/os-ip.c
+--- a/libraries/libldap/os-ip.c	2010-07-12 12:05:38.000000000 +0200
++++ b/libraries/libldap/os-ip.c	2010-07-12 12:07:30.000000000 +0200
 @@ -592,17 +592,8 @@
  	hints.ai_socktype = socktype;
  	snprintf(serv, sizeof serv, "%d", port );
@@ -37,8 +37,8 @@ Index: b/libraries/libldap/os-ip.c
  			AC_GAI_STRERROR(err), 0, 0);
 Index: b/libraries/libldap/util-int.c
 ===================================================================
---- a/libraries/libldap/util-int.c
-+++ b/libraries/libldap/util-int.c
+--- a/libraries/libldap/util-int.c	2010-07-12 12:05:37.000000000 +0200
++++ b/libraries/libldap/util-int.c	2010-07-12 12:07:30.000000000 +0200
 @@ -444,13 +444,7 @@
  	int rc;
  #if defined( HAVE_GETNAMEINFO )
