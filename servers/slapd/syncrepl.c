@@ -1,5 +1,5 @@
 /* syncrepl.c -- Replication Engine which uses the LDAP Sync protocol */
-/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.254.2.105 2010/04/19 19:24:41 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.254.2.106 2010/06/10 17:15:14 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2010 The OpenLDAP Foundation.
@@ -4592,9 +4592,10 @@ add_syncrepl(
 		return 1;
 	} else {
 		Debug( LDAP_DEBUG_CONFIG,
-			"Config: ** successfully added syncrepl \"%s\"\n",
+			"Config: ** successfully added syncrepl %s \"%s\"\n",
+			si->si_ridtxt,
 			BER_BVISNULL( &si->si_bindconf.sb_uri ) ?
-			"(null)" : si->si_bindconf.sb_uri.bv_val, 0, 0 );
+			"(null)" : si->si_bindconf.sb_uri.bv_val, 0 );
 		if ( c->be->be_syncinfo ) {
 			syncinfo_t *sip;
 

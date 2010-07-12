@@ -1,4 +1,4 @@
-openldap (2.4.22-1) unstable; urgency=low
+openldap (2.4.23-1) unstable; urgency=low
 
   * New upstream version
   * Change to build dependency libdb4.8-dev instead of libdb4.7-dev
@@ -8,7 +8,7 @@ openldap (2.4.22-1) unstable; urgency=low
   * Updated german translation thanks Helge Kreutzmann (Closes: #579582)
   * Fix bashisms in debian/rules (Closes: #581454)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Fri, 21 May 2010 08:50:50 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Mon, 12 Jul 2010 08:33:50 +0200
 
 openldap (2.4.21-1) unstable; urgency=low
 

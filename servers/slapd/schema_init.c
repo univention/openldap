@@ -1,5 +1,5 @@
 /* schema_init.c - init builtin schema */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_init.c,v 1.386.2.39 2010/04/14 18:12:15 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_init.c,v 1.386.2.40 2010/06/10 17:48:07 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2010 The OpenLDAP Foundation.
@@ -1735,8 +1735,9 @@ UTF8StringNormalize(
 		? LDAP_UTF8_APPROX : 0;
 
 	val = UTF8bvnormalize( val, &tmp, flags, ctx );
+	/* out of memory or syntax error, the former is unlikely */
 	if( val == NULL ) {
-		return LDAP_OTHER;
+		return LDAP_INVALID_SYNTAX;
 	}
 	
 	/* collapse spaces (in place) */

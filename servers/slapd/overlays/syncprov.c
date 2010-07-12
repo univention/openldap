@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/syncprov.c,v 1.147.2.73 2010/04/19 16:53:04 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/syncprov.c,v 1.147.2.75 2010/06/10 18:50:48 quanah Exp $ */
 /* syncprov.c - syncrepl provider */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
@@ -1301,7 +1301,15 @@ syncprov_matchops( Operation *op, opcookie *opc, int saveit )
 			op2.o_hdr = &oh;
 			op2.o_extra = op->o_extra;
 			op2.o_callback = NULL;
-			rc = test_filter( &op2, e, ss->s_op->ors_filter );
+			ldap_pvt_thread_mutex_lock( &ss->s_mutex );
+			if (ss->s_flags & PS_FIX_FILTER) {
+				/* Skip the AND/GE clause that we stuck on in front. We
+				   would lose deletes/mods that happen during the refresh
+				   phase otherwise (ITS#6555) */
+				op2.ors_filter = ss->s_op->ors_filter->f_and->f_next;
+			}
+			ldap_pvt_thread_mutex_unlock( &ss->s_mutex );
+			rc = test_filter( &op2, e, op2.ors_filter );
 		}
 
 		Debug( LDAP_DEBUG_TRACE, "syncprov_matchops: sid %03x fscope %d rc %d\n",
@@ -1413,6 +1421,7 @@ syncprov_checkpoint( Operation *op, SlapReply *rs, slap_overinst *on )
 	SlapReply rsm = { 0 };
 	slap_callback cb = {0};
 	BackendDB be;
+	BackendInfo *bi;
 
 #ifdef CHECK_CSN
 	Syntax *syn = slap_schema.si_ad_contextCSN->ad_type->sat_syntax;
@@ -1442,6 +1451,7 @@ syncprov_checkpoint( Operation *op, SlapReply *rs, slap_overinst *on )
 	}
 	opm.o_req_dn = si->si_contextdn;
 	opm.o_req_ndn = si->si_contextdn;
+	bi = opm.o_bd->bd_info;
 	opm.o_bd->bd_info = on->on_info->oi_orig;
 	opm.o_managedsait = SLAP_CONTROL_NONCRITICAL;
 	opm.o_no_schema_check = 1;
@@ -1459,6 +1469,7 @@ syncprov_checkpoint( Operation *op, SlapReply *rs, slap_overinst *on )
 		if ( e == opm.ora_e )
 			be_entry_release_w( &opm, opm.ora_e );
 	}
+	opm.o_bd->bd_info = bi;
 
 	if ( mod.sml_next != NULL ) {
 		slap_mods_free( mod.sml_next, 1 );

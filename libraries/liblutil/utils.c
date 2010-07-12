@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/utils.c,v 1.33.2.28 2010/04/19 16:53:01 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/utils.c,v 1.33.2.29 2010/06/10 17:23:20 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2010 The OpenLDAP Foundation.
@@ -147,7 +147,7 @@ size_t lutil_localtime( char *s, size_t smax, const struct tm *tm, long delta )
 	snprintf( p, smax - 15, "%02ld%02ld", delta / 3600,
 			( delta % 3600 ) / 60 );
 
-	return ret + 5;
+	return ret + 4;
 }
 
 int lutil_tm2time( struct lutil_tm *tm, struct lutil_timet *tt )

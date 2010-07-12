@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/request.c,v 1.125.2.16 2010/04/13 20:22:59 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/request.c,v 1.125.2.17 2010/06/10 17:39:48 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2010 The OpenLDAP Foundation.
@@ -124,10 +124,14 @@ ldap_send_initial_request(
 			if (ld->ld_options.ldo_cldapdn)
 				ldap_memfree(ld->ld_options.ldo_cldapdn);
 			ld->ld_options.ldo_cldapdn = ldap_strdup(dn);
+			ber_free( ber, 1 );
 			return 0;
 		}
 		if (msgtype != LDAP_REQ_ABANDON && msgtype != LDAP_REQ_SEARCH)
+		{
+			ber_free( ber, 1 );
 			return LDAP_PARAM_ERROR;
+		}
 	}
 #endif
 #ifdef LDAP_R_COMPILE

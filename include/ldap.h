@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.312.2.24 2010/04/13 20:22:47 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.312.2.25 2010/06/10 18:48:36 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
  * Copyright 1998-2010 The OpenLDAP Foundation.
@@ -187,6 +187,7 @@ LDAP_BEGIN_DECL
 #define LDAP_OPT_X_SASL_MECHLIST		0x610a /* read-only */
 #define LDAP_OPT_X_SASL_NOCANON			0x610b
 #define LDAP_OPT_X_SASL_USERNAME		0x610c /* read-only */
+#define LDAP_OPT_X_SASL_GSS_CREDS		0x610d
 
 /* OpenLDAP GSSAPI options */
 #define LDAP_OPT_X_GSSAPI_DO_NOT_FREE_CONTEXT      0x6200

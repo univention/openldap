@@ -1,5 +1,5 @@
 /* sssvlv.c - server side sort / virtual list view */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/sssvlv.c,v 1.9.2.6 2010/04/14 17:56:50 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/sssvlv.c,v 1.9.2.9 2010/06/10 17:37:40 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2009-2010 The OpenLDAP Foundation.
@@ -471,7 +471,9 @@ range_err:
 	be = op->o_bd;
 	for ( i=0; i<j; i++ ) {
 		sort_node *sn = cur_node->avl_data;
-		
+
+		if ( slapd_shutdown ) break;
+
 		op->o_bd = select_backend( &sn->sn_dn, 0 );
 		e = NULL;
 		rc = be_entry_get_rw( op, &sn->sn_dn, NULL, NULL, 0, &e );
@@ -502,6 +504,8 @@ static void send_page( Operation *op, SlapReply *rs, sort_op *so )
 
 	while ( cur_node && rs->sr_nentries < so->so_page_size ) {
 		sort_node *sn = cur_node->avl_data;
+
+		if ( slapd_shutdown ) break;
 
 		next_node = tavl_next( cur_node, TAVL_DIR_RIGHT );
 
@@ -822,6 +826,8 @@ static int sssvlv_op_search(
 					so->so_vlv = op->o_ctrlflag[vlv_cid];
 					so->so_vlv_target = 0;
 					so->so_vlv_rc = 0;
+				} else {
+					so->so_vlv = SLAP_CONTROL_NONE;
 				}
 			}
 			so->so_vcontext = (unsigned long)so;
@@ -1230,11 +1236,11 @@ int sssvlv_initialize()
 	if ( rc == LDAP_SUCCESS ) {
 		rc = overlay_register( &sssvlv );
 		if ( rc != LDAP_SUCCESS ) {
-			fprintf( stderr, "Failed to register server side sort overlay\n" );
+			Debug( LDAP_DEBUG_ANY, "Failed to register server side sort overlay\n", 0, 0, 0 );
 		}
 	}
 	else {
-		fprintf( stderr, "Failed to register control %d\n", rc );
+		Debug( LDAP_DEBUG_ANY, "Failed to register control %d\n", rc, 0, 0 );
 	}
 
 	return rc;

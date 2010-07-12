@@ -1,5 +1,28 @@
 OpenLDAP 2.4 Change Log
 
+OpenLDAP 2.4.23 Release (2010/06/30)
+	Fixed libldap to return server's error code (ITS#6569)
+	Fixed libldap memleaks (ITS#6568)
+	Fixed liblutil off-by-one with delta (ITS#6541)
+	Fixed slapd acls with glued databases (ITS#6468)
+	Fixed slapd syncrepl rid logging (ITS#6533)
+	Fixed slapd modrdn handling of invalid values (ITS#6570)
+	Fixed slapd-bdb hasSubordinates computation (ITS#6549)
+	Fixed slapd-bdb to use memcpy instead for strcpy (ITS#6474)
+	Fixed slapd-bdb entry cache delete failure (ITS#6577)
+	Fixed slapd-ldap to return control responses (ITS#6530)
+	Fixed slapo-ppolicy to use Debug (ITS#6566)
+	Fixed slapo-refint to zero out freed DN vals (ITS#6572)
+	Fixed slapo-rwm to use Debug (ITS#6566)
+	Fixed slapo-sssvlv to use Debug (ITS#6566)
+	Fixed slapo-syncprov lost deletes in refresh phase (ITS#6555)
+	Fixed slapo-valsort to use Debug (ITS#6566)
+ 	Fixed contrib/nssov network.c missing patch (ITS#6562)
+	Build Environment
+		Fixed test043 attribute sorting (ITS#6553)
+	Documentation
+	        slapd-config(5) note default rootdn (ITS#6546)
+
 OpenLDAP 2.4.22 Release (2010/04/24)
 	Added slapd SLAP_SCHEMA_EXPOSE flag for hidden schema elements (ITS#6435)
 	Added slapd tools selective iterations (ITS#6442)
@@ -25,7 +48,7 @@ OpenLDAP 2.4.22 Release (2010/04/24)
 	Fixed slapd sasl auxprop ssf (ITS#5195)
 	Fixed slapd syncrepl for attributes with no matching rule (ITS#6458)
 	Fixed slapd syncrepl for unknown attrs and delta-sync (ITS#6473)
-	Fixed slapd syncrep loop with moddn (ITS#6472)
+	Fixed slapd syncrepl loop with moddn (ITS#6472)
 	Fixed slapo-accesslog to not replicate internal purges (ITS#6519)
 	Fixed slapd-bdb contextCSN updates from updatedn (ITS#6469)
 	Fixed slapd-bdb lockobj zeroing (ITS#6501)
@@ -49,7 +72,7 @@ OpenLDAP 2.4.22 Release (2010/04/24)
 	Build Environment
 		Added back-ldif, back-null test support (ITS#5810)
 	Documentation
-		admin24 avoid explicity moduleload statements (ITS#6486)
+		admin24 avoid explicit moduleload statements (ITS#6486)
 		admin24 broken link fixes (ITS#6493,ITS#6515)
 	        slapd.access(5) val.regex explanation (ITS#5804)
 
@@ -195,6 +218,8 @@ OpenLDAP 2.4.18 Release (2009/09/06)
 	Documentation
 		admin24 fix broken link (ITS#6264)
 		ldap_open(3) document URI (ITS#6261)
+		ldap_set/get_option(3) SASL/TLS options added (ITS#6260)
+		man page format updates (ITS#6023)
 
 OpenLDAP 2.4.17 Release (2009/07/13)
 	Fixed liblber to use ber_strnlen (ITS#6080)

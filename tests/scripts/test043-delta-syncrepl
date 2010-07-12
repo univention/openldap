@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test043-delta-syncrepl,v 1.4.2.7 2010/04/19 19:14:35 quanah Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test043-delta-syncrepl,v 1.4.2.8 2010/06/10 17:28:50 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2010 The OpenLDAP Foundation.
@@ -339,9 +339,9 @@ fi
 test $KILLSERVERS != no && kill -HUP $KILLPIDS
 
 echo "Filtering producer results..."
-$LDIFFILTER < $MASTEROUT | grep -iv "^auditcontext:" > $MASTERFLT
+$LDIFFILTER -s bdb=a,hdb=a < $MASTEROUT | grep -iv "^auditcontext:" > $MASTERFLT
 echo "Filtering consumer results..."
-$LDIFFILTER < $SLAVEOUT | grep -iv "^auditcontext:" > $SLAVEFLT
+$LDIFFILTER -s bdb=a,hdb=a < $SLAVEOUT | grep -iv "^auditcontext:" > $SLAVEFLT
 
 echo "Comparing retrieved entries from producer and consumer..."
 $CMP $MASTERFLT $SLAVEFLT > $CMPOUT

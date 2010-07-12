@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/build/version.var,v 1.9.2.70 2010/04/21 22:53:53 quanah Exp $
+# $OpenLDAP: pkg/ldap/build/version.var,v 1.9.2.73 2010/06/29 15:23:31 kurt Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2010 The OpenLDAP Foundation.
@@ -15,9 +15,9 @@
 ol_package=OpenLDAP
 ol_major=2
 ol_minor=4
-ol_patch=22
-ol_api_inc=20422
+ol_patch=23
+ol_api_inc=20423
 ol_api_current=7
-ol_api_revision=5
+ol_api_revision=6
 ol_api_age=5
-ol_release_date="2010/04/24"
+ol_release_date="2010/06/30"

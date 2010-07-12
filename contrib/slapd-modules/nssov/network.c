@@ -1,5 +1,5 @@
 /* network.c - network address lookup routines */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/network.c,v 1.1.2.5 2010/04/13 20:22:28 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/network.c,v 1.1.2.7 2010/05/26 15:21:53 hyc Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
  * Copyright 2008-2010 The OpenLDAP Foundation.
@@ -91,7 +91,7 @@ static int write_network(nssov_network_cbp *cbp,Entry *entry)
 	addrs = a->a_vals;
 	numaddr = a->a_numvals;
 	/* write the entry */
-	WRITE_INT32(cbp->fp,NSLCD_RESULT_SUCCESS);
+	WRITE_INT32(cbp->fp,NSLCD_RESULT_BEGIN);
 	WRITE_BERVAL(cbp->fp,&name);
 	if ( dupname >= 0 ) {
 		WRITE_INT32(cbp->fp,numname-1);
@@ -118,7 +118,7 @@ NSSOV_HANDLE(
 	struct berval filter = {sizeof(fbuf)};
 	filter.bv_val = fbuf;
 	BER_BVZERO(&cbp.addr);
-	READ_STRING_BUF2(fp,cbp.buf,sizeof(cbp.buf));
+	READ_STRING(fp,cbp.buf);
 	cbp.name.bv_len = tmpint32;
 	cbp.name.bv_val = cbp.buf;,
 	Debug(LDAP_DEBUG_TRACE,"nssov_network_byname(%s)\n",cbp.name.bv_val,0,0);,

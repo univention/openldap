@@ -1,5 +1,5 @@
 /* dn.c - routines for dealing with distinguished names */
-/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.182.2.15 2010/04/13 20:23:14 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.182.2.16 2010/06/10 17:48:06 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2010 The OpenLDAP Foundation.
@@ -302,16 +302,13 @@ LDAPRDN_rewrite( LDAPRDN rdn, unsigned flags, void *ctx )
 		ava->la_attr = ad->ad_cname;
 
 		if( ava->la_flags & LDAP_AVA_BINARY ) {
-			if( ava->la_value.bv_len == 0 ) {
-				/* BER encoding is empty */
-				return LDAP_INVALID_SYNTAX;
-			}
+			/* AVA is binary encoded, not supported */
+			return LDAP_INVALID_SYNTAX;
 
 			/* Do not allow X-ORDERED 'VALUES' naming attributes */
 		} else if( ad->ad_type->sat_flags & SLAP_AT_ORDERED_VAL ) {
 			return LDAP_INVALID_SYNTAX;
 
-			/* AVA is binary encoded, don't muck with it */
 		} else if( flags & SLAP_LDAPDN_PRETTY ) {
 			transf = ad->ad_type->sat_syntax->ssyn_pretty;
 			if( !transf ) {
@@ -378,6 +375,10 @@ LDAPRDN_rewrite( LDAPRDN rdn, unsigned flags, void *ctx )
 				ber_memfree_x( ava->la_value.bv_val, ctx );
 			ava->la_value = bv;
 			ava->la_flags |= LDAP_AVA_FREE_VALUE;
+		}
+		/* reject empty values */
+		if (!ava->la_value.bv_len) {
+			return LDAP_INVALID_SYNTAX;
 		}
 	}
 	rc = LDAP_SUCCESS;
