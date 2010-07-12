@@ -16,15 +16,17 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap 2.4.21-1\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2010-04-23 16:00+0200\n"
+"POT-Creation-Date: 2010-07-12 10:37+0200\n"
 "PO-Revision-Date: 2010-06-13 11:30+0400\n"
 "Last-Translator: Yuri Kozlov <yuray@komyakino.ru>\n"
 "Language-Team: Russian <debian-l10n-russian@lists.debian.org>\n"
+"Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms:  nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms:  nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #. Type: boolean
 #. Description
@@ -145,12 +147,6 @@ msgstr "Повторить настройку?"
 #. Type: boolean
 #. Description
 #: ../slapd.templates:5001
-#| msgid ""
-#| "The configuration you entered is invalid. Make sure that the DNS domain "
-#| "name is syntactically valid, the organization is not left empty and the "
-#| "admin passwords match. If you decide not to retry the configuration the "
-#| "LDAP server will not be set up. Run 'dpkg-reconfigure slapd' if you want "
-#| "to retry later."
 msgid ""
 "The configuration you entered is invalid. Make sure that the DNS domain name "
 "is syntactically valid, the field for the organization is not left empty and "
@@ -159,8 +155,8 @@ msgid ""
 "retry later."
 msgstr ""
 "Введённая вами конфигурация неправильна. Убедитесь, что доменное имя DNS "
-"записано в правильном формате, что поле названия организации непустое и "
-"что пароль администратора верен. Если вы не станете повторять настройку, то "
+"записано в правильном формате, что поле названия организации непустое и что "
+"пароль администратора верен. Если вы не станете повторять настройку, то "
 "сервер LDAP останется ненастроенным. Если позднее вы захотите выполнить "
 "настройку, запустите команду 'dpkg-reconfigure slapd'."
 
@@ -194,7 +190,8 @@ msgstr "Название организации:"
 msgid ""
 "Please enter the name of the organization to use in the base DN of your LDAP "
 "directory."
-msgstr "Введите название организации для использования в базовом DN каталога LDAP."
+msgstr ""
+"Введите название организации для использования в базовом DN каталога LDAP."
 
 #. Type: password
 #. Description
@@ -328,15 +325,12 @@ msgstr ""
 #. Translators: keep "${location}" unchanged. This is a variable that
 #. will be replaced by a directory name at execution
 #: ../slapd.templates:16001
-#| msgid ""
-#| "Then move the database files back to a backup area and then try running "
-#| "slapadd from $location."
 msgid ""
 "Then move the database files back to a backup area and then try running "
 "slapadd from ${location}."
 msgstr ""
-"Переместите файлы базы данных обратно в место хранения резервной копии "
-"и затем попытайтесь запустить slapadd из ${location}."
+"Переместите файлы базы данных обратно в место хранения резервной копии и "
+"затем попытайтесь запустить slapadd из ${location}."
 
 #. Type: select
 #. Description
@@ -432,4 +426,3 @@ msgstr ""
 "специфичного шифрования вам требуется её использовать, то список "
 "поддерживаемых GnuTLS алгоритмов можно посмотреть, запустив команду 'gnutls-"
 "cli -l' из пакета gnutls-bin."
-
