@@ -1,3 +1,9 @@
+openldap (2.4.23-2) unstable; urgency=low
+
+  * Depend on libdb4.8 >= 4.8.30 (Closes: #588969)
+
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Wed, 14 Jul 2010 10:17:27 +0200
+
 openldap (2.4.23-1) unstable; urgency=low
 
   * New upstream version
