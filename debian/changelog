@@ -1,6 +1,7 @@
-openldap (2.4.23-2) unstable; urgency=low
+openldap (2.4.23-2) unstable; urgency=medium
 
   * Depend on libdb4.8 >= 4.8.30 (Closes: #588969)
+  * Urgency previous as previous version fixes a RC bug.
 
  -- Matthijs Mohlmann <matthijs@cacholong.nl>  Wed, 14 Jul 2010 10:17:27 +0200
 
