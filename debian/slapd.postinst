@@ -31,28 +31,19 @@ postinst_upgrade_configuration() {					# {{{
 	backup_config_once
 	echo done. >&2
 
-	configure_v2_protocol_support
-
-	if previous_version_older 2.4.7-4; then
-		if ! migrate_checkpoint_and_slurpd; then
-			db_input critical slapd/slurpd_obsolete || true
-			db_go || true
-		fi
-		config_obsolete_schemacheck
-	fi
-
-	if previous_version_older 2.4.7-5; then
-		if ! disable_openssl_cipher_suite; then
-			db_input critical slapd/tlsciphersuite || true
-			db_go || true
-		fi
-	fi
-
+	# Check if the database format has changed.
 	if database_format_changed; then
+
 		# During upgrading we have to load the old data
 		move_incompatible_databases_away
 		load_databases
 	fi
+
+	# Move to slapd.d configuration style.
+	migrate_to_slapd_d_style
+
+	# Enable LDAP protocol v2 support if needed.
+	configure_v2_protocol_support
 
 	# Update permissions of all database directories and /var/run/slapd
 	update_databases_permissions
@@ -60,7 +51,7 @@ postinst_upgrade_configuration() {					# {{{
 
 	# Versions prior to 2.4.7-1 could create a slapd.conf that wasn't
 	# readable by the openldap user.
-	update_slapd_conf_permissions
+	update_permissions "${SLAPD_CONF}"
 }
 
 # }}}

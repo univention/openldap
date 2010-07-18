@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2010-05-21 08:51+0200\n"
+"POT-Creation-Date: 2010-07-15 22:05+0200\n"
 "PO-Revision-Date: 2008-05-09 11:50+0900\n"
 "Last-Translator: Kenshi Muto <kmuto@debian.org>\n"
 "Language-Team: Japanese <debian-japanese@lists.debian.org>\n"
@@ -257,42 +257,21 @@ msgstr ""
 "LDAPv3 を利用できないのなら、この選択肢で「はい」を選べば、'allow bind_v2' "
 "が slapd.conf に追加されます。"
 
-#. Type: boolean
-#. Description
-#: ../slapd.templates:15001
-msgid "Back up current database and create a new one?"
-msgstr ""
-"現在のデータベースをバックアップして、新しいデータベースを作成しますか?"
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:15001
-msgid ""
-"The directory suffix (domain) you specified doesn't match the one currently "
-"in /etc/ldap/slapd.conf. Changing the directory suffix requires moving aside "
-"the current LDAP database and creating a new one. Please confirm whether you "
-"want to back up and abandon the current database."
-msgstr ""
-"あなたが指定したディレクトリサフィックス (ドメイン) は、/etc/ldap/slapd.conf "
-"内の現在のそれと一致しません。ディレクトリサフィックスの変更には、現在の "
-"LDAP データベースを別の場所に移動し、新しいデータベースを作成する必要がありま"
-"す。現在のデータベースをバックアップして破棄よいかどうか確認してください。"
-
 #. Type: error
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid "slapcat failure during upgrade"
 msgstr "更新中に slapcat が失敗"
 
 #. Type: error
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid "An error occurred while upgrading the LDAP directory."
 msgstr "LDAP ディレクトリの更新中にエラーが発生しました。"
 
 #. Type: error
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid ""
 "The 'slapcat' program failed while extracting the LDAP directory. This may "
 "be caused by an incorrect configuration file (for example, missing "
@@ -306,7 +285,7 @@ msgstr ""
 #. Description
 #. This paragraph is followed by a (non translatable) paragraph
 #. containing a command line
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid ""
 "This failure will cause 'slapadd' to fail later as well. The old database "
 "files will be moved to /var/backups. If you want to try this upgrade again, "
@@ -322,7 +301,7 @@ msgstr ""
 #. Description
 #. Translators: keep "${location}" unchanged. This is a variable that
 #. will be replaced by a directory name at execution
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 #, fuzzy
 #| msgid ""
 #| "Then move the database files back to a backup area and then try running "
@@ -336,13 +315,13 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:16001
 msgid "Database backend to use:"
 msgstr "利用するデータベースバックエンド:"
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:16001
 msgid ""
 "The HDB backend is recommended. HDB and BDB use similar storage formats, but "
 "HDB adds support for subtree renames. Both support the same configuration "
@@ -354,7 +333,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:16001
 msgid ""
 "In either case, you should review the resulting database configuration for "
 "your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more details."
@@ -362,67 +341,68 @@ msgstr ""
 "いずれの場合でも、必要に応じてデータベース設定の結果を再確認すべきです。詳細"
 "については /usr/share/doc/slapd/README.DB_CONFIG.gz を参照してください。"
 
-#. Type: error
-#. Description
-#: ../slapd.templates:18001
-msgid "slurpd is obsolete; replicas must be reconfigured by hand"
-msgstr "slurpd は時代遅れです; 複製は手動で設定しなければなりません"
+#~ msgid "slurpd is obsolete; replicas must be reconfigured by hand"
+#~ msgstr "slurpd は時代遅れです; 複製は手動で設定しなければなりません"
 
-#. Type: error
-#. Description
-#: ../slapd.templates:18001
-msgid ""
-"One or more slurpd \"replica\" options were found in your slapd config when "
-"upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, you will "
-"need to migrate your replicas to use the syncrepl protocol instead."
-msgstr ""
-"更新中、1つ以上の slurpd の \"replica\" オプションがあなたの slapd 設定に見つ"
-"かりました。slurpd は OpenLDAP 2.4 から時代遅れになっているので、syncrepl プ"
-"ロトコルを代わりに使うようにあなたの複製を移行する必要があります。"
+#~ msgid ""
+#~ "One or more slurpd \"replica\" options were found in your slapd config "
+#~ "when upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, "
+#~ "you will need to migrate your replicas to use the syncrepl protocol "
+#~ "instead."
+#~ msgstr ""
+#~ "更新中、1つ以上の slurpd の \"replica\" オプションがあなたの slapd 設定に"
+#~ "見つかりました。slurpd は OpenLDAP 2.4 から時代遅れになっているので、"
+#~ "syncrepl プロトコルを代わりに使うようにあなたの複製を移行する必要がありま"
+#~ "す。"
 
-#. Type: error
-#. Description
-#: ../slapd.templates:18001
-msgid ""
-"The conversion from slurpd to the pull-based syncrepl protocol cannot be "
-"done automatically and you will need to configure your replica servers by "
-"hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for "
-"details."
-msgstr ""
-"slurpd からプルベースの syncrepl プロトコルへの変換は自動では行うことができ"
-"ず、あなたの複製サーバを手動で設定する必要があります。詳細については http://"
-"www.openldap.org/doc/admin24/syncrepl.html を参照してください。"
+#~ msgid ""
+#~ "The conversion from slurpd to the pull-based syncrepl protocol cannot be "
+#~ "done automatically and you will need to configure your replica servers by "
+#~ "hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for "
+#~ "details."
+#~ msgstr ""
+#~ "slurpd からプルベースの syncrepl プロトコルへの変換は自動では行うことがで"
+#~ "きず、あなたの複製サーバを手動で設定する必要があります。詳細については "
+#~ "http://www.openldap.org/doc/admin24/syncrepl.html を参照してください。"
 
-#. Type: error
-#. Description
-#: ../slapd.templates:19001
-msgid "TLSCipherSuite values have changed"
-msgstr "TLSCipherSuite の値が変更されました"
+#~ msgid "TLSCipherSuite values have changed"
+#~ msgstr "TLSCipherSuite の値が変更されました"
 
-#. Type: error
-#. Description
-#: ../slapd.templates:19001
-msgid ""
-"A \"TLSCipherSuite\" option was found in your slapd config when upgrading. "
-"The values allowed for this option are determined by the SSL implementation "
-"used, which has been changed from OpenSSL to GnuTLS.  As a result, your "
-"existing TLSCipherSuite setting will not work with this package."
-msgstr ""
-"更新中に、\"TLSCipherSuite\" オプションがあなたの slapd 設定に見つかりまし"
-"た。このオプションで許される値は、利用するSSL 実装によって決定されますが、そ"
-"の実装は OpenSSL から GnuTLS へと変更されました。結果として、既存の "
-"TLSCipherSuite 設定はこのパッケージでは動作しません。"
+#~ msgid ""
+#~ "A \"TLSCipherSuite\" option was found in your slapd config when "
+#~ "upgrading. The values allowed for this option are determined by the SSL "
+#~ "implementation used, which has been changed from OpenSSL to GnuTLS.  As a "
+#~ "result, your existing TLSCipherSuite setting will not work with this "
+#~ "package."
+#~ msgstr ""
+#~ "更新中に、\"TLSCipherSuite\" オプションがあなたの slapd 設定に見つかりまし"
+#~ "た。このオプションで許される値は、利用するSSL 実装によって決定されますが、"
+#~ "その実装は OpenSSL から GnuTLS へと変更されました。結果として、既存の "
+#~ "TLSCipherSuite 設定はこのパッケージでは動作しません。"
 
-#. Type: error
-#. Description
-#: ../slapd.templates:19001
-msgid ""
-"This setting has been automatically commented out for you.  If you have "
-"specific encryption needs that require this option to be re-enabled, see the "
-"output of 'gnutls-cli -l' in the gnutls-bin package for the list of ciphers "
-"supported by GnuTLS."
-msgstr ""
-"設定は自動的にコメントアウトされました。このオプションを再び有効化しないとい"
-"けないような特定の暗号化を使う必要があるなら、GnuTLS でサポートしている暗号法"
-"の一覧を得るために gnutls-bin パッケージの 'gnutls-cli -i'  の出力を参照して"
-"ください。"
+#~ msgid ""
+#~ "This setting has been automatically commented out for you.  If you have "
+#~ "specific encryption needs that require this option to be re-enabled, see "
+#~ "the output of 'gnutls-cli -l' in the gnutls-bin package for the list of "
+#~ "ciphers supported by GnuTLS."
+#~ msgstr ""
+#~ "設定は自動的にコメントアウトされました。このオプションを再び有効化しないと"
+#~ "いけないような特定の暗号化を使う必要があるなら、GnuTLS でサポートしている"
+#~ "暗号法の一覧を得るために gnutls-bin パッケージの 'gnutls-cli -i'  の出力を"
+#~ "参照してください。"
+
+#~ msgid "Back up current database and create a new one?"
+#~ msgstr ""
+#~ "現在のデータベースをバックアップして、新しいデータベースを作成しますか?"
+
+#~ msgid ""
+#~ "The directory suffix (domain) you specified doesn't match the one "
+#~ "currently in /etc/ldap/slapd.conf. Changing the directory suffix requires "
+#~ "moving aside the current LDAP database and creating a new one. Please "
+#~ "confirm whether you want to back up and abandon the current database."
+#~ msgstr ""
+#~ "あなたが指定したディレクトリサフィックス (ドメイン) は、/etc/ldap/slapd."
+#~ "conf 内の現在のそれと一致しません。ディレクトリサフィックスの変更には、現"
+#~ "在の LDAP データベースを別の場所に移動し、新しいデータベースを作成する必要"
+#~ "があります。現在のデータベースをバックアップして破棄よいかどうか確認してく"
+#~ "ださい。"

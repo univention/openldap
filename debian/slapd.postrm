@@ -22,8 +22,8 @@ remove_database_on_purge() {
 if [ "$1" = "purge" ]; then
   echo -n "Removing slapd configuration... "
   rm -f /etc/ldap/slapd.conf 2>/dev/null || true
-  rmdir /etc/ldap/schema || true
-  echo done
+  rm -rf /etc/ldap/slapd.d 2>/dev/null || true
+  echo "done."
 
   if remove_database_on_purge; then
     echo -n "Purging OpenLDAP database... "

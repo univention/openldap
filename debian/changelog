@@ -1,3 +1,13 @@
+openldap (2.4.23-3exp1) experimental; urgency=low
+
+  * Configure the newly installed openldap package using slapd.d instead of
+    slapd.conf, merged from ubuntu. (Closes: #562723, #494155, #333428)
+  * Update the debconf templates by running debconf-updatepo.
+  * We do not support upgrades from older releases then lenny, so removed some
+    upgrade functions from slapd.scripts-common.
+
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 18 Jul 2010 12:21:14 +0200
+
 openldap (2.4.23-2) unstable; urgency=medium
 
   * Depend on libdb4.8 >= 4.8.30 (Closes: #588969)

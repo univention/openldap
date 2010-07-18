@@ -103,16 +103,6 @@ _Description: Allow LDAPv2 protocol?
  can't use LDAPv3, you should select this option and 'allow bind_v2'
  will be added to your slapd.conf file.
 
-Template: slapd/suffix_change
-Type: boolean
-Default: false
-_Description: Back up current database and create a new one?
- The directory suffix (domain) you specified doesn't match the
- one currently in /etc/ldap/slapd.conf. Changing the directory suffix
- requires moving aside the current LDAP database and creating a new
- one. Please confirm whether you want to back up and abandon the current
- database.
-
 Template: slapd/upgrade_slapcat_failure
 Type: error
 #flag:translate!:5
@@ -151,30 +141,3 @@ _Description: Database backend to use:
  In either case, you should review the resulting database configuration
  for your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more
  details.
-
-Template: slapd/slurpd_obsolete
-Type: error
-_Description: slurpd is obsolete; replicas must be reconfigured by hand
- One or more slurpd "replica" options were found in your slapd config
- when upgrading.  Because slurpd is obsolete beginning with OpenLDAP
- 2.4, you will need to migrate your replicas to use the syncrepl
- protocol instead.
- .
- The conversion from slurpd to the pull-based syncrepl protocol cannot be
- done automatically and you will need to configure your replica servers by
- hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for
- details.
-
-Template: slapd/tlsciphersuite
-Type: error
-_Description: TLSCipherSuite values have changed
- A "TLSCipherSuite" option was found in your slapd config when upgrading.
- The values allowed for this option are determined by the SSL
- implementation used, which has been changed from OpenSSL to GnuTLS.  As a
- result, your existing TLSCipherSuite setting will not work with this
- package.
- .
- This setting has been automatically commented out for you.  If you have
- specific encryption needs that require this option to be re-enabled,
- see the output of 'gnutls-cli -l' in the gnutls-bin package for the
- list of ciphers supported by GnuTLS.

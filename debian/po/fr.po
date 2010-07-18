@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2010-05-21 08:51+0200\n"
+"POT-Creation-Date: 2010-07-15 22:05+0200\n"
 "PO-Revision-Date: 2010-04-26 08:17+0200\n"
 "Last-Translator: Christian Perrier <bubulle@debian.org>\n"
 "Language-Team: French <debian-l10n-french@lists.debian.org>\n"
@@ -259,43 +259,21 @@ msgstr ""
 "choisir cette option, ce qui ajoutera l'option « allow bind_v2 » au fichier "
 "slapd.conf."
 
-#. Type: boolean
-#. Description
-#: ../slapd.templates:15001
-msgid "Back up current database and create a new one?"
-msgstr ""
-"Faut-il sauvegarder l'ancienne base de données et en créer une nouvelle ?"
-
-#. Type: boolean
-#. Description
-#: ../slapd.templates:15001
-msgid ""
-"The directory suffix (domain) you specified doesn't match the one currently "
-"in /etc/ldap/slapd.conf. Changing the directory suffix requires moving aside "
-"the current LDAP database and creating a new one. Please confirm whether you "
-"want to back up and abandon the current database."
-msgstr ""
-"Le suffixe d'annuaire (domaine) indiqué ne correspond pas à celui qui est "
-"actuellement mentionné dans /etc/ldap/slapd.conf. Le changement du suffixe "
-"d'annuaire nécessite de déplacer la base de données actuelle et d'en créer "
-"une nouvelle. Veuillez confirmer si vous voulez délaisser la base de données "
-"actuelle (une sauvegarde sera effectuée)."
-
 #. Type: error
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid "slapcat failure during upgrade"
 msgstr "Échec de slapcat durant la mise à niveau"
 
 #. Type: error
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid "An error occurred while upgrading the LDAP directory."
 msgstr "Une erreur s'est produite lors de la mise à niveau de l'annuaire LDAP."
 
 #. Type: error
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid ""
 "The 'slapcat' program failed while extracting the LDAP directory. This may "
 "be caused by an incorrect configuration file (for example, missing "
@@ -310,7 +288,7 @@ msgstr ""
 #. Description
 #. This paragraph is followed by a (non translatable) paragraph
 #. containing a command line
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid ""
 "This failure will cause 'slapadd' to fail later as well. The old database "
 "files will be moved to /var/backups. If you want to try this upgrade again, "
@@ -326,7 +304,7 @@ msgstr ""
 #. Description
 #. Translators: keep "${location}" unchanged. This is a variable that
 #. will be replaced by a directory name at execution
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid ""
 "Then move the database files back to a backup area and then try running "
 "slapadd from ${location}."
@@ -336,13 +314,13 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:16001
 msgid "Database backend to use:"
 msgstr "Module de base de données à utiliser :"
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:16001
 msgid ""
 "The HDB backend is recommended. HDB and BDB use similar storage formats, but "
 "HDB adds support for subtree renames. Both support the same configuration "
@@ -354,7 +332,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:16001
 msgid ""
 "In either case, you should review the resulting database configuration for "
 "your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more details."
@@ -363,69 +341,70 @@ msgstr ""
 "à vos besoins. Pour plus d'informations, veuillez consulter le fichier /usr/"
 "share/doc/slapd/README.DB_CONFIG.gz."
 
-#. Type: error
-#. Description
-#: ../slapd.templates:18001
-msgid "slurpd is obsolete; replicas must be reconfigured by hand"
-msgstr "Programme slurpd obsolète : reconfiguration manuelle des réplicats"
+#~ msgid "slurpd is obsolete; replicas must be reconfigured by hand"
+#~ msgstr "Programme slurpd obsolète : reconfiguration manuelle des réplicats"
 
-#. Type: error
-#. Description
-#: ../slapd.templates:18001
-msgid ""
-"One or more slurpd \"replica\" options were found in your slapd config when "
-"upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, you will "
-"need to migrate your replicas to use the syncrepl protocol instead."
-msgstr ""
-"Une ou plusieurs options « replica » de slurpd ont été trouvée dans le "
-"fichier de configuration lors de la mise à niveau. Le programme slurpd est "
-"obsolète à partir de la version 2.4 d'OpenLDAP et il est nécessaire de "
-"migrer les réplicats pour qu'ils utilisent le protocole syncrepl à la place."
+#~ msgid ""
+#~ "One or more slurpd \"replica\" options were found in your slapd config "
+#~ "when upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, "
+#~ "you will need to migrate your replicas to use the syncrepl protocol "
+#~ "instead."
+#~ msgstr ""
+#~ "Une ou plusieurs options « replica » de slurpd ont été trouvée dans le "
+#~ "fichier de configuration lors de la mise à niveau. Le programme slurpd "
+#~ "est obsolète à partir de la version 2.4 d'OpenLDAP et il est nécessaire "
+#~ "de migrer les réplicats pour qu'ils utilisent le protocole syncrepl à la "
+#~ "place."
 
-#. Type: error
-#. Description
-#: ../slapd.templates:18001
-msgid ""
-"The conversion from slurpd to the pull-based syncrepl protocol cannot be "
-"done automatically and you will need to configure your replica servers by "
-"hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for "
-"details."
-msgstr ""
-"Cette conversion ne peut se faire automatiquement et vous devez configurer "
-"les serveurs réplicats vous-même. Veuillez consulter http://www.openldap.org/"
-"doc/admin24/syncrepl.html pour plus d'informations."
+#~ msgid ""
+#~ "The conversion from slurpd to the pull-based syncrepl protocol cannot be "
+#~ "done automatically and you will need to configure your replica servers by "
+#~ "hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for "
+#~ "details."
+#~ msgstr ""
+#~ "Cette conversion ne peut se faire automatiquement et vous devez "
+#~ "configurer les serveurs réplicats vous-même. Veuillez consulter http://"
+#~ "www.openldap.org/doc/admin24/syncrepl.html pour plus d'informations."
 
-#. Type: error
-#. Description
-#: ../slapd.templates:19001
-msgid "TLSCipherSuite values have changed"
-msgstr "Changement des valeurs possibles pour « TLSCipherSuite »"
+#~ msgid "TLSCipherSuite values have changed"
+#~ msgstr "Changement des valeurs possibles pour « TLSCipherSuite »"
 
-#. Type: error
-#. Description
-#: ../slapd.templates:19001
-msgid ""
-"A \"TLSCipherSuite\" option was found in your slapd config when upgrading. "
-"The values allowed for this option are determined by the SSL implementation "
-"used, which has been changed from OpenSSL to GnuTLS.  As a result, your "
-"existing TLSCipherSuite setting will not work with this package."
-msgstr ""
-"L'option « TLSCipherSuite » a été trouvée dans le fichier de configuration "
-"de slapd lors de la mise à niveau. Les valeurs possibles pour cette option "
-"dépendent de l'implémentation de SSL qui est utilisée. Comme OpenSSL a été "
-"remplacé par GnuTLS, les réglages actuels de « TLSCipherSuite » ne "
-"fonctionnent plus avec cette version du paquet."
+#~ msgid ""
+#~ "A \"TLSCipherSuite\" option was found in your slapd config when "
+#~ "upgrading. The values allowed for this option are determined by the SSL "
+#~ "implementation used, which has been changed from OpenSSL to GnuTLS.  As a "
+#~ "result, your existing TLSCipherSuite setting will not work with this "
+#~ "package."
+#~ msgstr ""
+#~ "L'option « TLSCipherSuite » a été trouvée dans le fichier de "
+#~ "configuration de slapd lors de la mise à niveau. Les valeurs possibles "
+#~ "pour cette option dépendent de l'implémentation de SSL qui est utilisée. "
+#~ "Comme OpenSSL a été remplacé par GnuTLS, les réglages actuels de "
+#~ "« TLSCipherSuite » ne fonctionnent plus avec cette version du paquet."
 
-#. Type: error
-#. Description
-#: ../slapd.templates:19001
-msgid ""
-"This setting has been automatically commented out for you.  If you have "
-"specific encryption needs that require this option to be re-enabled, see the "
-"output of 'gnutls-cli -l' in the gnutls-bin package for the list of ciphers "
-"supported by GnuTLS."
-msgstr ""
-"Ce réglage a été automatiquement mis en commentaire. Si une méthode "
-"spécifique de chiffrement impose de la réactiver, vous devriez consulter "
-"l'affichage de la commande « gnutls-cli -l » du paquet gnutls-bin pour une "
-"liste des méthodes de chiffrement gérées par GnuTLS."
+#~ msgid ""
+#~ "This setting has been automatically commented out for you.  If you have "
+#~ "specific encryption needs that require this option to be re-enabled, see "
+#~ "the output of 'gnutls-cli -l' in the gnutls-bin package for the list of "
+#~ "ciphers supported by GnuTLS."
+#~ msgstr ""
+#~ "Ce réglage a été automatiquement mis en commentaire. Si une méthode "
+#~ "spécifique de chiffrement impose de la réactiver, vous devriez consulter "
+#~ "l'affichage de la commande « gnutls-cli -l » du paquet gnutls-bin pour "
+#~ "une liste des méthodes de chiffrement gérées par GnuTLS."
+
+#~ msgid "Back up current database and create a new one?"
+#~ msgstr ""
+#~ "Faut-il sauvegarder l'ancienne base de données et en créer une nouvelle ?"
+
+#~ msgid ""
+#~ "The directory suffix (domain) you specified doesn't match the one "
+#~ "currently in /etc/ldap/slapd.conf. Changing the directory suffix requires "
+#~ "moving aside the current LDAP database and creating a new one. Please "
+#~ "confirm whether you want to back up and abandon the current database."
+#~ msgstr ""
+#~ "Le suffixe d'annuaire (domaine) indiqué ne correspond pas à celui qui est "
+#~ "actuellement mentionné dans /etc/ldap/slapd.conf. Le changement du "
+#~ "suffixe d'annuaire nécessite de déplacer la base de données actuelle et "
+#~ "d'en créer une nouvelle. Veuillez confirmer si vous voulez délaisser la "
+#~ "base de données actuelle (une sauvegarde sera effectuée)."
