@@ -5,8 +5,9 @@ openldap (2.4.23-3exp1) experimental; urgency=low
   * Update the debconf templates by running debconf-updatepo.
   * We do not support upgrades from older releases then lenny, so removed some
     upgrade functions from slapd.scripts-common.
+  * Updated japanese translation, thanks Kenshi Muto (Closes: #589508)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 18 Jul 2010 12:21:14 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 18 Jul 2010 14:19:44 +0200
 
 openldap (2.4.23-2) unstable; urgency=medium
 
