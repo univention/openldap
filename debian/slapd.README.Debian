@@ -7,6 +7,24 @@ Notes about Debian's slapd package
   reportbug and not to upstream; upstream is not responsible for changes
   made in the Debian package.
 
+The OpenLDAP configuration
+
+  Since version 2.4.23-3 the configuration of OpenLDAP has been changed to
+  /etc/ldap/slapd.d. The OpenLDAP packages in Debian provide an automatic
+  migration to the new configuration style. With the new configuration style
+  it is possible to change values on the fly without restarting slapd.
+  Changes are made through the use of ldif files and ldap{add,modify}. In
+  Debian you can use the following command to search the configuration:
+
+      ldapsearch -Y EXTERNAL -H ldapi:/// -b "cn=config"
+
+  To modify configuration use the command:
+
+      ldapmodify -Y EXTERNAL -H ldapi:/// -f <file.ldif>
+
+  For configuration options see the several manpages that exist or the
+  documentation provided upstream.
+
 Using BDB/HDB Backends
 
   HDB is the recommended database backend.  It's the same as BDB but
@@ -26,17 +44,13 @@ Using BDB/HDB Backends
 
 BerkeleyDB Version
 
-  slapd has been built against version 4.2 of BerkeleyDB.  This version is
-  faster and more stable than later versions for the use to which OpenLDAP
-  puts it.  There are remaining performance problems with BerkeleyDB 4.6
-  that have not yet been resolved, but it looks likely that eventually
-  slapd will be able to use 4.6.  All intermediate versions (4.3 through
-  4.5) either had serious stability bugs or serious performance issues.
+  slapd has been built against version 4.8.30 of BerkeleyDB. This version is
+  supported by the upstream developers.
 
   slapd will automatically handle database recovery, so you generally do
-  not need the BerkeleyDB 4.2 utilities.  However, if you want to perform
+  not need the BerkeleyDB utilities.  However, if you want to perform
   other operations directly on the raw database without using the slapd
-  tools, install db4.2-util and use those BerkeleyDB utilities.  Utilities
+  tools, install db4.8-util and use those BerkeleyDB utilities. Utilities
   from other db*-util packages will not work correctly and may render the
   database unusable by slapd.
 
