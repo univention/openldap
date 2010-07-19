@@ -16,7 +16,7 @@ msgstr ""
 "Project-Id-Version: openldap\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2010-07-15 22:05+0200\n"
-"PO-Revision-Date: 2008-05-08 11:22+0200\n"
+"PO-Revision-Date: 2010-07-18 19:23+0200\n"
 "Last-Translator: Miroslav Kure <kurem@debian.cz>\n"
 "Language-Team: Czech <debian-l10n-czech@lists.debian.org>\n"
 "Language: cs\n"
@@ -142,7 +142,6 @@ msgstr "Zopakovat nastavení?"
 #. Type: boolean
 #. Description
 #: ../slapd.templates:5001
-#, fuzzy
 #| msgid ""
 #| "The configuration you entered is invalid. Make sure that the DNS domain "
 #| "name is syntactically valid, the organization is not left empty and the "
@@ -157,8 +156,8 @@ msgid ""
 "retry later."
 msgstr ""
 "Zadané nastavení není platné. Ujistěte se, že máte doménové jméno (DNS) ve "
-"správném formátu, že je vyplněná organizace a že administrátorská hesla "
-"souhlasí. Jestliže znovu nespustíte tohoto průvodce, LDAP server nebude "
+"správném formátu, že je vyplněné pole pro organizaci a že administrátorská "
+"hesla souhlasí. Jestliže znovu nespustíte tohoto průvodce, LDAP server nebude "
 "nakonfigurován. Budete-li chtít balík nastavit později, použijte příkaz "
 "„dpkg-reconfigure slapd“."
 
@@ -307,7 +306,6 @@ msgstr ""
 #. Translators: keep "${location}" unchanged. This is a variable that
 #. will be replaced by a directory name at execution
 #: ../slapd.templates:15001
-#, fuzzy
 #| msgid ""
 #| "Then move the database files back to a backup area and then try running "
 #| "slapadd from $location."
@@ -316,7 +314,7 @@ msgid ""
 "slapadd from ${location}."
 msgstr ""
 "Poté přesuňte databázové soubory zpět mezi zálohy a zkuste spustit slapadd z "
-"$location."
+"${location}."
 
 #. Type: select
 #. Description

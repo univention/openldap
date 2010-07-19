@@ -6,8 +6,9 @@ openldap (2.4.23-3exp1) experimental; urgency=low
   * We do not support upgrades from older releases then lenny, so removed some
     upgrade functions from slapd.scripts-common.
   * Updated japanese translation, thanks Kenshi Muto (Closes: #589508)
+  * Updated czech translation, thanks Miroslav Kure (Closes: #589569)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 18 Jul 2010 14:19:44 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Mon, 19 Jul 2010 08:06:47 +0200
 
 openldap (2.4.23-2) unstable; urgency=medium
 
