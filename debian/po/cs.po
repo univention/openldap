@@ -142,12 +142,6 @@ msgstr "Zopakovat nastavení?"
 #. Type: boolean
 #. Description
 #: ../slapd.templates:5001
-#| msgid ""
-#| "The configuration you entered is invalid. Make sure that the DNS domain "
-#| "name is syntactically valid, the organization is not left empty and the "
-#| "admin passwords match. If you decide not to retry the configuration the "
-#| "LDAP server will not be set up. Run 'dpkg-reconfigure slapd' if you want "
-#| "to retry later."
 msgid ""
 "The configuration you entered is invalid. Make sure that the DNS domain name "
 "is syntactically valid, the field for the organization is not left empty and "
@@ -157,9 +151,9 @@ msgid ""
 msgstr ""
 "Zadané nastavení není platné. Ujistěte se, že máte doménové jméno (DNS) ve "
 "správném formátu, že je vyplněné pole pro organizaci a že administrátorská "
-"hesla souhlasí. Jestliže znovu nespustíte tohoto průvodce, LDAP server nebude "
-"nakonfigurován. Budete-li chtít balík nastavit později, použijte příkaz "
-"„dpkg-reconfigure slapd“."
+"hesla souhlasí. Jestliže znovu nespustíte tohoto průvodce, LDAP server "
+"nebude nakonfigurován. Budete-li chtít balík nastavit později, použijte "
+"příkaz „dpkg-reconfigure slapd“."
 
 #. Type: string
 #. Description
@@ -306,9 +300,6 @@ msgstr ""
 #. Translators: keep "${location}" unchanged. This is a variable that
 #. will be replaced by a directory name at execution
 #: ../slapd.templates:15001
-#| msgid ""
-#| "Then move the database files back to a backup area and then try running "
-#| "slapadd from $location."
 msgid ""
 "Then move the database files back to a backup area and then try running "
 "slapadd from ${location}."
