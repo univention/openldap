@@ -135,6 +135,10 @@ start_slapd() {
 	if [ ! -h /var/run/ldapi ] && [ ! -e /var/run/ldapi ] ; then
 		ln -s slapd/ldapi /var/run/ldapi
 	fi
+
+	# Sleep for two seconds to have OpenLDAP operational when exiting this init
+	# script
+	sleep 2
 }
 
 # Stop the slapd daemon and capture the error message (if any) to
