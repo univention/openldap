@@ -1,14 +1,14 @@
 # Italian (it) translation of debconf templates for openldap
-# Copyright (C) 2006 Software in the Public Interest
+# COPYRIGHT (C) 2010 THE OPENLDAP'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the openldap package.
-# Luca Monducci <luca.mo@tiscali.it>, 2007-2008.
-#
+# Luca Monducci <luca.mo@tiscali.it>, 2007-2010.
+# 
 msgid ""
 msgstr ""
-"Project-Id-Version: openldap 2.4.7 italian debconf templates\n"
+"Project-Id-Version: openldap 2.4.23-3exp1 italian debconf templates\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2010-07-15 22:05+0200\n"
-"PO-Revision-Date: 2008-04-22 21:55+0200\n"
+"PO-Revision-Date: 2010-07-24 11:45+0200\n"
 "Last-Translator: Luca Monducci <luca.mo@tiscali.it>\n"
 "Language-Team: Italian <debian-l10n-italian@lists.debian.org>\n"
 "Language: it\n"
@@ -136,13 +136,6 @@ msgstr "Ripetere la configurazione?"
 #. Type: boolean
 #. Description
 #: ../slapd.templates:5001
-#, fuzzy
-#| msgid ""
-#| "The configuration you entered is invalid. Make sure that the DNS domain "
-#| "name is syntactically valid, the organization is not left empty and the "
-#| "admin passwords match. If you decide not to retry the configuration the "
-#| "LDAP server will not be set up. Run 'dpkg-reconfigure slapd' if you want "
-#| "to retry later."
 msgid ""
 "The configuration you entered is invalid. Make sure that the DNS domain name "
 "is syntactically valid, the field for the organization is not left empty and "
@@ -151,11 +144,11 @@ msgid ""
 "retry later."
 msgstr ""
 "La configurazione inserita non è valida. Assicurarsi che il nome di dominio "
-"DNS sia sintatticamente corretto, che il nome dell'organizzazione non sia "
-"stato lasciato in bianco e che le password di amministrazione coincidano. Se "
-"si decide di non riprovare la configurazione, il server LDAP non verrà "
-"impostato. In seguito, per riprovare la configurazione, usare \"dpkg-"
-"reconfigure slapd\"."
+"DNS sia sintatticamente corretto, che il campo per il nome "
+"dell'organizzazione non sia stato lasciato in bianco e che le password di "
+"amministrazione coincidano. Se si decide di non riprovare la configurazione, "
+"il server LDAP non verrà impostato. In seguito, per riprovare la "
+"configurazione, usare \"dpkg-reconfigure slapd\"."
 
 #. Type: string
 #. Description
@@ -171,7 +164,7 @@ msgid ""
 "For example, 'foo.example.org' will create the directory with 'dc=foo, "
 "dc=example, dc=org' as base DN."
 msgstr ""
-"Il nome di dominio DNS è usato per costruire la base DN della directory "
+"Il nome DNS di dominio è usato per costruire la base DN della directory "
 "LDAP. Per esempio \"pippo.esempio.org\" creerà una directory con \"dc=pippo, "
 "dc=esempio, dc=org\" come base DN."
 
@@ -306,16 +299,12 @@ msgstr ""
 #. Translators: keep "${location}" unchanged. This is a variable that
 #. will be replaced by a directory name at execution
 #: ../slapd.templates:15001
-#, fuzzy
-#| msgid ""
-#| "Then move the database files back to a backup area and then try running "
-#| "slapadd from $location."
 msgid ""
 "Then move the database files back to a backup area and then try running "
 "slapadd from ${location}."
 msgstr ""
 "Poi spostare i file del database in un'area di backup e provare a eseguire "
-"slapadd da $location."
+"slapadd da ${location}."
 
 #. Type: select
 #. Description
@@ -345,72 +334,3 @@ msgstr ""
 "Qualsiasi scelta si faccia è necessario rivedere la configurazione del "
 "database in base alle proprie necessità. Per maggiori informazioni si veda /"
 "usr/share/doc/slapd/README.DB_CONFIG.gz."
-
-#~ msgid "slurpd is obsolete; replicas must be reconfigured by hand"
-#~ msgstr ""
-#~ "slurpd è obsoleto; le repliche devono essere riconfigurate manualmente"
-
-#~ msgid ""
-#~ "One or more slurpd \"replica\" options were found in your slapd config "
-#~ "when upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, "
-#~ "you will need to migrate your replicas to use the syncrepl protocol "
-#~ "instead."
-#~ msgstr ""
-#~ "Durante l'aggiornamento sono state trovate nel file di configurazione di "
-#~ "slapd una o più opzioni \"replica\" per slurpd. Poiché con OpenLDAP 2.4 "
-#~ "slurpd diventa obsoleto, è necessario migrare le proprie repliche in modo "
-#~ "da usare il protocollo syncrepl."
-
-#~ msgid ""
-#~ "The conversion from slurpd to the pull-based syncrepl protocol cannot be "
-#~ "done automatically and you will need to configure your replica servers by "
-#~ "hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for "
-#~ "details."
-#~ msgstr ""
-#~ "La conversione da slurpd al protocollo syncrepl di pull non può essere "
-#~ "fatta automaticamente ed è necessario configurare a mano la replica fra i "
-#~ "propri server. Si veda http://www.openldap.org/doc/admin24/syncrepl.html "
-#~ "per i dettagli."
-
-#~ msgid "TLSCipherSuite values have changed"
-#~ msgstr "Sono cambiati i valori di TLSCipherSuite"
-
-#~ msgid ""
-#~ "A \"TLSCipherSuite\" option was found in your slapd config when "
-#~ "upgrading. The values allowed for this option are determined by the SSL "
-#~ "implementation used, which has been changed from OpenSSL to GnuTLS.  As a "
-#~ "result, your existing TLSCipherSuite setting will not work with this "
-#~ "package."
-#~ msgstr ""
-#~ "Durante l'aggiornamento è stata trovata nel file di configurazione di "
-#~ "slapd l'opzione \"TLSCipherSuite\". I valori consentiti per questa "
-#~ "opzione sono determinati dall'implementazione di SSL in uso, che è "
-#~ "passata da OpenSSL a GnuTLS. Il risultato è che l'attuale impostazione di "
-#~ "TLSCipherSuite non funziona con questo pacchetto."
-
-#~ msgid ""
-#~ "This setting has been automatically commented out for you.  If you have "
-#~ "specific encryption needs that require this option to be re-enabled, see "
-#~ "the output of 'gnutls-cli -l' in the gnutls-bin package for the list of "
-#~ "ciphers supported by GnuTLS."
-#~ msgstr ""
-#~ "Questa impostazione è stata automaticamente disattivata trasformandola in "
-#~ "un commento. Se si hanno particolari esigenze di cifratura le quali "
-#~ "richiedono la riattivazione di questa opzione, si veda l'output di "
-#~ "\"gnutls-cli -l\", contenuto nel pacchetto gnutls-bin, per l'elenco dei "
-#~ "cifrari supportati da GnuTLS."
-
-#~ msgid "Back up current database and create a new one?"
-#~ msgstr "Fare il backup del database attuale e crearne uno nuovo?"
-
-#~ msgid ""
-#~ "The directory suffix (domain) you specified doesn't match the one "
-#~ "currently in /etc/ldap/slapd.conf. Changing the directory suffix requires "
-#~ "moving aside the current LDAP database and creating a new one. Please "
-#~ "confirm whether you want to back up and abandon the current database."
-#~ msgstr ""
-#~ "Il suffisso della directory (dominio) specificato non corrisponde a "
-#~ "quello attualmente presente in /etc/ldap/slapd.conf. La modifica del "
-#~ "suffisso della directory implica l'accantonamento dell'attuale database "
-#~ "LDAP e la creazione di uno nuovo. Confermare l'intenzione di fare un "
-#~ "backup e di abbandonare il database corrente."

@@ -1,19 +1,19 @@
 # openldap po-debconf translation to Spanish
 # Copyright 2006 Rudy Godoy <rudy@kernel-panik.org>
 # Copyright 2008 Steve Langasek <vorlon@debian.org>
-# Copyright 2009 Francisco Javier Cuadrado <fcocuadrado@gmail.com>
+# Copyright (C) 2009, 2010 Software in the Public Interest
 # This file is distributed under the same license as the openldap package.
 #
 # Changes:
-# - Initial translation
+#   - Initial translation
 #       Rudy Godoy <rudy@kernel-panik.org>, 2006
 #
-# - Reviewer
+#   - Reviewer
 #       Javier Fernandez-Sanguino
 #
-# - Updates
+#   - Updates
 #       Steve Langasek <vorlon@debian.org>, 2008
-#       Francisco Javier Cuadrado <fcocuadrado@gmail.com>, 2009
+#       Francisco Javier Cuadrado <fcocuadrado@gmail.com>, 2009, 2010
 #
 # Traductores, si no conocen el formato PO, merece la pena leer la
 # documentación de gettext, especialmente las secciones dedicadas a este
@@ -24,24 +24,24 @@
 # Equipo de traducción al español, por favor lean antes de traducir
 # los siguientes documentos:
 #
-# - El proyecto de traducción de Debian al español
-#   http://www.debian.org/intl/spanish/coordinacion
-#   especialmente las notas de traducción en
-#   http://www.debian.org/intl/spanish/notas
+#   - El proyecto de traducción de Debian al español
+#     http://www.debian.org/intl/spanish/coordinacion
+#     especialmente las notas de traducción en
+#     http://www.debian.org/intl/spanish/notas
 #
-# - La guía de traducción de po's de debconf:
-#   /usr/share/doc/po-debconf/README-trans
-#   o http://www.debian.org/intl/l10n/po-debconf/README-trans
+#   - La guía de traducción de po's de debconf:
+#     /usr/share/doc/po-debconf/README-trans
+#     o http://www.debian.org/intl/l10n/po-debconf/README-trans
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: openldap 2.4.15-1\n"
+"Project-Id-Version: openldap 2.4.23-3exp1\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2010-07-15 22:05+0200\n"
-"PO-Revision-Date: 2009-03-20 13:48+0100\n"
+"PO-Revision-Date: 2010-07-18 18:06+0100\n"
 "Last-Translator: Francisco Javier Cuadrado <fcocuadrado@gmail.com>\n"
 "Language-Team: Debian l10n Spanish <debian-l10n-spanish@lists.debian.org>\n"
-"Language: \n"
+"Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -161,18 +161,11 @@ msgstr ""
 #. Description
 #: ../slapd.templates:5001
 msgid "Retry configuration?"
-msgstr "¿Reintentar la configuración?"
+msgstr "¿Desea volver a intentar la configuración?"
 
 #. Type: boolean
 #. Description
 #: ../slapd.templates:5001
-#, fuzzy
-#| msgid ""
-#| "The configuration you entered is invalid. Make sure that the DNS domain "
-#| "name is syntactically valid, the organization is not left empty and the "
-#| "admin passwords match. If you decide not to retry the configuration the "
-#| "LDAP server will not be set up. Run 'dpkg-reconfigure slapd' if you want "
-#| "to retry later."
 msgid ""
 "The configuration you entered is invalid. Make sure that the DNS domain name "
 "is syntactically valid, the field for the organization is not left empty and "
@@ -181,10 +174,10 @@ msgid ""
 "retry later."
 msgstr ""
 "La configuración que ha introducido no es válida. Asegúrese de que el nombre "
-"de dominio del DNS tiene una sintáxis válida, la organización no está en "
-"blanco y las claves del administrador coinciden. El servidor LDAP quedará "
-"sin configurar si decide no volver a intentar la configuración. Ejecute "
-"«dpkg-reconfigure slapd» si desea volver a intentarlo después."
+"de dominio del DNS es válido, que el campo de la organización no está en "
+"blanco y que las claves del administrador coinciden. El servidor LDAP "
+"quedará sin configurar si decide no volver a intentar la configuración. "
+"Ejecute «dpkg-reconfigure slapd» si desea volver a intentarlo más tarde."
 
 #. Type: string
 #. Description
@@ -275,7 +268,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:14001
 msgid "Allow LDAPv2 protocol?"
-msgstr "¿Permitir el protocolo LDAPv2?"
+msgstr "¿Desea permitir el protocolo LDAPv2?"
 
 #. Type: boolean
 #. Description
@@ -337,16 +330,12 @@ msgstr ""
 #. Translators: keep "${location}" unchanged. This is a variable that
 #. will be replaced by a directory name at execution
 #: ../slapd.templates:15001
-#, fuzzy
-#| msgid ""
-#| "Then move the database files back to a backup area and then try running "
-#| "slapadd from $location."
 msgid ""
 "Then move the database files back to a backup area and then try running "
 "slapadd from ${location}."
 msgstr ""
 "Mueva los ficheros de la base de datos de nuevo al área de la copia de "
-"seguridad e intente utilizar «slapadd» en $location."
+"seguridad e intente ejecutar «slapadd» desde «${locatio}n»."
 
 #. Type: select
 #. Description
