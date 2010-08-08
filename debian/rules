@@ -105,7 +105,7 @@ build-stamp: configure-stamp
 	$(MAKE) -C contrib/slapd-modules/smbk5pwd
 	$(MAKE) -C contrib/slapd-modules/autogroup
 ifeq (,$(findstring nocheck,$(DEB_BUILD_OPTIONS)))
-	#RESOLV_MULTI=off $(MAKE) -C $(builddir) test
+	RESOLV_MULTI=off $(MAKE) -C $(builddir) test
 endif
 	touch $@
 
