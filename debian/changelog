@@ -18,8 +18,9 @@ openldap (2.4.23-3) unstable; urgency=low
   * Added debian specific patch to wait until slapd is operational before
     detaching to the terminal (Closes: #589915)
   * Add a lintian overrides for libldap.
+  * Empty dependency_libs line in .la files. (Closes: #591550)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 08 Aug 2010 16:56:45 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sun, 08 Aug 2010 22:57:58 +0200
 
 openldap (2.4.23-2) unstable; urgency=medium
 
