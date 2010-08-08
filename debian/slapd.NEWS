@@ -1,4 +1,4 @@
-openldap (2.4.23-3exp1) unstable; urgency=low
+openldap (2.4.23-3) unstable; urgency=low
 
    The OpenLDAP packages in Debian have a different configuration style now.
    Please take a look at README.Debian for more information.

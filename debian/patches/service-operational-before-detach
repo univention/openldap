@@ -1,0 +1,26 @@
+Index: b/servers/slapd/main.c
+===================================================================
+--- a/servers/slapd/main.c
++++ b/servers/slapd/main.c
+@@ -880,10 +880,6 @@
+ 	(void) SIGNAL( SIGBREAK, slap_sig_shutdown );
+ #endif
+ 
+-#ifndef HAVE_WINSOCK
+-	lutil_detach( no_detach, 0 );
+-#endif /* HAVE_WINSOCK */
+-
+ #ifdef CSRIMALLOC
+ 	mal_leaktrace(1);
+ #endif
+@@ -950,6 +946,10 @@
+ 		goto shutdown;
+ 	}
+ 
++#ifndef HAVE_WINSOCK
++	lutil_detach( no_detach, 0 );
++#endif /* HAVE_WINSOCK */
++
+ 	Debug( LDAP_DEBUG_ANY, "slapd starting\n", 0, 0, 0 );
+ 
+ #ifdef HAVE_NT_EVENT_LOG
