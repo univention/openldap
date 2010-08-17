@@ -1,19 +1,22 @@
+# translation of openldap_2.4.23-2_gl.po to Galician
 # Galician translation of openldap's debconf templates.
 # This file is distributed under the same license as the openldap package.
-# Jacobo Tarrio <jtarrio@debian.org>, 2006.
 #
+# Jacobo Tarrio <jtarrio@debian.org>, 2006.
+# Jorge Barreiro <yortx.barry@gmail.com>, 2010.
 msgid ""
 msgstr ""
-"Project-Id-Version: openldap\n"
+"Project-Id-Version: openldap_2.4.23-2_gl\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2010-07-15 22:05+0200\n"
-"PO-Revision-Date: 2008-05-08 20:39+0100\n"
-"Last-Translator: Jacobo Tarrio <jtarrio@debian.org>\n"
+"PO-Revision-Date: 2010-08-13 02:40+0200\n"
+"Last-Translator: Jorge Barreiro <yortx.barry@gmail.com>\n"
 "Language-Team: Galician <proxecto@trasno.net>\n"
 "Language: gl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.11.4\n"
 
 #. Type: boolean
 #. Description
@@ -135,13 +138,6 @@ msgstr "¿Volver tentar a configuración?"
 #. Type: boolean
 #. Description
 #: ../slapd.templates:5001
-#, fuzzy
-#| msgid ""
-#| "The configuration you entered is invalid. Make sure that the DNS domain "
-#| "name is syntactically valid, the organization is not left empty and the "
-#| "admin passwords match. If you decide not to retry the configuration the "
-#| "LDAP server will not be set up. Run 'dpkg-reconfigure slapd' if you want "
-#| "to retry later."
 msgid ""
 "The configuration you entered is invalid. Make sure that the DNS domain name "
 "is syntactically valid, the field for the organization is not left empty and "
@@ -150,9 +146,9 @@ msgid ""
 "retry later."
 msgstr ""
 "A configuración que introduciu non é válida. Asegúrese de que o nome de "
-"dominio DNS teña unha sintaxe válida, a organización non quede baleira e os "
-"contrasinais do administrador coincidan. Se decide non volver tentar a "
-"configuración non se ha configurar o servidor LDAP. Executar \"dpkg-"
+"dominio DNS teña unha sintaxe válida, o campo para a organización non quede "
+"baleiro e os contrasinais do administrador coincidan. Se decide non volver "
+"tentar a configuración non se ha configurar o servidor LDAP. Executar \"dpkg-"
 "reconfigure slapd\" se quere volver tentala."
 
 #. Type: string
@@ -301,16 +297,12 @@ msgstr ""
 #. Translators: keep "${location}" unchanged. This is a variable that
 #. will be replaced by a directory name at execution
 #: ../slapd.templates:15001
-#, fuzzy
-#| msgid ""
-#| "Then move the database files back to a backup area and then try running "
-#| "slapadd from $location."
 msgid ""
 "Then move the database files back to a backup area and then try running "
 "slapadd from ${location}."
 msgstr ""
 "Volva trasladar os ficheiros da base de datos a unha zona de copias de "
-"seguridade e probe a executar slapadd desde $location."
+"seguridade e probe a executar slapadd desde ${location}."
 
 #. Type: select
 #. Description
@@ -340,6 +332,20 @@ msgstr ""
 "En calquera caso, debería revisar se a configuración da base de datos se "
 "axusta ás súas necesidades. Consulte /usr/share/doc/slapd/README.DB_CONFIG."
 "gz para máis detalles."
+
+#~ msgid "Back up current database and create a new one?"
+#~ msgstr "¿Facer unha copia da base de datos actual e crear unha nova?"
+
+#~ msgid ""
+#~ "The directory suffix (domain) you specified doesn't match the one "
+#~ "currently in /etc/ldap/slapd.conf. Changing the directory suffix requires "
+#~ "moving aside the current LDAP database and creating a new one. Please "
+#~ "confirm whether you want to back up and abandon the current database."
+#~ msgstr ""
+#~ "O sufixo de directorio (dominio) que especificou non coincide co que hai "
+#~ "en /etc/ldap/slapd.conf. Para cambiar o sufixo do directorio hai que "
+#~ "apartar a base de datos LDAP actual e crear unha nova. Confirme se quere "
+#~ "facer unha copia de seguridade da base de datos actual e abandonala."
 
 #~ msgid "slurpd is obsolete; replicas must be reconfigured by hand"
 #~ msgstr "slurpd está obsoleto; é preciso reconfigurar as réplicas á man"
@@ -392,17 +398,3 @@ msgstr ""
 #~ "necesidades de cifrado específicas que precisan de que se volva activar "
 #~ "esta opción, consulte a saída de \"gnutls-cli -l\" no paquete gnutls-bin "
 #~ "para obter a lista de sistemas de cifrado soportados por GnuTLS."
-
-#~ msgid "Back up current database and create a new one?"
-#~ msgstr "¿Facer unha copia da base de datos actual e crear unha nova?"
-
-#~ msgid ""
-#~ "The directory suffix (domain) you specified doesn't match the one "
-#~ "currently in /etc/ldap/slapd.conf. Changing the directory suffix requires "
-#~ "moving aside the current LDAP database and creating a new one. Please "
-#~ "confirm whether you want to back up and abandon the current database."
-#~ msgstr ""
-#~ "O sufixo de directorio (dominio) que especificou non coincide co que hai "
-#~ "en /etc/ldap/slapd.conf. Para cambiar o sufixo do directorio hai que "
-#~ "apartar a base de datos LDAP actual e crear unha nova. Confirme se quere "
-#~ "facer unha copia de seguridade da base de datos actual e abandonala."
