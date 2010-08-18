@@ -755,14 +755,12 @@ if [ -f "/etc/default/slapd" ]; then
 fi
 
 # Load the default location of the slapd config file
-if [ -z "$SLAPD_CONF" ]; then
+if [ "${MODE}" = "configure" ] || [ -z "$SLAPD_CONF" ]; then
 	if previous_version_older 2.4.23-3 && \
 		[ -f "/etc/ldap/slapd.conf" ] && \
 		[ ! -e "/etc/ldap/slapd.d" ]; then
 
 		SLAPD_CONF="/etc/ldap/slapd.conf"
-	else
-		SLAPD_CONF="/etc/ldap/slapd.d"
 	fi
 fi
 
