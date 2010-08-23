@@ -1,10 +1,15 @@
 openldap (2.4.23-4) UNRELEASED; urgency=low
 
+  [ Steve Langasek ]
   * Bump the database upgrade version check to 2.4.23-4; should have been
     set to 2.4.23-1 when we switched to db4.8, but was missed so we need to
     clean up.  Closes: #593550.
 
- -- Steve Langasek <vorlon@debian.org>  Thu, 19 Aug 2010 14:40:42 -0700
+  [ Matthijs Mohlmann ]
+  * Fix root access to cn=config on upgrades from configuration style slapd.conf
+    Thanks to Mathias Gug (Closes: #593566, #593878)
+
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Mon, 23 Aug 2010 20:35:27 +0200
 
 openldap (2.4.23-3) unstable; urgency=low
 

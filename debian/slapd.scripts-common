@@ -136,18 +136,9 @@ EOF
 		mv ${SLAPD_CONF} ${SLAPD_CONF}.old
 		SLAPD_CONF=/etc/ldap/slapd.d
 
-		# Add the localroot authz mapping
-		if ! grep -q -E '^olcAuthzRegexp: gidNumber=\[\[:digit:]]\+\\\+uidNumber=0,cn=peercred,cn=external,cn=auth cn=localroot,cn=config' "${SLAPD_CONF}/cn=config.ldif"; then
-			sed -i 's/^\(structuralObjectClass: olcGlobal\)/olcAuthzRegexp: gidNumber=[[:digit:]]+\\+uidNumber=0,cn=peercred,cn=external,cn=auth cn=localroot,cn=config\n\0/' "${SLAPD_CONF}/cn=config.ldif"
-		fi
-
 		# Add olcAccess control to grant cn=localroot,cn=config manage access
-		if ! grep -q -E '^olcAccess: to \* by dn.exact=cn=localroot,cn=config manage by \* break' "${SLAPD_CONF}/cn=config/olcDatabase={-1}frontend.ldif"; then
-			sed -i 's/^\(structuralObjectClass: olcDatabaseConfig\)/olcAccess: to * by dn.exact=cn=localroot,cn=config manage by * break\n\0/' "${SLAPD_CONF}/cn=config/olcDatabase={-1}frontend.ldif"
-		fi
-		if ! grep -q -E '^olcAccess: {1}to \* by dn.exact=cn=localroot,cn=config manage by \* break' "${SLAPD_CONF}/cn=config/olcDatabase={0}config.ldif"; then
-			sed -i 's/^\(structuralObjectClass: olcDatabaseConfig\)/olcAccess: {1}to * by dn.exact=cn=localroot,cn=config manage by * break\n\0/' "${SLAPD_CONF}/cn=config/olcDatabase={0}config.ldif"
-		fi
+		sed -i 's/^\(olcDatabase: {-1}frontend\)/\0\nolcAccess: {0}to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break/' "${SLAPD_CONF}/cn=config/olcDatabase={-1}frontend.ldif"
+		sed -i 's/^\(olcDatabase: {0}config\)/\0\nolcAccess: {0}to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break/' "${SLAPD_CONF}/cn=config/olcDatabase={0}config.ldif"
 
 		# TODO: Now we are doing something that is not allowed by policy but it
 		# has to be done.
