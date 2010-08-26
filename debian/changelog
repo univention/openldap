@@ -1,4 +1,4 @@
-openldap (2.4.23-4) UNRELEASED; urgency=low
+openldap (2.4.23-4) unstable; urgency=low
 
   [ Steve Langasek ]
   * Bump the database upgrade version check to 2.4.23-4; should have been
@@ -9,7 +9,7 @@ openldap (2.4.23-4) UNRELEASED; urgency=low
   * Fix root access to cn=config on upgrades from configuration style slapd.conf
     Thanks to Mathias Gug (Closes: #593566, #593878)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Mon, 23 Aug 2010 20:35:27 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Thu, 26 Aug 2010 20:30:51 +0200
 
 openldap (2.4.23-3) unstable; urgency=low
 
