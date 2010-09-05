@@ -1,3 +1,12 @@
+openldap (2.4.23-5) UNRELEASED; urgency=high
+
+  * High-urgency upload for RC bugfix.
+  * debian/slapd.scripts-common: fix gratuitous (and wrong) use of grep in
+    get_suffix(), which causes us to incorrectly parse any slapd.conf that
+    uses tabs instead of spaces.  Closes; #595672.
+
+ -- Steve Langasek <vorlon@debian.org>  Sun, 05 Sep 2010 16:08:53 -0700
+
 openldap (2.4.23-4) unstable; urgency=low
 
   [ Steve Langasek ]

@@ -260,7 +260,7 @@ move_incompatible_databases_away() {					# {{{
 get_suffix() {							
 	if [ -f "${SLAPD_CONF}" ]; then
 		for f in `get_all_slapd_conf_files`; do
-			grep '^suffix ' ${f} | sed 's/^suffix[[:space:]]\+\(.\+\)/\1/' | sed 's/"//g'
+			sed -n -e's/^suffix[[:space:]]\+"*\([^"]\+\)"*/\1/p' $f
 		done
 	else
 		grep -h olcSuffix ${SLAPD_CONF}/cn\=config/olcDatabase* | cut -d: -f 2
