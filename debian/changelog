@@ -4,6 +4,9 @@ openldap (2.4.23-5) UNRELEASED; urgency=high
   * debian/slapd.scripts-common: fix gratuitous (and wrong) use of grep in
     get_suffix(), which causes us to incorrectly parse any slapd.conf that
     uses tabs instead of spaces.  Closes; #595672.
+  * debian/slapd.init: correctly set the slapd.conf argument even when
+    SLAPD_PIDFILE is non-empty in /etc/default/slapd.  Thanks to Peter
+    Marschall <peter@adpm.de> for the patch.  Closes: #593880.
 
  -- Steve Langasek <vorlon@debian.org>  Sun, 05 Sep 2010 16:08:53 -0700
 

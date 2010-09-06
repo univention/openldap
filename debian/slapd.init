@@ -44,19 +44,24 @@ if [ ! -r "$SLAPD_CONF" ]; then
   exit 1
 fi
 
+# extend options depending on config type
+if [ -f "$SLAPD_CONF" ]; then
+	SLAPD_OPTIONS="-f $SLAPD_CONF $SLAPD_OPTIONS"
+elif [ -d "$SLAPD_CONF" ] ; then
+	SLAPD_OPTIONS="-F $SLAPD_CONF $SLAPD_OPTIONS"
+fi
+
 # Find out the name of slapd's pid file
 if [ -z "$SLAPD_PIDFILE" ]; then
 	# If using old one-file configuration scheme
 	if [ -f "$SLAPD_CONF" ] ; then
 		SLAPD_PIDFILE=`sed -ne 's/^pidfile[[:space:]]\+\(.\+\)/\1/p' \
 			"$SLAPD_CONF"`
-		SLAPD_OPTIONS="-f $SLAPD_CONF $SLAPD_OPTIONS"
 	# Else, if using new directory configuration scheme
 	elif [ -d "$SLAPD_CONF" ] ; then
 		SLAPD_PIDFILE=`sed -ne \
 			's/^olcPidFile:[[:space:]]\+\(.\+\)[[:space:]]*/\1/p' \
 			"$SLAPD_CONF"/'cn=config.ldif'`
-		SLAPD_OPTIONS="-F $SLAPD_CONF $SLAPD_OPTIONS"
 	fi
 fi
 
