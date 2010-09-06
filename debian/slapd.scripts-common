@@ -158,24 +158,27 @@ dump_databases() {							# {{{
 	dir=`database_dumping_destdir`
 	echo >&2 "  Dumping to $dir: "
 	for suffix in `get_suffix`; do
-		file="$dir/$suffix.ldif"
-		echo -n "  - directory $suffix... " >&2
-		# Need to support slapd.d migration from preinst
-		if [ -f "${SLAPD_CONF}" ]; then
-			slapcat_opts="-f ${SLAPD_CONF}"
-		else
-			slapcat_opts="-F ${SLAPD_CONF}"
+		dbdir=`get_directory $suffix`
+		if [ -n "$dbdir" ] && [ -d "$dbdir" ]; then
+			file="$dir/$suffix.ldif"
+			echo -n "  - directory $suffix... " >&2
+			# Need to support slapd.d migration from preinst
+			if [ -f "${SLAPD_CONF}" ]; then
+				slapcat_opts="-f ${SLAPD_CONF}"
+			else
+				slapcat_opts="-F ${SLAPD_CONF}"
+			fi
+			slapcat ${slapcat_opts} -b "$suffix" > "$file" || failed=1
+			if [ "$failed" ]; then
+				rm -f "$file"
+				echo "failed." >&2
+				db_subst slapd/upgrade_slapcat_failure location "$dir"
+				db_input critical slapd/upgrade_slapcat_failure || true
+				db_go || true
+				exit 1
+			fi
+			echo "done." >&2
 		fi
-		slapcat ${slapcat_opts} -b "$suffix" > "$file" || failed=1
-		if [ "$failed" ]; then
-			rm -f "$file"
-			echo "failed." >&2
-			db_subst slapd/upgrade_slapcat_failure location "$dir"
-			db_input critical slapd/upgrade_slapcat_failure || true
-			db_go || true
-			exit 1
-		fi
-		echo "done." >&2
 	done
 }
 
@@ -681,16 +684,7 @@ previous_version_newer() {						# {{{
 		return 1
 	fi
 } # }}}
-upgrade_supported_from_backend() {					# {{{
-# Check if upgrading a database in the named backend is supported by
-# our scripts.
-# Usage: if upgrade_supported_from_backend "backend"; then ... fi
 
-	case "$1" in bdb|hdb) return 0; esac
-	return 1
-}
-
-# }}}
 is_initial_configuration() {						# {{{
 # Check if this is the initial configuration and not an upgrade of an 
 # existing configuration
