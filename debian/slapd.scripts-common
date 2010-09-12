@@ -142,7 +142,7 @@ EOF
 
 		# TODO: Now we are doing something that is not allowed by policy but it
 		# has to be done.
-		sed -i -e "s|^SLAPD_CONF=.*|SLAPD_CONF=\"${SLAPD_CONF}\"|" /etc/default/slapd
+		sed -i -e "/^[[:space:]]*SLAPD_CONF=.*/ s/^/#/" /etc/default/slapd
 		echo "done." >&2
 	fi
 }

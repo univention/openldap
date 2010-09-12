@@ -18,6 +18,9 @@ openldap (2.4.23-5) UNRELEASED; urgency=high
   * debian/slapd.default: now that we have a sensible default behavior in
     both slapd.init and the maintainer scripts, leave SLAPD_CONF empty to
     save pain later.
+  * debian/slapd.scripts-common: ... and do the same in
+    migrate_to_slapd_d_style, we just need to comment out the user's
+    previous entry instead of blowing it away.
 
   [ Matthijs Mohlmann ]
   * Remove upgrade_supported_from_backend, implemented patch from
