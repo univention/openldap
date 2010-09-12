@@ -15,6 +15,9 @@ openldap (2.4.23-5) UNRELEASED; urgency=high
     package can be removed gracefully.  Closes: #596100.
   * drop build-conflicts with libssl-dev; we explicitly pass
     --with-tls=gnutls to configure, so there's no risk of a misbuild here.
+  * debian/slapd.default: now that we have a sensible default behavior in
+    both slapd.init and the maintainer scripts, leave SLAPD_CONF empty to
+    save pain later.
 
   [ Matthijs Mohlmann ]
   * Remove upgrade_supported_from_backend, implemented patch from
