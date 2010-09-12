@@ -13,6 +13,8 @@ openldap (2.4.23-5) UNRELEASED; urgency=high
   * debian/slapd.init: 'invoke-rc.d slapd stop' should not fail due to the
     absence of a slapd configuration; we should still exit 0 so that the
     package can be removed gracefully.  Closes: #596100.
+  * drop build-conflicts with libssl-dev; we explicitly pass
+    --with-tls=gnutls to configure, so there's no risk of a misbuild here.
 
   [ Matthijs Mohlmann ]
   * Remove upgrade_supported_from_backend, implemented patch from
