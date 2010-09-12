@@ -45,7 +45,9 @@ fi
 # Stop processing if the config file is not there
 if [ ! -r "$SLAPD_CONF" ]; then
   log_warning_msg "No configuration file was found for slapd at $SLAPD_CONF."
-  exit 1
+  # if there is no config at all, we should assume slapd is not running
+  # and exit 0 on stop so that unconfigured packages can be removed.
+  [ "x$1" = xstop ] && exit 0 || exit 1
 fi
 
 # extend options depending on config type

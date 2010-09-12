@@ -13,6 +13,9 @@ openldap (2.4.23-5) UNRELEASED; urgency=high
     precedence to slapd.d and falling back to slapd.conf.  Users who don't
     want to use an existing slapd.d should point at slapd.conf explicitly.
     Closes: #594714, #596343.
+  * debian/slapd.init: 'invoke-rc.d slapd stop' should not fail due to the
+    absence of a slapd configuration; we should still exit 0 so that the
+    package can be removed gracefully.  Closes: #596100.
 
   [ Matthijs Mohlmann ]
   * Remove upgrade_supported_from_backend, implemented patch from
