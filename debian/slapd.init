@@ -35,7 +35,11 @@ fi
 
 # Load the default location of the slapd config file
 if [ -z "$SLAPD_CONF" ]; then
-	SLAPD_CONF="/etc/ldap/slapd.conf"
+	if [ -e /etc/ldap/slapd.d ]; then
+		SLAPD_CONF=/etc/ldap/slapd.d
+	else
+		SLAPD_CONF=/etc/ldap/slapd.conf
+	fi
 fi
 
 # Stop processing if the config file is not there
