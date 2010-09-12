@@ -164,9 +164,9 @@ dump_databases() {							# {{{
 			echo -n "  - directory $suffix... " >&2
 			# Need to support slapd.d migration from preinst
 			if [ -f "${SLAPD_CONF}" ]; then
-				slapcat_opts="-f ${SLAPD_CONF}"
+				slapcat_opts="-g -f ${SLAPD_CONF}"
 			else
-				slapcat_opts="-F ${SLAPD_CONF}"
+				slapcat_opts="-g -F ${SLAPD_CONF}"
 			fi
 			slapcat ${slapcat_opts} -b "$suffix" > "$file" || failed=1
 			if [ "$failed" ]; then
@@ -209,9 +209,9 @@ load_databases() {							# {{{
 		fi
 
 		if [ -f "${SLAPD_CONF}" ]; then
-			slapadd_opts="-f ${SLAPD_CONF}"
+			slapadd_opts="-g -f ${SLAPD_CONF}"
 		else
-			slapadd_opts="-F ${SLAPD_CONF}"
+			slapadd_opts="-g -F ${SLAPD_CONF}"
 		fi
 		capture_diagnostics slapadd ${slapadd_opts} \
 			-q -b "$suffix" -l "$file" || failed=1
