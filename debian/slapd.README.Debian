@@ -10,11 +10,12 @@ Notes about Debian's slapd package
 The OpenLDAP configuration
 
   Since version 2.4.23-3 the configuration of OpenLDAP has been changed to
-  /etc/ldap/slapd.d. The OpenLDAP packages in Debian provide an automatic
-  migration to the new configuration style. With the new configuration style
-  it is possible to change values on the fly without restarting slapd.
-  Changes are made through the use of ldif files and ldap{add,modify}. In
-  Debian you can use the following command to search the configuration:
+  /etc/ldap/slapd.d by default.  The OpenLDAP packages in Debian provide an
+  automatic migration to the new configuration style. With the new
+  configuration style it is possible to change values on the fly without
+  restarting slapd.  Changes are made through the use of ldif files and
+  ldap{add,modify}.  In Debian you can use the following command to search
+  the configuration:
 
       ldapsearch -Y EXTERNAL -H ldapi:/// -b "cn=config"
 

@@ -1,7 +1,8 @@
 openldap (2.4.23-3) unstable; urgency=low
 
-   The OpenLDAP packages in Debian have a different configuration style now.
-   Please take a look at README.Debian for more information.
+   The OpenLDAP packages in Debian now use the slapd.d LDIF-based
+   configuration model by default.  Please see README.Debian for more
+   information.
 
  -- Matthijs Mohlmann <matthijs@cacholong.nl>  Mon, 19 Jul 2010 10:48:19 +0200
 
