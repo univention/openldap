@@ -5,9 +5,6 @@ openldap (2.4.23-5) UNRELEASED; urgency=high
   * debian/slapd.scripts-common: fix gratuitous (and wrong) use of grep in
     get_suffix(), which causes us to incorrectly parse any slapd.conf that
     uses tabs instead of spaces.  Closes: #595672.
-  * debian/slapd.init: correctly set the slapd.conf argument even when
-    SLAPD_PIDFILE is non-empty in /etc/default/slapd.  Thanks to Peter
-    Marschall <peter@adpm.de> for the patch.  Closes: #593880.
   * debian/slapd.init, debian/slapd.scripts-common: when $SLAPD_CONF is not
     set in /etc/default/slapd, we should always set a default value, giving
     precedence to slapd.d and falling back to slapd.conf.  Users who don't
@@ -21,6 +18,10 @@ openldap (2.4.23-5) UNRELEASED; urgency=high
   * Remove upgrade_supported_from_backend, implemented patch from
     Peter Marschall <peter@adpm.de> to automatically detect if an upgrade is
     supported. (Closes: #594712)
+
+  [ Peter Marschall ]
+  * debian/slapd.init: correctly set the slapd.conf argument even when
+    SLAPD_PIDFILE is non-empty in /etc/default/slapd.  Closes: #593880.
 
  -- Matthijs Mohlmann <matthijs@cacholong.nl>  Mon, 06 Sep 2010 23:09:42 +0200
 
