@@ -137,8 +137,11 @@ EOF
 		SLAPD_CONF=/etc/ldap/slapd.d
 
 		# Add olcAccess control to grant cn=localroot,cn=config manage access
-		sed -i 's/^\(olcDatabase: {-1}frontend\)/\0\nolcAccess: {0}to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break/' "${SLAPD_CONF}/cn=config/olcDatabase={-1}frontend.ldif"
-		sed -i 's/^\(olcDatabase: {0}config\)/\0\nolcAccess: {0}to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break/' "${SLAPD_CONF}/cn=config/olcDatabase={0}config.ldif"
+		sed -i '/^olcDatabase: {-1}frontend/a\
+olcAccess: {0}to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break\
+olcAccess: {1}to dn.base="cn=Subschema" by * read' "${SLAPD_CONF}/cn=config/olcDatabase={-1}frontend.ldif"
+		sed -i '/^olcDatabase: {0}config/a\
+olcAccess: {0}to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break' "${SLAPD_CONF}/cn=config/olcDatabase={0}config.ldif"
 
 		# TODO: Now we are doing something that is not allowed by policy but it
 		# has to be done.

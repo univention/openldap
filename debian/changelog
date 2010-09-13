@@ -28,6 +28,9 @@ openldap (2.4.23-5) UNRELEASED; urgency=high
   * debian/slapd.scripts-common: when parsing the names of includes, handle
     double-quotes and escape characters as described in slapd.conf(5).
     Closes: #595784.
+  * debian/slapd.scripts-common, debian/slapd.postinst: on upgrade from
+    versions <= 2.4.23-4, explicitly grant access to cn=Subschema, which
+    otherwise is blocked by our added olcAccess settings.  Closes: #596326.
 
   [ Matthijs Mohlmann ]
   * Remove upgrade_supported_from_backend, implemented patch from
