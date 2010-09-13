@@ -35,6 +35,8 @@ openldap (2.4.23-5) UNRELEASED; urgency=high
     too.
   * Likewise, grant access to dn.exact="" so that base dn autodiscovery
     works as intended.  Closes: #596049.
+  * debian/slapd.init.ldif: synchronize our behavior on new installs with
+    that on upgrades, avoiding the non-standard cn=localroot,cn=config.
 
   [ Matthijs Mohlmann ]
   * Remove upgrade_supported_from_backend, implemented patch from
