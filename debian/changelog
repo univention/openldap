@@ -25,6 +25,9 @@ openldap (2.4.23-5) UNRELEASED; urgency=high
     separate responses by newlines, to properly handle the case when a
     DN has embedded spaces.  Introduces a few more stupid fd tricks to work
     around possible problems with debconf.  Closes: #595466.
+  * debian/slapd.scripts-common: when parsing the names of includes, handle
+    double-quotes and escape characters as described in slapd.conf(5).
+    Closes: #595784.
 
   [ Matthijs Mohlmann ]
   * Remove upgrade_supported_from_backend, implemented patch from

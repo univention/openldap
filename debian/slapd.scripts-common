@@ -281,7 +281,9 @@ get_directory() {							# {{{
 		       /^database/ { DB=1; SUF=""; DIR="" } ; 
 		       DB==1 && /^suffix[ \t]+"?'"$1"'"?$/ { SUF=$2 ; } ; 
 		       DB==1 && /^directory/ { DIR=$2 ;} ; 
-		       DB==1 && SUF!="" && DIR!="" { sub(/^"/,"",DIR) ; sub(/"$/,"",DIR) ; print DIR; SUF=""; DIR="" }' "${f}"
+		       DB==1 && SUF!="" && DIR!="" { sub(/^"/,"",DIR) ; sub(/"$/,"",DIR) ; print DIR; SUF=""; DIR="" }' "${f}" | \
+		sed -e's/\([^\\]\|^\)"/\1/g; s/\\"/"/g; s/\\\\/\\/g'
+
 		done
 	else
 		return 1
