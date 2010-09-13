@@ -21,6 +21,10 @@ openldap (2.4.23-5) UNRELEASED; urgency=high
   * debian/slapd.scripts-common: ... and do the same in
     migrate_to_slapd_d_style, we just need to comment out the user's
     previous entry instead of blowing it away.
+  * debian/slapd.scripts-common: call get_suffix in a way that lets us
+    separate responses by newlines, to properly handle the case when a
+    DN has embedded spaces.  Introduces a few more stupid fd tricks to work
+    around possible problems with debconf.  Closes: #595466.
 
   [ Matthijs Mohlmann ]
   * Remove upgrade_supported_from_backend, implemented patch from
