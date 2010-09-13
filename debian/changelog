@@ -37,6 +37,8 @@ openldap (2.4.23-5) UNRELEASED; urgency=high
     works as intended.  Closes: #596049.
   * debian/slapd.init.ldif: synchronize our behavior on new installs with
     that on upgrades, avoiding the non-standard cn=localroot,cn=config.
+  * debian/slapd.scripts-common: don't run the migration code if slapd.d
+    already exists.  Closes: #593965.
 
   [ Matthijs Mohlmann ]
   * Remove upgrade_supported_from_backend, implemented patch from

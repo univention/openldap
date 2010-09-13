@@ -112,7 +112,9 @@ update_databases_permissions() {	# {{{
 migrate_to_slapd_d_style() {				# {{{
 
 	# Check if we need to migrate to the new style.
-	if previous_version_older 2.4.23-3 || [ -f "${SLAPD_CONF}" ]; then
+	if previous_version_older 2.4.23-3 && [ -f "${SLAPD_CONF}" ] \
+	   && ! [ -d /etc/ldap/slapd.d ]
+	then
 
 		# Create the new configuration directory
 		mkdir /etc/ldap/slapd.d
