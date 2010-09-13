@@ -24,6 +24,7 @@ olcSizeLimit: 500
 # Allow unlimited access to cn=localroot,cn=config which is the dn to wich a
 # local connection from the local root user is mapped to
 olcAccess: to * by dn.exact=cn=localroot,cn=config manage by * break
+olcAccess: to dn.base="cn=Subschema" read by *
 
 # Config db settings
 dn: olcDatabase=config,cn=config
