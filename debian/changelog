@@ -33,6 +33,8 @@ openldap (2.4.23-5) UNRELEASED; urgency=high
     otherwise is blocked by our added olcAccess settings.  Closes: #596326.
   * debian/slapd.init.ldif: set the acl in the default LDIF for new installs,
     too.
+  * Likewise, grant access to dn.exact="" so that base dn autodiscovery
+    works as intended.  Closes: #596049.
 
   [ Matthijs Mohlmann ]
   * Remove upgrade_supported_from_backend, implemented patch from

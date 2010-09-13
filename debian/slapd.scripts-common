@@ -139,7 +139,8 @@ EOF
 		# Add olcAccess control to grant cn=localroot,cn=config manage access
 		sed -i '/^olcDatabase: {-1}frontend/a\
 olcAccess: {0}to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break\
-olcAccess: {1}to dn.base="cn=Subschema" by * read' "${SLAPD_CONF}/cn=config/olcDatabase={-1}frontend.ldif"
+olcAccess: {1}to dn.exact="" by * read\
+olcAccess: {2}to dn.base="cn=Subschema" by * read' "${SLAPD_CONF}/cn=config/olcDatabase={-1}frontend.ldif"
 		sed -i '/^olcDatabase: {0}config/a\
 olcAccess: {0}to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth manage by * break' "${SLAPD_CONF}/cn=config/olcDatabase={0}config.ldif"
 

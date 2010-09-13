@@ -48,7 +48,8 @@ postinst_upgrade_configuration() {					# {{{
 	   && ! grep -i 'olcAccess:.*subschema' "$SLAPD_CONF/cn=config/olcDatabase={-1}frontend.ldif"
 	then
 		sed -i '/olcAccess: {0}/a\
-olcAccess: {1}to dn.base="cn=Subschema" by * read' "${SLAPD_CONF}/cn=config/olcDatabase={-1}frontend.ldif"
+olcAccess: {1}to dn.exact="" by * read\
+olcAccess: {2}to dn.base="cn=Subschema" by * read' "${SLAPD_CONF}/cn=config/olcDatabase={-1}frontend.ldif"
 	fi
 
 	# Enable LDAP protocol v2 support if needed.
