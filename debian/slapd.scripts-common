@@ -196,6 +196,9 @@ load_databases() {							# {{{
 	echo >&2 "  Loading from $dir: "
 	get_suffix | while read suffix; do
 		dbdir=`get_directory "$suffix"`
+		if [ -z "$dbdir" ]; then
+			continue
+		fi
 		if ! is_empty_dir "$dbdir"; then
 			echo >&2 \
 			  "  Directory $dbdir for $suffix not empty, aborting."
