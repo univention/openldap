@@ -1,8 +1,8 @@
-openldap (2.4.23-6) UNRELEASED; urgency=high
+openldap (2.4.23-6) unstable; urgency=high
 
   * Check for an empty directory to prevent an rm -f /*. (Closes: #597704)
 
- -- Matthijs Mohlmann <matthijs@cacholong.nl>  Wed, 22 Sep 2010 20:17:40 +0200
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Thu, 23 Sep 2010 10:17:50 +0200
 
 openldap (2.4.23-5) unstable; urgency=high
 
