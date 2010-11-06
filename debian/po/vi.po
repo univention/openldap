@@ -1,13 +1,13 @@
 # Vietnamese translation for OpenLDAP.
-# Copyright © 2008 Free Software Foundation, Inc.
-# Clytie Siddall <clytie@riverland.net.au>, 2005-2008.
+# Copyright © 2010 Free Software Foundation, Inc.
+# Clytie Siddall <clytie@riverland.net.au>, 2005-2010.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: openldap 2.4.7-6.4\n"
+"Project-Id-Version: openldap 2.4.23-6\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2010-07-15 22:05+0200\n"
-"PO-Revision-Date: 2008-05-09 00:24+0930\n"
+"PO-Revision-Date: 2010-10-27 15:50+1030\n"
 "Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
 "Language-Team: Vietnamese <vi-VN@googlegroups.com>\n"
 "Language: vi\n"
@@ -15,13 +15,13 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: LocFactoryEditor 1.7b3\n"
+"X-Generator: LocFactoryEditor 1.8\n"
 
 #. Type: boolean
 #. Description
 #: ../slapd.templates:1001
 msgid "Omit OpenLDAP server configuration?"
-msgstr "Bỏ qua cấu hình trình phục vụ OpenLDAP không?"
+msgstr "Bỏ qua bước cấu hình trình phục vụ OpenLDAP ?"
 
 #. Type: boolean
 #. Description
@@ -54,7 +54,7 @@ msgstr "không bao giờ"
 #. Description
 #: ../slapd.templates:2002
 msgid "Dump databases to file on upgrade:"
-msgstr "Nâng cấp thì đổ các cơ sở dữ liệu vào tập tin:"
+msgstr "Nâng cấp thì cũng đổ các cơ sở dữ liệu vào tập tin:"
 
 #. Type: select
 #. Description
@@ -66,7 +66,7 @@ msgid ""
 msgstr ""
 "Trước khi nâng cấp lên phiên bản mới của trình phục vụ OpenLDAP, dữ liệu nằm "
 "trong các thư mục LDAP có thể được đổ vào tập tin nhập thô theo định dạng "
-"trao đổi dữ liệu LDAP chuẩn."
+"trao đổi dữ liệu LDAP tiêu chuẩn."
 
 #. Type: select
 #. Description
@@ -100,16 +100,16 @@ msgid ""
 "from."
 msgstr ""
 "Ghi rõ tên thư mục vào đó cần xuất các cơ sở dữ liệu LDAP. Trong thư mục này "
-"thì tạo vài tập tin LDIF mà tương ứng với những cơ bản tìm kiếm nằm trên máy "
-"phục vụ. Hãy kiểm tra xem vẫn có đủ chỗ rỗng trong phân vùng đó. Lần đầu "
-"tiên gặp chuỗi « VERSION » (phiên bản) thì được thay thế bằng phiên bản từ "
-"đó bạn đang nâng cấp."
+"thì tạo vài tập tin LDIF tương ứng với những cơ bản tìm kiếm nằm trên máy "
+"phục vụ. Hãy kiểm tra xem vẫn có đủ sức chứa trống trong phân vùng đó. Lần "
+"đầu tiên gặp chuỗi « VERSION » (phiên bản) thì được thay thế bằng phiên bản "
+"từ đó bạn đang nâng cấp."
 
 #. Type: boolean
 #. Description
 #: ../slapd.templates:4001
 msgid "Move old database?"
-msgstr "Di chuyển cơ sở dữ liệu cũ không?"
+msgstr "Dời cơ sở dữ liệu cũ ?"
 
 #. Type: boolean
 #. Description
@@ -120,27 +120,19 @@ msgid ""
 "will move the old database files out of the way before creating a new "
 "database."
 msgstr ""
-"Vẫn còn có một số tập tin nằm trong thư mục « /var/lib/ldap » mà sẽ rất có "
-"thể phá vỡ tiến trình cấu hình. Nếu bạn hiệu lực tùy chọn này, những văn "
-"lệnh bảo quản sẽ di chuyển những tập tin cơ sở dữ liệu cũ ra, trước khi tạo "
-"cơ sở dữ liệu mới."
+"Vẫn còn có một số tập tin nằm trong thư mục « /var/lib/ldap » mà rất có thể "
+"làm hỏng tiến trình cấu hình. Bật tùy chọn này thì văn lệnh bảo trì chuyển "
+"các tập tin cơ sở dữ liệu ra trước khi tạo một cơ sở dữ liệu mới."
 
 #. Type: boolean
 #. Description
 #: ../slapd.templates:5001
 msgid "Retry configuration?"
-msgstr "Thử lại cấu hình không?"
+msgstr "Thử lại cấu hình ?"
 
 #. Type: boolean
 #. Description
 #: ../slapd.templates:5001
-#, fuzzy
-#| msgid ""
-#| "The configuration you entered is invalid. Make sure that the DNS domain "
-#| "name is syntactically valid, the organization is not left empty and the "
-#| "admin passwords match. If you decide not to retry the configuration the "
-#| "LDAP server will not be set up. Run 'dpkg-reconfigure slapd' if you want "
-#| "to retry later."
 msgid ""
 "The configuration you entered is invalid. Make sure that the DNS domain name "
 "is syntactically valid, the field for the organization is not left empty and "
@@ -148,11 +140,11 @@ msgid ""
 "LDAP server will not be set up. Run 'dpkg-reconfigure slapd' if you want to "
 "retry later."
 msgstr ""
-"Bạn đã nhập một cấu hình không hợp lệ. Hãy kiểm tra xem tên miền DNS có cú "
-"pháp hợp lệ, trường tổ chức không rỗng và có hai mật khẩu quản lý trùng. Nếu "
-"bạn quyết định không thử lại tiến trình cấu hình thì không thiết lập trình "
-"phục vụ LDAP. Muốn thử lại sau thì chạy lệnh cấu hình lại « dpkg-reconfigure "
-"slapd »."
+"Bạn đã nhập một cấu hình không hợp lệ. Hãy kiểm tra lại tên miền DNS có cú "
+"pháp đúng, không bỏ trống trường tổ chức, và có hai mật khẩu quản lý trùng "
+"nhau. Nếu bạn quyết định không nên thử lại làm bước cấu hình thì không thiết "
+"lập trình phục vụ LDAP. Muốn thử lại về sau thì chạy lệnh cấu hình lại « "
+"dpkg-reconfigure slapd »."
 
 #. Type: string
 #. Description
@@ -200,7 +192,7 @@ msgstr "Mật khẩu quản trị:"
 #. Description
 #: ../slapd.templates:8001
 msgid "Please enter the password for the admin entry in your LDAP directory."
-msgstr "Hãy nhập mật khẩu cho mục ghi quản trị trong thư mục LDAP của bạn."
+msgstr "Hãy nhập mật khẩu cho mục nhập quản trị trong thư mục LDAP của bạn."
 
 #. Type: password
 #. Description
@@ -240,7 +232,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:14001
 msgid "Allow LDAPv2 protocol?"
-msgstr "Cho phép giao thức LDAPv2 không?"
+msgstr "Cho phép giao thức LDAPv2 ?"
 
 #. Type: boolean
 #. Description
@@ -251,10 +243,10 @@ msgid ""
 "LDAPv3, you should select this option and 'allow bind_v2' will be added to "
 "your slapd.conf file."
 msgstr ""
-"Giao thức LDAPv2 (phiên bản 2) quá cũ bị tắt theo mặc định trong slapd. Các "
+"Giao thức LDAPv2 (phiên bản 2) cũ bị tắt theo mặc định trong slapd. Các "
 "chương trình và người dùng đều nên nâng cấp lên LDAPv3 (phiên bản 3). Có "
-"chương trình cũ không thể dùng LDAPv3 thì bạn nên bật tùy chọn này và chuỗi "
-"« allow bind_v2 » sẽ được thêm vào tập tin cấu hình « slapd.conf »."
+"chương trình cũ không thể dùng LDAPv3 thì bạn nên bật tùy chọn này mà thêm "
+"chuỗi « allow bind_v2 » vào tập tin cấu hình « slapd.conf »."
 
 #. Type: error
 #. Description
@@ -276,9 +268,9 @@ msgid ""
 "be caused by an incorrect configuration file (for example, missing "
 "'moduleload' lines to support the backend database)."
 msgstr ""
-"Chương trình « slapcat » bị lỗi trong khi giải nén mục LDAP. Có lẽ do tập "
-"tin cấu hình sai (v.d. thiếu dòng « moduleload » để hỗ trợ cơ sở dữ liệu hậu "
-"phương)."
+"Chương trình « slapcat » bị lỗi trong khi giải nén thư mục LDAP. Có thể do "
+"một tập tin cấu hình sai (v.d. thiếu dòng « moduleload » để hỗ trợ cơ sở dữ "
+"liệu hậu phương)."
 
 #. Type: error
 #. Description
@@ -294,24 +286,20 @@ msgstr ""
 "Sự thất bại này sẽ cũng gây ra tiến trình « slapadd » thất bại về sau. Các "
 "tập tin cơ sở dữ liệu cũ sẽ được di chuyển vào thư mục « /var/backups ». "
 "Muốn thử lại tiến trình nâng cấp thì bạn nên di chuyển các tập tin cơ sở dữ "
-"liệu cũ về nơi gốc, sửa chữa trường hợp gây ra slapcat bị lỗi, rồi chạy lệnh "
-"này:"
+"liệu cũ về nơi gốc, sửa chữa trường hợp gây ra slapcat bị lỗi, và chạy câu "
+"lệnh này:"
 
 #. Type: error
 #. Description
 #. Translators: keep "${location}" unchanged. This is a variable that
 #. will be replaced by a directory name at execution
 #: ../slapd.templates:15001
-#, fuzzy
-#| msgid ""
-#| "Then move the database files back to a backup area and then try running "
-#| "slapadd from $location."
 msgid ""
 "Then move the database files back to a backup area and then try running "
 "slapadd from ${location}."
 msgstr ""
-"Sau đó, hãy di chuyển các tập tin cơ sở dữ liệu sang một vùng sao lưu, rồi "
-"thử chạy trình slapadd từ nơi « $location »."
+"Sau đó, hãy di chuyển các tập tin cơ sở dữ liệu sang một vùng sao lưu, và "
+"thử chạy trình slapadd từ vị trí « ${location} »."
 
 #. Type: select
 #. Description
@@ -328,8 +316,8 @@ msgid ""
 "options."
 msgstr ""
 "Khuyên bạn dùng hậu phương HDB. HDB và BDB dùng định dạng cất giữ tương tự "
-"nhau, nhưng HDB thêm hỗ trợ khả năng thay đổi tên của cây con. Cả hai đều hỗ "
-"trợ cùng các tùy chọn cấu hình."
+"nhau, nhưng HDB thêm hỗ trợ để thay đổi tên của cây con. Cả hai hỗ trợ cùng "
+"những tùy chọn cấu hình."
 
 # The BDB backend is the recommended choice of the OpenLDAP developers.
 # When using the BDB backend make sure that you configure the underlying
@@ -342,73 +330,6 @@ msgid ""
 "In either case, you should review the resulting database configuration for "
 "your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more details."
 msgstr ""
-"Trong cả trường hợp, bạn nên xem lại cấu hình cơ sở dữ liệu đã kết quả, kiểm "
-"tra nó thích hợp với trường hợp của bạn. Xem tài liệu Đọc Đi « /usr/share/"
-"doc/slapd/README.DB_CONFIG.gz » để tìm chi tiết."
-
-#~ msgid "slurpd is obsolete; replicas must be reconfigured by hand"
-#~ msgstr "slurpd quá cũ ; mỗi bản sao phải được cấu hình lại bằng tay"
-
-#~ msgid ""
-#~ "One or more slurpd \"replica\" options were found in your slapd config "
-#~ "when upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, "
-#~ "you will need to migrate your replicas to use the syncrepl protocol "
-#~ "instead."
-#~ msgstr ""
-#~ "Một hay nhiều tùy chọn « sao chép » của slurpd đã được tim trong cấu hình "
-#~ "slapd của bạn trong khi nâng cấp. Vì slurpd quá cũ kể từ OpenLDAP 2.4, "
-#~ "bạn cần phải nâng cấp các bản sao để sử dụng giao thức syncrepl thay vào "
-#~ "đó."
-
-#~ msgid ""
-#~ "The conversion from slurpd to the pull-based syncrepl protocol cannot be "
-#~ "done automatically and you will need to configure your replica servers by "
-#~ "hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for "
-#~ "details."
-#~ msgstr ""
-#~ "Tiến trình chuyển đổi từ slurpd sang giao thức syncrepl dựa vào pull "
-#~ "không thể được tự động chạy, và bạn sẽ cần phải cấu hình bằng tay các "
-#~ "trình phục vụ sao chép. Xem địa chỉ « http://www.openldap.org/doc/admin24/"
-#~ "syncrepl.html » để tìm chi tiết."
-
-#~ msgid "TLSCipherSuite values have changed"
-#~ msgstr "Giá trị TLSCipherSuite bị thay đổi"
-
-#~ msgid ""
-#~ "A \"TLSCipherSuite\" option was found in your slapd config when "
-#~ "upgrading. The values allowed for this option are determined by the SSL "
-#~ "implementation used, which has been changed from OpenSSL to GnuTLS.  As a "
-#~ "result, your existing TLSCipherSuite setting will not work with this "
-#~ "package."
-#~ msgstr ""
-#~ "Một tùy chọn « TLSCipherSuite » đã được tìm trong cấu hình slapd của bạn "
-#~ "trong khi nâng cấp. Các giá trị được phép cho tùy chọn này được quyết "
-#~ "định bởi bản thực hiện SSL đang chạy, mà đã được thay đổi từ OpenSSL sang "
-#~ "GnuTLS. Kết quả là thiết lập TLSCipherSuite đã tồn tại của bạn sẽ không "
-#~ "chạy được với gói này."
-
-#~ msgid ""
-#~ "This setting has been automatically commented out for you.  If you have "
-#~ "specific encryption needs that require this option to be re-enabled, see "
-#~ "the output of 'gnutls-cli -l' in the gnutls-bin package for the list of "
-#~ "ciphers supported by GnuTLS."
-#~ msgstr ""
-#~ "Thiết lập này đã do ghi chú tự động tắt cho bạn. Nếu bạn có sự cần mật mã "
-#~ "đặc biệt mà cần thiết bật lại tùy chọn này, xem kết xuất của câu lệnh « "
-#~ "gnutls-cli -l » trong gói gnutls-bin để tìm danh sách các mật mã được "
-#~ "GnuTLS hỗ trợ."
-
-#~ msgid "Back up current database and create a new one?"
-#~ msgstr "Sao lưu cơ sở dữ liệu hiện thời và tạo điều mới không?"
-
-#~ msgid ""
-#~ "The directory suffix (domain) you specified doesn't match the one "
-#~ "currently in /etc/ldap/slapd.conf. Changing the directory suffix requires "
-#~ "moving aside the current LDAP database and creating a new one. Please "
-#~ "confirm whether you want to back up and abandon the current database."
-#~ msgstr ""
-#~ "Bạn đã ghi rõ một hậu tố thư mục (miền) không khớp với điều hiện thời "
-#~ "được ghi trong tập tin cấu hình « /etc/ldap/slapd.conf ». Việc thay đổi "
-#~ "hậu tố thư mục cần thiết di chuyển cơ sở dữ liệu LDAP hiện thời ra rồi "
-#~ "tạo một điều mới. Hãy xác nhận nếu bạn muốn sao lưu và hủy cơ sở dữ liệu "
-#~ "hiện thời không."
+"Trong mỗi trường hợp, bạn nên xem lại cấu hình cơ sở dữ liệu đã kết quả vẫn "
+"thích hợp với nhu cầu của bạn. Xem tài liệu Đọc Đi « /usr/share/doc/slapd/"
+"README.DB_CONFIG.gz » để tìm chi tiết."

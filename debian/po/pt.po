@@ -1,21 +1,21 @@
 # Portuguese translation for openldap debconf messages.
 # Copyright (C) Tiago Fernandes <tjg.fernandes@gmail.com>, 2006
 # This file is distributed under the same license as the openldap package.
-# Tiago Fernandes <tjg.fernandes@gmail.com>, 2006-2008.
-#
+# Tiago Fernandes <tjg.fernandes@gmail.com>, 2006,2008,2010.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: openldap 2.3.38-2\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2010-07-15 22:05+0200\n"
-"PO-Revision-Date: 2008-05-12 21:10+0100\n"
+"PO-Revision-Date: 2010-10-10 20:04+0100\n"
 "Last-Translator: Tiago Fernandes <tjg.fernandes@gmail.com>\n"
-"Language-Team: Portuguese <traduz@debianpt.org>\n"
+"Language-Team: pt <traduz@debianpt.org>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2\n"
 
 #. Type: boolean
 #. Description
@@ -137,13 +137,6 @@ msgstr "Tentar novamente a configuração?"
 #. Type: boolean
 #. Description
 #: ../slapd.templates:5001
-#, fuzzy
-#| msgid ""
-#| "The configuration you entered is invalid. Make sure that the DNS domain "
-#| "name is syntactically valid, the organization is not left empty and the "
-#| "admin passwords match. If you decide not to retry the configuration the "
-#| "LDAP server will not be set up. Run 'dpkg-reconfigure slapd' if you want "
-#| "to retry later."
 msgid ""
 "The configuration you entered is invalid. Make sure that the DNS domain name "
 "is syntactically valid, the field for the organization is not left empty and "
@@ -153,7 +146,7 @@ msgid ""
 msgstr ""
 "A configuração que inseriu é inválida. Assegure-se que o nome do domínio DNS "
 "tem uma sintaxe válida, que a organização é preenchida e que as palavras-"
-"chave de admininostrador coincidem. Se decidir não tentar novamente a "
+"chave de administrador coincidem. Se decidir não tentar novamente a "
 "configuração, o servidor de LDAP não ficará configurado. Corra \"dpkg-"
 "reconfigure slapd\" se quiser tentar novamente mais tarde."
 
@@ -307,16 +300,12 @@ msgstr ""
 #. Translators: keep "${location}" unchanged. This is a variable that
 #. will be replaced by a directory name at execution
 #: ../slapd.templates:15001
-#, fuzzy
-#| msgid ""
-#| "Then move the database files back to a backup area and then try running "
-#| "slapadd from $location."
 msgid ""
 "Then move the database files back to a backup area and then try running "
 "slapadd from ${location}."
 msgstr ""
 "Depois mova os ficheiros da base de dados de volta para a área de backup e a "
-"seguir tente correr o slapadd a partir de $location."
+"seguir tente correr o slapadd a partir de ${location}."
 
 #. Type: select
 #. Description

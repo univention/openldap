@@ -1,3 +1,12 @@
+openldap (2.4.23-7) unstable; urgency=low
+
+  * Updated vietnamese translation, thanks Clytie Siddall
+    (Closes: #601537, #598575)
+  * Updated portuguese translation, thanks Traduz (Closes: #599760)
+  * Updated danish translation, thanks Joe Dalton (Closes: #599835)
+
+ -- Matthijs Mohlmann <matthijs@cacholong.nl>  Sat, 06 Nov 2010 12:13:01 +0100
+
 openldap (2.4.23-6) unstable; urgency=high
 
   * Check for an empty directory to prevent an rm -f /*. (Closes: #597704)
