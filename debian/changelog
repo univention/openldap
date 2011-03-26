@@ -8,8 +8,9 @@ openldap (2.4.24-1) unstable; urgency=low
     by default to /etc/ssl/certs/ca-certificates.crt (Closes: #555409, #616703)
   * Add patch to fix a FTBFS with binutils-gold (Closes: #555867)
   * Add slapschema, just hardlink it (Closes: #601569)
+  * Update patch service-operational-before-detach (Closes: #616164)
 
- -- Matthijs Möhlmann <matthijs@cacholong.nl>  Sat, 26 Mar 2011 18:36:26 +0100
+ -- Matthijs Möhlmann <matthijs@cacholong.nl>  Sat, 26 Mar 2011 20:12:46 +0100
 
 openldap (2.4.23-7) unstable; urgency=low
 
