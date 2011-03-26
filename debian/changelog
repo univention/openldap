@@ -6,8 +6,9 @@ openldap (2.4.24-1) unstable; urgency=low
   * Add Slovak translation, thanks Slavko <linux@slavino.sk> (Closes: #608699)
   * Add debian specific patch for ldap.conf. Add TLS_CACERT option and set it
     by default to /etc/ssl/certs/ca-certificates.crt (Closes: #555409, #616703)
+  * Add patch to fix a FTBFS with binutils-gold (Closes: #555867)
 
- -- Matthijs Möhlmann <matthijs@cacholong.nl>  Sat, 26 Mar 2011 17:44:27 +0100
+ -- Matthijs Möhlmann <matthijs@cacholong.nl>  Sat, 26 Mar 2011 18:32:08 +0100
 
 openldap (2.4.23-7) unstable; urgency=low
 
