@@ -4,8 +4,10 @@ openldap (2.4.24-1) unstable; urgency=low
   * Refresh all patches
   * Remove manpage-tlscyphersuite-additions, applied upstream
   * Add Slovak translation, thanks Slavko <linux@slavino.sk> (Closes: #608699)
+  * Add debian specific patch for ldap.conf. Add TLS_CACERT option and set it
+    by default to /etc/ssl/certs/ca-certificates.crt (Closes: #555409, #616703)
 
- -- Matthijs Möhlmann <matthijs@cacholong.nl>  Sat, 26 Mar 2011 17:06:42 +0100
+ -- Matthijs Möhlmann <matthijs@cacholong.nl>  Sat, 26 Mar 2011 17:44:27 +0100
 
 openldap (2.4.23-7) unstable; urgency=low
 
