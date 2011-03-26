@@ -1,3 +1,9 @@
+openldap (2.4.24-1) unstable; urgency=low
+
+  * New upstream version
+
+ -- Matthijs Möhlmann <matthijs@cacholong.nl>  Sat, 26 Mar 2011 10:22:16 +0100
+
 openldap (2.4.23-7) unstable; urgency=low
 
   * Updated vietnamese translation, thanks Clytie Siddall
