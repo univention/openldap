@@ -3,8 +3,9 @@ openldap (2.4.24-1) unstable; urgency=low
   * New upstream version
   * Refresh all patches
   * Remove manpage-tlscyphersuite-additions, applied upstream
+  * Add Slovak translation, thanks Slavko <linux@slavino.sk> (Closes: #608699)
 
- -- Matthijs Möhlmann <matthijs@cacholong.nl>  Sat, 26 Mar 2011 12:11:30 +0100
+ -- Matthijs Möhlmann <matthijs@cacholong.nl>  Sat, 26 Mar 2011 17:06:42 +0100
 
 openldap (2.4.23-7) unstable; urgency=low
 
