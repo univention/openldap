@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sock/proto-sock.h,v 1.4.2.3 2010/04/13 20:23:41 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sock/proto-sock.h,v 1.4.2.4 2011/01/04 23:50:45 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2010 The OpenLDAP Foundation.
+ * Copyright 2007-2011 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

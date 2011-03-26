@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.137.2.17 2010/04/14 22:59:10 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.137.2.20 2011/01/04 23:50:30 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2010 The OpenLDAP Foundation.
+ * Copyright 2000-2011 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -106,7 +106,7 @@ int bdb_dn2id(
 	struct berval *dn,
 	EntryInfo *ei,
 	DB_TXN *txn,
-	DB_LOCK *lock );
+	DBC **cursor );
 
 int bdb_dn2id_add(
 	Operation *op,
@@ -547,6 +547,7 @@ int bdb_cache_find_ndn(
 #define	ID_LOCKED	1
 #define	ID_NOCACHE	2
 #define	ID_NOENTRY	4
+#define	ID_CHKPURGE	8
 int bdb_cache_find_id(
 	Operation *op,
 	DB_TXN	*tid,

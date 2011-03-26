@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/sql-wrap.c,v 1.43.2.9 2010/04/13 20:23:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/sql-wrap.c,v 1.43.2.11 2011/01/04 23:50:47 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2011 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -424,7 +424,8 @@ backsql_open_db_handle(
 	 * TimesTen : Turn off autocommit.  We must explicitly
 	 * commit any transactions. 
 	 */
-	SQLSetConnectOption( *dbhp, SQL_AUTOCOMMIT, SQL_AUTOCOMMIT_OFF );
+	SQLSetConnectOption( *dbhp, SQL_AUTOCOMMIT,
+		BACKSQL_AUTOCOMMIT_ON( bi ) ?  SQL_AUTOCOMMIT_ON : SQL_AUTOCOMMIT_OFF );
 
 	/* 
 	 * See if this connection is to TimesTen.  If it is,

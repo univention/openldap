@@ -1,7 +1,7 @@
-dnl $OpenLDAP: pkg/ldap/configure.in,v 1.631.2.29 2010/04/19 16:53:00 quanah Exp $
+dnl $OpenLDAP: pkg/ldap/configure.in,v 1.631.2.33 2011/01/31 20:51:37 hyc Exp $
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
-dnl Copyright 1998-2010 The OpenLDAP Foundation.
+dnl Copyright 1998-2011 The OpenLDAP Foundation.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -23,9 +23,9 @@ define([AC_LIBTOOL_LANG_F77_CONFIG], [:])dnl
 define([AC_LIBTOOL_LANG_GCJ_CONFIG], [:])dnl
 dnl ================================================================
 dnl Configure.in for OpenLDAP
-AC_COPYRIGHT([[Copyright 1998-2010 The OpenLDAP Foundation. All rights reserved.
+AC_COPYRIGHT([[Copyright 1998-2011 The OpenLDAP Foundation. All rights reserved.
 Restrictions apply, see COPYRIGHT and LICENSE files.]])
-AC_REVISION([$OpenLDAP: pkg/ldap/configure.in,v 1.631.2.29 2010/04/19 16:53:00 quanah Exp $])
+AC_REVISION([$OpenLDAP: pkg/ldap/configure.in,v 1.631.2.33 2011/01/31 20:51:37 hyc Exp $])
 AC_INIT([OpenLDAP],,[http://www.openldap.org/its/])
 m4_define([AC_PACKAGE_BUGREPORT],[<http://www.openldap.org/its/>])
 AC_CONFIG_SRCDIR(build/version.sh)dnl
@@ -96,7 +96,7 @@ AH_TOP([
 /* begin of portable.h.pre */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation
+ * Copyright 1998-2011 The OpenLDAP Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -244,8 +244,8 @@ OL_ARG_WITH(fetch,[  --with-fetch		  with fetch(3) URL support],
 	auto, [auto yes no] )
 OL_ARG_WITH(threads,[  --with-threads	  with threads],
 	auto, [auto nt posix mach pth lwp yes no manual] )
-OL_ARG_WITH(tls,[  --with-tls		  with TLS/SSL support auto|openssl|gnutls],
-	auto, [auto openssl gnutls yes no] )
+OL_ARG_WITH(tls,[  --with-tls		  with TLS/SSL support auto|openssl|gnutls|moznss],
+	auto, [auto openssl gnutls moznss yes no] )
 OL_ARG_WITH(yielding_select,
 	[  --with-yielding-select  with implicitly yielding select],
 	auto, [auto yes no manual] )
@@ -1217,6 +1217,30 @@ if test $ol_link_tls = no ; then
 	fi
 fi
 
+dnl NOTE: caller must specify -I/path/to/nspr4 and -I/path/to/nss3
+dnl and -L/path/to/nspr4 libs and -L/path/to/nss3 libs if those libs
+dnl are not in the default system location
+if test $ol_link_tls = no ; then
+	if test $ol_with_tls = moznss || test $ol_with_tls = auto ; then
+		have_moznss=no
+		AC_CHECK_HEADERS([nssutil.h])
+		if test "$ac_cv_header_nssutil_h" = yes ; then
+			AC_CHECK_LIB([nss3], [NSS_Initialize],
+						 [ have_moznss=yes ], [ have_moznss=no ])
+		fi
+
+		if test "$have_moznss" = yes ; then
+			ol_with_tls=moznss
+			ol_link_tls=yes
+			AC_DEFINE(HAVE_MOZNSS, 1, 
+					  [define if you have MozNSS])
+			TLS_LIBS="-lssl3 -lsmime3 -lnss3 -lnssutil3 -lplds4 -lplc4 -lnspr4"
+		else
+			AC_MSG_ERROR([MozNSS not found - please specify the location to the NSPR and NSS header files in CPPFLAGS and the location to the NSPR and NSS libraries in LDFLAGS (if not in the system location)])
+		fi
+	fi
+fi
+
 WITH_TLS=no
 if test $ol_link_tls = yes ; then
 	AC_DEFINE(HAVE_TLS, 1, [define if you have TLS])
@@ -1687,23 +1711,6 @@ case $ol_with_threads in auto | yes | lwp)
 			)
 		fi
 	fi
-
-	dnl check for SunOS4 LWP
-	AC_CHECK_HEADERS(lwp/lwp.h)
-	if test $ac_cv_header_lwp_lwp_h = yes ; then
-		AC_CHECK_LIB(lwp, lwp_create, [have_lwp=yes], [have_lwp=no])
-
-		if test $have_lwp = yes ; then
-			AC_DEFINE(HAVE_LWP,1,
-				[if you have SunOS LWP package])
-			LTHREAD_LIBS="$LTHREAD_LIBS -llwp"
-			ol_link_threads=lwp
-
-			if test $ol_with_yielding_select = auto ; then
-				ol_with_yielding_select=no
-			fi
-		fi
-	fi
 	;;
 esac
 
@@ -1723,7 +1730,6 @@ if test $ol_with_threads = manual ; then
 	OL_HEADER_LINUX_THREADS
 
 	AC_CHECK_HEADERS(mach/cthreads.h)
-	AC_CHECK_HEADERS(lwp/lwp.h)
 	AC_CHECK_HEADERS(thread.h synch.h)
 fi
 
@@ -2434,6 +2440,7 @@ AC_CHECK_FUNCS(			\
 	strtoq			\
 	strtouq			\
 	strtoll			\
+	strtoull		\
 	strspn			\
 	sysconf			\
 	waitpid			\
@@ -3179,7 +3186,7 @@ rm -f $BACKENDSC
 cat > $BACKENDSC << ENDX
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2011 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -3230,7 +3237,7 @@ rm -f $OVERLAYSC
 cat > $OVERLAYSC << ENDX
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2011 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

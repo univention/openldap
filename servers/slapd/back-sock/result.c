@@ -1,8 +1,8 @@
 /* result.c - sock backend result reading function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sock/result.c,v 1.3.2.4 2010/04/13 20:23:41 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sock/result.c,v 1.3.2.6 2011/01/26 23:23:33 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2010 The OpenLDAP Foundation.
+ * Copyright 2007-2011 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -100,6 +100,7 @@ sock_read_and_send_results(
 				rs->sr_flags = REP_ENTRY_MODIFIABLE;
 				send_search_entry( op, rs );
 				entry_free( rs->sr_entry );
+				rs->sr_attrs = NULL;
 			}
 
 			bp = buf;

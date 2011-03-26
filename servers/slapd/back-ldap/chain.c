@@ -1,8 +1,8 @@
 /* chain.c - chain LDAP operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/chain.c,v 1.52.2.12 2010/04/13 20:23:28 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/chain.c,v 1.52.2.20 2011/01/26 23:23:31 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2010 The OpenLDAP Foundation.
+ * Copyright 2003-2011 The OpenLDAP Foundation.
  * Portions Copyright 2003 Howard Chu.
  * All rights reserved.
  *
@@ -399,6 +399,8 @@ ldap_chain_op(
 	slap_overinst	*on = (slap_overinst *) op->o_bd->bd_info;
 	ldap_chain_cb_t	*lb = (ldap_chain_cb_t *)op->o_callback->sc_private;
 	ldap_chain_t	*lc = (ldap_chain_t *)on->on_bi.bi_private;
+	struct berval	odn = op->o_req_dn,
+			ondn = op->o_req_ndn;
 	ldapinfo_t	li = { 0 }, *lip = NULL;
 	struct berval	bvuri[ 2 ] = { { 0 } };
 
@@ -417,12 +419,14 @@ ldap_chain_op(
 	for ( ; !BER_BVISNULL( ref ); ref++ ) {
 		SlapReply	rs2 = { 0 };
 		LDAPURLDesc	*srv = NULL;
-		struct berval	save_req_dn = op->o_req_dn,
-				save_req_ndn = op->o_req_ndn,
-				dn = BER_BVNULL,
-				pdn = BER_BVNULL,
-				ndn = BER_BVNULL;
+		req_search_s	save_oq_search = op->oq_search,
+				tmp_oq_search = { 0 };
+		struct berval	dn = BER_BVNULL,
+				pdn = odn,
+				ndn = ondn;
+		char		*filter = NULL;
 		int		temporary = 0;
+		int		free_dn = 0;
 			
 		/* We're setting the URI of the first referral;
 		 * what if there are more?
@@ -444,15 +448,37 @@ Document: RFC 4511
 		 * proto://[host][:port]/ only */
 		rc = ldap_url_parse_ext( ref->bv_val, &srv, LDAP_PVT_URL_PARSE_NONE );
 		if ( rc != LDAP_URL_SUCCESS ) {
+			Debug( LDAP_DEBUG_TRACE, "%s ldap_chain_op: unable to parse ref=\"%s\"\n",
+				op->o_log_prefix, ref->bv_val, 0 );
+
 			/* try next */
 			rc = LDAP_OTHER;
 			continue;
 		}
 
-		/* normalize DN */
+		if ( op->o_tag == LDAP_REQ_SEARCH ) {
+			if ( srv->lud_scope != LDAP_SCOPE_DEFAULT ) {
+				/* RFC 4511: if scope is present, use it */
+				tmp_oq_search.rs_scope = srv->lud_scope;
+
+			} else {
+				/* RFC 4511: if scope is absent, use original */
+				tmp_oq_search.rs_scope = op->ors_scope;
+			}
+		}
+
 		rc = LDAP_SUCCESS;
 		srv->lud_scope = LDAP_SCOPE_DEFAULT;
-		if ( srv->lud_dn != NULL ) {
+		dn.bv_val = srv->lud_dn;
+		filter = srv->lud_filter;
+
+		/* normalize DN */
+		if ( srv->lud_dn == NULL || srv->lud_dn[0] == '\0' ) {
+			if ( srv->lud_dn == NULL ) {
+				srv->lud_dn = "";
+			}
+
+		} else {
 			ber_str2bv( srv->lud_dn, 0, 0, &dn );
 			rc = dnPrettyNormal( NULL, &dn, &pdn, &ndn, op->o_tmpmemctx );
 			if ( rc == LDAP_SUCCESS ) {
@@ -460,14 +486,38 @@ Document: RFC 4511
 				 * ldap_initialize() will parse the URL 
 				 * as a comma-separated URL list */
 				srv->lud_dn = "";
+				free_dn = 1;
 			}
-
-		} else {
-			srv->lud_dn = "";
 		}
 
-		li.li_uri = ldap_url_desc2str( srv );
+		/* prepare filter */
+		if ( rc == LDAP_SUCCESS && op->o_tag == LDAP_REQ_SEARCH ) {
+			/* filter */
+			if ( srv->lud_filter != NULL
+				&& srv->lud_filter[0] != '\0'
+				&& strcasecmp( srv->lud_filter, "(objectClass=*)" ) != 0 )
+			{
+				/* RFC 4511: if filter is present, use it;
+				 * otherwise, use original */
+				tmp_oq_search.rs_filter = str2filter_x( op, srv->lud_filter );
+				if ( tmp_oq_search.rs_filter != NULL ) {
+					filter2bv_x( op, tmp_oq_search.rs_filter, &tmp_oq_search.rs_filterstr );
+
+				} else {
+					Debug( LDAP_DEBUG_TRACE, "%s ldap_chain_op: ref=\"%s\": unable to parse filter=\"%s\"\n",
+						op->o_log_prefix, ref->bv_val, srv->lud_filter );
+					rc = LDAP_OTHER;
+				}
+			}
+		}
+		srv->lud_filter = NULL;
+
+		if ( rc == LDAP_SUCCESS ) {
+			li.li_uri = ldap_url_desc2str( srv );
+		}
+
 		srv->lud_dn = dn.bv_val;
+		srv->lud_filter = filter;
 		ldap_free_urldesc( srv );
 
 		if ( rc != LDAP_SUCCESS ) {
@@ -477,13 +527,27 @@ Document: RFC 4511
 		}
 
 		if ( li.li_uri == NULL ) {
+			Debug( LDAP_DEBUG_TRACE, "%s ldap_chain_op: ref=\"%s\" unable to reconstruct URI\n",
+				op->o_log_prefix, ref->bv_val, 0 );
+
 			/* try next */
 			rc = LDAP_OTHER;
 			goto further_cleanup;
 		}
 
+		Debug( LDAP_DEBUG_TRACE, "%s ldap_chain_op: ref=\"%s\" -> \"%s\"\n",
+			op->o_log_prefix, ref->bv_val, li.li_uri );
+
 		op->o_req_dn = pdn;
 		op->o_req_ndn = ndn;
+
+		if ( op->o_tag == LDAP_REQ_SEARCH ) {
+			op->ors_scope = tmp_oq_search.rs_scope;
+			if ( tmp_oq_search.rs_filter != NULL ) {
+				op->ors_filter = tmp_oq_search.rs_filter;
+				op->ors_filterstr = tmp_oq_search.rs_filterstr;
+			}
+		}
 
 		ber_str2bv( li.li_uri, 0, 0, &li.li_bvuri[ 0 ] );
 
@@ -496,9 +560,14 @@ Document: RFC 4511
 		if ( lip != NULL ) {
 			op->o_bd->be_private = (void *)lip;
 
+			Debug( LDAP_DEBUG_TRACE, "%s ldap_chain_op: ref=\"%s\": URI=\"%s\" found in cache\n",
+				op->o_log_prefix, ref->bv_val, li.li_uri );
+
 		} else {
 			rc = ldap_chain_db_init_one( op->o_bd );
 			if ( rc != 0 ) {
+				Debug( LDAP_DEBUG_TRACE, "%s ldap_chain_op: ref=\"%s\" unable to init back-ldap for URI=\"%s\"\n",
+					op->o_log_prefix, ref->bv_val, li.li_uri );
 				goto cleanup;
 			}
 			lip = (ldapinfo_t *)op->o_bd->be_private;
@@ -506,6 +575,8 @@ Document: RFC 4511
 			lip->li_bvuri = bvuri;
 			rc = ldap_chain_db_open_one( op->o_bd );
 			if ( rc != 0 ) {
+				Debug( LDAP_DEBUG_TRACE, "%s ldap_chain_op: ref=\"%s\" unable to open back-ldap for URI=\"%s\"\n",
+					op->o_log_prefix, ref->bv_val, li.li_uri );
 				lip->li_uri = NULL;
 				lip->li_bvuri = NULL;
 				(void)ldap_chain_db_destroy_one( op->o_bd, NULL);
@@ -527,6 +598,9 @@ Document: RFC 4511
 			} else {
 				temporary = 1;
 			}
+
+			Debug( LDAP_DEBUG_TRACE, "%s ldap_chain_op: ref=\"%s\" %s\n",
+				op->o_log_prefix, ref->bv_val, temporary ? "temporary" : "caching" );
 		}
 
 		lb->lb_op_f = op_f;
@@ -551,16 +625,23 @@ cleanup:;
 		}
 
 further_cleanup:;
-		if ( !BER_BVISNULL( &pdn ) ) {
+		if ( free_dn ) {
 			op->o_tmpfree( pdn.bv_val, op->o_tmpmemctx );
-		}
-		op->o_req_dn = save_req_dn;
-
-		if ( !BER_BVISNULL( &ndn ) ) {
 			op->o_tmpfree( ndn.bv_val, op->o_tmpmemctx );
 		}
-		op->o_req_ndn = save_req_ndn;
-		
+	
+		if ( op->o_tag == LDAP_REQ_SEARCH ) {	
+			if ( tmp_oq_search.rs_filter != NULL ) {
+				filter_free_x( op, tmp_oq_search.rs_filter, 1 );
+			}
+
+			if ( !BER_BVISNULL( &tmp_oq_search.rs_filterstr ) ) {
+				slap_sl_free( tmp_oq_search.rs_filterstr.bv_val, op->o_tmpmemctx );
+			}
+
+			op->oq_search = save_oq_search;
+		}
+
 		if ( rc == LDAP_SUCCESS && rs2.sr_err == LDAP_SUCCESS ) {
 			*rs = rs2;
 			break;
@@ -568,6 +649,9 @@ further_cleanup:;
 
 		rc = rs2.sr_err;
 	}
+
+	op->o_req_dn = odn;
+	op->o_req_ndn = ondn;
 
 #ifdef LDAP_CONTROL_X_CHAINING_BEHAVIOR
 	(void)chaining_control_remove( op, &ctrls );
@@ -596,7 +680,6 @@ ldap_chain_search(
 
 	struct berval	odn = op->o_req_dn,
 			ondn = op->o_req_ndn;
-	slap_response	*save_response = op->o_callback->sc_response;
 	Entry		*save_entry = rs->sr_entry;
 	slap_mask_t	save_flags = rs->sr_flags;
 
@@ -609,9 +692,9 @@ ldap_chain_search(
 	(void)chaining_control_add( lc, op, &ctrls );
 #endif /* LDAP_CONTROL_X_CHAINING_BEHAVIOR */
 
-	rs->sr_type = REP_SEARCH;
+	assert( rs->sr_type == REP_SEARCHREF );
 
-	op->o_callback->sc_response = ldap_chain_cb_search_response;
+	rs->sr_type = REP_SEARCH;
 
 	/* if we parse the URI then by no means 
 	 * we can cache stuff or reuse connections, 
@@ -620,27 +703,61 @@ ldap_chain_search(
 	 * to be set once for all (correct?) */
 	li.li_bvuri = bvuri;
 	for ( ; !BER_BVISNULL( &ref[0] ); ref++ ) {
-		SlapReply	rs2 = { 0 };
+		SlapReply	rs2 = { REP_RESULT };
 		LDAPURLDesc	*srv;
-		struct berval	save_req_dn = op->o_req_dn,
-				save_req_ndn = op->o_req_ndn,
-				dn,
-				pdn = BER_BVNULL,
-				ndn = BER_BVNULL;
+		req_search_s	save_oq_search = op->oq_search,
+				tmp_oq_search = { 0 };
+		struct berval	dn,
+				pdn = op->o_req_dn,
+				ndn = op->o_req_ndn;
+		char		*filter = NULL;
 		int		temporary = 0;
+		int		free_dn = 0;
 
 		/* parse reference and use
 		 * proto://[host][:port]/ only */
 		rc = ldap_url_parse_ext( ref[0].bv_val, &srv, LDAP_PVT_URL_PARSE_NONE );
 		if ( rc != LDAP_URL_SUCCESS ) {
+			Debug( LDAP_DEBUG_TRACE, "%s ldap_chain_search: unable to parse ref=\"%s\"\n",
+				op->o_log_prefix, ref->bv_val, 0 );
+
 			/* try next */
 			rs->sr_err = LDAP_OTHER;
 			continue;
 		}
 
+		if ( srv->lud_scope != LDAP_SCOPE_DEFAULT ) {
+			/* RFC 4511: if scope is present, use it */
+			tmp_oq_search.rs_scope = srv->lud_scope;
+
+		} else {
+			/* RFC 4511: if scope is absent, use original */
+			/* Section 4.5.3: if scope is onelevel, use base */
+			if ( op->ors_scope == LDAP_SCOPE_ONELEVEL )
+				tmp_oq_search.rs_scope = LDAP_SCOPE_BASE;
+			else
+				tmp_oq_search.rs_scope = op->ors_scope;
+		}
+
+		rc = LDAP_SUCCESS;
+		srv->lud_scope = LDAP_SCOPE_DEFAULT;
+		dn.bv_val = srv->lud_dn;
+		filter = srv->lud_filter;
+
 		/* normalize DN */
-		rc = LDAP_INVALID_SYNTAX;
-		if ( srv->lud_dn != NULL ) {
+		if ( srv->lud_dn == NULL || srv->lud_dn[0] == '\0' ) {
+			if ( srv->lud_dn == NULL ) {
+				srv->lud_dn = "";
+			}
+
+			if ( save_entry != NULL ) {
+				/* use the "right" DN, if available */
+				pdn = save_entry->e_name;
+				ndn = save_entry->e_nname;
+			} /* else leave the original req DN in place, if any RFC 4511 */
+			
+		} else {
+			/* RFC 4511: if DN is present, use it */
 			ber_str2bv( srv->lud_dn, 0, 0, &dn );
 			rc = dnPrettyNormal( NULL, &dn, &pdn, &ndn, op->o_tmpmemctx );
 			if ( rc == LDAP_SUCCESS ) {
@@ -648,27 +765,59 @@ ldap_chain_search(
 				 * ldap_initialize() will parse the URL 
 				 * as a comma-separated URL list */
 				srv->lud_dn = "";
-				srv->lud_scope = LDAP_SCOPE_DEFAULT;
-				li.li_uri = ldap_url_desc2str( srv );
-				srv->lud_dn = dn.bv_val;
+				free_dn = 1;
 			}
 		}
-		ldap_free_urldesc( srv );
 
-		if ( rc != LDAP_SUCCESS ) {
-			/* try next */
-			rc = LDAP_OTHER;
-			continue;
+		/* prepare filter */
+		if ( rc == LDAP_SUCCESS ) {
+			/* filter */
+			if ( srv->lud_filter != NULL
+				&& srv->lud_filter[0] != '\0'
+				&& strcasecmp( srv->lud_filter, "(objectClass=*)" ) != 0 )
+			{
+				/* RFC 4511: if filter is present, use it;
+				 * otherwise, use original */
+				tmp_oq_search.rs_filter = str2filter_x( op, srv->lud_filter );
+				if ( tmp_oq_search.rs_filter != NULL ) {
+					filter2bv_x( op, tmp_oq_search.rs_filter, &tmp_oq_search.rs_filterstr );
+
+				} else {
+					Debug( LDAP_DEBUG_TRACE, "%s ldap_chain_search: ref=\"%s\": unable to parse filter=\"%s\"\n",
+						op->o_log_prefix, ref->bv_val, srv->lud_filter );
+					rc = LDAP_OTHER;
+				}
+			}
+		}
+		srv->lud_filter = NULL;
+
+		if ( rc == LDAP_SUCCESS ) {
+			li.li_uri = ldap_url_desc2str( srv );
 		}
 
-		if ( li.li_uri == NULL ) {
+		srv->lud_dn = dn.bv_val;
+		srv->lud_filter = filter;
+		ldap_free_urldesc( srv );
+
+		if ( rc != LDAP_SUCCESS || li.li_uri == NULL ) {
+			Debug( LDAP_DEBUG_TRACE, "%s ldap_chain_search: ref=\"%s\" unable to reconstruct URI\n",
+				op->o_log_prefix, ref->bv_val, 0 );
+
 			/* try next */
 			rc = LDAP_OTHER;
 			goto further_cleanup;
 		}
 
+		Debug( LDAP_DEBUG_TRACE, "%s ldap_chain_search: ref=\"%s\" -> \"%s\"\n",
+			op->o_log_prefix, ref->bv_val, li.li_uri );
+
 		op->o_req_dn = pdn;
 		op->o_req_ndn = ndn;
+		op->ors_scope = tmp_oq_search.rs_scope;
+		if ( tmp_oq_search.rs_filter != NULL ) {
+			op->ors_filter = tmp_oq_search.rs_filter;
+			op->ors_filterstr = tmp_oq_search.rs_filterstr;
+		}
 
 		ber_str2bv( li.li_uri, 0, 0, &li.li_bvuri[ 0 ] );
 
@@ -681,10 +830,15 @@ ldap_chain_search(
 		if ( lip != NULL ) {
 			op->o_bd->be_private = (void *)lip;
 
+			Debug( LDAP_DEBUG_TRACE, "%s ldap_chain_search: ref=\"%s\": URI=\"%s\" found in cache\n",
+				op->o_log_prefix, ref->bv_val, li.li_uri );
+
 		} else {
 			/* if none is found, create a temporary... */
 			rc = ldap_chain_db_init_one( op->o_bd );
 			if ( rc != 0 ) {
+				Debug( LDAP_DEBUG_TRACE, "%s ldap_chain_search: ref=\"%s\" unable to init back-ldap for URI=\"%s\"\n",
+					op->o_log_prefix, ref->bv_val, li.li_uri );
 				goto cleanup;
 			}
 			lip = (ldapinfo_t *)op->o_bd->be_private;
@@ -692,6 +846,8 @@ ldap_chain_search(
 			lip->li_bvuri = bvuri;
 			rc = ldap_chain_db_open_one( op->o_bd );
 			if ( rc != 0 ) {
+				Debug( LDAP_DEBUG_TRACE, "%s ldap_chain_search: ref=\"%s\" unable to open back-ldap for URI=\"%s\"\n",
+					op->o_log_prefix, ref->bv_val, li.li_uri );
 				lip->li_uri = NULL;
 				lip->li_bvuri = NULL;
 				(void)ldap_chain_db_destroy_one( op->o_bd, NULL );
@@ -713,6 +869,9 @@ ldap_chain_search(
 			} else {
 				temporary = 1;
 			}
+
+			Debug( LDAP_DEBUG_TRACE, "%s ldap_chain_search: ref=\"%s\" %s\n",
+				op->o_log_prefix, ref->bv_val, temporary ? "temporary" : "caching" );
 		}
 
 		lb->lb_op_f = lback->bi_op_search;
@@ -737,15 +896,23 @@ cleanup:;
 		}
 		
 further_cleanup:;
-		if ( !BER_BVISNULL( &pdn ) ) {
+		if ( free_dn ) {
 			op->o_tmpfree( pdn.bv_val, op->o_tmpmemctx );
-		}
-		op->o_req_dn = save_req_dn;
-
-		if ( !BER_BVISNULL( &ndn ) ) {
 			op->o_tmpfree( ndn.bv_val, op->o_tmpmemctx );
 		}
-		op->o_req_ndn = save_req_ndn;
+
+		op->o_req_dn = odn;
+		op->o_req_ndn = ondn;
+
+		if ( tmp_oq_search.rs_filter != NULL ) {
+			filter_free_x( op, tmp_oq_search.rs_filter, 1 );
+		}
+
+		if ( !BER_BVISNULL( &tmp_oq_search.rs_filterstr ) ) {
+			slap_sl_free( tmp_oq_search.rs_filterstr.bv_val, op->o_tmpmemctx );
+		}
+
+		op->oq_search = save_oq_search;
 		
 		if ( rc == LDAP_SUCCESS && rs2.sr_err == LDAP_SUCCESS ) {
 			*rs = rs2;
@@ -761,7 +928,6 @@ further_cleanup:;
 
 	op->o_req_dn = odn;
 	op->o_req_ndn = ondn;
-	op->o_callback->sc_response = save_response;
 	rs->sr_type = REP_SEARCHREF;
 	rs->sr_entry = save_entry;
 	rs->sr_flags = save_flags;
@@ -854,6 +1020,7 @@ ldap_chain_response( Operation *op, SlapReply *rs )
 
 	/* we need this to know if back-ldap returned any result */
 	lb.lb_lc = lc;
+	sc2.sc_next = sc->sc_next;
 	sc2.sc_private = &lb;
 	sc2.sc_response = ldap_chain_cb_response;
 	op->o_callback = &sc2;
@@ -906,6 +1073,7 @@ ldap_chain_response( Operation *op, SlapReply *rs )
 
 	case LDAP_REQ_SEARCH:
 		if ( rs->sr_type == REP_SEARCHREF ) {
+			sc2.sc_response = ldap_chain_cb_search_response;
 			rc = ldap_chain_search( op, rs, ref, 0 );
 			
 		} else {
@@ -947,6 +1115,7 @@ ldap_chain_response( Operation *op, SlapReply *rs )
 
 	case LDAP_SUCCESS:
 	case LDAP_REFERRAL:
+		sr_err = rs->sr_err;
 		/* slapd-ldap sent response */
 		if ( !op->o_abandon && lb.lb_status != LDAP_CH_RES ) {
 			/* FIXME: should we send response? */
@@ -974,7 +1143,7 @@ cannot_chain:;
 		default:
 #endif /* LDAP_CONTROL_X_CHAINING_BEHAVIOR */
 			if ( LDAP_CHAIN_RETURN_ERR( lc ) ) {
-				rs->sr_err = rc;
+				sr_err = rs->sr_err = rc;
 				rs->sr_type = sr_type;
 
 			} else {
@@ -992,7 +1161,8 @@ cannot_chain:;
 	}
 
 	if ( lb.lb_status == LDAP_CH_NONE && rc != SLAPD_ABANDON ) {
-		op->o_callback = NULL;
+		/* give the remaining callbacks a chance */
+		op->o_callback = sc->sc_next;
 		rc = rs->sr_err = slap_map_api2result( rs );
 		send_ldap_result( op, rs );
 	}
@@ -1137,6 +1307,7 @@ chain_ldadd( CfEntryInfo *p, Entry *e, ConfigArgs *ca )
 	assert( rc == LDAP_SUCCESS );
 
 	at = attr_find( e->e_attrs, ad );
+#if 0
 	if ( lc->lc_common_li == NULL && at != NULL ) {
 		/* FIXME: we should generate an empty default entry
 		 * if none is supplied */
@@ -1147,7 +1318,9 @@ chain_ldadd( CfEntryInfo *p, Entry *e, ConfigArgs *ca )
 		rc = LDAP_CONSTRAINT_VIOLATION;
 		goto done;
 
-	} else if ( lc->lc_common_li != NULL && at == NULL ) {
+	} else
+#endif
+	if ( lc->lc_common_li != NULL && at == NULL ) {
 		/* FIXME: we should generate an empty default entry
 		 * if none is supplied */
 		Debug( LDAP_DEBUG_ANY, "slapd-chain: "

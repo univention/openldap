@@ -1,8 +1,8 @@
 /* tls_g.c - Handle tls/ssl using GNUTLS. */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/tls_g.c,v 1.6.2.9 2010/04/14 22:10:21 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/tls_g.c,v 1.6.2.12 2011/01/06 18:43:21 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2010 The OpenLDAP Foundation.
+ * Copyright 2008-2011 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,10 +40,6 @@
 
 #include "ldap-int.h"
 #include "ldap-tls.h"
-
-#ifdef LDAP_R_COMPILE
-#include <ldap_pvt_thread.h>
-#endif
 
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
@@ -257,13 +253,9 @@ static void
 tlsg_ctx_ref( tls_ctx *ctx )
 {
 	tlsg_ctx *c = (tlsg_ctx *)ctx;
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_lock( &c->ref_mutex );
-#endif
+	LDAP_MUTEX_LOCK( &c->ref_mutex );
 	c->refcount++;
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_unlock( &c->ref_mutex );
-#endif
+	LDAP_MUTEX_UNLOCK( &c->ref_mutex );
 }
 
 static void
@@ -274,13 +266,9 @@ tlsg_ctx_free ( tls_ctx *ctx )
 
 	if ( !c ) return;
 
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_lock( &c->ref_mutex );
-#endif
+	LDAP_MUTEX_LOCK( &c->ref_mutex );
 	refcount = --c->refcount;
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_unlock( &c->ref_mutex );
-#endif
+	LDAP_MUTEX_UNLOCK( &c->ref_mutex );
 	if ( refcount )
 		return;
 #ifdef HAVE_CIPHERSUITES
@@ -967,7 +955,7 @@ tlsg_sb_close( Sockbuf_IO_Desc *sbiod )
 	assert( sbiod->sbiod_pvt != NULL );
 
 	p = (struct tls_data *)sbiod->sbiod_pvt;
-	gnutls_bye ( p->session->session, GNUTLS_SHUT_RDWR );
+	gnutls_bye ( p->session->session, GNUTLS_SHUT_WR );
 	return 0;
 }
 

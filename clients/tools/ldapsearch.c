@@ -1,8 +1,8 @@
 /* ldapsearch -- a tool for searching LDAP directories */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapsearch.c,v 1.234.2.25 2010/04/15 22:16:50 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapsearch.c,v 1.234.2.30 2011/01/06 18:43:19 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2011 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -66,7 +66,6 @@
 #include "lutil.h"
 #include "lutil_ldap.h"
 #include "ldap_defaults.h"
-#include "ldap_log.h"
 #include "ldap_pvt.h"
 
 #include "common.h"
@@ -139,7 +138,7 @@ usage( void )
 #ifdef LDAP_CONTROL_X_DEREF
 	fprintf( stderr, _("             [!]deref=derefAttr:attr[,...][;derefAttr:attr[,...][;...]]\n"));
 #endif
-	fprintf( stderr, _("             [!]<oid>=:<value>           (generic control; no response handling)\n"));
+	fprintf( stderr, _("             [!]<oid>[=:<b64value>] (generic control; no response handling)\n"));
 	fprintf( stderr, _("  -f file    read operations from `file'\n"));
 	fprintf( stderr, _("  -F prefix  URL prefix for files (default: %s)\n"), def_urlpre);
 	fprintf( stderr, _("  -l limit   time limit (in seconds, or \"none\" or \"max\") for search\n"));
@@ -594,7 +593,7 @@ handle_private_option( int i )
 				exit( EXIT_FAILURE );
 			}
 			for ( ispecs = 0; specs[ ispecs ] != NULL; ispecs++ )
-				/* count'em */
+				/* count'em */ ;
 
 			ds = ldap_memcalloc( ispecs + 1, sizeof( LDAPDerefSpec ) );
 			if ( ds == NULL ) {
@@ -636,18 +635,20 @@ handle_private_option( int i )
 				c[ nctrls - 1 ].ldctl_value.bv_len = 0;
 
 			} else if ( cvalue[ 0 ] == ':' ) {
-				struct berval	type;
-				struct berval	value;
-				int		freeval;
+				struct berval type;
+				struct berval value;
+				int freeval;
+				char save_c;
 
 				cvalue++;
 
 				/* dummy type "x"
 				 * to use ldif_parse_line2() */
+				save_c = cvalue[ -2 ];
 				cvalue[ -2 ] = 'x';
 				ldif_parse_line2( &cvalue[ -2 ], &type,
 					&value, &freeval );
-				cvalue[ -2 ] = '\0';
+				cvalue[ -2 ] = save_c;
 
 				if ( freeval ) {
 					c[ nctrls - 1 ].ldctl_value = value;
@@ -655,6 +656,11 @@ handle_private_option( int i )
 				} else {
 					ber_dupbv( &c[ nctrls - 1 ].ldctl_value, &value );
 				}
+
+			} else {
+				fprintf( stderr, "unable to parse %s control value\n", control );
+				exit( EXIT_FAILURE );
+				
 			}
 
 			/* criticality */
@@ -1334,6 +1340,11 @@ getNextPage:
 	if ( derefval.bv_val != NULL ) {
 		ldap_memfree( derefval.bv_val );
 	}
+	if ( urlpre != NULL ) {
+		if ( def_urlpre != urlpre )
+			free( def_urlpre );
+		free( urlpre );
+	}
 
 	if ( c ) {
 		for ( ; save_nctrls-- > 0; ) {
@@ -1887,4 +1898,3 @@ static int print_result(
 
 	return err;
 }
-

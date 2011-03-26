@@ -1,8 +1,8 @@
 /* rdnval.c - RDN value overlay */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/samba4/rdnval.c,v 1.1.2.2 2010/04/21 20:13:23 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/samba4/rdnval.c,v 1.1.2.3 2011/01/04 23:49:36 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2011 The OpenLDAP Foundation.
  * Portions Copyright 2008 Pierangelo Masarati.
  * All rights reserved.
  *

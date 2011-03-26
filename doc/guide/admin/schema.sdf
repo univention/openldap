@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/admin/schema.sdf,v 1.41.2.11 2010/04/19 15:58:40 quanah Exp $
-# Copyright 1999-2010 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP: pkg/openldap-guide/admin/schema.sdf,v 1.41.2.12 2011/01/04 23:49:40 kurt Exp $
+# Copyright 1999-2011 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Schema Specification

@@ -1,5 +1,5 @@
-# $OpenLDAP: pkg/openldap-guide/release/copyright.sdf,v 1.22.2.10 2010/04/13 20:22:35 kurt Exp $
-# Copyright 1999-2010 The OpenLDAP Foundation, All Rights Reserved.
+# $OpenLDAP: pkg/openldap-guide/release/copyright.sdf,v 1.22.2.12 2011/01/06 22:20:09 quanah Exp $
+# Copyright 1999-2011 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 !if OPT_PP_HTML
@@ -58,8 +58,8 @@ Public License}}.
 Portions [[copyright]] 1999-2007 Howard Y.H. Chu.
 Portions [[copyright]] 1999-2007 Symas Corporation.
 Portions [[copyright]] 1998-2003 Hallvard B. Furuseth.
-Portions [[copyright]] 2007-2009 Gavin Henry.
-Portions [[copyright]] 2007-2009 Suretec Systems Limited.
+Portions [[copyright]] 2007-2011 Gavin Henry.
+Portions [[copyright]] 2007-2011 Suretec Systems Limited.
 {{All rights reserved.}}
 !endblock
 

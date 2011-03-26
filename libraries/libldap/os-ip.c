@@ -1,8 +1,8 @@
 /* os-ip.c -- platform-specific TCP & UDP related code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.118.2.20 2010/04/13 20:22:58 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.118.2.23 2011/01/31 19:21:48 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2011 The OpenLDAP Foundation.
  * Portions Copyright 1999 Lars Uffmann.
  * All rights reserved.
  *
@@ -592,16 +592,12 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
 	hints.ai_socktype = socktype;
 	snprintf(serv, sizeof serv, "%d", port );
 
-#ifdef LDAP_R_COMPILE
 	/* most getaddrinfo(3) use non-threadsafe resolver libraries */
-	ldap_pvt_thread_mutex_lock(&ldap_int_resolv_mutex);
-#endif
+	LDAP_MUTEX_LOCK(&ldap_int_resolv_mutex);
 
 	err = getaddrinfo( host, serv, &hints, &res );
 
-#ifdef LDAP_R_COMPILE
-	ldap_pvt_thread_mutex_unlock(&ldap_int_resolv_mutex);
-#endif
+	LDAP_MUTEX_UNLOCK(&ldap_int_resolv_mutex);
 
 	if ( err != 0 ) {
 		osip_debug(ld, "ldap_connect_to_host: getaddrinfo failed: %s\n",
@@ -727,9 +723,9 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
 			async);
    
 		if ( (rc == 0) || (rc == -2) ) {
-			i = ldap_int_connect_cbs( ld, sb, &s, srv, (struct sockaddr *)&sin );
-			if ( i )
-				rc = i;
+			int err = ldap_int_connect_cbs( ld, sb, &s, srv, (struct sockaddr *)&sin );
+			if ( err )
+				rc = err;
 			else
 				break;
 		}

@@ -1,8 +1,8 @@
 /* config.c - configuration file handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.441.2.37 2010/04/19 15:32:26 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.441.2.39 2011/01/04 23:50:18 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2011 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -467,7 +467,7 @@ config_get_vals(ConfigTable *cf, ConfigArgs *c)
 				c->value_string = ch_strdup(*(char **)ptr);
 			break;
 		case ARG_BERVAL:
-			ber_dupbv( &c->value_bv, (struct berval *)ptr ); break;
+			c->value_bv = *((struct berval *)ptr); break;
 		case ARG_ATDESC:
 			c->value_ad = *(AttributeDescription **)ptr; break;
 		}

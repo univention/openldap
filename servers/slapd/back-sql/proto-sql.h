@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/proto-sql.h,v 1.30.2.8 2010/04/13 20:23:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/proto-sql.h,v 1.30.2.10 2011/01/04 23:50:47 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2011 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Mararati.
  * All rights reserved.
@@ -204,12 +204,17 @@ RETCODE backsql_Prepare( SQLHDBC dbh, SQLHSTMT *sth, const char* query, int time
 			(io), SQL_C_ULONG, SQL_INTEGER,			\
 			0, 0, (SQLPOINTER)(val), 0, (SQLINTEGER*)NULL )
 
+#define backsql_BindParamNumID( sth, par_ind, io, val )			\
+	SQLBindParameter( (sth), (SQLUSMALLINT)(par_ind),		\
+			(io), BACKSQL_C_NUMID, SQL_INTEGER,		\
+			0, 0, (SQLPOINTER)(val), 0, (SQLINTEGER*)NULL )
+
 #ifdef BACKSQL_ARBITRARY_KEY
 #define backsql_BindParamID( sth, par_ind, io, id )			\
 	backsql_BindParamBerVal( (sth), (par_ind), (io), (id) )
 #else /* ! BACKSQL_ARBITRARY_KEY */
 #define backsql_BindParamID( sth, par_ind, io, id )			\
-	backsql_BindParamInt( (sth), (par_ind), (io), (id) )
+	backsql_BindParamNumID( (sth), (par_ind), (io), (id) )
 #endif /* ! BACKSQL_ARBITRARY_KEY */
 
 RETCODE backsql_BindRowAsStrings_x( SQLHSTMT sth, BACKSQL_ROW_NTS *row, void *ctx );

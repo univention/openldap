@@ -1,8 +1,8 @@
 /* init.cpp - initialize ndb backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ndb/init.cpp,v 1.4.2.4 2010/04/13 20:23:35 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ndb/init.cpp,v 1.4.2.5 2011/01/04 23:50:39 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2010 The OpenLDAP Foundation.
+ * Copyright 2008-2011 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

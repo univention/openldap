@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/controls.c,v 1.174.2.23 2010/04/15 20:15:19 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/controls.c,v 1.174.2.25 2011/01/04 23:50:19 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2011 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1137,14 +1137,13 @@ static int parseProxyAuthz (
 	}
 
 	ch_free( op->o_ndn.bv_val );
-	ch_free( op->o_dn.bv_val );
 
 	/*
 	 * NOTE: since slap_sasl_getdn() returns a normalized dn,
 	 * from now on op->o_dn is normalized
 	 */
 	op->o_ndn = dn;
-	ber_dupbv( &op->o_dn, &dn );
+	ber_bvreplace( &op->o_dn, &dn );
 
 	Statslog( LDAP_DEBUG_STATS, "%s PROXYAUTHZ dn=\"%s\"\n",
 	    op->o_log_prefix, dn.bv_val, 0, 0, 0 );

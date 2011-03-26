@@ -1,8 +1,8 @@
 /* allowed.c - add allowed attributes based on ACL */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/allowed/allowed.c,v 1.3.2.4 2010/04/15 20:35:22 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/allowed/allowed.c,v 1.3.2.5 2011/01/04 23:49:30 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2006-2010 The OpenLDAP Foundation.
+ * Copyright 2006-2011 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

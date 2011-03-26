@@ -23,7 +23,7 @@
 <DIV CLASS="title">
 <H1 CLASS="doc-title">OpenLDAP Software 2.4 Administrator's Guide</H1>
 <ADDRESS CLASS="doc-author">The OpenLDAP Project &lt;<A HREF="http://www.openldap.org/">http://www.openldap.org/</A>&gt;</ADDRESS>
-<ADDRESS CLASS="doc-modified">29 June 2010</ADDRESS>
+<ADDRESS CLASS="doc-modified">11 February 2011</ADDRESS>
 <BR CLEAR="All">
 </DIV>
 <DIV CLASS="contents">
@@ -462,9 +462,7 @@
 <BR>
 <A HREF="#SHA password storage scheme">14.4.5. SHA password storage scheme</A>
 <BR>
-<A HREF="#SASL password storage scheme">14.4.6. SASL password storage scheme</A>
-<BR>
-<A HREF="#KERBEROS password storage scheme">14.4.7. KERBEROS password storage scheme</A></UL>
+<A HREF="#SASL password storage scheme">14.4.6. SASL password storage scheme</A></UL>
 <BR>
 <A HREF="#Pass-Through authentication">14.5. Pass-Through authentication</A><UL>
 <A HREF="#Configuring slapd to use an authentication provider">14.5.1. Configuring slapd to use an authentication provider</A>
@@ -1085,7 +1083,7 @@ Support Pages
 <P><EM>slapd</EM>(8) is an LDAP directory server that runs on many different platforms. You can use it to provide a directory service of your very own.  Your directory can contain pretty much anything you want to put in it. You can connect it to the global LDAP directory service, or run a service all by yourself. Some of slapd's more interesting features and capabilities include:</P>
 <P><B>LDAPv3</B>: <EM>slapd</EM> implements version 3 of <TERM>Lightweight Directory Access Protocol</TERM>. <EM>slapd</EM> supports LDAP over both <TERM>IPv4</TERM> and <TERM>IPv6</TERM> and Unix <TERM>IPC</TERM>.</P>
 <P><B><TERM>Simple Authentication and Security Layer</TERM></B>: <EM>slapd</EM> supports strong authentication and data security (integrity and confidentiality) services through the use of SASL.  <EM>slapd</EM>'s SASL implementation utilizes <A HREF="http://asg.web.cmu.edu/sasl/sasl-library.html">Cyrus SASL</A> software which supports a number of mechanisms including <TERM>DIGEST-MD5</TERM>, <TERM>EXTERNAL</TERM>, and <TERM>GSSAPI</TERM>.</P>
-<P><B><TERM>Transport Layer Security</TERM></B>: <EM>slapd</EM> supports certificate-based authentication and data security (integrity and confidentiality) services through the use of TLS (or SSL).  <EM>slapd</EM>'s TLS implementation can utilize either <A HREF="http://www.openssl.org/">OpenSSL</A> or <A HREF="http://www.gnu.org/software/gnutls/">GnuTLS</A> software.</P>
+<P><B><TERM>Transport Layer Security</TERM></B>: <EM>slapd</EM> supports certificate-based authentication and data security (integrity and confidentiality) services through the use of TLS (or SSL).  <EM>slapd</EM>'s TLS implementation can utilize <A HREF="http://www.openssl.org/">OpenSSL</A>, <A HREF="http://www.gnu.org/software/gnutls/">GnuTLS</A>, or <A HREF="http://developer.mozilla.org/en/NSS">MozNSS</A> software.</P>
 <P><B>Topology control</B>: <EM>slapd</EM> can be configured to restrict access at the socket layer based upon network topology information. This feature utilizes <EM>TCP wrappers</EM>.</P>
 <P><B>Access control</B>: <EM>slapd</EM> provides a rich and powerful access control facility, allowing you to control access to the information in your database(s). You can control access to entries based on LDAP authorization information, <TERM>IP</TERM> address, domain name and other criteria.  <EM>slapd</EM> supports both <EM>static</EM> and <EM>dynamic</EM> access control information.</P>
 <P><B>Internationalization</B>: <EM>slapd</EM> supports Unicode and language tags.</P>
@@ -1327,8 +1325,8 @@ This command will search for and retrieve every entry in the database.</OL>
 <H2><A NAME="Prerequisite software">4.2. Prerequisite software</A></H2>
 <P>OpenLDAP Software relies upon a number of software packages distributed by third parties.  Depending on the features you intend to use, you may have to download and install a number of additional software packages.  This section details commonly needed third party software packages you might have to install.  However, for an up-to-date prerequisite information, the <TT>README</TT> document should be consulted.  Note that some of these third party packages may depend on additional software packages.  Install each package per the installation instructions provided with it.</P>
 <H3><A NAME="{{TERM[expand]TLS}}">4.2.1. <TERM>Transport Layer Security</TERM></A></H3>
-<P>OpenLDAP clients and servers require installation of either <A HREF="http://www.openssl.org/">OpenSSL</A> or <A HREF="http://www.gnu.org/software/gnutls/">GnuTLS</A> <TERM>TLS</TERM> libraries to provide <TERM>Transport Layer Security</TERM> services.  Though some operating systems may provide these libraries as part of the base system or as an optional software component, OpenSSL and GnuTLS often require separate installation.</P>
-<P>OpenSSL is available from <A HREF="http://www.openssl.org/">http://www.openssl.org/</A>. GnuTLS is available from <A HREF="http://www.gnu.org/software/gnutls/">http://www.gnu.org/software/gnutls/</A>.</P>
+<P>OpenLDAP clients and servers require installation of <A HREF="http://www.openssl.org/">OpenSSL</A>, <A HREF="http://www.gnu.org/software/gnutls/">GnuTLS</A>, or <A HREF="http://developer.mozilla.org/en/NSS">MozNSS</A> <TERM>TLS</TERM> libraries to provide <TERM>Transport Layer Security</TERM> services.  Though some operating systems may provide these libraries as part of the base system or as an optional software component, OpenSSL, GnuTLS, and Mozilla NSS often require separate installation.</P>
+<P>OpenSSL is available from <A HREF="http://www.openssl.org/">http://www.openssl.org/</A>. GnuTLS is available from <A HREF="http://www.gnu.org/software/gnutls/">http://www.gnu.org/software/gnutls/</A>. Mozilla NSS is available from <A HREF="http://developer.mozilla.org/en/NSS">http://developer.mozilla.org/en/NSS</A>.</P>
 <P>OpenLDAP Software will not be fully LDAPv3 compliant unless OpenLDAP's <TT>configure</TT> detects a usable TLS library.</P>
 <H3><A NAME="{{TERM[expand]SASL}}">4.2.2. <TERM>Simple Authentication and Security Layer</TERM></A></H3>
 <P>OpenLDAP clients and servers require installation of <A HREF="http://asg.web.cmu.edu/sasl/sasl-library.html">Cyrus SASL</A> libraries to provide <TERM>Simple Authentication and Security Layer</TERM> services.  Though some operating systems may provide this library as part of the base system or as an optional software component, Cyrus SASL often requires separate installation.</P>
@@ -3776,7 +3774,7 @@ needed to manage
 </PRE>
 <P>This ACL grants read permissions to authenticated users while denying others (i.e.: anonymous users).</P>
 <H3><A NAME="Controlling rootdn access">8.4.3. Controlling rootdn access</A></H3>
-<P>You could specify the <EM>rootdn</EM> in <EM>slapd.conf</EM>(5) or {[slapd.d}} without specifying a <EM>rootpw</EM>. Then you have to add an actual directory entry with the same dn, e.g.:</P>
+<P>You could specify the <EM>rootdn</EM> in <EM>slapd.conf</EM>(5) or <EM>slapd.d</EM> without specifying a <EM>rootpw</EM>. Then you have to add an actual directory entry with the same dn, e.g.:</P>
 <PRE>
     dn: cn=Manager,o=MyOrganization
     cn: Manager
@@ -3816,7 +3814,7 @@ needed to manage
         by group.exact=&quot;cn=Administrators,dc=example,dc=com&quot; write
         by * auth
 </PRE>
-<P>Like by {[dn}} clauses, one can also use <EM>expand</EM> to expand the group name based upon the regular expression matching of the target, that is, the to <EM>dn.regex</EM>). For instance,</P>
+<P>Like by <EM>dn</EM> clauses, one can also use <EM>expand</EM> to expand the group name based upon the regular expression matching of the target, that is, the to <EM>dn.regex</EM>). For instance,</P>
 <PRE>
     access to dn.regex=&quot;(.+,)?ou=People,(dc=[^,]+,dc=[^,]+)$&quot;
              attrs=children,entry,uid
@@ -5084,7 +5082,7 @@ Members of a group
         chain-return-error TRUE
 </PRE>
 <H3><A NAME="Read-Back of Chained Modifications">12.3.4. Read-Back of Chained Modifications</A></H3>
-<P>Occasionally, applications want to read back the data that they just wrote. If a modification requested to a shadow server was silently chained to its producer, an immediate read could result in receiving data not yet synchronized. In those cases, clients should use the <B>dontusecopy</B> control to ensure they are directed to the authoritative source for that piece of data.</P>
+<P>Occasionally, applications want to read back the data that they just wrote. If a modification requested to a shadow server was silently chained to its provider, an immediate read could result in receiving data not yet synchronized. In those cases, clients should use the <B>dontusecopy</B> control to ensure they are directed to the authoritative source for that piece of data.</P>
 <P>This control usually causes a referral to the actual source of the data to be returned.  However, when the <EM>slapo-chain(5)</EM> overlay is used, it intercepts the referral being returned in response to the <B>dontusecopy</B> control, and tries to fetch the requested data.</P>
 <H3><A NAME="Further Information">12.3.5. Further Information</A></H3>
 <P><EM>slapo-chain(5)</EM></P>
@@ -5309,49 +5307,79 @@ Members of a group
 <P>The cache replacement policy removes the least recently used (LRU) query and entries belonging to only that query. Queries are allowed a maximum time to live (TTL) in the cache thus providing weak consistency. A background task periodically checks the cache for expired queries and removes them.</P>
 <P>The Proxy Cache paper (<A HREF="http://www.openldap.org/pub/kapurva/proxycaching.pdf">http://www.openldap.org/pub/kapurva/proxycaching.pdf</A>) provides design and implementation details.</P>
 <H3><A NAME="Proxy Cache Configuration">12.9.2. Proxy Cache Configuration</A></H3>
-<P>The cache configuration specific directives described below must appear after a <TT>overlay proxycache</TT> directive within a <TT>&quot;database meta&quot;</TT> or <TT>database ldap</TT> section of the server's <EM>slapd.conf</EM>(5) file.</P>
+<P>The cache configuration specific directives described below must appear after a <TT>overlay pcache</TT> directive within a <TT>&quot;database meta&quot;</TT> or <TT>&quot;database ldap&quot;</TT> section of the server's <EM>slapd.conf</EM>(5) file.</P>
 <H4><A NAME="Setting cache parameters">12.9.2.1. Setting cache parameters</A></H4>
 <PRE>
- proxyCache &lt;DB&gt; &lt;maxentries&gt; &lt;nattrsets&gt; &lt;entrylimit&gt; &lt;period&gt;
+ pcache &lt;DB&gt; &lt;maxentries&gt; &lt;nattrsets&gt; &lt;entrylimit&gt; &lt;period&gt;
 </PRE>
-<P>This directive enables proxy caching and sets general cache parameters.  The &lt;DB&gt; parameter specifies which underlying database is to be used to hold cached entries.  It should be set to <TT>bdb</TT> or <TT>hdb</TT>.  The &lt;maxentries&gt; parameter specifies the total number of entries which may be held in the cache.  The &lt;nattrsets&gt; parameter specifies the total number of attribute sets (as specified by the <TT>proxyAttrSet</TT> directive) that may be defined.  The &lt;entrylimit&gt; parameter specifies the maximum number of entries in a cacheable query.  The &lt;period&gt; specifies the consistency check period (in seconds).  In each period, queries with expired TTLs are removed.</P>
+<P>This directive enables proxy caching and sets general cache parameters.  The &lt;DB&gt; parameter specifies which underlying database is to be used to hold cached entries.  It should be set to <TT>bdb</TT> or <TT>hdb</TT>.  The &lt;maxentries&gt; parameter specifies the total number of entries which may be held in the cache.  The &lt;nattrsets&gt; parameter specifies the total number of attribute sets (as specified by the <TT>pcacheAttrset</TT> directive) that may be defined.  The &lt;entrylimit&gt; parameter specifies the maximum number of entries in a cacheable query.  The &lt;period&gt; specifies the consistency check period (in seconds).  In each period, queries with expired TTLs are removed.</P>
 <H4><A NAME="Defining attribute sets">12.9.2.2. Defining attribute sets</A></H4>
 <PRE>
- proxyAttrset &lt;index&gt; &lt;attrs...&gt;
+ pcacheAttrset &lt;index&gt; &lt;attrs...&gt;
 </PRE>
-<P>Used to associate a set of attributes to an index. Each attribute set is associated with an index number from 0 to &lt;numattrsets&gt;-1. These indices are used by the proxyTemplate directive to define cacheable templates.</P>
+<P>Used to associate a set of attributes to an index. Each attribute set is associated with an index number from 0 to &lt;numattrsets&gt;-1. These indices are used by the pcacheTemplate directive to define cacheable templates.</P>
 <H4><A NAME="Specifying cacheable templates">12.9.2.3. Specifying cacheable templates</A></H4>
 <PRE>
- proxyTemplate &lt;prototype_string&gt; &lt;attrset_index&gt; &lt;TTL&gt;
+ pcacheTemplate &lt;prototype_string&gt; &lt;attrset_index&gt; &lt;TTL&gt;
 </PRE>
 <P>Specifies a cacheable template and the &quot;time to live&quot; (in sec) &lt;TTL&gt; for queries belonging to the template. A template is described by its prototype filter string and set of required attributes identified by &lt;attrset_index&gt;.</P>
-<H4><A NAME="Example">12.9.2.4. Example</A></H4>
+<H4><A NAME="Example for slapd.conf">12.9.2.4. Example for slapd.conf</A></H4>
 <P>An example <EM>slapd.conf</EM>(5) database section for a caching server which proxies for the <TT>&quot;dc=example,dc=com&quot;</TT> subtree held at server <TT>ldap.example.com</TT>.</P>
 <PRE>
         database        ldap
         suffix          &quot;dc=example,dc=com&quot;
         rootdn          &quot;dc=example,dc=com&quot;
         uri             ldap://ldap.example.com/
-        overlay proxycache
-        proxycache    bdb 100000 1 1000 100
-        proxyAttrset  0 mail postaladdress telephonenumber
-        proxyTemplate (sn=) 0 3600
-        proxyTemplate (&amp;(sn=)(givenName=)) 0 3600
-        proxyTemplate (&amp;(departmentNumber=)(secretary=*)) 0 3600
+        overlay pcache
+        pcache         bdb 100000 1 1000 100
+        pcacheAttrset  0 mail postaladdress telephonenumber
+        pcacheTemplate (sn=) 0 3600
+        pcacheTemplate (&amp;(sn=)(givenName=)) 0 3600
+        pcacheTemplate (&amp;(departmentNumber=)(secretary=*)) 0 3600
 
         cachesize 20
         directory ./testrun/db.2.a
         index       objectClass eq
         index       cn,sn,uid,mail  pres,eq,sub
 </PRE>
-<H5><A NAME="Cacheable Queries">12.9.2.4.1. Cacheable Queries</A></H5>
-<P>A LDAP search query is cacheable when its filter matches one of the templates as defined in the &quot;proxyTemplate&quot; statements and when it references only the attributes specified in the corresponding attribute set. In the example above the attribute set number 0 defines that only the attributes: <TT>mail postaladdress telephonenumber</TT> are cached for the following proxyTemplates.</P>
-<H5><A NAME="Examples:">12.9.2.4.2. Examples:</A></H5>
+<H4><A NAME="Example for slapd-config">12.9.2.5. Example for slapd-config</A></H4>
+<P>The same example as a LDIF file for back-config for a caching server which proxies for the <TT>&quot;dc=example,dc=com&quot;</TT> subtree held at server <TT>ldap.example.com</TT>.</P>
+<PRE>
+   dn: olcDatabase={2}ldap
+   objectClass: olcDatabaseConfig
+   objectClass: olcLDAPConfig
+   olcDatabase: {2}ldap
+   olcSuffix: dc=example,dc=com
+   olcRootDN: dc=example,dc=com
+   olcDbURI: &quot;ldap://ldap.example.com&quot;
+
+   dn: olcOverlay={0}pcache
+   objectClass: olcOverlayConfig
+   objectClass: olcPcacheConfig
+   olcOverlay: {0}pcache
+   olcPcache: bdb 100000 1 1000 100
+   olcPcacheAttrset: 0 mail postalAddress telephoneNumber
+   olcPcacheTemplate: &quot;(sn=)&quot; 0 3600 0 0 0
+   olcPcacheTemplate: &quot;(&amp;(sn=)(givenName=))&quot; 0 3600 0 0 0
+   olcPcacheTemplate: &quot;(&amp;(departmentNumber=)(secretary=))&quot; 0 3600
+
+   dn: olcDatabase={0}hdb
+   objectClass: olcHdbConfig
+   objectClass: olcPcacheDatabase
+   olcDatabase: {0}hdb
+   olcDbDirectory: ./testrun/db.2.a
+   olcDbCacheSize: 20
+   olcDbIndex: objectClass eq
+   olcDbIndex: cn,sn,uid,mail  pres,eq,sub
+</PRE>
+<H5><A NAME="Cacheable Queries">12.9.2.5.1. Cacheable Queries</A></H5>
+<P>A LDAP search query is cacheable when its filter matches one of the templates as defined in the &quot;pcacheTemplate&quot; statements and when it references only the attributes specified in the corresponding attribute set. In the example above the attribute set number 0 defines that only the attributes: <TT>mail postaladdress telephonenumber</TT> are cached for the following pcacheTemplates.</P>
+<H5><A NAME="Examples:">12.9.2.5.2. Examples:</A></H5>
 <PRE>
         Filter: (&amp;(sn=Richard*)(givenName=jack))
         Attrs: mail telephoneNumber
 </PRE>
-<P>is cacheable, because it matches the template <TT>(&amp;(sn=)(givenName=))</TT> and its attributes are contained in proxyAttrset 0.</P>
+<P>is cacheable, because it matches the template <TT>(&amp;(sn=)(givenName=))</TT> and its attributes are contained in pcacheAttrset 0.</P>
 <PRE>
         Filter: (&amp;(sn=Richard*)(telephoneNumber))
         Attrs: givenName
@@ -5471,6 +5499,7 @@ Members of a group
 <P ALIGN="Center">Figure X.Y: Maintaining referential integrity in groups</P>
 <P>Notice that if we rename (<TT>modrdn</TT>) the <TT>john</TT> entry to, say, <TT>jsmith</TT>, the refint overlay will also rename the reference in the <TT>member</TT> attribute, so the group membership stays correct.</P>
 <P>If we removed all users from the directory who are a member of this group, then the end result would be a single member in the group: <TT>cn=admin,dc=example,dc=com</TT>. This is the <TT>refint_nothing</TT> parameter kicking into action so that the schema is not violated.</P>
+<P>The <EM>rootdn</EM> must be set for the database as refint runs as the <EM>rootdn</EM> to gain access to make its updates.  The <EM>rootpw</EM> does not need to be set.</P>
 <H3><A NAME="Further Information">12.11.3. Further Information</A></H3>
 <P><EM>slapo-refint(5)</EM></P>
 <H2><A NAME="Return Code">12.12. Return Code</A></H2>
@@ -6475,12 +6504,6 @@ object identifier
 <P><HR WIDTH="80%" ALIGN="Left">
 <STRONG>Note: </STRONG>This is not the same as using SASL to authenticate the LDAP session.
 <HR WIDTH="80%" ALIGN="Left"></P>
-<H3><A NAME="KERBEROS password storage scheme">14.4.7. KERBEROS password storage scheme</A></H3>
-<P>This is not really a password storage scheme at all. It uses the value of the <EM>userPassword</EM> attribute to delegate password verification to Kerberos.</P>
-<P><HR WIDTH="80%" ALIGN="Left">
-<STRONG>Note: </STRONG>This is not the same as using Kerberos authentication of the LDAP session.
-<HR WIDTH="80%" ALIGN="Left"></P>
-<P>This scheme could be said to defeat the advantages of Kerberos by causing the Kerberos password to be exposed to the <EM>slapd</EM> server (and possibly on the network as well).</P>
 <H2><A NAME="Pass-Through authentication">14.5. Pass-Through authentication</A></H2>
 <P>Since OpenLDAP 2.0 <EM>slapd</EM> has had the ability to delegate password verification to a separate process. This uses the <EM>sasl_checkpass(3)</EM> function so it can use any back-end server that Cyrus SASL supports for checking passwords. The choice is very wide, as one option is to use <EM>saslauthd(8)</EM> which in turn can use local files, Kerberos, an IMAP server, another LDAP server, or anything supported by the PAM mechanism.</P>
 <P>The server must be built with the <TT>--enable-spasswd</TT> configuration option to enable pass-through authentication.</P>
@@ -6493,9 +6516,6 @@ object identifier
  userPassword: {SASL}username@realm
 </PRE>
 <P>The <EM>username</EM> and <EM>realm</EM> are passed to the SASL authentication mechanism and are used to identify the account whose password is to be verified. This allows arbitrary mapping between entries in OpenLDAP and accounts known to the backend authentication service.</P>
-<P><HR WIDTH="80%" ALIGN="Left">
-<STRONG>Note: </STRONG>There is no support for changing passwords in the backend via <EM>slapd</EM>.
-<HR WIDTH="80%" ALIGN="Left"></P>
 <P>It would be wise to use access control to prevent users from changing their passwords through LDAP where they have pass-through authentication enabled.</P>
 <H3><A NAME="Configuring slapd to use an authentication provider">14.5.1. Configuring slapd to use an authentication provider</A></H3>
 <P>Where an entry has a &quot;{SASL}&quot; password value, OpenLDAP delegates the whole process of validating that entry's password to Cyrus SASL. All the configuration is therefore done in SASL config files.</P>
@@ -6806,7 +6826,7 @@ object identifier
 <STRONG>Note: </STRONG>For generating certifcates, please reference <A HREF="http://www.openldap.org/faq/data/cache/185.html">http://www.openldap.org/faq/data/cache/185.html</A>
 <HR WIDTH="80%" ALIGN="Left"></P>
 <H2><A NAME="TLS Certificates">16.1. TLS Certificates</A></H2>
-<P>TLS uses <TERM>X.509</TERM> certificates to carry client and server identities.  All servers are required to have valid certificates, whereas client certificates are optional.  Clients must have a valid certificate in order to authenticate via SASL EXTERNAL. For more information on creating and managing certificates, see the <A HREF="http://www.openssl.org/">OpenSSL</A> documentation.</P>
+<P>TLS uses <TERM>X.509</TERM> certificates to carry client and server identities.  All servers are required to have valid certificates, whereas client certificates are optional.  Clients must have a valid certificate in order to authenticate via SASL EXTERNAL. For more information on creating and managing certificates, see the <A HREF="http://www.openssl.org/">OpenSSL</A>, <A HREF="http://www.gnu.org/software/gnutls/">GnuTLS</A>, or <A HREF="http://developer.mozilla.org/en/NSS">MozNSS</A> documentation, depending on which TLS implementation libraries you are using.</P>
 <H3><A NAME="Server Certificates">16.1.1. Server Certificates</A></H3>
 <P>The <TERM>DN</TERM> of a server certificate must use the <TT>CN</TT> attribute to name the server, and the <TT>CN</TT> must carry the server's fully qualified domain name. Additional alias names and wildcards may be present in the <TT>subjectAltName</TT> certificate extension.  More details on server certificate names are in <A HREF="http://www.rfc-editor.org/rfc/rfc4513.txt">RFC4513</A>.</P>
 <H3><A NAME="Client Certificates">16.1.2. Client Certificates</A></H3>
@@ -6820,28 +6840,68 @@ object identifier
 <P>This directive specifies the <TERM>PEM</TERM>-format file containing certificates for the CA's that slapd will trust. The certificate for the CA that signed the server certificate must be included among these certificates. If the signing CA was not a top-level (root) CA, certificates for the entire sequence of CA's from the signing CA to the top-level CA should be present. Multiple certificates are simply appended to the file; the order is not significant.</P>
 <H4><A NAME="TLSCACertificatePath &lt;path&gt;">16.2.1.2. TLSCACertificatePath &lt;path&gt;</A></H4>
 <P>This directive specifies the path of a directory that contains individual <TERM>CA</TERM> certificates in separate files.  In addition, this directory must be specially managed using the OpenSSL <EM>c_rehash</EM> utility. When using this feature, the OpenSSL library will attempt to locate certificate files based on a hash of their name and serial number. The <EM>c_rehash</EM> utility is used to generate symbolic links with the hashed names that point to the actual certificate files. As such, this option can only be used with a filesystem that actually supports symbolic links. In general, it is simpler to use the <TT>TLSCACertificateFile</TT> directive instead.</P>
+<P>When using Mozilla NSS, this directive can be used to specify the path of the directory containing the NSS certificate and key database files.  The <EM>certutil</EM> command can be used to add a <TERM>CA</TERM> certificate:</P>
+<PRE>
+        certutil -d &lt;path&gt; -A -n &quot;name of CA cert&quot; -t CT,, -a -i /path/to/cacertfile.pem
+</PRE>
+<UL>
+This command will add a CA certficate stored in the PEM (ASCII) formatted
+<BR>
+file named /path/to/cacertfile.pem.  <TT>-t CT,,</TT> means that the certificate is
+<BR>
+trusted to be a CA issuing certs for use in TLS clients and servers.</UL>
 <H4><A NAME="TLSCertificateFile &lt;filename&gt;">16.2.1.3. TLSCertificateFile &lt;filename&gt;</A></H4>
 <P>This directive specifies the file that contains the slapd server certificate. Certificates are generally public information and require no special protection.</P>
+<P>When using Mozilla NSS, if using a cert/key database (specified with <TT>TLSCACertificatePath</TT>), this directive specifies the name of the certificate to use:</P>
+<PRE>
+       TLSCertificateFile Server-Cert
+</PRE>
+<UL>
+If using a token other than the internal built in token, specify the
+<BR>
+token name first, followed by a colon:</UL>
+<PRE>
+       TLSCertificateFile my hardware device:Server-Cert
+</PRE>
+<UL>
+Use <TT>certutil -L</TT> to list the certificates by name:</UL>
+<PRE>
+       certutil -d /path/to/certdbdir -L
+</PRE>
 <H4><A NAME="TLSCertificateKeyFile &lt;filename&gt;">16.2.1.4. TLSCertificateKeyFile &lt;filename&gt;</A></H4>
 <P>This directive specifies the file that contains the private key that matches the certificate stored in the <TT>TLSCertificateFile</TT> file. Private keys themselves are sensitive data and are usually password encrypted for protection. However, the current implementation doesn't support encrypted keys so the key must not be encrypted and the file itself must be protected carefully.</P>
+<P>When using Mozilla NSS, this directive specifies the name of a file that contains the password for the key for the certificate specified with <TT>TLSCertificateFile</TT>.  The modutil command can be used to turn off password protection for the cert/key database.  For example, if <TT>TLSCACertificatePath</TT> specifes /etc/openldap/certdb as the location of the cert/key database, use modutil to change the password to the empty string:</P>
+<PRE>
+        modutil -dbdir /etc/openldap/certdb -changepw 'NSS Certificate DB'
+</PRE>
+<UL>
+You must have the old password, if any.  Ignore the WARNING about the running
+<BR>
+browser.  Press 'Enter' for the new password.</UL>
 <H4><A NAME="TLSCipherSuite &lt;cipher-suite-spec&gt;">16.2.1.5. TLSCipherSuite &lt;cipher-suite-spec&gt;</A></H4>
 <P>This directive configures what ciphers will be accepted and the preference order. <TT>&lt;cipher-suite-spec&gt;</TT> should be a cipher specification for OpenSSL. You can use the command</P>
 <PRE>
         openssl ciphers -v ALL
 </PRE>
 <P>to obtain a verbose list of available cipher specifications.</P>
-<P>To obtain the list of ciphers in GNUtls use:</P>
+<P>Besides the individual cipher names, the specifiers <TT>HIGH</TT>, <TT>MEDIUM</TT>, <TT>LOW</TT>, <TT>EXPORT</TT>, and <TT>EXPORT40</TT> may be helpful, along with <TT>TLSv1</TT>, <TT>SSLv3</TT>, and <TT>SSLv2</TT>.</P>
+<P>To obtain the list of ciphers in GnuTLS use:</P>
 <PRE>
         gnutls-cli -l
 </PRE>
-<P>Besides the individual cipher names, the specifiers <TT>HIGH</TT>, <TT>MEDIUM</TT>, <TT>LOW</TT>, <TT>EXPORT</TT>, and <TT>EXPORT40</TT> may be helpful, along with <TT>TLSv1</TT>, <TT>SSLv3</TT>, and <TT>SSLv2</TT>.</P>
+<P>When using Mozilla NSS, the OpenSSL cipher suite specifications are used and translated into the format used internally by Mozilla NSS.  There isn't an easy way to list the cipher suites from the command line.  The authoritative list is in the source code for Mozilla NSS in the file sslinfo.c in the structure</P>
+<PRE>
+       static const SSLCipherSuiteInfo suiteInfo[]
+</PRE>
 <H4><A NAME="TLSRandFile &lt;filename&gt;">16.2.1.6. TLSRandFile &lt;filename&gt;</A></H4>
 <P>This directive specifies the file to obtain random bits from when <TT>/dev/urandom</TT> is not available. If the system provides <TT>/dev/urandom</TT> then this option is not needed, otherwise a source of random data must be configured.  Some systems (e.g. Linux) provide <TT>/dev/urandom</TT> by default, while others (e.g. Solaris) require the installation of a patch to provide it, and others may not support it at all. In the latter case, EGD or PRNGD should be installed, and this directive should specify the name of the EGD/PRNGD socket. The environment variable <TT>RANDFILE</TT> can also be used to specify the filename. Also, in the absence of these options, the <TT>.rnd</TT> file in the slapd user's home directory may be used if it exists. To use the <TT>.rnd</TT> file, just create the file and copy a few hundred bytes of arbitrary data into the file. The file is only used to provide a seed for the pseudo-random number generator, and it doesn't need very much data to work.</P>
+<P>This directive is ignored with GnuTLS and Mozilla NSS.</P>
 <H4><A NAME="TLSEphemeralDHParamFile &lt;filename&gt;">16.2.1.7. TLSEphemeralDHParamFile &lt;filename&gt;</A></H4>
 <P>This directive specifies the file that contains parameters for Diffie-Hellman ephemeral key exchange.  This is required in order to use a DSA certificate on the server side (i.e. <TT>TLSCertificateKeyFile</TT> points to a DSA key).  Multiple sets of parameters can be included in the file; all of them will be processed.  Parameters can be generated using the following command</P>
 <PRE>
         openssl dhparam [-dsaparam] -out &lt;filename&gt; &lt;numbits&gt;
 </PRE>
+<P>This directive is ignored with GnuTLS and Mozilla NSS.</P>
 <H4><A NAME="TLSVerifyClient { never | allow | try | demand }">16.2.1.8. TLSVerifyClient { never | allow | try | demand }</A></H4>
 <P>This directive specifies what checks to perform on client certificates in an incoming TLS session, if any. This option is set to <TT>never</TT> by default, in which case the server never asks the client for a certificate. With a setting of <TT>allow</TT> the server will ask for a client certificate; if none is provided the session proceeds normally. If a certificate is provided but the server is unable to verify it, the certificate is ignored and the session proceeds normally, as if no certificate had been provided. With a setting of <TT>try</TT> the certificate is requested, and if none is provided, the session proceeds normally. If a certificate is provided and it cannot be verified, the session is immediately terminated. With a setting of <TT>demand</TT> the certificate is requested and a valid certificate must be provided, otherwise the session is immediately terminated.</P>
 <P><HR WIDTH="80%" ALIGN="Left">
@@ -6854,9 +6914,25 @@ object identifier
 <H4><A NAME="TLS_CACERT &lt;filename&gt;">16.2.2.1. TLS_CACERT &lt;filename&gt;</A></H4>
 <P>This is equivalent to the server's <TT>TLSCACertificateFile</TT> option. As noted in the <A HREF="#TLS Configuration">TLS Configuration</A> section, a client typically may need to know about more CAs than a server, but otherwise the same considerations apply.</P>
 <H4><A NAME="TLS_CACERTDIR &lt;path&gt;">16.2.2.2. TLS_CACERTDIR &lt;path&gt;</A></H4>
-<P>This is equivalent to the server's <TT>TLSCACertificatePath</TT> option. The specified directory must be managed with the OpenSSL <EM>c_rehash</EM> utility as well.</P>
+<P>This is equivalent to the server's <TT>TLSCACertificatePath</TT> option. The specified directory must be managed with the OpenSSL <EM>c_rehash</EM> utility as well.  If using Mozilla NSS, &lt;path&gt; may contain a cert/key database.</P>
 <H4><A NAME="TLS_CERT &lt;filename&gt;">16.2.2.3. TLS_CERT &lt;filename&gt;</A></H4>
 <P>This directive specifies the file that contains the client certificate. This is a user-only directive and can only be specified in a user's <EM>.ldaprc</EM> file.</P>
+<P>When using Mozilla NSS, if using a cert/key database (specified with <TT>TLS_CACERTDIR</TT>), this directive specifies the name of the certificate to use:</P>
+<PRE>
+       TLS_CERT Certificate for Sam Carter
+</PRE>
+<UL>
+If using a token other than the internal built in token, specify the
+<BR>
+token name first, followed by a colon:</UL>
+<PRE>
+       TLS_CERT my hardware device:Certificate for Sam Carter
+</PRE>
+<UL>
+Use <TT>certutil -L</TT> to list the certificates by name:</UL>
+<PRE>
+       certutil -d /path/to/certdbdir -L
+</PRE>
 <H4><A NAME="TLS_KEY &lt;filename&gt;">16.2.2.4. TLS_KEY &lt;filename&gt;</A></H4>
 <P>This directive specifies the file that contains the private key that matches the certificate stored in the <TT>TLS_CERT</TT> file. The same constraints mentioned for <TT>TLSCertificateKeyFile</TT> apply here. This is also a user-only directive.</P>
 <H4><A NAME="TLS_RANDFILE &lt;filename&gt;">16.2.2.5. TLS_RANDFILE &lt;filename&gt;</A></H4>
@@ -8313,7 +8389,7 @@ Database objects of instances of this backend
 <P>The following sections attempt to summarize the most common causes of LDAP errors when using OpenLDAP</P>
 <H2><A NAME="Common causes of LDAP errors">C.1. Common causes of LDAP errors</A></H2>
 <H3><A NAME="ldap_*: Can\'t contact LDAP server">C.1.1. ldap_*: Can't contact LDAP server</A></H3>
-<P>The {[B:Can't contact LDAP server}} error is usually returned when the LDAP server cannot be contacted. This may occur for many reasons:</P>
+<P>The <B>Can't contact LDAP server</B> error is usually returned when the LDAP server cannot be contacted. This may occur for many reasons:</P>
 <UL>
 <LI>the LDAP server is not running; this can be checked by running, for example,</UL>
 <PRE>
@@ -8570,7 +8646,7 @@ Database objects of instances of this backend
 <H3><A NAME="GSSAPI: gss_acquire_cred: Miscellaneous failure; Permission denied;">C.2.4. GSSAPI: gss_acquire_cred: Miscellaneous failure; Permission denied;</A></H3>
 <P>This message means that slapd is not running as root and, thus, it cannot get its Kerberos 5 key from the keytab, usually file /etc/krb5.keytab.</P>
 <P>A keytab file is used to store keys that are to be used by services or daemons that are started at boot time. It is very important that these secrets are kept beyond reach of intruders.</P>
-<P>That's why the default keytab file is owned by root and protected from being read by others. Do not mess with these permissions, build a different keytab file for slapd instead.</P>
+<P>That's why the default keytab file is owned by root and protected from being read by others. Do not mess with these permissions, build a different keytab file for slapd instead, and make sure it is owned by the user that slapd runs as.</P>
 <P>To do this, start kadmin, and enter the following commands:</P>
 <PRE>
      addprinc -randkey ldap/ldap.example.com@EXAMPLE.COM
@@ -8578,7 +8654,7 @@ Database objects of instances of this backend
 </PRE>
 <P>Then, on the shell, do:</P>
 <PRE>
-     chown ldap.ldap /etc/openldap/ldap.keytab
+     chown ldap:ldap /etc/openldap/ldap.keytab
      chmod 600 /etc/openldap/ldap.keytab
 </PRE>
 <P>Now you have to tell slapd (well, actually tell the gssapi library in Kerberos 5 that is invoked by Cyrus SASL) where to find the new keytab. You do this by setting the environment variable KRB5_KTNAME like this:</P>
@@ -8635,9 +8711,9 @@ Database objects of instances of this backend
 <P>There might well be other reasons; the contents of the log file should help clarifying them.</P>
 <P>Tests that fire up multiple instances of slapd typically log to tests/testrun/slapd.&lt;n&gt;.log, with a distinct &lt;n&gt; for each instance of slapd; list tests/testrun/ for possible values of &lt;n&gt;.</P>
 <H3><A NAME="ldap_*: Internal (implementation specific) error (80) - additional info: entry index delete failed">C.2.8. ldap_*: Internal (implementation specific) error (80) - additional info: entry index delete failed</A></H3>
-<P>This seems to be related with wrong ownership of the BDB's dir (/var/lib/ldap) and files.</P>
+<P>This seems to be related with wrong ownership of the BDB's dir (/var/lib/ldap) and files. The files must be owned by the user that slapd runs as.</P>
 <PRE>
-    chmod -R openldap:openldap /var/lib/ldap
+    chown -R ldap:ldap /var/lib/ldap
 </PRE>
 <P>fixes it in Debian</P>
 <H3><A NAME="ldap_sasl_interactive_bind_s: Can\'t contact LDAP server (-1)">C.2.9. ldap_sasl_interactive_bind_s: Can't contact LDAP server (-1)</A></H3>
@@ -8698,6 +8774,17 @@ Database objects of instances of this backend
 </TD>
 <TD>
 <TT>2.0.1</TT>
+</TD>
+</TR>
+<TR>
+<TD>
+&nbsp;
+</TD>
+<TD>
+<TT>&nbsp;<A HREF="http://developer.mozilla.org/en/NSS">MozNSS</A></TT>
+</TD>
+<TD>
+<TT>3.12.9</TT>
 </TD>
 </TR>
 <TR>
@@ -8797,6 +8884,39 @@ Database Software
 </TD>
 <TD>
 <TT>4.7</TT>
+</TD>
+</TR>
+<TR>
+<TD>
+&nbsp;
+</TD>
+<TD>
+<TT>&nbsp;</TT>
+</TD>
+<TD>
+<TT>4.8</TT>
+</TD>
+</TR>
+<TR>
+<TD>
+&nbsp;
+</TD>
+<TD>
+<TT>&nbsp;</TT>
+</TD>
+<TD>
+<TT>5.0</TT>
+</TD>
+</TR>
+<TR>
+<TD>
+&nbsp;
+</TD>
+<TD>
+<TT>&nbsp;</TT>
+</TD>
+<TD>
+<TT>5.1</TT>
 </TD>
 </TR>
 <TR>
@@ -10404,6 +10524,14 @@ University of Michigan LDAP Team
 </TR>
 <TR>
 <TD>
+<A HREF="http://developer.mozilla.org/en/NSS">MozNSS</A>
+</TD>
+<TD>
+<A HREF="http://developer.mozilla.org/en/NSS">http://developer.mozilla.org/en/NSS</A>
+</TD>
+</TR>
+<TR>
+<TD>
 <A HREF="http://www.openldap.org/">OpenLDAP</A>
 </TD>
 <TD>
@@ -11059,7 +11187,7 @@ operates.
 <H2><A NAME="Additional Copyright Notices">K.2. Additional Copyright Notices</A></H2>
 <P>Portions Copyright 1998-2008 Kurt D. Zeilenga.<BR>Portions Copyright 1998-2006 Net Boolean Incorporated.<BR>Portions Copyright 2001-2006 IBM Corporation.<BR><EM>All rights reserved.</EM></P>
 <P>Redistribution and use in source and binary forms, with or without modification, are permitted only as authorized by the <A HREF="#OpenLDAP Public License">OpenLDAP Public License</A>.</P>
-<P>Portions Copyright 1999-2007 Howard Y.H. Chu.<BR>Portions Copyright 1999-2007 Symas Corporation.<BR>Portions Copyright 1998-2003 Hallvard B. Furuseth.<BR>Portions Copyright 2007-2009 Gavin Henry.<BR>Portions Copyright 2007-2009 Suretec Systems Limited.<BR><EM>All rights reserved.</EM></P>
+<P>Portions Copyright 1999-2007 Howard Y.H. Chu.<BR>Portions Copyright 1999-2007 Symas Corporation.<BR>Portions Copyright 1998-2003 Hallvard B. Furuseth.<BR>Portions Copyright 2007-2011 Gavin Henry.<BR>Portions Copyright 2007-2011 Suretec Systems Limited.<BR><EM>All rights reserved.</EM></P>
 <P>Redistribution and use in source and binary forms, with or without modification, are permitted provided that this notice is preserved. The names of the copyright holders may not be used to endorse or promote products derived from this software without their specific prior written permission.  This software is provided ``as is'' without express or implied warranty.</P>
 <H2><A NAME="University of Michigan Copyright Notice">K.3. University of Michigan Copyright Notice</A></H2>
 <P>Portions Copyright 1992-1996 Regents of the University of Michigan.<BR><EM>All rights reserved.</EM></P>

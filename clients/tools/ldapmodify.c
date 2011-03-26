@@ -1,8 +1,8 @@
 /* ldapmodify.c - generic program to modify or add entries using LDAP */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodify.c,v 1.186.2.14 2010/04/15 22:16:50 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodify.c,v 1.186.2.17 2011/01/06 18:43:18 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2011 The OpenLDAP Foundation.
  * Portions Copyright 2006 Howard Chu.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
@@ -64,7 +64,6 @@
 #include "lutil_ldap.h"
 #include "ldif.h"
 #include "ldap_defaults.h"
-#include "ldap_log.h"
 #include "ldap_pvt.h"
 #include "lber_pvt.h"
 
@@ -1259,7 +1258,7 @@ static int process_response(
 
 	if ( text ) ldap_memfree( text );
 	if ( matched ) ldap_memfree( matched );
-	if ( text ) ber_memvfree( (void **)refs );
+	if ( refs ) ber_memvfree( (void **)refs );
 
 	if ( ctrls ) {
 		tool_print_ctrls( ld, ctrls );

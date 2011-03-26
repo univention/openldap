@@ -1,8 +1,8 @@
 /* accesslog.c - log operations for audit/history purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/accesslog.c,v 1.37.2.30 2010/04/19 20:37:53 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/accesslog.c,v 1.37.2.34 2011/01/26 23:23:34 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2010 The OpenLDAP Foundation.
+ * Copyright 2005-2011 The OpenLDAP Foundation.
  * Portions copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -669,8 +669,10 @@ accesslog_purge( void *ctx, void *arg )
 		for (i=0; i<pd.used; i++) {
 			op->o_req_dn = pd.dn[i];
 			op->o_req_ndn = pd.ndn[i];
-			if ( !slapd_shutdown )
+			if ( !slapd_shutdown ) {
+				rs_reinit( &rs, REP_RESULT );
 				op->o_bd->be_delete( op, &rs );
+			}
 			ch_free( pd.ndn[i].bv_val );
 			ch_free( pd.dn[i].bv_val );
 		}
@@ -680,6 +682,7 @@ accesslog_purge( void *ctx, void *arg )
 		{
 			Modifications mod;
 			struct berval bv[2];
+			rs_reinit( &rs, REP_RESULT );
 			/* update context's entryCSN to reflect oldest CSN */
 			mod.sml_numvals = 1;
 			mod.sml_values = bv;
@@ -1048,6 +1051,8 @@ logSchemaControlValidate(
 	/* extract and check controlValue */
 	if ( strncasecmp( &val.bv_val[ i ], "controlValue ", STRLENOF( "controlValue " ) ) == 0 )
 	{
+		ber_len_t valueStart, valueLen;
+
 		i += STRLENOF( "controlValue " );
 		for ( ; i < val.bv_len; i++ ) {
 			if ( !ASCII_SPACE( val.bv_val[ i ] ) ) {
@@ -1063,6 +1068,9 @@ logSchemaControlValidate(
 			return LDAP_INVALID_SYNTAX;
 		}
 
+		i++;
+		valueStart = i;
+
 		for ( ; i < val.bv_len; i++ ) {
 			if ( val.bv_val[ i ] == '"' ) {
 				break;
@@ -1077,7 +1085,12 @@ logSchemaControlValidate(
 			return LDAP_INVALID_SYNTAX;
 		}
 
-		for ( ; i < val.bv_len; i++ ) {
+		valueLen = i - valueStart;
+		if ( (valueLen/2)*2 != valueLen ) {
+			return LDAP_INVALID_SYNTAX;
+		}
+
+		for ( i++; i < val.bv_len; i++ ) {
 			if ( !ASCII_SPACE( val.bv_val[ i ] ) ) {
 				break;
 			}
@@ -1160,25 +1173,9 @@ accesslog_ctrls(
 			ber_len_t	j;
 
 			ptr = lutil_strcopy( ptr, " controlValue \"" );
-			for ( j = 0; j < ctrls[ i ]->ldctl_value.bv_len; j++ )
-			{
-				unsigned char	o;
-
-				o = ( ( ctrls[ i ]->ldctl_value.bv_val[ j ] >> 4 ) & 0xF );
-				if ( o < 10 ) {
-					*ptr++ = '0' + o;
-
-				} else {
-					*ptr++ = 'A' + o;
-				}
-
-				o = ( ctrls[ i ]->ldctl_value.bv_val[ j ] & 0xF );
-				if ( o < 10 ) {
-					*ptr++ = '0' + o;
-
-				} else {
-					*ptr++ = 'A' + o;
-				}
+			for ( j = 0; j < ctrls[ i ]->ldctl_value.bv_len; j++ ) {
+				*ptr++ = SLAP_ESCAPE_HI(ctrls[ i ]->ldctl_value.bv_val[ j ]);
+				*ptr++ = SLAP_ESCAPE_LO(ctrls[ i ]->ldctl_value.bv_val[ j ]);
 			}
 
 			*ptr++ = '"';
@@ -1377,6 +1374,11 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 
 	if ( lo->mask & LOG_OP_WRITES ) {
 		slap_callback *cb;
+
+		/* These internal ops are not logged */
+		if ( op->o_dont_replicate && op->orm_no_opattrs )
+			return SLAP_CB_CONTINUE;
+
 		ldap_pvt_thread_mutex_lock( &li->li_log_mutex );
 		old = li->li_old;
 		li->li_old = NULL;
@@ -1757,6 +1759,10 @@ accesslog_op_mod( Operation *op, SlapReply *rs )
 {
 	slap_overinst *on = (slap_overinst *)op->o_bd->bd_info;
 	log_info *li = on->on_bi.bi_private;
+
+	/* These internal ops are not logged */
+	if ( op->o_dont_replicate && op->orm_no_opattrs )
+		return SLAP_CB_CONTINUE;
 
 	if ( li->li_ops & LOG_OP_WRITES ) {
 		slap_callback *cb = op->o_tmpalloc( sizeof( slap_callback ), op->o_tmpmemctx ), *cb2;

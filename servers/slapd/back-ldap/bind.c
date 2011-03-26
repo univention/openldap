@@ -1,8 +1,8 @@
 /* bind.c - ldap backend bind function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.162.2.29 2010/06/10 19:38:49 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.162.2.33 2011/01/26 18:32:52 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2011 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -33,9 +33,6 @@
 #include "slap.h"
 #include "back-ldap.h"
 #include "lutil.h"
-#undef ldap_debug	/* silence a warning in ldap-int.h */
-#include "../../../libraries/libldap/ldap-int.h"
-
 #include "lutil_ldap.h"
 
 #define LDAP_CONTROL_OBSOLETE_PROXY_AUTHZ	"2.16.840.1.113730.3.4.12"
@@ -584,12 +581,13 @@ retry:;
 				rc = ldap_parse_extended_result( ld, res,
 						NULL, &data, 0 );
 				if ( rc == LDAP_SUCCESS ) {
-					int err;
-					rc = ldap_parse_result( ld, res, &err,
+					SlapReply rs;
+					rc = ldap_parse_result( ld, res, &rs.sr_err,
 						NULL, NULL, NULL, NULL, 1 );
-					if ( rc == LDAP_SUCCESS ) {
-						rc = err;
+					if ( rc != LDAP_SUCCESS ) {
+						rs.sr_err = rc;
 					}
+					rc = slap_map_api2result( &rs );
 					res = NULL;
 					
 					/* FIXME: in case a referral 
@@ -667,6 +665,7 @@ ldap_back_prepare_conn( ldapconn_t *lc, Operation *op, SlapReply *rs, ldap_back_
 	LDAP		*ld = NULL;
 #ifdef HAVE_TLS
 	int		is_tls = op->o_conn->c_is_tls;
+	int		flags = li->li_flags;
 	time_t		lctime = (time_t)(-1);
 	slap_bindconf *sb;
 #endif /* HAVE_TLS */
@@ -726,11 +725,18 @@ ldap_back_prepare_conn( ldapconn_t *lc, Operation *op, SlapReply *rs, ldap_back_
 		ldap_set_option( ld, LDAP_OPT_X_TLS_CTX, sb->sb_tls_ctx );
 	}
 
+	/* if required by the bindconf configuration, force TLS */
+	if ( ( sb == &li->li_acl || sb == &li->li_idassert.si_bc ) &&
+		sb->sb_tls_ctx )
+	{
+		flags |= LDAP_BACK_F_USE_TLS;
+	}
+
 	ldap_pvt_thread_mutex_lock( &li->li_uri_mutex );
 	assert( li->li_uri_mutex_do_not_lock == 0 );
 	li->li_uri_mutex_do_not_lock = 1;
 	rs->sr_err = ldap_back_start_tls( ld, op->o_protocol, &is_tls,
-			li->li_uri, li->li_flags, li->li_nretries, &rs->sr_text );
+			li->li_uri, flags, li->li_nretries, &rs->sr_text );
 	li->li_uri_mutex_do_not_lock = 0;
 	ldap_pvt_thread_mutex_unlock( &li->li_uri_mutex );
 	if ( rs->sr_err != LDAP_SUCCESS ) {
@@ -1804,10 +1810,12 @@ retry:;
 
 			rc = ldap_parse_result( lc->lc_ld, res, &rs->sr_err,
 					&match, &text, &refs, &ctrls, 1 );
-			rs->sr_text = text;
-			if ( rc != LDAP_SUCCESS ) {
+			if ( rc == LDAP_SUCCESS ) {
+				rs->sr_text = text;
+			} else {
 				rs->sr_err = rc;
 			}
+			rs->sr_err = slap_map_api2result( rs );
 
 			/* RFC 4511: referrals can only appear
 			 * if result code is LDAP_REFERRAL */
@@ -1901,14 +1909,14 @@ retry:;
 		ber_memvfree( (void **)refs );
 	}
 
-		/* match should not be possible with a successful bind */
-		if ( match ) {
-			if ( rs->sr_matched != match ) {
-				free( (char *)rs->sr_matched );
-			}
-			rs->sr_matched = NULL;
-			ldap_memfree( match );
+	/* match should not be possible with a successful bind */
+	if ( match ) {
+		if ( rs->sr_matched != match ) {
+			free( (char *)rs->sr_matched );
 		}
+		rs->sr_matched = NULL;
+		ldap_memfree( match );
+	}
 
 	if ( ctrls != NULL ) {
 		if ( op->o_tag == LDAP_REQ_BIND && rs->sr_err == LDAP_SUCCESS ) {

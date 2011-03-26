@@ -1,8 +1,8 @@
 /* ldif-filter -- clean up LDIF testdata from stdin */
-/* $OpenLDAP: pkg/ldap/tests/progs/ldif-filter.c,v 1.3.2.2 2010/04/19 19:14:31 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/tests/progs/ldif-filter.c,v 1.3.2.3 2011/01/04 23:51:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2009-2010 The OpenLDAP Foundation.
+ * Copyright 2009-2011 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

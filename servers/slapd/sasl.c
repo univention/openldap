@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.239.2.23 2010/04/15 18:41:32 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sasl.c,v 1.239.2.25 2011/01/04 23:50:23 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2011 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1590,7 +1590,7 @@ int slap_sasl_bind( Operation *op, SlapReply *rs )
 		/* EXTERNAL */
 
 		if( op->orb_cred.bv_len ) {
-			rs->sr_text = "proxy authorization not support";
+			rs->sr_text = "proxy authorization not supported";
 			rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
 			send_ldap_result( op, rs );
 

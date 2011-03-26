@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/init.c,v 1.102.2.14 2010/04/13 20:22:57 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/init.c,v 1.102.2.17 2011/01/11 20:44:14 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2011 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@
 #include "lutil.h"
 
 struct ldapoptions ldap_int_global_options =
-	{ LDAP_UNINITIALIZED, LDAP_DEBUG_NONE };  
+	{ LDAP_UNINITIALIZED, LDAP_DEBUG_NONE LDAP_LDO_MUTEX_NULLARG };  
 
 #define ATTR_NONE	0
 #define ATTR_BOOL	1
@@ -510,6 +510,15 @@ ldap_int_destroy_global_options(void)
  */
 void ldap_int_initialize_global_options( struct ldapoptions *gopts, int *dbglvl )
 {
+#ifdef LDAP_R_COMPILE
+	LDAP_PVT_MUTEX_FIRSTCREATE(gopts->ldo_mutex);
+#endif
+	LDAP_MUTEX_LOCK( &gopts->ldo_mutex );
+	if (gopts->ldo_valid == LDAP_INITIALIZED) {
+		/* someone else got here first */
+		LDAP_MUTEX_UNLOCK( &gopts->ldo_mutex );
+		return;
+	}
 	if (dbglvl)
 	    gopts->ldo_debug = *dbglvl;
 	else
@@ -573,6 +582,7 @@ void ldap_int_initialize_global_options( struct ldapoptions *gopts, int *dbglvl 
 	gopts->ldo_keepalive_idle = 0;
 
 	gopts->ldo_valid = LDAP_INITIALIZED;
+	LDAP_MUTEX_UNLOCK( &gopts->ldo_mutex );
    	return;
 }
 

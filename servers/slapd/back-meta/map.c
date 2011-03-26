@@ -1,8 +1,8 @@
 /* map.c - ldap backend mapping routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/map.c,v 1.15.2.14 2010/04/15 22:22:28 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/map.c,v 1.15.2.18 2011/01/31 20:47:58 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2011 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -60,9 +60,6 @@
 #include "lutil.h"
 #include "../back-ldap/back-ldap.h"
 #include "back-meta.h"
-
-#undef ldap_debug	/* silence a warning in ldap-int.h */
-#include "../../../libraries/libldap/ldap-int.h"
 
 int
 mapping_cmp ( const void *c1, const void *c2 )
@@ -270,7 +267,9 @@ map_attr_value(
 			return -1;
 		}
 
-	} else if ( ad->ad_type->sat_equality->smr_usage & SLAP_MR_MUTATION_NORMALIZER ) {
+	} else if ( ad->ad_type->sat_equality && 
+		ad->ad_type->sat_equality->smr_usage & SLAP_MR_MUTATION_NORMALIZER )
+	{
 		if ( ad->ad_type->sat_equality->smr_normalize(
 			(SLAP_MR_DENORMALIZE|SLAP_MR_VALUE_OF_ASSERTION_SYNTAX),
 			NULL, NULL, value, &vtmp, memctx ) )
@@ -711,7 +710,7 @@ ldap_back_referral_result_rewrite(
 			 * legal to trim values when adding/modifying;
 			 * it should be when searching (e.g. ACLs).
 			 */
-			LBER_FREE( a_vals[ i ].bv_val );
+			ber_memfree( a_vals[ i ].bv_val );
 			if ( last > i ) {
 				a_vals[ i ] = a_vals[ last ];
 			}
@@ -738,7 +737,7 @@ ldap_back_referral_result_rewrite(
 
 				ber_memfree_x( a_vals[ i ].bv_val, memctx );
 				ber_str2bv_x( newurl, 0, 1, &a_vals[ i ], memctx );
-				LDAP_FREE( newurl );
+				ber_memfree( newurl );
 				ludp->lud_dn = olddn.bv_val;
 			}
 			break;
@@ -824,7 +823,7 @@ ldap_dnattr_result_rewrite(
 			 * legal to trim values when adding/modifying;
 			 * it should be when searching (e.g. ACLs).
 			 */
-			LBER_FREE( a_vals[i].bv_val );
+			ber_memfree( a_vals[i].bv_val );
 			if ( last > i ) {
 				a_vals[i] = a_vals[last];
 			}
@@ -835,7 +834,7 @@ ldap_dnattr_result_rewrite(
 		default:
 			/* leave attr untouched if massage failed */
 			if ( !BER_BVISNULL( &bv ) && a_vals[i].bv_val != bv.bv_val ) {
-				LBER_FREE( a_vals[i].bv_val );
+				ber_memfree( a_vals[i].bv_val );
 				a_vals[i] = bv;
 			}
 			break;

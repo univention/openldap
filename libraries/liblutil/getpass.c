@@ -1,8 +1,8 @@
 /* getpass.c -- get password from user */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/getpass.c,v 1.17.2.7 2010/04/13 20:23:05 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/getpass.c,v 1.17.2.9 2011/01/04 23:50:10 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2011 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -102,8 +102,8 @@ lutil_getpass( const char *prompt )
 #else
 	fi = stdin;
 #endif
-	fprintf(stdout, "%s", prompt); 
-	fflush(stdout);
+	fprintf(stderr, "%s", prompt); 
+	fflush(stderr);
 	i = 0;
 	while ( (c = getc(fi)) != EOF && c != '\n' && c != '\r' )
 		if ( i < (sizeof(pbuf)-1) )
@@ -111,8 +111,8 @@ lutil_getpass( const char *prompt )
 #if defined(HAVE_TERMIOS_H) || defined(HAVE_SGTTY_H)
 	/* tidy up */
 	if (fi != stdin) {
-		fprintf(stdout, "\n"); 
-		fflush(stdout);
+		fprintf(stderr, "\n"); 
+		fflush(stderr);
 		SETFLAGS( ttyb, flags );
 		if (SETATTR(fileno(fi), &ttyb) < 0)
 			perror("SETATTR");

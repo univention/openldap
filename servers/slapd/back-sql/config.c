@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/config.c,v 1.32.2.8 2010/04/13 20:23:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/config.c,v 1.32.2.10 2011/01/04 23:50:46 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2011 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -638,6 +638,37 @@ backsql_db_config(
 		}
 
 		ber_str2bv( argv[ 1 ], 0, 1, &bi->sql_aliasing_quote );
+
+	} else if ( !strcasecmp( argv[ 0 ], "autocommit" ) ) {
+		if ( argc != 2 ) {
+			Debug( LDAP_DEBUG_TRACE,
+				"<==backsql_db_config (%s line %d): "
+				"missing arg "
+				"in \"autocommit {NO|yes}\" directive\n",
+				fname, lineno, 0 );
+			return 1;
+		}
+
+		if ( !strcasecmp( argv[ 1 ], "yes" ) ||
+			!strcasecmp( argv[ 1 ], "TRUE" ) ||
+			!strcasecmp( argv[ 1 ], "on" ) )
+		{
+			bi->sql_flags |= BSQLF_AUTOCOMMIT_ON;
+
+		} else if ( !strcasecmp( argv[ 1 ], "no" ) ||
+			!strcasecmp( argv[ 1 ], "FALSE" ) ||
+			!strcasecmp( argv[ 1 ], "off" ) )
+		{
+			bi->sql_flags &= ~BSQLF_AUTOCOMMIT_ON;
+
+		} else {
+			Debug( LDAP_DEBUG_TRACE,
+				"<==backsql_db_config (%s line %d): "
+				"invalid arg "
+				"in \"autocommit {NO|yes}\" directive\n",
+				fname, lineno, 0 );
+			return 1;
+		}
 
 	} else {
 		return SLAP_CONF_UNKNOWN;

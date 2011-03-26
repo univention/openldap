@@ -1,8 +1,8 @@
 /* nssov.c - nss-ldap overlay for slapd */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/nssov.c,v 1.1.2.6 2010/04/13 20:22:28 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/nssov.c,v 1.1.2.9 2011/01/04 23:49:33 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2010 The OpenLDAP Foundation.
+ * Copyright 2008-2011 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
@@ -260,9 +260,11 @@ static void handleconnection(nssov_info *ni,int sock,Operation *op)
   uid_t uid;
   gid_t gid;
   char authid[sizeof("gidNumber=4294967295+uidNumber=424967295,cn=peercred,cn=external,cn=auth")];
+  char peerbuf[8];
+  struct berval peerbv = { sizeof(peerbuf), peerbuf };
 
   /* log connection */
-  if (lutil_getpeereid(sock,&uid,&gid))
+  if (LUTIL_GETPEEREID(sock,&uid,&gid,&peerbv))
     Debug( LDAP_DEBUG_TRACE,"nssov: connection from unknown client: %s\n",strerror(errno),0,0);
   else
     Debug( LDAP_DEBUG_TRACE,"nssov: connection from uid=%d gid=%d\n",
@@ -879,18 +881,20 @@ nssov_db_close(
 	slap_overinst *on = (slap_overinst *)be->bd_info;
 	nssov_info *ni = on->on_bi.bi_private;
 
-	/* close socket if it's still in use */
-	if (ni->ni_socket >= 0);
-	{
-		if (close(ni->ni_socket))
-			Debug( LDAP_DEBUG_ANY,"problem closing server socket (ignored): %s",strerror(errno),0,0);
-		ni->ni_socket = -1;
-	}
-	/* remove existing named socket */
-	if (unlink(NSLCD_SOCKET)<0)
-	{
-		Debug( LDAP_DEBUG_TRACE,"unlink() of "NSLCD_SOCKET" failed (ignored): %s",
-			strerror(errno),0,0);
+	if ( slapMode & SLAP_SERVER_MODE ) {
+		/* close socket if it's still in use */
+		if (ni->ni_socket >= 0);
+		{
+			if (close(ni->ni_socket))
+				Debug( LDAP_DEBUG_ANY,"problem closing server socket (ignored): %s",strerror(errno),0,0);
+			ni->ni_socket = -1;
+		}
+		/* remove existing named socket */
+		if (unlink(NSLCD_SOCKET)<0)
+		{
+			Debug( LDAP_DEBUG_TRACE,"unlink() of "NSLCD_SOCKET" failed (ignored): %s",
+				strerror(errno),0,0);
+		}
 	}
 }
 

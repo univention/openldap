@@ -1,8 +1,8 @@
 /* operation.c - routines to deal with pending ldap operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.75.2.11 2010/04/13 20:23:17 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.75.2.13 2011/01/04 23:50:22 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2011 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -114,6 +114,11 @@ slap_op_free( Operation *op, void *ctx )
 	if ( !BER_BVISNULL( &op->o_csn ) ) {
 		op->o_tmpfree( op->o_csn.bv_val, op->o_tmpmemctx );
 		BER_BVZERO( &op->o_csn );
+	}
+
+	if ( op->o_pagedresults_state != NULL ) {
+		op->o_tmpfree( op->o_pagedresults_state, op->o_tmpmemctx );
+		op->o_pagedresults_state = NULL;
 	}
 
 	opbuf = (OperationBuffer *) op;

@@ -1,8 +1,8 @@
 /* host.c - host lookup routines */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/host.c,v 1.1.2.6 2010/04/15 21:32:56 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/host.c,v 1.1.2.7 2011/01/04 23:49:33 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2010 The OpenLDAP Foundation.
+ * Copyright 2008-2011 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *

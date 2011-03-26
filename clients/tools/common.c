@@ -1,8 +1,8 @@
 /* common.c - common routines for the ldap client tools */
-/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.78.2.31 2010/04/15 22:16:49 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.78.2.39 2011/01/06 18:52:13 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2011 The OpenLDAP Foundation.
  * Portions Copyright 2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -66,6 +66,7 @@ int		nocanon = 0;
 int		referrals = 0;
 int		verbose = 0;
 int		ldif = 0;
+ber_len_t	ldif_wrap = LDIF_LINE_WIDTH;
 char		*prog = NULL;
 
 /* connection */
@@ -252,20 +253,47 @@ tool_destroy( void )
 
 	if ( pr_cookie.bv_val != NULL ) {
 		ber_memfree( pr_cookie.bv_val );
-		pr_cookie.bv_val = NULL;
-		pr_cookie.bv_len = 0;
+		BER_BVZERO( &pr_cookie );
 	}
 
 	if ( binddn != NULL ) {
 		ber_memfree( binddn );
+		binddn = NULL;
 	}
 
 	if ( passwd.bv_val != NULL ) {
 		ber_memfree( passwd.bv_val );
+		BER_BVZERO( &passwd );
 	}
 
 	if ( infile != NULL ) {
 		ber_memfree( infile );
+		infile = NULL;
+	}
+
+	if ( assertion ) {
+		ber_memfree( assertion );
+		assertion = NULL;
+	}
+
+	if ( authzid ) {
+		ber_memfree( authzid );
+		authzid = NULL;
+	}
+
+	if ( proxydn ) {
+		ber_memfree( proxydn );
+		proxydn = NULL;
+	}
+
+	if ( preread_attrs ) {
+		ber_memfree( preread_attrs );
+		preread_attrs = NULL;
+	}
+
+	if ( postread_attrs ) {
+		ber_memfree( postread_attrs );
+		postread_attrs = NULL;
 	}
 }
 
@@ -311,6 +339,7 @@ N_("  -N         do not use reverse DNS to canonicalize SASL host name\n"),
 N_("  -O props   SASL security properties\n"),
 N_("  -o <opt>[=<optparam] general options\n"),
 N_("             nettimeout=<timeout> (in seconds, or \"none\" or \"max\")\n"),
+N_("             ldif-wrap=<width> (in columns, or \"no\" for no wrapping)\n"),
 N_("  -p port    port on LDAP server\n"),
 N_("  -Q         use SASL Quiet mode\n"),
 N_("  -R realm   SASL realm\n"),
@@ -334,6 +363,8 @@ NULL
 			fputs( _(*cpp), stderr );
 		}
 	}
+
+	tool_destroy();
 }
 
 void tool_perror(
@@ -425,7 +456,7 @@ tool_args( int argc, char **argv )
 				assertctl = 1 + crit;
 
 				assert( assertion == NULL );
-				assertion = cvalue;
+				assertion = ber_strdup( cvalue );
 
 			} else if ( strcasecmp( control, "authzid" ) == 0 ) {
 				if( authzid != NULL ) {
@@ -448,7 +479,7 @@ tool_args( int argc, char **argv )
 				}
 
 				assert( authzid == NULL );
-				authzid = cvalue;
+				authzid = ber_strdup( cvalue );
 
 #ifdef LDAP_CONTROL_OBSOLETE_PROXY_AUTHZ
 			} else if ( strcasecmp( control, "proxydn" ) == 0 ) {
@@ -470,7 +501,7 @@ tool_args( int argc, char **argv )
 				}
 
 				assert( proxydn == NULL );
-				proxydn = cvalue;
+				proxydn = ber_strdup( cvalue );
 #endif /* LDAP_CONTROL_OBSOLETE_PROXY_AUTHZ */
 
 			} else if ( ( strcasecmp( control, "relax" ) == 0 ) ||
@@ -540,7 +571,7 @@ tool_args( int argc, char **argv )
 				}
 
 				preread = 1 + crit;
-				preread_attrs = cvalue;
+				preread_attrs = ber_strdup( cvalue );
 
 			} else if ( strcasecmp( control, "postread" ) == 0 ) {
 				if( postread ) {
@@ -549,7 +580,7 @@ tool_args( int argc, char **argv )
 				}
 
 				postread = 1 + crit;
-				postread_attrs = cvalue;
+				postread_attrs = ber_strdup( cvalue );
 
 #ifdef LDAP_CONTROL_X_CHAINING_BEHAVIOR
 			} else if ( strcasecmp( control, "chaining" ) == 0 ) {
@@ -597,6 +628,19 @@ tool_args( int argc, char **argv )
 				}
 #endif /* LDAP_CONTROL_X_CHAINING_BEHAVIOR */
 
+#ifdef LDAP_CONTROL_X_SESSION_TRACKING
+			} else if ( strcasecmp( control, "sessiontracking" ) == 0 ) {
+				if ( sessionTracking ) {
+					fprintf( stderr, "%s: session tracking can be only specified once\n", prog );
+					exit( EXIT_FAILURE );
+				}
+				sessionTracking = 1;
+				if( crit ) {
+					fprintf( stderr, "sessiontracking: critical flag not allowed\n" );
+					usage();
+				}
+#endif /* LDAP_CONTROL_X_SESSION_TRACKING */
+
 			/* this shouldn't go here, really; but it's a feature... */
 			} else if ( strcasecmp( control, "abandon" ) == 0 ) {
 				abcan = Intr_Abandon;
@@ -616,15 +660,6 @@ tool_args( int argc, char **argv )
 					gotintr = abcan;
 				}
 
-#ifdef LDAP_CONTROL_X_SESSION_TRACKING
-			} else if ( strcasecmp( control, "sessiontracking" ) == 0 ) {
-				if ( sessionTracking ) {
-					fprintf( stderr, "%s: session tracking can be only specified once\n", prog );
-					exit( EXIT_FAILURE );
-				}
-				sessionTracking = 1;
-#endif /* LDAP_CONTROL_X_SESSION_TRACKING */
-
 			} else if ( tool_is_oid( control ) ) {
 				LDAPControl	*tmpctrls, ctrl;
 
@@ -636,6 +671,8 @@ tool_args( int argc, char **argv )
 				}
 				unknown_ctrls = tmpctrls;
 				ctrl.ldctl_oid = control;
+				/* don't free it */
+				control = NULL;
 				ctrl.ldctl_value.bv_val = NULL;
 				ctrl.ldctl_value.bv_len = 0;
 				ctrl.ldctl_iscritical = crit;
@@ -669,6 +706,10 @@ tool_args( int argc, char **argv )
 				fprintf( stderr, "Invalid general control name: %s\n",
 					control );
 				usage();
+			}
+			if ( control ) {
+				ber_memfree( control );	 
+				control = NULL;
 			}
 			break;
 		case 'f':	/* read from file */
@@ -751,11 +792,30 @@ tool_args( int argc, char **argv )
 		 				prog, (long)nettimeout.tv_sec );
 	 				exit( EXIT_FAILURE );
  				}
+
+			} else if ( strcasecmp( control, "ldif-wrap" ) == 0 ) {
+				if ( cvalue == 0 ) {
+					ldif_wrap = LDIF_LINE_WIDTH;
+
+				} else if ( strcasecmp( cvalue, "no" ) == 0 ) {
+					ldif_wrap = LDIF_LINE_WIDTH_MAX;
+
+				} else {
+					unsigned int u;
+					if ( lutil_atou( &u, cvalue ) ) {
+						fprintf( stderr,
+							_("Unable to parse ldif-wrap=\"%s\"\n"), cvalue );
+		 				exit( EXIT_FAILURE );
+					}
+					ldif_wrap = (ber_len_t)u;
+				}
+
 			} else {
 				fprintf( stderr, "Invalid general option name: %s\n",
 					control );
 				usage();
 			}
+			ber_memfree(control);
 			break;
 		case 'O':
 #ifdef HAVE_CYRUS_SASL
@@ -1839,6 +1899,7 @@ print_prepostread( LDAP *ld, LDAPControl *ctrl, struct berval *what)
 		while ( ber_scanf( ber, "{m" /*}*/, &bv ) != LBER_ERROR ) {
 			int		i;
 			BerVarray	vals = NULL;
+			char		*str = NULL;
 
 			if ( ber_scanf( ber, "[W]", &vals ) == LBER_ERROR ||
 				vals == NULL )
@@ -1846,14 +1907,25 @@ print_prepostread( LDAP *ld, LDAPControl *ctrl, struct berval *what)
 				/* error? */
 				return 1;
 			}
+
+			if ( ldif ) {
+				char *ptr;
+
+				str = malloc( bv.bv_len + STRLENOF(": ") + 1 );
+
+				ptr = str;
+				ptr = lutil_strncopy( ptr, bv.bv_val, bv.bv_len );
+				ptr = lutil_strcopy( ptr, ": " );
+			}
 		
 			for ( i = 0; vals[ i ].bv_val != NULL; i++ ) {
 				tool_write_ldif(
 					ldif ? LDIF_PUT_COMMENT : LDIF_PUT_VALUE,
-					bv.bv_val, vals[ i ].bv_val, vals[ i ].bv_len );
+					ldif ? str : bv.bv_val, vals[ i ].bv_val, vals[ i ].bv_len );
 			}
 
 			ber_bvarray_free( vals );
+			if ( str ) free( str );
 		}
 	}
 
@@ -1933,7 +2005,8 @@ print_paged_results( LDAP *ld, LDAPControl *ctrl )
 		}
 
 		tool_write_ldif( ldif ? LDIF_PUT_COMMENT : LDIF_PUT_VALUE,
-			"pagedresults", buf, ptr - buf );
+			ldif ? "pagedresults: " : "pagedresults",
+			buf, ptr - buf );
 	}
 
 	return 0;
@@ -1953,7 +2026,7 @@ print_sss( LDAP *ld, LDAPControl *ctrl )
 			err, ldap_err2string(err), attr ? " " : "", attr ? attr : "" );
 
 		tool_write_ldif( ldif ? LDIF_PUT_COMMENT : LDIF_PUT_VALUE,
-			"sortResult", buf, rc );
+			ldif ? "sortResult: " : "sortResult", buf, rc );
 	}
 
 	return rc;
@@ -1993,7 +2066,7 @@ print_vlv( LDAP *ld, LDAPControl *ctrl )
 			ber_memfree( bv.bv_val );
 
 		tool_write_ldif( ldif ? LDIF_PUT_COMMENT : LDIF_PUT_VALUE,
-			"vlvResult", buf, rc );
+			ldif ? "vlvResult" : "vlvResult", buf, rc );
 	}
 
 	return rc;
@@ -2153,7 +2226,7 @@ print_ppolicy( LDAP *ld, LDAPControl *ctrl )
 		}
 
 		tool_write_ldif( ldif ? LDIF_PUT_COMMENT : LDIF_PUT_VALUE,
-			"ppolicy", buf, ptr - buf );
+			ldif ? "ppolicy: " : "ppolicy", buf, ptr - buf );
 	}
 
 	return rc;
@@ -2249,7 +2322,7 @@ tool_write_ldif( int type, char *name, char *value, ber_len_t vallen )
 {
 	char	*ldif;
 
-	if (( ldif = ldif_put( type, name, value, vallen )) == NULL ) {
+	if (( ldif = ldif_put_wrap( type, name, value, vallen, ldif_wrap )) == NULL ) {
 		return( -1 );
 	}
 

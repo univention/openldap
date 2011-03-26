@@ -1,8 +1,8 @@
 /* slapcommon.h - common definitions for the slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.h,v 1.14.2.10 2010/04/14 22:59:10 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.h,v 1.14.2.12 2011/01/04 23:50:25 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2011 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,6 +64,7 @@ typedef struct tool_vars {
 	slap_ssf_t tv_sasl_ssf;
 	unsigned tv_dn_mode;
 	unsigned int tv_csnsid;
+	ber_len_t tv_ldif_wrap;
 } tool_vars;
 
 extern tool_vars tool_globals;
@@ -98,6 +99,8 @@ extern tool_vars tool_globals;
 #define sasl_ssf tool_globals.tv_sasl_ssf
 #define dn_mode tool_globals.tv_dn_mode
 #define csnsid tool_globals.tv_csnsid
+#define ldif_wrap tool_globals.tv_ldif_wrap
+
 #define SLAP_TOOL_LDAPDN_PRETTY		SLAP_LDAPDN_PRETTY
 #define SLAP_TOOL_LDAPDN_NORMAL		(SLAP_LDAPDN_PRETTY << 1)
 

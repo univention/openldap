@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.312.2.25 2010/06/10 18:48:36 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.312.2.28 2011/01/06 18:43:19 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2011 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -59,7 +59,9 @@ LDAP_BEGIN_DECL
 		defined( LDAP_API_FEATURE_X_OPENLDAP_THREAD_SAFE ) )
 	/* -lldap may or may not be thread safe */
 	/* -lldap_r, if available, is always thread safe */
-#	define	LDAP_API_FEATURE_THREAD_SAFE 1
+#	define	LDAP_API_FEATURE_THREAD_SAFE 		1
+#	define  LDAP_API_FEATURE_SESSION_THREAD_SAFE	1
+#	define  LDAP_API_FEATURE_OPERATION_THREAD_SAFE	1
 #endif
 #if defined( LDAP_THREAD_SAFE ) && \
 	defined( LDAP_API_FEATURE_X_OPENLDAP_THREAD_SAFE )
@@ -135,6 +137,7 @@ LDAP_BEGIN_DECL
 #define LDAP_OPT_DEFBASE		0x5009	/* searchbase */
 #define	LDAP_OPT_CONNECT_ASYNC		0x5010	/* create connections asynchronously */
 #define	LDAP_OPT_CONNECT_CB			0x5011	/* connection callbacks */
+#define	LDAP_OPT_SESSION_REFCNT		0x5012	/* session reference count */
 
 /* OpenLDAP TLS options */
 #define LDAP_OPT_X_TLS				0x6000
@@ -1187,6 +1190,26 @@ typedef int (LDAP_SASL_INTERACT_PROC) LDAP_P((
 	LDAP *ld, unsigned flags, void* defaults, void *interact ));
 
 LDAP_F( int )
+ldap_sasl_interactive_bind LDAP_P((
+	LDAP *ld,
+	LDAP_CONST char *dn, /* usually NULL */
+	LDAP_CONST char *saslMechanism,
+	LDAPControl **serverControls,
+	LDAPControl **clientControls,
+
+	/* should be client controls */
+	unsigned flags,
+	LDAP_SASL_INTERACT_PROC *proc,
+	void *defaults,
+	
+	/* as obtained from ldap_result() */
+	LDAPMessage *result,
+
+	/* returned during bind processing */
+	const char **rmech,
+	int *msgid ));
+
+LDAP_F( int )
 ldap_sasl_interactive_bind_s LDAP_P((
 	LDAP *ld,
 	LDAP_CONST char *dn, /* usually NULL */
@@ -1498,6 +1521,10 @@ LDAP_F( int )
 ldap_initialize LDAP_P((
 	LDAP **ldp,
 	LDAP_CONST char *url ));
+
+LDAP_F( LDAP * )
+ldap_dup LDAP_P((
+	LDAP *old ));
 
 /*
  * in tls.c
@@ -1910,6 +1937,10 @@ ldap_unbind_ext_s LDAP_P((
 	LDAP			*ld,
 	LDAPControl		**serverctrls,
 	LDAPControl		**clientctrls));
+
+LDAP_F( int )
+ldap_destroy LDAP_P((
+	LDAP			*ld));
 
 #if LDAP_DEPRECATED
 LDAP_F( int )

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/bind.c,v 1.95.2.21 2010/04/13 20:23:30 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/bind.c,v 1.95.2.27 2011/01/26 18:32:53 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2010 The OpenLDAP Foundation.
+ * Copyright 1999-2011 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -33,8 +33,6 @@
 #include "slap.h"
 #include "../back-ldap/back-ldap.h"
 #include "back-meta.h"
-#undef ldap_debug	/* silence a warning in ldap-int.h */
-#include "../../../libraries/libldap/ldap-int.h"
 
 #include "lutil_ldap.h"
 
@@ -425,6 +423,7 @@ retry:;
 			if ( rc != LDAP_SUCCESS ) {
 				rs->sr_err = rc;
 			}
+			rs->sr_err = slap_map_api2result( rs );
 			break;
 		}
 	}
@@ -585,7 +584,6 @@ meta_back_single_dobind(
 	metatarget_t		*mt = mi->mi_targets[ candidate ];
 	metaconn_t		*mc = *mcp;
 	metasingleconn_t	*msc = &mc->mc_conns[ candidate ];
-	static struct berval	cred = BER_BVC( "" );
 	int			msgid;
 
 	assert( !LDAP_BACK_CONN_ISBOUND( msc ) );
@@ -601,12 +599,22 @@ meta_back_single_dobind(
 		(void)meta_back_proxy_authz_bind( mc, candidate, op, rs, sendok );
 
 	} else {
+		char *binddn = "";
+		struct berval cred = BER_BVC( "" );
+
+		/* use credentials if available */
+		if ( !BER_BVISNULL( &msc->msc_bound_ndn )
+			&& !BER_BVISNULL( &msc->msc_cred ) )
+		{
+			binddn = msc->msc_bound_ndn.bv_val;
+			cred = msc->msc_cred;
+		}
 
 		/* FIXME: should we check if at least some of the op->o_ctrls
 		 * can/should be passed? */
 		for (;;) {
 			rs->sr_err = ldap_sasl_bind( msc->msc_ld,
-				"", LDAP_SASL_SIMPLE, &cred,
+				binddn, LDAP_SASL_SIMPLE, &cred,
 				NULL, NULL, &msgid );
 			if ( rs->sr_err != LDAP_X_CONNECTING ) {
 				break;
@@ -615,15 +623,29 @@ meta_back_single_dobind(
 		}
 
 		rs->sr_err = meta_back_bind_op_result( op, rs, mc, candidate, msgid, sendok );
+
+		/* if bind succeeded, but anonymous, clear msc_bound_ndn */
+		if ( rs->sr_err != LDAP_SUCCESS || binddn[0] == '\0' ) {
+			if ( !BER_BVISNULL( &msc->msc_bound_ndn ) ) {
+				ber_memfree( msc->msc_bound_ndn.bv_val );
+				BER_BVZERO( &msc->msc_bound_ndn );
+			}
+
+			if ( !BER_BVISNULL( &msc->msc_cred ) ) {
+				memset( msc->msc_cred.bv_val, 0, msc->msc_cred.bv_len );
+				ber_memfree( msc->msc_cred.bv_val );
+				BER_BVZERO( &msc->msc_cred );
+			}
+		}
 	}
 
 	if ( rs->sr_err != LDAP_SUCCESS ) {
 		if ( dolock ) {
 			ldap_pvt_thread_mutex_lock( &mi->mi_conninfo.lai_mutex );
 		}
-	        LDAP_BACK_CONN_BINDING_CLEAR( msc );
+		LDAP_BACK_CONN_BINDING_CLEAR( msc );
 		if ( META_BACK_ONERR_STOP( mi ) ) {
-	        	LDAP_BACK_CONN_TAINTED_SET( mc );
+			LDAP_BACK_CONN_TAINTED_SET( mc );
 			meta_back_release_conn_lock( mi, mc, 0 );
 			*mcp = NULL;
 		}
@@ -746,8 +768,8 @@ retry_binding:;
 				if ( mc != NULL ) {
 					ldap_pvt_thread_mutex_lock( &mi->mi_conninfo.lai_mutex );
 					LDAP_BACK_CONN_BINDING_CLEAR( msc );
+					meta_back_release_conn_lock( mi, mc, 0 );
 					ldap_pvt_thread_mutex_unlock( &mi->mi_conninfo.lai_mutex );
-					meta_back_release_conn( mi, mc );
 				}
 
 				return 0;
@@ -1042,10 +1064,12 @@ retry:;
 				rc = ldap_parse_result( msc->msc_ld, res, &rs->sr_err,
 						&matched, &text, &refs, &ctrls, 1 );
 				res = NULL;
-				rs->sr_text = text;
-				if ( rc != LDAP_SUCCESS ) {
+				if ( rc == LDAP_SUCCESS ) {
+					rs->sr_text = text;
+				} else {
 					rs->sr_err = rc;
 				}
+				rs->sr_err = slap_map_api2result( rs );
 
 				/* RFC 4511: referrals can only appear
 				 * if result code is LDAP_REFERRAL */
@@ -1120,6 +1144,10 @@ retry:;
 			metasingleconn_t	*msc = &mc->mc_conns[ i ];
 			char			*xtext = NULL;
 			char			*xmatched = NULL;
+
+			if ( msc->msc_ld == NULL ) {
+				continue;
+			}
 
 			rs->sr_err = LDAP_SUCCESS;
 
@@ -1511,6 +1539,11 @@ meta_back_proxy_authz_cred(
 	}
 
 done:;
+
+	if ( !BER_BVISEMPTY( binddn ) ) {
+		LDAP_BACK_CONN_ISIDASSERT_SET( msc );
+	}
+
 	return rs->sr_err;
 }
 

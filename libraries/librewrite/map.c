@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/map.c,v 1.21.2.7 2010/04/13 20:23:08 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/librewrite/map.c,v 1.21.2.8 2011/01/04 23:50:13 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2010 The OpenLDAP Foundation.
+ * Copyright 2000-2011 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

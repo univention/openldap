@@ -1,8 +1,8 @@
 /* tools.c - tools for slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/tools.c,v 1.105.2.19 2010/04/14 23:54:26 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/tools.c,v 1.105.2.22 2011/01/26 18:42:03 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2010 The OpenLDAP Foundation.
+ * Copyright 2000-2011 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -163,9 +163,28 @@ int bdb_tool_entry_close(
 		ldap_pvt_thread_mutex_unlock( &bdb_tool_trickle_mutex );
 #endif
 		ldap_pvt_thread_mutex_lock( &bdb_tool_index_mutex );
+
+		/* There might still be some threads starting */
+		while ( bdb_tool_index_tcount ) {
+			ldap_pvt_thread_cond_wait( &bdb_tool_index_cond_main,
+					&bdb_tool_index_mutex );
+		}
+
 		bdb_tool_index_tcount = slap_tool_thread_max - 1;
 		ldap_pvt_thread_cond_broadcast( &bdb_tool_index_cond_work );
+
+		/* Make sure all threads are stopped */
+		while ( bdb_tool_index_tcount ) {
+			ldap_pvt_thread_cond_wait( &bdb_tool_index_cond_main,
+				&bdb_tool_index_mutex );
+		}
 		ldap_pvt_thread_mutex_unlock( &bdb_tool_index_mutex );
+
+		bdb_tool_info = NULL;
+		slapd_shutdown = 0;
+		ch_free( bdb_tool_index_threads );
+		ch_free( bdb_tool_index_rec );
+		bdb_tool_index_tcount = slap_tool_thread_max - 1;
 	}
 
 	if( eh.bv.bv_val ) {
@@ -718,12 +737,11 @@ int bdb_tool_entry_reindex(
 	Operation op = {0};
 	Opheader ohdr = {0};
 
-	assert( tool_base == NULL );
-	assert( tool_filter == NULL );
-
 	Debug( LDAP_DEBUG_ARGS,
 		"=> " LDAP_XSTRING(bdb_tool_entry_reindex) "( %ld )\n",
 		(long) id, 0, 0 );
+	assert( tool_base == NULL );
+	assert( tool_filter == NULL );
 
 	/* No indexes configured, nothing to do. Could return an
 	 * error here to shortcut things.
@@ -1257,9 +1275,14 @@ bdb_tool_index_task( void *ctx, void *ptr )
 			ldap_pvt_thread_cond_signal( &bdb_tool_index_cond_main );
 		ldap_pvt_thread_cond_wait( &bdb_tool_index_cond_work,
 			&bdb_tool_index_mutex );
-		ldap_pvt_thread_mutex_unlock( &bdb_tool_index_mutex );
-		if ( slapd_shutdown )
+		if ( slapd_shutdown ) {
+			bdb_tool_index_tcount--;
+			if ( !bdb_tool_index_tcount )
+				ldap_pvt_thread_cond_signal( &bdb_tool_index_cond_main );
+			ldap_pvt_thread_mutex_unlock( &bdb_tool_index_mutex );
 			break;
+		}
+		ldap_pvt_thread_mutex_unlock( &bdb_tool_index_mutex );
 
 		bdb_tool_index_threads[base] = bdb_index_recrun( bdb_tool_ix_op,
 			bdb_tool_info, bdb_tool_index_rec, bdb_tool_ix_id, base );

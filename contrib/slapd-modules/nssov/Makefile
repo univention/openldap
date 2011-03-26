@@ -1,7 +1,7 @@
-# $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/Makefile,v 1.1.2.7 2010/04/15 21:32:56 quanah Exp $
+# $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/Makefile,v 1.1.2.8 2011/01/04 23:49:33 kurt Exp $
 # This work is part of OpenLDAP Software <http://www.openldap.org/>.
 #
-# Copyright 2008-2010 The OpenLDAP Foundation.
+# Copyright 2008-2011 The OpenLDAP Foundation.
 # Portions Copyright 2008 Howard Chu, Symas Corp. All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without

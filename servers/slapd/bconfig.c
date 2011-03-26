@@ -1,8 +1,8 @@
 /* bconfig.c - the config backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/bconfig.c,v 1.202.2.86 2010/04/14 22:59:08 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/bconfig.c,v 1.202.2.91 2011/02/02 21:32:02 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2010 The OpenLDAP Foundation.
+ * Copyright 2005-2011 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -191,6 +191,7 @@ enum {
 	CFG_SYNTAX,
 	CFG_ACL_ADD,
 	CFG_SYNC_SUBENTRY,
+	CFG_LTHREADS,
 
 	CFG_LAST
 };
@@ -242,6 +243,7 @@ static OidRec OidMacros[] = {
  * OLcfg{Bk|Db}{Oc|At}:5		-> back-relay
  * OLcfg{Bk|Db}{Oc|At}:6		-> back-sql
  * OLcfg{Bk|Db}{Oc|At}:7		-> back-sock
+ * OLcfg{Bk|Db}{Oc|At}:8		-> back-null
  */
 
 /*
@@ -408,6 +410,14 @@ static ConfigTable config_back_cf_table[] = {
 		&config_generic, "( OLcfgDbAt:0.5 NAME 'olcLimits' "
 			"EQUALITY caseIgnoreMatch "
 			"SYNTAX OMsDirectoryString X-ORDERED 'VALUES' )", NULL, NULL },
+	{ "listener-threads", "count", 2, 0, 0,
+#ifdef NO_THREADS
+		ARG_IGNORED, NULL,
+#else
+		ARG_UINT|ARG_MAGIC|CFG_LTHREADS, &config_generic,
+#endif
+		"( OLcfgGlAt:93 NAME 'olcListenerThreads' "
+			"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
 	{ "localSSF", "ssf", 2, 2, 0, ARG_INT,
 		&local_ssf, "( OLcfgGlAt:26 NAME 'olcLocalSSF' "
 			"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
@@ -894,6 +904,9 @@ config_generic(ConfigArgs *c) {
 		case CFG_TTHREADS:
 			c->value_int = slap_tool_thread_max;
 			break;
+		case CFG_LTHREADS:
+			c->value_uint = slapd_daemon_threads;
+			break;
 		case CFG_SALT:
 			if ( passwd_salt )
 				c->value_string = ch_strdup( passwd_salt );
@@ -1195,6 +1208,7 @@ config_generic(ConfigArgs *c) {
 		case CFG_CONCUR:
 		case CFG_THREADS:
 		case CFG_TTHREADS:
+		case CFG_LTHREADS:
 		case CFG_RO:
 		case CFG_AZPOLICY:
 		case CFG_DEPTH:
@@ -1515,6 +1529,19 @@ config_generic(ConfigArgs *c) {
 			if ( slapMode & SLAP_TOOL_MODE )
 				ldap_pvt_thread_pool_maxthreads(&connection_pool, c->value_int);
 			slap_tool_thread_max = c->value_int;	/* save for reference */
+			break;
+
+		case CFG_LTHREADS:
+			{ int mask = 0;
+			/* use a power of two */
+			while (c->value_uint > 1) {
+				c->value_uint >>= 1;
+				mask <<= 1;
+				mask |= 1;
+			}
+			slapd_daemon_mask = mask;
+			slapd_daemon_threads = mask+1;
+			}
 			break;
 
 		case CFG_SALT:
@@ -3977,10 +4004,12 @@ config_setup_ldif( BackendDB *be, const char *dir, int readit ) {
 
 		op->o_tag = LDAP_REQ_ADD;
 		if ( rc == LDAP_SUCCESS && sc.frontend ) {
+			rs_reinit( &rs, REP_RESULT );
 			op->ora_e = sc.frontend;
 			rc = op->o_bd->be_add( op, &rs );
 		}
 		if ( rc == LDAP_SUCCESS && sc.config ) {
+			rs_reinit( &rs, REP_RESULT );
 			op->ora_e = sc.config;
 			rc = op->o_bd->be_add( op, &rs );
 		}
@@ -5263,6 +5292,7 @@ out2:;
 out:;
 	{	int repl = op->o_dont_replicate;
 		if ( rs->sr_err == LDAP_COMPARE_TRUE ) {
+			rs->sr_text = NULL; /* Set after config_add_internal */
 			rs->sr_err = LDAP_SUCCESS;
 			op->o_dont_replicate = 1;
 		}
@@ -5594,6 +5624,7 @@ out:
 out_noop:
 	if ( rc == LDAP_SUCCESS ) {
 		attrs_free( save_attrs );
+		rs->sr_text = NULL;
 	} else {
 		attrs_free( e->e_attrs );
 		e->e_attrs = save_attrs;
@@ -5640,7 +5671,10 @@ config_back_modify( Operation *op, SlapReply *rs )
 	rdn = ce->ce_entry->e_nname;
 	ptr = strchr( rdn.bv_val, '=' );
 	rdn.bv_len = ptr - rdn.bv_val;
-	slap_bv2ad( &rdn, &rad, &rs->sr_text );
+	rs->sr_err = slap_bv2ad( &rdn, &rad, &rs->sr_text );
+	if ( rs->sr_err != LDAP_SUCCESS ) {
+		goto out;
+	}
 
 	/* Some basic validation... */
 	for ( ml = op->orm_modlist; ml; ml = ml->sml_next ) {
@@ -6141,6 +6175,8 @@ config_build_attrs( Entry *e, AttributeType **at, AttributeDescription *ad,
 	return 0;
 }
 
+/* currently (2010) does not access rs except possibly writing rs->sr_err */
+
 Entry *
 config_build_entry( Operation *op, SlapReply *rs, CfEntryInfo *parent,
 	ConfigArgs *c, struct berval *rdn, ConfigOCs *main, ConfigOCs *extra )
@@ -6238,9 +6274,12 @@ fail:
 		op->ora_modlist = NULL;
 		slap_add_opattrs( op, NULL, NULL, 0, 0 );
 		if ( !op->o_noop ) {
-			op->o_bd->be_add( op, rs );
-			if ( ( rs->sr_err != LDAP_SUCCESS ) 
-					&& (rs->sr_err != LDAP_ALREADY_EXISTS) ) {
+			SlapReply rs2 = {REP_RESULT};
+			op->o_bd->be_add( op, &rs2 );
+			rs->sr_err = rs2.sr_err;
+			rs_assert_done( &rs2 );
+			if ( ( rs2.sr_err != LDAP_SUCCESS ) 
+					&& (rs2.sr_err != LDAP_ALREADY_EXISTS) ) {
 				goto fail;
 			}
 		}
@@ -6456,8 +6495,8 @@ config_back_db_open( BackendDB *be, ConfigReply *cr )
 	/* If we have no explicitly configured ACLs, don't just use
 	 * the global ACLs. Explicitly deny access to everything.
 	 */
-	if ( !be->be_acl ) {
-		parse_acl(be, "config_back_db_open", 0, 6, (char **)defacl, 0 );
+	if ( !be->bd_self->be_acl ) {
+		parse_acl(be->bd_self, "config_back_db_open", 0, 6, (char **)defacl, 0 );
 	}
 
 	thrctx = ldap_pvt_thread_pool_context();
@@ -6521,9 +6560,11 @@ config_back_db_open( BackendDB *be, ConfigReply *cr )
 
 	/* Create schema nodes for included schema... */
 	if ( cfb->cb_config->c_kids ) {
+		int rc;
 		c.depth = 0;
 		c.ca_private = cfb->cb_config->c_kids;
-		if (config_build_schema_inc( &c, ce, op, &rs )) {
+		rc = config_build_schema_inc( &c, ce, op, &rs );
+		if ( rc ) {
 			return -1;
 		}
 	}
@@ -6598,8 +6639,10 @@ config_back_db_open( BackendDB *be, ConfigReply *cr )
 			return -1;
 		}
 		ce = e->e_private;
-		if ( be->be_cf_ocs && be->be_cf_ocs->co_cfadd )
+		if ( be->be_cf_ocs && be->be_cf_ocs->co_cfadd ) {
+			rs_reinit( &rs, REP_RESULT );
 			be->be_cf_ocs->co_cfadd( op, &rs, e, &c );
+		}
 		/* Iterate through overlays */
 		if ( oi ) {
 			slap_overinst *on;
@@ -6638,8 +6681,10 @@ config_back_db_open( BackendDB *be, ConfigReply *cr )
 				if ( !oe ) {
 					return -1;
 				}
-				if ( c.bi->bi_cf_ocs && c.bi->bi_cf_ocs->co_cfadd )
+				if ( c.bi->bi_cf_ocs && c.bi->bi_cf_ocs->co_cfadd ) {
+					rs_reinit( &rs, REP_RESULT );
 					c.bi->bi_cf_ocs->co_cfadd( op, &rs, oe, &c );
+				}
 			}
 		}
 	}

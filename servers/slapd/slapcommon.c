@@ -1,8 +1,8 @@
 /* slapcommon.c - common routine for the slap tools */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.c,v 1.73.2.20 2010/04/14 22:59:10 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapcommon.c,v 1.73.2.25 2011/01/04 23:50:25 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2011 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -108,7 +108,7 @@ usage( int tool, const char *progname )
 }
 
 static int
-parse_slapopt( void )
+parse_slapopt( int tool, int *mode )
 {
 	size_t	len = 0;
 	char	*p;
@@ -192,6 +192,63 @@ parse_slapopt( void )
 #endif /* LOG_LOCAL4 */
 #endif /* LDAP_DEBUG && LDAP_SYSLOG */
 
+	} else if ( strncasecmp( optarg, "schema-check", len ) == 0 ) {
+		switch ( tool ) {
+		case SLAPADD:
+			if ( strcasecmp( p, "yes" ) == 0 ) {
+				*mode &= ~SLAP_TOOL_NO_SCHEMA_CHECK;
+			} else if ( strcasecmp( p, "no" ) == 0 ) {
+				*mode |= SLAP_TOOL_NO_SCHEMA_CHECK;
+			} else {
+				Debug( LDAP_DEBUG_ANY, "unable to parse schema-check=\"%s\".\n", p, 0, 0 );
+				return -1;
+			}
+			break;
+
+		default:
+			Debug( LDAP_DEBUG_ANY, "schema-check meaningless for tool.\n", 0, 0, 0 );
+			break;
+		}
+
+	} else if ( strncasecmp( optarg, "value-check", len ) == 0 ) {
+		switch ( tool ) {
+		case SLAPADD:
+			if ( strcasecmp( p, "yes" ) == 0 ) {
+				*mode |= SLAP_TOOL_VALUE_CHECK;
+			} else if ( strcasecmp( p, "no" ) == 0 ) {
+				*mode &= ~SLAP_TOOL_VALUE_CHECK;
+			} else {
+				Debug( LDAP_DEBUG_ANY, "unable to parse value-check=\"%s\".\n", p, 0, 0 );
+				return -1;
+			}
+			break;
+
+		default:
+			Debug( LDAP_DEBUG_ANY, "value-check meaningless for tool.\n", 0, 0, 0 );
+			break;
+		}
+
+	} else if ( strncasecmp( optarg, "ldif-wrap", len ) == 0 ) {
+		switch ( tool ) {
+		case SLAPCAT:
+			if ( strcasecmp( p, "no" ) == 0 ) {
+				ldif_wrap = LDIF_LINE_WIDTH_MAX;
+
+			} else {
+				unsigned int u;
+				if ( lutil_atou( &u, p ) ) {
+					Debug( LDAP_DEBUG_ANY, "unable to parse ldif-wrap=\"%s\".\n", p, 0, 0 );
+					return -1;
+				}
+				ldif_wrap = (ber_len_t)u;
+			}
+			break;
+
+		default:
+			Debug( LDAP_DEBUG_ANY, "value-check meaningless for tool.\n", 0, 0, 0 );
+			break;
+		}
+
 	} else {
 		return -1;
 	}
@@ -246,6 +303,8 @@ slap_tool_init(
 	free( leakfilename );
 	leakfilename = NULL;
 #endif
+
+	ldif_wrap = LDIF_LINE_WIDTH;
 
 	scope = LDAP_SCOPE_DEFAULT;
 
@@ -420,7 +479,7 @@ slap_tool_init(
 			break;
 
 		case 'o':
-			if ( parse_slapopt() ) {
+			if ( parse_slapopt( tool, &mode ) ) {
 				usage( tool, progname );
 			}
 			break;
@@ -453,11 +512,19 @@ slap_tool_init(
 			}
 			break;
 
-		case 's':	/* dump subtree */
-			if ( tool == SLAPADD )
+		case 's':
+			switch ( tool ) {
+			case SLAPADD:
+				/* no schema check */
 				mode |= SLAP_TOOL_NO_SCHEMA_CHECK;
-			else if ( tool == SLAPCAT || tool == SLAPSCHEMA )
+				break;
+
+			case SLAPCAT:
+			case SLAPSCHEMA:
+				/* dump subtree */
 				subtree = ch_strdup( optarg );
+				break;
+			}
 			break;
 
 		case 't':	/* turn on truncate */

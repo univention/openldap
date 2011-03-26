@@ -1,8 +1,8 @@
 /* slap.h - stand alone ldap server include file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.764.2.68 2010/04/16 20:03:05 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.764.2.73 2011/01/26 23:23:30 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2010 The OpenLDAP Foundation.
+ * Copyright 1998-2011 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -421,6 +421,7 @@ struct Syntax {
 #define SLAP_SYNTAX_HIDE	0x8000U /* hide (do not publish) */
 #endif
 #define	SLAP_SYNTAX_HARDCODE	0x10000U	/* This is hardcoded schema */
+#define	SLAP_SYNTAX_DN		0x20000U	/* Treat like a DN */
 
 	Syntax				**ssyn_sups;
 
@@ -1542,6 +1543,7 @@ typedef struct AccessControlState {
 
 	/* Value dependent acl where processing can restart */
 	AccessControl  *as_vd_acl;
+	int as_vd_acl_present;
 	int as_vd_acl_count;
 	slap_mask_t		as_vd_mask;
 
@@ -1552,7 +1554,7 @@ typedef struct AccessControlState {
 	/* True if started to process frontend ACLs */
 	int as_fe_done;
 } AccessControlState;
-#define ACL_STATE_INIT { NULL, ACL_NONE, NULL, 0, ACL_PRIV_NONE, -1, 0 }
+#define ACL_STATE_INIT { NULL, ACL_NONE, NULL, 0, 0, ACL_PRIV_NONE, -1, 0 }
 
 typedef struct AclRegexMatches {        
 	int dn_count;
@@ -1586,6 +1588,7 @@ LDAP_SLAPD_V (int) slapMode;
 #define	SLAP_TOOL_READONLY	0x0400
 #define	SLAP_TOOL_QUICK		0x0800
 #define SLAP_TOOL_NO_SCHEMA_CHECK	0x1000
+#define SLAP_TOOL_VALUE_CHECK	0x2000
 
 #define SB_TLS_DEFAULT		(-1)
 #define SB_TLS_OFF		0
@@ -2099,23 +2102,23 @@ struct SlapReply {
 		rep_extended_s sru_extended;
 	} sr_un;
 	slap_mask_t sr_flags;
-#define REP_ENTRY_MODIFIABLE	0x0001U
-#define REP_ENTRY_MUSTBEFREED	0x0002U
-#define REP_ENTRY_MUSTRELEASE	0x0004U
-#define	REP_ENTRY_MASK		(REP_ENTRY_MODIFIABLE|REP_ENTRY_MUSTBEFREED|REP_ENTRY_MUSTRELEASE)
+#define	REP_ENTRY_MODIFIABLE	((slap_mask_t) 0x0001U)
+#define	REP_ENTRY_MUSTBEFREED	((slap_mask_t) 0x0002U)
+#define	REP_ENTRY_MUSTRELEASE	((slap_mask_t) 0x0004U)
+#define	REP_ENTRY_MASK		(REP_ENTRY_MODIFIABLE|REP_ENTRY_MUSTFLUSH)
 #define	REP_ENTRY_MUSTFLUSH	(REP_ENTRY_MUSTBEFREED|REP_ENTRY_MUSTRELEASE)
 
-#define REP_MATCHED_MUSTBEFREED	0x0010U
+#define	REP_MATCHED_MUSTBEFREED	((slap_mask_t) 0x0010U)
 #define	REP_MATCHED_MASK	(REP_MATCHED_MUSTBEFREED)
 
-#define REP_REF_MUSTBEFREED	0x0020U
+#define REP_REF_MUSTBEFREED	((slap_mask_t) 0x0020U)
 #define REP_REF_MASK		(REP_REF_MUSTBEFREED)
 
-#define REP_CTRLS_MUSTBEFREED	0x0040U
+#define REP_CTRLS_MUSTBEFREED	((slap_mask_t) 0x0040U)
 #define REP_CTRLS_MASK		(REP_CTRLS_MUSTBEFREED)
 
-#define	REP_NO_ENTRYDN		0x1000U
-#define	REP_NO_SUBSCHEMA	0x2000U
+#define	REP_NO_ENTRYDN		((slap_mask_t) 0x1000U)
+#define	REP_NO_SUBSCHEMA	((slap_mask_t) 0x2000U)
 #define	REP_NO_OPERATIONALS	(REP_NO_ENTRYDN|REP_NO_SUBSCHEMA)
 };
 

@@ -1,7 +1,7 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/dds.c,v 1.2.2.5 2010/04/13 20:22:56 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/dds.c,v 1.2.2.6 2011/01/04 23:50:01 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2010 The OpenLDAP Foundation.
+ * Copyright 2005-2011 The OpenLDAP Foundation.
  * Portions Copyright 2005-2006 SysNet s.n.c.
  * All rights reserved.
  *
