@@ -1,8 +1,10 @@
 openldap (2.4.24-1) unstable; urgency=low
 
   * New upstream version
+  * Refresh all patches
+  * Remove manpage-tlscyphersuite-additions, applied upstream
 
- -- Matthijs Möhlmann <matthijs@cacholong.nl>  Sat, 26 Mar 2011 10:22:16 +0100
+ -- Matthijs Möhlmann <matthijs@cacholong.nl>  Sat, 26 Mar 2011 12:11:30 +0100
 
 openldap (2.4.23-7) unstable; urgency=low
 

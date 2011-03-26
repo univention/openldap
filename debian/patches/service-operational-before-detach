@@ -1,8 +1,6 @@
-Index: b/servers/slapd/main.c
-===================================================================
 --- a/servers/slapd/main.c
 +++ b/servers/slapd/main.c
-@@ -880,14 +880,28 @@
+@@ -902,14 +902,28 @@
  	(void) SIGNAL( SIGBREAK, slap_sig_shutdown );
  #endif
  
@@ -35,7 +33,7 @@ Index: b/servers/slapd/main.c
  	if ( slapd_pid_file != NULL ) {
  		FILE *fp = fopen( slapd_pid_file, "w" );
  
-@@ -936,20 +950,6 @@
+@@ -958,20 +972,6 @@
  		slapd_args_file_unlink = 1;
  	}
  

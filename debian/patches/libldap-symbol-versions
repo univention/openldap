@@ -8,10 +8,8 @@ Not yet contributed upstream.
 Upstream ITS #5365 filed requesting symbol versioning for libldap and
 libber.
 
-Index: b/libraries/libldap_r/Makefile.in
-===================================================================
---- a/libraries/libldap_r/Makefile.in	2010-07-12 12:07:19.000000000 +0200
-+++ b/libraries/libldap_r/Makefile.in	2010-07-12 12:07:28.000000000 +0200
+--- a/libraries/libldap_r/Makefile.in
++++ b/libraries/libldap_r/Makefile.in
 @@ -61,6 +61,9 @@
  XXXLIBS = $(LTHREAD_LIBS)
  NT_LINK_LIBS = $(LDAP_LIBLBER_LA) $(AC_LIBS) $(SECURITY_LIBS)
@@ -22,10 +20,8 @@ Index: b/libraries/libldap_r/Makefile.in
  
  .links : Makefile
  	@for i in $(XXSRCS); do \
-Index: b/build/top.mk
-===================================================================
---- a/build/top.mk	2010-07-12 12:05:38.000000000 +0200
-+++ b/build/top.mk	2010-07-12 12:07:28.000000000 +0200
+--- a/build/top.mk
++++ b/build/top.mk
 @@ -104,6 +104,9 @@
  # LINK_LIBS referenced in library and module link commands.
  LINK_LIBS = $(MOD_LIBS) $(@PLAT@_LINK_LIBS)
@@ -45,11 +41,9 @@ Index: b/build/top.mk
  
  LTCOMPILE_MOD = $(LIBTOOL) $(LTONLY_MOD) --mode=compile \
  	$(CC) $(LT_CFLAGS) $(LT_CPPFLAGS) $(MOD_DEFS) -c
-Index: b/build/openldap.m4
-===================================================================
---- a/build/openldap.m4	2010-07-12 12:05:38.000000000 +0200
-+++ b/build/openldap.m4	2010-07-12 12:07:28.000000000 +0200
-@@ -1129,3 +1129,54 @@
+--- a/build/openldap.m4
++++ b/build/openldap.m4
+@@ -1136,3 +1136,54 @@
  #endif
  	], [ol_cv_ssl_crl_compat=yes], [ol_cv_ssl_crl_compat=no])])
  ])
@@ -104,11 +98,9 @@ Index: b/build/openldap.m4
 +  ol_cv_ld_version_script_option=no
 +fi
 +rm -f conftest*])])
-Index: b/configure.in
-===================================================================
---- a/configure.in	2010-07-12 12:05:38.000000000 +0200
-+++ b/configure.in	2010-07-12 12:07:28.000000000 +0200
-@@ -1895,6 +1895,13 @@
+--- a/configure.in
++++ b/configure.in
+@@ -1901,6 +1901,13 @@
  fi
  AC_SUBST(LTSTATIC)dnl
  
@@ -122,10 +114,8 @@ Index: b/configure.in
  dnl ----------------------------------------------------------------
  if test $ol_enable_wrappers != no ; then
  	AC_CHECK_HEADERS(tcpd.h,[
-Index: b/libraries/libldap/libldap.map
-===================================================================
---- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ b/libraries/libldap/libldap.map	2010-07-12 12:07:28.000000000 +0200
+--- /dev/null
++++ b/libraries/libldap/libldap.map
 @@ -0,0 +1,6 @@
 +OPENLDAP_2.4_2 {
 +  global:
@@ -133,10 +123,8 @@ Index: b/libraries/libldap/libldap.map
 +  local:
 +    *;
 +};
-Index: b/libraries/libldap/Makefile.in
-===================================================================
---- a/libraries/libldap/Makefile.in	2010-07-12 12:07:19.000000000 +0200
-+++ b/libraries/libldap/Makefile.in	2010-07-12 12:07:28.000000000 +0200
+--- a/libraries/libldap/Makefile.in
++++ b/libraries/libldap/Makefile.in
 @@ -52,6 +52,9 @@
  XXLIBS = $(SECURITY_LIBS) $(LUTIL_LIBS)
  NT_LINK_LIBS = $(LDAP_LIBLBER_LA) $(AC_LIBS) $(SECURITY_LIBS)
@@ -147,10 +135,8 @@ Index: b/libraries/libldap/Makefile.in
  
  apitest:	$(XLIBS) apitest.o
  	$(LTLINK) -o $@ apitest.o $(LIBS)
-Index: b/libraries/liblber/Makefile.in
-===================================================================
---- a/libraries/liblber/Makefile.in	2010-07-12 12:05:38.000000000 +0200
-+++ b/libraries/liblber/Makefile.in	2010-07-12 12:07:28.000000000 +0200
+--- a/libraries/liblber/Makefile.in
++++ b/libraries/liblber/Makefile.in
 @@ -38,6 +38,9 @@
  XXLIBS = 
  NT_LINK_LIBS = $(AC_LIBS)
@@ -161,10 +147,8 @@ Index: b/libraries/liblber/Makefile.in
  
  dtest:    $(XLIBS) dtest.o
  	$(LTLINK) -o $@ dtest.o $(LIBS)
-Index: b/libraries/liblber/liblber.map
-===================================================================
---- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ b/libraries/liblber/liblber.map	2010-07-12 12:07:28.000000000 +0200
+--- /dev/null
++++ b/libraries/liblber/liblber.map
 @@ -0,0 +1,8 @@
 +OPENLDAP_2.4_2 {
 +  global:

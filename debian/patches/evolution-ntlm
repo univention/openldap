@@ -11,11 +11,9 @@ SASL and DIGEST-MD5, it's not very appealing.
 Bug#457374 filed against evolution-data-server asking if this support is
 still required on 2007-12-21.
 
-Index: b/include/ldap.h
-===================================================================
---- a/include/ldap.h	2010-07-12 12:05:43.000000000 +0200
-+++ b/include/ldap.h	2010-07-12 12:07:19.000000000 +0200
-@@ -2487,5 +2487,25 @@
+--- a/include/ldap.h
++++ b/include/ldap.h
+@@ -2518,5 +2518,25 @@
  	LDAPControl	**ctrls,
  	LDAPDerefRes	**drp ));
  
@@ -41,10 +39,8 @@ Index: b/include/ldap.h
 +
  LDAP_END_DECL
  #endif /* _LDAP_H */
-Index: b/libraries/libldap/ntlm.c
-===================================================================
---- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ b/libraries/libldap/ntlm.c	2010-07-12 12:07:19.000000000 +0200
+--- /dev/null
++++ b/libraries/libldap/ntlm.c
 @@ -0,0 +1,138 @@
 +/* $OpenLDAP: pkg/ldap/libraries/libldap/ntlm.c,v 1.1.4.10 2002/01/04 20:38:21 kurt Exp $ */
 +/*
@@ -184,10 +180,8 @@ Index: b/libraries/libldap/ntlm.c
 + return( ld->ld_errno );
 +}
 +
-Index: b/libraries/libldap/Makefile.in
-===================================================================
---- a/libraries/libldap/Makefile.in	2010-07-12 12:05:43.000000000 +0200
-+++ b/libraries/libldap/Makefile.in	2010-07-12 12:07:19.000000000 +0200
+--- a/libraries/libldap/Makefile.in
++++ b/libraries/libldap/Makefile.in
 @@ -27,7 +27,7 @@
  	init.c options.c print.c string.c util-int.c schema.c \
  	charray.c os-local.c dnssrv.c utf-8.c utf-8-conv.c \
@@ -206,10 +200,8 @@ Index: b/libraries/libldap/Makefile.in
  	assertion.lo deref.lo
  
  LDAP_INCDIR= ../../include       
-Index: b/libraries/libldap_r/Makefile.in
-===================================================================
---- a/libraries/libldap_r/Makefile.in	2010-07-12 12:05:42.000000000 +0200
-+++ b/libraries/libldap_r/Makefile.in	2010-07-12 12:07:19.000000000 +0200
+--- a/libraries/libldap_r/Makefile.in
++++ b/libraries/libldap_r/Makefile.in
 @@ -29,7 +29,7 @@
  	init.c options.c print.c string.c util-int.c schema.c \
  	charray.c os-local.c dnssrv.c utf-8.c utf-8-conv.c \
@@ -218,7 +210,7 @@ Index: b/libraries/libldap_r/Makefile.in
 +	turn.c ppolicy.c dds.c txn.c ldap_sync.c stctrl.c ntlm.c \
  	assertion.c deref.c
  SRCS	= threads.c rdwr.c rmutex.c tpool.c rq.c \
- 	thr_posix.c thr_cthreads.c thr_thr.c thr_lwp.c thr_nt.c \
+ 	thr_posix.c thr_cthreads.c thr_thr.c thr_nt.c \
 @@ -47,7 +47,7 @@
  	init.lo options.lo print.lo string.lo util-int.lo schema.lo \
  	charray.lo os-local.lo dnssrv.lo utf-8.lo utf-8-conv.lo \
