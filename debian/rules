@@ -169,7 +169,7 @@ binary-arch: install-stamp
 	dh_link -a
 
 	# hardlink these so not confined by apparmor
-	for f in slapacl slapadd slapauth slapcat slapdn slapindex slappasswd slaptest ; do \
+	for f in slapacl slapadd slapauth slapcat slapdn slapindex slappasswd slaptest slapschema ; do \
 	    ln -f $(slapddir)/slapd $(slapddir)/$$f ; \
 	done ;
 
