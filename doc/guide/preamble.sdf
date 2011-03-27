@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/openldap-guide/preamble.sdf,v 1.70.2.13 2011/01/31 21:05:06 quanah Exp $
+# $OpenLDAP: pkg/openldap-guide/preamble.sdf,v 1.70.2.15 2011/03/24 01:32:13 quanah Exp $
 # Copyright 1999-2011 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
  
@@ -55,7 +55,7 @@
 <P>
 <FONT COLOR="#808080" FACE="Arial,Verdana,Helvetica" SIZE="1"><B>
 ________________<BR>
-<SMALL>&copy; Copyright 2008, <A HREF="http://www.OpenLDAP.org/foundation/">OpenLDAP Foundation</A>, <A HREF="mailto:info@OpenLDAP.org">info@OpenLDAP.org</A></SMALL></B></FONT>
+<SMALL>&copy; Copyright 2011, <A HREF="http://www.OpenLDAP.org/foundation/">OpenLDAP Foundation</A>, <A HREF="mailto:info@OpenLDAP.org">info@OpenLDAP.org</A></SMALL></B></FONT>
 
 	!endblock
 !endmacro
@@ -91,7 +91,7 @@ ________________<BR>
 <P>
 <FONT COLOR="#808080" FACE="Arial,Verdana,Helvetica" SIZE="1"><B>
 ________________<BR>
-<SMALL>&copy; Copyright 2008, <A HREF="http://www.OpenLDAP.org/foundation/">OpenLDAP Foundation</A>, <A HREF="mailto:info@OpenLDAP.org">info@OpenLDAP.org</A></SMALL></B></FONT>
+<SMALL>&copy; Copyright 2011, <A HREF="http://www.OpenLDAP.org/foundation/">OpenLDAP Foundation</A>, <A HREF="mailto:info@OpenLDAP.org">info@OpenLDAP.org</A></SMALL></B></FONT>
 
 	!endblock
 !endmacro
@@ -308,4 +308,5 @@ RFC4518|PS|Lightweight Directory Access Protocol (LDAP): Internationalized Strin
 RFC4519|PS|Lightweight Directory Access Protocol (LDAP): Schema for User Applications|http://www.rfc-editor.org/rfc/rfc4519.txt
 RFC4520|BCP|IANA Considerations for LDAP|http://www.rfc-editor.org/rfc/rfc4520.txt
 RFC4533|X|The Lightweight Directory Access Protocol (LDAP) Content Synchronization Operation|http://www.rfc-editor.org/rfc/rfc4533.txt
+Chu-LDAPI|ID|Using LDAP Over IPC Mechanisms|http://tools.ietf.org/html/draft-chu-ldap-ldapi-00
 !endblock

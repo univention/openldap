@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.380.2.39 2011/01/06 18:44:22 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.380.2.41 2011/03/24 18:22:44 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -557,8 +557,8 @@ static slap_daemon_st slap_daemon[MAX_DAEMON_THREADS];
 	memset( slap_daemon[t].sd_flags, 0, dtblsize ); \
 	slapd_ws_sockets[t*2] = wake_sds[t][0]; \
 	slapd_ws_sockets[t*2+1] = wake_sds[t][1]; \
-	wake_sds[0] = t*2; \
-	wake_sds[1] = t*2+1; \
+	wake_sds[t][0] = t*2; \
+	wake_sds[t][1] = t*2+1; \
 	slap_daemon[t].sd_nfds = t*2 + 2; \
 	} while ( 0 )
 
@@ -2098,7 +2098,7 @@ slap_listener_activate(
 	Debug( LDAP_DEBUG_TRACE, "slap_listener_activate(%d): %s\n",
 		sl->sl_sd, sl->sl_busy ? "busy" : "", 0 );
 
-	sl->sl_busy++;
+	sl->sl_busy = 1;
 
 	rc = ldap_pvt_thread_pool_submit( &connection_pool,
 		slap_listener_thread, (void *) sl );

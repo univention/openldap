@@ -1,5 +1,32 @@
 OpenLDAP 2.4 Change Log
 
+OpenLDAP 2.4.25 Release (2011/03/26)
+	Fixed ldapsearch pagedresults loop (ITS#6755)
+	Fixed tools for incompatible args (ITS#6849)
+	Fixed libldap MozNSS crash (ITS#6863)
+	Fixed slapd add objectclasses in order (ITS#6837)
+	Added slapd ordering for uidNumber and gidNumber (ITS#6852)
+	Fixed slapd segfault when adding values out of order (ITS#6858)
+	Fixed slapd sortval handling (ITS#6845)
+	Fixed slapd-bdb with slapadd/index quick option (ITS#6853)
+	Fixed slapd-ldap chain cn=config support (ITS#6837)
+	Fixed slapd-ldap chain with slapd.conf (ITS#6857)
+	Fixed slapd-meta deadlock (ITS#6846)
+	Fixed slapo-sssvlv with multiple requests (ITS#6850)
+	Fixed contrib/lastbind install rules (ITS#6238)
+	Fixed contrib/cloak install rules (ITS#6877)
+	Build Environment
+		Fixed windows NT threads build (ITS#6859)
+		Fixed libldap/lberl/util if/else usage (ITS#6832)
+		Fixed Windows odbc32 detection (ITS#6125)
+		Fixed Windows msys build (ITS#6870)
+		Fixed test020 exit codes (ITS#6404)
+	Documentation
+		admin24 guide ldapi usage (ITS#6839)
+		admin24 guide conversion notes (ITS#6834)
+		admin24 guide fix drawback math for syncrepl (ITS#6866)
+		admin24 guide note manpages are definitive (ITS#6855)
+
 OpenLDAP 2.4.24 Release (2011/02/10)
 	Added LDIF line wrapping setting (ITS#6645)
 	Added MozNSS support (ITS#6714,ITS#6742,ITS#6790,ITS#6791)

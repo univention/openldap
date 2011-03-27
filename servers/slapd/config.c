@@ -1,5 +1,5 @@
 /* config.c - configuration file handling routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.441.2.39 2011/01/04 23:50:18 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/config.c,v 1.441.2.40 2011/03/24 02:22:10 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -1726,6 +1726,10 @@ void bindconf_free( slap_bindconf *bc ) {
 		bc->sb_tls_crlcheck = NULL;
 	}
 #endif
+	if ( bc->sb_tls_ctx ) {
+		ldap_pvt_tls_ctx_free( bc->sb_tls_ctx );
+		bc->sb_tls_ctx = NULL;
+	}
 #endif
 }
 

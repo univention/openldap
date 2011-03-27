@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/contrib/slapd-modules/lastbind/Makefile,v 1.2.2.2 2011/02/04 23:39:17 quanah Exp $
+# $OpenLDAP: pkg/ldap/contrib/slapd-modules/lastbind/Makefile,v 1.2.2.4 2011/03/25 19:39:47 quanah Exp $
 # Copyright 2009 Jonathan Clarke <jonathan@phillipoux.net>.
 # All rights reserved.
 #
@@ -15,6 +15,7 @@ CPPFLAGS+=-DSLAPD_OVER_LASTBIND=SLAPD_MOD_DYNAMIC
 #LIBTOOL=libtool
 LIBTOOL=../../../libtool
 
+prefix=/usr/local
 
 all: lastbind.la
 
@@ -23,7 +24,11 @@ lastbind.lo:    lastbind.c
 
 lastbind.la:    lastbind.lo
 	$(LIBTOOL) --mode=link $(CC) -version-info 0:0:0 \
-		   -rpath $(PREFIX)/lib -module -o $@ $?
+		   -rpath $(prefix)/lib -module -o $@ $?
 
 clean:
 	rm -rf lastbind.lo lastbind.la lastbind.o .libs/
+
+install: lastbind.la
+	mkdir -p $(prefix)/libexec/openldap
+	$(LIBTOOL) --mode=install cp lastbind.la $(prefix)/libexec/openldap

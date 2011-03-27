@@ -1,5 +1,5 @@
 /* schema_prep.c - load builtin schema */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.169.2.15 2011/01/04 23:50:24 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.169.2.16 2011/03/24 02:02:23 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -934,6 +934,7 @@ static struct slap_schema_ad_map {
     		"DESC 'RFC2307: An integer uniquely identifying a user "
 				"in an administrative domain' "
     		"EQUALITY integerMatch "
+    		"ORDERING integerOrderingMatch "
     		"SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 SINGLE-VALUE )",
 		NULL, 0,
 		NULL, NULL,
@@ -944,6 +945,7 @@ static struct slap_schema_ad_map {
     		"DESC 'RFC2307: An integer uniquely identifying a group "
 				"in an administrative domain' "
     		"EQUALITY integerMatch "
+    		"ORDERING integerOrderingMatch "
     		"SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 SINGLE-VALUE )",
 		NULL, 0,
 		NULL, NULL,

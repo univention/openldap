@@ -1,4 +1,4 @@
-dnl $OpenLDAP: pkg/ldap/configure.in,v 1.631.2.33 2011/01/31 20:51:37 hyc Exp $
+dnl $OpenLDAP: pkg/ldap/configure.in,v 1.631.2.34 2011/03/24 01:18:25 quanah Exp $
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
 dnl Copyright 1998-2011 The OpenLDAP Foundation.
@@ -25,7 +25,7 @@ dnl ================================================================
 dnl Configure.in for OpenLDAP
 AC_COPYRIGHT([[Copyright 1998-2011 The OpenLDAP Foundation. All rights reserved.
 Restrictions apply, see COPYRIGHT and LICENSE files.]])
-AC_REVISION([$OpenLDAP: pkg/ldap/configure.in,v 1.631.2.33 2011/01/31 20:51:37 hyc Exp $])
+AC_REVISION([$OpenLDAP: pkg/ldap/configure.in,v 1.631.2.34 2011/03/24 01:18:25 quanah Exp $])
 AC_INIT([OpenLDAP],,[http://www.openldap.org/its/])
 m4_define([AC_PACKAGE_BUGREPORT],[<http://www.openldap.org/its/>])
 AC_CONFIG_SRCDIR(build/version.sh)dnl
@@ -1989,6 +1989,21 @@ if test $ol_enable_sql != no ; then
 
 			odbc32)
 				AC_CHECK_LIB(odbc32, SQLDriverConnect, [have_odbc32=yes], [have_odbc32=no])
+				
+				dnl The windows API uses __stdcall which cannot be detected by AC_CHECK_LIB
+				if test $have_odbc32 = no ; then
+					AC_MSG_CHECKING([for SQLDriverConnect in -lodbc32 with windows.h])
+					save_LIBS="$LIBS"
+					LIBS="$LIBS -lodbc32"
+					AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <windows.h>
+					#include <sqlext.h>
+						]], [[
+						SQLDriverConnect(NULL,NULL,NULL,0,NULL,0,NULL,0);
+						]])],[have_odbc32=yes], [have_odbc32=no])
+					LIBS="$save_LIBS"
+					AC_MSG_RESULT($have_odbc32)
+				fi
+				
 				if test $have_odbc32 = yes ; then
 					ol_link_sql="-lodbc32"
 				fi

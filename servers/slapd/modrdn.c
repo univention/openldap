@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/modrdn.c,v 1.170.2.10 2011/01/04 23:50:21 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/modrdn.c,v 1.170.2.11 2011/03/24 01:44:13 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -403,7 +403,7 @@ slap_modrdn2mods(
 			"type(s)/value(s) of newrdn\n",
 			op->o_log_prefix, 0, 0 );
 		rs->sr_err = LDAP_INVALID_DN_SYNTAX;
-		rs->sr_text = "unknown type(s) used in RDN";
+		rs->sr_text = "unknown type(s)/value(s) used in RDN";
 		goto done;
 	}
 

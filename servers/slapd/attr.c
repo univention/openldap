@@ -1,5 +1,5 @@
 /* attr.c - routines for dealing with attributes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/attr.c,v 1.112.2.14 2011/01/04 23:50:16 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/attr.c,v 1.112.2.15 2011/03/24 01:56:01 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -88,6 +88,8 @@ attr_alloc( AttributeDescription *ad )
 	ldap_pvt_thread_mutex_unlock( &attr_mutex );
 	
 	a->a_desc = ad;
+	if ( ad && ( ad->ad_type->sat_flags & SLAP_AT_SORTED_VAL ))
+		a->a_flags |= SLAP_ATTR_SORTED_VALS;
 
 	return a;
 }

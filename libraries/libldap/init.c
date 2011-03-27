@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/init.c,v 1.102.2.17 2011/01/11 20:44:14 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/init.c,v 1.102.2.18 2011/03/24 01:14:05 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -626,7 +626,7 @@ void ldap_int_initialize( struct ldapoptions *gopts, int *dbglvl )
 	    return; 
 	}
 }	/* The WinSock DLL is acceptable. Proceed. */
-#elif HAVE_WINSOCK
+#elif defined(HAVE_WINSOCK)
 {	WSADATA wsaData;
 	if ( WSAStartup( 0x0101, &wsaData ) != 0 ) {
 	    return;

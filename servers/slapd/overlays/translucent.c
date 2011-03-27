@@ -1,5 +1,5 @@
 /* translucent.c - translucent proxy module */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/translucent.c,v 1.13.2.39 2011/01/26 23:23:35 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/translucent.c,v 1.13.2.40 2011/03/23 19:50:57 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2011 The OpenLDAP Foundation.
@@ -629,7 +629,6 @@ static int translucent_pwmod(Operation *op, SlapReply *rs) {
 
 	slap_overinst *on = (slap_overinst *) op->o_bd->bd_info;
 	translucent_info *ov = on->on_bi.bi_private;
-	const struct berval bv_exop_pwmod = BER_BVC(LDAP_EXOP_MODIFY_PASSWD);
 	Entry *e = NULL, *re = NULL;
 	BackendDB *db;
 	int rc = 0;

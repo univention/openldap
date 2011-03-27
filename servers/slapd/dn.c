@@ -1,5 +1,5 @@
 /* dn.c - routines for dealing with distinguished names */
-/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.182.2.17 2011/01/04 23:50:19 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.182.2.18 2011/03/24 01:51:27 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -1195,7 +1195,7 @@ dnIsSuffix(
 	}
 
 	/* compare */
-	return( strcmp( dn->bv_val + d, suffix->bv_val ) == 0 );
+	return( strncmp( dn->bv_val + d, suffix->bv_val, suffix->bv_len ) == 0 );
 }
 
 /*

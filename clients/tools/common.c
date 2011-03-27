@@ -1,5 +1,5 @@
 /* common.c - common routines for the ldap client tools */
-/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.78.2.39 2011/01/06 18:52:13 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.78.2.40 2011/03/24 01:58:39 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -1126,6 +1126,12 @@ tool_args( int argc, char **argv )
 			exit( EXIT_FAILURE );
 		}
 #endif
+	}
+
+	if ( ( pw_file || want_bindpw ) && !BER_BVISNULL( &passwd ) ) {
+		fprintf( stderr, "%s: -%c incompatible with -w\n",
+			prog, ( pw_file ? 'y' : 'W' ) );
+		exit( EXIT_FAILURE );
 	}
 }
 

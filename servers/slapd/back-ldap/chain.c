@@ -1,5 +1,5 @@
 /* chain.c - chain LDAP operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/chain.c,v 1.52.2.20 2011/01/26 23:23:31 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/chain.c,v 1.52.2.23 2011/03/24 02:10:01 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2011 The OpenLDAP Foundation.
@@ -225,7 +225,6 @@ ldap_chain_uri_cmp( const void *c1, const void *c2 )
 	assert( !BER_BVISNULL( &li2->li_bvuri[ 0 ] ) );
 	assert( BER_BVISNULL( &li2->li_bvuri[ 1 ] ) );
 
-	/* If local DNs don't match, it is definitely not a match */
 	return ber_bvcmp( &li1->li_bvuri[ 0 ], &li2->li_bvuri[ 0 ] );
 }
 
@@ -243,11 +242,10 @@ ldap_chain_uri_dup( void *c1, void *c2 )
 	assert( !BER_BVISNULL( &li2->li_bvuri[ 0 ] ) );
 	assert( BER_BVISNULL( &li2->li_bvuri[ 1 ] ) );
 
-	/* Cannot have more than one shared session with same DN */
 	if ( ber_bvcmp( &li1->li_bvuri[ 0 ], &li2->li_bvuri[ 0 ] ) == 0 ) {
 		return -1;
 	}
-		
+
 	return 0;
 }
 
@@ -1269,7 +1267,7 @@ static ConfigOCs chainocs[] = {
 	{ "( OLcfgOvOc:3.2 "
 		"NAME 'olcChainDatabase' "
 		"DESC 'Chain remote server configuration' "
-		"AUXILIARY )",
+		"SUP olcLDAPConfig )",
 		Cft_Misc, olcDatabaseDummy, chain_ldadd },
 	{ NULL, 0, NULL }
 };
@@ -1721,20 +1719,17 @@ ldap_chain_db_config(
 	ldap_chain_t	*lc = (ldap_chain_t *)on->on_bi.bi_private;
 
 	int		rc = SLAP_CONF_UNKNOWN;
-		
+
 	if ( lc->lc_common_li == NULL ) {
-		void	*be_private = be->be_private;
-		ldap_chain_db_init_common( be );
-		lc->lc_common_li = lc->lc_cfg_li = (ldapinfo_t *)be->be_private;
-		be->be_private = be_private;
+		BackendDB db = *be;
+		ldap_chain_db_init_common( &db );
+		lc->lc_common_li = lc->lc_cfg_li = (ldapinfo_t *)db.be_private;
 	}
 
 	/* Something for the chain database? */
 	if ( strncasecmp( argv[ 0 ], "chain-", STRLENOF( "chain-" ) ) == 0 ) {
 		char		*save_argv0 = argv[ 0 ];
-		BackendInfo	*bd_info = be->bd_info;
-		void		*be_private = be->be_private;
-		ConfigOCs	*be_cf_ocs = be->be_cf_ocs;
+		BackendDB	db = *be;
 		static char	*allowed_argv[] = {
 			/* special: put URI here, so in the meanwhile
 			 * it detects whether a new URI is being provided */
@@ -1773,14 +1768,14 @@ ldap_chain_db_config(
 		}
 
 		if ( which_argv == 0 ) {
-			rc = ldap_chain_db_init_one( be );
+			rc = ldap_chain_db_init_one( &db );
 			if ( rc != 0 ) {
 				Debug( LDAP_DEBUG_ANY, "%s: line %d: "
 					"underlying slapd-ldap initialization failed.\n.",
 					fname, lineno, 0 );
 				return 1;
 			}
-			lc->lc_cfg_li = be->be_private;
+			lc->lc_cfg_li = db.be_private;
 		}
 
 		/* TODO: add checks on what other slapd-ldap(5) args
@@ -1790,27 +1785,21 @@ ldap_chain_db_config(
 		 * be warned.
 		 */
 
-		be->bd_info = lback;
-		be->be_private = (void *)lc->lc_cfg_li;
-		be->be_cf_ocs = lback->bi_cf_ocs;
+		db.bd_info = lback;
+		db.be_private = (void *)lc->lc_cfg_li;
+		db.be_cf_ocs = lback->bi_cf_ocs;
 
-		rc = config_generic_wrapper( be, fname, lineno, argc, argv );
+		rc = config_generic_wrapper( &db, fname, lineno, argc, argv );
 
 		argv[ 0 ] = save_argv0;
-		be->be_cf_ocs = be_cf_ocs;
-		be->be_private = be_private;
-		be->bd_info = bd_info;
 
 		if ( which_argv == 0 ) {
 private_destroy:;
 			if ( rc != 0 ) {
-				BackendDB		db = *be;
-
 				db.bd_info = lback;
 				db.be_private = (void *)lc->lc_cfg_li;
 				ldap_chain_db_destroy_one( &db, NULL );
 				lc->lc_cfg_li = NULL;
-
 			} else {
 				if ( lc->lc_cfg_li->li_bvuri == NULL
 					|| BER_BVISNULL( &lc->lc_cfg_li->li_bvuri[ 0 ] )
@@ -1836,7 +1825,7 @@ private_destroy:;
 			}
 		}
 	}
-	
+
 	return rc;
 }
 

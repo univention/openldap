@@ -1,5 +1,5 @@
 /* fetch.c - routines for fetching data at URLs */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/fetch.c,v 1.10.2.9 2011/01/06 18:43:22 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/fetch.c,v 1.1.2.2 2011/03/24 18:22:43 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2011 The OpenLDAP Foundation.

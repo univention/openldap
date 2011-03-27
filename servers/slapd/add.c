@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/add.c,v 1.244.2.11 2011/01/04 23:50:15 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/add.c,v 1.244.2.12 2011/03/24 01:56:00 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -500,9 +500,6 @@ slap_mods2entry(
 		} else {
 			attr->a_nvals = attr->a_vals;
 		}
-		/* slap_mods_check() gives us sorted results */
-		if ( attr->a_desc->ad_type->sat_flags & SLAP_AT_SORTED_VAL )
-			attr->a_flags |= SLAP_ATTR_SORTED_VALS;
 
 		*tail = attr;
 		tail = &attr->a_next;

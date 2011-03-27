@@ -1,5 +1,5 @@
 # This is a sample Perl module for the OpenLDAP server slapd.
-# $OpenLDAP: pkg/ldap/servers/slapd/back-perl/SampleLDAP.pm,v 1.10.2.7 2011/02/04 20:36:34 quanah Exp $
+# $OpenLDAP: pkg/ldap/servers/slapd/back-perl/SampleLDAP.pm,v 1.10.2.8 2011/03/24 02:26:51 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2011 The OpenLDAP Foundation.
@@ -13,7 +13,7 @@
 ## A copy of this license is available in the file LICENSE in the
 ## top-level directory of the distribution or, alternatively, at
 ## <http://www.OpenLDAP.org/license.html>.
-#
+
 # Usage: Add something like this to slapd.conf:
 #
 #	database	perl
@@ -22,6 +22,9 @@
 #	perlModule	SampleLDAP
 #
 # See the slapd-perl(5) manual page for details.
+#
+# This demo module keeps an in-memory hash {"DN" => "LDIF entry", ...}
+# built in sub add{} & co.  The data is lost when slapd shuts down.
 
 package SampleLDAP;
 use strict;

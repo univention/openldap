@@ -1,5 +1,5 @@
 /* init.c - initialize ldap backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/init.c,v 1.99.2.17 2011/01/04 23:50:33 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/init.c,v 1.99.2.18 2011/03/24 01:37:46 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2011 The OpenLDAP Foundation.
@@ -100,6 +100,11 @@ ldap_back_initialize( BackendInfo *bi )
 
 	bi->bi_extra = (void *)&ldap_extra;
 
+	rc =  ldap_back_init_cf( bi );
+	if ( rc ) {
+		return rc;
+	}
+
 	rc = chain_initialize();
 	if ( rc ) {
 		return rc;
@@ -116,8 +121,7 @@ ldap_back_initialize( BackendInfo *bi )
 		return rc;
 	}
 #endif
-
-	return ldap_back_init_cf( bi );
+	return rc;
 }
 
 int

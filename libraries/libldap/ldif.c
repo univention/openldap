@@ -1,5 +1,5 @@
 /* ldif.c - routines for dealing with LDIF files */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/ldif.c,v 1.15.2.13 2011/01/04 23:50:10 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/ldif.c,v 1.1.2.2 2011/03/24 18:22:43 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

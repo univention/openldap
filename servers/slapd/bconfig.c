@@ -1,5 +1,5 @@
 /* bconfig.c - the config backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/bconfig.c,v 1.202.2.91 2011/02/02 21:32:02 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/bconfig.c,v 1.202.2.94 2011/03/24 02:11:41 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2011 The OpenLDAP Foundation.
@@ -313,6 +313,7 @@ static ConfigTable config_back_cf_table[] = {
 		&config_generic, "( OLcfgGlAt:4 NAME 'olcAttributeTypes' "
 			"DESC 'OpenLDAP attributeTypes' "
 			"EQUALITY caseIgnoreMatch "
+			"SUBSTR caseIgnoreSubstringsMatch "
 			"SYNTAX OMsDirectoryString X-ORDERED 'VALUES' )",
 				NULL, NULL },
 	{ "authid-rewrite", NULL, 2, 0, STRLENOF( "authid-rewrite" ),
@@ -362,6 +363,7 @@ static ConfigTable config_back_cf_table[] = {
 		&config_generic, "( OLcfgGlAt:16 NAME 'olcDitContentRules' "
 			"DESC 'OpenLDAP DIT content rules' "
 			"EQUALITY caseIgnoreMatch "
+			"SUBSTR caseIgnoreSubstringsMatch "
 			"SYNTAX OMsDirectoryString X-ORDERED 'VALUES' )",
 			NULL, NULL },
 	{ "gentlehup", "on|off", 2, 2, 0,
@@ -404,6 +406,7 @@ static ConfigTable config_back_cf_table[] = {
 		&config_generic, "( OLcfgGlAt:85 NAME 'olcLdapSyntaxes' "
 			"DESC 'OpenLDAP ldapSyntax' "
 			"EQUALITY caseIgnoreMatch "
+			"SUBSTR caseIgnoreSubstringsMatch "
 			"SYNTAX OMsDirectoryString X-ORDERED 'VALUES' )",
 				NULL, NULL },
 	{ "limits", "limits", 2, 0, 0, ARG_DB|ARG_MAGIC|CFG_LIMITS,
@@ -459,11 +462,13 @@ static ConfigTable config_back_cf_table[] = {
 		&config_generic, "( OLcfgGlAt:32 NAME 'olcObjectClasses' "
 		"DESC 'OpenLDAP object classes' "
 		"EQUALITY caseIgnoreMatch "
+		"SUBSTR caseIgnoreSubstringsMatch "
 		"SYNTAX OMsDirectoryString X-ORDERED 'VALUES' )",
 			NULL, NULL },
 	{ "objectidentifier", "name> <oid",	3, 3, 0, ARG_MAGIC|CFG_OID,
 		&config_generic, "( OLcfgGlAt:33 NAME 'olcObjectIdentifier' "
 			"EQUALITY caseIgnoreMatch "
+			"SUBSTR caseIgnoreSubstringsMatch "
 			"SYNTAX OMsDirectoryString X-ORDERED 'VALUES' )", NULL, NULL },
 	{ "overlay", "overlay", 2, 2, 0, ARG_MAGIC,
 		&config_overlay, "( OLcfgGlAt:34 NAME 'olcOverlay' "
@@ -1621,7 +1626,8 @@ config_generic(ConfigArgs *c) {
 					int i;
 					for (i=0, oc = cfn->c_oc_head; i<c->valx; i++) {
 						prev = oc;
-						oc_next( &oc );
+						if ( !oc_next( &oc ))
+							break;
 					}
 				} else
 				/* If adding the first, and head exists, find its prev */
@@ -1653,7 +1659,8 @@ config_generic(ConfigArgs *c) {
 					int i;
 					for (i=0, at = cfn->c_at_head; i<c->valx; i++) {
 						prev = at;
-						at_next( &at );
+						if ( !at_next( &at ))
+							break;
 					}
 				} else
 				/* If adding the first, and head exists, find its prev */
@@ -1685,7 +1692,8 @@ config_generic(ConfigArgs *c) {
 					int i;
 					for ( i = 0, syn = cfn->c_syn_head; i < c->valx; i++ ) {
 						prev = syn;
-						syn_next( &syn );
+						if ( !syn_next( &syn ))
+							break;
 					}
 				} else
 				/* If adding the first, and head exists, find its prev */
@@ -4563,6 +4571,12 @@ count_oc( ObjectClass *oc, ConfigOCs ***copp, int *nocs )
 	ConfigOCs	co, *cop;
 	ObjectClass	**sups;
 
+	for ( sups = oc->soc_sups; sups && *sups; sups++ ) {
+		if ( count_oc( *sups, copp, nocs ) ) {
+			return -1;
+		}
+	}
+
 	co.co_name = &oc->soc_cname;
 	cop = avl_find( CfOcTree, &co, CfOc_cmp );
 	if ( cop ) {
@@ -4586,27 +4600,18 @@ count_oc( ObjectClass *oc, ConfigOCs ***copp, int *nocs )
 		}
 	}
 
-	for ( sups = oc->soc_sups; sups && *sups; sups++ ) {
-		if ( count_oc( *sups, copp, nocs ) ) {
-			return -1;
-		}
-	}
-
 	return 0;
 }
 
 static ConfigOCs **
 count_ocs( Attribute *oc_at, int *nocs )
 {
-	int		i;
+	int		i, j;
 	ConfigOCs	**colst = NULL;
 
 	*nocs = 0;
 
-	for ( i = 0; !BER_BVISNULL( &oc_at->a_nvals[i] ); i++ )
-		/* count attrs */ ;
-
-	for ( ; i--; ) {
+	for ( i = oc_at->a_numvals; i--; ) {
 		ObjectClass	*oc = oc_bvfind( &oc_at->a_nvals[i] );
 
 		assert( oc != NULL );
@@ -4614,6 +4619,16 @@ count_ocs( Attribute *oc_at, int *nocs )
 			ch_free( colst );
 			return NULL;
 		}
+	}
+
+	/* invert order */
+	i = 0;
+	j = *nocs - 1;
+	while ( i < j ) {
+		ConfigOCs *tmp = colst[i];
+		colst[i] = colst[j];
+		colst[j] = tmp;
+		i++; j--;
 	}
 
 	return colst;

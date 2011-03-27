@@ -1,5 +1,5 @@
 /* ldapsearch -- a tool for searching LDAP directories */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapsearch.c,v 1.234.2.30 2011/01/06 18:43:19 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/ldapsearch.c,v 1.234.2.31 2011/03/24 02:14:29 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -908,6 +908,15 @@ main( int argc, char **argv )
 	tool_bind( ld );
 
 getNextPage:
+	/* fp may have been closed, need to reopen if code jumps
+	 * back here to getNextPage.
+	 */
+	if ( !fp && infile ) {
+		if (( fp = fopen( infile, "r" )) == NULL ) {
+			perror( infile );
+			return EXIT_FAILURE;
+		}
+	}
 	save_nctrls = nctrls;
 	i = nctrls;
 	if ( nctrls > 0
@@ -1249,6 +1258,7 @@ getNextPage:
 		}
 		if ( fp != stdin ) {
 			fclose( fp );
+			fp = NULL;
 		}
 	}
 

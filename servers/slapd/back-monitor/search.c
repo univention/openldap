@@ -1,5 +1,5 @@
 /* search.c - monitor backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/search.c,v 1.39.2.10 2011/01/13 19:02:46 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/search.c,v 1.39.2.11 2011/03/23 19:50:57 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2011 The OpenLDAP Foundation.
@@ -39,9 +39,8 @@ monitor_find_children(
 	Entry **vol
 )
 {
-	monitor_info_t	*mi = ( monitor_info_t * )op->o_bd->be_private;
 	monitor_entry_t *mp;
-	
+
 	mp = ( monitor_entry_t * )e_parent->e_private;
 	*nonv = mp->mp_children;
 

@@ -1,5 +1,5 @@
 /* cache.c - routines to maintain an in-core cache of entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.120.2.42 2011/02/04 21:04:07 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.120.2.43 2011/03/24 01:49:45 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2011 The OpenLDAP Foundation.
@@ -1146,6 +1146,7 @@ bdb_cache_add(
 	ei.bei_nrdn = *nrdn;
 	ei.bei_lockpad = 0;
 
+#if 0
 	/* Lock this entry so that bdb_add can run to completion.
 	 * It can only fail if BDB has run out of lock resources.
 	 */
@@ -1154,6 +1155,7 @@ bdb_cache_add(
 		bdb_cache_entryinfo_unlock( eip );
 		return rc;
 	}
+#endif
 
 #ifdef BDB_HIER
 	if ( nrdn->bv_len != e->e_nname.bv_len ) {
@@ -1197,12 +1199,22 @@ bdb_cache_add(
 	}
 	ldap_pvt_thread_mutex_unlock( &bdb->bi_cache.c_count_mutex );
 
+	new->bei_finders = 1;
 	bdb_cache_lru_link( bdb, new );
 
 	if ( purge )
 		bdb_cache_lru_purge( bdb );
 
 	return rc;
+}
+
+void bdb_cache_deref(
+	EntryInfo *ei
+	)
+{
+	bdb_cache_entryinfo_lock( ei );
+	ei->bei_finders--;
+	bdb_cache_entryinfo_unlock( ei );
 }
 
 int
