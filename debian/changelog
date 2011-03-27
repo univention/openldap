@@ -1,4 +1,4 @@
-openldap (2.4.24-1) unstable; urgency=low
+openldap (2.4.25-1) unstable; urgency=low
 
   * New upstream version
   * Refresh all patches
@@ -10,7 +10,7 @@ openldap (2.4.24-1) unstable; urgency=low
   * Add slapschema, just hardlink it (Closes: #601569)
   * Update patch service-operational-before-detach (Closes: #616164)
 
- -- Matthijs Möhlmann <matthijs@cacholong.nl>  Sat, 26 Mar 2011 20:12:46 +0100
+ -- Matthijs Möhlmann <matthijs@cacholong.nl>  Sun, 27 Mar 2011 13:00:02 +0200
 
 openldap (2.4.23-7) unstable; urgency=low
 
