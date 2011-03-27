@@ -11,7 +11,6 @@ getaddrinfo-is-threadsafe
 do-not-second-guess-sonames
 smbk5pwd-makefile
 autogroup-makefile
-issue-6534-patch
 ldap-conf-tls-cacertdir
 service-operational-before-detach
 add-tlscacert-option-to-ldap-conf
