@@ -10,8 +10,9 @@ openldap (2.4.25-1) unstable; urgency=low
   * Add patch to fix a FTBFS with binutils-gold (Closes: #555867)
   * Add slapschema, just hardlink it (Closes: #601569)
   * Update patch service-operational-before-detach (Closes: #616164)
+  * Add ldif_* symbols to libldap-2.4-2
 
- -- Matthijs Möhlmann <matthijs@cacholong.nl>  Sun, 27 Mar 2011 13:07:17 +0200
+ -- Matthijs Möhlmann <matthijs@cacholong.nl>  Mon, 28 Mar 2011 09:23:57 +0200
 
 openldap (2.4.23-7) unstable; urgency=low
 

@@ -116,10 +116,11 @@ libber.
  	AC_CHECK_HEADERS(tcpd.h,[
 --- /dev/null
 +++ b/libraries/libldap/libldap.map
-@@ -0,0 +1,6 @@
+@@ -0,0 +1,7 @@
 +OPENLDAP_2.4_2 {
 +  global:
 +    ldap_*;
++    ldif_*;
 +  local:
 +    *;
 +};
