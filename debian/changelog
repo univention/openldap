@@ -1,7 +1,9 @@
 openldap (2.4.25-1) unstable; urgency=low
 
-  * New upstream version (Closes: #617606)
+  * New upstream version (Closes: #617606, #618904)
     - Fixes CVE-2011-1024, CVE-2011-1025, CVE-2011-1081
+    - slapd server process frequently hangs during everyday usage is fixed in
+      newer versions of openldap according to the bug submitter
   * Refresh all patches
   * Remove manpage-tlscyphersuite-additions, applied upstream
   * Remove issue-6534-patch, applied upstream
@@ -13,7 +15,7 @@ openldap (2.4.25-1) unstable; urgency=low
   * Update patch service-operational-before-detach (Closes: #616164)
   * Add ldif_* symbols to libldap-2.4-2
 
- -- Matthijs Möhlmann <matthijs@cacholong.nl>  Mon, 28 Mar 2011 10:48:30 +0200
+ -- Matthijs Möhlmann <matthijs@cacholong.nl>  Mon, 28 Mar 2011 10:51:22 +0200
 
 openldap (2.4.23-7) unstable; urgency=low
 
