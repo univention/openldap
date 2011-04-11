@@ -15,8 +15,10 @@ openldap (2.4.25-1) unstable; urgency=low
   * Update patch service-operational-before-detach (Closes: #616164, #598361)
   * Add ldif_* symbols to libldap-2.4-2
   * Add upstream patch for a locking issue in libldap_r
+  * Fix build failure, use @SHELL@ instead of hardcoded /bin/sh (build/top.mk)
+    (Closes: #621925)
 
- -- Matthijs Möhlmann <matthijs@cacholong.nl>  Mon, 11 Apr 2011 08:20:28 +0200
+ -- Matthijs Möhlmann <matthijs@cacholong.nl>  Mon, 11 Apr 2011 22:10:14 +0200
 
 openldap (2.4.23-7) unstable; urgency=low
 
