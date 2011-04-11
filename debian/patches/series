@@ -15,3 +15,4 @@ ldap-conf-tls-cacertdir
 service-operational-before-detach
 add-tlscacert-option-to-ldap-conf
 fix-ftbfs-binutils-gold
+fix-its6898-locking-issue
