@@ -476,7 +476,8 @@ create_new_slapd_conf() {						# {{{
 	echo -n "  Creating initial configuration... " >&2
 
 	# Create the slapd.d directory.
-	mkdir ${SLAPD_CONF}
+	rm -rf ${SLAPD_CONF}/cn=config ${SLAPD_CONF}/cn=config.ldif
+	mkdir -p ${SLAPD_CONF}
 	initldif=`mktemp -t slapadd.XXXXXX`
 	cat /usr/share/slapd/slapd.init.ldif > ${initldif}
 

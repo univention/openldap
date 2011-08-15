@@ -1,10 +1,18 @@
-openldap (2.4.25-2) unstable; urgency=low
+openldap (2.4.25-2) UNRELEASED; urgency=low
 
   * Change to bdb 5.1 (Closes: #621403)
   * Add note to ldap-utils package how to unfold lines. (Closes: #530519)
     (Thanks to Peter Marschall and Javier Barroso)
+  * Acknowledge NMU for bug #596343; thanks to Thijs Kinkhorst for the fix!
 
  -- Matthijs Möhlmann <matthijs@cacholong.nl>  Sat, 16 Apr 2011 14:40:51 +0200
+
+openldap (2.4.25-1.1) unstable; urgency=low
+
+  * Non-maintainer upload to fix RC bug.
+  * Fix "dpkg-reconfigure slapd". Closes: #596343
+
+ -- Thijs Kinkhorst <thijs@debian.org>  Tue, 31 May 2011 11:57:29 +0200
 
 openldap (2.4.25-1) unstable; urgency=low
 
