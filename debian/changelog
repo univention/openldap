@@ -1,4 +1,4 @@
-openldap (2.4.25-2) UNRELEASED; urgency=low
+openldap (2.4.25-2) unstable; urgency=low
 
   [ Matthijs Möhlmann ]
   * Change to bdb 5.1 (Closes: #621403)
@@ -11,7 +11,7 @@ openldap (2.4.25-2) UNRELEASED; urgency=low
     every single .install file
   * Build for multiarch.
 
- -- Matthijs Möhlmann <matthijs@cacholong.nl>  Sat, 16 Apr 2011 14:40:51 +0200
+ -- Steve Langasek <vorlon@debian.org>  Sun, 14 Aug 2011 23:17:09 -0700
 
 openldap (2.4.25-1.1) unstable; urgency=low
 
