@@ -170,7 +170,7 @@ binary-arch: install-stamp
 	dh_strip -pldap-utils
 	dh_strip -pslapd-smbk5pwd
 	for pkg in libldap2-dev libldap-2.4-2; do \
-		sed -e"s/\${DEB_HOST_MULTIARCH}/$(DEB_HOST_MULTIARCH)/g" < debian/$$pkg.links.in > debian/$$pkg.links; \
+		sed -e"s/$${DEB_HOST_MULTIARCH}/$(DEB_HOST_MULTIARCH)/g" < debian/$$pkg.links.in > debian/$$pkg.links; \
 	done
 	dh_link -a
 
