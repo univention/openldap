@@ -9,6 +9,7 @@ openldap (2.4.25-2) UNRELEASED; urgency=low
   * Acknowledge NMU for bug #596343; thanks to Thijs Kinkhorst for the fix!
   * Bump to compat level 7, so we don't have to spell out debian/tmp in
     every single .install file
+  * Build for multiarch.
 
  -- Matthijs Möhlmann <matthijs@cacholong.nl>  Sat, 16 Apr 2011 14:40:51 +0200
 
