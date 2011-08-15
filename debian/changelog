@@ -1,3 +1,10 @@
+openldap (2.4.25-3) UNRELEASED; urgency=low
+
+  * Brown paper bag: really fix the .links.in handling, so we don't generate
+    broken /usr/lib/${DEB_HOST_MULTIARCH} dirs.
+
+ -- Steve Langasek <vorlon@debian.org>  Mon, 15 Aug 2011 02:40:34 -0700
+
 openldap (2.4.25-2) unstable; urgency=low
 
   [ Matthijs Möhlmann ]
