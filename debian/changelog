@@ -1,9 +1,14 @@
 openldap (2.4.25-2) UNRELEASED; urgency=low
 
+  [ Matthijs Möhlmann ]
   * Change to bdb 5.1 (Closes: #621403)
   * Add note to ldap-utils package how to unfold lines. (Closes: #530519)
     (Thanks to Peter Marschall and Javier Barroso)
+
+  [ Steve Langasek ]
   * Acknowledge NMU for bug #596343; thanks to Thijs Kinkhorst for the fix!
+  * Bump to compat level 7, so we don't have to spell out debian/tmp in
+    every single .install file
 
  -- Matthijs Möhlmann <matthijs@cacholong.nl>  Sat, 16 Apr 2011 14:40:51 +0200
 
