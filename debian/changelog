@@ -1,3 +1,11 @@
+openldap (2.4.25-4) UNRELEASED; urgency=low
+
+  * Drop explicit depends on libdb4.8, since we're now linking against
+    libdb5.1.  Thanks to Peter Marschall for catching.  Closes: #621403
+    again.
+
+ -- Steve Langasek <vorlon@debian.org>  Sun, 21 Aug 2011 11:25:07 -0700
+
 openldap (2.4.25-3) unstable; urgency=low
 
   * Brown paper bag: really fix the .links.in handling, so we don't generate
