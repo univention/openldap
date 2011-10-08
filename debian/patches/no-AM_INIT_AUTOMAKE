@@ -7,12 +7,20 @@ Index: trunk/configure.in
 ===================================================================
 --- trunk.orig/configure.in
 +++ trunk/configure.in
-@@ -67,7 +67,7 @@
+@@ -26,7 +26,7 @@
+ AC_COPYRIGHT([[Copyright 1998-2011 The OpenLDAP Foundation. All rights reserved.
+ Restrictions apply, see COPYRIGHT and LICENSE files.]])
+ AC_REVISION([$OpenLDAP: pkg/ldap/configure.in,v 1.631.2.34 2011/03/24 01:18:25 quanah Exp $])
+-AC_INIT([OpenLDAP],,[http://www.openldap.org/its/])
++AC_INIT([OpenLDAP],[$OL_VERSION],[http://www.openldap.org/its/])
+ m4_define([AC_PACKAGE_BUGREPORT],[<http://www.openldap.org/its/>])
+ AC_CONFIG_SRCDIR(build/version.sh)dnl
+ dnl ----------------------------------------------------------------
+@@ -67,7 +67,6 @@
  dnl		we try not to use this for much
  AC_CANONICAL_TARGET([])
  
 -AM_INIT_AUTOMAKE([$OL_PACKAGE],[$OL_VERSION], [no defines])dnl
-+AC_INIT([$OL_PACKAGE],[$OL_VERSION])dnl
  AC_SUBST(PACKAGE)dnl
  AC_SUBST(VERSION)dnl
  AC_DEFINE_UNQUOTED(OPENLDAP_PACKAGE,"$PACKAGE",Package)
