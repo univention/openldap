@@ -1,18 +1,10 @@
 #!/usr/bin/make -f
 
-#export DH_VERBOSE = 1
-
 # Set this variable if you're building packages outside of Debian and don't
 # want the checks for DFSG-freeness.
 #DFSG_NONFREE = 1
 
-CFLAGS = -Wall -g -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
-
-ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-    CFLAGS += -O0
-else
-    CFLAGS += -O2
-endif
+export DEB_CFLAGS_MAINT_APPEND := -Wall -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 
 DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 
@@ -74,7 +66,7 @@ override_dh_auto_configure:
 
 	cp -f /usr/share/misc/config.* contrib/ldapc++/
 
-	dh_auto_configure -- CFLAGS="$(CFLAGS)" $(CONFIG)
+	dh_auto_configure -- $(CONFIG)
 	perl debian/check_config
 	$(MAKE) -C $(builddir) depend
 
@@ -129,17 +121,18 @@ override_dh_strip:
 	dh_strip -plibldap-2.4-2 --dbg-package=libldap-2.4-2-dbg
 	dh_strip -pslapd --dbg-package=slapd-dbg
 	dh_strip -Nlibldap-2.4-2 -Nslapd
+	# hardlink these so not confined by apparmor; do this here and not
+	# in dh_link so that dh_strip doesn't get confused and put the wrong
+	# binary in the debug package.
+	for f in slapacl slapadd slapauth slapcat slapdn slapindex slappasswd slaptest slapschema ; do \
+	    ln -f $(slapddir)/slapd $(slapddir)/$$f ; \
+	done
 
 override_dh_link:
 	for pkg in libldap2-dev libldap-2.4-2; do \
 		sed -e"s/\$${DEB_HOST_MULTIARCH}/$(DEB_HOST_MULTIARCH)/g" < debian/$$pkg.links.in > debian/$$pkg.links; \
 	done
 	dh_link
-
-	# hardlink these so not confined by apparmor
-	for f in slapacl slapadd slapauth slapcat slapdn slapindex slappasswd slaptest slapschema ; do \
-	    ln -f $(slapddir)/slapd $(slapddir)/$$f ; \
-	done
 
 override_dh_makeshlibs:
 	# ideally we would do this and not have any libldap-2.4.so.2 links

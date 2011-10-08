@@ -7,6 +7,10 @@ openldap (2.4.25-4) UNRELEASED; urgency=low
   * debian/patches/no-AM_INIT_AUTOMAKE: don't use AM_INIT_AUTOMAKE macro
     when we aren't using automake.
   * Convert debian/rules to dh(1).
+  * use DEB_CFLAGS_MAINT_APPEND with appropriate versioned dependency on
+    debhelper and dpkg-dev, so we can pick up dpkg-buildflags for our
+    policy-mandated flags - as well as our security-enhancing ones!
+    Closes: #644427.
 
  -- Steve Langasek <vorlon@debian.org>  Sun, 21 Aug 2011 11:25:07 -0700
 
