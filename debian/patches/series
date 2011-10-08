@@ -1,6 +1,5 @@
 man-slapd 
 evolution-ntlm
-add-autogen-sh
 slapi-errorlog-file 
 ldapi-socket-place 
 wrong-database-location 
