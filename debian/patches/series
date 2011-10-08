@@ -16,3 +16,4 @@ add-tlscacert-option-to-ldap-conf
 fix-ftbfs-binutils-gold
 fix-its6898-locking-issue
 fix-build-top-mk
+no-AM_INIT_AUTOMAKE

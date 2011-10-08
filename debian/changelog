@@ -4,6 +4,8 @@ openldap (2.4.25-4) UNRELEASED; urgency=low
     libdb5.1.  Thanks to Peter Marschall for catching.  Closes: #621403
     again.
   * Use dh_autoreconf instead of a locally-patched autogen.sh.
+  * debian/patches/no-AM_INIT_AUTOMAKE: don't use AM_INIT_AUTOMAKE macro
+    when we aren't using automake.
 
  -- Steve Langasek <vorlon@debian.org>  Sun, 21 Aug 2011 11:25:07 -0700
 
