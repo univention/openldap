@@ -66,9 +66,8 @@ override_dh_auto_configure:
 
 	# Copy our stripped schema versions into where upstream expects them.
 	if [ -z "$(DFSG_NONFREE)" ]; then \
-	    set -e; for s in debian/schema/*.schema debian/schema/*.ldif; do \
-	        cp $$s servers/slapd/schema/`basename $$s`; \
-	    done; \
+		cp debian/schema/*.schema debian/schema/*.ldif \
+			servers/slapd/schema/; \
 	fi
 
 	dh_auto_configure -- $(CONFIG)
