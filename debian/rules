@@ -114,7 +114,7 @@ override_dh_install:
 	chmod 0755 $(CURDIR)/debian/slapd/usr/share/slapd/ldiftopasswd
 
 override_dh_installinit:
-	dh_installinit -Xslapd.prerm -- "defaults 19 80"
+	dh_installinit -- "defaults 19 80"
 
 override_dh_strip:
 	dh_strip -plibldap-2.4-2 --dbg-package=libldap-2.4-2-dbg
