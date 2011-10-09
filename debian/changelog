@@ -18,6 +18,8 @@ openldap (2.4.25-4) UNRELEASED; urgency=low
     while via hardening-wrappers, so the change is presumed safe.
   * Drop debian/check_config.  The upstream configure script now enforces
     --with-cyrus-sasl, so there's no need for a second check.
+  * debian/po/es.po: tweak an ambiguous string in the Spanish debconf
+    translation, noticed in response to a submitted Catalan translation    
 
  -- Steve Langasek <vorlon@debian.org>  Sun, 21 Aug 2011 11:25:07 -0700
 
