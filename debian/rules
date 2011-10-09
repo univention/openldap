@@ -68,7 +68,6 @@ override_dh_auto_configure:
 	cp -f /usr/share/misc/config.* contrib/ldapc++/
 
 	dh_auto_configure -- $(CONFIG)
-	$(MAKE) -C $(builddir) depend
 
 override_dh_auto_build:
 	dh_auto_build -- $(MAKEVARS)
