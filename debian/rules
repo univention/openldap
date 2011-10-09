@@ -65,8 +65,6 @@ override_dh_auto_configure:
 	    done; \
 	fi
 
-	cp -f /usr/share/misc/config.* contrib/ldapc++/
-
 	dh_auto_configure -- $(CONFIG)
 
 override_dh_auto_build:
@@ -163,9 +161,6 @@ override_dh_auto_clean:
 	        rm -f servers/slapd/schema/`basename $$s`; \
 	    done; \
 	fi
-
-	# Remove updated config.guess and config.sub for a clean diff.
-	rm -f contrib/ldapc++/config.sub contrib/ldapc++/config.guess
 
 	# Clean the contrib directory
 	rm -rf contrib/slapd-modules/smbk5pwd/.libs \
