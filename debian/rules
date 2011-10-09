@@ -173,4 +173,3 @@ override_dh_auto_clean:
 		contrib/slapd-modules/autogroup/autogroup.lo \
 		contrib/slapd-modules/autogroup/autogroup.la \
 		contrib/slapd-modules/autogroup/autogroup.o
-	dh_clean
