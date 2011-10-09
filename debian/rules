@@ -87,10 +87,10 @@ override_dh_auto_install:
 		sed -i "s/^dependency_libs=.*/dependency_libs=''/" $$F; \
 	done
 	
-	# Check all built libraries for unresolved symbols except for the libslapi
-	# library.  It is a special case since the SLAPI interface depends on symbols
-	# defined in slapd itself.  Those symbols will remain unresolved until the
-	# plugin is loaded into slapd.
+	# Check all built libraries for unresolved symbols except for the
+	# libslapi library.  It is a special case since the SLAPI interface
+	# depends on symbols defined in slapd itself.  Those symbols will
+	# remain unresolved until the plugin is loaded into slapd.
 	for F in $(installdir)/usr/lib/$(DEB_HOST_MULTIARCH)/*.so.*.*.*; do \
 	    if echo "$$F" | grep -q libslapi ; then \
 	        continue; \
@@ -147,11 +147,6 @@ override_dh_makeshlibs:
 override_dh_installdeb:
 	dh_installdeb
 	perl -w debian/dh_installscripts-common -p slapd
-
-override_dh_gencontrol:
-	# Strip duplicate dependency out of substvars.
-	sed -i -e 's/ libldap-2.4-2,//' debian/*.substvars
-	dh_gencontrol
 
 override_dh_auto_clean:
 	dh_auto_clean
