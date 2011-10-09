@@ -15,6 +15,8 @@ openldap (2.4.25-4) UNRELEASED; urgency=low
     security, since this is a security-sensitive daemon dealing with
     untrusted input.  Ubuntu has been building with these flags for a
     while via hardening-wrappers, so the change is presumed safe.
+  * Drop debian/check_config.  The upstream configure script now enforces
+    --with-cyrus-sasl, so there's no need for a second check.
 
  -- Steve Langasek <vorlon@debian.org>  Sun, 21 Aug 2011 11:25:07 -0700
 
