@@ -3,6 +3,7 @@ openldap (2.4.25-4) UNRELEASED; urgency=low
   * Drop explicit depends on libdb4.8, since we're now linking against
     libdb5.1.  Thanks to Peter Marschall for catching.  Closes: #621403
     again.
+  * Rebuild against cyrus-sasl2 2.1.25.  Closes: #628237.
   * Use dh_autoreconf instead of a locally-patched autogen.sh.
   * debian/patches/no-AM_INIT_AUTOMAKE: don't use AM_INIT_AUTOMAKE macro
     when we aren't using automake.
