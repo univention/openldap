@@ -77,10 +77,6 @@ override_dh_auto_build:
 	$(MAKE) -C contrib/slapd-modules/smbk5pwd
 	$(MAKE) -C contrib/slapd-modules/autogroup
 
-# Check all built libraries for unresolved symbols except for the libslapi
-# library.  It is a special case since the SLAPI interface depends on symbols
-# defined in slapd itself.  Those symbols will remain unresolved until the
-# plugin is loaded into slapd.
 override_dh_auto_install:
 	dh_auto_install -- $(MAKEVARS)
 	$(MAKE) -C contrib/slapd-modules/smbk5pwd install DESTDIR=$(installdir)
@@ -91,6 +87,10 @@ override_dh_auto_install:
 		sed -i "s/^dependency_libs=.*/dependency_libs=''/" $$F; \
 	done
 	
+	# Check all built libraries for unresolved symbols except for the libslapi
+	# library.  It is a special case since the SLAPI interface depends on symbols
+	# defined in slapd itself.  Those symbols will remain unresolved until the
+	# plugin is loaded into slapd.
 	for F in $(installdir)/usr/lib/$(DEB_HOST_MULTIARCH)/*.so.*.*.*; do \
 	    if echo "$$F" | grep -q libslapi ; then \
 	        continue; \
@@ -101,6 +101,7 @@ override_dh_auto_install:
 		exit 1; \
 	    fi; \
 	done
+
 	# Upstream installs schema files in mode 0444 - policy wants 0644
 	find $(installdir)/etc -type f|xargs chmod 0644
 	# Upstream manpages are section 8C but installed as section 8
