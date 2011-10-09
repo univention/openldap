@@ -11,6 +11,10 @@ openldap (2.4.25-4) UNRELEASED; urgency=low
     debhelper and dpkg-dev, so we can pick up dpkg-buildflags for our
     policy-mandated flags - as well as our security-enhancing ones!
     Closes: #644427.
+  * Also set hardening=+pie,+bindnow buildflags options for maximum
+    security, since this is a security-sensitive daemon dealing with
+    untrusted input.  Ubuntu has been building with these flags for a
+    while via hardening-wrappers, so the change is presumed safe.
 
  -- Steve Langasek <vorlon@debian.org>  Sun, 21 Aug 2011 11:25:07 -0700
 
