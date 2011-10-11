@@ -21,6 +21,10 @@ openldap (2.4.25-4) UNRELEASED; urgency=low
   * debian/po/es.po: tweak an ambiguous string in the Spanish debconf
     translation, noticed in response to a submitted Catalan translation    
 
+  [ Updated debconf translations ]
+  * Catalan, thanks to Innocent De Marchi <tangram.peces@gmail.com>.
+    Closes: #644274.
+
  -- Steve Langasek <vorlon@debian.org>  Sun, 21 Aug 2011 11:25:07 -0700
 
 openldap (2.4.25-3) unstable; urgency=low
