@@ -20,6 +20,10 @@ openldap (2.4.25-4) UNRELEASED; urgency=low
     --with-cyrus-sasl, so there's no need for a second check.
   * debian/po/es.po: tweak an ambiguous string in the Spanish debconf
     translation, noticed in response to a submitted Catalan translation    
+  * debian/patches/switch-to-lt_dlopenadvise-to-get-RTLD_GLOBAL-set.diff:
+    Switch to lt_dlopenadvise() so back_perl can be opened with RTLD_GLOBAL.
+    Thanks to Jan-Marek Glogowski <jan-marek.glogowski@muenchen.de> for the
+    patch.  Closes: #327585.
 
   [ Updated debconf translations ]
   * Catalan, thanks to Innocent De Marchi <tangram.peces@gmail.com>.
