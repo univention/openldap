@@ -1,3 +1,11 @@
+openldap (2.4.25-5) UNRELEASED; urgency=low
+
+  * debian/slapd.scripts-common: quote the argument to slappasswd, to cope
+    with shell characters in the string.  Thanks to Nicolai Ehemann
+    <en@englightened.de> for the patch.  Closes: #635931.
+
+ -- Steve Langasek <vorlon@debian.org>  Sun, 18 Dec 2011 11:01:09 -0800
+
 openldap (2.4.25-4) unstable; urgency=low
 
   * Drop explicit depends on libdb4.8, since we're now linking against

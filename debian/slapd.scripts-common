@@ -666,7 +666,7 @@ create_password_hash() {						# {{{
 # Create the password hash for the given password
 # Usage: hash=`create_password_hash "$password"`
 
-	slappasswd -s $1
+	slappasswd -s "$1"
 }
 
 # }}}
