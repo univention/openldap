@@ -10,6 +10,8 @@ openldap (2.4.28-1) UNRELEASED; urgency=low
   * debian/slapd.scripts-common: quote the argument to slappasswd, to cope
     with shell characters in the string.  Thanks to Nicolai Ehemann
     <en@englightened.de> for the patch.  Closes: #635931.
+  * Install ldif.h in libldap2-dev, now that it's been blessed upstream.
+    Closes: #644985.
 
  -- Steve Langasek <vorlon@debian.org>  Sun, 18 Dec 2011 11:01:09 -0800
 
