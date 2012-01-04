@@ -1,5 +1,5 @@
 /* pam.c - pam processing routines */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/pam.c,v 1.13.2.10 2011/01/26 23:23:28 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
  * Copyright 2008-2011 The OpenLDAP Foundation.
@@ -678,7 +678,7 @@ int nssov_pam_init()
 	int code = 0;
 	const char *text;
 	if (!ad_loginStatus)
-		code = slap_str2ad( "loginStatus", &ad_loginStatus, &text );
+		code = slap_str2ad("loginStatus", &ad_loginStatus, &text);
 
 	return code;
 }

@@ -1,5 +1,5 @@
 /* ldap_thr_debug.h - preprocessor magic for LDAP_THREAD_DEBUG */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/ldap_thr_debug.h,v 1.3.2.8 2011/01/04 23:50:07 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2011 The OpenLDAP Foundation.

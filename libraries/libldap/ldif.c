@@ -1,5 +1,5 @@
 /* ldif.c - routines for dealing with LDIF files */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/ldif.c,v 1.1.2.2 2011/03/24 18:22:43 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -842,11 +842,16 @@ ldif_read_record(
 
 		if ( fgets( line, sizeof( line ), lfp->fp ) == NULL ) {
 			stop = 1;
-			/* Add \n in case the file does not end with newline */
-			line[0] = '\n';
-			line[1] = '\0';
+			len = 0;
+		} else {
+			len = strlen( line );
 		}
-		len = strlen( line );
+
+		if ( len == 0 || line[len-1] != '\n' ) {
+			/* Add \n in case the line/file does not end with newline */
+			line[len] = '\n';
+			line[++len] = '\0';
+		}
 
 		if ( last_ch == '\n' ) {
 			(*lno)++;

@@ -1,5 +1,5 @@
 /* thr_pth.c - wrappers around GNU Pth */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_pth.c,v 1.16.2.7 2011/01/04 23:50:08 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

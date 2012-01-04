@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/ldap_utf8.h,v 1.13.2.6 2011/01/04 23:49:54 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/printmsg.c,v 1.15.2.6 2011/01/04 23:50:53 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2002-2011 The OpenLDAP Foundation.

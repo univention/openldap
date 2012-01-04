@@ -1,5 +1,5 @@
 /* schema_check.c - routines to enforce schema definitions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_check.c,v 1.103.2.13 2011/01/04 23:50:23 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

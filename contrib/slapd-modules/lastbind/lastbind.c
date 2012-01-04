@@ -1,5 +1,5 @@
 /* lastbind.c - Record timestamp of the last successful bind to entries */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/lastbind/lastbind.c,v 1.6.2.2 2011/02/04 23:39:17 quanah Exp $ */
+/* $OpenLDAP$ */
 /*
  * Copyright 2009 Jonathan Clarke <jonathan@phillipoux.net>.
  * All rights reserved.
@@ -250,6 +250,8 @@ int lastbind_initialize()
 			return code;
 		}
 	}
+
+	ad_authTimestamp->ad_type->sat_flags |= SLAP_AT_MANAGEABLE;
 
 	lastbind.on_bi.bi_type = "lastbind";
 	lastbind.on_bi.bi_db_init = lastbind_db_init;

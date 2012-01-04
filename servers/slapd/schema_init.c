@@ -1,5 +1,5 @@
 /* schema_init.c - init builtin schema */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_init.c,v 1.386.2.46 2011/02/02 21:35:26 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -164,6 +164,7 @@ unsigned int index_intlen = SLAP_INDEX_INTLEN_DEFAULT;
 unsigned int index_intlen_strlen = SLAP_INDEX_INTLEN_STRLEN(
 	SLAP_INDEX_INTLEN_DEFAULT );
 
+ldap_pvt_thread_mutex_t	ad_index_mutex;
 ldap_pvt_thread_mutex_t	ad_undef_mutex;
 ldap_pvt_thread_mutex_t	oc_undef_mutex;
 
@@ -1852,12 +1853,12 @@ UTF8StringNormalize(
 		}
 		nvalue.bv_val[nvalue.bv_len] = '\0';
 
-	} else {
+	} else if ( tmp.bv_len )  {
 		/* string of all spaces is treated as one space */
 		nvalue.bv_val[0] = ' ';
 		nvalue.bv_val[1] = '\0';
 		nvalue.bv_len = 1;
-	}
+	}	/* should never be entered with 0-length val */
 
 	*normalized = nvalue;
 	return LDAP_SUCCESS;
@@ -2331,13 +2332,18 @@ postalAddressNormalize(
 	}
 	lines[l].bv_len = &val->bv_val[c] - lines[l].bv_val;
 
-	normalized->bv_len = l;
+	normalized->bv_len = c = l;
 
-	for ( l = 0; !BER_BVISNULL( &lines[l] ); l++ ) {
+	for ( l = 0; l <= c; l++ ) {
 		/* NOTE: we directly normalize each line,
 		 * without unescaping the values, since the special
 		 * values '\24' ('$') and '\5C' ('\') are not affected
 		 * by normalization */
+		if ( !lines[l].bv_len ) {
+			nlines[l].bv_len = 0;
+			nlines[l].bv_val = NULL;
+			continue;
+		}
 		rc = UTF8StringNormalize( usage, NULL, xmr, &lines[l], &nlines[l], ctx );
 		if ( rc != LDAP_SUCCESS ) {
 			rc = LDAP_INVALID_SYNTAX;
@@ -2350,7 +2356,7 @@ postalAddressNormalize(
 	normalized->bv_val = slap_sl_malloc( normalized->bv_len + 1, ctx );
 
 	p = normalized->bv_val;
-	for ( l = 0; !BER_BVISNULL( &nlines[l] ); l++ ) {
+	for ( l = 0; l <= c ; l++ ) {
 		p = lutil_strbvcopy( p, &nlines[l] );
 		*p++ = '$';
 	}
@@ -3556,14 +3562,9 @@ serialNumberAndIssuerNormalize(
 		sn2.bv_val = slap_sl_malloc( sn.bv_len, ctx );
 	}
 	sn2.bv_len = sn.bv_len;
-	if ( lutil_str2bin( &sn, &sn2, ctx )) {
-		rc = LDAP_INVALID_SYNTAX;
-		goto func_leave;
-	}
-
 	sn3.bv_val = sbuf3;
 	sn3.bv_len = sizeof(sbuf3);
-	if ( slap_bin2hex( &sn2, &sn3, ctx ) ) {
+	if ( lutil_str2bin( &sn, &sn2, ctx ) || slap_bin2hex( &sn2, &sn3, ctx ) ) {
 		rc = LDAP_INVALID_SYNTAX;
 		goto func_leave;
 	}
@@ -3571,7 +3572,6 @@ serialNumberAndIssuerNormalize(
 	out->bv_len = STRLENOF( "{ serialNumber , issuer rdnSequence:\"\" }" )
 		+ sn3.bv_len + ni.bv_len;
 	out->bv_val = slap_sl_malloc( out->bv_len + 1, ctx );
-
 	if ( out->bv_val == NULL ) {
 		out->bv_len = 0;
 		rc = LDAP_OTHER;
@@ -4769,13 +4769,13 @@ attributeCertificateExactNormalize(
 	ber_tag_t tag;
 	ber_len_t len;
 	char issuer_serialbuf[SLAP_SN_BUFLEN], serialbuf[SLAP_SN_BUFLEN];
-	struct berval sn, i_sn, sn2, i_sn2;
+	struct berval sn, i_sn, sn2 = BER_BVNULL, i_sn2 = BER_BVNULL;
 	struct berval issuer_dn = BER_BVNULL, bvdn;
 	char *p;
 	int rc = LDAP_INVALID_SYNTAX;
 
 	if ( BER_BVISEMPTY( val ) ) {
-		goto done;
+		return rc;
 	}
 
 	if ( SLAP_MR_IS_VALUE_OF_ASSERTION_SYNTAX(usage) ) {
@@ -4799,8 +4799,7 @@ attributeCertificateExactNormalize(
 	tag = ber_skip_tag( ber, &len );	/* GeneralNames (sequence) */
 	tag = ber_skip_tag( ber, &len );	/* directoryName (we only accept this form of GeneralName) */
 	if ( tag != SLAP_X509_GN_DIRECTORYNAME ) { 
-		rc = LDAP_INVALID_SYNTAX; 
-		goto done;
+		return LDAP_INVALID_SYNTAX; 
 	}
 	tag = ber_peek_tag( ber, &len );	/* sequence of RDN */
 	len = ber_ptrlen( ber );
@@ -6851,6 +6850,7 @@ schema_destroy( void )
 	syn_destroy();
 
 	if( schema_init_done ) {
+		ldap_pvt_thread_mutex_destroy( &ad_index_mutex );
 		ldap_pvt_thread_mutex_destroy( &ad_undef_mutex );
 		ldap_pvt_thread_mutex_destroy( &oc_undef_mutex );
 	}

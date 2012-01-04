@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test023-refint,v 1.10.2.9 2011/01/04 23:51:06 kurt Exp $
+# $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 2004-2011 The OpenLDAP Foundation.

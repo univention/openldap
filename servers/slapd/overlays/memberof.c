@@ -1,5 +1,5 @@
 /* memberof.c - back-reference for group membership */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/memberof.c,v 1.2.2.27 2011/01/27 18:50:27 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2007 Pierangelo Masarati <ando@sys-net.it>
@@ -357,6 +357,10 @@ memberof_value_modify(
 	op2.o_ndn = op->o_bd->be_rootndn;
 	op2.orm_modlist = NULL;
 
+	/* Internal ops, never replicate these */
+	op2.orm_no_opattrs = 1;
+	op2.o_dont_replicate = 1;
+
 	if ( !BER_BVISNULL( &mo->mo_ndn ) ) {
 		ml = &mod[ mcnt ];
 		ml->sml_numvals = 1;
@@ -387,7 +391,6 @@ memberof_value_modify(
 	ml->sml_flags = SLAP_MOD_INTERNAL;
 	ml->sml_next = op2.orm_modlist;
 	op2.orm_modlist = ml;
-	op2.orm_no_opattrs = 0;
 
 	if ( new_ndn != NULL ) {
 		BackendInfo *bi = op2.o_bd->bd_info;
@@ -404,7 +407,6 @@ memberof_value_modify(
 
 		oex.oe_key = (void *)&memberof;
 		LDAP_SLIST_INSERT_HEAD(&op2.o_extra, &oex, oe_next);
-		BER_BVZERO( &op2.o_csn );
 		op2.o_bd->bd_info = (BackendInfo *)on->on_info;
 		(void)op->o_bd->be_modify( &op2, &rs2 );
 		op2.o_bd->bd_info = bi;
@@ -447,7 +449,6 @@ memberof_value_modify(
 
 		oex.oe_key = (void *)&memberof;
 		LDAP_SLIST_INSERT_HEAD(&op2.o_extra, &oex, oe_next);
-		BER_BVZERO( &op2.o_csn );
 		op2.o_bd->bd_info = (BackendInfo *)on->on_info;
 		(void)op->o_bd->be_modify( &op2, &rs2 );
 		op2.o_bd->bd_info = bi;

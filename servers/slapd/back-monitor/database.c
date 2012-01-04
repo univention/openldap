@@ -1,5 +1,5 @@
 /* database.c - deals with database subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/database.c,v 1.80.2.17 2011/01/04 23:50:37 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2011 The OpenLDAP Foundation.

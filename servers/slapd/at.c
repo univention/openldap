@@ -1,5 +1,5 @@
 /* at.c - routines for dealing with attribute types */
-/* $OpenLDAP: pkg/ldap/servers/slapd/at.c,v 1.84.2.12 2011/01/04 23:50:15 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

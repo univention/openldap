@@ -1,5 +1,5 @@
 /* search.c - search operation */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/search.c,v 1.246.2.30 2011/01/26 23:23:31 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2011 The OpenLDAP Foundation.
@@ -308,6 +308,36 @@ sameido:
 		e = ei->bei_e;
 	}
 	return rs->sr_err;
+}
+
+/* Get the next ID from the DB. Used if the candidate list is
+ * a range and simple iteration hits missing entryIDs
+ */
+static int
+bdb_get_nextid(struct bdb_info *bdb, DB_TXN *ltid, ID *cursor)
+{
+	DBC *curs;
+	DBT key, data;
+	ID id, nid;
+	int rc;
+
+	id = *cursor + 1;
+	BDB_ID2DISK( id, &nid );
+	rc = bdb->bi_id2entry->bdi_db->cursor(
+		bdb->bi_id2entry->bdi_db, ltid, &curs, bdb->bi_db_opflags );
+	if ( rc )
+		return rc;
+	key.data = &nid;
+	key.size = key.ulen = sizeof(ID);
+	key.flags = DB_DBT_USERMEM;
+	data.flags = DB_DBT_USERMEM | DB_DBT_PARTIAL;
+	data.dlen = data.ulen = 0;
+	rc = curs->c_get( curs, &key, &data, DB_SET_RANGE );
+	curs->c_close( curs );
+	if ( rc )
+		return rc;
+	BDB_DISK2ID( &nid, cursor );
+	return 0;
 }
 
 int
@@ -717,6 +747,7 @@ fetch_entry_retry:
 				ltid->flags &= ~TXN_DEADLOCK;
 				goto fetch_entry_retry;
 			}
+txnfail:
 			opinfo->boi_err = rs->sr_err;
 			send_ldap_error( op, rs, LDAP_BUSY, "ldap server busy" );
 			goto done;
@@ -743,6 +774,27 @@ fetch_entry_retry:
 					LDAP_XSTRING(bdb_search)
 					": candidate %ld not found\n",
 					(long) id, 0, 0 );
+			} else {
+				/* get the next ID from the DB */
+id_retry:
+				rs->sr_err = bdb_get_nextid( bdb, ltid, &cursor );
+				if ( rs->sr_err == DB_NOTFOUND ) {
+					break;
+				} else if ( rs->sr_err == DB_LOCK_DEADLOCK ) {
+					if ( opinfo )
+						goto txnfail;
+					ltid->flags &= ~TXN_DEADLOCK;
+					goto id_retry;
+				} else if ( rs->sr_err == DB_LOCK_NOTGRANTED ) {
+					goto id_retry;
+				}
+				if ( rs->sr_err ) {
+					rs->sr_err = LDAP_OTHER;
+					rs->sr_text = "internal error in get_nextid";
+					send_ldap_result( op, rs );
+					goto done;
+				}
+				cursor--;
 			}
 
 			goto loop_continue;

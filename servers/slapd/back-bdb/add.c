@@ -1,5 +1,5 @@
 /* add.c - ldap BerkeleyDB back-end add routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/add.c,v 1.152.2.21 2011/03/24 01:49:45 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2011 The OpenLDAP Foundation.
@@ -290,6 +290,27 @@ retry:	/* transaction retry */
 
 	/* free parent and reader lock */
 	if ( p != (Entry *)&slap_entry_root ) {
+		if ( p->e_nname.bv_len ) {
+			struct berval ppdn;
+
+			/* ITS#5326: use parent's DN if differs from provided one */
+			dnParent( &op->ora_e->e_name, &ppdn );
+			if ( !dn_match( &p->e_name, &ppdn ) ) {
+				struct berval rdn;
+				struct berval newdn;
+
+				dnRdn( &op->ora_e->e_name, &rdn );
+
+				build_new_dn( &newdn, &p->e_name, &rdn, NULL ); 
+				if ( op->ora_e->e_name.bv_val != op->o_req_dn.bv_val )
+					ber_memfree( op->ora_e->e_name.bv_val );
+				op->ora_e->e_name = newdn;
+
+				/* FIXME: should check whether
+				 * dnNormalize(newdn) == e->e_nname ... */
+			}
+		}
+
 		bdb_unlocked_cache_return_entry_r( bdb, p );
 	}
 	p = NULL;

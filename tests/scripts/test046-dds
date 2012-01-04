@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test046-dds,v 1.4.2.9 2011/01/04 23:51:08 kurt Exp $
+# $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 2005-2011 The OpenLDAP Foundation.

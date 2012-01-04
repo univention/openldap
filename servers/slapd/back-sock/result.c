@@ -1,5 +1,5 @@
 /* result.c - sock backend result reading function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sock/result.c,v 1.3.2.6 2011/01/26 23:23:33 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2007-2011 The OpenLDAP Foundation.
@@ -91,6 +91,13 @@ sock_read_and_send_results(
 			if ( strncasecmp( buf, "RESULT", 6 ) == 0 ) {
 				break;
 			}
+			if ( strncasecmp( buf, "CONTINUE", 8 ) == 0 ) {
+				struct sockinfo	*si = (struct sockinfo *) op->o_bd->be_private;
+				/* Only valid when operating as an overlay! */
+				assert( si->si_ops != 0 );
+				rs->sr_err = SLAP_CB_CONTINUE;
+				goto skip;
+			}
 
 			if ( (rs->sr_entry = str2entry( buf )) == NULL ) {
 				Debug( LDAP_DEBUG_ANY, "str2entry(%s) failed\n",
@@ -113,7 +120,8 @@ sock_read_and_send_results(
 		send_ldap_result( op, rs );
 	}
 
-	free( buf );
+skip:
+	ch_free( buf );
 
 	return( rs->sr_err );
 }
@@ -150,5 +158,8 @@ sock_print_conn(
 	}
 	if( si->si_extensions & SOCK_EXT_SSF ) {
 		fprintf( fp, "ssf: %d\n", conn->c_ssf );
+	}
+	if( si->si_extensions & SOCK_EXT_CONNID ) {
+		fprintf( fp, "connid: %lu\n", conn->c_connid );
 	}
 }

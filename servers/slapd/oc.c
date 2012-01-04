@@ -1,5 +1,5 @@
 /* oc.c - object class routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/oc.c,v 1.77.2.13 2011/01/04 23:50:22 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -637,6 +637,8 @@ oc_insert(
 		assert( oc_bvfind( &oir->oir_name ) != NULL );
 	}
 
+	assert( soc != NULL );
+
 	if ( (names = soc->soc_names) ) {
 		while ( *names ) {
 			oir = (struct oindexrec *)
@@ -644,9 +646,6 @@ oc_insert(
 			oir->oir_name.bv_val = *names;
 			oir->oir_name.bv_len = strlen( *names );
 			oir->oir_oc = soc;
-
-			assert( oir->oir_name.bv_val != NULL );
-			assert( oir->oir_oc != NULL );
 
 			if ( avl_insert( &oc_index, (caddr_t) oir,
 				oc_index_cmp, avl_dup_error ) )

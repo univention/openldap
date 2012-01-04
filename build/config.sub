@@ -5,7 +5,7 @@
 #   Free Software Foundation, Inc.
 
 timestamp='2010-12-11-OpenLDAP'
-# $OpenLDAP: pkg/ldap/build/config.sub,v 1.19.2.6 2011/01/04 19:20:42 quanah Exp $
+# $OpenLDAP$
 
 # This file is (in principle) common to ALL GNU software.
 # The presence of a machine in this file suggests that SOME GNU software

@@ -1,5 +1,5 @@
 /* pguid.c - Parent GUID value overlay */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/samba4/pguid.c,v 1.1.2.3 2011/01/04 23:49:36 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

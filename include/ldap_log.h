@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/ldap_log.h,v 1.40.2.10 2011/01/26 18:32:52 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
  * Copyright 1998-2011 The OpenLDAP Foundation.

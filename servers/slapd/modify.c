@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/modify.c,v 1.276.2.18 2011/01/04 23:50:21 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -879,6 +879,7 @@ void slap_mods_opattrs(
 		for ( modtail = modsp; *modtail; modtail = &(*modtail)->sml_next ) {
 			if ( (*modtail)->sml_op != LDAP_MOD_ADD &&
 				(*modtail)->sml_op != SLAP_MOD_SOFTADD &&
+				(*modtail)->sml_op != SLAP_MOD_ADD_IF_NOT_PRESENT &&
 				(*modtail)->sml_op != LDAP_MOD_REPLACE )
 			{
 				continue;

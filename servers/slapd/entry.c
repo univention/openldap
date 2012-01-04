@@ -1,5 +1,5 @@
 /* entry.c - routines for dealing with entries */
-/* $OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.148.2.16 2011/01/04 23:50:19 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -814,18 +814,11 @@ int entry_header(EntryHeader *eh)
 {
 	unsigned char *ptr = (unsigned char *)eh->bv.bv_val;
 
+	/* Some overlays can create empty entries
+	 * so don't check for zeros here.
+	 */
 	eh->nattrs = entry_getlen(&ptr);
-	if ( !eh->nattrs ) {
-		Debug( LDAP_DEBUG_ANY,
-			"entry_header: attribute count was zero\n", 0, 0, 0);
-		return LDAP_OTHER;
-	}
 	eh->nvals = entry_getlen(&ptr);
-	if ( !eh->nvals ) {
-		Debug( LDAP_DEBUG_ANY,
-			"entry_header: value count was zero\n", 0, 0, 0);
-		return LDAP_OTHER;
-	}
 	eh->data = (char *)ptr;
 	return LDAP_SUCCESS;
 }

@@ -1,6 +1,6 @@
-// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPConnection.h,v 1.8.4.3 2010/04/14 23:50:44 quanah Exp $
+// $OpenLDAP$
 /*
- * Copyright 2000, OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2011 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

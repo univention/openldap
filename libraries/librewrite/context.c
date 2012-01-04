@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/context.c,v 1.15.2.7 2011/01/06 18:47:32 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2011 The OpenLDAP Foundation.

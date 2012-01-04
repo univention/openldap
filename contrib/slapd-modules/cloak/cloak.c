@@ -1,5 +1,5 @@
 /* cloak.c - Overlay to hide some attribute except if explicitely requested */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/cloak/cloak.c,v 1.2.2.8 2011/01/28 18:53:36 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2011 The OpenLDAP Foundation.

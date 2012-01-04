@@ -1,5 +1,5 @@
 /* dn2id.c - routines to deal with the dn2id index */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2id.c,v 1.137.2.26 2011/01/26 23:23:31 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2011 The OpenLDAP Foundation.
@@ -945,6 +945,7 @@ hdb_dn2idl_internal(
 			cx->rc = bdb_idl_cache_get(cx->bdb, cx->db, &cx->key, ids);
 			if ( cx->rc == LDAP_SUCCESS ) {
 				if ( cx->depth ) {
+					bdb_idl_delete( cx->tmp, cx->id );	/* ITS#6983, drop our own ID */
 					bdb_idl_append( cx->ids, cx->tmp );
 					cx->need_sort = 1;
 				}

@@ -1,5 +1,5 @@
 /* rwmmap.c - rewrite/mapping routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwmmap.c,v 1.31.2.18 2011/02/01 01:43:40 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2011 The OpenLDAP Foundation.
@@ -186,19 +186,30 @@ rwm_map_attrnames(
 	AttributeName	**anp,
 	int		remap )
 {
-	int		i, j;
+	int		i, j, x;
 
 	assert( anp != NULL );
 
 	*anp = NULL;
 
-	if ( an == NULL ) {
+	if ( an == NULL && op->o_bd->be_extra_anlist == NULL ) {
 		return LDAP_SUCCESS;
 	}
 
-	for ( i = 0; !BER_BVISNULL( &an[i].an_name ); i++ )
-		/* just count */ ;
-	*anp = op->o_tmpalloc( ( i + 1 )* sizeof( AttributeName ),
+	i = 0;
+	if ( an != NULL ) {
+		for ( i = 0; !BER_BVISNULL( &an[i].an_name ); i++ )
+			/* just count */ ;
+	}
+
+	x = 0;
+	if ( op->o_bd->be_extra_anlist ) {
+		for ( ; !BER_BVISNULL( &op->o_bd->be_extra_anlist[x].an_name ); x++ )
+			/* just count */ ;
+	}
+
+	assert( i > 0 || x > 0 );
+	*anp = op->o_tmpcalloc( ( i + x + 1 ), sizeof( AttributeName ),
 		op->o_tmpmemctx );
 	if ( *anp == NULL ) {
 		return LDAP_NO_MEMORY;
@@ -321,7 +332,22 @@ rwm_map_attrnames(
 		}
 	}
 
-	if ( j == 0 && i != 0 ) {
+	if ( op->o_bd->be_extra_anlist != NULL ) {
+		/* we assume be_extra_anlist are already mapped */
+		for ( x = 0; !BER_BVISNULL( &op->o_bd->be_extra_anlist[x].an_name ); x++ ) {
+			BER_BVZERO( &(*anp)[j].an_name );
+			if ( op->o_bd->be_extra_anlist[x].an_desc &&
+				ad_inlist( op->o_bd->be_extra_anlist[x].an_desc, *anp ) )
+			{
+				continue;
+			}
+
+			(*anp)[j] = op->o_bd->be_extra_anlist[x];
+			j++;
+		}
+	}
+
+	if ( j == 0 && ( i != 0 || x != 0 ) ) {
 		memset( &(*anp)[0], 0, sizeof( AttributeName ) );
 		(*anp)[0].an_name = *slap_bv_no_attrs;
 		j = 1;
@@ -436,7 +462,9 @@ map_attr_value(
 				return -1;
 			}
 
-		} else if ( ad->ad_type->sat_equality->smr_usage & SLAP_MR_MUTATION_NORMALIZER ) {
+		} else if ( ad->ad_type->sat_equality &&
+			( ad->ad_type->sat_equality->smr_usage & SLAP_MR_MUTATION_NORMALIZER ) )
+		{
 			if ( ad->ad_type->sat_equality->smr_normalize(
 				(SLAP_MR_DENORMALIZE|SLAP_MR_VALUE_OF_ASSERTION_SYNTAX),
 				NULL, NULL, value, &vtmp, memctx ) )

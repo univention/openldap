@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/lutil.h,v 1.63.2.12 2011/01/04 23:49:54 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -48,7 +48,7 @@ lutil_b64_pton LDAP_P((
 	size_t));
 
 /* detach.c */
-LDAP_LUTIL_F( void )
+LDAP_LUTIL_F( int )
 lutil_detach LDAP_P((
 	int debug,
 	int do_close));
@@ -142,6 +142,13 @@ lutil_passwd_scheme LDAP_P((
 LDAP_LUTIL_F( int )
 lutil_salt_format LDAP_P((
 	const char *format ));
+
+LDAP_LUTIL_F( int )
+lutil_passwd_string64 LDAP_P((
+	const struct berval *sc,
+	const struct berval *hash,
+	struct berval *b64,
+	const struct berval *salt ));
 
 /* utils.c */
 LDAP_LUTIL_F( char* )

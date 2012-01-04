@@ -1,5 +1,5 @@
 /* getpeereid.c */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/getpeereid.c,v 1.24.2.8 2011/01/04 23:50:10 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2011 The OpenLDAP Foundation.

@@ -11,10 +11,8 @@ do-not-second-guess-sonames
 smbk5pwd-makefile
 autogroup-makefile
 ldap-conf-tls-cacertdir
-service-operational-before-detach
 add-tlscacert-option-to-ldap-conf
 fix-ftbfs-binutils-gold
-fix-its6898-locking-issue
 fix-build-top-mk
 no-AM_INIT_AUTOMAKE
 switch-to-lt_dlopenadvise-to-get-RTLD_GLOBAL-set.diff

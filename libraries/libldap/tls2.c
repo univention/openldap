@@ -1,5 +1,5 @@
 /* tls.c - Handle tls/ssl. */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/tls2.c,v 1.4.2.14 2011/01/06 18:43:21 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -578,6 +578,11 @@ ldap_pvt_tls_get_option( LDAP *ld, int option, void *arg )
 {
 	struct ldapoptions *lo;
 
+	if( option == LDAP_OPT_X_TLS_PACKAGE ) {
+		*(char **)arg = LDAP_STRDUP( tls_imp->ti_name );
+		return 0;
+	}
+
 	if( ld != NULL ) {
 		assert( LDAP_VALID( ld ) );
 
@@ -802,10 +807,14 @@ ldap_pvt_tls_set_option( LDAP *ld, int option, void *arg )
 int
 ldap_int_tls_start ( LDAP *ld, LDAPConn *conn, LDAPURLDesc *srv )
 {
-	Sockbuf *sb = conn->lconn_sb;
+	Sockbuf *sb;
 	char *host;
 	void *ssl;
 
+	if ( !conn )
+		return LDAP_PARAM_ERROR;
+
+	sb = conn->lconn_sb;
 	if( srv ) {
 		host = srv->lud_host;
 	} else {
@@ -833,7 +842,8 @@ ldap_int_tls_start ( LDAP *ld, LDAPConn *conn, LDAPURLDesc *srv )
 	/* 
 	 * compare host with name(s) in certificate
 	 */
-	if (ld->ld_options.ldo_tls_require_cert != LDAP_OPT_X_TLS_NEVER) {
+	if (ld->ld_options.ldo_tls_require_cert != LDAP_OPT_X_TLS_NEVER &&
+	    ld->ld_options.ldo_tls_require_cert != LDAP_OPT_X_TLS_ALLOW) {
 		ld->ld_errno = ldap_pvt_tls_check_hostname( ld, ssl, host );
 		if (ld->ld_errno != LDAP_SUCCESS) {
 			return ld->ld_errno;

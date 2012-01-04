@@ -1,5 +1,5 @@
 /* translucent.c - translucent proxy module */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/translucent.c,v 1.13.2.40 2011/03/23 19:50:57 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2011 The OpenLDAP Foundation.

@@ -1,5 +1,5 @@
 /* avl.h - avl tree definitions */
-/* $OpenLDAP: pkg/ldap/include/avl.h,v 1.29.2.7 2011/01/04 23:49:52 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

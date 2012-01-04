@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/defines.sh,v 1.141.2.27 2011/01/06 18:43:23 quanah Exp $
+# $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2011 The OpenLDAP Foundation.
@@ -245,6 +245,8 @@ LDIFTRANSLUCENTMERGED=$DATADIR/test-translucent-merged.ldif
 LDIFMETA=$DATADIR/test-meta.ldif
 LDIFVALSORT=$DATADIR/test-valsort.ldif
 SQLADD=$DATADIR/sql-add.ldif
+LDIFUNORDERED=$DATADIR/test-unordered.ldif
+LDIFREORDERED=$DATADIR/test-reordered.ldif
 
 # strings
 MONITOR=""

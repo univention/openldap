@@ -1,5 +1,5 @@
 /* init.c - initialize monitor backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/init.c,v 1.125.2.17 2011/01/26 23:23:32 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2011 The OpenLDAP Foundation.
@@ -1108,16 +1108,6 @@ done:;
 
 		*elpp = (entry_limbo_t *)ch_malloc( sizeof( entry_limbo_t ) );
 		if ( *elpp == NULL ) {
-			el.el_e->e_private = NULL;
-			entry_free( el.el_e );
-			return -1;
-		}
-
-		if ( *elpp != NULL ) {
-			el.el_next = NULL;
-			**elpp = el;
-
-		} else {
 			if ( !BER_BVISNULL( &el.el_filter ) ) {
 				ch_free( el.el_filter.bv_val );
 			}
@@ -1129,6 +1119,9 @@ done:;
 			}
 			return -1;
 		}
+
+		el.el_next = NULL;
+		**elpp = el;
 	}
 
 	return 0;

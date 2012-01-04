@@ -1,5 +1,5 @@
 /* backend.c - routines for dealing with back-end databases */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.362.2.36 2011/01/26 23:23:28 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -464,6 +464,9 @@ void backend_destroy_one( BackendDB *bd, int dynamic )
 	}
 	acl_destroy( bd->be_acl );
 	limits_destroy( bd->be_limits );
+	if ( bd->be_extra_anlist ) {
+		anlist_free( bd->be_extra_anlist, 1, NULL );
+	}
 	if ( !BER_BVISNULL( &bd->be_update_ndn ) ) {
 		ch_free( bd->be_update_ndn.bv_val );
 	}
@@ -1791,15 +1794,18 @@ backend_access(
 	slap_mask_t		*mask )
 {
 	Entry		*e = NULL;
-	void		*o_priv = op->o_private, *e_priv = NULL;
+	void		*o_priv, *e_priv = NULL;
 	int		rc = LDAP_INSUFFICIENT_ACCESS;
-	Backend		*be = op->o_bd;
+	Backend		*be;
 
 	/* pedantic */
 	assert( op != NULL );
 	assert( op->o_conn != NULL );
 	assert( edn != NULL );
 	assert( access > ACL_NONE );
+
+	be = op->o_bd;
+	o_priv = op->o_private;
 
 	if ( !op->o_bd ) {
 		op->o_bd = select_backend( edn, 0 );

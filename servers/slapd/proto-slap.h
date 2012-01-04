@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.670.2.68 2011/02/04 21:03:38 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -129,6 +129,7 @@ LDAP_SLAPD_F (int) slap_bv2ad LDAP_P((
 	const char **text ));
 
 LDAP_SLAPD_F (void) ad_destroy LDAP_P(( AttributeDescription * ));
+LDAP_SLAPD_F (int) ad_keystring LDAP_P(( struct berval *bv ));
 
 #define ad_cmp(l,r)	(((l)->ad_cname.bv_len < (r)->ad_cname.bv_len) \
 	? -1 : (((l)->ad_cname.bv_len > (r)->ad_cname.bv_len) \
@@ -482,7 +483,10 @@ LDAP_SLAPD_F (void) overlay_move LDAP_P((
 	BackendDB *be, slap_overinst *on, int idx ));
 #ifdef SLAP_CONFIG_DELETE
 LDAP_SLAPD_F (void) overlay_remove LDAP_P((
-	BackendDB *be, slap_overinst *on ));
+	BackendDB *be, slap_overinst *on, Operation *op ));
+LDAP_SLAPD_F (void) overlay_unregister_control LDAP_P((
+	BackendDB *be,
+	const char *oid ));
 #endif /* SLAP_CONFIG_DELETE */
 LDAP_SLAPD_F (int) overlay_callback_after_backover LDAP_P((
 	Operation *op, slap_callback *sc, int append ));
@@ -656,6 +660,10 @@ LDAP_SLAPD_F (int) register_supported_control2 LDAP_P((
 	int *controlcid ));
 #define register_supported_control(oid, mask, exops, fn, cid) \
 	register_supported_control2((oid), (mask), (exops), (fn), 0, (cid))
+#ifdef SLAP_CONFIG_DELETE
+LDAP_SLAPD_F (int) unregister_supported_control LDAP_P((
+	const char* controloid ));
+#endif /* SLAP_CONFIG_DELETE */
 LDAP_SLAPD_F (int) slap_controls_init LDAP_P ((void));
 LDAP_SLAPD_F (void) controls_destroy LDAP_P ((void));
 LDAP_SLAPD_F (int) controls_root_dse_info LDAP_P ((Entry *e));
@@ -707,6 +715,10 @@ LDAP_SLAPD_F (int) verbs_to_mask LDAP_P((
 	int argc, char *argv[], slap_verbmasks *v, slap_mask_t *m ));
 LDAP_SLAPD_F (int) mask_to_verbs LDAP_P((
 	slap_verbmasks *v, slap_mask_t m, BerVarray *bva ));
+LDAP_SLAPD_F (int) mask_to_verbstring LDAP_P((
+	slap_verbmasks *v, slap_mask_t m, char delim, struct berval *bv ));
+LDAP_SLAPD_F (int) verbstring_to_mask LDAP_P((
+	slap_verbmasks *v, char *str, char delim, slap_mask_t *m ));
 LDAP_SLAPD_F (int) enum_to_verb LDAP_P((
 	slap_verbmasks *v, slap_mask_t m, struct berval *bv ));
 LDAP_SLAPD_F (int) slap_verbmasks_init LDAP_P(( slap_verbmasks **vp, slap_verbmasks *v ));
@@ -743,6 +755,7 @@ LDAP_SLAPD_F (int) connections_init LDAP_P((void));
 LDAP_SLAPD_F (int) connections_shutdown LDAP_P((void));
 LDAP_SLAPD_F (int) connections_destroy LDAP_P((void));
 LDAP_SLAPD_F (int) connections_timeout_idle LDAP_P((time_t));
+LDAP_SLAPD_F (void) connections_drop LDAP_P((void));
 
 LDAP_SLAPD_F (Connection *) connection_client_setup LDAP_P((
 	ber_socket_t s,
@@ -849,6 +862,9 @@ LDAP_SLAPD_F (void) slapd_remove LDAP_P((ber_socket_t s, Sockbuf *sb,
 LDAP_SLAPD_F (RETSIGTYPE) slap_sig_shutdown LDAP_P((int sig));
 LDAP_SLAPD_F (RETSIGTYPE) slap_sig_wake LDAP_P((int sig));
 LDAP_SLAPD_F (void) slap_wake_listener LDAP_P((void));
+
+LDAP_SLAPD_F (void) slap_suspend_listeners LDAP_P((void));
+LDAP_SLAPD_F (void) slap_resume_listeners LDAP_P((void));
 
 LDAP_SLAPD_F (void) slapd_set_write LDAP_P((ber_socket_t s, int wake));
 LDAP_SLAPD_F (void) slapd_clr_write LDAP_P((ber_socket_t s, int wake));
@@ -1152,6 +1168,10 @@ LDAP_SLAPD_F (int) slap_parse_csn_sid LDAP_P((
 				struct berval * ));
 LDAP_SLAPD_F (int *) slap_parse_csn_sids LDAP_P((
 				BerVarray, int, void *memctx ));
+LDAP_SLAPD_F (int) slap_sort_csn_sids LDAP_P((
+				BerVarray, int *, int, void *memctx ));
+LDAP_SLAPD_F (void) slap_insert_csn_sids LDAP_P((
+				struct sync_cookie *ck, int, int, struct berval * ));
 LDAP_SLAPD_F (int) slap_parse_sync_cookie LDAP_P((
 				struct sync_cookie *, void *memctx ));
 LDAP_SLAPD_F (int) slap_init_sync_cookie_ctxcsn LDAP_P((
@@ -2038,6 +2058,7 @@ LDAP_SLAPD_V (ldap_pvt_thread_mutex_t)	entry2str_mutex;
 #define gmtime_mutex ldap_int_gmtime_mutex
 #endif /* ! LDAP_DEVEL */
 
+LDAP_SLAPD_V (ldap_pvt_thread_mutex_t)	ad_index_mutex;
 LDAP_SLAPD_V (ldap_pvt_thread_mutex_t)	ad_undef_mutex;
 LDAP_SLAPD_V (ldap_pvt_thread_mutex_t)	oc_undef_mutex;
 

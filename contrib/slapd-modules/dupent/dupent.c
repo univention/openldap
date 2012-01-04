@@ -1,5 +1,5 @@
 /* dupent.c - LDAP Control for a Duplicate Entry Representation of Search Results */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/dupent/dupent.c,v 1.3.2.4 2011/01/28 18:53:36 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2006-2011 The OpenLDAP Foundation.

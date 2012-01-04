@@ -1,5 +1,5 @@
 # include Makefile.in for OpenLDAP
-# $OpenLDAP: pkg/ldap/include/Makefile.in,v 1.33.2.6 2011/01/04 23:49:52 kurt Exp $
+# $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2011 The OpenLDAP Foundation.
@@ -20,7 +20,8 @@ install-local: FORCE
 	for header in $(srcdir)/lber.h lber_types.h \
 		$(srcdir)/ldap.h $(srcdir)/ldap_cdefs.h \
 		$(srcdir)/ldap_schema.h $(srcdir)/ldap_utf8.h \
-		$(srcdir)/slapi-plugin.h ldap_features.h; \
+		$(srcdir)/slapi-plugin.h ldap_features.h \
+		$(srcdir)/ldif.h ; \
 	do \
 		$(INSTALL) $(INSTALLFLAGS) -m 644 $$header $(DESTDIR)$(includedir); \
 	done

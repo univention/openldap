@@ -1,5 +1,5 @@
 /* ldapmodrdn.c - generic program to modify an entry's RDN using LDAP */
-/* $OpenLDAP: pkg/ldap/clients/tools/ldapmodrdn.c,v 1.116.2.11 2011/01/04 23:49:28 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -156,7 +156,7 @@ main(int argc, char **argv)
 {
 	char		*entrydn = NULL, *rdn = NULL, buf[ 4096 ];
 	FILE		*fp = NULL;
-	LDAP		*ld;
+	LDAP		*ld = NULL;
 	int		rc, retval, havedn;
 
 	tool_init( TOOL_MODRDN );
@@ -227,13 +227,11 @@ main(int argc, char **argv)
 		}
 	}
 
-	tool_unbind( ld );
-	tool_destroy();
 fail:
 	if ( fp && fp != stdin ) fclose( fp );
 	if ( entrydn ) free( entrydn );
 	if ( rdn ) free( rdn );
-	return( retval );
+	tool_exit( ld, retval );
 }
 
 static int domodrdn(

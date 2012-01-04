@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/tests/progs/slapd-tester.c,v 1.46.2.12 2011/01/04 23:51:02 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2011 The OpenLDAP Foundation.

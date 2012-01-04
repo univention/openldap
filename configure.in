@@ -1,4 +1,4 @@
-dnl $OpenLDAP: pkg/ldap/configure.in,v 1.631.2.34 2011/03/24 01:18:25 quanah Exp $
+dnl $OpenLDAP$
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
 dnl Copyright 1998-2011 The OpenLDAP Foundation.
@@ -25,7 +25,7 @@ dnl ================================================================
 dnl Configure.in for OpenLDAP
 AC_COPYRIGHT([[Copyright 1998-2011 The OpenLDAP Foundation. All rights reserved.
 Restrictions apply, see COPYRIGHT and LICENSE files.]])
-AC_REVISION([$OpenLDAP: pkg/ldap/configure.in,v 1.631.2.34 2011/03/24 01:18:25 quanah Exp $])
+AC_REVISION([$Id: e7e5a7e17ae6655fc0779de0ad978202c3a73699 $])
 AC_INIT([OpenLDAP],,[http://www.openldap.org/its/])
 m4_define([AC_PACKAGE_BUGREPORT],[<http://www.openldap.org/its/>])
 AC_CONFIG_SRCDIR(build/version.sh)dnl
@@ -56,12 +56,14 @@ if test -t 1; then
 	TN="`$SHTOOL echo -e '%b' 2>/dev/null`"
 fi
 
-OPENLDAP_CVS=""
-if test -d $ac_aux_dir/CVS; then
-	OPENLDAP_CVS="(from CVS sources) "
+OPENLDAP_REPO=""
+if test -d $ac_aux_dir/../.git; then
+	OPENLDAP_REPO="(from Git clone) "
+elif test -d $ac_aux_dir/CVS; then
+	OPENLDAP_REPO="(from CVS checkout) "
 fi
 
-echo "Configuring ${TB}${OL_STRING}${TN} ${OPENLDAP_CVS}..."
+echo "Configuring ${TB}${OL_STRING}${TN} ${OPENLDAP_REPO}..."
 
 dnl Determine host platform
 dnl		we try not to use this for much
@@ -284,6 +286,7 @@ Backends="bdb \
 	dnssrv \
 	hdb \
 	ldap \
+	mdb \
 	meta \
 	monitor \
 	ndb \
@@ -308,6 +311,8 @@ OL_ARG_ENABLE(hdb,[    --enable-hdb	  enable Hierarchical DB backend],
 	yes, [no yes mod], ol_enable_backends)dnl
 OL_ARG_ENABLE(ldap,[    --enable-ldap	  enable ldap backend],
 	no, [no yes mod], ol_enable_backends)dnl
+OL_ARG_ENABLE(mdb,[    --enable-mdb	  enable mdb database backend],
+	yes, [no yes mod], ol_enable_backends)dnl
 OL_ARG_ENABLE(meta,[    --enable-meta	  enable metadirectory backend],
 	no, [no yes mod], ol_enable_backends)dnl
 OL_ARG_ENABLE(monitor,[    --enable-monitor	  enable monitor backend],
@@ -470,6 +475,7 @@ elif test $ol_enable_modules != yes &&
 	test $ol_enable_dnssrv = no &&
 	test $ol_enable_hdb = no &&
 	test $ol_enable_ldap = no &&
+	test $ol_enable_mdb = no &&
 	test $ol_enable_meta = no &&
 	test $ol_enable_monitor = no &&
 	test $ol_enable_ndb = no &&
@@ -531,6 +537,7 @@ BUILD_BDB=no
 BUILD_DNSSRV=no
 BUILD_HDB=no
 BUILD_LDAP=no
+BUILD_MDB=no
 BUILD_META=no
 BUILD_MONITOR=no
 BUILD_NDB=no
@@ -588,7 +595,6 @@ TLS_LIBS=
 MODULES_LIBS=
 SLAPI_LIBS=
 LIBSLAPI=
-LIBSLAPITOOLS=
 AUTH_LIBS=
 ICU_LIBS=
 
@@ -933,7 +939,7 @@ dnl		-linet
 AC_CHECK_FUNC(socket, :, [	
 dnl hopefully we won't include too many libraries
 	AC_CHECK_LIB(socket, main)
-	AC_CHECK_LIB(net, main)
+	AC_CHECK_LIB(net, socket)
 	AC_CHECK_LIB(nsl_s, main)
 	AC_CHECK_LIB(nsl, main)
 	AC_CHECK_LIB(inet, socket)
@@ -2163,7 +2169,7 @@ if test $ol_with_fetch != no ; then
 	OL_LIB_FETCH
 
 	if test $ol_cv_lib_fetch != no ; then
-		LUTIL_LIBS="$LUTIL_LIBS $ol_link_fetch"
+		LIBS="$LIBS $ol_link_fetch"
 		ol_link_fetch=freebsd
 
 	elif test $ol_with_fetch != auto ; then
@@ -2521,8 +2527,7 @@ if test "$ol_enable_slapi" != no ; then
 	fi
 	AC_CHECK_LIB(ltdl, lt_dlinit, [
 		SLAPI_LIBS=-lltdl
-		LIBSLAPI=libslapi.a
-		LIBSLAPITOOLS=../libslapi.a
+		LIBSLAPI=slapi/libslapi.la
 		AC_DEFINE(HAVE_LIBLTDL,1,[define if you have libtool -ltdl])
 	],[AC_MSG_ERROR([could not locate libtool -lltdl])])
 
@@ -2661,6 +2666,19 @@ if test "$ol_enable_ldap" != no ; then
 		MFLAG=SLAPD_MOD_STATIC
 	fi
 	AC_DEFINE_UNQUOTED(SLAPD_LDAP,$MFLAG,[define to support LDAP backend])
+fi
+
+if test "$ol_enable_mdb" != no ; then
+	BUILD_SLAPD=yes
+	BUILD_MDB=$ol_enable_mdb
+	if test "$ol_enable_mdb" = mod ; then
+		SLAPD_DYNAMIC_BACKENDS="$SLAPD_DYNAMIC_BACKENDS back-mdb"
+		MFLAG=SLAPD_MOD_DYNAMIC
+	else
+		SLAPD_STATIC_BACKENDS="$SLAPD_STATIC_BACKENDS back-mdb"
+		MFLAG=SLAPD_MOD_STATIC
+	fi
+	AC_DEFINE_UNQUOTED(SLAPD_MDB,$MFLAG,[define to support MDB backend])
 fi
 
 if test "$ol_enable_meta" != no ; then
@@ -3068,6 +3086,7 @@ dnl backends
   AC_SUBST(BUILD_DNSSRV)
   AC_SUBST(BUILD_HDB)
   AC_SUBST(BUILD_LDAP)
+  AC_SUBST(BUILD_MDB)
   AC_SUBST(BUILD_META)
   AC_SUBST(BUILD_MONITOR)
   AC_SUBST(BUILD_NDB)
@@ -3131,7 +3150,6 @@ AC_SUBST(TLS_LIBS)
 AC_SUBST(MODULES_LIBS)
 AC_SUBST(SLAPI_LIBS)
 AC_SUBST(LIBSLAPI)
-AC_SUBST(LIBSLAPITOOLS)
 AC_SUBST(AUTH_LIBS)
 AC_SUBST(ICU_LIBS)
 
@@ -3175,6 +3193,7 @@ AC_CONFIG_FILES([Makefile:build/top.mk:Makefile.in:build/dir.mk]
 [servers/slapd/back-hdb/Makefile:build/top.mk:servers/slapd/back-hdb/Makefile.in:build/mod.mk]
 [servers/slapd/back-ldap/Makefile:build/top.mk:servers/slapd/back-ldap/Makefile.in:build/mod.mk]
 [servers/slapd/back-ldif/Makefile:build/top.mk:servers/slapd/back-ldif/Makefile.in:build/mod.mk]
+[servers/slapd/back-mdb/Makefile:build/top.mk:servers/slapd/back-mdb/Makefile.in:build/mod.mk]
 [servers/slapd/back-meta/Makefile:build/top.mk:servers/slapd/back-meta/Makefile.in:build/mod.mk]
 [servers/slapd/back-monitor/Makefile:build/top.mk:servers/slapd/back-monitor/Makefile.in:build/mod.mk]
 [servers/slapd/back-ndb/Makefile:build/top.mk:servers/slapd/back-ndb/Makefile.in:build/mod.mk]

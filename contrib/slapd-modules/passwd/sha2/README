@@ -107,7 +107,7 @@ to see stderr:
 $ sudo /etc/init.d/slapd stop
 Stopping OpenLDAP: slapd.
 $ sudo /usr/sbin/slapd -f /etc/ldap/slapd.conf -h ldap://localhost:389 -d 256
-@(#) $OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/sha2/README,v 1.1.2.5 2011/01/04 23:49:35 kurt Exp $
+@(#) $OpenLDAP$
         buildd@palmer:/build/buildd/openldap2.3-2.4.9/debian/build/servers/slapd
 /etc/ldap/slapd.conf: line 123: rootdn is always granted unlimited privileges.
 /etc/ldap/slapd.conf: line 140: rootdn is always granted unlimited privileges.

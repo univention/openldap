@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/librewrite/rewrite-int.h,v 1.20.2.8 2011/01/26 18:32:52 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2011 The OpenLDAP Foundation.

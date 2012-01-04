@@ -1,5 +1,5 @@
 /* dn.c - routines for dealing with distinguished names */
-/* $OpenLDAP: pkg/ldap/servers/slapd/dn.c,v 1.182.2.18 2011/03/24 01:51:27 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -703,11 +703,10 @@ dnPrettyNormal(
 	struct berval *normal,
 	void *ctx)
 {
-	Debug( LDAP_DEBUG_TRACE, ">>> dnPrettyNormal: <%s>\n", val->bv_val ? val->bv_val : "", 0, 0 );
-
 	assert( val != NULL );
 	assert( pretty != NULL );
 	assert( normal != NULL );
+	Debug( LDAP_DEBUG_TRACE, ">>> dnPrettyNormal: <%s>\n", val->bv_val ? val->bv_val : "", 0, 0 );
 
 	if ( val->bv_len == 0 ) {
 		ber_dupbv_x( pretty, val, ctx );
@@ -1169,10 +1168,12 @@ dnIsSuffix(
 	const struct berval *dn,
 	const struct berval *suffix )
 {
-	int	d = dn->bv_len - suffix->bv_len;
+	int	d;
 
 	assert( dn != NULL );
 	assert( suffix != NULL );
+
+	d = dn->bv_len - suffix->bv_len;
 
 	/* empty suffix matches any dn */
 	if ( suffix->bv_len == 0 ) {

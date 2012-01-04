@@ -1,5 +1,5 @@
 /* os-ip.c -- platform-specific TCP & UDP related code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.118.2.23 2011/01/31 19:21:48 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

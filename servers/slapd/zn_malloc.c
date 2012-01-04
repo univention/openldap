@@ -1,5 +1,5 @@
 /* zn_malloc.c - zone-based malloc routines */
-/* $OpenLDAP: pkg/ldap/servers/slapd/zn_malloc.c,v 1.11.2.8 2011/01/04 23:50:27 kurt Exp $*/
+/* $OpenLDAP$*/
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2011 The OpenLDAP Foundation.
@@ -329,7 +329,7 @@ retry:
 		if ( zh->zh_maxzones < zh->zh_numzones + zh->zh_deltazones ) {
 			ldap_pvt_thread_mutex_unlock( &zh->zh_mutex );
 			Debug( LDAP_DEBUG_TRACE,
-				"zn_malloc %lu: ch_malloc\n\n",
+				"zn_malloc %lu: ch_malloc\n",
 				(long)size, 0, 0);
 			Debug(LDAP_DEBUG_NONE,
 				"slap_zn_malloc: returning 0x%x, 0x%x\n",

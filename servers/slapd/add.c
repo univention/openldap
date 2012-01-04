@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/add.c,v 1.244.2.12 2011/03/24 01:56:00 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

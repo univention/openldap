@@ -1,5 +1,5 @@
 /* deref.c - dereference overlay */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/deref.c,v 1.7.2.7 2011/01/04 23:50:48 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

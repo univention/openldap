@@ -1,5 +1,5 @@
 /* auditlog.c - log modifications for audit/history purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/auditlog.c,v 1.7.2.11 2011/01/04 23:50:48 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2011 The OpenLDAP Foundation.
@@ -72,7 +72,7 @@ static int auditlog_response(Operation *op, SlapReply *rs) {
 	FILE *f;
 	Attribute *a;
 	Modifications *m;
-	struct berval *b, *who = NULL;
+	struct berval *b, *who = NULL, peername;
 	char *what, *whatm, *suffix;
 	time_t stamp;
 	int i;
@@ -119,6 +119,7 @@ static int auditlog_response(Operation *op, SlapReply *rs) {
 	if ( !who )
 		who = &op->o_dn;
 
+	peername = op->o_conn->c_peer_name;
 	ldap_pvt_thread_mutex_lock(&ad->ad_mutex);
 	if((f = fopen(ad->ad_logfile, "a")) == NULL) {
 		ldap_pvt_thread_mutex_unlock(&ad->ad_mutex);
@@ -126,8 +127,9 @@ static int auditlog_response(Operation *op, SlapReply *rs) {
 	}
 
 	stamp = slap_get_time();
-	fprintf(f, "# %s %ld %s%s%s\n",
-		what, (long)stamp, suffix, who ? " " : "", who ? who->bv_val : "");
+	fprintf(f, "# %s %ld %s%s%s %s conn=%ld\n",
+		what, (long)stamp, suffix, who ? " " : "", who ? who->bv_val : "",
+		peername.bv_val ? peername.bv_val: "", op->o_conn->c_connid);
 
 	if ( !BER_BVISEMPTY( &op->o_conn->c_dn ) &&
 		(!who || !dn_match( who, &op->o_conn->c_dn )))

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.133.2.22 2011/01/06 18:43:20 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -433,7 +433,11 @@ ldap_int_sasl_bind(
 					rc = ld->ld_errno;
 				}
 			}
-		}   
+		}
+		if ( rc == 0 && ld->ld_defconn &&
+			ld->ld_defconn->lconn_status == LDAP_CONNST_CONNECTING ) {
+			rc = ldap_int_check_async_open( ld, sd );
+		}
 		LDAP_MUTEX_UNLOCK( &ld->ld_conn_mutex );
 		if( rc != 0 ) return ld->ld_errno;
 

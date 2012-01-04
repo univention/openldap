@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/openldap-guide/release/license.sdf,v 1.12.2.6 2011/01/04 23:49:41 kurt Exp $
+# $OpenLDAP$
 # Copyright 2000-2011 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
@@ -8,7 +8,7 @@ H1: OpenLDAP Public License
 #<FONT FACE="Courier">
 #!endblock
 
-!include "../LICENSE" ; verbatim
+!include "../../../LICENSE" ; verbatim
 
 #!block inline
 #</FONT>

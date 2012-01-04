@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/util-int.c,v 1.57.2.10 2011/01/13 19:05:18 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -271,7 +271,7 @@ ldap_pvt_gettime( struct lutil_tm *ltm )
 	t = tv.tv_sec;
 
 	if ( tv.tv_sec < prevTv.tv_sec
-		|| ( tv.tv_sec == prevTv.tv_sec && tv.tv_usec == prevTv.tv_usec )) {
+		|| ( tv.tv_sec == prevTv.tv_sec && tv.tv_usec <= prevTv.tv_usec )) {
 		subs++;
 	} else {
 		subs = 0;

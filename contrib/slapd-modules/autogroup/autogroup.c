@@ -1,5 +1,5 @@
 /* autogroup.c - automatic group overlay */
-/* $OpenLDAP: pkg/ldap/contrib/slapd-modules/autogroup/autogroup.c,v 1.2.2.11 2011/01/31 19:42:04 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2007-2011 The OpenLDAP Foundation.
@@ -112,11 +112,10 @@ autogroup_add_member_to_group( Operation *op, BerValue *dn, BerValue *ndn, autog
 	slap_callback	cb = { NULL, slap_null_cb, NULL, NULL };
 	Operation	o = *op;
 
-	Debug(LDAP_DEBUG_TRACE, "==> autogroup_add_member_to_group adding <%s> to <%s>\n",
-		dn->bv_val, age->age_dn.bv_val, 0);
-
 	assert( dn != NULL );
 	assert( ndn != NULL );
+	Debug(LDAP_DEBUG_TRACE, "==> autogroup_add_member_to_group adding <%s> to <%s>\n",
+		dn->bv_val, age->age_dn.bv_val, 0);
 
 	vals = (BerValue *)ch_calloc( 2, sizeof( BerValue ) );
 	nvals = (BerValue *)ch_calloc( 2, sizeof( BerValue ) );
@@ -166,10 +165,9 @@ autogroup_add_member_values_to_group( Operation *op, Entry *e, autogroup_entry_t
 	slap_callback	cb = { NULL, slap_null_cb, NULL, NULL };
 	Operation	o = *op;
 
+	assert( e != NULL );
 	Debug(LDAP_DEBUG_TRACE, "==> autogroup_add_member_values_to_group adding <%s> to <%s>\n",
 		e->e_name.bv_val, age->age_dn.bv_val, 0);
-
-	assert( e != NULL );
 
 	attr = attrs_find( e->e_attrs, attrdesc );
 	if (!attr) {
@@ -279,10 +277,9 @@ autogroup_delete_member_values_from_group( Operation *op, Entry *e, autogroup_en
         slap_callback   cb = { NULL, slap_null_cb, NULL, NULL };
         Operation       o = *op;
 
+        assert( e != NULL );
         Debug(LDAP_DEBUG_TRACE, "==> autogroup_delete_member_values_from_group removing <%s> from <%s>\n",
                 e->e_name.bv_val, age->age_dn.bv_val, 0);
-
-        assert( e != NULL );
 
         attr = attrs_find( e->e_attrs, attrdesc );
         if (!attr) {
@@ -324,8 +321,6 @@ autogroup_delete_member_values_from_group( Operation *op, Entry *e, autogroup_en
 static int
 autogroup_member_search_cb( Operation *op, SlapReply *rs )
 {
-	slap_overinst		*on = (slap_overinst *)op->o_bd->bd_info;
-
 	assert( op->o_tag == LDAP_REQ_SEARCH );
 
 	if ( rs->sr_type == REP_SEARCH ) {
@@ -635,11 +630,12 @@ autogroup_add_group( Operation *op, autogroup_info_t *agi, autogroup_def_t *agd,
 				}
 
 				if ( i > 1 ) {
-					Debug( LDAP_DEBUG_ANY, "autogroup_add_group: to much attributes specified in url <%s>\n",
+					Debug( LDAP_DEBUG_ANY, "autogroup_add_group: too many attributes specified in url <%s>\n",
 						bv->bv_val, 0, 0);
 					/* FIXME: error? */
 					ldap_free_urldesc( lud );
 					ch_free( agf ); 
+					continue;
 				}
 					
 				agf->agf_anlist = str2anlist( NULL, lud->lud_attrs[0], "," );

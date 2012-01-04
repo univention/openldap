@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/entry-id.c,v 1.67.2.15 2011/01/04 23:50:47 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2011 The OpenLDAP Foundation.
@@ -182,9 +182,9 @@ backsql_dn2id(
 	}
 	
 	/* begin TimesTen */
+	assert( bi->sql_id_query != NULL );
 	Debug( LDAP_DEBUG_TRACE, "   backsql_dn2id(\"%s\"): id_query \"%s\"\n",
 			ndn->bv_val, bi->sql_id_query, 0 );
-	assert( bi->sql_id_query != NULL );
  	rc = backsql_Prepare( dbh, &sth, bi->sql_id_query, 0 );
 	if ( rc != SQL_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE, 
@@ -406,9 +406,9 @@ backsql_count_children(
 	}
 	
 	/* begin TimesTen */
+	assert( bi->sql_has_children_query != NULL );
 	Debug(LDAP_DEBUG_TRACE, "children id query \"%s\"\n", 
 			bi->sql_has_children_query, 0, 0);
-	assert( bi->sql_has_children_query != NULL );
  	rc = backsql_Prepare( dbh, &sth, bi->sql_has_children_query, 0 );
 	if ( rc != SQL_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE, 
@@ -507,7 +507,7 @@ backsql_get_attr_vals( void *v_at, void *v_bsi )
 {
 	backsql_at_map_rec	*at = v_at;
 	backsql_srch_info	*bsi = v_bsi;
-	backsql_info		*bi = (backsql_info *)bsi->bsi_op->o_bd->be_private;
+	backsql_info		*bi;
 	RETCODE			rc;
 	SQLHSTMT		sth = SQL_NULL_HSTMT;
 	BACKSQL_ROW_NTS		row;
@@ -531,11 +531,12 @@ backsql_get_attr_vals( void *v_at, void *v_bsi )
 
 	assert( at != NULL );
 	assert( bsi != NULL );
-
 	Debug( LDAP_DEBUG_TRACE, "==>backsql_get_attr_vals(): "
 		"oc=\"%s\" attr=\"%s\" keyval=" BACKSQL_IDFMT "\n",
 		BACKSQL_OC_NAME( bsi->bsi_oc ), at->bam_ad->ad_cname.bv_val, 
 		BACKSQL_IDARG(bsi->bsi_c_eid->eid_keyval) );
+
+	bi = (backsql_info *)bsi->bsi_op->o_bd->be_private;
 
 #ifdef BACKSQL_PRETTY_VALIDATE
 	validate = at->bam_true_ad->ad_type->sat_syntax->ssyn_validate;

@@ -1,5 +1,5 @@
 /* proto-back-relay.h - relay backend header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-relay/proto-back-relay.h,v 1.6.2.8 2011/01/04 23:50:42 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2011 The OpenLDAP Foundation.

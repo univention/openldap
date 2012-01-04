@@ -1,5 +1,5 @@
 /* thr_posix.c - wrapper around posix and posixish thread implementations.  */
-/* $OpenLDAP: pkg/ldap/libraries/libldap_r/thr_posix.c,v 1.46.2.8 2011/01/04 23:50:08 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

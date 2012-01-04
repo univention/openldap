@@ -1,5 +1,5 @@
 /* dntest.c -- OpenLDAP DN API Test Program */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/dntest.c,v 1.27.2.7 2011/01/04 23:50:01 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

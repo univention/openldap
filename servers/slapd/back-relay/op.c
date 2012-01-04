@@ -1,5 +1,5 @@
 /* op.c - relay backend operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-relay/op.c,v 1.15.2.15 2011/01/04 23:50:42 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2011 The OpenLDAP Foundation.

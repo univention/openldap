@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/contrib/slapd-modules/smbk5pwd/Makefile,v 1.1.6.6 2011/01/04 23:49:36 kurt Exp $
+# $OpenLDAP$
 # This work is part of OpenLDAP Software <http://www.openldap.org/>.
 #
 # Copyright 1998-2011 The OpenLDAP Foundation.
@@ -16,8 +16,8 @@ LIBTOOL=../../../libtool
 OPT=-g -O2
 CC=gcc
 
-# Omit DO_KRB5 or DO_SAMBA if you don't want to support it.
-DEFS=-DDO_KRB5 -DDO_SAMBA
+# Omit DO_KRB5, DO_SAMBA or DO_SHADOW if you don't want to support it.
+DEFS=-DDO_KRB5 -DDO_SAMBA -DDO_SHADOW
 
 HEIMDAL_INC=-I/usr/heimdal/include
 SSL_INC=

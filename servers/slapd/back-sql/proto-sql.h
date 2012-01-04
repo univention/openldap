@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/proto-sql.h,v 1.30.2.10 2011/01/04 23:50:47 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2011 The OpenLDAP Foundation.
@@ -189,25 +189,25 @@ RETCODE backsql_Prepare( SQLHDBC dbh, SQLHSTMT *sth, const char* query, int time
 #define backsql_BindParamStr( sth, par_ind, io, str, maxlen ) 		\
 	SQLBindParameter( (sth), (SQLUSMALLINT)(par_ind), 		\
 			(io), SQL_C_CHAR, SQL_VARCHAR,			\
-         		(SQLUINTEGER)(maxlen), 0, (SQLPOINTER)(str),	\
-			(SQLUINTEGER)(maxlen), NULL )
+         		(SQLULEN)(maxlen), 0, (SQLPOINTER)(str),	\
+			(SQLLEN)(maxlen), NULL )
 
 #define backsql_BindParamBerVal( sth, par_ind, io, bv ) 		\
 	SQLBindParameter( (sth), (SQLUSMALLINT)(par_ind), 		\
 			(io), SQL_C_CHAR, SQL_VARCHAR,			\
-         		(SQLUINTEGER)(bv)->bv_len, 0,			\
+         		(SQLULEN)(bv)->bv_len, 0,			\
 			(SQLPOINTER)(bv)->bv_val,			\
-			(SQLUINTEGER)(bv)->bv_len, NULL )
+			(SQLLEN)(bv)->bv_len, NULL )
 
 #define backsql_BindParamInt( sth, par_ind, io, val )			\
 	SQLBindParameter( (sth), (SQLUSMALLINT)(par_ind),		\
 			(io), SQL_C_ULONG, SQL_INTEGER,			\
-			0, 0, (SQLPOINTER)(val), 0, (SQLINTEGER*)NULL )
+			0, 0, (SQLPOINTER)(val), 0, (SQLLEN*)NULL )
 
 #define backsql_BindParamNumID( sth, par_ind, io, val )			\
 	SQLBindParameter( (sth), (SQLUSMALLINT)(par_ind),		\
 			(io), BACKSQL_C_NUMID, SQL_INTEGER,		\
-			0, 0, (SQLPOINTER)(val), 0, (SQLINTEGER*)NULL )
+			0, 0, (SQLPOINTER)(val), 0, (SQLLEN*)NULL )
 
 #ifdef BACKSQL_ARBITRARY_KEY
 #define backsql_BindParamID( sth, par_ind, io, id )			\
@@ -307,5 +307,7 @@ extern BI_entry_get_rw		backsql_entry_get;
 extern BI_entry_release_rw	backsql_entry_release;
 
 extern BI_connection_destroy	backsql_connection_destroy;
+
+int backsql_init_cf( BackendInfo * bi );
 
 #endif /* PROTO_SQL_H */

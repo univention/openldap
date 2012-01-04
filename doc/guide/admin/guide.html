@@ -23,7 +23,7 @@
 <DIV CLASS="title">
 <H1 CLASS="doc-title">OpenLDAP Software 2.4 Administrator's Guide</H1>
 <ADDRESS CLASS="doc-author">The OpenLDAP Project &lt;<A HREF="http://www.openldap.org/">http://www.openldap.org/</A>&gt;</ADDRESS>
-<ADDRESS CLASS="doc-modified">23 March 2011</ADDRESS>
+<ADDRESS CLASS="doc-modified">25 November 2011</ADDRESS>
 <BR CLEAR="All">
 </DIV>
 <DIV CLASS="contents">
@@ -1413,14 +1413,14 @@ Specify additional libraries
 <PRE>
         [[env] settings] ./configure [options]
 </PRE>
-<P>As an example, let's assume that we want to install OpenLDAP with BDB backend and TCP Wrappers support.  By default, BDB is enabled and TCP Wrappers is not.  So, we just need to specify <TT>--with-wrappers</TT> to include TCP Wrappers support:</P>
+<P>As an example, let's assume that we want to install OpenLDAP with BDB backend and TCP Wrappers support.  By default, BDB is enabled and TCP Wrappers is not.  So, we just need to specify <TT>--enable-wrappers</TT> to include TCP Wrappers support:</P>
 <PRE>
-        ./configure --with-wrappers
+        ./configure --enable-wrappers
 </PRE>
 <P>However, this will fail to locate dependent software not installed in system directories.  For example, if TCP Wrappers headers and libraries are installed in <TT>/usr/local/include</TT> and <TT>/usr/local/lib</TT> respectively, the <TT>configure</TT> script should be called as follows:</P>
 <PRE>
         env CPPFLAGS=&quot;-I/usr/local/include&quot; LDFLAGS=&quot;-L/usr/local/lib&quot; \
-                ./configure --with-wrappers
+                ./configure --enable-wrappers
 </PRE>
 <P><HR WIDTH="80%" ALIGN="Left">
 <STRONG>Note: </STRONG>Some shells, such as those derived from the Bourne <EM>sh</EM>(1), do not require use of the <EM>env</EM>(1) command.  In some cases, environmental variables have to be specified using alternative syntaxes.
@@ -1459,11 +1459,20 @@ Specify additional libraries
 <HR>
 <H1><A NAME="Configuring slapd">5. Configuring slapd</A></H1>
 <P>Once the software has been built and installed, you are ready to configure <EM>slapd</EM>(8) for use at your site.</P>
-<P>Unlike previous OpenLDAP releases, the slapd(8) runtime configuration in 2.3 (and later) is fully LDAP-enabled and can be managed using the standard LDAP operations with data in <TERM>LDIF</TERM>. The LDAP configuration engine allows all of slapd's configuration options to be changed on the fly, generally without requiring a server restart for the changes to take effect.</P>
-<P>The old style <EM>slapd.conf</EM>(5) file is still supported, but must be converted to the new <EM>slapd-config</EM>(5) format to allow runtime changes to be saved. While the old style configuration uses a single file, normally installed as <TT>/usr/local/etc/openldap/slapd.conf</TT>, the new style uses a slapd backend database to store the configuration. The configuration database normally resides in the <TT>/usr/local/etc/openldap/slapd.d</TT> directory. An alternate configuration directory (or file) can be specified via a command-line option to <EM>slapd</EM>(8).</P>
-<P>This chapter describes the general format of the configuration system, followed by a detailed description of commonly used config settings.</P>
+<P>OpenLDAP 2.3 and later have transitioned to using a dynamic runtime configuration engine, <EM>slapd-config</EM>(5).  <EM>slapd-config</EM>(5)</P>
+<UL>
+<LI>is fully LDAP-enabled
+<LI>is managed using the standard LDAP operations
+<LI>stores its configuration data in an <TERM>LDIF</TERM> database, generally in the <TT>/usr/local/etc/openldap/slapd.d</TT> directory.
+<LI>allows all of slapd's configuration options to be changed on the fly, generally without requiring a server restart for the changes to take effect.</UL>
+<P>This chapter describes the general format of the <EM>slapd-config</EM>(5) configuration system, followed by a detailed description of commonly used settings.</P>
+<P>The older style <EM>slapd.conf</EM>(5) file is still supported, but its use is deprecated and support for it will be withdrawn in a future OpenLDAP release.  Configuring <EM>slapd</EM>(8) via <EM>slapd.conf</EM>(5) is described in the next chapter.</P>
+<P>Refer to <EM>slapd</EM>(8) for information on how to have slapd automatically convert from <EM>slapd.conf</EM>(5) to <EM>slapd-config</EM>(5).</P>
 <P><HR WIDTH="80%" ALIGN="Left">
-<STRONG>Note: </STRONG>some of the backends do not support runtime configuration yet.  In those cases, the old style <EM>slapd.conf</EM>(5) file must be used.
+<STRONG>Note: </STRONG>Although the <EM>slapd-config</EM>(5) system stores its configuration as (text-based) LDIF files, you should <EM>never</EM> edit any of the LDIF files directly.  Configuration changes should be performed via LDAP operations, e.g. <EM>ldapadd</EM>(1), <EM>ldapdelete</EM>(1), or <EM>ldapmodify</EM>(1).
+<HR WIDTH="80%" ALIGN="Left"></P>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG>You will need to continue to use the older <EM>slapd.conf</EM>(5) configuration system if your OpenLDAP installation requires the use of one or more backends or overlays that have not been updated to use the <EM>slapd-config</EM>(5) system.  As of OpenLDAP 2.4.25, the only official backends that have not yet been updated to use <EM>slapd-config</EM>(5) are <EM>slapd-meta</EM>(5) and <EM>slapd-sql</EM>(5).  There may be additional contributed or experimental overlays that also have not been updated.
 <HR WIDTH="80%" ALIGN="Left"></P>
 <H2><A NAME="Configuration Layout">5.1. Configuration Layout</A></H2>
 <P>The slapd configuration is stored as a special LDAP directory with a predefined schema and DIT. There are specific objectClasses used to carry global configuration options, schema definitions, backend and database definitions, and assorted other items. A sample config tree is shown in Figure 5.1.</P>
@@ -2291,8 +2300,8 @@ olcDbIndex: objectClass eq
 <P></P>
 <HR>
 <H1><A NAME="The slapd Configuration File">6. The slapd Configuration File</A></H1>
-<P>Once the software has been built and installed, you are ready to configure <EM>slapd</EM>(8) for use at your site. The slapd runtime configuration is primarily accomplished through the <EM>slapd.conf</EM>(5) file, normally installed in the <TT>/usr/local/etc/openldap</TT> directory.</P>
-<P>An alternate configuration file location can be specified via a command-line option to <EM>slapd</EM>(8). This chapter describes the general format of the <EM>slapd.conf</EM>(5) configuration file, followed by a detailed description of commonly used config file directives.</P>
+<P>This chapter describes configuring <EM>slapd</EM>(8) via the <EM>slapd.conf</EM>(5) configuration file.  <EM>slapd.conf</EM>(5) has been deprecated and should only be used if your site requires one of the backends that hasn't yet been updated to work with the newer <EM>slapd-config</EM>(5) system.  Configuring <EM>slapd</EM>(8) via <EM>slapd-config</EM>(5) is described in the previous chapter.</P>
+<P>The <EM>slapd.conf</EM>(5) file is normally installed in the <TT>/usr/local/etc/openldap</TT> directory.  An alternate configuration file location can be specified via a command-line option to <EM>slapd</EM>(8).</P>
 <H2><A NAME="Configuration File Format">6.1. Configuration File Format</A></H2>
 <P>The <EM>slapd.conf</EM>(5) file consists of three types of configuration information: global, backend specific, and database specific.  Global information is specified first, followed by information associated with a particular backend type, which is then followed by information associated with a particular database instance.  Global directives can be overridden in backend and/or database directives, and backend directives can be overridden by database directives.</P>
 <P>Blank lines and comment lines beginning with a '<TT>#</TT>' character are ignored.  If a line begins with whitespace, it is considered a continuation of the previous line (even if the previous line is a comment).</P>
@@ -2340,7 +2349,7 @@ olcDbIndex: objectClass eq
 <P><HR WIDTH="80%" ALIGN="Left">
 <STRONG>Note: </STRONG>You should be careful when using this directive - there is no small limit on the number of nested include directives, and no loop detection is done.
 <HR WIDTH="80%" ALIGN="Left"></P>
-<H4><A NAME="loglevel &lt;integer&gt;">6.2.1.5. loglevel &lt;integer&gt;</A></H4>
+<H4><A NAME="loglevel &lt;level&gt;">6.2.1.5. loglevel &lt;level&gt;</A></H4>
 <P>This directive specifies the level at which debugging statements and operation statistics should be syslogged (currently logged to the <EM>syslogd</EM>(8) <TT>LOG_LOCAL4</TT> facility). You must have configured OpenLDAP <TT>--enable-debug</TT> (the default) for this to work (except for the two statistics levels, which are always enabled). Log levels may be specified as integers or by keyword. Multiple log levels may be used and the levels are additive. To display what numbers correspond to what kind of debugging, invoke slapd with <TT>-d?</TT> or consult the table below. The possible values for &lt;integer&gt; are:</P>
 <TABLE CLASS="columns" BORDER ALIGN='Center'>
 <CAPTION ALIGN=top>Table 6.1: Debugging Levels</CAPTION>
@@ -2588,7 +2597,7 @@ only messages that get logged whatever log level is set
 <H4><A NAME="backend &lt;type&gt;">6.2.2.1. backend &lt;type&gt;</A></H4>
 <P>This directive marks the beginning of a backend declaration. <TT>&lt;type&gt;</TT> should be one of the supported backend types listed in Table 6.2.</P>
 <TABLE CLASS="columns" BORDER ALIGN='Center'>
-<CAPTION ALIGN=top>Table 5.2: Database Backends</CAPTION>
+<CAPTION ALIGN=top>Table 6.2: Database Backends</CAPTION>
 <TR CLASS="heading">
 <TD>
 <STRONG>Types</STRONG>
@@ -7179,8 +7188,7 @@ Use <TT>certutil -L</TT> to list the certificates by name:</UL>
 <LI>MirrorMode is not what is termed as a Multi-Master solution. This is because writes have to go to just one of the mirror nodes at a time
 <LI>MirrorMode can be termed as Active-Active Hot-Standby, therefore an external server (slapd in proxy mode) or device (hardware load balancer) is needed to manage which provider is currently active
 <LI>Backups are managed slightly differently<UL>
-<LI>If backing up the Berkeley database itself and periodically backing up the transaction log files, then the same member of the mirror pair needs to be used to collect logfiles until the next database backup is taken
-<LI>To ensure that both databases are consistent, each database might have to be put in read-only mode while performing a slapcat.</UL>
+<LI>If backing up the Berkeley database itself and periodically backing up the transaction log files, then the same member of the mirror pair needs to be used to collect logfiles until the next database backup is taken</UL>
 <LI>Delta-Syncrepl is not yet supported</UL>
 <P>For configuration, please see the <A HREF="#MirrorMode">MirrorMode</A> section below</P>
 <H3><A NAME="Syncrepl Proxy Mode">18.2.4. Syncrepl Proxy Mode</A></H3>
@@ -8266,20 +8274,16 @@ Database objects of instances of this backend
        db_stat -d
 </PRE>
 <P>will tell you how many internal pages are present in a database. You should check this number for both dn2id and id2entry.</P>
-<P>Also note that <EM>id2entry</EM> always uses 16KB per &quot;page&quot;, while <EM>dn2id</EM> uses whatever the underlying filesystem uses, typically 4 or 8KB. To avoid thrashing the, your cache must be at least as large as the number of internal pages in both the <EM>dn2id</EM> and <EM>id2entry</EM> databases, plus some extra space to accommodate the actual leaf data pages.</P>
+<P>Also note that <EM>id2entry</EM> always uses 16KB per &quot;page&quot;, while <EM>dn2id</EM> uses whatever the underlying filesystem uses, typically 4 or 8KB. To avoid thrashing, your cache must be at least as large as the number of internal pages in both the <EM>dn2id</EM> and <EM>id2entry</EM> databases, plus some extra space to accommodate the actual leaf data pages.</P>
 <P>For example, in my OpenLDAP 2.4 test database, I have an input LDIF file that's about 360MB. With the back-hdb backend this creates a <EM>dn2id.bdb</EM> that's 68MB, and an <EM>id2entry</EM> that's 800MB. db_stat tells me that <EM>dn2id</EM> uses 4KB pages, has 433 internal pages, and 6378 leaf pages. The id2entry uses 16KB pages, has 52 internal pages, and 45912 leaf pages. In order to efficiently retrieve any single entry in this database, the cache should be at least</P>
 <PRE>
        (433+1) * 4KB + (52+1) * 16KB in size: 1736KB + 848KB =~ 2.5MB.
 </PRE>
 <P>This doesn't take into account other library overhead, so this is even lower than the barest minimum. The default cache size, when nothing is configured, is only 256KB.</P>
-<P>This 2.5MB number also doesn't take indexing into account. Each indexed attribute uses another database file of its own, using a Hash structure.</P>
-<P>Unlike the B-trees, where you only need to touch one data page to find an entry of interest, doing an index lookup generally touches multiple keys, and the point of a hash structure is that the keys are evenly distributed across the data space. That means there's no convenient compact subset of the database that you can keep in the cache to insure quick operation, you can pretty much expect references to be scattered across the whole thing. My strategy here would be to provide enough cache for at least 50% of all of the hash data.</P>
+<P>This 2.5MB number also doesn't take indexing into account. Each indexed attribute results in another database file.  Earlier versions of OpenLDAP kept these index databases in Hash format, but from OpenLDAP 2.2 onward the index databases are in B-tree format so the same procedure can be used to calculate the necessary amount of cache for each index database.</P>
+<P>For example, if your only index is for the objectClass attribute and db_stat reveals that <EM>objectClass.bdb</EM> has 339 internal pages and uses 4096 byte pages, the additional cache needed for just this attribute index is</P>
 <PRE>
-   (Number of hash buckets + number of overflow pages + number of duplicate pages) * page size / 2.
-</PRE>
-<P>The objectClass index for my example database is 5.9MB and uses 3 hash buckets and 656 duplicate pages. So:</P>
-<PRE>
-   ( 3 + 656 ) * 4KB / 2 =~ 1.3MB.
+       (339+1) * 4KB =~ 1.3MB.
 </PRE>
 <P>With only this index enabled, I'd figure at least a 4MB cache for this backend. (Of course you're using a single cache shared among all of the database files, so the cache pages will most likely get used for something other than what you accounted for, but this gives you a fighting chance.)</P>
 <P>With this 4MB cache I can slapcat this entire database on my 1.3GHz PIII in 1 minute, 40 seconds. With the cache doubled to 8MB, it still takes the same 1:40s. Once you've got enough cache to fit the B-tree internal pages, increasing it further won't have any effect until the cache really is large enough to hold 100% of the data pages. I don't have enough free RAM to hold all the 800MB id2entry data, so 4MB is good enough.</P>
@@ -11296,7 +11300,7 @@ operates.
 <HR>
 <H1><A NAME="OpenLDAP Software Copyright Notices">K. OpenLDAP Software Copyright Notices</A></H1>
 <H2><A NAME="OpenLDAP Copyright Notice">K.1. OpenLDAP Copyright Notice</A></H2>
-<P>Copyright 1998-2008 The OpenLDAP Foundation.<BR><EM>All rights reserved.</EM></P>
+<P>Copyright 1998-2011 The OpenLDAP Foundation.<BR><EM>All rights reserved.</EM></P>
 <P>Redistribution and use in source and binary forms, with or without modification, are permitted <EM>only as authorized</EM> by the <A HREF="#OpenLDAP Public License">OpenLDAP Public License</A>.</P>
 <P>A copy of this license is available in file <TT>LICENSE</TT> in the top-level directory of the distribution or, alternatively, at &lt;<A HREF="http://www.OpenLDAP.org/license.html">http://www.OpenLDAP.org/license.html</A>&gt;.</P>
 <P>OpenLDAP is a registered trademark of the OpenLDAP Foundation.</P>
@@ -11305,9 +11309,9 @@ operates.
 <P>This work also contains materials derived from public sources.</P>
 <P>Additional information about OpenLDAP software can be obtained at &lt;<A HREF="http://www.OpenLDAP.org/">http://www.OpenLDAP.org/</A>&gt;.</P>
 <H2><A NAME="Additional Copyright Notices">K.2. Additional Copyright Notices</A></H2>
-<P>Portions Copyright 1998-2008 Kurt D. Zeilenga.<BR>Portions Copyright 1998-2006 Net Boolean Incorporated.<BR>Portions Copyright 2001-2006 IBM Corporation.<BR><EM>All rights reserved.</EM></P>
+<P>Portions Copyright 1998-2011 Kurt D. Zeilenga.<BR>Portions Copyright 1998-2006 Net Boolean Incorporated.<BR>Portions Copyright 2001-2006 IBM Corporation.<BR><EM>All rights reserved.</EM></P>
 <P>Redistribution and use in source and binary forms, with or without modification, are permitted only as authorized by the <A HREF="#OpenLDAP Public License">OpenLDAP Public License</A>.</P>
-<P>Portions Copyright 1999-2007 Howard Y.H. Chu.<BR>Portions Copyright 1999-2007 Symas Corporation.<BR>Portions Copyright 1998-2003 Hallvard B. Furuseth.<BR>Portions Copyright 2007-2011 Gavin Henry.<BR>Portions Copyright 2007-2011 Suretec Systems Limited.<BR><EM>All rights reserved.</EM></P>
+<P>Portions Copyright 1999-2008 Howard Y.H. Chu.<BR>Portions Copyright 1999-2008 Symas Corporation.<BR>Portions Copyright 1998-2003 Hallvard B. Furuseth.<BR>Portions Copyright 2007-2011 Gavin Henry.<BR>Portions Copyright 2007-2011 Suretec Systems Limited.<BR><EM>All rights reserved.</EM></P>
 <P>Redistribution and use in source and binary forms, with or without modification, are permitted provided that this notice is preserved. The names of the copyright holders may not be used to endorse or promote products derived from this software without their specific prior written permission.  This software is provided ``as is'' without express or implied warranty.</P>
 <H2><A NAME="University of Michigan Copyright Notice">K.3. University of Michigan Copyright Notice</A></H2>
 <P>Portions Copyright 1992-1996 Regents of the University of Michigan.<BR><EM>All rights reserved.</EM></P>

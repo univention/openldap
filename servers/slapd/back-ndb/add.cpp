@@ -1,5 +1,5 @@
 /* add.cpp - ldap NDB back-end add routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ndb/add.cpp,v 1.3.2.7 2011/02/02 21:28:24 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2011 The OpenLDAP Foundation.

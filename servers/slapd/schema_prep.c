@@ -1,5 +1,5 @@
 /* schema_prep.c - load builtin schema */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.169.2.16 2011/03/24 02:02:23 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -1161,6 +1161,7 @@ slap_schema_load( void )
 	slap_at_proxied.sat_syntax = slap_schema.si_syn_octetString;
 	slap_schema.si_at_proxied = &slap_at_proxied;
 
+	ldap_pvt_thread_mutex_init( &ad_index_mutex );
 	ldap_pvt_thread_mutex_init( &ad_undef_mutex );
 	ldap_pvt_thread_mutex_init( &oc_undef_mutex );
 

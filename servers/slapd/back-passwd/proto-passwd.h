@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-passwd/proto-passwd.h,v 1.5.2.6 2011/01/04 23:50:40 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -21,11 +21,13 @@ LDAP_BEGIN_DECL
 extern BI_init		passwd_back_initialize;
 extern BI_open		passwd_back_open;
 extern BI_destroy	passwd_back_destroy;
-extern BI_db_config	passwd_back_db_config;
 extern BI_op_search	passwd_back_search;
+
+extern int passwd_back_init_cf( BackendInfo *bi );
 
 extern AttributeDescription	*ad_sn;
 extern AttributeDescription	*ad_desc;
+
 LDAP_END_DECL
 
 #endif /* PROTO_PASSWD_H */

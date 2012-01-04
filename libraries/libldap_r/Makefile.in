@@ -1,5 +1,5 @@
 # Makefile.in for LDAP -lldap
-# $OpenLDAP: pkg/ldap/libraries/libldap_r/Makefile.in,v 1.79.2.14 2011/03/24 18:22:43 quanah Exp $
+# $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2011 The OpenLDAP Foundation.

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblber/debug.c,v 1.21.2.6 2011/01/04 23:49:58 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -62,8 +62,9 @@ void (lutil_debug)( int debug, int level, const char *fmt, ... )
 	}
 #endif
 
+	sprintf(buffer, "%08x ", (unsigned) time(0L));
 	va_start( vl, fmt );
-	vsnprintf( buffer, sizeof(buffer), fmt, vl );
+	vsnprintf( buffer+9, sizeof(buffer)-9, fmt, vl );
 	buffer[sizeof(buffer)-1] = '\0';
 	if( log_file != NULL ) {
 		fputs( buffer, log_file );

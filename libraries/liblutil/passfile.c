@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/passfile.c,v 1.8.2.7 2011/01/04 23:50:11 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -65,6 +65,7 @@ lutil_get_filed_password(
 	passwd->bv_val = (char *) ber_memalloc( passwd->bv_len + 1 );
 	if( passwd->bv_val == NULL ) {
 		perror( filename );
+		fclose( f );
 		return -1;
 	}
 
@@ -79,6 +80,7 @@ lutil_get_filed_password(
 				ber_memfree( passwd->bv_val );
 				passwd->bv_val = NULL;
 				passwd->bv_len = 0;
+				fclose( f );
 				return -1;
 			}
 			nleft = passwd->bv_len;
@@ -92,6 +94,7 @@ lutil_get_filed_password(
 			ber_memfree( passwd->bv_val );
 			passwd->bv_val = NULL;
 			passwd->bv_len = 0;
+			fclose( f );
 			return -1;
 		}
 

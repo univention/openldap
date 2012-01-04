@@ -1,5 +1,5 @@
 /* ldap_queue.h -- queue macros */
-/* $OpenLDAP: pkg/ldap/include/ldap_queue.h,v 1.13.2.6 2011/01/04 23:49:54 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2011 The OpenLDAP Foundation.

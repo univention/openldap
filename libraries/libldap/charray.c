@@ -1,5 +1,5 @@
 /* charray.c - routines for dealing with char * arrays */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/charray.c,v 1.16.2.8 2011/01/04 23:50:01 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

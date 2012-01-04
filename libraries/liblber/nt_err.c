@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/liblber/nt_err.c,v 1.15.2.7 2011/03/24 01:14:05 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

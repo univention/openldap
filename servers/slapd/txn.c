@@ -1,5 +1,5 @@
 /* txn.c - LDAP Transactions */
-/* $OpenLDAP: pkg/ldap/servers/slapd/txn.c,v 1.6.2.6 2011/01/04 23:50:27 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

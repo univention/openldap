@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/bind.c,v 1.24.2.7 2011/01/04 23:50:41 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2011 The OpenLDAP Foundation.
@@ -42,10 +42,7 @@ perl_back_bind(
 		return rs->sr_err;
 	}
 
-#if defined(HAVE_WIN32_ASPERL) || defined(USE_ITHREADS)
 	PERL_SET_CONTEXT( PERL_INTERPRETER );
-#endif
-
 	ldap_pvt_thread_mutex_lock( &perl_interpreter_mutex );	
 
 	{
@@ -57,11 +54,7 @@ perl_back_bind(
 		XPUSHs(sv_2mortal(newSVpv( op->orb_cred.bv_val , op->orb_cred.bv_len)));
 		PUTBACK;
 
-#ifdef PERL_IS_5_6
 		count = call_method("bind", G_SCALAR);
-#else
-		count = perl_call_method("bind", G_SCALAR);
-#endif
 
 		SPAGAIN;
 

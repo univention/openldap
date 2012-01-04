@@ -1,5 +1,5 @@
 /* bind.c - ldap backend bind function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.162.2.33 2011/01/26 18:32:52 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2011 The OpenLDAP Foundation.
@@ -36,6 +36,10 @@
 #include "lutil_ldap.h"
 
 #define LDAP_CONTROL_OBSOLETE_PROXY_AUTHZ	"2.16.840.1.113730.3.4.12"
+
+#ifdef LDAP_DEVEL
+#define SLAP_AUTH_DN 1
+#endif
 
 #if LDAP_BACK_PRINT_CONNTREE > 0
 
@@ -710,7 +714,12 @@ ldap_back_prepare_conn( ldapconn_t *lc, Operation *op, SlapReply *rs, ldap_back_
 
 #ifdef HAVE_TLS
 	if ( LDAP_BACK_CONN_ISPRIV( lc ) ) {
-		sb = &li->li_acl;
+		/* See "rationale" comment in ldap_back_getconn() */
+		if ( li->li_acl_authmethod == LDAP_AUTH_NONE &&
+			 li->li_idassert_authmethod != LDAP_AUTH_NONE )
+			sb = &li->li_idassert.si_bc;
+		else
+			sb = &li->li_acl;
 
 	} else if ( LDAP_BACK_CONN_ISIDASSERT( lc ) ) {
 		sb = &li->li_idassert.si_bc;
@@ -976,10 +985,10 @@ retry_lock:
 
 		/*
 		 * the rationale is: connections as the rootdn are privileged,
-		 * so acl_authcDN is to be used; however, in some cases
+		 * so li_acl is to be used; however, in some cases
 		 * one already configured identity assertion with a highly
-		 * privileged idassert_authcDN, so if acl_authcDN is NULL
-		 * and idassert_authcDN is not, use the second instead.
+		 * privileged idassert_authcDN, so if li_acl is not configured
+		 * and idassert is, use idassert instead.
 		 *
 		 * might change in the future, because it's preferable
 		 * to make clear what identity is being used, since
@@ -987,7 +996,8 @@ retry_lock:
 		 * the same identity twice...
 		 */
 		if ( LDAP_BACK_CONN_ISPRIV( &lc_curr ) ) {
-			if ( BER_BVISNULL( &li->li_acl_authcDN ) && !BER_BVISNULL( &li->li_idassert_authcDN ) ) {
+			if ( li->li_acl_authmethod == LDAP_AUTH_NONE &&
+				 li->li_idassert_authmethod != LDAP_AUTH_NONE ) {
 				ber_dupbv( &lc->lc_bound_ndn, &li->li_idassert_authcDN );
 				ber_dupbv( &lc->lc_cred, &li->li_idassert_passwd );
 
@@ -1398,28 +1408,33 @@ retry_lock:;
 	}
 
 #ifdef HAVE_CYRUS_SASL
-	if ( LDAP_BACK_CONN_ISPRIV( lc )
-		&& li->li_acl_authmethod == LDAP_AUTH_SASL )
-	{
+	if ( LDAP_BACK_CONN_ISPRIV( lc )) {
+	slap_bindconf *sb;
+	if ( li->li_acl_authmethod != LDAP_AUTH_NONE )
+		sb = &li->li_acl;
+	else
+		sb = &li->li_idassert.si_bc;
+
+	if ( sb->sb_method == LDAP_AUTH_SASL ) {
 		void		*defaults = NULL;
 
-		if ( li->li_acl_secprops != NULL ) {
+		if ( sb->sb_secprops != NULL ) {
 			rc = ldap_set_option( lc->lc_ld,
-				LDAP_OPT_X_SASL_SECPROPS, li->li_acl_secprops );
+				LDAP_OPT_X_SASL_SECPROPS, sb->sb_secprops );
 
 			if ( rc != LDAP_OPT_SUCCESS ) {
 				Debug( LDAP_DEBUG_ANY, "Error: ldap_set_option "
 					"(SECPROPS,\"%s\") failed!\n",
-					li->li_acl_secprops, 0, 0 );
+					sb->sb_secprops, 0, 0 );
 				goto done;
 			}
 		}
 
 		defaults = lutil_sasl_defaults( lc->lc_ld,
-				li->li_acl_sasl_mech.bv_val,
-				li->li_acl_sasl_realm.bv_val,
-				li->li_acl_authcID.bv_val,
-				li->li_acl_passwd.bv_val,
+				sb->sb_saslmech.bv_val,
+				sb->sb_realm.bv_val,
+				sb->sb_authcId.bv_val,
+				sb->sb_cred.bv_val,
 				NULL );
 		if ( defaults == NULL ) {
 			rs->sr_err = LDAP_OTHER;
@@ -1431,8 +1446,8 @@ retry_lock:;
 		}
 
 		rs->sr_err = ldap_sasl_interactive_bind_s( lc->lc_ld,
-				li->li_acl_authcDN.bv_val,
-				li->li_acl_sasl_mech.bv_val, NULL, NULL,
+				sb->sb_binddn.bv_val,
+				sb->sb_saslmech.bv_val, NULL, NULL,
 				LDAP_SASL_QUIET, lutil_sasl_interact,
 				defaults );
 
@@ -1465,6 +1480,7 @@ retry_lock:;
 		}
 
 		goto done;
+	}
 	}
 #endif /* HAVE_CYRUS_SASL */
 
@@ -2193,6 +2209,15 @@ ldap_back_proxy_authz_bind(
 		void		*defaults = NULL;
 		struct berval	authzID = BER_BVNULL;
 		int		freeauthz = 0;
+		LDAPControl **ctrlsp = NULL;
+		LDAPMessage *result = NULL;
+		const char *rmech = NULL;
+		const char *save_text = rs->sr_text;
+
+#ifdef SLAP_AUTH_DN
+		LDAPControl ctrl, *ctrls[2];
+		int msgid;
+#endif /* SLAP_AUTH_DN */
 
 		/* if SASL supports native authz, prepare for it */
 		if ( ( !op->o_do_not_cache || !op->o_is_auth_check ) &&
@@ -2257,13 +2282,95 @@ ldap_back_proxy_authz_bind(
 			goto done;
 		}
 
-		rs->sr_err = ldap_sasl_interactive_bind_s( lc->lc_ld, binddn->bv_val,
-				li->li_idassert_sasl_mech.bv_val, NULL, NULL,
-				LDAP_SASL_QUIET, lutil_sasl_interact,
-				defaults );
+#ifdef SLAP_AUTH_DN
+		if ( li->li_idassert_flags & LDAP_BACK_AUTH_DN_AUTHZID ) {
+			assert( BER_BVISNULL( binddn ) );
+
+			ctrl.ldctl_oid = LDAP_CONTROL_AUTHZID_REQUEST;
+			ctrl.ldctl_iscritical = 0;
+			BER_BVZERO( &ctrl.ldctl_value );
+			ctrls[0] = &ctrl;
+			ctrls[1] = NULL;
+			ctrlsp = ctrls;
+		}
+#endif /* SLAP_AUTH_DN */
+
+		do {
+			rs->sr_err = ldap_sasl_interactive_bind( lc->lc_ld, binddn->bv_val,
+				li->li_idassert_sasl_mech.bv_val, 
+				ctrlsp, NULL, LDAP_SASL_QUIET, lutil_sasl_interact, defaults,
+				result, &rmech, &msgid );
+
+			if ( rs->sr_err != LDAP_SASL_BIND_IN_PROGRESS )
+				break;
+
+			ldap_msgfree( result );
+
+			if ( ldap_result( lc->lc_ld, msgid, LDAP_MSG_ALL, NULL, &result ) == -1 || !result ) {
+				ldap_get_option( lc->lc_ld, LDAP_OPT_RESULT_CODE, (void*)&rs->sr_err );
+				ldap_get_option( lc->lc_ld, LDAP_OPT_DIAGNOSTIC_MESSAGE, (void*)&rs->sr_text );
+				break;
+			}
+		} while ( rs->sr_err == LDAP_SASL_BIND_IN_PROGRESS );
 
 		switch ( rs->sr_err ) {
 		case LDAP_SUCCESS:
+#ifdef SLAP_AUTH_DN
+			/* FIXME: right now, the only reason to check
+			 * response controls is RFC 3829 authzid */
+			if ( li->li_idassert_flags & LDAP_BACK_AUTH_DN_AUTHZID ) {
+				ctrlsp = NULL;
+				rc = ldap_parse_result( lc->lc_ld, result, NULL, NULL, NULL, NULL,
+					&ctrlsp, 0 );
+				if ( rc == LDAP_SUCCESS && ctrlsp ) {
+					LDAPControl *ctrl;
+		
+					ctrl = ldap_control_find( LDAP_CONTROL_AUTHZID_RESPONSE,
+						ctrlsp, NULL );
+					if ( ctrl ) {
+						Debug( LDAP_DEBUG_TRACE, "%s: ldap_back_proxy_authz_bind: authzID=\"%s\" (authzid)\n",
+							op->o_log_prefix, ctrl->ldctl_value.bv_val, 0 );
+						if ( ctrl->ldctl_value.bv_len > STRLENOF("dn:") &&
+							strncasecmp( ctrl->ldctl_value.bv_val, "dn:", STRLENOF("dn:") ) == 0 )
+						{
+							struct berval bv;
+							bv.bv_val = &ctrl->ldctl_value.bv_val[STRLENOF("dn:")];
+							bv.bv_len = ctrl->ldctl_value.bv_len - STRLENOF("dn:");
+							ber_bvreplace( &lc->lc_bound_ndn, &bv );
+						}
+					}
+				}
+
+				ldap_controls_free( ctrlsp );
+
+			} else if ( li->li_idassert_flags & LDAP_BACK_AUTH_DN_WHOAMI ) {
+				struct berval *val = NULL;
+				rc = ldap_whoami_s( lc->lc_ld, &val, NULL, NULL );
+				if ( rc == LDAP_SUCCESS && val != NULL ) {
+					Debug( LDAP_DEBUG_TRACE, "%s: ldap_back_proxy_authz_bind: authzID=\"%s\" (whoami)\n",
+						op->o_log_prefix, val->bv_val, 0 );
+					if ( val->bv_len > STRLENOF("dn:") &&
+						strncasecmp( val->bv_val, "dn:", STRLENOF("dn:") ) == 0 )
+					{
+						struct berval bv;
+						bv.bv_val = &val->bv_val[STRLENOF("dn:")];
+						bv.bv_len = val->bv_len - STRLENOF("dn:");
+						ber_bvreplace( &lc->lc_bound_ndn, &bv );
+					}
+					ber_bvfree( val );
+				}
+			}
+
+			if ( ( li->li_idassert_flags & LDAP_BACK_AUTH_DN_MASK ) &&
+				BER_BVISNULL( &lc->lc_bound_ndn ) )
+			{
+				/* all in all, we only need it to be non-null */
+				/* FIXME: should this be configurable? */
+				static struct berval bv = BER_BVC("cn=authzdn");
+				ber_bvreplace( &lc->lc_bound_ndn, &bv );
+			}
+#endif /* SLAP_AUTH_DN */
+			op->o_conn->c_authz_cookie = op->o_bd->be_private;
 			LDAP_BACK_CONN_ISBOUND_SET( lc );
 			break;
 
@@ -2283,6 +2390,13 @@ ldap_back_proxy_authz_bind(
 			}
 			break;
 		}
+
+		if ( save_text != rs->sr_text ) {
+			ldap_memfree( (char *)rs->sr_text );
+			rs->sr_text = save_text;
+		}
+
+		ldap_msgfree( result );
 
 		lutil_sasl_freedefs( defaults );
 		if ( freeauthz ) {
@@ -2343,6 +2457,7 @@ ldap_back_proxy_authz_bind(
 			lc->lc_cred.bv_len = 0;
 		}
 	}
+
 done:;
 	return LDAP_BACK_CONN_ISBOUND( lc );
 }

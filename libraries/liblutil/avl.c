@@ -1,5 +1,5 @@
 /* avl.c - routines to implement an avl tree */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/avl.c,v 1.9.2.7 2011/01/04 23:50:10 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

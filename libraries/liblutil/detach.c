@@ -1,5 +1,5 @@
 /* detach.c -- routines to daemonize a process */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/detach.c,v 1.18.2.7 2011/03/24 01:14:05 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -49,10 +49,10 @@
 
 #include "lutil.h"
 
-void
+int
 lutil_detach( int debug, int do_close )
 {
-	int		i, sd, nbits;
+	int		i, sd, nbits, pid;
 
 #ifdef HAVE_SYSCONF
 	nbits = sysconf( _SC_OPEN_MAX );
@@ -71,10 +71,11 @@ lutil_detach( int debug, int do_close )
 	if ( debug == 0 ) {
 		for ( i = 0; i < 5; i++ ) {
 #ifdef HAVE_THR
-			switch ( fork1() )
+			pid = fork1();
 #else
-			switch ( fork() )
+			pid = fork();
 #endif
+			switch ( pid )
 			{
 			case -1:
 				sleep( 5 );
@@ -84,7 +85,7 @@ lutil_detach( int debug, int do_close )
 				break;
 
 			default:
-				_exit( EXIT_SUCCESS );
+				return pid;
 			}
 			break;
 		}
@@ -139,4 +140,5 @@ lutil_detach( int debug, int do_close )
 #ifdef SIGPIPE
 	(void) SIGNAL( SIGPIPE, SIG_IGN );
 #endif
+	return 0;
 }

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/lber_pvt.h,v 1.35.2.9 2011/01/04 23:49:52 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

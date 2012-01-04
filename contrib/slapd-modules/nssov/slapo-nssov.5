@@ -1,7 +1,7 @@
 .TH SLAPO-NSSOV 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" Copyright 1998-2011 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
-.\" $OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/slapo-nssov.5,v 1.4.2.6 2011/01/04 23:49:34 kurt Exp $
+.\" $OpenLDAP$
 .SH NAME
 slapo-nssov \- NSS and PAM requests through a local Unix Domain socket
 .SH SYNOPSIS
@@ -213,12 +213,12 @@ There is no default value.  This setting is only relevant if the
 .B usergroup
 option has been set.
 .TP
-.B nssov-pam-minuid <integer>
+.B nssov-pam-min-uid <integer>
 Specify a minimum uid that is allowed to login. Users with a uidNumber
 lower than this value will be denied access. The default is zero, which
 disables this setting.
 .TP
-.B nssov-pam-maxuid <integer>
+.B nssov-pam-max-uid <integer>
 Specify a maximum uid that is allowed to login. Users with a uidNumber
 higher than this value will be denied access. The default is zero, which
 disables this setting.

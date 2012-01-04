@@ -1,5 +1,5 @@
 /* valsort.c - sort attribute values */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/valsort.c,v 1.17.2.12 2011/01/28 18:53:37 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2011 The OpenLDAP Foundation.
@@ -489,6 +489,10 @@ valsort_destroy(
 {
 	slap_overinst *on = (slap_overinst *)be->bd_info;
 	valsort_info *vi = on->on_bi.bi_private, *next;
+
+#ifdef SLAP_CONFIG_DELETE
+	overlay_unregister_control( be, LDAP_CONTROL_VALSORT );
+#endif /* SLAP_CONFIG_DELETE */
 
 	for (; vi; vi = next) {
 		next = vi->vi_next;

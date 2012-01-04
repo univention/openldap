@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-perl/modrdn.c,v 1.22.2.6 2011/01/04 23:50:41 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2011 The OpenLDAP Foundation.
@@ -25,10 +25,7 @@ perl_back_modrdn(
 	PerlBackend *perl_back = (PerlBackend *) op->o_bd->be_private;
 	int count;
 
-#if defined(HAVE_WIN32_ASPERL) || defined(USE_ITHREADS)
 	PERL_SET_CONTEXT( PERL_INTERPRETER );
-#endif
-
 	ldap_pvt_thread_mutex_lock( &perl_interpreter_mutex );	
 
 	{
@@ -44,11 +41,7 @@ perl_back_modrdn(
 		}
 		PUTBACK ;
 
-#ifdef PERL_IS_5_6
 		count = call_method("modrdn", G_SCALAR);
-#else
-		count = perl_call_method("modrdn", G_SCALAR);
-#endif
 
 		SPAGAIN ;
 

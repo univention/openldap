@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.358.2.45 2011/01/26 23:23:29 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -225,6 +225,7 @@ int connections_timeout_idle(time_t now)
 		 */
 		if(( c->c_n_ops_executing && !c->c_writewaiter)
 			|| c->c_conn_state == SLAP_C_CLIENT ) {
+			connection_done( c );
 			continue;
 		}
 
@@ -243,14 +244,38 @@ int connections_timeout_idle(time_t now)
 				connection_closing( c, "writetimeout" );
 				connection_close( c );
 				i++;
+				continue;
 			}
 		}
+		connection_done( c );
 	}
-	connection_done( c );
 	if ( old && !writers )
 		slapd_clr_writetime( old );
 
 	return i;
+}
+
+/* Drop all client connections */
+void connections_drop()
+{
+	Connection* c;
+	int connindex;
+
+	for( c = connection_first( &connindex );
+		c != NULL;
+		c = connection_next( c, &connindex ) )
+	{
+		/* Don't close a slow-running request or a persistent
+		 * outbound connection.
+		 */
+		if(( c->c_n_ops_executing && !c->c_writewaiter)
+			|| c->c_conn_state == SLAP_C_CLIENT ) {
+			connection_done( c );
+			continue;
+		}
+		connection_closing( c, "dropping" );
+		connection_close( c );
+	}
 }
 
 static Connection* connection_get( ber_socket_t s )
@@ -546,9 +571,9 @@ Connection * connection_init(
 	slap_sasl_external( c, ssf, authid );
 
 	slapd_add_internal( s, 1 );
-	ldap_pvt_thread_mutex_unlock( &c->c_mutex );
 
 	backend_connection_init(c);
+	ldap_pvt_thread_mutex_unlock( &c->c_mutex );
 
 	return c;
 }
@@ -1475,12 +1500,20 @@ connection_input( Connection *conn , conn_readinfo *cri )
 #ifdef LDAP_CONNECTIONLESS
 	if ( conn->c_is_udp ) {
 		char peername[sizeof("IP=255.255.255.255:65336")];
+		const char *peeraddr_string = NULL;
 
 		len = ber_int_sb_read(conn->c_sb, &peeraddr, sizeof(struct sockaddr));
 		if (len != sizeof(struct sockaddr)) return 1;
 
+#if defined( HAVE_GETADDRINFO ) && defined( HAVE_INET_NTOP )
+		char addr[INET_ADDRSTRLEN];
+		peeraddr_string = inet_ntop( AF_INET, &peeraddr.sa_in_addr.sin_addr,
+			   addr, sizeof(addr) );
+#else /* ! HAVE_GETADDRINFO || ! HAVE_INET_NTOP */
+		peeraddr_string = inet_ntoa( peeraddr.sa_in_addr.sin_addr );
+#endif /* ! HAVE_GETADDRINFO || ! HAVE_INET_NTOP */
 		sprintf( peername, "IP=%s:%d",
-			inet_ntoa( peeraddr.sa_in_addr.sin_addr ),
+			 peeraddr_string,
 			(unsigned) ntohs( peeraddr.sa_in_addr.sin_port ) );
 		Statslog( LDAP_DEBUG_STATS,
 			"conn=%lu UDP request from %s (%s) accepted.\n",

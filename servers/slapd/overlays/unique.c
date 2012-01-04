@@ -1,5 +1,5 @@
 /* unique.c - attribute uniqueness module */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/unique.c,v 1.20.2.19 2011/01/04 23:50:50 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2011 The OpenLDAP Foundation.
@@ -183,6 +183,14 @@ unique_new_domain_uri ( unique_domain_uri **urip,
 	const char * text;
 
 	uri = ch_calloc ( 1, sizeof ( unique_domain_uri ) );
+
+	if ( url_desc->lud_host && url_desc->lud_host[0] ) {
+		snprintf( c->cr_msg, sizeof( c->cr_msg ),
+			  "host <%s> not allowed in URI",
+			  url_desc->lud_host );
+		rc = ARG_BAD_CONF;
+		goto exit;
+	}
 
 	if ( url_desc->lud_dn && url_desc->lud_dn[0] ) {
 		ber_str2bv( url_desc->lud_dn, 0, 0, &bv );
@@ -963,6 +971,8 @@ build_filter(
 				int len;
 
 				ldap_bv2escaped_filter_value_x( &b[i], &bv, 1, ctx );
+				if (!b[i].bv_len)
+					bv.bv_val = b[i].bv_val;
 				len = snprintf( kp, ks, "(%s=%s)", ad->ad_cname.bv_val, bv.bv_val );
 				assert( len >= 0 && len < ks );
 				kp += len;
@@ -1068,6 +1078,13 @@ unique_add(
 
 	Debug(LDAP_DEBUG_TRACE, "==> unique_add <%s>\n",
 	      op->o_req_dn.bv_val, 0, 0);
+
+	/* skip the checks if the operation has manageDsaIt control in it
+	 * (for replication) */
+	if ( op->o_managedsait > SLAP_CONTROL_IGNORED ) {
+		Debug(LDAP_DEBUG_TRACE, "unique_add: administrative bypass, skipping\n", 0, 0, 0);
+		return rc;
+	}
 
 	for ( domain = legacy ? legacy : domains;
 	      domain;
@@ -1190,6 +1207,13 @@ unique_modify(
 	Debug(LDAP_DEBUG_TRACE, "==> unique_modify <%s>\n",
 	      op->o_req_dn.bv_val, 0, 0);
 
+	/* skip the checks if the operation has manageDsaIt control in it
+	 * (for replication) */
+	if ( op->o_managedsait > SLAP_CONTROL_IGNORED ) {
+		Debug(LDAP_DEBUG_TRACE, "unique_modify: administrative bypass, skipping\n", 0, 0, 0);
+		return rc;
+	}
+
 	for ( domain = legacy ? legacy : domains;
 	      domain;
 	      domain = domain->next )
@@ -1303,6 +1327,13 @@ unique_modrdn(
 
 	Debug(LDAP_DEBUG_TRACE, "==> unique_modrdn <%s> <%s>\n",
 		op->o_req_dn.bv_val, op->orr_newrdn.bv_val, 0);
+
+	/* skip the checks if the operation has manageDsaIt control in it
+	 * (for replication) */
+	if ( op->o_managedsait > SLAP_CONTROL_IGNORED ) {
+		Debug(LDAP_DEBUG_TRACE, "unique_modrdn: administrative bypass, skipping\n", 0, 0, 0);
+		return rc;
+	}
 
 	for ( domain = legacy ? legacy : domains;
 	      domain;

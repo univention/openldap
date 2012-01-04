@@ -1,5 +1,5 @@
 /* tls_g.c - Handle tls/ssl using GNUTLS. */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/tls_g.c,v 1.6.2.12 2011/01/06 18:43:21 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2008-2011 The OpenLDAP Foundation.
@@ -530,9 +530,11 @@ tlsg_x509_cert_dn( struct berval *cert, struct berval *dn, int get_subject )
 	ber_init2( ber, cert, LBER_USE_DER );
 	tag = ber_skip_tag( ber, &len );	/* Sequence */
 	tag = ber_skip_tag( ber, &len );	/* Sequence */
-	tag = ber_skip_tag( ber, &len );	/* Context + Constructed (version) */
-	if ( tag == 0xa0 )	/* Version is optional */
+	tag = ber_peek_tag( ber, &len );	/* Context + Constructed (version) */
+	if ( tag == 0xa0 ) {	/* Version is optional */
+		tag = ber_skip_tag( ber, &len );
 		tag = ber_get_int( ber, &i );	/* Int: Version */
+	}
 	tag = ber_skip_tag( ber, &len );	/* Int: Serial (can be longer than ber_int_t) */
 	ber_skip_data( ber, len );
 	tag = ber_skip_tag( ber, &len );	/* Sequence: Signature */

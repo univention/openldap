@@ -1,5 +1,12 @@
-openldap (2.4.25-5) UNRELEASED; urgency=low
+openldap (2.4.28-1) UNRELEASED; urgency=low
 
+  * New upstream release.
+    - Fixes CVE-2011-4079.  Closes: #647610.
+    - Fixes support for proxy authorization with SASL-GSSAPI.
+      Closes: #608815.
+    - Drop patch service-operational-before-detach, which came from upstream.
+    - Drop patch fix-its6898-locking-issue, included upstream.
+    - Refresh other patches as needed.
   * debian/slapd.scripts-common: quote the argument to slappasswd, to cope
     with shell characters in the string.  Thanks to Nicolai Ehemann
     <en@englightened.de> for the patch.  Closes: #635931.

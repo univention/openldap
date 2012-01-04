@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/request.c,v 1.125.2.22 2011/01/06 18:43:21 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -120,15 +120,18 @@ ldap_send_initial_request(
 	ber_int_t msgid)
 {
 	int rc = 1;
+	ber_socket_t sd = AC_SOCKET_INVALID;
 
 	Debug( LDAP_DEBUG_TRACE, "ldap_send_initial_request\n", 0, 0, 0 );
 
 	LDAP_MUTEX_LOCK( &ld->ld_conn_mutex );
-	if ( ber_sockbuf_ctrl( ld->ld_sb, LBER_SB_OPT_GET_FD, NULL ) == -1 ) {
+	if ( ber_sockbuf_ctrl( ld->ld_sb, LBER_SB_OPT_GET_FD, &sd ) == -1 ) {
 		/* not connected yet */
 		rc = ldap_open_defconn( ld );
 
 	}
+	if ( ld->ld_defconn && ld->ld_defconn->lconn_status == LDAP_CONNST_CONNECTING )
+		rc = ldap_int_check_async_open( ld, sd );
 	if( rc < 0 ) {
 		ber_free( ber, 1 );
 		LDAP_MUTEX_UNLOCK( &ld->ld_conn_mutex );

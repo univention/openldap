@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/search.c,v 1.146.2.38 2011/01/26 23:23:32 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2011 The OpenLDAP Foundation.
@@ -235,6 +235,10 @@ meta_search_dobind_init(
 
 	assert( msc->msc_ld != NULL );
 
+	/* connect must be async only the first time... */
+	ldap_set_option( msc->msc_ld, LDAP_OPT_CONNECT_ASYNC, LDAP_OPT_ON );
+
+retry:;
 	if ( !BER_BVISEMPTY( &binddn ) && BER_BVISEMPTY( &cred ) ) {
 		/* bind anonymously? */
 		Debug( LDAP_DEBUG_ANY, "%s meta_search_dobind_init[%d] mc=%p: "
@@ -250,10 +254,6 @@ meta_search_dobind_init(
 		goto other;
 	}
 
-	/* connect must be async only the first time... */
-	ldap_set_option( msc->msc_ld, LDAP_OPT_CONNECT_ASYNC, LDAP_OPT_ON );
-
-retry:;
 	rc = ldap_sasl_bind( msc->msc_ld, binddn.bv_val, LDAP_SASL_SIMPLE, &cred,
 			NULL, NULL, &candidates[ candidate ].sr_msgid );
 
@@ -327,6 +327,8 @@ down:;
 
 			if ( rc == LDAP_SUCCESS ) {
 				candidates[ candidate ].sr_msgid = META_MSGID_IGNORE;
+				binddn = msc->msc_bound_ndn;
+				cred = msc->msc_cred;
 				goto retry;
 			}
 		}
@@ -601,9 +603,8 @@ meta_back_search_start(
 	/*
 	 * Maps required attributes
 	 */
-	rc = ldap_back_map_attrs( &mt->mt_rwmap.rwm_at,
-			op->ors_attrs, BACKLDAP_MAP, &mapped_attrs,
-			op->o_tmpmemctx );
+	rc = ldap_back_map_attrs( op, &mt->mt_rwmap.rwm_at,
+			op->ors_attrs, BACKLDAP_MAP, &mapped_attrs );
 	if ( rc != LDAP_SUCCESS ) {
 		/*
 		 * this target is no longer candidate

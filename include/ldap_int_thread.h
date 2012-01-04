@@ -1,5 +1,5 @@
 /* ldap_int_thread.h - ldap internal thread wrappers header file */
-/* $OpenLDAP: pkg/ldap/include/ldap_int_thread.h,v 1.20.2.12 2011/03/24 02:21:02 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
  * Copyright 1998-2011 The OpenLDAP Foundation.

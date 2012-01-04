@@ -1,5 +1,5 @@
 /* init.c - initialize various things */
-/* $OpenLDAP: pkg/ldap/servers/slapd/init.c,v 1.97.2.14 2011/01/04 23:50:20 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.

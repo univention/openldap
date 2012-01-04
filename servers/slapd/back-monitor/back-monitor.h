@@ -1,5 +1,5 @@
 /* back-monitor.h - ldap monitor back-end header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/back-monitor.h,v 1.52.2.10 2011/01/04 23:50:36 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2011 The OpenLDAP Foundation.

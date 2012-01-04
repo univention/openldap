@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/ldap/contrib/slapd-modules/cloak/Makefile,v 1.2.2.2 2011/03/24 18:15:01 quanah Exp $
+# $OpenLDAP$
 CPPFLAGS+=-I../../../include -I../../../servers/slapd 
 CPPFLAGS+=-DSLAPD_OVER_CLOAK=SLAPD_MOD_DYNAMIC
 LIBS=-lldap_r -llber -lcrypto

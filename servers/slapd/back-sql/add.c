@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sql/add.c,v 1.50.2.14 2011/01/04 23:50:46 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2011 The OpenLDAP Foundation.
@@ -389,6 +389,7 @@ del_all:
 		 */
 		case LDAP_MOD_ADD:
 		/* case SLAP_MOD_SOFTADD: */
+		/* case SLAP_MOD_ADD_IF_NOT_PRESENT: */
 add_only:;
 			if ( at->bam_add_proc == NULL ) {
 				Debug( LDAP_DEBUG_TRACE,
@@ -541,6 +542,7 @@ add_only:;
 			break;
 			
 	      	case LDAP_MOD_DELETE:
+		/* case SLAP_MOD_SOFTDEL: */
 			if ( at->bam_delete_proc == NULL ) {
 				Debug( LDAP_DEBUG_TRACE,
 					"   backsql_modify_internal(): "
@@ -1217,7 +1219,7 @@ backsql_add( Operation *op, SlapReply *rs )
 
 	if ( !BACKSQL_IS_ADD( oc->bom_expect_return ) ) {
 		SWORD		ncols;
-		SQLINTEGER	value_len;
+		SQLLEN		value_len;
 
 		if ( BACKSQL_CREATE_NEEDS_SELECT( bi ) ) {
 			SQLFreeStmt( sth, SQL_DROP );

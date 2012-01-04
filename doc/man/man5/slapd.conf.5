@@ -1,7 +1,7 @@
 .TH SLAPD.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" Copyright 1998-2011 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.239.2.44 2011/01/31 21:05:07 quanah Exp $
+.\" $OpenLDAP$
 .SH NAME
 slapd.conf \- configuration file for slapd, the stand-alone LDAP daemon
 .SH SYNOPSIS
@@ -1079,7 +1079,12 @@ is in the source code for Mozilla NSS in the file sslinfo.c in the structure
 Specifies the file that contains certificates for all of the Certificate
 Authorities that
 .B slapd
-will recognize.
+will recognize.  The certificate for
+the CA that signed the server certificate must be included among
+these certificates. If the signing CA was not a top-level (root) CA,
+certificates for the entire sequence of CA's from the signing CA to
+the top-level CA should be present. Multiple certificates are simply
+appended to the file; the order is not significant.
 .TP
 .B TLSCACertificatePath <path>
 Specifies the path of a directory that contains Certificate Authority
@@ -1277,6 +1282,19 @@ by default. See the
 .BR slapd.access (5)
 manual page for more details on ACL requirements for
 Add operations.
+.TP
+.B extra_attrs <attrlist>
+Lists what attributes need to be added to search requests.
+Local storage backends return the entire entry to the frontend.
+The frontend takes care of only returning the requested attributes
+that are allowed by ACLs.
+However, features like access checking and so may need specific
+attributes that are not automatically returned by remote storage
+backends, like proxy backends and so on.
+.B <attrlist>
+is a list of attributes that are needed for internal purposes
+and thus always need to be collected, even when not explicitly
+requested by clients.
 .TP
 .B hidden on | off
 Controls whether the database will be used to answer

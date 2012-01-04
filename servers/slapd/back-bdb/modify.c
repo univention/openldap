@@ -1,5 +1,5 @@
 /* modify.c - bdb backend modify routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modify.c,v 1.156.2.22 2011/03/24 02:00:47 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2011 The OpenLDAP Foundation.
@@ -153,7 +153,6 @@ int bdb_modify_internal(
 				mod->sm_desc->ad_cname.bv_val, 0, 0);
 			err = modify_delete_values( e, mod, get_permissiveModify(op),
 				text, textbuf, textlen );
-			assert( err != LDAP_TYPE_OR_VALUE_EXISTS );
 			if( err != LDAP_SUCCESS ) {
 				Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: %d %s\n",
 					err, *text, 0);
@@ -208,6 +207,56 @@ int bdb_modify_internal(
  			if ( err == LDAP_TYPE_OR_VALUE_EXISTS ) {
  				err = LDAP_SUCCESS;
  			}
+
+			if( err != LDAP_SUCCESS ) {
+				Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: %d %s\n",
+					err, *text, 0);
+			}
+ 			break;
+
+		case SLAP_MOD_SOFTDEL:
+			Debug(LDAP_DEBUG_ARGS,
+				"bdb_modify_internal: softdel %s\n",
+				mod->sm_desc->ad_cname.bv_val, 0, 0);
+ 			/* Avoid problems in index_delete_mods()
+ 			 * We need to add index if necessary.
+ 			 */
+ 			mod->sm_op = LDAP_MOD_DELETE;
+
+			err = modify_delete_values( e, mod, get_permissiveModify(op),
+				text, textbuf, textlen );
+
+ 			mod->sm_op = SLAP_MOD_SOFTDEL;
+
+ 			if ( err == LDAP_NO_SUCH_ATTRIBUTE ) {
+ 				err = LDAP_SUCCESS;
+ 			}
+
+			if( err != LDAP_SUCCESS ) {
+				Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: %d %s\n",
+					err, *text, 0);
+			}
+ 			break;
+
+		case SLAP_MOD_ADD_IF_NOT_PRESENT:
+			if ( attr_find( e->e_attrs, mod->sm_desc ) != NULL ) {
+				/* skip */
+				err = LDAP_SUCCESS;
+				break;
+			}
+
+			Debug(LDAP_DEBUG_ARGS,
+				"bdb_modify_internal: add_if_not_present %s\n",
+				mod->sm_desc->ad_cname.bv_val, 0, 0);
+ 			/* Avoid problems in index_add_mods()
+ 			 * We need to add index if necessary.
+ 			 */
+ 			mod->sm_op = LDAP_MOD_ADD;
+
+			err = modify_add_values( e, mod, get_permissiveModify(op),
+				text, textbuf, textlen );
+
+ 			mod->sm_op = SLAP_MOD_ADD_IF_NOT_PRESENT;
 
 			if( err != LDAP_SUCCESS ) {
 				Debug(LDAP_DEBUG_ARGS, "bdb_modify_internal: %d %s\n",

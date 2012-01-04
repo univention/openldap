@@ -1,5 +1,5 @@
 /* rwm.c - rewrite/remap operations */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/rwm.c,v 1.70.2.45 2011/01/26 23:23:35 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2011 The OpenLDAP Foundation.
@@ -911,6 +911,7 @@ rwm_entry_get_rw( Operation *op, struct berval *ndn,
 		/* duplicate & release */
 		op2.o_bd->bd_info = (BackendInfo *)on;
 		rc = rwm_send_entry( &op2, &rs );
+		RS_ASSERT( rs.sr_flags & REP_ENTRY_MUSTFLUSH );
 		if ( rc == SLAP_CB_CONTINUE ) {
 			*ep = rs.sr_entry;
 			rc = LDAP_SUCCESS;
@@ -1498,6 +1499,7 @@ rwm_send_entry( Operation *op, SlapReply *rs )
 	} else if ( rs->sr_flags & REP_ENTRY_MUSTRELEASE ) {
 		/* ITS#6423: REP_ENTRY_MUSTRELEASE incompatible
 		 * with REP_ENTRY_MODIFIABLE */
+		RS_ASSERT( 0 );
 		rc = 1;
 		goto fail;
 	}

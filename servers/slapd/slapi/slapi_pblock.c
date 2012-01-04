@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_pblock.c,v 1.63.2.13 2011/01/26 23:23:36 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2002-2011 The OpenLDAP Foundation.

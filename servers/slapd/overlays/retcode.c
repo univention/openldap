@@ -1,5 +1,5 @@
 /* retcode.c - customizable response for client testing purposes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/retcode.c,v 1.18.2.15 2011/01/26 23:23:35 quanah Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2005-2011 The OpenLDAP Foundation.

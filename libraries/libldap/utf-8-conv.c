@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/utf-8-conv.c,v 1.16.2.7 2011/01/04 23:50:06 kurt Exp $ */
+/* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2011 The OpenLDAP Foundation.
@@ -328,6 +328,10 @@ ldap_x_wcs_to_utf8s ( char *utf8str, const wchar_t *wcstr, size_t count )
 	return (p - utf8str);
 }
 
+#ifdef ANDROID
+int wctomb(char *s, wchar_t wc) { return wcrtomb(s,wc,NULL); }
+int mbtowc(wchar_t *pwc, const char *s, size_t n) { return mbrtowc(pwc, s, n, NULL); }
+#endif
 
 /*-----------------------------------------------------------------------------
    Convert a UTF-8 character to a MultiByte character.
