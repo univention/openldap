@@ -1,29 +1,20 @@
-#
-#    Translators, if you are not familiar with the PO format, gettext
-#    documentation is worth reading, especially sections dedicated to
-#    this format, e.g. by running:
-#         info -n '(gettext)PO Files'
-#         info -n '(gettext)Header Entry'
-#
-#    Some information specific to po-debconf are available at
-#            /usr/share/doc/po-debconf/README-trans
-#         or http://www.debian.org/intl/l10n/po-debconf/README-trans
-#
-#    Developers do not need to manually edit POT or PO files.
-#
+# Dutch translation of openldap debconf templates.
+# Copyright (C) 2008-2011 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the openldap package.
+# Bart Cornelis <cobaco@skolelinux.no>, 2008.
+# Jeroen Schot <schot@a-eskwadraat.nl>, 2011.
 msgid ""
 msgstr ""
-"Project-Id-Version: openldap2\n"
+"Project-Id-Version: openldap 2.4.25-4\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2010-07-15 22:05+0200\n"
-"PO-Revision-Date: 2008-05-08 12:42+0100\n"
-"Last-Translator: Bart Cornelis <cobaco@skolelinux.no>\n"
-"Language-Team: debian-l10n-dutch <debian-l10n-dutch@lists.debian.org>\n"
-"Language: \n"
+"PO-Revision-Date: 2011-12-08 11:42+0100\n"
+"Last-Translator: Jeroen Schot <schot@a-eskwadraat.nl>\n"
+"Language-Team: Debian l10n Dutch <debian-l10n-dutch@lists.debian.org>\n"
+"Language: nl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Poedit-Language: Dutch\n"
 
 #. Type: boolean
 #. Description
@@ -74,8 +65,8 @@ msgid ""
 "Data Interchange Format."
 msgstr ""
 "Voor een opwaardering naar een nieuwe versie van de OpenLDAP-server "
-"uitgevoerd wordt kan de data in uw LDAP-catalogussen geëxporteerd worden "
-"naar een gewoon tekstbestand in LDIF-formaat (dit is het gestandaardiseerde "
+"uitgevoerd wordt kan de data in uw LDAP-catalogi geëxporteerd worden naar "
+"een gewoon tekstbestand in LDIF-indeling (dit is het gestandaardiseerde "
 "'LDAP Data Interchange Format')."
 
 #. Type: select
@@ -89,8 +80,8 @@ msgid ""
 msgstr ""
 "Wanneer u 'altijd' selecteert worden de databases voor elke opwaardering on-"
 "conditioneel naar een bestand geëxporteerd. Wanneer u 'wanneer nodig' "
-"selecteert worden de databases enkel geëxporteerd wanneer het nieuwe "
-"databaseformaat incompatibel is met het oude formaat en de data opnieuw "
+"selecteert worden de databases enkel geëxporteerd wanneer de nieuwe database-"
+"indeling incompatibel is met de oude indeling en de data opnieuw "
 "geïmporteerd moet worden. Wanneer u 'nooit' kiest wordt er geen database-"
 "export gemaakt."
 
@@ -147,13 +138,6 @@ msgstr "Configuratie opnieuw proberen?"
 #. Type: boolean
 #. Description
 #: ../slapd.templates:5001
-#, fuzzy
-#| msgid ""
-#| "The configuration you entered is invalid. Make sure that the DNS domain "
-#| "name is syntactically valid, the organization is not left empty and the "
-#| "admin passwords match. If you decide not to retry the configuration the "
-#| "LDAP server will not be set up. Run 'dpkg-reconfigure slapd' if you want "
-#| "to retry later."
 msgid ""
 "The configuration you entered is invalid. Make sure that the DNS domain name "
 "is syntactically valid, the field for the organization is not left empty and "
@@ -162,8 +146,8 @@ msgid ""
 "retry later."
 msgstr ""
 "De door u ingevoerde configuratie is ongeldig. Zorg ervoor dat: de DNS-"
-"domeinnaam een geldige syntax heeft, de organisatie niet leeg is, en de "
-"beheerderswachtwoorden overeenkomen. Wanneer u ervoor kiest om de "
+"domeinnaam een geldige syntax heeft, het veld voor de organisatie niet leeg "
+"is, en de beheerderswachtwoorden overeenkomen. Wanneer u ervoor kiest om de "
 "configuratie niet opnieuw te proberen wordt uw LDAP-server niet ingesteld. U "
 "kunt later altijd 'dpkg-reconfigure slapd' uitvoeren om de configuratie "
 "opnieuw te proberen. "
@@ -314,16 +298,12 @@ msgstr ""
 #. Translators: keep "${location}" unchanged. This is a variable that
 #. will be replaced by a directory name at execution
 #: ../slapd.templates:15001
-#, fuzzy
-#| msgid ""
-#| "Then move the database files back to a backup area and then try running "
-#| "slapadd from $location."
 msgid ""
 "Then move the database files back to a backup area and then try running "
 "slapadd from ${location}."
 msgstr ""
 "Vervolgens verplaatst u de databasebestanden terug naar de reservekopie-map "
-"en probeert u slapadd uit te voeren vanaf $location."
+"en probeert u slapadd uit te voeren vanaf ${location}."
 
 #. Type: select
 #. Description
@@ -340,7 +320,7 @@ msgid ""
 "options."
 msgstr ""
 "Het HDB-backend is de aanbevolen keuze. HDB en BDB gebruiken een "
-"gelijkaardig opslagformaat maar HDB ondersteunt ook het hernoemen van "
+"gelijkaardig opslagindeling maar HDB ondersteunt ook het hernoemen van "
 "deelbomen. Beide ondersteunen dezelfde configuratieopties. "
 
 #. Type: select
@@ -353,70 +333,3 @@ msgstr ""
 "Onafhankelijk van de hier gemaakte is het een goed idee om te controleren of "
 "de resulterende databaseconfiguratie aan uw noden voldoet. Meer informatie "
 "vindt u in /usr/share/doc/slapd/README.DB_CONFIG.gz ."
-
-#~ msgid "slurpd is obsolete; replicas must be reconfigured by hand"
-#~ msgstr "slurpd is verouderd; replica's dienen handmatig ingesteld te worden"
-
-#~ msgid ""
-#~ "One or more slurpd \"replica\" options were found in your slapd config "
-#~ "when upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, "
-#~ "you will need to migrate your replicas to use the syncrepl protocol "
-#~ "instead."
-#~ msgstr ""
-#~ "Bij het opwaarderen zijn er een of meer slurpd 'replica'-opties gevonden "
-#~ "in uw slapd-configuratie. Daar slurpd verouderd is sinds OpenLDAP 2.4 "
-#~ "dient u uw replica's om te zetten naar het syncrepl-protocol."
-
-#~ msgid ""
-#~ "The conversion from slurpd to the pull-based syncrepl protocol cannot be "
-#~ "done automatically and you will need to configure your replica servers by "
-#~ "hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for "
-#~ "details."
-#~ msgstr ""
-#~ "De conversie van slurpd naar het 'pull'-gebaseerde syncrepl-protocol kan "
-#~ "niet automatisch uitgevoerd worden, u dient uw replica-servers dus "
-#~ "handmatig in te stellen. Meer informatie vindt u op http://www.openldap."
-#~ "org/doc/admin24/syncrepl.html ."
-
-#~ msgid "TLSCipherSuite values have changed"
-#~ msgstr "De TLSCipherSuite-waardes zijn veranderd"
-
-#~ msgid ""
-#~ "A \"TLSCipherSuite\" option was found in your slapd config when "
-#~ "upgrading. The values allowed for this option are determined by the SSL "
-#~ "implementation used, which has been changed from OpenSSL to GnuTLS.  As a "
-#~ "result, your existing TLSCipherSuite setting will not work with this "
-#~ "package."
-#~ msgstr ""
-#~ "Er is een 'TLSCipherSuite'-optie gevonden in uw slapd-configuratie. De "
-#~ "toegelaten waardes voor deze opties worden bepaald door de gebruikte SSL-"
-#~ "implementatie, en deze is veranderd van OpenSSL naar GnuTLS. Uw bestaande "
-#~ "TLSCipherSuite-instelling zal dan ook niet werken met dit pakket."
-
-#~ msgid ""
-#~ "This setting has been automatically commented out for you.  If you have "
-#~ "specific encryption needs that require this option to be re-enabled, see "
-#~ "the output of 'gnutls-cli -l' in the gnutls-bin package for the list of "
-#~ "ciphers supported by GnuTLS."
-#~ msgstr ""
-#~ "De instelling is automatisch uitgecommentarieerd. Als u specifieke "
-#~ "encryptie-eisen heeft waarvoor deze optie geheractiveerd moet worden "
-#~ "vindt u via het commando 'gnutls-cli-l' (uit het pakket gnutls-bin) de "
-#~ "lijst van door GnuTLS ondersteunde ciphers terug."
-
-#~ msgid "Back up current database and create a new one?"
-#~ msgstr ""
-#~ "Wilt u dat er een reservekopie van de huidige database en een nieuwe "
-#~ "database aangemaakt wordt?"
-
-#~ msgid ""
-#~ "The directory suffix (domain) you specified doesn't match the one "
-#~ "currently in /etc/ldap/slapd.conf. Changing the directory suffix requires "
-#~ "moving aside the current LDAP database and creating a new one. Please "
-#~ "confirm whether you want to back up and abandon the current database."
-#~ msgstr ""
-#~ "Het door u opgegeven catalogus-suffix (domein) komt niet overeen met dat "
-#~ "in /etc/ldap/slapd.conf . Aanpassen van het catalogus-suffix vereist dat "
-#~ "de huidige database aan de kant gezet wordt en een nieuwe database "
-#~ "aangemaakt wordt. Bent u zeker dat u de huidige database wilt verlaten? "
-#~ "(Er wordt dan een reservekopie van de huidige database gemaakt.)"

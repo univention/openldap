@@ -13,6 +13,9 @@ openldap (2.4.28-1) UNRELEASED; urgency=low
   * Install ldif.h in libldap2-dev, now that it's been blessed upstream.
     Closes: #644985.
 
+  [ Updated debconf translations ]
+  * Dutch, thanks to Jeroen Schot <schot@A-Eskwadraat.nl>.  Closes: #651400.
+
  -- Steve Langasek <vorlon@debian.org>  Sun, 18 Dec 2011 11:01:09 -0800
 
 openldap (2.4.25-4) unstable; urgency=low
