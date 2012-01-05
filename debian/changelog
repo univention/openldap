@@ -16,6 +16,9 @@ openldap (2.4.28-1) UNRELEASED; urgency=low
     the upstream version of libdb; this is redundant with our packaging
     system, and causes spurious errors when there's a non-ABI-breaking
     BDB upstream release.  Closes: #651333.
+  * Build-conflict with the ancient autoconf2.13, which is incompatible with
+    dh-autoreconf.  (Maybe dh-autoreconf itself should conflict with it?)
+    Closes: #651598.
 
   [ Updated debconf translations ]
   * Dutch, thanks to Jeroen Schot <schot@A-Eskwadraat.nl>.  Closes: #651400.
