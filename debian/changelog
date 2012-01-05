@@ -12,6 +12,10 @@ openldap (2.4.28-1) UNRELEASED; urgency=low
     <en@englightened.de> for the patch.  Closes: #635931.
   * Install ldif.h in libldap2-dev, now that it's been blessed upstream.
     Closes: #644985.
+  * debian/patches/no-bdb-ABI-second-guessing: don't force an exact match on
+    the upstream version of libdb; this is redundant with our packaging
+    system, and causes spurious errors when there's a non-ABI-breaking
+    BDB upstream release.  Closes: #651333.
 
   [ Updated debconf translations ]
   * Dutch, thanks to Jeroen Schot <schot@A-Eskwadraat.nl>.  Closes: #651400.
