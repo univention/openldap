@@ -1,4 +1,4 @@
-openldap (2.4.28-1) UNRELEASED; urgency=low
+openldap (2.4.28-1) unstable; urgency=low
 
   * New upstream release.
     - Fixes CVE-2011-4079.  Closes: #647610.
@@ -23,7 +23,7 @@ openldap (2.4.28-1) UNRELEASED; urgency=low
   [ Updated debconf translations ]
   * Dutch, thanks to Jeroen Schot <schot@A-Eskwadraat.nl>.  Closes: #651400.
 
- -- Steve Langasek <vorlon@debian.org>  Sun, 18 Dec 2011 11:01:09 -0800
+ -- Steve Langasek <vorlon@debian.org>  Thu, 05 Jan 2012 06:07:11 +0000
 
 openldap (2.4.25-4) unstable; urgency=low
 
