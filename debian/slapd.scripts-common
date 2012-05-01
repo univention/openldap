@@ -275,14 +275,14 @@ get_suffix() {
 			sed -n -e's/^suffix[[:space:]]\+"*\([^"]\+\)"*/\1/p' $f
 		done
 	else
-		grep -h olcSuffix ${SLAPD_CONF}/cn\=config/olcDatabase* | cut -d: -f 2
+		grep -h olcSuffix ${SLAPD_CONF}/cn\=config/olcDatabase*.ldif | cut -d: -f 2
 	fi
 }
 # }}}
 get_directory() {							# {{{
 # Returns the db directory for a given suffix
 	if [ -d "${SLAPD_CONF}" ] && get_suffix | grep -q "$1" ; then
-		grep "olcDbDirectory:" `grep -l "olcSuffix: $1" ${SLAPD_CONF}/cn\=config/olcDatabase*` | cut -d: -f 2 | sed 's/^  *//g'
+		grep "olcDbDirectory:" `grep -l "olcSuffix: $1" ${SLAPD_CONF}/cn\=config/olcDatabase*.ldif` | cut -d: -f 2 | sed 's/^  *//g'
 	elif [ -f "${SLAPD_CONF}" ]; then
 		# Extract the directory for the given suffix ($1)
 		for f in `get_all_slapd_conf_files`; do
