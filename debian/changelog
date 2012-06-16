@@ -1,5 +1,9 @@
 openldap (2.4.28-2) UNRELEASED; urgency=low
 
+  * Incorporate NMU (thanks, Julien Cristau):
+    - Disable the mdb backend on non-Linux, it looks like it doesn't work
+      with linuxthreads (closes: #654824).
+
   [ Peter Marschall ]
   * debian/slapd.scripts-common: avoid grep warnings
   * debian/patches/heimdal-fix: fix arguments of

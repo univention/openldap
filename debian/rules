@@ -11,8 +11,12 @@ export DEB_BUILD_MAINT_OPTIONS := hardening=+pie,+bindnow
 export RESOLV_MULTI = off
 
 DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+DEB_HOST_ARCH_OS ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
 
 CONFIG		= $(shell grep -v "^\#" debian/configure.options)
+ifneq ($(DEB_HOST_ARCH_OS),linux)
+	CONFIG += --disable-mdb
+endif
 
 installdir	:= $(CURDIR)/debian/tmp
 builddir	:= $(CURDIR)/debian/build
