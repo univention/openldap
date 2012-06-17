@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2011 The OpenLDAP Foundation.
+ * Copyright 2000-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1357,6 +1357,10 @@ int bdb_idl_append( ID *a, ID *b )
 		return 0;
 	}
 
+	if ( b[0] == 1 ) {
+		return bdb_idl_append_one( a, BDB_IDL_FIRST( b ));
+	}
+
 	ida = BDB_IDL_LAST( a );
 	idb = BDB_IDL_LAST( b );
 	if ( BDB_IDL_IS_RANGE( a ) || BDB_IDL_IS_RANGE(b) ||
@@ -1367,7 +1371,7 @@ int bdb_idl_append( ID *a, ID *b )
 		return 0;
 	}
 
-	if ( b[0] > 1 && ida > idb ) {
+	if ( ida > idb ) {
 		swap = idb;
 		a[a[0]] = idb;
 		b[b[0]] = ida;
@@ -1382,7 +1386,7 @@ int bdb_idl_append( ID *a, ID *b )
 	a[0]++;
 	a[a[0]] = tmp;
 
-	if ( b[0] > 1 ) {
+	{
 		int i = b[0] - 1;
 		AC_MEMCPY(a+a[0]+1, b+2, i * sizeof(ID));
 		a[0] += i;

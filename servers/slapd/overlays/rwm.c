@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2011 The OpenLDAP Foundation.
+ * Copyright 2003-2012 The OpenLDAP Foundation.
  * Portions Copyright 2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -1277,7 +1277,13 @@ rwm_attrs( Operation *op, SlapReply *rs, Attribute** a_first, int stripEntryDN )
 								NULL );
 
 							if ( rc != LDAP_SUCCESS ) {
-								BER_BVZERO( &(*ap)->a_nvals[i] );
+								/* FIXME: this is wrong, putting a non-normalized value
+								 * into nvals. But when a proxy sends us bogus data,
+								 * we still need to give it to the client, even if it
+								 * violates the syntax. I.e., we don't want to silently
+								 * drop things and trigger an apparent data loss.
+								 */
+								ber_dupbv( &(*ap)->a_nvals[i], &(*ap)->a_vals[i] );
 							}
 						}
 						BER_BVZERO( &(*ap)->a_nvals[i] );

@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2011 The OpenLDAP Foundation.
+ * Copyright 1998-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -344,7 +344,6 @@ ldap_init_fd(
 
 	/* Add the connection to the *LDAP's select pool */
 	ldap_mark_select_read( ld, conn->lconn_sb );
-	ldap_mark_select_write( ld, conn->lconn_sb );
 	
 	*ldp = ld;
 	return LDAP_SUCCESS;
@@ -502,7 +501,6 @@ ldap_open_internal_connection( LDAP **ldp, ber_socket_t *fdp )
 
 	/* Add the connection to the *LDAP's select pool */
 	ldap_mark_select_read( ld, c->lconn_sb );
-	ldap_mark_select_write( ld, c->lconn_sb );
 
 	/* Make this connection an LDAP V3 protocol connection */
 	rc = LDAP_VERSION3;

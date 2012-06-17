@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2011 The OpenLDAP Foundation.
+ * Copyright 2000-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -190,11 +190,14 @@ mdb_dn2id_add(
 	rc = mdb_cursor_put( mcp, &key, &data, MDB_NODUPDATA );
 
 	if (rc == 0) {
+		int flag = MDB_NODUPDATA;
 		nid = e->e_id;
 		memcpy( ptr, &pid, sizeof( ID ));
 		d->nrdnlen[0] ^= 0x80;
 
-		rc = mdb_cursor_put( mcd, &key, &data, MDB_NODUPDATA|MDB_APPEND );
+		if (slapMode & SLAP_TOOL_MODE)
+			flag |= MDB_APPEND;
+		rc = mdb_cursor_put( mcd, &key, &data, flag );
 	}
 
 fail:

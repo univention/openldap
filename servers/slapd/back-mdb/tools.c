@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2011 The OpenLDAP Foundation.
+ * Copyright 2011-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -335,8 +335,10 @@ mdb_tool_entry_get_int( BackendDB *be, ID id, Entry **ep )
 		rc = mdb_id2name( &op, txn, &idcursor, id, &dn, &ndn );
 		if ( rc  ) {
 			rc = LDAP_OTHER;
-			mdb_entry_return( &op, e );
-			e = NULL;
+			if ( e ) {
+				mdb_entry_return( &op, e );
+				e = NULL;
+			}
 			goto done;
 		}
 		if ( tool_base != NULL ) {
@@ -369,7 +371,24 @@ Entry*
 mdb_tool_entry_get( BackendDB *be, ID id )
 {
 	Entry *e = NULL;
+	int rc;
 
+	if ( !txn ) {
+		struct mdb_info *mdb = (struct mdb_info *) be->be_private;
+		rc = mdb_txn_begin( mdb->mi_dbenv, NULL,
+			(slapMode & SLAP_TOOL_READONLY) ? MDB_RDONLY : 0, &txn );
+		if ( rc )
+			return NULL;
+	}
+	if ( !cursor ) {
+		struct mdb_info *mdb = (struct mdb_info *) be->be_private;
+		rc = mdb_cursor_open( txn, mdb->mi_id2entry, &cursor );
+		if ( rc ) {
+			mdb_txn_abort( txn );
+			txn = NULL;
+			return NULL;
+		}
+	}
 	(void)mdb_tool_entry_get_int( be, id, &e );
 	return e;
 }
@@ -679,9 +698,13 @@ done:
 		}
 
 	} else {
+		unsigned i;
 		mdb_txn_abort( txn );
 		txn = NULL;
-		cursor = NULL;
+		idcursor = NULL;
+		for ( i=0; i<mdb->mi_nattrs; i++ )
+			mdb->mi_attrs[i]->ai_cursor = NULL;
+		mdb_writes = 0;
 		snprintf( text->bv_val, text->bv_len,
 			"txn_aborted! %s (%d)",
 			rc == LDAP_OTHER ? "Internal error" :
@@ -760,22 +783,6 @@ int mdb_tool_entry_reindex(
 		mi->mi_nattrs = i;
 	}
 
-	if ( slapMode & SLAP_TRUNCATE_MODE ) {
-		int i;
-		for ( i=0; i < mi->mi_nattrs; i++ ) {
-			rc = mdb_drop( txn, mi->mi_attrs[i]->ai_dbi, 0 );
-			if ( rc ) {
-				Debug( LDAP_DEBUG_ANY,
-					LDAP_XSTRING(mdb_tool_entry_reindex)
-					": (Truncate) mdb_drop(%s) failed: %s (%d)\n",
-					mi->mi_attrs[i]->ai_desc->ad_type->sat_cname.bv_val,
-					mdb_strerror(rc), rc );
-				return -1;
-			}
-		}
-		slapMode ^= SLAP_TRUNCATE_MODE;
-	}
-
 	e = mdb_tool_entry_get( be, id );
 
 	if( e == NULL ) {
@@ -797,11 +804,25 @@ int mdb_tool_entry_reindex(
 		}
 	}
 
+	if ( slapMode & SLAP_TRUNCATE_MODE ) {
+		int i;
+		for ( i=0; i < mi->mi_nattrs; i++ ) {
+			rc = mdb_drop( txi, mi->mi_attrs[i]->ai_dbi, 0 );
+			if ( rc ) {
+				Debug( LDAP_DEBUG_ANY,
+					LDAP_XSTRING(mdb_tool_entry_reindex)
+					": (Truncate) mdb_drop(%s) failed: %s (%d)\n",
+					mi->mi_attrs[i]->ai_desc->ad_type->sat_cname.bv_val,
+					mdb_strerror(rc), rc );
+				return -1;
+			}
+		}
+		slapMode ^= SLAP_TRUNCATE_MODE;
+	}
+
 	/*
 	 * just (re)add them for now
-	 * assume that some other routine (not yet implemented)
-	 * will zap index databases
-	 *
+	 * Use truncate mode to empty/reset index databases
 	 */
 
 	Debug( LDAP_DEBUG_TRACE,
@@ -822,6 +843,7 @@ done:
 			unsigned i;
 			MDB_TOOL_IDL_FLUSH( be, txi );
 			rc = mdb_txn_commit( txi );
+			mdb_writes = 0;
 			for ( i=0; i<mi->mi_nattrs; i++ )
 				mi->mi_attrs[i]->ai_cursor = NULL;
 			if( rc != 0 ) {
@@ -835,7 +857,11 @@ done:
 		}
 
 	} else {
+		unsigned i;
+		mdb_writes = 0;
 		mdb_txn_abort( txi );
+		for ( i=0; i<mi->mi_nattrs; i++ )
+			mi->mi_attrs[i]->ai_cursor = NULL;
 		Debug( LDAP_DEBUG_ANY,
 			"=> " LDAP_XSTRING(mdb_tool_entry_reindex)
 			": txn_aborted! err=%d\n",

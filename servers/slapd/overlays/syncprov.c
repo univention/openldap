@@ -2,7 +2,7 @@
 /* syncprov.c - syncrepl provider */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2011 The OpenLDAP Foundation.
+ * Copyright 2004-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -822,7 +822,7 @@ syncprov_sendresp( Operation *op, opcookie *opc, syncops *so, int mode )
 {
 	SlapReply rs = { REP_SEARCH };
 	LDAPControl *ctrls[2];
-	struct berval cookie = BER_BVNULL, csns[2];
+	struct berval cookie, csns[2];
 	Entry e_uuid = {0};
 	Attribute a_uuid = {0};
 
@@ -830,19 +830,17 @@ syncprov_sendresp( Operation *op, opcookie *opc, syncops *so, int mode )
 		return SLAPD_ABANDON;
 
 	ctrls[1] = NULL;
-	if ( !BER_BVISNULL( &opc->sctxcsn )) {
-		csns[0] = opc->sctxcsn;
-		BER_BVZERO( &csns[1] );
-		slap_compose_sync_cookie( op, &cookie, csns, so->s_rid, slap_serverID ? slap_serverID : -1 );
-	}
+	csns[0] = opc->sctxcsn;
+	BER_BVZERO( &csns[1] );
+	slap_compose_sync_cookie( op, &cookie, csns, so->s_rid, slap_serverID ? slap_serverID : -1 );
 
 #ifdef LDAP_DEBUG
 	if ( so->s_sid > 0 ) {
 		Debug( LDAP_DEBUG_SYNC, "syncprov_sendresp: to=%03x, cookie=%s\n",
-			so->s_sid, cookie.bv_val ? cookie.bv_val : "", 0 );
+			so->s_sid, cookie.bv_val, 0 );
 	} else {
 		Debug( LDAP_DEBUG_SYNC, "syncprov_sendresp: cookie=%s\n",
-			cookie.bv_val ? cookie.bv_val : "", 0, 0 );
+			cookie.bv_val, 0, 0 );
 	}
 #endif
 
@@ -851,9 +849,7 @@ syncprov_sendresp( Operation *op, opcookie *opc, syncops *so, int mode )
 	a_uuid.a_nvals = &opc->suuid;
 	rs.sr_err = syncprov_state_ctrl( op, &rs, &e_uuid,
 		mode, ctrls, 0, 1, &cookie );
-	if ( !BER_BVISNULL( &cookie )) {
-		op->o_tmpfree( cookie.bv_val, op->o_tmpmemctx );
-	}
+	op->o_tmpfree( cookie.bv_val, op->o_tmpmemctx );
 
 	rs.sr_ctrls = ctrls;
 	rs.sr_entry = &e_uuid;
@@ -2115,10 +2111,12 @@ syncprov_op_mod( Operation *op, SlapReply *rs )
 				/* clean up if the caller is giving up */
 				if ( op->o_abandon ) {
 					modinst *m2;
-					for ( m2 = mt->mt_mods; m2->mi_next != mi;
+					for ( m2 = mt->mt_mods; m2 && m2->mi_next != mi;
 						m2 = m2->mi_next );
-					m2->mi_next = mi->mi_next;
-					if ( mt->mt_tail == mi ) mt->mt_tail = m2;
+					if ( m2 ) {
+						m2->mi_next = mi->mi_next;
+						if ( mt->mt_tail == mi ) mt->mt_tail = m2;
+					}
 					op->o_tmpfree( cb, op->o_tmpmemctx );
 					ldap_pvt_thread_mutex_unlock( &mt->mt_mutex );
 					return SLAPD_ABANDON;
@@ -2477,7 +2475,10 @@ syncprov_op_search( Operation *op, SlapReply *rs )
 		ldap_pvt_thread_mutex_init( &sop->s_mutex );
 		sop->s_rid = srs->sr_state.rid;
 		sop->s_sid = srs->sr_state.sid;
-		sop->s_inuse = 1;
+		/* set refcount=2 to prevent being freed out from under us
+		 * by abandons that occur while we're running here
+		 */
+		sop->s_inuse = 2;
 
 		ldap_pvt_thread_mutex_lock( &si->si_ops_mutex );
 		while ( si->si_active ) {
@@ -2645,10 +2646,11 @@ no_change:		if ( !(op->o_sync_mode & SLAP_SYNC_PERSIST) ) {
 						do_play = 1;
 						break;
 					}
-					/* SID present and new enough */
-					if ( minsid == sl->sl_sids[i]
-						&& ber_bvcmp( &mincsn, &sl->sl_mincsn[i] ) >= 0 ) {
-						do_play = 1;
+					/* SID present */
+					if ( minsid == sl->sl_sids[i] ) {
+						/* new enough? */
+						if ( ber_bvcmp( &mincsn, &sl->sl_mincsn[i] ) >= 0 )
+							do_play = 1;
 						break;
 					}
 				}
@@ -2708,7 +2710,10 @@ shortcut:
 	 * for persistent search evaluation
 	 */
 	if ( sop ) {
-		sop->s_filterstr= op->ors_filterstr;
+		ldap_pvt_thread_mutex_lock( &sop->s_mutex );
+		sop->s_filterstr = op->ors_filterstr;
+		/* correct the refcount that was set to 2 before */
+		sop->s_inuse--;
 	}
 
 	/* If something changed, find the changes */
@@ -2728,14 +2733,14 @@ shortcut:
 #endif
 		ber_dupbv_x( &fava->f_ava->aa_value, &mincsn, op->o_tmpmemctx );
 		fava->f_next = op->ors_filter;
-		if ( sop )
-			ldap_pvt_thread_mutex_lock( &sop->s_mutex );
 		op->ors_filter = fand;
 		filter2bv_x( op, op->ors_filter, &op->ors_filterstr );
 		if ( sop ) {
 			sop->s_flags |= PS_FIX_FILTER;
-			ldap_pvt_thread_mutex_unlock( &sop->s_mutex );
 		}
+	}
+	if ( sop ) {
+		ldap_pvt_thread_mutex_unlock( &sop->s_mutex );
 	}
 
 	/* Let our callback add needed info to returned entries */
@@ -3087,6 +3092,7 @@ syncprov_db_open(
 		}
 		overlay_entry_release_ov( op, e, 0, on );
 		if ( si->si_ctxcsn && !SLAP_DBCLEAN( be )) {
+			op->o_tag = LDAP_REQ_SEARCH;
 			op->o_req_dn = be->be_suffix[0];
 			op->o_req_ndn = be->be_nsuffix[0];
 			op->ors_scope = LDAP_SCOPE_SUBTREE;

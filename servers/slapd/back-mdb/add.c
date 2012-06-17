@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2011 The OpenLDAP Foundation.
+ * Copyright 2000-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -408,7 +408,9 @@ txnReturn:
 			goto return_results;
 		}
 
-		if (( rs->sr_err = mdb_txn_commit( txn )) != 0 ) {
+		rs->sr_err = mdb_txn_commit( txn );
+		txn = NULL;
+		if ( rs->sr_err != 0 ) {
 			rs->sr_text = "txn_commit failed";
 			Debug( LDAP_DEBUG_TRACE,
 				LDAP_XSTRING(mdb_add) ": %s : %s (%d)\n",
@@ -416,7 +418,6 @@ txnReturn:
 			rs->sr_err = LDAP_OTHER;
 			goto return_results;
 		}
-		txn = NULL;
 	}
 
 	Debug(LDAP_DEBUG_TRACE,

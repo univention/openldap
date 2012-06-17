@@ -1,5 +1,6 @@
-openldap (2.4.28-2) UNRELEASED; urgency=low
+openldap (2.4.31-1) UNRELEASED; urgency=low
 
+  * New upstream release.
   * Incorporate NMU (thanks, Julien Cristau, Mattias Ellert):
     - Disable the mdb backend on non-Linux, it looks like it doesn't work
       with linuxthreads (closes: #654824).

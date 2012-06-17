@@ -11,7 +11,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2011 The OpenLDAP Foundation.
+ * Copyright 2000-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,8 +36,7 @@
  *	@{
  */
 	/** A generic ID number. These were entryIDs in back-bdb.
-	 *	It should be the largest integer type supported on a machine.
-	 *	It should be equal to the size of a pointer.
+	 *	Preferably it should have the same size as a pointer.
 	 */
 typedef size_t ID;
 

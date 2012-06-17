@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2011 The OpenLDAP Foundation.
+ * Copyright 2000-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -170,6 +170,8 @@ typedef struct AttrList {
 
 #if defined(__i386) || defined(__x86_64)
 #define MISALIGNED_OK	1
+#else
+#define	ALIGNER	(sizeof(size_t)-1)
 #endif
 
 typedef struct IndexRbody {

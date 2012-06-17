@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2011 The OpenLDAP Foundation.
+ * Copyright 2005-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -890,6 +890,7 @@ typedef struct ServerID {
 } ServerID;
 
 static ServerID *sid_list;
+static ServerID *sid_set;
 
 typedef struct voidList {
 	struct voidList *vl_next;
@@ -1271,6 +1272,8 @@ config_generic(ConfigArgs *c) {
 				si; si = *sip, i++ ) {
 				if ( c->valx == -1 || i == c->valx ) {
 					*sip = si->si_next;
+					if ( sid_set == si )
+						sid_set = NULL;
 					ch_free( si );
 					if ( c->valx >= 0 )
 						break;
@@ -1661,7 +1664,7 @@ config_generic(ConfigArgs *c) {
 				/* else prev is NULL, append to end of global list */
 			}
 			if(parse_oc(c, &oc, prev)) return(1);
-			if (!cfn->c_oc_head) cfn->c_oc_head = oc;
+			if (!cfn->c_oc_head || !c->valx) cfn->c_oc_head = oc;
 			if (cfn->c_oc_tail == prev) cfn->c_oc_tail = oc;
 			}
 			break;
@@ -1694,7 +1697,7 @@ config_generic(ConfigArgs *c) {
 				/* else prev is NULL, append to end of global list */
 			}
 			if(parse_at(c, &at, prev)) return(1);
-			if (!cfn->c_at_head) cfn->c_at_head = at;
+			if (!cfn->c_at_head || !c->valx) cfn->c_at_head = at;
 			if (cfn->c_at_tail == prev) cfn->c_at_tail = at;
 			}
 			break;
@@ -1727,7 +1730,7 @@ config_generic(ConfigArgs *c) {
 				/* else prev is NULL, append to end of global list */
 			}
 			if ( parse_syn( c, &syn, prev ) ) return(1);
-			if ( !cfn->c_syn_head ) cfn->c_syn_head = syn;
+			if ( !cfn->c_syn_head || !c->valx ) cfn->c_syn_head = syn;
 			if ( cfn->c_syn_tail == prev ) cfn->c_syn_tail = syn;
 			}
 			break;
@@ -1903,6 +1906,7 @@ sortval_reject:
 					Debug( LDAP_DEBUG_CONFIG,
 						"%s: SID=0x%03x\n",
 						c->log, slap_serverID, 0 );
+					sid_set = si;
 				}
 				si->si_next = NULL;
 				si->si_num = num;
@@ -1912,11 +1916,20 @@ sortval_reject:
 				if (( slapMode & SLAP_SERVER_MODE ) && c->argc > 2 ) {
 					Listener *l = config_check_my_url( c->argv[2], lud );
 					if ( l ) {
+						if ( sid_set ) {
+							ldap_free_urldesc( lud );
+							snprintf( c->cr_msg, sizeof( c->cr_msg ),
+								"<%s> multiple server ID URLs matched, only one is allowed", c->argv[0] );
+							Debug(LDAP_DEBUG_ANY, "%s: %s %s\n",
+								c->log, c->cr_msg, c->argv[1] );
+							return 1;
+						}
 						slap_serverID = si->si_num;
 						Debug( LDAP_DEBUG_CONFIG,
 							"%s: SID=0x%03x (listener=%s)\n",
 							c->log, slap_serverID,
 							l->sl_url.bv_val );
+						sid_set = si;
 					}
 				}
 				if ( c->argc > 2 )
@@ -2925,7 +2938,8 @@ config_suffix(ConfigArgs *c)
 	}
 #endif
 
-	if (SLAP_DB_ONE_SUFFIX( c->be ) && c->be->be_suffix ) {
+	if (SLAP_DB_ONE_SUFFIX( c->be ) && c->be->be_suffix &&
+		!BER_BVISNULL( &c->be->be_suffix[0] )) {
 		snprintf( c->cr_msg, sizeof( c->cr_msg ), "<%s> Only one suffix is allowed on this %s backend",
 			c->argv[0], c->be->bd_info->bi_type );
 		Debug(LDAP_DEBUG_ANY, "%s: %s\n",
@@ -4226,6 +4240,13 @@ done:
 				frontendDB->be_schemadn.bv_val, 0, 0 );
 			/* must not happen */
 			assert( 0 );
+		}
+	}
+	if ( rc == 0 && ( slapMode & SLAP_SERVER_MODE ) && sid_list ) {
+		if ( !BER_BVISEMPTY( &sid_list->si_url ) && !sid_set ) {
+			Debug(LDAP_DEBUG_ANY, "read_config: no serverID / URL match found. "
+				"Check slapd -h arguments.\n", 0,0,0 );
+			rc = LDAP_OTHER;
 		}
 	}
 	return rc;

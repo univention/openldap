@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2011 The OpenLDAP Foundation.
+ * Copyright 1999-2012 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -1340,6 +1340,7 @@ meta_back_proxy_authz_cred(
 	} else {
 		ndn = op->o_ndn;
 	}
+	rs->sr_err = LDAP_SUCCESS;
 
 	/*
 	 * FIXME: we need to let clients use proxyAuthz

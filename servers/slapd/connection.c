@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2011 The OpenLDAP Foundation.
+ * Copyright 1998-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -209,7 +209,7 @@ int connections_shutdown(void)
 int connections_timeout_idle(time_t now)
 {
 	int i = 0, writers = 0;
-	int connindex;
+	ber_socket_t connindex;
 	Connection* c;
 	time_t old;
 
@@ -225,7 +225,6 @@ int connections_timeout_idle(time_t now)
 		 */
 		if(( c->c_n_ops_executing && !c->c_writewaiter)
 			|| c->c_conn_state == SLAP_C_CLIENT ) {
-			connection_done( c );
 			continue;
 		}
 
@@ -247,8 +246,8 @@ int connections_timeout_idle(time_t now)
 				continue;
 			}
 		}
-		connection_done( c );
 	}
+	connection_done( c );
 	if ( old && !writers )
 		slapd_clr_writetime( old );
 
@@ -259,7 +258,7 @@ int connections_timeout_idle(time_t now)
 void connections_drop()
 {
 	Connection* c;
-	int connindex;
+	ber_socket_t connindex;
 
 	for( c = connection_first( &connindex );
 		c != NULL;
@@ -270,12 +269,12 @@ void connections_drop()
 		 */
 		if(( c->c_n_ops_executing && !c->c_writewaiter)
 			|| c->c_conn_state == SLAP_C_CLIENT ) {
-			connection_done( c );
 			continue;
 		}
 		connection_closing( c, "dropping" );
 		connection_close( c );
 	}
+	connection_done( c );
 }
 
 static Connection* connection_get( ber_socket_t s )
@@ -865,6 +864,17 @@ unsigned long connections_nextid(void)
 	return id;
 }
 
+/*
+ * Loop through the connections:
+ *
+ *	for (c = connection_first(&i); c; c = connection_next(c, &i)) ...;
+ *	connection_done(c);
+ *
+ * 'i' is the cursor, initialized by connection_first().
+ * 'c_mutex' is locked in the returned connection.  The functions must
+ * be passed the previous return value so they can unlock it again.
+ */
+
 Connection* connection_first( ber_socket_t *index )
 {
 	assert( connections != NULL );
@@ -881,6 +891,7 @@ Connection* connection_first( ber_socket_t *index )
 	return connection_next(NULL, index);
 }
 
+/* Next connection in loop, see connection_first() */
 Connection* connection_next( Connection *c, ber_socket_t *index )
 {
 	assert( connections != NULL );
@@ -929,6 +940,7 @@ Connection* connection_next( Connection *c, ber_socket_t *index )
 	return c;
 }
 
+/* End connection loop, see connection_first() */
 void connection_done( Connection *c )
 {
 	assert( connections != NULL );
@@ -1893,8 +1905,6 @@ int connection_write(ber_socket_t s)
 
 	assert( connections != NULL );
 
-	slapd_clr_write( s, 0 );
-
 	c = connection_get( s );
 	if( c == NULL ) {
 		Debug( LDAP_DEBUG_ANY,
@@ -1902,6 +1912,8 @@ int connection_write(ber_socket_t s)
 			(long)s, 0, 0 );
 		return -1;
 	}
+
+	slapd_clr_write( s, 0 );
 
 #ifdef HAVE_TLS
 	if ( c->c_is_tls && c->c_needs_tls_accept ) {

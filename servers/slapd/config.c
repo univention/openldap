@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2011 The OpenLDAP Foundation.
+ * Copyright 1998-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1259,9 +1259,11 @@ static slap_verbmasks crlkeys[] = {
 
 static slap_verbmasks vfykeys[] = {
 		{ BER_BVC("never"),	LDAP_OPT_X_TLS_NEVER },
-		{ BER_BVC("demand"),	LDAP_OPT_X_TLS_DEMAND },
+		{ BER_BVC("allow"),	LDAP_OPT_X_TLS_ALLOW },
 		{ BER_BVC("try"),	LDAP_OPT_X_TLS_TRY },
+		{ BER_BVC("demand"),	LDAP_OPT_X_TLS_DEMAND },
 		{ BER_BVC("hard"),	LDAP_OPT_X_TLS_HARD },
+		{ BER_BVC("true"),	LDAP_OPT_X_TLS_HARD },
 		{ BER_BVNULL, 0 }
 	};
 #endif

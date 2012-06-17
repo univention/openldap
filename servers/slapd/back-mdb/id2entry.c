@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2011 The OpenLDAP Foundation.
+ * Copyright 2000-2012 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -217,14 +217,14 @@ int mdb_entry_return(
 )
 {
 	if ( e->e_private ) {
-		if ( slapMode & SLAP_TOOL_MODE ) {
-			ch_free( e->e_nname.bv_val );
-			ch_free( e->e_name.bv_val );
-			ch_free( e );
-		} else {
+		if ( op->o_hdr ) {
 			op->o_tmpfree( e->e_nname.bv_val, op->o_tmpmemctx );
 			op->o_tmpfree( e->e_name.bv_val, op->o_tmpmemctx );
 			op->o_tmpfree( e, op->o_tmpmemctx );
+		} else {
+			ch_free( e->e_nname.bv_val );
+			ch_free( e->e_name.bv_val );
+			ch_free( e );
 		}
 	} else {
 		entry_free( e );
@@ -500,6 +500,11 @@ static int mdb_entry_partsize(struct mdb_info *mdb, MDB_txn *txn, Entry *e,
 	for (a=e->e_attrs; a; a=a->a_next) {
 		/* For AttributeDesc, we only store the attr index */
 		nat++;
+		if (a->a_desc->ad_index >= MDB_MAXADS) {
+			Debug( LDAP_DEBUG_ANY, "mdb_entry_partsize: too many AttributeDescriptions used\n",
+				0, 0, 0 );
+			return LDAP_OTHER;
+		}
 		if (!mdb->mi_adxs[a->a_desc->ad_index]) {
 			int rc = mdb_ad_get(mdb, txn, a->a_desc);
 			if (rc)

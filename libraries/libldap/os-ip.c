@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2011 The OpenLDAP Foundation.
+ * Copyright 1998-2012 The OpenLDAP Foundation.
  * Portions Copyright 1999 Lars Uffmann.
  * All rights reserved.
  *
@@ -963,6 +963,32 @@ ldap_mark_select_clear( LDAP *ld, Sockbuf *sb )
 	/* for UNIX select(2) */
 	FD_CLR( sd, &sip->si_writefds );
 	FD_CLR( sd, &sip->si_readfds );
+#endif
+}
+
+void
+ldap_clear_select_write( LDAP *ld, Sockbuf *sb )
+{
+	struct selectinfo	*sip;
+	ber_socket_t		sd;
+
+	sip = (struct selectinfo *)ld->ld_selectinfo;
+
+	ber_sockbuf_ctrl( sb, LBER_SB_OPT_GET_FD, &sd );
+
+#ifdef HAVE_POLL
+	/* for UNIX poll(2) */
+	{
+		int i;
+		for(i=0; i < sip->si_maxfd; i++) {
+			if( sip->si_fds[i].fd == sd ) {
+				sip->si_fds[i].events &= ~POLL_WRITE;
+			}
+		}
+	}
+#else
+	/* for UNIX select(2) */
+	FD_CLR( sd, &sip->si_writefds );
 #endif
 }
 

@@ -33,7 +33,7 @@
  *
  *	@author	Howard Chu, Symas Corporation.
  *
- *	@copyright Copyright 2011 Howard Chu, Symas Corp. All rights reserved.
+ *	@copyright Copyright 2011-2012 Howard Chu, Symas Corp. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted only as authorized by the OpenLDAP
@@ -432,7 +432,7 @@ int  mdb_env_get_path(MDB_env *env, const char **path);
 	 * The size should be a multiple of the OS page size. The default is
 	 * 10485760 bytes. The size of the memory map is also the maximum size
 	 * of the database. The value should be chosen as large as possible,
-	 * to accomodate future growth of the database.
+	 * to accommodate future growth of the database.
 	 * This function may only be called after #mdb_env_create() and before #mdb_env_open().
 	 * @param[in] env An environment handle returned by #mdb_env_create()
 	 * @param[in] size The size in bytes
@@ -490,8 +490,8 @@ int  mdb_env_set_maxdbs(MDB_env *env, MDB_dbi dbs);
 	/** @brief Create a transaction for use with the environment.
 	 *
 	 * The transaction handle may be discarded using #mdb_txn_abort() or #mdb_txn_commit().
-	 * @note Transactions may not span threads, a transaction must only be used by a
-	 * single thread.
+	 * @note Transactions may not span threads; a transaction must only be used by a
+	 * single thread. Also, a thread may only have a single transaction.
 	 * @note Cursors may not span transactions; each cursor must be opened and closed
 	 * within a single transaction.
 	 * @param[in] env An environment handle returned by #mdb_env_create()
@@ -530,6 +530,7 @@ int  mdb_txn_begin(MDB_env *env, MDB_txn *parent, unsigned int flags, MDB_txn **
 	 *	<li>EINVAL - an invalid parameter was specified.
 	 *	<li>ENOSPC - no more disk space.
 	 *	<li>EIO - a low-level I/O error occurred while writing.
+	 *	<li>ENOMEM - the transaction is nested and could not be merged into its parent.
 	 * </ul>
 	 */
 int  mdb_txn_commit(MDB_txn *txn);
@@ -578,11 +579,11 @@ int  mdb_txn_renew(MDB_txn *txn);
 	/** @brief Open a database in the environment.
 	 *
 	 * The database handle may be discarded by calling #mdb_close(). Only
-	 * one thread should call this function; it is not mutex-protected in
+	 * one thread at a time may call this function; it is not mutex-protected in
 	 * a read-only transaction.
 	 * @param[in] txn A transaction handle returned by #mdb_txn_begin()
 	 * @param[in] name The name of the database to open. If only a single
-	 * 	database is needed in the enviroment, this value may be NULL.
+	 * 	database is needed in the environment, this value may be NULL.
 	 * @param[in] flags Special options for this database. This parameter
 	 * must be set to 0 or by bitwise OR'ing together one or more of the
 	 * values described here.
@@ -666,7 +667,7 @@ int  mdb_drop(MDB_txn *txn, MDB_dbi dbi, int del);
 	 *
 	 * The comparison function is called whenever it is necessary to compare a
 	 * key specified by the application with a key currently stored in the database.
-	 * If no comparison function is specified, and no speAGAINcial key flags were specified
+	 * If no comparison function is specified, and no special key flags were specified
 	 * with #mdb_open(), the keys are compared lexically, with shorter keys collating
 	 * before longer keys.
 	 * @warning This function must be called before any data access functions are used,
@@ -796,7 +797,7 @@ int  mdb_get(MDB_txn *txn, MDB_dbi dbi, MDB_val *key, MDB_val *data);
 	 * @return A non-zero error value on failure and 0 on success. Some possible
 	 * errors are:
 	 * <ul>
-	 *	<li>EACCESS - an attempt was made to write in a read-only transaction.
+	 *	<li>EACCES - an attempt was made to write in a read-only transaction.
 	 *	<li>EINVAL - an invalid parameter was specified.
 	 *	<li>ENOMEM - the database is full, see #mdb_env_set_mapsize().
 	 * </ul>
@@ -822,7 +823,7 @@ int  mdb_put(MDB_txn *txn, MDB_dbi dbi, MDB_val *key, MDB_val *data,
 	 * @return A non-zero error value on failure and 0 on success. Some possible
 	 * errors are:
 	 * <ul>
-	 *	<li>EACCESS - an attempt was made to write in a read-only transaction.
+	 *	<li>EACCES - an attempt was made to write in a read-only transaction.
 	 *	<li>EINVAL - an invalid parameter was specified.
 	 * </ul>
 	 */

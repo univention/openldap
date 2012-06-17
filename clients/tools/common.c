@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2011 The OpenLDAP Foundation.
+ * Copyright 1998-2012 The OpenLDAP Foundation.
  * Portions Copyright 2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -341,7 +341,7 @@ N_("  -I         use SASL Interactive mode\n"),
 N_("  -n         show what would be done but don't actually do it\n"),
 N_("  -N         do not use reverse DNS to canonicalize SASL host name\n"),
 N_("  -O props   SASL security properties\n"),
-N_("  -o <opt>[=<optparam] general options\n"),
+N_("  -o <opt>[=<optparam>] general options\n"),
 N_("             nettimeout=<timeout> (in seconds, or \"none\" or \"max\")\n"),
 N_("             ldif-wrap=<width> (in columns, or \"no\" for no wrapping)\n"),
 N_("  -p port    port on LDAP server\n"),
@@ -412,7 +412,7 @@ tool_args( int argc, char **argv )
 		case 'c':	/* continuous operation mode */
 			contoper++;
 			break;
-		case 'C':
+		case 'C':	/* referrals: obsolete */
 			referrals++;
 			break;
 		case 'd':
@@ -1329,7 +1329,7 @@ dnssrv_free:;
 
 		if( private_setup ) private_setup( ld );
 
-		/* referrals */
+		/* referrals: obsolete */
 		if( ldap_set_option( ld, LDAP_OPT_REFERRALS,
 			referrals ? LDAP_OPT_ON : LDAP_OPT_OFF ) != LDAP_OPT_SUCCESS )
 		{
