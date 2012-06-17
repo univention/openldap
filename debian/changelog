@@ -1,6 +1,8 @@
 openldap (2.4.31-1) UNRELEASED; urgency=low
 
   * New upstream release.
+    - Fixes a denial of service attack, CVE-2012-1164, when using the rwm
+      overlay.  Closes: #663644.
   * Incorporate NMU (thanks, Julien Cristau, Mattias Ellert):
     - Disable the mdb backend on non-Linux, it looks like it doesn't work
       with linuxthreads (closes: #654824).
