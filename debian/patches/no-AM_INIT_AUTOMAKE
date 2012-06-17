@@ -8,9 +8,9 @@ Index: trunk/configure.in
 --- trunk.orig/configure.in
 +++ trunk/configure.in
 @@ -26,7 +26,8 @@
- AC_COPYRIGHT([[Copyright 1998-2011 The OpenLDAP Foundation. All rights reserved.
+ AC_COPYRIGHT([[Copyright 1998-2012 The OpenLDAP Foundation. All rights reserved.
  Restrictions apply, see COPYRIGHT and LICENSE files.]])
- AC_REVISION([$Id: e7e5a7e17ae6655fc0779de0ad978202c3a73699 $])
+ AC_REVISION([$Id: 5d7d475f16befcc240afc953c9a8775677566d23 $])
 -AC_INIT([OpenLDAP],,[http://www.openldap.org/its/])
 +AC_INIT([OpenLDAP],[$OL_VERSION],[http://www.openldap.org/its/])
 +AC_PROG_MAKE_SET
