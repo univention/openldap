@@ -5,6 +5,8 @@ openldap (2.4.31-1) UNRELEASED; urgency=low
       overlay.  Closes: #663644.
     - Fixes a bug with ldap_result always returning -1 when called from
       sssd.  Closes: #666230.
+    - Fix a build failure on armel due to unaligned memory access.
+      Closes: #677158.
   * Incorporate NMU (thanks, Julien Cristau, Mattias Ellert):
     - Disable the mdb backend on non-Linux, it looks like it doesn't work
       with linuxthreads (closes: #654824).
