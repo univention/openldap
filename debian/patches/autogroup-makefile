@@ -1,5 +1,7 @@
---- a/contrib/slapd-modules/autogroup/Makefile
-+++ b/contrib/slapd-modules/autogroup/Makefile
+Index: trunk/contrib/slapd-modules/autogroup/Makefile
+===================================================================
+--- trunk.orig/contrib/slapd-modules/autogroup/Makefile
++++ trunk/contrib/slapd-modules/autogroup/Makefile
 @@ -1,6 +1,6 @@
 -LIBTOOL=../../../libtool
 +LIBTOOL=../../../debian/build/libtool
@@ -12,7 +14,7 @@
 @@ -16,12 +16,12 @@
  
  autogroup.la:	autogroup.lo
- 	$(LIBTOOL) --mode=link $(CC) -version-info 0:0:0 \
+ 	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info 0:0:0 \
 -	-rpath $(libdir) -module -o $@ $? 
 +	-rpath /usr/lib/ldap -module -o $@ $?
  
