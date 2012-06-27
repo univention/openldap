@@ -1,4 +1,4 @@
-openldap (2.4.31-1) UNRELEASED; urgency=low
+openldap (2.4.31-1) unstable; urgency=low
 
   * New upstream release.
     - Fixes a denial of service attack, CVE-2012-1164, when using the rwm
@@ -22,7 +22,7 @@ openldap (2.4.31-1) UNRELEASED; urgency=low
     contrib builds.  Thanks to Simon Ruderich <simon@ruderich.org>.
     Closes: #663724.
 
- -- Steve Langasek <vorlon@debian.org>  Sun, 06 May 2012 17:04:29 -0700
+ -- Steve Langasek <vorlon@debian.org>  Wed, 27 Jun 2012 03:27:34 +0000
 
 openldap (2.4.28-1) unstable; urgency=low
 
