@@ -61,3 +61,14 @@ Debian-specific.
  # Indices to maintain
  olcDbIndex:     objectClass  eq
  olcDbIndex:     cn,sn,mail   pres,eq,approx,sub
+--- doc/man/man5/slapd-mdb.5
++++ doc/man/man5/slapd-mdb.5
+@@ -52,7 +52,7 @@
+ associated indexes live.
+ A separate directory must be specified for each database.
+ The default is
+-.BR LOCALSTATEDIR/openldap\-data .
++.BR LOCALSTATEDIR/lib/ldap .
+ .TP
+ \fBindex \fR{\fI<attrlist>\fR|\fBdefault\fR} [\fBpres\fR,\fBeq\fR,\fBapprox\fR,\fBsub\fR,\fI<special>\fR]
+ Specify the indexes to maintain for the given attribute (or
