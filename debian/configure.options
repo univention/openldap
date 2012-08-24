@@ -119,6 +119,7 @@
 #    --enable-dnssrv	  enable dnssrv backend no|yes|mod [no]
 #    --enable-hdb	  enable Hierarchical DB backend no|yes|mod [yes]
 #    --enable-ldap	  enable ldap backend no|yes|mod [no]
+#    --enable-mdb	  enable mdb database backend no|yes|mod [yes]
 #    --enable-meta	  enable metadirectory backend no|yes|mod [no]
 #    --enable-monitor	  enable monitor backend no|yes|mod [yes]
 #    --enable-ndb	  enable MySQL NDB Cluster backend no|yes|mod [no]
