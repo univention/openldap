@@ -5,6 +5,9 @@ openldap (2.4.31-2) UNRELEASED; urgency=low
     doc/man/man5/slapd-mdb.5
   * debian/configure.options: add info on --enable-mdb
 
+  [ Russ Allbery ]
+  * Remove myself from Uploaders.
+
  -- Steve Langasek <vorlon@debian.org>  Sat, 03 Nov 2012 23:08:17 -0700
 
 openldap (2.4.31-1) unstable; urgency=low
