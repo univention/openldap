@@ -3,7 +3,6 @@ Section: net
 Priority: optional
 Maintainer: Debian OpenLDAP Maintainers <pkg-openldap-devel@lists.alioth.debian.org>
 Uploaders: Roland Bauerschmidt <rb@debian.org>,
- Stephen Frost <sfrost@debian.org>,
  Steve Langasek <vorlon@debian.org>,
  Torsten Landschoff <torsten@debian.org>,
  Matthijs Möhlmann <matthijs@cacholong.nl>
