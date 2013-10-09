@@ -53,6 +53,15 @@ get-orig-source:
 %:
 	dh $@ --with quilt,autoreconf --builddirectory=$(builddir)
 
+# Only contrib/ldapc++ uses Automake, so special care is needed to update
+# config.guess and config.sub at the top level.
+autoreconf:
+	autoreconf -f -i . contrib/ldapc++
+	cp -f /usr/share/misc/config.guess /usr/share/misc/config.sub build/
+
+override_dh_autoreconf:
+	dh_autoreconf debian/rules -- autoreconf
+
 override_dh_auto_configure:
 	# Check if we include the RFCs, Internet-Drafts, or upstream schemas
 	# with RFC text (which are non DFSG-free).  You can set DFSG_NONFREE
