@@ -16,6 +16,12 @@ openldap (2.4.38-1) UNRELEASED; urgency=low
     ports.  Thanks to Colin Watson <cjwatson@ubuntu.com> for the patch.
     Closes: #725824.
 
+  [ Timo Aaltonen ]
+  * contrib-modules-use-dpkg-buildflags, autogroup-makefile,
+    smbk5pwd-makefile:
+    - Updated for current upstream.
+  * Refresh patches to apply cleanly.
+
  -- Steve Langasek <vorlon@debian.org>  Sat, 03 Nov 2012 23:08:17 -0700
 
 openldap (2.4.31-1) unstable; urgency=low
