@@ -444,6 +444,7 @@ syncprov_findbase( Operation *op, fbase_cookie *fc )
 		fop.o_hdr = op->o_hdr;
 		fop.o_time = op->o_time;
 		fop.o_tincr = op->o_tincr;
+		fop.o_extra = op->o_extra;
 
 		cb.sc_response = findbase_cb;
 		cb.sc_private = fc;
@@ -3172,6 +3173,7 @@ syncprov_db_close(
 
 #ifdef SLAP_CONFIG_DELETE
 	if ( !slapd_shutdown ) {
+		ldap_pvt_thread_mutex_lock( &si->si_ops_mutex );
 		for ( so=si->si_ops, sonext=so;  so; so=sonext  ) {
 			SlapReply rs = {REP_RESULT};
 			rs.sr_err = LDAP_UNAVAILABLE;
@@ -3180,6 +3182,7 @@ syncprov_db_close(
 			syncprov_drop_psearch( so, 0);
 		}
 		si->si_ops=NULL;
+		ldap_pvt_thread_mutex_unlock( &si->si_ops_mutex );
 	}
 	overlay_unregister_control( be, LDAP_CONTROL_SYNC );
 #endif /* SLAP_CONFIG_DELETE */
