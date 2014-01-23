@@ -21,7 +21,7 @@
  LTVER = 0:0:0
  
 -prefix=/usr/local
-+prefix=/usr/
++prefix=/usr
  exec_prefix=$(prefix)
 -ldap_subdir=/openldap
 +ldap_subdir=/ldap
