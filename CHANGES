@@ -1,5 +1,26 @@
 OpenLDAP 2.4 Change Log
 
+OpenLDAP 2.4.39 Release (2014/01/26)
+	Fixed libldap MozNSS crash (ITS#7783)
+	Fixed libldap memory leak with SASL (ITS#7757)
+	Fixed libldap assert in parse_passwdpolicy_control (ITS#7759)
+	Fixed libldap shortcut NULL RDNs (ITS#7762)
+	Fixed libldap deref to use correct control
+	Fixed liblmdb keysizes with mdb_update_key (ITS#7756)
+	Fixed slapd cn=config olcDbConfig modification (ITS#7750)
+	Fixed slapd-bdb/hdb to bail out of search if config is paused (ITS#7761)
+	Fixed slapd-bdb/hdb indexing issue with derived attributes (ITS#7778)
+	Fixed slapd-mdb to bail out of search if config is paused (ITS#7761)
+	Fixed slapd-mdb indexing issue with derived attributes (ITS#7778)
+	Fixed slapd-perl to bail out of search if config is paused (ITS#7761)
+	Fixed slapd-sql to bail out of search if config is paused (ITS#7761)
+	Fixed slapo-constraint handling of softadd/softdel (ITS#7773)
+	Fixed slapo-syncprov assert with findbase (ITS#7749)
+	Build Environment
+		Test suite: Use $(MAKE) for tests (ITS#7753)
+	Documentation
+		admin24 fix TLSDHParamFile to be correct (ITS#7684)
+
 OpenLDAP 2.4.38 Release (2013/11/16)
 	Fixed liblmdb nordahead flag (ITS#7734)
 	Fixed liblmdb to check cursor index before cursor_del (ITS#7733)

@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2013 The OpenLDAP Foundation.
+ * Copyright 1998-2014 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -545,8 +545,11 @@ ldap_int_sasl_bind(
 		ctx = ld->ld_defconn->lconn_sasl_authctx;
 
 		rc = ldap_parse_sasl_bind_result( ld, result, &scred, 0 );
-		if ( rc != LDAP_SUCCESS )
+		if ( rc != LDAP_SUCCESS ) {
+			if ( scred )
+				ber_bvfree( scred );
 			goto done;
+		}
 
 		rc = ldap_result2error( ld, result, 0 );
 		if ( rc != LDAP_SUCCESS && rc != LDAP_SASL_BIND_IN_PROGRESS ) {
@@ -562,8 +565,11 @@ ldap_int_sasl_bind(
 		}
 
 		mech = *rmech;
-		if ( rc == LDAP_SUCCESS && mech == NULL )
+		if ( rc == LDAP_SUCCESS && mech == NULL ) {
+			if ( scred )
+				ber_bvfree( scred );
 			goto success;
+		}
 
 		do {
 			if( ! scred ) {
