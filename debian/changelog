@@ -1,4 +1,4 @@
-openldap (2.4.38-1) UNRELEASED; urgency=low
+openldap (2.4.39-1) UNRELEASED; urgency=low
 
   [ Peter Marschall ]
   * debian/patches/wrong-database-location: fix database location in
@@ -21,6 +21,8 @@ openldap (2.4.38-1) UNRELEASED; urgency=low
     smbk5pwd-makefile:
     - Updated for current upstream.
   * Refresh patches to apply cleanly.
+  * rules: Use dpkg-parsechangelog to determine the upstream version for
+    get-orig-source.
 
  -- Steve Langasek <vorlon@debian.org>  Sat, 03 Nov 2012 23:08:17 -0700
 
