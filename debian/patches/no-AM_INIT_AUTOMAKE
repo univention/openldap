@@ -6,9 +6,9 @@ Author: Steve Langasek <vorlon@debian.org>
 --- a/configure.in
 +++ b/configure.in
 @@ -26,7 +26,8 @@ dnl Configure.in for OpenLDAP
- AC_COPYRIGHT([[Copyright 1998-2013 The OpenLDAP Foundation. All rights reserved.
+ AC_COPYRIGHT([[Copyright 1998-2014 The OpenLDAP Foundation. All rights reserved.
  Restrictions apply, see COPYRIGHT and LICENSE files.]])
- AC_REVISION([$Id: fcd8bd7f3dc63b300b55fdb28ef56331801be8af $])
+ AC_REVISION([$Id: 81bd528fb5194c83d688db355737b7715448b958 $])
 -AC_INIT([OpenLDAP],,[http://www.openldap.org/its/])
 +AC_INIT([OpenLDAP],[$OL_VERSION],[http://www.openldap.org/its/])
 +AC_PROG_MAKE_SET
