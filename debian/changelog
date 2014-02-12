@@ -23,6 +23,8 @@ openldap (2.4.39-1) UNRELEASED; urgency=low
   * Refresh patches to apply cleanly.
   * rules: Use dpkg-parsechangelog to determine the upstream version for
     get-orig-source.
+  * source: Add lintian overrides for non-transatable internal
+    templates.
 
  -- Steve Langasek <vorlon@debian.org>  Sat, 03 Nov 2012 23:08:17 -0700
 
