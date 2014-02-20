@@ -7,7 +7,7 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_COPYRIGHT([[Copyright 2000-2014 The OpenLDAP Foundation. All rights reserved.
 Restrictions apply, see COPYRIGHT and LICENSE files.]])
-AC_REVISION([$Id$])
+AC_REVISION([$Id: 73be60f7277f53358ce10305a55938bdf7a0d602 $])
 AC_INIT(ldapcpplib, [] , [http://www.openldap.org/its/] )
 AC_CONFIG_SRCDIR(src/LDAPConnection.h)
 AM_INIT_AUTOMAKE(foreign)
