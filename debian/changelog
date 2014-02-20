@@ -16,6 +16,8 @@ openldap (2.4.39-1) UNRELEASED; urgency=low
     ports.  Thanks to Colin Watson <cjwatson@ubuntu.com> for the patch.
     Closes: #725824.
   * Add Timo to Uploaders.
+  * Update Vcs-* fields to point at the new git repo; thanks to Timo for
+    driving this migration!
 
   [ Timo Aaltonen ]
   * contrib-modules-use-dpkg-buildflags, autogroup-makefile,

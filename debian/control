@@ -18,8 +18,8 @@ Build-Depends: debhelper (>= 8.9.0~),
 Build-Conflicts: libbind-dev, bind-dev, libicu-dev, autoconf2.13
 Standards-Version: 3.9.1
 Homepage: http://www.openldap.org/
-Vcs-Svn: svn://svn.debian.org/pkg-openldap/openldap/trunk
-Vcs-Browser: http://svn.debian.org/wsvn/pkg-openldap/openldap/trunk
+Vcs-Git: git://anonscm.debian.org/pkg-openldap/openldap.git
+Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-openldap/openldap.git
 
 Package: slapd
 Section: net
