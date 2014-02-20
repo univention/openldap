@@ -15,6 +15,7 @@ openldap (2.4.39-1) UNRELEASED; urgency=low
     instances in the source, so that we can be forwards-compatible with new
     ports.  Thanks to Colin Watson <cjwatson@ubuntu.com> for the patch.
     Closes: #725824.
+  * Add Timo to Uploaders.
 
   [ Timo Aaltonen ]
   * contrib-modules-use-dpkg-buildflags, autogroup-makefile,
