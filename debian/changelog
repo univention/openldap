@@ -1,4 +1,4 @@
-openldap (2.4.39-1) UNRELEASED; urgency=low
+openldap (2.4.39-1) unstable; urgency=low
 
   [ Peter Marschall ]
   * debian/patches/wrong-database-location: fix database location in
@@ -31,7 +31,7 @@ openldap (2.4.39-1) UNRELEASED; urgency=low
   * source: Add lintian overrides for non-transatable internal
     templates.
 
- -- Steve Langasek <vorlon@debian.org>  Sat, 03 Nov 2012 23:08:17 -0700
+ -- Steve Langasek <vorlon@debian.org>  Mon, 17 Mar 2014 15:27:31 -0700
 
 openldap (2.4.31-1) unstable; urgency=low
 
