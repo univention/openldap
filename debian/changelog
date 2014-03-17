@@ -18,6 +18,8 @@ openldap (2.4.39-1) UNRELEASED; urgency=low
   * Add Timo to Uploaders.
   * Update Vcs-* fields to point at the new git repo; thanks to Timo for
     driving this migration!
+  * Rebuild against db5.3, with a corresponding dump/restore of the database
+    on upgrade.  Closes: #738641.
 
   [ Timo Aaltonen ]
   * contrib-modules-use-dpkg-buildflags, autogroup-makefile,

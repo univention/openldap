@@ -46,7 +46,7 @@ database_format_changed() {						# {{{
 # Return success if yes.
 # Usage: if database_format_changed; then
 
-	if dpkg --compare-versions "$OLD_VERSION" lt-nl 2.4.25-2; then
+	if dpkg --compare-versions "$OLD_VERSION" lt-nl 2.4.39-1; then
 		return 0
 	else
 		return 1
