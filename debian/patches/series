@@ -19,3 +19,4 @@ no-AM_INIT_AUTOMAKE
 switch-to-lt_dlopenadvise-to-get-RTLD_GLOBAL-set.diff
 no-bdb-ABI-second-guessing
 heimdal-fix
+0001-ITS-7723-fix-reference-counting.patch

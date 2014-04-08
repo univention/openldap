@@ -1,3 +1,10 @@
+openldap (2.4.39-2) UNRELEASED; urgency=low
+
+  * 0001-ITS-7723-fix-reference-counting.patch: import upstream fix for 
+    CVE-2013-4449. Thanks to Hideki Yamane for the patch. (Closes: #729367)
+
+ -- Ryan Tandy <ryan@nardis.ca>  Mon, 07 Apr 2014 19:36:18 -0700
+
 openldap (2.4.39-1) unstable; urgency=low
 
   [ Peter Marschall ]
