@@ -94,8 +94,8 @@ create_ldap_directories() {	# {{{
 update_permissions() {	# {{{
 	dir="$1"
 	if [ -d "$dir" ]; then
-		[ -z "$SLAPD_USER" ] || chown -R "$SLAPD_USER" "$dir"
-		[ -z "$SLAPD_GROUP" ] || chgrp -R "$SLAPD_GROUP" "$dir"
+		[ -z "$SLAPD_USER" ] || chown -R -H "$SLAPD_USER" "$dir"
+		[ -z "$SLAPD_GROUP" ] || chgrp -R -H "$SLAPD_GROUP" "$dir"
 	fi
 }
 # }}}
@@ -240,9 +240,9 @@ EOF
 		if [ -n "$SLAPD_USER" ] || [ -n "$SLAPD_GROUP" ]; then
 			echo -n "  - chowning database directory ($SLAPD_USER:$SLAPD_GROUP)... "
 			[ -z "$SLAPD_USER" ] || \
-				chown -R "$SLAPD_USER" "$dbdir"
+				chown -R -H "$SLAPD_USER" "$dbdir"
 			[ -z "$SLAPD_GROUP" ] || \
-				chgrp -R "$SLAPD_GROUP" "$dbdir"
+				chgrp -R -H "$SLAPD_GROUP" "$dbdir"
 			echo "done";
 		fi
 	done
@@ -385,7 +385,7 @@ move_old_database_away() {						# {{{
 		backupdir=`compute_backup_path "$databasedir" "$suffix"`
 		echo -n "  - directory $suffix... " >&2
 		mkdir -p "$backupdir"
-		find "$databasedir" -mindepth 1 -maxdepth 1	\
+		find -H "$databasedir" -mindepth 1 -maxdepth 1	\
 			-exec mv {} "$backupdir" \;
 		echo done. >&2
 	else
@@ -725,7 +725,7 @@ is_empty_dir() {							# {{{
 # (i.e., contains no files except for an optional DB_CONFIG).
 # Usage: if is_empty_dir "$dir"; then ... fi
 
-	output=`find "$1" -mindepth 1 -maxdepth 1 \! -name DB_CONFIG 2>/dev/null`
+	output=`find -H "$1" -mindepth 1 -maxdepth 1 \! -name DB_CONFIG 2>/dev/null`
 	if [ -n "$output" ]; then
     		return 1
 	else
