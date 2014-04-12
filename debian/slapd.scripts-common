@@ -92,6 +92,7 @@ create_ldap_directories() {	# {{{
 }
 # }}}
 update_permissions() {	# {{{
+	local dir
 	dir="$1"
 	if [ -d "$dir" ]; then
 		[ -z "$SLAPD_USER" ] || chown -R -H "$SLAPD_USER" "$dir"
@@ -190,7 +191,7 @@ dump_databases() {							# {{{
 
 # }}}
 load_databases() {							# {{{
-	local dir file db dbdir backupdir
+	local dir file db dbdir backupdir slapadd_opts
 
 	dir=`database_dumping_destdir`
 	echo >&2 "  Loading from $dir: "
