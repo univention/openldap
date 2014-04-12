@@ -237,10 +237,7 @@ EOF
 
 		if [ -n "$SLAPD_USER" ] || [ -n "$SLAPD_GROUP" ]; then
 			echo -n "  - chowning database directory ($SLAPD_USER:$SLAPD_GROUP)... "
-			[ -z "$SLAPD_USER" ] || \
-				chown -R -H "$SLAPD_USER" "$dbdir"
-			[ -z "$SLAPD_GROUP" ] || \
-				chgrp -R -H "$SLAPD_GROUP" "$dbdir"
+			update_permissions "$dbdir"
 			echo "done";
 		fi
 	done
