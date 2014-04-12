@@ -195,7 +195,9 @@ load_databases() {							# {{{
 
 	dir=`database_dumping_destdir`
 	echo >&2 "  Loading from $dir: "
-	get_suffix | while read suffix; do
+	# restore by increasing suffix length due to possibly glued databases
+	get_suffix | awk '{ print length, $0 }' | sort -n | cut -d ' ' -f 2- \
+	| while read suffix; do
 		dbdir=`get_directory "$suffix"`
 		if [ -z "$dbdir" ]; then
 			continue
