@@ -385,7 +385,7 @@ move_old_database_away() {						# {{{
 		backupdir=`compute_backup_path "$databasedir" "$suffix"`
 		echo -n "  - directory $suffix... " >&2
 		mkdir -p "$backupdir"
-		find -H "$databasedir" -mindepth 1 -maxdepth 1	\
+		find -H "$databasedir" -mindepth 1 -maxdepth 1 -type f \
 			-exec mv {} "$backupdir" \;
 		echo done. >&2
 	else
@@ -725,7 +725,7 @@ is_empty_dir() {							# {{{
 # (i.e., contains no files except for an optional DB_CONFIG).
 # Usage: if is_empty_dir "$dir"; then ... fi
 
-	output=`find -H "$1" -mindepth 1 -maxdepth 1 \! -name DB_CONFIG 2>/dev/null`
+	output=`find -H "$1" -mindepth 1 -maxdepth 1 -type f \! -name DB_CONFIG 2>/dev/null`
 	if [ -n "$output" ]; then
     		return 1
 	else
