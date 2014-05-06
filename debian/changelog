@@ -15,7 +15,7 @@ openldap (2.4.39-2) UNRELEASED; urgency=low
     password module. (Closes: #746727)
 
   [ Jelmer Vernooij ]
-  * Depend on heimdal-multidev rather than heimdal-dev.
+  * Depend on heimdal-multidev rather than heimdal-dev. (Closes: #745356)
 
   [ Updated debconf translations ]
   * Turkish, thanks to Atila KOÇ <akoc@artielektronik.com.tr>.

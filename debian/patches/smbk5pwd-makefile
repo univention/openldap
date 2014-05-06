@@ -1,6 +1,6 @@
 --- a/contrib/slapd-modules/smbk5pwd/Makefile
 +++ b/contrib/slapd-modules/smbk5pwd/Makefile
-@@ -14,17 +14,17 @@
+@@ -14,34 +14,35 @@
  
  LDAP_SRC = ../../..
  LDAP_BUILD = ../../..
@@ -25,7 +25,12 @@
  CC = gcc
  OPT = -g -O2 -Wall
  # Omit DO_KRB5, DO_SAMBA or DO_SHADOW if you don't want to support it.
-@@ -35,13 +35,13 @@ LIBS = $(LDAP_LIB) $(HEIMDAL_LIB) $(SSL_
+ DEFS = -DDO_KRB5 -DDO_SAMBA -DDO_SHADOW
+ INCS = $(LDAP_INC) $(HEIMDAL_INC) $(SSL_INC)
+-LIBS = $(LDAP_LIB) $(HEIMDAL_LIB) $(SSL_LIB)
++# put /usr/lib/heimdal before /usr/lib in case libkrb5-dev is installed, #745356
++LIBS = $(HEIMDAL_LIB) $(LDAP_LIB) $(SSL_LIB)
+ 
  PROGRAMS = smbk5pwd.la
  LTVER = 0:0:0
  
@@ -42,7 +47,7 @@
  
  .SUFFIXES: .c .o .lo
  
-@@ -55,7 +55,7 @@ smbk5pwd.la:	smbk5pwd.lo
+@@ -55,7 +56,7 @@
  	-rpath $(moduledir) -module -o $@ $? $(LIBS)
  
  clean:
