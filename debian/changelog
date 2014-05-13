@@ -13,6 +13,7 @@ openldap (2.4.39-2) UNRELEASED; urgency=low
       contain other databases. Patch from Kenny Millington. (LP: #1003854)
   * debian/rules, debian/patches/pw-sha2-makefile: Build and install the sha2 
     password module. (Closes: #746727)
+  * debian/rules: Enable parallel building.
 
   [ Jelmer Vernooij ]
   * Depend on heimdal-multidev rather than heimdal-dev. (Closes: #745356)
