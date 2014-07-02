@@ -13,7 +13,7 @@
  
  SSL_INC = 
 -SSL_LIB = -lcrypto
-+SSL_LIB = -lgcrypt
++SSL_LIB = -lnettle
  
 -HEIMDAL_INC = -I/usr/heimdal/include
 -HEIMDAL_LIB = -L/usr/heimdal/lib -lkrb5 -lkadm5srv

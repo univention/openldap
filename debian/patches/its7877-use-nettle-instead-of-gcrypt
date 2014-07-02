@@ -1,0 +1,155 @@
+From 8a5bec8ce0fdd9e5ba1671920baf52cdd5ced5d9 Mon Sep 17 00:00:00 2001
+From: Ryan Tandy <ryan@nardis.ca>
+Date: Wed, 2 Jul 2014 14:27:56 -0700
+Subject: [PATCH] ITS#7877 use nettle instead of gcrypt
+
+---
+ contrib/slapd-modules/smbk5pwd/smbk5pwd.c | 34 +++++++++++++------------------
+ libraries/libldap/tls_g.c                 | 34 ++++---------------------------
+ 2 files changed, 18 insertions(+), 50 deletions(-)
+
+diff --git a/contrib/slapd-modules/smbk5pwd/smbk5pwd.c b/contrib/slapd-modules/smbk5pwd/smbk5pwd.c
+index 075ce88..459ce0c 100644
+--- a/contrib/slapd-modules/smbk5pwd/smbk5pwd.c
++++ b/contrib/slapd-modules/smbk5pwd/smbk5pwd.c
+@@ -66,7 +66,8 @@ static ObjectClass *oc_krb5KDCEntry;
+ 
+ #ifdef DO_SAMBA
+ #ifdef HAVE_GNUTLS
+-#include <gcrypt.h>
++#include <nettle/des.h>
++#include <nettle/md4.h>
+ typedef unsigned char DES_cblock[8];
+ #elif HAVE_OPENSSL
+ #include <openssl/des.h>
+@@ -193,11 +194,7 @@ static void lmhash(
+ #ifdef HAVE_OPENSSL
+ 	DES_key_schedule schedule;
+ #elif defined(HAVE_GNUTLS)
+-	gcry_cipher_hd_t h = NULL;
+-	gcry_error_t err;
+-
+-	err = gcry_cipher_open( &h, GCRY_CIPHER_DES, GCRY_CIPHER_MODE_CBC, 0 );
+-	if ( err ) return;
++	struct des_ctx ctx;
+ #endif
+ 
+ 	strncpy( UcasePassword, passwd->bv_val, 14 );
+@@ -206,19 +203,12 @@ static void lmhash(
+ 
+ 	lmPasswd_to_key( UcasePassword, &key );
+ #ifdef HAVE_GNUTLS
+-	err = gcry_cipher_setkey( h, &key, sizeof(key) );
+-	if ( err == 0 ) {
+-		err = gcry_cipher_encrypt( h, &hbuf[0], sizeof(key), &StdText, sizeof(key) );
+-		if ( err == 0 ) {
+-			gcry_cipher_reset( h );
+-			lmPasswd_to_key( &UcasePassword[7], &key );
+-			err = gcry_cipher_setkey( h, &key, sizeof(key) );
+-			if ( err == 0 ) {
+-				err = gcry_cipher_encrypt( h, &hbuf[1], sizeof(key), &StdText, sizeof(key) );
+-			}
+-		}
+-		gcry_cipher_close( h );
+-	}
++	des_set_key( &ctx, &key );
++	des_encrypt( &ctx, sizeof(key), &hbuf[0], &StdText );
++
++	lmPasswd_to_key( &UcasePassword[7], &key );
++	des_set_key( &ctx, &key );
++	des_encrypt( &ctx, sizeof(key), &hbuf[1], &StdText );
+ #elif defined(HAVE_OPENSSL)
+ 	des_set_key_unchecked( &key, schedule );
+ 	des_ecb_encrypt( &StdText, &hbuf[0], schedule , DES_ENCRYPT );
+@@ -243,6 +233,8 @@ static void nthash(
+ 	char hbuf[HASHLEN];
+ #ifdef HAVE_OPENSSL
+ 	MD4_CTX ctx;
++#elif defined(HAVE_GNUTLS)
++	struct md4_ctx ctx;
+ #endif
+ 
+ 	if (passwd->bv_len > MAX_PWLEN*2)
+@@ -253,7 +245,9 @@ static void nthash(
+ 	MD4_Update( &ctx, passwd->bv_val, passwd->bv_len );
+ 	MD4_Final( (unsigned char *)hbuf, &ctx );
+ #elif defined(HAVE_GNUTLS)
+-	gcry_md_hash_buffer(GCRY_MD_MD4, hbuf, passwd->bv_val, passwd->bv_len );
++	md4_init( &ctx );
++	md4_update( &ctx, passwd->bv_len, passwd->bv_val );
++	md4_digest( &ctx, sizeof(hbuf), (unsigned char *)hbuf );
+ #endif
+ 
+ 	hexify( hbuf, hash );
+diff --git a/libraries/libldap/tls_g.c b/libraries/libldap/tls_g.c
+index cc8af63..be7ebc0 100644
+--- a/libraries/libldap/tls_g.c
++++ b/libraries/libldap/tls_g.c
+@@ -43,21 +43,13 @@
+ 
+ #include <gnutls/gnutls.h>
+ #include <gnutls/x509.h>
+-#include <gcrypt.h>
+ 
+ #define DH_BITS	(1024)
+ 
+ #if LIBGNUTLS_VERSION_NUMBER >= 0x020200
+ #define	HAVE_CIPHERSUITES	1
+-/* This is a kludge. gcrypt 1.4.x has support. Recent GnuTLS requires gcrypt 1.4.x
+- * but that dependency isn't reflected in their configure script, resulting in
+- * build errors on older gcrypt. So, if they have a working build environment,
+- * assume gcrypt is new enough.
+- */
+-#define HAVE_GCRYPT_RAND	1
+ #else
+ #undef HAVE_CIPHERSUITES
+-#undef HAVE_GCRYPT_RAND
+ #endif
+ 
+ #ifndef HAVE_CIPHERSUITES
+@@ -145,20 +137,13 @@ tlsg_mutex_unlock( void **lock )
+ 	return ldap_pvt_thread_mutex_unlock( *lock );
+ }
+ 
+-static struct gcry_thread_cbs tlsg_thread_cbs = {
+-	GCRY_THREAD_OPTION_USER,
+-	NULL,
+-	tlsg_mutex_init,
+-	tlsg_mutex_destroy,
+-	tlsg_mutex_lock,
+-	tlsg_mutex_unlock,
+-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+-};
+-
+ static void
+ tlsg_thr_init( void )
+ {
+-	gcry_control (GCRYCTL_SET_THREAD_CBS, &tlsg_thread_cbs);
++	gnutls_global_set_mutex (tlsg_mutex_init,
++		tlsg_mutex_destroy,
++		tlsg_mutex_lock,
++		tlsg_mutex_unlock);
+ }
+ #endif /* LDAP_R_COMPILE */
+ 
+@@ -168,17 +153,6 @@ tlsg_thr_init( void )
+ static int
+ tlsg_init( void )
+ {
+-#ifdef HAVE_GCRYPT_RAND
+-	struct ldapoptions *lo = LDAP_INT_GLOBAL_OPT();
+-	if ( lo->ldo_tls_randfile &&
+-		gcry_control( GCRYCTL_SET_RNDEGD_SOCKET, lo->ldo_tls_randfile )) {
+-		Debug( LDAP_DEBUG_ANY,
+-		"TLS: gcry_control GCRYCTL_SET_RNDEGD_SOCKET failed\n",
+-		0, 0, 0);
+-		return -1;
+-	}
+-#endif
+-
+ 	gnutls_global_init();
+ 
+ #ifndef HAVE_CIPHERSUITES
+-- 
+2.0.1
+

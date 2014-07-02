@@ -16,6 +16,12 @@ openldap (2.4.39-2) UNRELEASED; urgency=low
   * debian/rules: Enable parallel building.
   * debian/slapd.README.Debian: Add a note about database format upgrades and 
     the consequences of missing one. (Closes: #594711)
+  * Build with GnuTLS 3 (Closes: #745231):
+    - debian/patches/its7430-avoid-gnutls-deprecated-function: Import upstream
+      fix for building with newer gnutls.
+    - debian/patches/its7877-use-nettle-instead-of-gcrypt: Remove explicit 
+      gcrypt usage from libldap and migrate smbk5pwd from gcrypt to nettle.
+    - Drop debian/patches/fix-ftbfs-binutils-gold, no longer needed.
 
   [ Jelmer Vernooij ]
   * Depend on heimdal-multidev rather than heimdal-dev. (Closes: #745356, 
