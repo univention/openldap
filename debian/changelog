@@ -22,6 +22,8 @@ openldap (2.4.39-2) UNRELEASED; urgency=low
     - debian/patches/its7877-use-nettle-instead-of-gcrypt: Remove explicit 
       gcrypt usage from libldap and migrate smbk5pwd from gcrypt to nettle.
     - Drop debian/patches/fix-ftbfs-binutils-gold, no longer needed.
+  * Drop debconf-utils from Build-Depends, no longer used (replaced by 
+    po-debconf). Thanks Johannes Schauer.
 
   [ Jelmer Vernooij ]
   * Depend on heimdal-multidev rather than heimdal-dev. (Closes: #745356, 
