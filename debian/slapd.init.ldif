@@ -62,10 +62,7 @@ objectClass: olcDatabaseConfig
 objectClass: @BACKENDOBJECTCLASS@
 olcDatabase: @BACKEND@
 olcDbCheckpoint: 512 30
-olcDbConfig: set_cachesize 0 2097152 0
-olcDbConfig: set_lk_max_objects 1500
-olcDbConfig: set_lk_max_locks 1500
-olcDbConfig: set_lk_max_lockers 1500
+@BACKENDOPTIONS@
 olcLastMod: TRUE
 olcSuffix: @SUFFIX@
 olcDbDirectory: /var/lib/ldap
