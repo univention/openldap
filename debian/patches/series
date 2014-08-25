@@ -19,6 +19,5 @@ switch-to-lt_dlopenadvise-to-get-RTLD_GLOBAL-set.diff
 no-bdb-ABI-second-guessing
 heimdal-fix
 CVE-2013-4449.patch
-pw-sha2-makefile
 its7430-avoid-gnutls-deprecated-function
 its7877-use-nettle-instead-of-gcrypt

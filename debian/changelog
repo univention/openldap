@@ -9,8 +9,6 @@ openldap (2.4.39-2) UNRELEASED; urgency=low
       symlink. (Closes: #742862)
     - When upgrading a database, ignore extra nested directories as they might 
       contain other databases. Patch from Kenny Millington. (LP: #1003854)
-  * debian/rules, debian/patches/pw-sha2-makefile: Build and install the sha2 
-    password module. (Closes: #746727)
   * debian/rules: Enable parallel building.
   * debian/slapd.README.Debian: Add a note about database format upgrades and 
     the consequences of missing one. (Closes: #594711)
