@@ -1,8 +1,6 @@
 openldap (2.4.39-2) UNRELEASED; urgency=low
 
   [ Ryan Tandy ]
-  * 0001-ITS-7723-fix-reference-counting.patch: import upstream fix for 
-    CVE-2013-4449. Thanks to Hideki Yamane for the patch. (Closes: #729367)
   * slapd.scripts-common:
     - Anchor grep patterns to avoid matching commented lines in ldif files 
       under cn=config. (Closes: #723957)
@@ -24,6 +22,7 @@ openldap (2.4.39-2) UNRELEASED; urgency=low
     - Drop debian/patches/fix-ftbfs-binutils-gold, no longer needed.
   * Drop debconf-utils from Build-Depends, no longer used (replaced by 
     po-debconf). Thanks Johannes Schauer.
+  * Acknowledge NMU fixing #729367, thanks to Michael Gilbert.
 
   [ Jelmer Vernooij ]
   * Depend on heimdal-multidev rather than heimdal-dev. (Closes: #745356, 
@@ -34,6 +33,13 @@ openldap (2.4.39-2) UNRELEASED; urgency=low
     (Closes: #661641)
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 07 Apr 2014 19:36:18 -0700
+
+openldap (2.4.39-1.1) unstable; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * Fix CVE-2013-4449: reference counting logic issue (closes: #729367).
+
+ -- Michael Gilbert <mgilbert@debian.org>  Sat, 09 Aug 2014 09:26:51 +0000
 
 openldap (2.4.39-1) unstable; urgency=low
 
