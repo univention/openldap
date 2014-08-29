@@ -65,15 +65,31 @@ Using BDB/HDB Backends
 
 BerkeleyDB Version
 
-  slapd has been built against version 4.8.30 of BerkeleyDB. This version is
-  supported by the upstream developers.
+  slapd has been built against version 5.3.28 of BerkeleyDB.
 
   slapd will automatically handle database recovery, so you generally do
   not need the BerkeleyDB utilities.  However, if you want to perform
   other operations directly on the raw database without using the slapd
-  tools, install db4.8-util and use those BerkeleyDB utilities. Utilities
+  tools, install db5.3-util and use those BerkeleyDB utilities. Utilities
   from other db*-util packages will not work correctly and may render the
   database unusable by slapd.
+
+BerkeleyDB database format upgrades
+
+  When upgrading slapd to a new version where the Berkeley DB library's
+  storage format has changed, the database has to be backed up using
+  slapcat(8) before upgrading and restored using slapadd(8) afterwards.
+  Normally the maintainer scripts will handle this automatically,
+  performing the dump and restore as needed.
+
+  If, after upgrading, slapd fails to start and you see the message
+  "Program version doesn't match environment version" in syslog, then
+  the DB version may have changed without a dump and reload. This should
+  be reported as a bug in the slapd package. In this case you will have
+  to downgrade slapd to the previous version as the new tools are unable
+  to dump the old database, and the same error would prevent you from
+  upgrading to the fixed version. Old package versions can be
+  found at <http://snapshot.debian.org> if needed.
 
 Logging
 
@@ -220,22 +236,3 @@ Modifications Compared to Upstream
   openldap source package.
 
  -- Russ Allbery <rra@debian.org>, Thu, 14 Feb 2008 18:47:07 -0800
-
-Database format upgrades
-
-  When upgrading slapd to a new version where the Berkeley DB library's
-  storage format has changed, the database has to be backed up using
-  slapcat(8) before upgrading and restored using slapadd(8) afterwards.
-  Normally the maintainer scripts will handle this automatically,
-  performing the dump and restore as needed.
-
-  If, after upgrading, slapd fails to start and you see the message
-  "Program version doesn't match environment version" in syslog, then
-  the DB version may have changed without a dump and reload. This should
-  be reported as a bug in the slapd package. In this case you will have
-  to downgrade slapd to the previous version as the new tools are unable
-  to dump the old database, and the same error would prevent you from
-  upgrading to the fixed version. Old package versions can be
-  found at http://snapshot.debian.org if needed.
-
- -- Ryan Tandy <ryan@nardis.ca>, Thu, 19 Jun 2014 12:51:38 -0700
