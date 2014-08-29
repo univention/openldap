@@ -24,6 +24,8 @@ openldap (2.4.39-2) UNRELEASED; urgency=low
   * Drop debconf-utils from Build-Depends, no longer used (replaced by 
     po-debconf). Thanks Johannes Schauer.
   * Acknowledge NMU fixing #729367, thanks to Michael Gilbert.
+  * Offer the MDB backend as a choice during initial configuration. (Closes:
+    #750022)
 
   [ Jelmer Vernooij ]
   * Depend on heimdal-multidev rather than heimdal-dev. (Closes: #745356, 

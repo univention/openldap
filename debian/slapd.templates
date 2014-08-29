@@ -131,12 +131,16 @@ _Description: slapcat failure during upgrade
 
 Template: slapd/backend
 Type: select
-Choices: BDB, HDB
+Choices: BDB, HDB, MDB
 Default: HDB
 _Description: Database backend to use:
  The HDB backend is recommended. HDB and BDB use similar storage formats,
  but HDB adds support for subtree renames. Both support the same
  configuration options.
+ .
+ The MDB backend is a new backend using the Lightning Memory-Mapped
+ Database (LMDB) library. It relies on the operating system for memory
+ management and requires less configuration.
  .
  In either case, you should review the resulting database configuration
  for your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more
