@@ -7,6 +7,10 @@ Notes about Debian's slapd package
   reportbug and not to upstream; upstream is not responsible for changes
   made in the Debian package.
 
+  In addition to the man pages shipped with this package, please consult
+  the OpenLDAP Admin Guide for more information, including configuration
+  examples for common use cases. <http://www.openldap.org/doc/admin24/>
+
 The OpenLDAP configuration
 
   Since version 2.4.23-3 the configuration of OpenLDAP has been changed to
@@ -25,6 +29,22 @@ The OpenLDAP configuration
 
   For configuration options see the several manpages that exist or the
   documentation provided upstream.
+
+Using the MDB Backend
+
+  MDB is a new database backend using the LMDB library created by the
+  OpenLDAP developers. It will become the default backend in a future
+  version of OpenLDAP. The MDB backend has fewer configuration
+  parameters than HDB/BDB and generally does not require hand tuning.
+
+  The database is stored in a sparse file with a specified maximum size.
+  The size should be set larger than the database is ever anticipated to
+  grow, but can be increased later if needed. When the MDB backend is
+  chosen during initial configuration, the Debian package configures the
+  automatically created database with a maximum size of 1 GiB.
+
+  The space currently used by the database can be found using du(1); for
+  example: du -h /var/lib/ldap/data.mdb
 
 Using BDB/HDB Backends
 
