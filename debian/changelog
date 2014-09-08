@@ -17,7 +17,7 @@ openldap (2.4.39-2) UNRELEASED; urgency=low
       #676168. (Closes: #742841)
   * debian/slapd.README.Debian: Add a note about database format upgrades and 
     the consequences of missing one. (Closes: #594711)
-  * Build with GnuTLS 3 (Closes: #745231):
+  * Build with GnuTLS 3 (Closes: #745231, #760559):
     - debian/patches/its7430-avoid-gnutls-deprecated-function: Import upstream
       fix for building with newer gnutls.
     - debian/patches/its7877-use-nettle-instead-of-gcrypt: Remove explicit 
