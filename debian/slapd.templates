@@ -138,9 +138,8 @@ _Description: Database backend to use:
  but HDB adds support for subtree renames. Both support the same
  configuration options.
  .
- The MDB backend is a new backend using the Lightning Memory-Mapped
- Database (LMDB) library. It relies on the operating system for memory
- management and requires less configuration.
+ The MDB backend is a new backend using a different storage format. It
+ requires less configuration than BDB or HDB.
  .
  In either case, you should review the resulting database configuration
  for your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more
