@@ -141,6 +141,5 @@ _Description: Database backend to use:
  The MDB backend is a new backend using a different storage format. It
  requires less configuration than BDB or HDB.
  .
- In either case, you should review the resulting database configuration
- for your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more
- details.
+ In any case, you should review the resulting database configuration for
+ your needs. See /usr/share/doc/slapd/README.Debian.gz for more details.
