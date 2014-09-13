@@ -11,6 +11,7 @@ openldap (2.4.39-2) UNRELEASED; urgency=low
       contain other databases. Patch from Kenny Millington. (LP: #1003854)
     - Fix dumping and reloading when multiple databases hold the same suffix,
       thanks Peder Stray. (Closes: #759596, LP: #1362481)
+    - Remove trailing dot from slapd/domain. (Closes: #637996)
   * debian/rules:
     - Enable parallel building.
     - Copy libldap-2.4-2.shlibs into place manually, as a workaround for
