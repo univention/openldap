@@ -29,6 +29,8 @@ openldap (2.4.39-2) UNRELEASED; urgency=low
   * Acknowledge NMU fixing #729367, thanks to Michael Gilbert.
   * Offer the MDB backend as a choice during initial configuration. (Closes:
     #750022)
+  * debian/slapd.init.ldif: Disallow modifying one's own entry by default,
+    except specific attributes. (Closes: #761406)
 
   [ Jelmer Vernooij ]
   * Depend on heimdal-multidev rather than heimdal-dev. (Closes: #745356, 
