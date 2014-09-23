@@ -69,6 +69,9 @@ olcDbDirectory: /var/lib/ldap
 olcRootDN: cn=admin,@SUFFIX@
 olcRootPW: @PASSWORD@
 olcDbIndex: objectClass eq
+olcDbIndex: cn,uid eq
+olcDbIndex: uidNumber,gidNumber eq
+olcDbIndex: member,memberUid eq
 olcAccess: to attrs=userPassword,shadowLastChange
   by self write
   by anonymous auth
