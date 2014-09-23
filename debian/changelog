@@ -31,6 +31,7 @@ openldap (2.4.39-2) UNRELEASED; urgency=low
     #750022)
   * debian/slapd.init.ldif: Disallow modifying one's own entry by default,
     except specific attributes. (Closes: #761406)
+  * Introduce a symbols file for libldap-2.4-2.
 
   [ Jelmer Vernooij ]
   * Depend on heimdal-multidev rather than heimdal-dev. (Closes: #745356, 
