@@ -37,6 +37,8 @@ openldap (2.4.39-2) UNRELEASED; urgency=low
   * debian/schema/pmi.schema: Add a copyright clarification. There does not
     appear to be any copyrighted text in this file, only ASN.1 assignments and
     LDAP schema definitions. Fixes a Lintian error on the original.
+  * debian/schema/duaconf.schema: Strip Internet-Draft text from
+    duaconf.schema.
 
   [ Jelmer Vernooij ]
   * Depend on heimdal-multidev rather than heimdal-dev. (Closes: #745356, 
