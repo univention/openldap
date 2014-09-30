@@ -34,6 +34,9 @@ openldap (2.4.39-2) UNRELEASED; urgency=low
       attributes. (Closes: #761406)
     - Index some more common search attributes by default. (Closes: #762111)
   * Introduce a symbols file for libldap-2.4-2.
+  * debian/schema/pmi.schema: Add a copyright clarification. There does not
+    appear to be any copyrighted text in this file, only ASN.1 assignments and
+    LDAP schema definitions. Fixes a Lintian error on the original.
 
   [ Jelmer Vernooij ]
   * Depend on heimdal-multidev rather than heimdal-dev. (Closes: #745356, 
