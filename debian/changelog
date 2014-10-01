@@ -1,6 +1,13 @@
-openldap (2.4.39-2) UNRELEASED; urgency=low
+openldap (2.4.40-1) UNRELEASED; urgency=low
 
   [ Ryan Tandy ]
+  * New upstream release.
+    - fixed ldap_get_dn(3) ldap_ava definition (ITS#7860) (Closes: #465024)
+    - fixed slapcat with external schema (ITS#7895) (Closes: #599235)
+    - fixed double free with invalid ciphersuite (ITS#7500) (Closes: #640384)
+    - fixed modrdn crash on naming attr with no matching rule (ITS#7850)
+      (Closes: #666515)
+    - fixed slapacl causing unclean database (ITS#7827) (Closes: #741248)
   * slapd.scripts-common:
     - Anchor grep patterns to avoid matching commented lines in ldif files 
       under cn=config. (Closes: #723957)
@@ -48,7 +55,7 @@ openldap (2.4.39-2) UNRELEASED; urgency=low
   * Turkish, thanks to Atila KOÇ <akoc@artielektronik.com.tr>.
     (Closes: #661641)
 
- -- Ryan Tandy <ryan@nardis.ca>  Mon, 07 Apr 2014 19:36:18 -0700
+ -- Ryan Tandy <ryan@nardis.ca>  Wed, 01 Oct 2014 04:01:09 +0000
 
 openldap (2.4.39-1.1) unstable; urgency=high
 
