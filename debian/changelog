@@ -25,12 +25,8 @@ openldap (2.4.40-1) UNRELEASED; urgency=low
       #676168. (Closes: #742841)
   * debian/slapd.README.Debian: Add a note about database format upgrades and 
     the consequences of missing one. (Closes: #594711)
-  * Build with GnuTLS 3 (Closes: #745231, #760559):
-    - debian/patches/its7430-avoid-gnutls-deprecated-function: Import upstream
-      fix for building with newer gnutls.
-    - debian/patches/its7877-use-nettle-instead-of-gcrypt: Remove explicit 
-      gcrypt usage from libldap and migrate smbk5pwd from gcrypt to nettle.
-    - Drop debian/patches/fix-ftbfs-binutils-gold, no longer needed.
+  * Build with GnuTLS 3 (Closes: #745231, #760559).
+  * Drop debian/patches/fix-ftbfs-binutils-gold, no longer needed.
   * Drop debconf-utils from Build-Depends, no longer used (replaced by 
     po-debconf). Thanks Johannes Schauer.
   * Acknowledge NMU fixing #729367, thanks to Michael Gilbert.
@@ -46,6 +42,7 @@ openldap (2.4.40-1) UNRELEASED; urgency=low
     LDAP schema definitions. Fixes a Lintian error on the original.
   * debian/schema/duaconf.schema: Strip Internet-Draft text from
     duaconf.schema.
+  * Drop debian/patches/CVE-2013-4449.patch, applied upstream.
 
   [ Jelmer Vernooij ]
   * Depend on heimdal-multidev rather than heimdal-dev. (Closes: #745356, 
