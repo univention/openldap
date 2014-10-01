@@ -43,6 +43,7 @@ openldap (2.4.40-1) UNRELEASED; urgency=low
   * debian/schema/duaconf.schema: Strip Internet-Draft text from
     duaconf.schema.
   * Drop debian/patches/CVE-2013-4449.patch, applied upstream.
+  * Update debian/patches/no-AM_INIT_AUTOMAKE with upstream changes.
 
   [ Jelmer Vernooij ]
   * Depend on heimdal-multidev rather than heimdal-dev. (Closes: #745356, 
