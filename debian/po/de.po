@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap 2.4.21-1\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2010-07-15 22:05+0200\n"
+"POT-Creation-Date: 2014-10-06 21:15-0700\n"
 "PO-Revision-Date: 2010-04-28 21:19+0200\n"
 "Last-Translator: Helge Kreutzmann <debian@helgefjell.de>\n"
 "Language-Team: de <debian-l10n-german@lists.debian.org>\n"
@@ -335,8 +335,21 @@ msgstr ""
 #. Description
 #: ../slapd.templates:16001
 msgid ""
-"In either case, you should review the resulting database configuration for "
-"your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more details."
+"The MDB backend is a new backend using a different storage format. It "
+"requires less configuration than BDB or HDB."
+msgstr ""
+
+#. Type: select
+#. Description
+#: ../slapd.templates:16001
+#, fuzzy
+#| msgid ""
+#| "In either case, you should review the resulting database configuration "
+#| "for your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more "
+#| "details."
+msgid ""
+"In any case, you should review the resulting database configuration for your "
+"needs. See /usr/share/doc/slapd/README.Debian.gz for more details."
 msgstr ""
 "In jedem Fall sollten Sie die erstellte Datenbankkonfiguration in Hinblick "
 "auf Ihre Anforderungen prüfen. Lesen Sie /usr/share/doc/slapd/README."

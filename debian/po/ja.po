@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2010-07-15 22:05+0200\n"
+"POT-Creation-Date: 2014-10-06 21:15-0700\n"
 "PO-Revision-Date: 2010-07-18 20:05+0900\n"
 "Last-Translator: Kenshi Muto <kmuto@debian.org>\n"
 "Language-Team: Japanese <debian-japanese@lists.debian.org>\n"
@@ -145,7 +145,11 @@ msgid ""
 "the admin passwords match. If you decide not to retry the configuration the "
 "LDAP server will not be set up. Run 'dpkg-reconfigure slapd' if you want to "
 "retry later."
-msgstr "入力された設定は無効です。DNS ドメイン名が有効な文法になっていること、組織名のフィールドが空になっていないことと、管理者パスワードが合っていることを確認してください。設定を再試行しないと、LDAP サーバはセットアップされません。あとで再試行するときには、\"dpkg-reconfigure slapd\" を実行してください。"
+msgstr ""
+"入力された設定は無効です。DNS ドメイン名が有効な文法になっていること、組織名"
+"のフィールドが空になっていないことと、管理者パスワードが合っていることを確認"
+"してください。設定を再試行しないと、LDAP サーバはセットアップされません。あと"
+"で再試行するときには、\"dpkg-reconfigure slapd\" を実行してください。"
 
 #. Type: string
 #. Description
@@ -294,7 +298,9 @@ msgstr ""
 msgid ""
 "Then move the database files back to a backup area and then try running "
 "slapadd from ${location}."
-msgstr "そして、データベースファイルをバックアップ領域に戻し、slapadd を ${location} から実行してみます。"
+msgstr ""
+"そして、データベースファイルをバックアップ領域に戻し、slapadd を ${location} "
+"から実行してみます。"
 
 #. Type: select
 #. Description
@@ -318,8 +324,21 @@ msgstr ""
 #. Description
 #: ../slapd.templates:16001
 msgid ""
-"In either case, you should review the resulting database configuration for "
-"your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more details."
+"The MDB backend is a new backend using a different storage format. It "
+"requires less configuration than BDB or HDB."
+msgstr ""
+
+#. Type: select
+#. Description
+#: ../slapd.templates:16001
+#, fuzzy
+#| msgid ""
+#| "In either case, you should review the resulting database configuration "
+#| "for your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more "
+#| "details."
+msgid ""
+"In any case, you should review the resulting database configuration for your "
+"needs. See /usr/share/doc/slapd/README.Debian.gz for more details."
 msgstr ""
 "いずれの場合でも、必要に応じてデータベース設定の結果を再確認すべきです。詳細"
 "については /usr/share/doc/slapd/README.DB_CONFIG.gz を参照してください。"

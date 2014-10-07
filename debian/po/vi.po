@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap 2.4.23-6\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2010-07-15 22:05+0200\n"
+"POT-Creation-Date: 2014-10-06 21:15-0700\n"
 "PO-Revision-Date: 2010-10-27 15:50+1030\n"
 "Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
 "Language-Team: Vietnamese <vi-VN@googlegroups.com>\n"
@@ -319,6 +319,14 @@ msgstr ""
 "nhau, nhưng HDB thêm hỗ trợ để thay đổi tên của cây con. Cả hai hỗ trợ cùng "
 "những tùy chọn cấu hình."
 
+#. Type: select
+#. Description
+#: ../slapd.templates:16001
+msgid ""
+"The MDB backend is a new backend using a different storage format. It "
+"requires less configuration than BDB or HDB."
+msgstr ""
+
 # The BDB backend is the recommended choice of the OpenLDAP developers.
 # When using the BDB backend make sure that you configure the underlying
 # database for your requirements. Look into /usr/share/doc/slapd/README.
@@ -326,9 +334,14 @@ msgstr ""
 #. Type: select
 #. Description
 #: ../slapd.templates:16001
+#, fuzzy
+#| msgid ""
+#| "In either case, you should review the resulting database configuration "
+#| "for your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more "
+#| "details."
 msgid ""
-"In either case, you should review the resulting database configuration for "
-"your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more details."
+"In any case, you should review the resulting database configuration for your "
+"needs. See /usr/share/doc/slapd/README.Debian.gz for more details."
 msgstr ""
 "Trong mỗi trường hợp, bạn nên xem lại cấu hình cơ sở dữ liệu đã kết quả vẫn "
 "thích hợp với nhu cầu của bạn. Xem tài liệu Đọc Đi « /usr/share/doc/slapd/"
