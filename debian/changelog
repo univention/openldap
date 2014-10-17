@@ -46,6 +46,7 @@ openldap (2.4.40-1) UNRELEASED; urgency=low
   * Update debian/patches/no-AM_INIT_AUTOMAKE with upstream changes.
   * debian/schema/ppolicy.schema: Update with ordering rules added in
     draft-behera-ldap-password-policy-11.
+  * Suggest GSSAPI SASL modules. (Closes: #762424)
 
   [ Jelmer Vernooij ]
   * Depend on heimdal-multidev rather than heimdal-dev. (Closes: #745356, 
