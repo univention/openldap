@@ -47,6 +47,9 @@ openldap (2.4.40-1) UNRELEASED; urgency=low
   * debian/schema/ppolicy.schema: Update with ordering rules added in
     draft-behera-ldap-password-policy-11.
   * Suggest GSSAPI SASL modules. (Closes: #762424)
+  * debian/patches/ITS6035-olcauthzregex-needs-restart.patch: Document in 
+    slapd-config.5 the fact that changes to olcAuthzRegexp only take effect 
+    after the server is restarted. (Closes: #761407)
 
   [ Jelmer Vernooij ]
   * Depend on heimdal-multidev rather than heimdal-dev. (Closes: #745356, 
