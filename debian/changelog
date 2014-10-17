@@ -1,4 +1,4 @@
-openldap (2.4.40-1) UNRELEASED; urgency=low
+openldap (2.4.40-1) unstable; urgency=low
 
   [ Ryan Tandy ]
   * New upstream release.
@@ -60,7 +60,7 @@ openldap (2.4.40-1) UNRELEASED; urgency=low
   * Turkish, thanks to Atila KOÇ <akoc@artielektronik.com.tr>.
     (Closes: #661641)
 
- -- Ryan Tandy <ryan@nardis.ca>  Wed, 01 Oct 2014 04:01:09 +0000
+ -- Ryan Tandy <ryan@nardis.ca>  Fri, 17 Oct 2014 08:19:28 -0700
 
 openldap (2.4.39-1.1) unstable; urgency=high
 
