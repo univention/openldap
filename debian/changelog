@@ -1,6 +1,8 @@
 openldap (2.4.40-2) UNRELEASED; urgency=medium
 
   * Fix typo (chmod/chgrp) in previous changelog, spotted by Ferenc Wagner.
+  * debian/patches/contrib-modules-use-dpkg-buildflags: Also use CPPFLAGS from
+    dpkg-buildflags. Spotted by Lintian.
 
  -- Ryan Tandy <ryan@nardis.ca>  Sun, 19 Oct 2014 17:34:00 -0700
 
