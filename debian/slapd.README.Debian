@@ -33,8 +33,7 @@ The OpenLDAP configuration
 Using the MDB Backend
 
   MDB is a new database backend using the LMDB library created by the
-  OpenLDAP developers. It will become the default backend in a future
-  version of OpenLDAP. The MDB backend has fewer configuration
+  OpenLDAP developers. The MDB backend has fewer configuration
   parameters than HDB/BDB and generally does not require hand tuning.
 
   The database is stored in a sparse file with a specified maximum size.
@@ -48,8 +47,8 @@ Using the MDB Backend
 
 Using BDB/HDB Backends
 
-  HDB is the recommended database backend.  It's the same as BDB but
-  allows some additional operations.
+  HDB was the recommended backend before MDB was developed. It's the
+  same as BDB but allows some additional operations.
    
   slapd BDB and HDB backends rely on libdb to store data on your disks.
   libdb uses a configuration file to tune database specific

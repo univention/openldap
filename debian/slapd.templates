@@ -132,13 +132,12 @@ _Description: slapcat failure during upgrade
 Template: slapd/backend
 Type: select
 Choices: BDB, HDB, MDB
-Default: HDB
+Default: MDB
 _Description: Database backend to use:
- The HDB backend is recommended. HDB and BDB use similar storage formats,
- but HDB adds support for subtree renames. Both support the same
- configuration options.
+ HDB and BDB use similar storage formats, but HDB adds support for
+ subtree renames. Both support the same configuration options.
  .
- The MDB backend is a new backend using a different storage format. It
+ The MDB backend is recommended. MDB uses a new storage format and
  requires less configuration than BDB or HDB.
  .
  In any case, you should review the resulting database configuration for
