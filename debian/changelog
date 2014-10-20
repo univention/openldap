@@ -1,3 +1,9 @@
+openldap (2.4.40-2) UNRELEASED; urgency=medium
+
+  * Fix typo (chmod/chgrp) in previous changelog, spotted by Ferenc Wagner.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sun, 19 Oct 2014 17:34:00 -0700
+
 openldap (2.4.40-1) unstable; urgency=low
 
   [ Ryan Tandy ]
@@ -12,7 +18,7 @@ openldap (2.4.40-1) unstable; urgency=low
     - Anchor grep patterns to avoid matching commented lines in ldif files 
       under cn=config. (Closes: #723957)
     - Don't silently ignore nonexistent directories that should be dumped.
-    - Invoke find, chmod, and chown with -H in case /var/lib/ldap is a 
+    - Invoke find, chown, and chgrp with -H in case /var/lib/ldap is a 
       symlink. (Closes: #742862)
     - When upgrading a database, ignore extra nested directories as they might 
       contain other databases. Patch from Kenny Millington. (LP: #1003854)
