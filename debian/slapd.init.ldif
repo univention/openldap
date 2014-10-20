@@ -75,10 +75,8 @@ olcDbIndex: member,memberUid eq
 olcAccess: to attrs=userPassword,shadowLastChange
   by self write
   by anonymous auth
-  by dn="cn=admin,@SUFFIX@" write
   by * none
 olcAccess: to dn.base="" by * read
 olcAccess: to *
-  by dn="cn=admin,@SUFFIX@" write
   by * read
 
