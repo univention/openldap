@@ -213,8 +213,6 @@ load_databases() {							# {{{
 		backupdir=`compute_backup_path -n "$dbdir" "$suffix"`
 		if [ -e "$backupdir"/DB_CONFIG ]; then
 			cp -a "$backupdir"/DB_CONFIG "$dbdir"/
-		else
-			copy_example_DB_CONFIG "$dbdir"/
 		fi
 
 		if [ -f "${SLAPD_CONF}" ]; then

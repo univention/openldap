@@ -6,6 +6,8 @@ openldap (2.4.40-2) UNRELEASED; urgency=medium
   * debian/slapd.init.ldif: Don't bother explicitly granting rights to the
     rootdn, since it already has unlimited privileges. Thanks Ferenc Wagner.
   * Recommend MDB for new installations, per upstream's recommendation.
+  * Don't re-create the default DB_CONFIG if there wasn't one in the backup,
+    for example if the active backend doesn't use it. Thanks Ferenc Wagner.
 
  -- Ryan Tandy <ryan@nardis.ca>  Sun, 19 Oct 2014 17:34:00 -0700
 
