@@ -142,3 +142,19 @@ _Description: Database backend to use:
  .
  In any case, you should review the resulting database configuration for
  your needs. See /usr/share/doc/slapd/README.Debian.gz for more details.
+
+Template: slapd/unsafe_selfwrite_acl
+Type: note
+#flag:comment:3
+# Translators: keep "by self write" and "to *" unchanged. These are part 
+# of the slapd configuration and are not translatable.
+_Description: Potentially unsafe slapd access control configuration
+ One or more of the configured databases has an access control rule that 
+ allows users to modify most of their own attributes. This may be 
+ unsafe, depending on how the database is used.
+ .
+ In the case of slapd access rules that begin with "to *", it is
+ recommended to remove any instances of "by self write", so that users
+ are only able to modify specifically allowed attributes.
+ .
+ See /usr/share/doc/slapd/README.Debian.gz for more details.

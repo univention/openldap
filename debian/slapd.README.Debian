@@ -235,3 +235,47 @@ Modifications Compared to Upstream
   openldap source package.
 
  -- Russ Allbery <rra@debian.org>, Thu, 14 Feb 2008 18:47:07 -0800
+
+Unsafe access control rule installed by default in previous versions
+
+  Versions of slapd before 2.4.40-1 configured the default database with 
+  an access control rule of the form:
+
+  to *
+    by self write
+    by dn="cn=admin,dc=example,dc=com" write
+    by * read
+
+  Depending on how the database and client applications are configured, 
+  users might be able to impersonate others by editing attributes such 
+  as their Unix user and group numbers, or other application-specific 
+  attributes.
+
+  New installations no longer include "by self write", but existing 
+  configurations will not be automatically modified.
+
+  To list your current access control rules, use the command:
+
+    ldapsearch -Y EXTERNAL -H ldapi:/// -b 'cn=config' '(olcAccess=*)' olcAccess
+
+  To fix the problem, create an LDIF file to replace the rules as 
+  needed. For example:
+
+    dn: olcDatabase={1}hdb,cn=config
+    delete: olcAccess
+    olcAccess: {2}
+    -
+    add: olcAccess
+    olcAccess: {2}to * by dn="cn=admin,dc=example,dc=com" write by * read
+
+  Adjust the database DN, the administrative DN, and the rule numbers 
+  according to your configuration, following the output from ldapsearch.
+
+  Next, apply the configuration changes from the file:
+
+    ldapmodify -Y EXTERNAL -H ldapi:/// -f mods.ldif
+
+  For more information about access control rules, refer to the 
+  slapd.access(5) man page.
+
+ -- Ryan Tandy <ryan@nardis.ca>, Mon, 20 Oct 2014 11:45:20 -0700
