@@ -12,6 +12,7 @@ contrib-modules-use-dpkg-buildflags
 smbk5pwd-makefile
 autogroup-makefile
 lastbind-makefile
+pw-sha2-makefile
 ldap-conf-tls-cacertdir
 add-tlscacert-option-to-ldap-conf
 fix-build-top-mk

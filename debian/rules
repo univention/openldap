@@ -90,12 +90,14 @@ override_dh_auto_build:
 	$(MAKE) -C contrib/slapd-modules/smbk5pwd
 	$(MAKE) -C contrib/slapd-modules/autogroup
 	$(MAKE) -C contrib/slapd-modules/lastbind
+	$(MAKE) -C contrib/slapd-modules/passwd/sha2
 
 override_dh_auto_install:
 	dh_auto_install -- $(MAKEVARS)
 	$(MAKE) -C contrib/slapd-modules/smbk5pwd install DESTDIR=$(installdir)
 	$(MAKE) -C contrib/slapd-modules/autogroup install DESTDIR=$(installdir)
 	$(MAKE) -C contrib/slapd-modules/lastbind install DESTDIR=$(installdir)
+	$(MAKE) -C contrib/slapd-modules/passwd/sha2 install DESTDIR=$(installdir)
 
 	# Empty the dependency_libs file in the .la files.
 	for F in $(installdir)/usr/lib/ldap/*.la; do \
@@ -189,3 +191,7 @@ override_dh_auto_clean:
 		contrib/slapd-modules/lastbind/lastbind.lo \
 		contrib/slapd-modules/lastbind/lastbind.la \
 		contrib/slapd-modules/lastbind/lastbind.o
+	rm -rf contrib/slapd-modules/passwd/sha2/.libs \
+		contrib/slapd-modules/passwd/sha2/pw-sha2.lo \
+		contrib/slapd-modules/passwd/sha2/pw-sha2.la \
+		contrib/slapd-modules/passwd/sha2/pw-sha2.o

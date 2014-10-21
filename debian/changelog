@@ -11,6 +11,7 @@ openldap (2.4.40-2) UNRELEASED; urgency=medium
   * On upgrade, if an access rule begins with "to * by self write", show a 
     debconf note warning that it should be changed. (Closes: #761406)
   * Build and install the lastbind contrib module. (Closes: #701111)
+  * Build and install the passwd/sha2 contrib module. (Closes: #746727)
 
  -- Ryan Tandy <ryan@nardis.ca>  Sun, 19 Oct 2014 17:34:00 -0700
 
