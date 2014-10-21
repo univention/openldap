@@ -10,6 +10,7 @@ openldap (2.4.40-2) UNRELEASED; urgency=medium
     for example if the active backend doesn't use it. Thanks Ferenc Wagner.
   * On upgrade, if an access rule begins with "to * by self write", show a 
     debconf note warning that it should be changed. (Closes: #761406)
+  * Build and install the lastbind contrib module. (Closes: #701111)
 
  -- Ryan Tandy <ryan@nardis.ca>  Sun, 19 Oct 2014 17:34:00 -0700
 

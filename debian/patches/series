@@ -11,6 +11,7 @@ do-not-second-guess-sonames
 contrib-modules-use-dpkg-buildflags
 smbk5pwd-makefile
 autogroup-makefile
+lastbind-makefile
 ldap-conf-tls-cacertdir
 add-tlscacert-option-to-ldap-conf
 fix-build-top-mk
