@@ -146,11 +146,11 @@ _Description: Database backend to use:
 Template: slapd/unsafe_selfwrite_acl
 Type: note
 #flag:comment:3
-# Translators: keep "by self write" and "to *" unchanged. These are part 
+# Translators: keep "by self write" and "to *" unchanged. These are part
 # of the slapd configuration and are not translatable.
 _Description: Potentially unsafe slapd access control configuration
- One or more of the configured databases has an access control rule that 
- allows users to modify most of their own attributes. This may be 
+ One or more of the configured databases has an access control rule that
+ allows users to modify most of their own attributes. This may be
  unsafe, depending on how the database is used.
  .
  In the case of slapd access rules that begin with "to *", it is
