@@ -16,7 +16,7 @@ msgstr ""
 "Project-Id-Version: openldap\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2014-10-20 22:17-0700\n"
-"PO-Revision-Date: 2010-07-18 20:05+0900\n"
+"PO-Revision-Date: 2014-10-26 13:17+0900\n"
 "Last-Translator: Kenshi Muto <kmuto@debian.org>\n"
 "Language-Team: Japanese <debian-japanese@lists.debian.org>\n"
 "Language: ja\n"
@@ -311,55 +311,32 @@ msgstr "利用するデータベースバックエンド:"
 #. Type: select
 #. Description
 #: ../slapd.templates:16001
-#, fuzzy
-#| msgid ""
-#| "The HDB backend is recommended. HDB and BDB use similar storage formats, "
-#| "but HDB adds support for subtree renames. Both support the same "
-#| "configuration options."
 msgid ""
 "HDB and BDB use similar storage formats, but HDB adds support for subtree "
 "renames. Both support the same configuration options."
-msgstr ""
-"HDB バックエンドをお勧めします。HDB と BDB は似たストレージフォーマットを使い"
-"ますが、HDB にはサブツリーの名前変更のサポートが加わっています。共に、同じ設"
-"定オプションをサポートします。"
+msgstr "HDB と BDB は似たストレージフォーマットを使いますが、HDB にはサブツリーの名前変更のサポートが加わっています。共に、同じ設定オプションをサポートします。"
 
 #. Type: select
 #. Description
 #: ../slapd.templates:16001
-#, fuzzy
-#| msgid ""
-#| "The HDB backend is recommended. HDB and BDB use similar storage formats, "
-#| "but HDB adds support for subtree renames. Both support the same "
-#| "configuration options."
 msgid ""
 "The MDB backend is recommended. MDB uses a new storage format and requires "
 "less configuration than BDB or HDB."
-msgstr ""
-"HDB バックエンドをお勧めします。HDB と BDB は似たストレージフォーマットを使い"
-"ますが、HDB にはサブツリーの名前変更のサポートが加わっています。共に、同じ設"
-"定オプションをサポートします。"
+msgstr "MDB バックエンドをお勧めします。MDB は新しいストレージフォーマットを採用しており、BDB や HDB よりも少ない設定で済みます。"
 
 #. Type: select
 #. Description
 #: ../slapd.templates:16001
-#, fuzzy
-#| msgid ""
-#| "In either case, you should review the resulting database configuration "
-#| "for your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more "
-#| "details."
 msgid ""
 "In any case, you should review the resulting database configuration for your "
 "needs. See /usr/share/doc/slapd/README.Debian.gz for more details."
-msgstr ""
-"いずれの場合でも、必要に応じてデータベース設定の結果を再確認すべきです。詳細"
-"については /usr/share/doc/slapd/README.DB_CONFIG.gz を参照してください。"
+msgstr "いずれの場合でも、必要に応じてデータベース設定の結果を再確認すべきです。詳細については /usr/share/doc/slapd/README.Debian.gz を参照してください。"
 
 #. Type: note
 #. Description
 #: ../slapd.templates:17001
 msgid "Potentially unsafe slapd access control configuration"
-msgstr ""
+msgstr "潜在的に安全でない slapd のアクセス制御設定です"
 
 #. Type: note
 #. Description
@@ -368,7 +345,7 @@ msgid ""
 "One or more of the configured databases has an access control rule that  "
 "allows users to modify most of their own attributes. This may be  unsafe, "
 "depending on how the database is used."
-msgstr ""
+msgstr "設定されたデータベースには、ユーザに自身の属性のほとんどの変更を許容する 1 つ以上のアクセス制御ルールがあります。これはデータベースの使いようによっては安全でない可能性があります。"
 
 #. Type: note
 #. Description
@@ -379,10 +356,10 @@ msgid ""
 "In the case of slapd access rules that begin with \"to *\", it is "
 "recommended to remove any instances of \"by self write\", so that users are "
 "only able to modify specifically allowed attributes."
-msgstr ""
+msgstr "\"to *\" で始まる slapd アクセスルールがある場合、各 \"by self write\" 記述を削除することをお勧めします。そうすれば、ユーザが変更できるのは明示的に許可された属性のみになります。"
 
 #. Type: note
 #. Description
 #: ../slapd.templates:17001
 msgid "See /usr/share/doc/slapd/README.Debian.gz for more details."
-msgstr ""
+msgstr "詳細については /usr/share/doc/slapd/README.Debian.gz を参照してください。"
