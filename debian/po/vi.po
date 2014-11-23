@@ -309,10 +309,6 @@ msgstr "Hậu phương cơ sở dữ liệu cần dùng:"
 #. Type: select
 #. Description
 #: ../slapd.templates:16001
-#| msgid ""
-#| "The HDB backend is recommended. HDB and BDB use similar storage formats, "
-#| "but HDB adds support for subtree renames. Both support the same "
-#| "configuration options."
 msgid ""
 "HDB and BDB use similar storage formats, but HDB adds support for subtree "
 "renames. Both support the same configuration options."
@@ -323,10 +319,6 @@ msgstr ""
 #. Type: select
 #. Description
 #: ../slapd.templates:16001
-#| msgid ""
-#| "The HDB backend is recommended. HDB and BDB use similar storage formats, "
-#| "but HDB adds support for subtree renames. Both support the same "
-#| "configuration options."
 msgid ""
 "The MDB backend is recommended. MDB uses a new storage format and requires "
 "less configuration than BDB or HDB."
@@ -341,10 +333,6 @@ msgstr ""
 #. Type: select
 #. Description
 #: ../slapd.templates:16001
-#| msgid ""
-#| "In either case, you should review the resulting database configuration "
-#| "for your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more "
-#| "details."
 msgid ""
 "In any case, you should review the resulting database configuration for your "
 "needs. See /usr/share/doc/slapd/README.Debian.gz for more details."

@@ -321,39 +321,27 @@ msgstr "Используемые серверы баз данных:"
 #. Type: select
 #. Description
 #: ../slapd.templates:16001
-#| msgid ""
-#| "The HDB backend is recommended. HDB and BDB use similar storage formats, "
-#| "but HDB adds support for subtree renames. Both support the same "
-#| "configuration options."
 msgid ""
 "HDB and BDB use similar storage formats, but HDB adds support for subtree "
 "renames. Both support the same configuration options."
 msgstr ""
-"HDB и BDB используют схожие форматы "
-"хранения, но в HDB добавлена поддержка переименования поддеревьев. Оба типа "
-"сервера поддерживают одинаковые параметры настройки."
+"HDB и BDB используют схожие форматы хранения, но в HDB добавлена поддержка "
+"переименования поддеревьев. Оба типа сервера поддерживают одинаковые "
+"параметры настройки."
 
 #. Type: select
 #. Description
 #: ../slapd.templates:16001
-#| msgid ""
-#| "The HDB backend is recommended. HDB and BDB use similar storage formats, "
-#| "but HDB adds support for subtree renames. Both support the same "
-#| "configuration options."
 msgid ""
 "The MDB backend is recommended. MDB uses a new storage format and requires "
 "less configuration than BDB or HDB."
 msgstr ""
-"Рекомендуется использовать сервер MDB. MDB использует новый формат "
-"хранения и требует меньше настроек чем BDB или HDB."
+"Рекомендуется использовать сервер MDB. MDB использует новый формат хранения "
+"и требует меньше настроек чем BDB или HDB."
 
 #. Type: select
 #. Description
 #: ../slapd.templates:16001
-#| msgid ""
-#| "In either case, you should review the resulting database configuration "
-#| "for your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more "
-#| "details."
 msgid ""
 "In any case, you should review the resulting database configuration for your "
 "needs. See /usr/share/doc/slapd/README.Debian.gz for more details."
@@ -391,8 +379,8 @@ msgid ""
 "only able to modify specifically allowed attributes."
 msgstr ""
 "В случае, когда правила доступа slapd начинаются с «to *», рекомендуется "
-"удалять все экземпляры «by self write» для того, чтобы пользователи "
-"могли изменять только явно разрешённые атрибуты."
+"удалять все экземпляры «by self write» для того, чтобы пользователи могли "
+"изменять только явно разрешённые атрибуты."
 
 #. Type: note
 #. Description

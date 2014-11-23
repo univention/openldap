@@ -111,11 +111,11 @@ msgid ""
 "the new version is incompatible with the old database format and it needs to "
 "be reimported. If you select \"never\", no dump will be done."
 msgstr ""
-"Si selecciona «siempre» se volcarán sus bases de datos de forma incondicional "
-"antes de cada actualización. Si selecciona «cuando se necesite» sólo se "
-"hará un volcado si la nueva versión es incompatible con el formato de la "
-"base de datos antigua y la información se debe volver a importar. Si "
-"selecciona «nunca» no se hará ningún volcado."
+"Si selecciona «siempre» se volcarán sus bases de datos de forma "
+"incondicional antes de cada actualización. Si selecciona «cuando se "
+"necesite» sólo se hará un volcado si la nueva versión es incompatible con el "
+"formato de la base de datos antigua y la información se debe volver a "
+"importar. Si selecciona «nunca» no se hará ningún volcado."
 
 #. Type: string
 #. Description
@@ -135,11 +135,11 @@ msgid ""
 "from."
 msgstr ""
 "Especifique el directorio donde se exportarán las bases de datos de LDAP. En "
-"éste se crearán diversos ficheros LDIF que corresponden a las bases de "
-"datos ubicadas en el servidor. Asegúrese de que tiene suficiente espacio "
-"libre en la partición donde se ubica el directorio. La primera ocurrencia de "
-"la cadena «VERSION» se reemplaza con la versión del servidor desde la cual "
-"va a actualizar."
+"éste se crearán diversos ficheros LDIF que corresponden a las bases de datos "
+"ubicadas en el servidor. Asegúrese de que tiene suficiente espacio libre en "
+"la partición donde se ubica el directorio. La primera ocurrencia de la "
+"cadena «VERSION» se reemplaza con la versión del servidor desde la cual va a "
+"actualizar."
 
 #. Type: boolean
 #. Description
@@ -263,7 +263,8 @@ msgstr ""
 #. Description
 #: ../slapd.templates:11001
 msgid "Do you want the database to be removed when slapd is purged?"
-msgstr "¿Desea que se borre la base de datos cuando se purgue el paquete slapd?"
+msgstr ""
+"¿Desea que se borre la base de datos cuando se purgue el paquete slapd?"
 
 #. Type: boolean
 #. Description
@@ -347,10 +348,6 @@ msgstr "Motor de base de datos a utilizar:"
 #. Type: select
 #. Description
 #: ../slapd.templates:16001
-#| msgid ""
-#| "The HDB backend is recommended. HDB and BDB use similar storage formats, "
-#| "but HDB adds support for subtree renames. Both support the same "
-#| "configuration options."
 msgid ""
 "HDB and BDB use similar storage formats, but HDB adds support for subtree "
 "renames. Both support the same configuration options."
@@ -362,10 +359,6 @@ msgstr ""
 #. Type: select
 #. Description
 #: ../slapd.templates:16001
-#| msgid ""
-#| "The HDB backend is recommended. HDB and BDB use similar storage formats, "
-#| "but HDB adds support for subtree renames. Both support the same "
-#| "configuration options."
 msgid ""
 "The MDB backend is recommended. MDB uses a new storage format and requires "
 "less configuration than BDB or HDB."
@@ -376,10 +369,6 @@ msgstr ""
 #. Type: select
 #. Description
 #: ../slapd.templates:16001
-#| msgid ""
-#| "In either case, you should review the resulting database configuration "
-#| "for your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more "
-#| "details."
 msgid ""
 "In any case, you should review the resulting database configuration for your "
 "needs. See /usr/share/doc/slapd/README.Debian.gz for more details."

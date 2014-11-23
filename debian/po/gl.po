@@ -32,8 +32,8 @@ msgid ""
 "If you enable this option, no initial configuration or database will be "
 "created for you."
 msgstr ""
-"Se escolle esta opción non se creará ningunha configuración ou "
-"base de datos inicial."
+"Se escolle esta opción non se creará ningunha configuración ou base de datos "
+"inicial."
 
 #. Type: select
 #. Choices
@@ -80,11 +80,11 @@ msgid ""
 "the new version is incompatible with the old database format and it needs to "
 "be reimported. If you select \"never\", no dump will be done."
 msgstr ""
-"A opción «sempre» fará que as bases de datos se envorquen "
-"incondicionalmente antes dunha actualización. Se escolle «cando se precise» "
-"só se ha envorcar a base de datos se a nova versión é incompatíbel co "
-"formato antigo da base de datos e hai que reimportala. Se escolle «nunca» "
-"non se ha envorcar a base de datos."
+"A opción «sempre» fará que as bases de datos se envorquen incondicionalmente "
+"antes dunha actualización. Se escolle «cando se precise» só se ha envorcar a "
+"base de datos se a nova versión é incompatíbel co formato antigo da base de "
+"datos e hai que reimportala. Se escolle «nunca» non se ha envorcar a base de "
+"datos."
 
 #. Type: string
 #. Description
@@ -167,8 +167,8 @@ msgid ""
 "dc=example, dc=org' as base DN."
 msgstr ""
 "O nome de dominio DNS emprégase para construír o DN base do directorio LDAP. "
-"Por exemplo, «foo.example.org» creará o directorio con «dc=foo, "
-"dc=example, dc=org» coma DN base."
+"Por exemplo, «foo.example.org» creará o directorio con «dc=foo, dc=example, "
+"dc=org» coma DN base."
 
 #. Type: string
 #. Description
@@ -288,8 +288,8 @@ msgid ""
 "you should move the old database files back into place, fix whatever caused "
 "slapcat to fail, and run:"
 msgstr ""
-"Este fallo fará que «slapadd» tamén falle. Trasladaranse os "
-"ficheiros de base de datos antigos a /var/backups. Se quere volver tentar a "
+"Este fallo fará que «slapadd» tamén falle. Trasladaranse os ficheiros de "
+"base de datos antigos a /var/backups. Se quere volver tentar a "
 "actualización, debería mover os ficheiros da base de datos antiga ao seu "
 "sitio, arranxar o que fixo que fallara slapcat, e executar:"
 
@@ -303,8 +303,7 @@ msgid ""
 "slapadd from ${location}."
 msgstr ""
 "Despois volva trasladar os ficheiros da base de datos a unha zona de copias "
-"de "
-"seguridade e probe a executar slapadd desde ${location}."
+"de seguridade e probe a executar slapadd desde ${location}."
 
 #. Type: select
 #. Description
@@ -315,47 +314,34 @@ msgstr "Motor de base de datos a empregar:"
 #. Type: select
 #. Description
 #: ../slapd.templates:16001
-#| msgid ""
-#| "The HDB backend is recommended. HDB and BDB use similar storage formats, "
-#| "but HDB adds support for subtree renames. Both support the same "
-#| "configuration options."
 msgid ""
 "HDB and BDB use similar storage formats, but HDB adds support for subtree "
 "renames. Both support the same configuration options."
 msgstr ""
 "HDB e BDB empregan formatos de almacenamento semellantes, pero HDB permite "
-"ademais "
-"o cambio de nome de subárbores. Ámbolos dous permiten usar as mesmas opcións "
-"de configuración."
+"ademais o cambio de nome de subárbores. Ámbolos dous permiten usar as mesmas "
+"opcións de configuración."
 
 #. Type: select
 #. Description
 #: ../slapd.templates:16001
-#| msgid ""
-#| "The HDB backend is recommended. HDB and BDB use similar storage formats, "
-#| "but HDB adds support for subtree renames. Both support the same "
-#| "configuration options."
 msgid ""
 "The MDB backend is recommended. MDB uses a new storage format and requires "
 "less configuration than BDB or HDB."
 msgstr ""
-"Recoméndase o motor MDB. MDB usa un formato de almacenamento novo e "
-"precisa menos configuración que BDB ou HDB."
+"Recoméndase o motor MDB. MDB usa un formato de almacenamento novo e precisa "
+"menos configuración que BDB ou HDB."
 
 #. Type: select
 #. Description
 #: ../slapd.templates:16001
-#| msgid ""
-#| "In either case, you should review the resulting database configuration "
-#| "for your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more "
-#| "details."
 msgid ""
 "In any case, you should review the resulting database configuration for your "
 "needs. See /usr/share/doc/slapd/README.Debian.gz for more details."
 msgstr ""
 "En calquera caso, debería revisar que a configuración da base de datos se "
-"axusta ás súas necesidades. Pode obter máis información en "
-"/usr/share/doc/slapd/README.Debian.gz ."
+"axusta ás súas necesidades. Pode obter máis información en /usr/share/doc/"
+"slapd/README.Debian.gz ."
 
 #. Type: note
 #. Description
@@ -372,10 +358,9 @@ msgid ""
 "allows users to modify most of their own attributes. This may be unsafe, "
 "depending on how the database is used."
 msgstr ""
-"Polo menos unha das bases de datos configuradas ten unha regra de "
-"control de acceso que permite aos usuarios modificar a maioría dos "
-"atributos. Isto pode ser inseguro dependendo da maneira en que se "
-"use a base de datos."
+"Polo menos unha das bases de datos configuradas ten unha regra de control de "
+"acceso que permite aos usuarios modificar a maioría dos atributos. Isto pode "
+"ser inseguro dependendo da maneira en que se use a base de datos."
 
 #. Type: note
 #. Description
@@ -389,8 +374,7 @@ msgid ""
 msgstr ""
 "No caso das regras de acceso de «slapd» que comezan con «to *», "
 "recoméndaselle eliminar calquera instancia de «by self write», de maneira "
-"que os usuarios só poidan modificar os atributos especificamente "
-"permitidos."
+"que os usuarios só poidan modificar os atributos especificamente permitidos."
 
 #. Type: note
 #. Description
