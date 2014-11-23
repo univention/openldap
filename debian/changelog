@@ -1,3 +1,46 @@
+openldap (2.4.40-3) unstable; urgency=medium
+
+  * Remove trailing spaces from slapd.templates.
+  * Update Vietnamese debconf translation.
+    Thanks to Trần Ngọc Quân.
+  * Update Danish debconf translation.
+    Thanks to Joe Hansen. (Closes: #766848)
+  * Update Japanese debconf translation.
+    Thanks to Kenshi Muto. (Closes: #766824)
+  * Update Russian debconf translation.
+    Thanks to Yuri Kozlov. (Closes: #766825)
+  * Update Basque translation.
+    Thanks to Iñaki Larrañaga Murgoitio. (Closes: #767070)
+  * Update French debconf translation.
+    Thanks to Christian Perrier. (Closes: #767634)
+  * Update German debconf translation.
+    Thanks to Helge Kreutzmann. (Closes: #767686)
+  * Update Portuguese debconf translation.
+    Thanks to Ricardo Silva. (Closes: #768085)
+  * Update Italian debconf translation.
+    Thanks to Luca Monducci. (Closes: #768195)
+  * Update Turkish debconf translation.
+    Thanks to Atila KOÇ. (Closes: #768409)
+  * Update Czech debconf translation.
+    Thanks to Miroslav Kure. (Closes: #768591)
+  * Update Catalan debconf translation.
+    Thanks to Innocent De Marchi. (Closes: #768605)
+  * Update Dutch debconf translation.
+    Thanks to Frans Spiesschaert. (Closes: #769024)
+  * Update Brazilian Portuguese debconf translation.
+    Thanks to Adriano Rafael Gomes. (Closes: #769717)
+  * Update Galician debconf translation.
+    Thanks to Jorge Barreiro.
+  * Update Swedish debconf translation.
+    Thanks to Martin Bagge / brother. (Closes: #769867)
+  * Update Spanish debconf translation.
+    Thanks to Camaleón. (Closes: #770715)
+  * Fix doubled spaces in po files, caused by trailing spaces in the templates
+    file.
+  * Run debconf-updatepo to refresh PO files.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sun, 23 Nov 2014 10:33:10 -0800
+
 openldap (2.4.40-2) unstable; urgency=medium
 
   * Fix typo (chmod/chgrp) in previous changelog, spotted by Ferenc Wagner.
