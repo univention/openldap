@@ -347,8 +347,8 @@ msgstr "Potentiel usikker slapd-adgangskontrolkonfiguration"
 #. Description
 #: ../slapd.templates:17001
 msgid ""
-"One or more of the configured databases has an access control rule that  "
-"allows users to modify most of their own attributes. This may be  unsafe, "
+"One or more of the configured databases has an access control rule that "
+"allows users to modify most of their own attributes. This may be unsafe, "
 "depending on how the database is used."
 msgstr ""
 "En eller flere af de konfigurerede databaser har en adgangskontrolregel, "

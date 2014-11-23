@@ -351,8 +351,8 @@ msgstr "Configurazione degli accessi di slapd potenzialmente non sicura"
 #. Description
 #: ../slapd.templates:17001
 msgid ""
-"One or more of the configured databases has an access control rule that  "
-"allows users to modify most of their own attributes. This may be  unsafe, "
+"One or more of the configured databases has an access control rule that "
+"allows users to modify most of their own attributes. This may be unsafe, "
 "depending on how the database is used."
 msgstr ""
 "Uno o più dei database configurati hanno una regola di accesso che permette "

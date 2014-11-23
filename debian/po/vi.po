@@ -363,8 +363,8 @@ msgstr "Cấu hình điều khiển truy cập slapd tiềm ẩn sự thiếu an
 #. Description
 #: ../slapd.templates:17001
 msgid ""
-"One or more of the configured databases has an access control rule that  "
-"allows users to modify most of their own attributes. This may be  unsafe, "
+"One or more of the configured databases has an access control rule that "
+"allows users to modify most of their own attributes. This may be unsafe, "
 "depending on how the database is used."
 msgstr ""
 "Có một hay hơn cơ sở dữ liệu cấu hình có chứa quy tắc điều khiển truy cập mà "

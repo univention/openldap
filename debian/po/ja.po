@@ -342,8 +342,8 @@ msgstr "潜在的に安全でない slapd のアクセス制御設定です"
 #. Description
 #: ../slapd.templates:17001
 msgid ""
-"One or more of the configured databases has an access control rule that  "
-"allows users to modify most of their own attributes. This may be  unsafe, "
+"One or more of the configured databases has an access control rule that "
+"allows users to modify most of their own attributes. This may be unsafe, "
 "depending on how the database is used."
 msgstr "設定されたデータベースには、ユーザに自身の属性のほとんどの変更を許容する 1 つ以上のアクセス制御ルールがあります。これはデータベースの使いようによっては安全でない可能性があります。"
 
