@@ -1,3 +1,11 @@
+openldap (2.4.40-4) UNRELEASED; urgency=medium
+
+  * debian/patches/ITS8027-deref-reject-empty-attr-list.patch: Import upstream 
+    patch to fix a crash when a search includes the Deref control with an 
+    empty attribute list. (ITS#8027) (Closes: #776988)
+
+ -- Ryan Tandy <ryan@nardis.ca>  Wed, 04 Feb 2015 08:23:15 -0800
+
 openldap (2.4.40-3) unstable; urgency=medium
 
   * Remove trailing spaces from slapd.templates.
