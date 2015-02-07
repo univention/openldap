@@ -2,10 +2,10 @@ openldap (2.4.40-4) UNRELEASED; urgency=medium
 
   * debian/patches/ITS8027-deref-reject-empty-attr-list.patch: Import upstream 
     patch to fix a crash when a search includes the Deref control with an 
-    empty attribute list. (ITS#8027) (Closes: #776988)
+    empty attribute list. (ITS#8027) (CVE-2015-1545, Closes: #776988)
   * debian/patches/ITS8046-fix-vrFilter_free-crash.patch: Import upstream 
     patch to fix a double free triggered by certain search queries using the 
-    Matched Values control. (ITS#8046) (Closes: #776991)
+    Matched Values control. (ITS#8046) (CVE-2015-1546, Closes: #776991)
 
  -- Ryan Tandy <ryan@nardis.ca>  Wed, 04 Feb 2015 08:23:15 -0800
 
