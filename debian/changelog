@@ -1,4 +1,4 @@
-openldap (2.4.40-4) UNRELEASED; urgency=medium
+openldap (2.4.40-4) unstable; urgency=medium
 
   * debian/patches/ITS8027-deref-reject-empty-attr-list.patch: Import upstream 
     patch to fix a crash when a search includes the Deref control with an 
@@ -7,7 +7,7 @@ openldap (2.4.40-4) UNRELEASED; urgency=medium
     patch to fix a double free triggered by certain search queries using the 
     Matched Values control. (ITS#8046) (CVE-2015-1546, Closes: #776991)
 
- -- Ryan Tandy <ryan@nardis.ca>  Wed, 04 Feb 2015 08:23:15 -0800
+ -- Ryan Tandy <ryan@nardis.ca>  Sun, 08 Feb 2015 20:19:11 +0000
 
 openldap (2.4.40-3) unstable; urgency=medium
 
