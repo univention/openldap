@@ -2,6 +2,7 @@ openldap (2.4.40+dfsg-1) unstable; urgency=medium
 
   * Remove inetorgperson.schema from the upstream source. Replace it with a
     copy stripped of RFC text. (Closes: #780283)
+  * Adjust debian/watch for +dfsg versioning.
 
  -- Ryan Tandy <ryan@nardis.ca>  Wed, 11 Mar 2015 14:59:45 -0700
 
