@@ -157,6 +157,7 @@ override_dh_makeshlibs:
 	#dh_makeshlibs -plibldap-2.4-2 -V 'libldap-2.4-2 (>= 2.4.7)'
 	mkdir -p debian/libldap-2.4-2/DEBIAN
 	cp -p debian/libldap-2.4-2.shlibs debian/libldap-2.4-2/DEBIAN/shlibs
+	dpkg-gensymbols -plibldap-2.4-2 -Pdebian/libldap-2.4-2
 	echo "slapd:Provides=$$(objdump -p debian/slapd/usr/lib/$(DEB_HOST_MULTIARCH)/libslapi-*.so.* \
 		| sed -ne '/SONAME/ { s/[[:space:]]*SONAME[[:space:]]*//; \
 		                      s/\.so\./-/; p; q }' \
