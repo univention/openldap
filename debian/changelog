@@ -1,6 +1,7 @@
 openldap (2.4.40+dfsg-2) UNRELEASED; urgency=medium
 
   * Actually install libldap-2.4-2.symbols.
+  * Update Standards-Version to 3.9.6.
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 04 May 2015 21:40:15 -0700
 
