@@ -257,17 +257,17 @@ move_incompatible_databases_away() {					# {{{
 # }}}
 # }}}
 # }}}
+# }}}
 
 # ===== Parsing the slapd configuration file ============================ {{{
 #
 # For some operations we have to know the slapd configuration. These 
 # functions are for parsing the slapd configuration file.
 
-# {{{
 # The following two functions need to support slapd.conf installations 
 # as long as upgrading from slapd.conf environment is supported.
 # They're used to dump database in preinst which may have a slapd.conf file.
-get_suffix() {							
+get_suffix() {								# {{{
 	if [ -f "${SLAPD_CONF}" ]; then
 		for f in `get_all_slapd_conf_files`; do
 			sed -n -e's/^suffix[[:space:]]\+"*\([^"]\+\)"*/\1/p' $f
@@ -296,9 +296,9 @@ get_directory() {							# {{{
 		return 1
 	fi
 }
-
+# }}}
+get_all_slapd_conf_files() {						# {{{
 # Returns the list of all the config files: slapd.conf and included files.
-get_all_slapd_conf_files() {
 	echo ${SLAPD_CONF}
 	awk '
 BEGIN { I=0 } 
@@ -603,8 +603,8 @@ backup_config_once() {							# {{{
 # }}}
 
 
+set_defaults_for_unseen_entries() {					# {{{
 # Set up the defaults for our templates
-set_defaults_for_unseen_entries() {
 	DOMAIN=`hostname -d 2>/dev/null` || true
 	if [ -z "$DOMAIN" ]; then DOMAIN='nodomain'; fi
 
@@ -618,7 +618,7 @@ set_defaults_for_unseen_entries() {
 		db_set shared/organization "$DOMAIN"
 	fi
 }
-
+# }}}
 crypt_admin_pass() {							# {{{
 # Store the encrypted admin password into the debconf db
 # Usage: crypt_admin_pass
