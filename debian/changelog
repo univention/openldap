@@ -3,6 +3,7 @@ openldap (2.4.41+dfsg-1) UNRELEASED; urgency=medium
   * New upstream release.
   * Update patches for upstream changes, drop patches included upstream.
   * debian/rules: Adjust get-orig-source target to add +dfsg to version.
+  * Convert to source format 3.0 (quilt).
 
  -- Ryan Tandy <ryan@nardis.ca>  Wed, 08 Jul 2015 02:53:48 +0000
 
