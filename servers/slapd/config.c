@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2015 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1353,9 +1353,8 @@ slap_keepalive_parse(
 			s = ++next;
 		}
 
-		if ( s == '\0' ) {
+		if ( *s == '\0' ) {
 			sk2.sk_interval = 0;
-			s++;
 
 		} else {
 			sk2.sk_interval = strtol( s, &next, 10 );
@@ -2011,7 +2010,7 @@ slap_client_connect( LDAP **ldp, slap_bindconf *sb )
 			"slap_client_connect: "
 			"URI=%s TLS context initialization failed (%d)\n",
 			sb->sb_uri.bv_val, rc, 0 );
-		return rc;
+		goto done;
 	}
 #endif
 

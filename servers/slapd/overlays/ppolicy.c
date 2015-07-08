@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2014 The OpenLDAP Foundation.
+ * Copyright 2004-2015 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Howard Chu, Symas Corporation.
  * Portions Copyright 2004 Hewlett-Packard Company.
  * All rights reserved.
@@ -378,6 +378,7 @@ create_passcontrol( Operation *op, int exptime, int grace, LDAPPasswordPolicyErr
 	BerElement *ber = (BerElement *) &berbuf, *b2 = (BerElement *) &bb2;
 	LDAPControl c = { 0 }, *cp;
 	struct berval bv;
+	int rc;
 
 	BER_BVZERO( &c.ldctl_value );
 
@@ -387,15 +388,23 @@ create_passcontrol( Operation *op, int exptime, int grace, LDAPPasswordPolicyErr
 	if ( exptime >= 0 ) {
 		ber_init2( b2, NULL, LBER_USE_DER );
 		ber_printf( b2, "ti", PPOLICY_EXPIRE, exptime );
-		ber_flatten2( b2, &bv, 1 );
+		rc = ber_flatten2( b2, &bv, 1 );
 		(void)ber_free_buf(b2);
+		if (rc == -1) {
+			cp = NULL;
+			goto fail;
+		}
 		ber_printf( ber, "tO", PPOLICY_WARNING, &bv );
 		ch_free( bv.bv_val );
 	} else if ( grace > 0 ) {
 		ber_init2( b2, NULL, LBER_USE_DER );
 		ber_printf( b2, "ti", PPOLICY_GRACE, grace );
-		ber_flatten2( b2, &bv, 1 );
+		rc = ber_flatten2( b2, &bv, 1 );
 		(void)ber_free_buf(b2);
+		if (rc == -1) {
+			cp = NULL;
+			goto fail;
+		}
 		ber_printf( ber, "tO", PPOLICY_WARNING, &bv );
 		ch_free( bv.bv_val );
 	}
@@ -414,6 +423,7 @@ create_passcontrol( Operation *op, int exptime, int grace, LDAPPasswordPolicyErr
 	cp->ldctl_value.bv_val = (char *)&cp[1];
 	cp->ldctl_value.bv_len = c.ldctl_value.bv_len;
 	AC_MEMCPY( cp->ldctl_value.bv_val, c.ldctl_value.bv_val, c.ldctl_value.bv_len );
+fail:
 	(void)ber_free_buf(ber);
 	
 	return cp;
@@ -2348,6 +2358,7 @@ ppolicy_db_destroy(
 		pwc--;
 		ch_free( pwc );
 	}
+	return 0;
 }
 
 static char *extops[] = {

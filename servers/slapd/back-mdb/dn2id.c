@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2014 The OpenLDAP Foundation.
+ * Copyright 2000-2015 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -346,7 +346,7 @@ mdb_dn2id(
 		cursor = mc;
 	} else {
 		rc = mdb_cursor_open( txn, dbi, &cursor );
-		if ( rc ) return rc;
+		if ( rc ) goto done;
 	}
 
 	for (;;) {
@@ -470,7 +470,7 @@ mdb_dn2sups(
 	key.mv_size = sizeof(ID);
 
 	rc = mdb_cursor_open( txn, dbi, &cursor );
-	if ( rc ) return rc;
+	if ( rc ) goto done;
 
 	for (;;) {
 		key.mv_data = &pid;
@@ -664,6 +664,11 @@ mdb_idscope(
 			ptr += data.mv_size - sizeof(ID);
 			memcpy( &id, ptr, sizeof(ID) );
 			if ( id == base ) {
+				if ( res[0] >= MDB_IDL_DB_SIZE-1 ) {
+					/* too many aliases in scope. Fallback to range */
+					MDB_IDL_RANGE( res, MDB_IDL_FIRST( ids ), MDB_IDL_LAST( ids ));
+					goto leave;
+				}
 				res[0]++;
 				res[res[0]] = ida;
 				copy = 0;
@@ -685,6 +690,7 @@ mdb_idscope(
 	if (!MDB_IDL_IS_RANGE( ids ))
 		ids[0] = idc;
 
+leave:
 	mdb_cursor_close( cursor );
 	return rc;
 }
@@ -760,9 +766,12 @@ mdb_idscopes(
 		if ( x <= isc->scopes[0].mid && isc->scopes[x].mid == id ) {
 			if ( !isc->scopes[x].mval.mv_data ) {
 				/* This node is in scope, add parent chain to scope */
-				int i = isc->sctmp[0].mid;
-				for ( i = 1; i <= isc->sctmp[0].mid; i++ )
-					mdb_id2l_insert( isc->scopes, &isc->sctmp[i] );
+				int i;
+				for ( i = 1; i <= isc->sctmp[0].mid; i++ ) {
+					rc = mdb_id2l_insert( isc->scopes, &isc->sctmp[i] );
+					if ( rc )
+						break;
+				}
 				/* check id again since inserts may have changed its position */
 				if ( isc->scopes[x].mid != id )
 					x = mdb_id2l_search( isc->scopes, id );
