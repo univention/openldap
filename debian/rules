@@ -26,7 +26,7 @@ MAKEVARS	:= STRIP=
 
 # These variables are used only by get-orig-source, which will normally only
 # be run by maintainers.
-VERSION = $(shell dpkg-parsechangelog |grep Version| sed 's/.*: //;s/-.*//')
+VERSION = $(shell dpkg-parsechangelog |grep Version| sed 's/.*: //;s/\+dfsg//;s/-.*//')
 URL     = http://www.openldap.org/software/download/OpenLDAP/openldap-release/
 
 # Download the upstream source and make changes as required for DFSG reasons.
@@ -45,10 +45,10 @@ get-orig-source:
 	    file=`basename "$$schema"`; \
 	    rm openldap-$(VERSION)/servers/slapd/schema/$$file; \
 	done
-	mv openldap-$(VERSION) openldap_$(VERSION).orig
-	tar cf openldap_$(VERSION).orig.tar openldap_$(VERSION).orig
-	rm -r openldap_$(VERSION).orig
-	gzip -9 openldap_$(VERSION).orig.tar
+	mv openldap-$(VERSION) openldap-$(VERSION)+dfsg
+	tar cf openldap_$(VERSION)+dfsg.orig.tar openldap-$(VERSION)+dfsg
+	rm -r openldap-$(VERSION)+dfsg
+	gzip -9 openldap_$(VERSION)+dfsg.orig.tar
 
 %:
 	dh $@ --with quilt,autoreconf --builddirectory=$(builddir) --parallel
