@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2014 The OpenLDAP Foundation.
+ * Copyright 2000-2015 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -140,7 +140,6 @@ static int search_aliases(
 	struct berval bv_alias = BER_BVC( "alias" );
 	AttributeAssertion aa_alias = ATTRIBUTEASSERTION_INIT;
 	Filter	af;
-	int first = 1;
 
 	aliases = stack;	/* IDL of all aliases in the database */
 	curscop = aliases + MDB_IDL_DB_SIZE;	/* Aliases in the current scope */
@@ -359,15 +358,29 @@ mdb_writewait( Operation *op, slap_callback *sc )
 }
 
 static int
-mdb_waitfixup( Operation *op, ww_ctx *ww, MDB_cursor *mci, MDB_cursor *mcd )
+mdb_waitfixup( Operation *op, ww_ctx *ww, MDB_cursor *mci, MDB_cursor *mcd, ID2 *scopes )
 {
 	int rc = 0;
 	ww->flag = 0;
 	mdb_txn_renew( ww->txn );
 	mdb_cursor_renew( ww->txn, mci );
 	mdb_cursor_renew( ww->txn, mcd );
+
+	if ( scopes[0].mid > 1 ) {
+		MDB_val key;
+		int i;
+		key.mv_size = sizeof(ID);
+		for ( i=1; i<scopes[0].mid; i++ ) {
+			if ( !scopes[i].mval.mv_data )
+				continue;
+			key.mv_data = &scopes[i].mid;
+			mdb_cursor_get( mcd, &key, &scopes[i].mval, MDB_SET );
+		}
+	}
+
 	if ( ww->mcd ) {
 		MDB_val key, data;
+
 		key.mv_size = sizeof(ID);
 		key.mv_data = &ww->key;
 		data = ww->data;
@@ -807,7 +820,7 @@ loop_begin:
 					scopeok = 1;
 			} else {
 				i = mdb_idl_search( candidates, id );
-				if ( candidates[i] == id )
+				if (i <= candidates[0] && candidates[i] == id )
 					scopeok = 1;
 			}
 			if ( scopeok )
@@ -837,6 +850,7 @@ loop_begin:
 			}
 			/* Fall-thru */
 		case LDAP_SCOPE_ONELEVEL:
+			if ( id == base->e_id ) break;
 			isc.id = id;
 			isc.nscope = 0;
 			rs->sr_err = mdb_idscopes( op, &isc );
@@ -1035,7 +1049,7 @@ notfound:
 			rs->sr_ref = NULL;
 
 			if ( wwctx.flag ) {
-				rs->sr_err = mdb_waitfixup( op, &wwctx, mci, mcd );
+				rs->sr_err = mdb_waitfixup( op, &wwctx, mci, mcd, scopes );
 				if ( rs->sr_err ) {
 					send_ldap_result( op, rs );
 					goto done;
@@ -1097,7 +1111,7 @@ notfound:
 					goto done;
 				}
 				if ( wwctx.flag ) {
-					rs->sr_err = mdb_waitfixup( op, &wwctx, mci, mcd );
+					rs->sr_err = mdb_waitfixup( op, &wwctx, mci, mcd, scopes );
 					if ( rs->sr_err ) {
 						send_ldap_result( op, rs );
 						goto done;
