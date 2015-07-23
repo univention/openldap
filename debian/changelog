@@ -1,4 +1,4 @@
-openldap (2.4.41+dfsg-1) UNRELEASED; urgency=medium
+openldap (2.4.41+dfsg-1) unstable; urgency=medium
 
   * New upstream release.
   * Update patches for upstream changes, drop patches included upstream.
