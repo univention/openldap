@@ -6,7 +6,7 @@ openldap (2.4.41+dfsg-1) unstable; urgency=medium
   * Convert to source format 3.0 (quilt).
   * debian/slapd.scripts-common: Fix nesting of fold markers.
 
- -- Ryan Tandy <ryan@nardis.ca>  Wed, 08 Jul 2015 02:53:48 +0000
+ -- Ryan Tandy <ryan@nardis.ca>  Wed, 08 Jul 2015 21:07:24 -0700
 
 openldap (2.4.40+dfsg-2) unstable; urgency=medium
 
