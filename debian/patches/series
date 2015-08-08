@@ -10,6 +10,7 @@ getaddrinfo-is-threadsafe
 do-not-second-guess-sonames
 contrib-modules-use-dpkg-buildflags
 smbk5pwd-makefile
+smbk5pwd-makefile-manpage
 autogroup-makefile
 lastbind-makefile
 lastbind-makefile-manpage
