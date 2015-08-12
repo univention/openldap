@@ -435,9 +435,6 @@ create_new_configuration() {						# {{{
 	db_get slapd/backend
 	backend="`echo $RET|tr A-Z a-z`"
 
-	# Looks like the following code is not needed as slapd is unconfigured
-	# first and stopped at that time. So no need to stop slapd at all here.
-
 	if [ -e "/var/lib/ldap" ] && ! is_empty_dir /var/lib/ldap; then
 		echo >&2 "  Moving old database directory to /var/backups:"
 		move_old_database_away /var/lib/ldap
