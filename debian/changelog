@@ -9,6 +9,7 @@ openldap (2.4.42+dfsg-1) UNRELEASED; urgency=medium
       'subordinate' keyword / 'olcSubordinate' attribute in slapd's
       configuration.
     (Closes: #794996)
+  * Install slapo-lastbind.5 man page. (Closes: #794997)
 
   [ Ryan Tandy ]
   * slapd.scripts-common: Delete an outdated comment.
