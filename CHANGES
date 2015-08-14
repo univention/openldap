@@ -1,5 +1,15 @@
 OpenLDAP 2.4 Change Log
 
+OpenLDAP 2.4.42 Release (2015/08/14)
+	Fixed liblber address length for CLDAP (ITS#8158)
+	Fixed libldap dnssrv potential overflow with port number (ITS#7027,ITS#8195)
+	Fixed slapd cn=config when updating olcAttributeTypes (ITS#8199)
+	Fixed slapd-mdb to correctly update search candidates for scoped searches (ITS#8203)
+	Fixed slapo-ppolicy with redundant mod ops on glued trees (ITS#8184)
+	Fixed slapo-rwm crash when deleting rewrite rules (ITS#8213)
+	Build Environment
+		Fixed libdb detection with gcc 5.x (ITS#8056)
+
 OpenLDAP 2.4.41 Release (2015/06/21)
 	Fixed ldapsearch to explicitly flush its buffer (ITS#8118)
 	Fixed libldap async connections (ITS#8090)
@@ -48,7 +58,6 @@ OpenLDAP 2.4.41 Release (2015/06/21)
 	Fixed slapo-syncprov potential loss of changes when under load (ITS#8081)
 	Fixed slapo-unique enforcement of uniqueness with manageDSAit control (ITS#8057)
 	Build Environment
-		Fixed libdb detection with gcc 5.x (ITS#8056)
 		Fixed ftello reference for Win32 (ITS#8127)
 		Enhanced contrib modules build paths (ITS#7782)
 		Fixed contrib/autogroup internal operation identity (ITS#8006)
