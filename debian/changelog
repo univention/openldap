@@ -1,4 +1,4 @@
-openldap (2.4.42+dfsg-1) UNRELEASED; urgency=medium
+openldap (2.4.42+dfsg-1) unstable; urgency=medium
 
   [ Peter Marschall ]
   * slapd.scripts-common:
@@ -21,7 +21,7 @@ openldap (2.4.42+dfsg-1) UNRELEASED; urgency=medium
   * Disable the BDB/HDB backends on the Hurd. BDB requires record locks 
     (F_SETLK), which have not yet been implemented; see #693971.
 
- -- Ryan Tandy <ryan@nardis.ca>  Fri, 14 Aug 2015 23:03:03 +0000
+ -- Ryan Tandy <ryan@nardis.ca>  Fri, 21 Aug 2015 13:07:51 -0700
 
 openldap (2.4.41+dfsg-1) unstable; urgency=medium
 
