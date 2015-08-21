@@ -15,7 +15,7 @@ DEB_HOST_ARCH_OS ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
 
 CONFIG		= $(shell grep -v "^\#" debian/configure.options)
 ifeq ($(DEB_HOST_ARCH_OS),hurd)
-	CONFIG += --disable-mdb
+	CONFIG += --disable-bdb --disable-hdb --disable-mdb
 endif
 
 installdir	:= $(CURDIR)/debian/tmp

@@ -18,6 +18,8 @@ openldap (2.4.42+dfsg-1) UNRELEASED; urgency=medium
     provides all the required interfaces, and the test suite now passes.
     Leave it disabled on the Hurd. LMDB requires POSIX semaphores, which have 
     not yet been implemented.
+  * Disable the BDB/HDB backends on the Hurd. BDB requires record locks 
+    (F_SETLK), which have not yet been implemented; see #693971.
 
  -- Ryan Tandy <ryan@nardis.ca>  Fri, 14 Aug 2015 23:03:03 +0000
 
