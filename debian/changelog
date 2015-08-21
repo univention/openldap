@@ -14,6 +14,10 @@ openldap (2.4.42+dfsg-1) UNRELEASED; urgency=medium
   [ Ryan Tandy ]
   * slapd.scripts-common: Delete an outdated comment.
   * New upstream release.
+  * Enable the MDB backend again on GNU/kFreeBSD. The new pthread library 
+    provides all the required interfaces, and the test suite now passes.
+    Leave it disabled on the Hurd. LMDB requires POSIX semaphores, which have 
+    not yet been implemented.
 
  -- Ryan Tandy <ryan@nardis.ca>  Fri, 14 Aug 2015 23:03:03 +0000
 

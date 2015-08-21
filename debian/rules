@@ -14,7 +14,7 @@ DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 DEB_HOST_ARCH_OS ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
 
 CONFIG		= $(shell grep -v "^\#" debian/configure.options)
-ifneq ($(DEB_HOST_ARCH_OS),linux)
+ifeq ($(DEB_HOST_ARCH_OS),hurd)
 	CONFIG += --disable-mdb
 endif
 
