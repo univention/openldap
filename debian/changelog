@@ -2,6 +2,9 @@ openldap (2.4.42+dfsg-2) UNRELEASED; urgency=medium
 
   * Change explicit Pre-Depends: multiarch-support to ${misc:Pre-Depends}, as 
     recommended by lintian.
+  * Omit smbk5pwd from the stage1 build profile, allowing the dependency loop 
+    with heimdal to be broken for bootstrapping. Thanks Daniel Schepler.
+    (Closes: #724518)
 
  -- Ryan Tandy <ryan@nardis.ca>  Tue, 25 Aug 2015 11:49:24 -0700
 
