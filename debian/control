@@ -74,7 +74,7 @@ Priority: standard
 Architecture: any
 Multi-Arch: same
 Conflicts: ldap-utils (<= 2.1.23-1)
-Pre-Depends: multiarch-support
+Pre-Depends: ${misc:Pre-Depends}
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Replaces: libldap2, libldap-2.3-0
 Description: OpenLDAP libraries 

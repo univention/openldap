@@ -1,3 +1,10 @@
+openldap (2.4.42+dfsg-2) UNRELEASED; urgency=medium
+
+  * Change explicit Pre-Depends: multiarch-support to ${misc:Pre-Depends}, as 
+    recommended by lintian.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Tue, 25 Aug 2015 11:49:24 -0700
+
 openldap (2.4.42+dfsg-1) unstable; urgency=medium
 
   [ Peter Marschall ]
