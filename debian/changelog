@@ -6,6 +6,8 @@ openldap (2.4.42+dfsg-2) UNRELEASED; urgency=medium
     with heimdal to be broken for bootstrapping. Thanks Daniel Schepler.
     (Closes: #724518)
   * Apply wrap-and-sort to the Build-Depends field.
+  * Drop libncurses5-dev from Build-Depends, no longer needed since the ud 
+    tool was removed in OpenLDAP 2.1.4.
 
  -- Ryan Tandy <ryan@nardis.ca>  Tue, 25 Aug 2015 11:49:24 -0700
 
