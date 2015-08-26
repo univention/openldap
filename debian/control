@@ -9,13 +9,23 @@ Uploaders: Roland Bauerschmidt <rb@debian.org>,
  Timo Aaltonen <tjaalton@ubuntu.com>,
  Ryan Tandy <ryan@nardis.ca>
 Build-Depends: debhelper (>= 9.20140227),
-	dpkg-dev (>= 1.16.1),
-	libdb5.3-dev, nettle-dev,
- libgnutls28-dev, unixodbc-dev, libncurses5-dev, libperl-dev (>= 5.8.0),
- libsasl2-dev, libslp-dev, libltdl-dev | libltdl3-dev (>= 1.4.3),
- libwrap0-dev, perl, po-debconf,
- groff-base, time, heimdal-multidev <!stage1>,
- dh-autoreconf
+               dh-autoreconf,
+               dpkg-dev (>= 1.16.1),
+               groff-base,
+               heimdal-multidev <!stage1>,
+               libdb5.3-dev,
+               libgnutls28-dev,
+               libltdl-dev | libltdl3-dev (>= 1.4.3),
+               libncurses5-dev,
+               libperl-dev (>= 5.8.0),
+               libsasl2-dev,
+               libslp-dev,
+               libwrap0-dev,
+               nettle-dev,
+               perl,
+               po-debconf,
+               time,
+               unixodbc-dev
 Build-Conflicts: libbind-dev, bind-dev, libicu-dev, autoconf2.13
 Standards-Version: 3.9.6
 Homepage: http://www.openldap.org/
