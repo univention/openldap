@@ -21,7 +21,7 @@ Build-Depends: debhelper (>= 9.20140227),
                libslp-dev <!stage1>,
                libwrap0-dev <!stage1>,
                nettle-dev <!stage1>,
-               perl,
+               perl:any,
                po-debconf,
                time <!stage1>,
                unixodbc-dev <!stage1>
