@@ -17,6 +17,10 @@ CONFIG		= $(shell grep -v "^\#" debian/configure.options)
 ifeq ($(DEB_HOST_ARCH_OS),hurd)
 	CONFIG += --disable-bdb --disable-hdb --disable-mdb
 endif
+ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
+	# --disable-slapd should imply --disable-slp, ITS#8224
+	CONFIG += --disable-slapd --disable-slp
+endif
 
 installdir	:= $(CURDIR)/debian/tmp
 builddir	:= $(CURDIR)/debian/build
@@ -89,16 +93,15 @@ override_dh_auto_build:
 	dh_auto_build -- $(MAKEVARS)
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	$(MAKE) -C contrib/slapd-modules/smbk5pwd
-endif
 	$(MAKE) -C contrib/slapd-modules/autogroup
 	$(MAKE) -C contrib/slapd-modules/lastbind
 	$(MAKE) -C contrib/slapd-modules/passwd/sha2
+endif
 
 override_dh_auto_install:
 	dh_auto_install -- $(MAKEVARS)
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	$(MAKE) -C contrib/slapd-modules/smbk5pwd install DESTDIR=$(installdir)
-endif
 	$(MAKE) -C contrib/slapd-modules/autogroup install DESTDIR=$(installdir)
 	$(MAKE) -C contrib/slapd-modules/lastbind install DESTDIR=$(installdir)
 	$(MAKE) -C contrib/slapd-modules/passwd/sha2 install DESTDIR=$(installdir)
@@ -107,6 +110,7 @@ endif
 	for F in $(installdir)/usr/lib/ldap/*.la; do \
 		sed -i "s/^dependency_libs=.*/dependency_libs=''/" $$F; \
 	done
+endif
 	
 	# Check all built libraries for unresolved symbols except for the
 	# libslapi library.  It is a special case since the SLAPI interface
@@ -129,24 +133,30 @@ endif
 	find $(installdir)/usr/share/man -name \*.8 \
 		| xargs perl -pi -e 's#(\.TH \w+ 8)C#$$1#'
 
+ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 override_dh_install:
 	dh_install
 	rm -rf $(CURDIR)/debian/slapd/usr/lib/ldap/smbk5pwd*
 	chmod 0755 $(CURDIR)/debian/slapd/usr/share/slapd/ldiftopasswd
+endif
 
 override_dh_installinit:
 	dh_installinit -- "defaults 19 80"
 
 override_dh_strip:
 	dh_strip -plibldap-2.4-2 --dbg-package=libldap-2.4-2-dbg
+ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	dh_strip -pslapd --dbg-package=slapd-dbg
+endif
 	dh_strip -Nlibldap-2.4-2 -Nslapd
+ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	# hardlink these so not confined by apparmor; do this here and not
 	# in dh_link so that dh_strip doesn't get confused and put the wrong
 	# binary in the debug package.
 	for f in slapacl slapadd slapauth slapcat slapdn slapindex slappasswd slaptest slapschema ; do \
 	    ln -f $(slapddir)/slapd $(slapddir)/$$f ; \
 	done
+endif
 
 override_dh_link:
 	for pkg in libldap2-dev libldap-2.4-2; do \
@@ -162,20 +172,25 @@ override_dh_makeshlibs:
 	mkdir -p debian/libldap-2.4-2/DEBIAN
 	cp -p debian/libldap-2.4-2.shlibs debian/libldap-2.4-2/DEBIAN/shlibs
 	dpkg-gensymbols -plibldap-2.4-2 -Pdebian/libldap-2.4-2
+ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	echo "slapd:Provides=$$(objdump -p debian/slapd/usr/lib/$(DEB_HOST_MULTIARCH)/libslapi-*.so.* \
 		| sed -ne '/SONAME/ { s/[[:space:]]*SONAME[[:space:]]*//; \
 		                      s/\.so\./-/; p; q }' \
 	)" >> debian/slapd.substvars
 	dh_makeshlibs -pslapd -X/usr/lib/ldap/ -V "$$(sed -ne's/slapd:Provides=//p' debian/slapd.substvars)"
+endif
 
+ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 override_dh_installdeb:
 	dh_installdeb
 	perl -w debian/dh_installscripts-common -p slapd
+endif
 
 override_dh_auto_clean:
 	dh_auto_clean
 	# Update translation templates for debconf
 	debconf-updatepo
+ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	# Remove our stripped schema from the upstream source area.
 	if [ -z "$(DFSG_NONFREE)" ]; then \
 	    set -e; for s in debian/schema/*.schema debian/schema/*.ldif; do \
@@ -200,3 +215,4 @@ override_dh_auto_clean:
 		contrib/slapd-modules/passwd/sha2/pw-sha2.lo \
 		contrib/slapd-modules/passwd/sha2/pw-sha2.la \
 		contrib/slapd-modules/passwd/sha2/pw-sha2.o
+endif
