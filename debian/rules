@@ -11,6 +11,7 @@ export DEB_BUILD_MAINT_OPTIONS := hardening=+pie,+bindnow
 export RESOLV_MULTI = off
 
 DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+DEB_HOST_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_HOST_ARCH_OS ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
 
 CONFIG		= $(shell grep -v "^\#" debian/configure.options)
@@ -20,6 +21,12 @@ endif
 ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	# --disable-slapd should imply --disable-slp, ITS#8224
 	CONFIG += --disable-slapd --disable-slp
+endif
+
+# Ensure CC is set correctly for cross builds, unless it has already 
+# been set explicitly.
+ifeq ($(origin CC),default)
+	export CC := $(DEB_HOST_GNU_TYPE)-cc
 endif
 
 installdir	:= $(CURDIR)/debian/tmp

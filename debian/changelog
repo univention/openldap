@@ -14,6 +14,7 @@ openldap (2.4.42+dfsg-2) UNRELEASED; urgency=medium
     removed after lenny.
   * Annotate Build-Depends on perl with :any to allow running the system perl 
     interpreter during cross builds.
+  * Ensure CC is set correctly for cross builds. Thanks Helmut Grohne.
 
  -- Ryan Tandy <ryan@nardis.ca>  Tue, 25 Aug 2015 11:49:24 -0700
 
