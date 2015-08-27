@@ -26,7 +26,7 @@ endif
 # Ensure CC is set correctly for cross builds, unless it has already 
 # been set explicitly.
 ifeq ($(origin CC),default)
-	export CC := $(DEB_HOST_GNU_TYPE)-cc
+	export CC := $(DEB_HOST_GNU_TYPE)-gcc
 endif
 
 installdir	:= $(CURDIR)/debian/tmp
