@@ -22,6 +22,10 @@ openldap (2.4.42+dfsg-2) UNRELEASED; urgency=medium
     actually in the form libldap_r.so -> libldap_r-2.4.so.xyz and the tag is a 
     false positive; see #687022.
   * Include the smbk5pwd man page in the slapd-smbk5pwd package.
+  * Allow anonymous read access to the shadowLastChange attribute by default, 
+    allowing nss-ldap/nss-ldapd to handle password expiry correctly even when 
+    bound anonymously. This was the only restricted shadow attribute, the 
+    others were already world-readable. (Closes: #669235)
 
   [ Peter Marschall ]
   * Add a manual page slapo-smbk5pwd.5 and update smbk5pwd's Makefile to 

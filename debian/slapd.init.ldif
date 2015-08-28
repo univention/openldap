@@ -72,10 +72,13 @@ olcDbIndex: objectClass eq
 olcDbIndex: cn,uid eq
 olcDbIndex: uidNumber,gidNumber eq
 olcDbIndex: member,memberUid eq
-olcAccess: to attrs=userPassword,shadowLastChange
+olcAccess: to attrs=userPassword
   by self write
   by anonymous auth
   by * none
+olcAccess: to attrs=shadowLastChange
+  by self write
+  by * read
 olcAccess: to dn.base="" by * read
 olcAccess: to *
   by * read
