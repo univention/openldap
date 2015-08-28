@@ -79,7 +79,6 @@ olcAccess: to attrs=userPassword
 olcAccess: to attrs=shadowLastChange
   by self write
   by * read
-olcAccess: to dn.base="" by * read
 olcAccess: to *
   by * read
 
