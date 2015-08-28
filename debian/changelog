@@ -1,5 +1,6 @@
 openldap (2.4.42+dfsg-2) UNRELEASED; urgency=medium
 
+  [ Ryan Tandy ]
   * Change explicit Pre-Depends: multiarch-support to ${misc:Pre-Depends}, as 
     recommended by lintian.
   * Omit slapd, slapd-dbg, and slapd-smbk5pwd from the stage1 build profile. 
@@ -20,6 +21,11 @@ openldap (2.4.42+dfsg-2) UNRELEASED; urgency=medium
   * Override the 'dev-pkg-without-shlib-symlink' lintian tag. The symlink is 
     actually in the form libldap_r.so -> libldap_r-2.4.so.xyz and the tag is a 
     false positive; see #687022.
+  * Include the smbk5pwd man page in the slapd-smbk5pwd package.
+
+  [ Peter Marschall ]
+  * Add a manual page slapo-smbk5pwd.5 and update smbk5pwd's Makefile to 
+    install the new manual page. (Closes: #794998)
 
  -- Ryan Tandy <ryan@nardis.ca>  Tue, 25 Aug 2015 11:49:24 -0700
 
