@@ -28,6 +28,8 @@ openldap (2.4.42+dfsg-2) UNRELEASED; urgency=medium
     others were already world-readable. (Closes: #669235)
   * Drop the redundant default ACL for dn.base="" from the database entry. 
     It's already covered by the fallback case below.
+  * Copy more comments from the slapd.conf template to slapd.init.ldif. Also 
+    comment the shadowLastChange access rule.
 
   [ Peter Marschall ]
   * Add a manual page slapo-smbk5pwd.5 and update smbk5pwd's Makefile to 
