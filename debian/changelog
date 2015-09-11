@@ -32,7 +32,7 @@ openldap (2.4.42+dfsg-2) unstable; urgency=medium
     comment the shadowLastChange access rule.
   * Import upstream patch to remove an unnecessary assert(0) that could be 
     triggered remotely by an unauthenticated user by sending a malformed BER 
-    element. (ITS#8240)
+    element. (ITS#8240) (CVE-2015-6908) (Closes: #798622)
 
   [ Peter Marschall ]
   * Add a manual page slapo-smbk5pwd.5 and update smbk5pwd's Makefile to 
