@@ -1,4 +1,4 @@
-openldap (2.4.42+dfsg-2) UNRELEASED; urgency=medium
+openldap (2.4.42+dfsg-2) unstable; urgency=medium
 
   [ Ryan Tandy ]
   * Change explicit Pre-Depends: multiarch-support to ${misc:Pre-Depends}, as 
@@ -38,7 +38,7 @@ openldap (2.4.42+dfsg-2) UNRELEASED; urgency=medium
   * Add a manual page slapo-smbk5pwd.5 and update smbk5pwd's Makefile to 
     install the new manual page. (Closes: #794998)
 
- -- Ryan Tandy <ryan@nardis.ca>  Tue, 25 Aug 2015 11:49:24 -0700
+ -- Ryan Tandy <ryan@nardis.ca>  Thu, 10 Sep 2015 20:13:17 -0700
 
 openldap (2.4.42+dfsg-1) unstable; urgency=medium
 
