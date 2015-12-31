@@ -23,4 +23,3 @@ switch-to-lt_dlopenadvise-to-get-RTLD_GLOBAL-set.diff
 no-bdb-ABI-second-guessing
 heimdal-fix
 ITS6035-olcauthzregex-needs-restart.patch
-ITS8240-remove-obsolete-assert.patch

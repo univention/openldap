@@ -1,3 +1,15 @@
+openldap (2.4.43+dfsg-1) UNRELEASED; urgency=medium
+
+  * !!! DO NOT UPLOAD this until updating the ppolicy schema on upgrade is 
+    dealt with, otherwise ppolicy users will be broken!
+
+  * New upstream release.
+    - Fixed ppolicy not unlocking policy entry after initialization failure 
+      (ITS#7537) (Closes: #702414)
+  * Drop ITS8240-remove-obsolete-assert.patch, included upstream.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Thu, 31 Dec 2015 14:08:53 -0800
+
 openldap (2.4.42+dfsg-2) unstable; urgency=medium
 
   [ Ryan Tandy ]
