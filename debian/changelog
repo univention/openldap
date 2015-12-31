@@ -7,6 +7,8 @@ openldap (2.4.43+dfsg-1) UNRELEASED; urgency=medium
     - Fixed ppolicy not unlocking policy entry after initialization failure 
       (ITS#7537) (Closes: #702414)
   * Drop ITS8240-remove-obsolete-assert.patch, included upstream.
+  * Update debian/schema/ppolicy.schema to add the pwdMaxRecordedFailure 
+    attribute.
 
  -- Ryan Tandy <ryan@nardis.ca>  Thu, 31 Dec 2015 14:08:53 -0800
 
