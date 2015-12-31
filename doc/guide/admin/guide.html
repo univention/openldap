@@ -23,7 +23,7 @@
 <DIV CLASS="title">
 <H1 CLASS="doc-title">OpenLDAP Software 2.4 Administrator's Guide</H1>
 <ADDRESS CLASS="doc-author">The OpenLDAP Project &lt;<A HREF="http://www.openldap.org/">http://www.openldap.org/</A>&gt;</ADDRESS>
-<ADDRESS CLASS="doc-modified">14 August 2015</ADDRESS>
+<ADDRESS CLASS="doc-modified">30 November 2015</ADDRESS>
 <BR CLEAR="All">
 </DIV>
 <DIV CLASS="contents">
@@ -2064,7 +2064,7 @@ SQL Programmable backend
 <P>Simple authentication should not be used unless adequate data integrity and confidentiality protections are in place (e.g. TLS or IPsec). Simple authentication requires specification of <TT>binddn</TT> and <TT>credentials</TT> parameters.</P>
 <P>SASL authentication is generally recommended.  SASL authentication requires specification of a mechanism using the <TT>saslmech</TT> parameter. Depending on the mechanism, an authentication identity and/or credentials can be specified using <TT>authcid</TT> and <TT>credentials</TT>, respectively.  The <TT>authzid</TT> parameter may be used to specify an authorization identity.</P>
 <P>The <TT>realm</TT> parameter specifies a realm which a certain mechanisms authenticate the identity within. The <TT>secprops</TT> parameter specifies Cyrus SASL security properties.</P>
-<P>The <TT>starttls</TT> parameter specifies use of the StartTLS extended operation to establish a TLS session before authenticating to the provider. If the <TT>critical</TT> argument is supplied, the session will be aborted if the StartTLS request fails.  Otherwise the syncrepl session continues without TLS.  Note that the main slapd TLS settings are not used by the syncrepl engine; by default the TLS parameters from a <EM>ldap.conf</EM>(5) configuration file will be used.  TLS settings may be specified here, in which case any <EM>ldap.conf</EM>(5) settings will be completely ignored.</P>
+<P>The <TT>starttls</TT> parameter specifies use of the StartTLS extended operation to establish a TLS session before authenticating to the provider. If the <TT>critical</TT> argument is supplied, the session will be aborted if the StartTLS request fails.  Otherwise the syncrepl session continues without TLS.  The tls_reqcert setting defaults to <TT>&quot;demand&quot;</TT> and the other TLS settings default to the same as the main slapd TLS settings.</P>
 <P>Rather than replicating whole entries, the consumer can query logs of data modifications.  This mode of operation is referred to as <EM>delta syncrepl</EM>.  In addition to the above parameters, the <TT>logbase</TT> and <TT>logfilter</TT> parameters must be set appropriately for the log that will be used. The <TT>syncdata</TT> parameter must be set to either <TT>&quot;accesslog&quot;</TT> if the log conforms to the <EM>slapo-accesslog</EM>(5) log format, or <TT>&quot;changelog&quot;</TT> if the log conforms to the obsolete <EM>changelog</EM> format. If the <TT>syncdata</TT> parameter is omitted or set to <TT>&quot;default&quot;</TT> then the log parameters are ignored.</P>
 <P>The <EM>syncrepl</EM> replication mechanism is supported by the <EM>bdb</EM> and <EM>hdb</EM> backends.</P>
 <P>See the <A HREF="#LDAP Sync Replication">LDAP Sync Replication</A> chapter of this guide for more information on how to use this directive.</P>
@@ -2800,7 +2800,7 @@ SQL Programmable backend
 <P>Simple authentication should not be used unless adequate data integrity and confidentiality protections are in place (e.g. TLS or IPsec). Simple authentication requires specification of <TT>binddn</TT> and <TT>credentials</TT> parameters.</P>
 <P>SASL authentication is generally recommended.  SASL authentication requires specification of a mechanism using the <TT>saslmech</TT> parameter. Depending on the mechanism, an authentication identity and/or credentials can be specified using <TT>authcid</TT> and <TT>credentials</TT>, respectively.  The <TT>authzid</TT> parameter may be used to specify an authorization identity.</P>
 <P>The <TT>realm</TT> parameter specifies a realm which a certain mechanisms authenticate the identity within. The <TT>secprops</TT> parameter specifies Cyrus SASL security properties.</P>
-<P>The <TT>starttls</TT> parameter specifies use of the StartTLS extended operation to establish a TLS session before authenticating to the provider. If the <TT>critical</TT> argument is supplied, the session will be aborted if the StartTLS request fails.  Otherwise the syncrepl session continues without TLS.  Note that the main slapd TLS settings are not used by the syncrepl engine; by default the TLS parameters from a <EM>ldap.conf</EM>(5) configuration file will be used.  TLS settings may be specified here, in which case any <EM>ldap.conf</EM>(5) settings will be completely ignored.</P>
+<P>The <TT>starttls</TT> parameter specifies use of the StartTLS extended operation to establish a TLS session before authenticating to the provider. If the <TT>critical</TT> argument is supplied, the session will be aborted if the StartTLS request fails.  Otherwise the syncrepl session continues without TLS.  The tls_reqcert setting defaults to <TT>&quot;demand&quot;</TT> and the other TLS settings default to the same as the main slapd TLS settings.</P>
 <P>Rather than replicating whole entries, the consumer can query logs of data modifications.  This mode of operation is referred to as <EM>delta syncrepl</EM>.  In addition to the above parameters, the <TT>logbase</TT> and <TT>logfilter</TT> parameters must be set appropriately for the log that will be used. The <TT>syncdata</TT> parameter must be set to either <TT>&quot;accesslog&quot;</TT> if the log conforms to the <EM>slapo-accesslog</EM>(5) log format, or <TT>&quot;changelog&quot;</TT> if the log conforms to the obsolete <EM>changelog</EM> format. If the <TT>syncdata</TT> parameter is omitted or set to <TT>&quot;default&quot;</TT> then the log parameters are ignored.</P>
 <P>The <EM>syncrepl</EM> replication mechanism is supported by the <EM>bdb</EM> and <EM>hdb</EM> backends.</P>
 <P>See the <A HREF="#LDAP Sync Replication">LDAP Sync Replication</A> chapter of this guide for more information on how to use this directive.</P>
@@ -4637,7 +4637,7 @@ Members of a group
 </PRE>
 <H2><A NAME="Berkeley DB Backends">11.1. Berkeley DB Backends</A></H2>
 <H3><A NAME="Overview">11.1.1. Overview</A></H3>
-<P>The <EM>hdb</EM> backend to <EM>slapd</EM>(8) is the recommended primary backend for a normal <EM>slapd</EM> database.  It uses the Oracle Berkeley DB (<TERM>BDB</TERM>) package to store data. It makes extensive use of indexing and caching (see the <A HREF="#Tuning">Tuning</A> section) to speed data access.</P>
+<P>The <EM>hdb</EM> backend to <EM>slapd</EM>(8) is a backend for a normal <EM>slapd</EM> database.  It uses the Oracle Berkeley DB (<TERM>BDB</TERM>) package to store data. It makes extensive use of indexing and caching (see the <A HREF="#Tuning">Tuning</A> section) to speed data access.</P>
 <P><EM>hdb</EM> is a variant of the original <EM>bdb</EM> backend which was first written for use with BDB. <EM>hdb</EM> uses a hierarchical database layout which supports subtree renames. It is otherwise identical to the <EM>bdb</EM> behavior, and all the same configuration options apply.</P>
 <P><HR WIDTH="80%" ALIGN="Left">
 <STRONG>Note: </STRONG>An <EM>hdb</EM> database needs a large <EM>idlcachesize</EM> for good search performance, typically three times the <EM>cachesize</EM> (entry cache size) or larger.
@@ -4728,7 +4728,7 @@ Members of a group
 <P><EM>slapd-ldif</EM>(5)</P>
 <H2><A NAME="LMDB">11.4. LMDB</A></H2>
 <H3><A NAME="Overview">11.4.1. Overview</A></H3>
-<P>The <EM>mdb</EM> backend to <EM>slapd</EM>(8) is the upcoming primary backend for a normal <EM>slapd</EM> database.  It uses OpenLDAP's own Lightning Memory-Mapped Database (<TERM>LMDB</TERM>) library to store data and is intended to replace the Berkeley DB backends.</P>
+<P>The <EM>mdb</EM> backend to <EM>slapd</EM>(8) is the recommended primary backend for a normal <EM>slapd</EM> database.  It uses OpenLDAP's own Lightning Memory-Mapped Database (<TERM>LMDB</TERM>) library to store data and is intended to replace the Berkeley DB backends.</P>
 <P>It supports indexing like the BDB backends, but it uses no caching and requires no tuning to deliver maximum search performance.  Like <EM>hdb</EM>, it is also fully hierarchical and supports subtree renames in constant time.</P>
 <H3><A NAME="back-mdb Configuration">11.4.2. back-mdb Configuration</A></H3>
 <P>Unlike the BDB backends, the <EM>mdb</EM> backend can be instantiated with very few configuration lines:</P>
