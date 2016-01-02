@@ -9,6 +9,7 @@ openldap (2.4.43+dfsg-1) UNRELEASED; urgency=medium
   * Drop ITS8240-remove-obsolete-assert.patch, included upstream.
   * Update debian/schema/ppolicy.schema to add the pwdMaxRecordedFailure 
     attribute.
+  * Update libldap-2.4-2.symbols with new ldap_build_*_req symbols.
 
  -- Ryan Tandy <ryan@nardis.ca>  Thu, 31 Dec 2015 14:08:53 -0800
 
