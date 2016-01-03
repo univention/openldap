@@ -229,7 +229,9 @@ ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 		contrib/slapd-modules/lastbind/lastbind.la \
 		contrib/slapd-modules/lastbind/lastbind.o
 	rm -rf contrib/slapd-modules/passwd/sha2/.libs \
-		contrib/slapd-modules/passwd/sha2/pw-sha2.lo \
 		contrib/slapd-modules/passwd/sha2/pw-sha2.la \
-		contrib/slapd-modules/passwd/sha2/pw-sha2.o
+		contrib/slapd-modules/passwd/sha2/sha2.lo \
+		contrib/slapd-modules/passwd/sha2/sha2.o \
+		contrib/slapd-modules/passwd/sha2/slapd-sha2.lo \
+		contrib/slapd-modules/passwd/sha2/slapd-sha2.o
 endif

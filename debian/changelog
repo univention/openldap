@@ -12,6 +12,7 @@ openldap (2.4.43+dfsg-1) UNRELEASED; urgency=medium
   * Update libldap-2.4-2.symbols with new ldap_build_*_req symbols.
   * Mark the build target in debian/rules as phony, since the upstream source 
     includes a build/ directory.
+  * Correct the list of files to be cleaned for the pw-sha2 contrib module.
 
  -- Ryan Tandy <ryan@nardis.ca>  Thu, 31 Dec 2015 14:08:53 -0800
 
