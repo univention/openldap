@@ -61,8 +61,12 @@ get-orig-source:
 	rm -r openldap-$(VERSION)+dfsg
 	gzip -9 openldap_$(VERSION)+dfsg.orig.tar
 
+DH = dh $@ --with autoreconf --builddirectory=$(builddir) --parallel
+.PHONY: build
+build:
+	$(DH)
 %:
-	dh $@ --with autoreconf --builddirectory=$(builddir) --parallel
+	$(DH)
 
 # Only contrib/ldapc++ uses Automake, so special care is needed to update
 # config.guess and config.sub at the top level.
