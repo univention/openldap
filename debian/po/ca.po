@@ -348,7 +348,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:17001
 msgid "Potentially unsafe slapd access control configuration"
-msgstr "Configuració de control d'accés de slpad potencialment insegur"
+msgstr "Configuració de control d'accés de slapd potencialment insegur"
 
 #. Type: note
 #. Description
@@ -372,7 +372,7 @@ msgid ""
 "recommended to remove any instances of \"by self write\", so that users are "
 "only able to modify specifically allowed attributes."
 msgstr ""
-"En el cas que les normes d'accés de slpad comencin per \"to *\", és "
+"En el cas que les normes d'accés de slapd comencin per \"to *\", és "
 "recomanable eliminar totes les instàncies a \"by self write\", de manera que "
 "els usuaris només puguin modificar els atributs específicament permesos."
 
