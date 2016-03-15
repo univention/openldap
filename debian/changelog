@@ -1,4 +1,4 @@
-openldap (2.4.43+dfsg-1) UNRELEASED; urgency=medium
+openldap (2.4.44+dfsg-1) UNRELEASED; urgency=medium
 
   * !!! DO NOT UPLOAD this until updating the ppolicy schema on upgrade is 
     dealt with, otherwise ppolicy users will be broken!
@@ -14,7 +14,7 @@ openldap (2.4.43+dfsg-1) UNRELEASED; urgency=medium
     includes a build/ directory.
   * Correct the list of files to be cleaned for the pw-sha2 contrib module.
 
- -- Ryan Tandy <ryan@nardis.ca>  Thu, 31 Dec 2015 14:08:53 -0800
+ -- Ryan Tandy <ryan@nardis.ca>  Tue, 15 Mar 2016 03:45:08 +0000
 
 openldap (2.4.42+dfsg-2) unstable; urgency=medium
 
