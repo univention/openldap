@@ -14,6 +14,8 @@ openldap (2.4.44+dfsg-1) UNRELEASED; urgency=medium
     includes a build/ directory.
   * Correct the list of files to be cleaned for the pw-sha2 contrib module.
   * Fix a typo (slpad -> slapd) in the Catalan debconf translation.
+  * Disable OpenSLP support and remove libslp-dev from Build-Depends.
+    (Closes: #815364)
 
  -- Ryan Tandy <ryan@nardis.ca>  Tue, 15 Mar 2016 03:45:08 +0000
 

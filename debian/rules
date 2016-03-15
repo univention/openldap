@@ -19,8 +19,7 @@ ifeq ($(DEB_HOST_ARCH_OS),hurd)
 	CONFIG += --disable-bdb --disable-hdb --disable-mdb
 endif
 ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
-	# --disable-slapd should imply --disable-slp, ITS#8224
-	CONFIG += --disable-slapd --disable-slp
+	CONFIG += --disable-slapd
 endif
 
 # Ensure CC is set correctly for cross builds, unless it has already 
