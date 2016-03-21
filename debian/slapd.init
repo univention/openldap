@@ -132,6 +132,13 @@ report_failure() {
 # Start the slapd daemon and capture the error message if any to 
 # $reason.
 start_slapd() {
+	# Make sure /var/run/slapd exists with correct permissions
+	if [ ! -d /var/run/slapd ]; then
+		mkdir -p /var/run/slapd
+		[ -z "$SLAPD_USER" ] || chown -R "$SLAPD_USER" /var/run/slapd
+		[ -z "$SLAPD_GROUP" ] || chgrp -R "$SLAPD_GROUP" /var/run/slapd
+	fi
+
 	if [ -z "$SLAPD_SERVICES" ]; then
 		reason="`start-stop-daemon --start --quiet --oknodo \
 			--pidfile "$SLAPD_PIDFILE" \

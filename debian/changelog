@@ -16,6 +16,8 @@ openldap (2.4.44+dfsg-1) UNRELEASED; urgency=medium
   * Fix a typo (slpad -> slapd) in the Catalan debconf translation.
   * Disable OpenSLP support and remove libslp-dev from Build-Depends.
     (Closes: #815364)
+  * Ensure /var/run/slapd exists when starting slapd, even if the pid file is 
+    somewhere else. Thanks to Dave Beach for the report.
 
  -- Ryan Tandy <ryan@nardis.ca>  Tue, 15 Mar 2016 03:45:08 +0000
 
