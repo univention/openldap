@@ -561,27 +561,6 @@ EOF
 	echo "done." >&2
 }
 # }}}
-configure_v2_protocol_support() {					# {{{
-# Adds the "allow bind_v2" directive to the configuration if the user decided
-# he wants to have ldap v2 enabled.
-
-	local new_conf
-
-	db_get slapd/allow_ldap_v2
-	if [ "$RET" != "true" ]; then return 0; fi
-
-	echo -n "  Enabling LDAPv2 support... " >&2
-
-	# cn=config enabled, try to update the cn=config.ldif
-	if [ -d "$SLAPD_CONF" ]; then
-		if ! grep -q -E "^olcAllows:[[:space:]]+bind_v2" "${SLAPD_CONF}/cn=config.ldif"; then
-			echo "olcAllows: bind_v2" >> "${SLAPD_CONF}/cn=config.ldif"
-		fi
-		echo "done" >&2
-		return 0
-	fi
-}
-# }}}
 backup_config_once() {							# {{{
 # Create a backup of the current configuration files. 
 # Usage: backup_config_once

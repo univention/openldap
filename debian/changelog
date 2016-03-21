@@ -20,6 +20,7 @@ openldap (2.4.44+dfsg-1) UNRELEASED; urgency=medium
     somewhere else. Thanks to Dave Beach for the report.
   * Create the pidfile directory when starting slapd, but not when running the 
     init script in other modes.
+  * Remove support for enabling the obsolete LDAPv2 protocol via debconf.
 
  -- Ryan Tandy <ryan@nardis.ca>  Tue, 15 Mar 2016 03:45:08 +0000
 

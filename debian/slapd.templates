@@ -94,15 +94,6 @@ Type: password
 Description: Generated admin password:
  Internal template, should never be displayed to users.
 
-Template: slapd/allow_ldap_v2
-Type: boolean
-Default: false
-_Description: Allow LDAPv2 protocol?
- The obsolete LDAPv2 protocol is disabled by default in slapd. Programs
- and users should upgrade to LDAPv3.  If you have old programs which
- can't use LDAPv3, you should select this option and 'allow bind_v2'
- will be added to your slapd.conf file.
-
 Template: slapd/upgrade_slapcat_failure
 Type: error
 #flag:translate!:5
