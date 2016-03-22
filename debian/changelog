@@ -17,7 +17,7 @@ openldap (2.4.44+dfsg-1) UNRELEASED; urgency=medium
   * Disable OpenSLP support and remove libslp-dev from Build-Depends.
     (Closes: #815364)
   * Ensure /var/run/slapd exists when starting slapd, even if the pid file is 
-    somewhere else. Thanks to Dave Beach for the report.
+    somewhere else. Thanks to Dave Beach for the report. (Closes: #815571)
   * Create the pidfile directory when starting slapd, but not when running the 
     init script in other modes.
   * Remove support for enabling the obsolete LDAPv2 protocol via debconf.
