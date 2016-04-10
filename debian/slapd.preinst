@@ -12,6 +12,7 @@ set -e
 # slapcat out the data so we can use it in postinst to do the upgrade
 
 if [ "$MODE" = upgrade ]; then
+	dump_config
 	dump_databases
 fi
 

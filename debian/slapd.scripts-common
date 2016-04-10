@@ -155,6 +155,19 @@ olcAccess: {0}to * by dn.exact=gidNumber=0+uidNumber=0,cn=peercred,cn=external,c
 }
 
 # }}}
+dump_config() {								# {{{
+# Dump the cn=config database to the backup directory.
+# This is not the same as backup_config_once, which copies the slapd.d 
+# directory verbatim.
+	local dir
+
+	[ -d "$SLAPD_CONF" ] || return 0
+
+	dir="$(database_dumping_destdir)"
+	echo "Saving current slapd configuration to $dir..." >&2
+	slapcat -F "$SLAPD_CONF" -n0 -l "$dir/cn=config.ldif"
+}
+# }}}
 dump_databases() {							# {{{
 # If the user wants us to dump the databases they are dumped to the 
 # configured directory.
@@ -576,6 +589,11 @@ backup_config_once() {							# {{{
 	fi
 }
 
+# }}}
+normalize_ldif() {							# {{{
+# Unwrap LDIF lines and strip comments.
+	perl -00 -pe 's/\n[ \t]//g; s/^#.*\n//mg' "$@"
+}
 # }}}
 
 
