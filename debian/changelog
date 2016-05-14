@@ -3,6 +3,7 @@ openldap (2.4.44+dfsg-1) UNRELEASED; urgency=medium
   * !!! DO NOT UPLOAD this until updating the ppolicy schema on upgrade is 
     dealt with, otherwise ppolicy users will be broken!
 
+  [ Ryan Tandy ]
   * New upstream release.
     - Fixed ppolicy not unlocking policy entry after initialization failure 
       (ITS#7537) (Closes: #702414)
@@ -21,6 +22,10 @@ openldap (2.4.44+dfsg-1) UNRELEASED; urgency=medium
   * Create the pidfile directory when starting slapd, but not when running the 
     init script in other modes.
   * Remove support for enabling the obsolete LDAPv2 protocol via debconf.
+
+  [ Helmut Grohne ]
+  * Fix policy 8.2 violation (Closes: #330695)
+    + Move /etc/ldap/ldap.conf and manpage to new package libldap-common.
 
  -- Ryan Tandy <ryan@nardis.ca>  Tue, 15 Mar 2016 03:45:08 +0000
 

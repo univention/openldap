@@ -85,11 +85,21 @@ Architecture: any
 Multi-Arch: same
 Conflicts: ldap-utils (<= 2.1.23-1)
 Pre-Depends: ${misc:Pre-Depends}
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, libldap-common (= ${source:Version})
 Replaces: libldap2, libldap-2.3-0
 Description: OpenLDAP libraries 
  These are the run-time libraries for the OpenLDAP (Lightweight Directory
  Access Protocol) servers and clients.
+
+Package: libldap-common
+Section: libs
+Priority: standard
+Architecture: all
+Multi-Arch: foreign
+Replaces: libldap-2.4-2 (<< 2.4.44+dfsg-1)
+Description: OpenLDAP common files for libraries
+ These are common files for the run-time libraries for the OpenLDAP
+ (Lightweight Directory Access Protocol) servers and clients.
 
 Package: libldap-2.4-2-dbg
 Section: debug
