@@ -96,6 +96,7 @@ Section: libs
 Priority: standard
 Architecture: all
 Multi-Arch: foreign
+Depends: ${misc:Depends}
 Replaces: libldap-2.4-2 (<< 2.4.44+dfsg-1)
 Description: OpenLDAP common files for libraries
  These are common files for the run-time libraries for the OpenLDAP
