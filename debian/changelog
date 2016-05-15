@@ -24,6 +24,9 @@ openldap (2.4.44+dfsg-1) UNRELEASED; urgency=medium
   * Remove support for enabling the obsolete LDAPv2 protocol via debconf.
   * debian/copyright: Update the OpenLDAP copyright and license.
   * debian/control: Update VCS URIs to the modern canonical form.
+  * Override Lintian errors about schema files derived from RFC documents. 
+    Copyrightable content has been removed from these files; however, the 
+    copyright notices have been retained to preserve attribution.
 
   [ Helmut Grohne ]
   * Fix policy 8.2 violation (Closes: #330695)
