@@ -26,6 +26,9 @@ openldap (2.4.44+dfsg-1) UNRELEASED; urgency=medium
     copyright notices have been retained to preserve attribution.
   * On upgrade, if the cn=config database contains the ppolicy schema, add the 
     new pwdMaxRecordedFailure attribute to it.
+  * Add debian/patches/set-maintainer-name to omit the builder's username and 
+    working directory from version strings and thereby make the build 
+    reproducible. Thanks to Daniel Shahaf for the patch. (Closes: #833179)
 
   [ Helmut Grohne ]
   * Fix policy 8.2 violation (Closes: #330695)
