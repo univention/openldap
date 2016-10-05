@@ -122,7 +122,7 @@ upgrade_cnconfig_ppolicy_schema() {						# {{{
 
 	# Import the modified config into a temporary location.
 	tmp_slapd_d="$(mktemp -d --tmpdir slapd-XXXXXXXX)"
-	trap "trap - INT EXIT; rm -rf "$tmp_slapd_d" '$working_ldif'" INT EXIT
+	trap "trap - INT EXIT; rm -rf '$tmp_slapd_d' '$working_ldif'" INT EXIT
 	capture_diagnostics slapadd -F "$tmp_slapd_d" -n0 -l "$working_ldif" || failed=1
 	if [ "$failed" ]; then
 		cat >&2 <<-eof
