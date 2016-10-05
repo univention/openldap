@@ -70,8 +70,6 @@ upgrade_cnconfig_ppolicy_schema() {						# {{{
 # cn=config database when upgrading to 2.4.43 or later.
 # slapd.conf users get schema updates through the regular conffile 
 # handling.
-# FIXME: changes made with serverid=0 (slapadd without -S) are not 
-# replicated in mirror-mode/MMR.
 	local dumped_ldif working_ldif ppolicy_dn tmp_slapd_d failed
 
 	if ! [ -d "$SLAPD_CONF" ]; then
@@ -92,20 +90,13 @@ upgrade_cnconfig_ppolicy_schema() {						# {{{
 
 	# Create a working copy with lines unwrapped.
 	working_ldif="$(mktemp --tmpdir slapd-XXXXXXXX.ldif)"
+	trap "trap - INT EXIT; rm -f '$working_ldif'" INT EXIT
 	normalize_ldif "$dumped_ldif" > "$working_ldif"
 
-	# Is the ppolicy schema loaded?
-	if ! ppolicy_dn="$(grep '^dn: cn={[0-9]\+}ppolicy,cn=schema,cn=config$' "$working_ldif")"; then
-		rm -f "$working_ldif"
-		return 0
-	fi
-	ppolicy_dn="${ppolicy_dn#dn: }"
-
-	# Has the pwdMaxRecordedFailure attribute already been added?
-	# It might have been replicated from a newer server.
-	if grep -q '^olcAttributeTypes: .*NAME '\''pwdMaxRecordedFailure'\' "$working_ldif"; then
-		rm -f "$working_ldif"
-		return 0
+	# Check whether the schema is loaded and needs an update.
+	ppolicy_dn="$(find_old_ppolicy_schema "$working_ldif")"
+	if [ -z "$ppolicy_dn" ]; then
+		return
 	fi
 
 	echo -n "Adding pwdMaxRecordedFailure attribute to ${ppolicy_dn}... " >&2
@@ -131,6 +122,7 @@ upgrade_cnconfig_ppolicy_schema() {						# {{{
 
 	# Import the modified config into a temporary location.
 	tmp_slapd_d="$(mktemp -d --tmpdir slapd-XXXXXXXX)"
+	trap "trap - INT EXIT; rm -rf "$tmp_slapd_d" '$working_ldif'" INT EXIT
 	capture_diagnostics slapadd -F "$tmp_slapd_d" -n0 -l "$working_ldif" || failed=1
 	if [ "$failed" ]; then
 		cat >&2 <<-eof
@@ -140,7 +132,6 @@ Updating the slapd configuration failed with the following error
 while running slapadd:
 eof
 		release_diagnostics
-		rm -rf "$tmp_slapd_d" "$working_ldif"
 		exit 1
 	fi
 
@@ -150,9 +141,6 @@ eof
 	mv "$tmp_slapd_d/cn=config.ldif" "$tmp_slapd_d/cn=config" "$SLAPD_CONF/"
 
 	echo 'done.' >&2
-
-	# Clean up
-	rm -rf "$tmp_slapd_d" "$working_ldif"
 }
 # }}}
 

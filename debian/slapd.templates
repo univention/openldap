@@ -149,3 +149,37 @@ _Description: Potentially unsafe slapd access control configuration
  are only able to modify specifically allowed attributes.
  .
  See /usr/share/doc/slapd/README.Debian.gz for more details.
+
+Template: slapd/ppolicy_schema_needs_update
+Type: select
+__Choices: abort installation, continue regardless
+DefaultChoice: abort installation
+#flag:comment:2
+# "pwdMaxRecordedFailure" and "cn=config" are not translatable.
+#flag:translate!:4
+#flag:translate!:6
+_Description: Manual ppolicy schema update recommended
+ In the version of slapd about to be installed, the ppolicy overlay
+ requires the new pwdMaxRecordedFailure attribute to be defined in the
+ ppolicy schema. The schema contained in the cn=config database does not
+ currently include this attribute.
+ .
+ You may choose to continue the installation. In this case, the
+ maintainer scripts will add the new attribute automatically during the
+ upgrade. However, the change will not be acted on by slapd overlays,
+ and replication with other servers may be affected.
+ .
+ The ppolicy schema can be updated by applying the changes found in the
+ following LDIF file:
+ .
+ ${ldif}
+ .
+ If slapd is using the default access control rules, after starting
+ slapd, the changes can be applied using the following command:
+ .
+ ldapmodify -H ldapi:/// -Y EXTERNAL -f ${ldif}
+ .
+ It is recommended to abort the upgrade now and to update the ppolicy
+ schema before upgrading slapd. If replication is in use, the schema
+ update should be applied on every server before continuing with the
+ upgrade.
