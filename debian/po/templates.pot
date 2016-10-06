@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2016-03-21 04:13+0000\n"
+"POT-Creation-Date: 2016-10-06 03:17+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -301,4 +301,68 @@ msgstr ""
 #. Description
 #: ../slapd.templates:16001
 msgid "See /usr/share/doc/slapd/README.Debian.gz for more details."
+msgstr ""
+
+#. Type: select
+#. Choices
+#: ../slapd.templates:17001
+msgid "abort installation"
+msgstr ""
+
+#. Type: select
+#. Choices
+#: ../slapd.templates:17001
+msgid "continue regardless"
+msgstr ""
+
+#. Type: select
+#. Description
+#: ../slapd.templates:17002
+msgid "Manual ppolicy schema update recommended"
+msgstr ""
+
+#. Type: select
+#. Description
+#. "pwdMaxRecordedFailure" and "cn=config" are not translatable.
+#: ../slapd.templates:17002
+msgid ""
+"In the version of slapd about to be installed, the ppolicy overlay requires "
+"the new pwdMaxRecordedFailure attribute to be defined in the ppolicy schema. "
+"The schema contained in the cn=config database does not currently include "
+"this attribute."
+msgstr ""
+
+#. Type: select
+#. Description
+#: ../slapd.templates:17002
+msgid ""
+"You may choose to continue the installation. In this case, the maintainer "
+"scripts will add the new attribute automatically during the upgrade. "
+"However, the change will not be acted on by slapd overlays, and replication "
+"with other servers may be affected."
+msgstr ""
+
+#. Type: select
+#. Description
+#: ../slapd.templates:17002
+msgid ""
+"The ppolicy schema can be updated by applying the changes found in the "
+"following LDIF file:"
+msgstr ""
+
+#. Type: select
+#. Description
+#: ../slapd.templates:17002
+msgid ""
+"If slapd is using the default access control rules, after starting slapd, "
+"the changes can be applied using the following command:"
+msgstr ""
+
+#. Type: select
+#. Description
+#: ../slapd.templates:17002
+msgid ""
+"It is recommended to abort the upgrade now and to update the ppolicy schema "
+"before upgrading slapd. If replication is in use, the schema update should "
+"be applied on every server before continuing with the upgrade."
 msgstr ""
