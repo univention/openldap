@@ -107,6 +107,20 @@ update_databases_permissions() {	# {{{
 	done
 }
 # }}}
+update_slapd_conf_permissions() {	# {{{
+	if [ -n "$SLAPD_USER" ] && [ -n "$SLAPD_GROUP" ] ; then
+		if perl -e '
+			($o, $m) = (stat $ARGV[0])[4,2];
+			exit 1 unless defined $o;
+			exit 0 if ($o == 0 && ($m & 040) == 0);
+			exit 1;
+		' "$SLAPD_CONF"; then
+			chgrp "$SLAPD_GROUP" "$SLAPD_CONF"
+			chmod g+r "$SLAPD_CONF"
+		fi
+	fi
+}
+# }}}
 # }}}
 # ----- Dumping and loading the data ------------------------------------ {{{
 
@@ -277,6 +291,86 @@ move_incompatible_databases_away() {					# {{{
 # For some operations we have to know the slapd configuration. These 
 # functions are for parsing the slapd configuration file.
 
+merge_logical_lines() {							# {{{
+# slapd supports continuation lines in the slapd.conf. Continuation lines 
+# start with spaces and are merged with the preceding line. This function
+# uses perl to merge physical lines into logical lines as seen by the 
+# slapd config parser.
+# Usage: merge_logical_lines < input > output
+
+	perl -pe 'BEGIN { undef $/ }; s/\n(?!\n)\s+/ /g;' 
+}
+
+# }}}
+read_slapd_conf() {							# {{{
+# read slapd.conf file and evaluate include statements
+# FIXME: circular loops will cause this to block forever
+	merge_logical_lines | while read command data; do
+		if [ "$command" = "include" ]; then
+			file=`eval echo $data`
+			read_slapd_conf < $file
+		else
+			echo $command $data
+		fi
+	done
+}
+
+# }}}
+write_slapd_conf() {            # {{{
+# Change a configuration setting in a configuration file, follow includes.
+# Usage: write_slapd_conf configuration_file regexpression
+# FIXME: circular loops will cause this to block forever
+
+	conf=$1
+	reg=$2
+
+	# Perl script to change configuration files.
+	script='
+		use File::Temp;
+		use File::Compare;
+		use File::Copy;
+
+		sub changeConfig {
+			my ($conf, $regexp) = @_;
+			my ($fh, $name) = mkstemp("/tmp/tmp.XXXXXX");
+
+			open(HANDLE, "<". $conf) || return;
+			my @data = <HANDLE>;
+			close(HANDLE);
+
+			foreach $line (@data) {
+
+				# Parse includes, but forget the schema files.
+				if ($line =~ /^include/ && $line !~ /\/etc\/ldap\/schema\//) {
+					my @file = split(/\s+/, $line);
+					changeConfig($file[1], $regexp);
+				}
+
+				# Modify the config with the given regexpression.
+				$doit = "\$line =~ $regexp";
+				eval $doit;
+				print $fh $line;
+			}
+
+			# Close the tempfile handle opened by mkstemp.
+			close($fh);
+
+			# If file is changed by the regexp replace the original file.
+			if (compare($conf, $name) != 0) {
+				move($name, $conf);
+			} else {
+				unlink($name);
+			}
+		}
+
+		$config = shift;
+		$regexp = shift;
+		changeConfig($config, $regexp);'
+
+	# Use perl to execute the function above.
+	perl -e "$script" "$conf" "$reg"
+}
+# }}}
 # The following two functions need to support slapd.conf installations 
 # as long as upgrading from slapd.conf environment is supported.
 # They're used to dump database in preinst which may have a slapd.conf file.
