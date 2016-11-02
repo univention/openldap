@@ -5,9 +5,10 @@ use Debian::Debhelper::Dh_Lib;
 
 init();
 
+my $scriptscommon = $ARGV[0];
+
 foreach my $package (@{$dh{DOPACKAGES}}) {
 	my $tmp=tmpdir($package);
-	my $ext=pkgext($package);
 
 	if (! -d "$tmp/DEBIAN") {
 		next;
@@ -15,8 +16,10 @@ foreach my $package (@{$dh{DOPACKAGES}}) {
 
 	foreach my $file (qw{postinst preinst prerm postrm config}) {
 		my $f="$tmp/DEBIAN/$file";
-		if ($f) {
-			complex_doit("perl -pe 's~#SCRIPTSCOMMON#~qx{cat debian/${ext}scripts-common}~eg' -i $f");
+		if (! -e $f) {
+			next;
 		}
+		print "changing $f with $scriptscommon\n";
+		complex_doit("perl -pe 's~#SCRIPTSCOMMON#~qx{cat $scriptscommon}~eg' -i $f");
 	}
 }

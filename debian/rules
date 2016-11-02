@@ -199,7 +199,7 @@ endif
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 override_dh_installdeb:
 	dh_installdeb
-	perl -w debian/dh_installscripts-common -p slapd
+	perl -w debian/dh_installscripts-common -pslapd -pslapd-smbk5pwd debian/slapd.scripts-common
 endif
 
 override_dh_auto_clean:
