@@ -1,14 +1,14 @@
 openldap (2.4.44+dfsg-1) unstable; urgency=medium
 
-    The slapd package no longer includes OpenSLP support. The
-    openslp-dfsg package is being retired due to lack of maintenance and
-    security concerns. Please see <https://bugs.debian.org/795428> for
-    more information.
+   The slapd package no longer includes OpenSLP support. The
+   openslp-dfsg package is being retired due to lack of maintenance and
+   security concerns. Please see <https://bugs.debian.org/795428> for
+   more information.
 
-    The slapd-smbk5pwd package is no longer built with Kerberos support,
-    as the heimdal package is being removed at the request of its
-    maintainers. Please see <https://bugs.debian.org/836885> for more
-    information.
+   The slapd-smbk5pwd package is no longer built with Kerberos support,
+   as the heimdal package is being removed at the request of its
+   maintainers. Please see <https://bugs.debian.org/836885> for more
+   information.
 
  -- Ryan Tandy <ryan@nardis.ca>  Sat, 29 Oct 2016 20:36:03 -0700
 
