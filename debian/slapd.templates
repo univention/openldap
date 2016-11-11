@@ -182,3 +182,10 @@ _Description: Manual ppolicy schema update recommended
  schema before upgrading slapd. If replication is in use, the schema
  update should be applied on every server before continuing with the
  upgrade.
+
+Template: slapd/smbk5pwd_krb5_disabled
+Type: error
+_Description: Kerberos support disabled for smbk5pwd overlay
+ The smbk5pwd overlay is no longer built with Kerberos support. The
+ "smbk5pwd-enable krb5" setting has been automatically disabled in the
+ slapd configuration file.

@@ -31,6 +31,8 @@ openldap (2.4.44+dfsg-1) UNRELEASED; urgency=medium
     reproducible. Thanks to Daniel Shahaf for the patch. (Closes: #833179)
   * Build smbk5pwd without Kerberos support and drop the build-dependency on 
     heimdal. (Closes: #836885)
+  * On upgrade, comment the krb5 setting on any instances of the smbk5pwd 
+    overlay in slapd.conf.
 
   [ Helmut Grohne ]
   * Fix policy 8.2 violation (Closes: #330695)
