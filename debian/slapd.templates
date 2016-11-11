@@ -189,3 +189,11 @@ _Description: Kerberos support disabled for smbk5pwd overlay
  The smbk5pwd overlay is no longer built with Kerberos support. The
  "smbk5pwd-enable krb5" setting has been automatically disabled in the
  slapd configuration file.
+
+Template: slapd/must_disable_smbk5pwd_krb5
+Type: error
+#flag:translate!:4,6
+_Description: Disable Kerberos in smbk5pwd before upgrading slapd
+ The smbk5pwd overlay is no longer built with Kerberos support. The
+ "olcSmbK5PwdEnable: krb5" setting must be removed from any instances of
+ the smbk5pwd overlay before upgrading slapd.

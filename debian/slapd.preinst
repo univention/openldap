@@ -40,33 +40,15 @@ eof
 	fi
 }
 # }}}
-
 check_ppolicy_schema() {						# {{{
 # When upgrading to 2.4.43 or later, if the cn=config database contains 
 # an old version of the ppolicy schema, check that it is safe to upgrade 
 # it automatically in postinst, or instruct the user to do so before 
 # upgrading.
-	local dumped_ldif working_ldif ppolicy_dn
-
-	# Only applicable for cn=config.
-	if [ ! -d "$SLAPD_CONF" ]; then
-		return
-	fi
-
-	# Locate the file exported by dump_config.
-	dumped_ldif="$(database_dumping_destdir)/cn=config.ldif"
-	if [ ! -f "$dumped_ldif" ]; then
-		echo "Expected to find a configuration backup in $dumped_ldif but it is missing. Please retry the upgrade." >&2
-		exit 1
-	fi
-
-	# Create a working copy with lines unwrapped.
-	working_ldif="$(mktemp --tmpdir slapd-XXXXXXXX.ldif)"
-	trap "trap - INT EXIT; rm -f '$working_ldif'" INT EXIT
-	normalize_ldif "$dumped_ldif" > "$working_ldif"
+	local config_ldif="$1"
 
 	# Check whether the schema is loaded and needs an update.
-	ppolicy_dn="$(find_old_ppolicy_schema "$working_ldif")"
+	local ppolicy_dn="$(find_old_ppolicy_schema "$config_ldif")"
 	if [ -z "$ppolicy_dn" ]; then
 		return
 	fi
@@ -77,15 +59,49 @@ check_ppolicy_schema() {						# {{{
 	# As well, if a content database is a sync provider, we want to 
 	# recommend that the schema be updated on every server before 
 	# going through with the upgrade.
-	if grep -q -e '^dn: olcOverlay=.\+,olcDatabase={-1}frontend,cn=config$' -e '^dn: olcOverlay=.\+,olcDatabase={0}config,cn=config$' "$working_ldif" \
-		|| sed -n '/^dn: olcDatabase={-1}frontend,cn=config$/,// p' "$working_ldif" | grep -q '^olcSyncrepl:' \
-		|| sed -n '/^dn: olcDatabase={0}config,cn=config$/,//p' "$working_ldif" | grep -q '^olcSyncrepl:' \
-		|| grep -q '^dn: olcOverlay={[0-9]\+}syncprov,olcDatabase=.\+,cn=config' "$working_ldif"; then
+	if grep -q -e '^dn: olcOverlay=.\+,olcDatabase={-1}frontend,cn=config$' -e '^dn: olcOverlay=.\+,olcDatabase={0}config,cn=config$' "$config_ldif" \
+		|| sed -n '/^dn: olcDatabase={-1}frontend,cn=config$/,// p' "$config_ldif" | grep -q '^olcSyncrepl:' \
+		|| sed -n '/^dn: olcDatabase={0}config,cn=config$/,//p' "$config_ldif" | grep -q '^olcSyncrepl:' \
+		|| grep -q '^dn: olcOverlay={[0-9]\+}syncprov,olcDatabase=.\+,cn=config' "$config_ldif"; then
 		ppolicy_schema_needs_update "$ppolicy_dn"
 	fi
 
 	# If we made it this far, it should be safe to upgrade the 
 	# schema automatically in postinst.
+}
+# }}}
+ensure_smbk5pwd_krb5_disabled() {					# {{{
+	local config_ldif="$1"
+
+	if grep -q '^olcSmbK5PwdEnable:\s\+krb5' "$config_ldif"; then
+		db_fset slapd/must_disable_smbk5pwd_krb5 seen false
+		db_input critical slapd/must_disable_smbk5pwd_krb5 || true
+		db_go || true
+		exit 1
+	fi
+}
+# }}}
+preinst_check_config() {						# {{{
+# Check whether manual config changes are required before upgrading
+	if ! previous_version_older '2.4.44+dfsg-1~'; then
+		# no pre-checks required
+		return 0
+	fi
+
+	# Locate the file exported by dump_config.
+	local dumped_ldif="$(database_dumping_destdir)/cn=config.ldif"
+	if [ ! -f "$dumped_ldif" ]; then
+		echo "Expected to find a configuration backup in $dumped_ldif but it is missing. Please retry the upgrade." >&2
+		exit 1
+	fi
+
+	# Create a working copy with lines unwrapped.
+	local config_ldif="$(mktemp --tmpdir slapd.XXXXXXXX.ldif)"
+	trap "trap - INT EXIT; rm -f '$config_ldif'" INT EXIT
+	normalize_ldif "$dumped_ldif" > "$config_ldif"
+
+	check_ppolicy_schema "$config_ldif"
+	ensure_smbk5pwd_krb5_disabled "$config_ldif"
 }
 # }}}
 
@@ -94,8 +110,8 @@ check_ppolicy_schema() {						# {{{
 
 if [ "$MODE" = upgrade ]; then
 	dump_config
-	if previous_version_older '2.4.44+dfsg-1~'; then
-		check_ppolicy_schema
+	if [ -d "$SLAPD_CONF" ]; then
+		preinst_check_config
 	fi
 	dump_databases
 fi
