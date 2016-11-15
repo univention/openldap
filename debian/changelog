@@ -1,4 +1,4 @@
-openldap (2.4.44+dfsg-1) UNRELEASED; urgency=medium
+openldap (2.4.44+dfsg-1) unstable; urgency=medium
 
   [ Ryan Tandy ]
   * New upstream release.
@@ -39,7 +39,7 @@ openldap (2.4.44+dfsg-1) UNRELEASED; urgency=medium
   * Fix policy 8.2 violation (Closes: #330695)
     + Move /etc/ldap/ldap.conf and manpage to new package libldap-common.
 
- -- Ryan Tandy <ryan@nardis.ca>  Tue, 15 Mar 2016 03:45:08 +0000
+ -- Ryan Tandy <ryan@nardis.ca>  Mon, 14 Nov 2016 18:59:30 -0800
 
 openldap (2.4.42+dfsg-2) unstable; urgency=medium
 
