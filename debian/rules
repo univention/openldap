@@ -181,13 +181,6 @@ override_dh_link:
 	dh_link
 
 override_dh_makeshlibs:
-	# ideally we would do this and not have any libldap-2.4.so.2 links
-	# at all, but that requires adjusting the build scripts first to
-	# link against libldap_r, otherwise dh_shlibdeps fails
-	#dh_makeshlibs -plibldap-2.4-2 -V 'libldap-2.4-2 (>= 2.4.7)'
-	mkdir -p debian/libldap-2.4-2/DEBIAN
-	cp -p debian/libldap-2.4-2.shlibs debian/libldap-2.4-2/DEBIAN/shlibs
-	dpkg-gensymbols -plibldap-2.4-2 -Pdebian/libldap-2.4-2
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	echo "slapd:Provides=$$(objdump -p debian/slapd/usr/lib/$(DEB_HOST_MULTIARCH)/libslapi-*.so.* \
 		| sed -ne '/SONAME/ { s/[[:space:]]*SONAME[[:space:]]*//; \
@@ -195,6 +188,7 @@ ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	)" >> debian/slapd.substvars
 	dh_makeshlibs -pslapd -X/usr/lib/ldap/ -V "$$(sed -ne's/slapd:Provides=//p' debian/slapd.substvars)"
 endif
+	dh_makeshlibs --remaining-packages
 
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 override_dh_installdeb:
