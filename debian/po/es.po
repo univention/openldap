@@ -38,7 +38,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap 2.4.23-3exp1\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2016-10-06 03:17+0000\n"
+"POT-Creation-Date: 2016-11-23 05:25+0000\n"
 "PO-Revision-Date: 2014-11-20 17:45+0100\n"
 "Last-Translator: Camaleón <noelamac@gmail.com>\n"
 "Language-Team: Debian Spanish <debian-l10n-spanish@lists.debian.org>\n"
@@ -414,7 +414,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#. "pwdMaxRecordedFailure" and "cn=config" are not translatable.
+#. "ppolicy", "pwdMaxRecordedFailure", and "cn=config" are not translatable.
 #: ../slapd.templates:17002
 msgid ""
 "In the version of slapd about to be installed, the ppolicy overlay requires "
@@ -456,6 +456,36 @@ msgid ""
 "It is recommended to abort the upgrade now and to update the ppolicy schema "
 "before upgrading slapd. If replication is in use, the schema update should "
 "be applied on every server before continuing with the upgrade."
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../slapd.templates:18001
+msgid "Kerberos support disabled for smbk5pwd overlay"
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../slapd.templates:18001
+msgid ""
+"The smbk5pwd overlay is no longer built with Kerberos support. The "
+"\"smbk5pwd-enable krb5\" setting has been automatically disabled in the "
+"slapd configuration file."
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid "Disable Kerberos in smbk5pwd before upgrading slapd"
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../slapd.templates:19001
+msgid ""
+"The smbk5pwd overlay is no longer built with Kerberos support. The "
+"\"olcSmbK5PwdEnable: krb5\" setting must be removed from any instances of "
+"the smbk5pwd overlay before upgrading slapd."
 msgstr ""
 
 #~ msgid "Allow LDAPv2 protocol?"
