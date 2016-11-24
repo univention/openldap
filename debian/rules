@@ -144,7 +144,7 @@ endif
 		| xargs perl -pi -e 's#(\.TH \w+ 8)C#$$1#'
 
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
-override_dh_install:
+override_dh_install-arch:
 	dh_install
 	rm -rf $(CURDIR)/debian/slapd/usr/lib/ldap/smbk5pwd*
 	chmod 0755 $(CURDIR)/debian/slapd/usr/share/slapd/ldiftopasswd

@@ -3,6 +3,8 @@ openldap (2.4.44+dfsg-2) UNRELEASED; urgency=medium
   * Update Standards-Version to 3.9.8; no changes required.
   * Enable dh_makeshlibs for libldap-2.4-2. Remove libldap-2.4-2.postinst, now 
     replaced by the automatic ldconfig trigger.
+  * Don't execute slapd's override_dh_install when building only 
+    arch-independent packages. (Closes: #845506)
 
  -- Ryan Tandy <ryan@nardis.ca>  Fri, 18 Nov 2016 06:00:35 +0000
 
