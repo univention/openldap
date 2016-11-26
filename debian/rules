@@ -102,10 +102,10 @@ override_dh_auto_configure:
 override_dh_auto_build:
 	dh_auto_build -- $(MAKEVARS)
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
-	$(MAKE) -C contrib/slapd-modules/smbk5pwd
-	$(MAKE) -C contrib/slapd-modules/autogroup
-	$(MAKE) -C contrib/slapd-modules/lastbind
-	$(MAKE) -C contrib/slapd-modules/passwd/sha2
+	$(MAKE) -C contrib/slapd-modules/smbk5pwd CC=$(CC)
+	$(MAKE) -C contrib/slapd-modules/autogroup CC=$(CC)
+	$(MAKE) -C contrib/slapd-modules/lastbind CC=$(CC)
+	$(MAKE) -C contrib/slapd-modules/passwd/sha2 CC=$(CC)
 endif
 
 override_dh_auto_install:
