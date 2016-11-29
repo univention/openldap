@@ -147,7 +147,6 @@ ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 override_dh_install-arch:
 	dh_install
 	rm -rf $(CURDIR)/debian/slapd/usr/lib/ldap/smbk5pwd*
-	chmod 0755 $(CURDIR)/debian/slapd/usr/share/slapd/ldiftopasswd
 endif
 
 override_dh_installinit:
@@ -157,6 +156,10 @@ ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 override_dh_installman:
 	dh_installman
 	rm -f $(CURDIR)/debian/slapd/usr/share/man/man5/slapo-smbk5pwd.*
+
+override_dh_fixperms-arch:
+	dh_fixperms
+	chmod +x $(CURDIR)/debian/slapd/usr/share/slapd/ldiftopasswd
 endif
 
 override_dh_strip:

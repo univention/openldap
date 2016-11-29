@@ -8,6 +8,8 @@ openldap (2.4.44+dfsg-2) UNRELEASED; urgency=medium
     arch-independent packages. (Closes: #845506)
   * Override lintian false positives on slapd.README.Debian, 
     slapd-smbk5pwd.postinst, and slapd-smbk5pwd triggering ldconfig.
+  * Perform permissions changes in override_dh_fixperms instead of in 
+    override_dh_install.
 
   [ Helmut Grohne ]
   * Fix FTCBFS: Pass CC to make explicitly. (Closes: #839251)
