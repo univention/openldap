@@ -137,8 +137,6 @@ endif
 	    fi; \
 	done
 
-	# Upstream installs schema files in mode 0444 - policy wants 0644
-	find $(installdir)/etc -type f|xargs chmod 0644
 	# Upstream manpages are section 8C but installed as section 8
 	find $(installdir)/usr/share/man -name \*.8 \
 		| xargs perl -pi -e 's#(\.TH \w+ 8)C#$$1#'

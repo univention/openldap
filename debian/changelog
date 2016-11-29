@@ -10,6 +10,8 @@ openldap (2.4.44+dfsg-2) UNRELEASED; urgency=medium
     slapd-smbk5pwd.postinst, and slapd-smbk5pwd triggering ldconfig.
   * Perform permissions changes in override_dh_fixperms instead of in 
     override_dh_install.
+  * Remove manual chmod of schema files since dh_fixperms sets correct 
+    permissions automatically.
 
   [ Helmut Grohne ]
   * Fix FTCBFS: Pass CC to make explicitly. (Closes: #839251)
