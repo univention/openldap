@@ -12,11 +12,13 @@ openldap (2.4.44+dfsg-2) unstable; urgency=medium
     override_dh_install.
   * Remove manual chmod of schema files since dh_fixperms sets correct 
     permissions automatically.
+  * Fix slapd-smbk5pwd failing to upgrade when there are no instances of the 
+    overlay configured.
 
   [ Helmut Grohne ]
   * Fix FTCBFS: Pass CC to make explicitly. (Closes: #839251)
 
- -- Ryan Tandy <ryan@nardis.ca>  Mon, 28 Nov 2016 19:46:46 -0800
+ -- Ryan Tandy <ryan@nardis.ca>  Thu, 01 Dec 2016 19:40:20 -0800
 
 openldap (2.4.44+dfsg-1) unstable; urgency=medium
 

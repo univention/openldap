@@ -9,9 +9,8 @@ set -e
 is_krb5_enabled() {							# {{{
 # Cannot depend on a working slapcat here. If a new slapd was already 
 # unpacked, slap* binaries may be broken until it is configured.
-	find "$SLAPD_CONF" \
-		-type f -iname 'olcOverlay={*}smbk5pwd.ldif' \
-		-exec grep -qi '^olcSmbK5PwdEnable:\s\+krb5' {} \+
+	grep -qri --include='olcOverlay=*smbk5pwd.ldif' \
+		'^olcSmbK5PwdEnable:\s\+krb5' "$SLAPD_CONF"
 }
 # }}}
 ensure_krb5_disabled() {						# {{{
