@@ -21,6 +21,7 @@ fix-build-top-mk
 no-AM_INIT_AUTOMAKE
 switch-to-lt_dlopenadvise-to-get-RTLD_GLOBAL-set.diff
 no-bdb-ABI-second-guessing
+heimdal-fix
 ITS6035-olcauthzregex-needs-restart.patch
 set-maintainer-name
 ITS-8554-kFreeBSD-is-like-BSD.patch

@@ -1,6 +1,7 @@
 openldap (2.4.44+dfsg-3) UNRELEASED; urgency=medium
 
   * Apply upstream patch to fix FTBFS on kFreeBSD. (Closes: #845394)
+  * Restore heimdal support to the smbk5pwd overlay.
 
  -- Ryan Tandy <ryan@nardis.ca>  Wed, 28 Dec 2016 10:58:31 -0800
 

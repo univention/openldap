@@ -70,17 +70,6 @@ check_ppolicy_schema() {						# {{{
 	# schema automatically in postinst.
 }
 # }}}
-ensure_smbk5pwd_krb5_disabled() {					# {{{
-	local config_ldif="$1"
-
-	if grep -q '^olcSmbK5PwdEnable:\s\+krb5' "$config_ldif"; then
-		db_fset slapd/must_disable_smbk5pwd_krb5 seen false
-		db_input critical slapd/must_disable_smbk5pwd_krb5 || true
-		db_go || true
-		exit 1
-	fi
-}
-# }}}
 preinst_check_config() {						# {{{
 # Check whether manual config changes are required before upgrading
 	if ! previous_version_older '2.4.44+dfsg-1~'; then
@@ -101,7 +90,6 @@ preinst_check_config() {						# {{{
 	normalize_ldif "$dumped_ldif" > "$config_ldif"
 
 	check_ppolicy_schema "$config_ldif"
-	ensure_smbk5pwd_krb5_disabled "$config_ldif"
 }
 # }}}
 
