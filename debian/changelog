@@ -1,3 +1,10 @@
+openldap (2.4.44+dfsg-4) UNRELEASED; urgency=medium
+
+  * Improve the slapd/ppolicy_schema_needs_update debconf template. Thanks to 
+    Justin B Rye for the review.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sun, 08 Jan 2017 12:39:19 -0800
+
 openldap (2.4.44+dfsg-3) unstable; urgency=medium
 
   * Apply upstream patch to fix FTBFS on kFreeBSD. (Closes: #845394)
