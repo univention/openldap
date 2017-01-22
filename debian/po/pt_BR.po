@@ -5,15 +5,15 @@
 # Felipe Augusto van de Wiel (faw) <faw@debian.org>, 2007.
 # Steve Langasek <vorlon@debian.org>, 2008.
 # Eder L. Marques (frolic) <frolic@debian-ce.org>, 2008.
-# Adriano Rafael Gomes <adrianorg@arg.eti.br>, 2011, 2014.
+# Adriano Rafael Gomes <adrianorg@debian.org>, 2011-2017.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: openldap 2.4.40-2\n"
+"Project-Id-Version: openldap 2.4.44+dfsg-4\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2017-01-10 05:24+0000\n"
-"PO-Revision-Date: 2014-11-15 18:15-0200\n"
-"Last-Translator: Adriano Rafael Gomes <adrianorg@arg.eti.br>\n"
+"PO-Revision-Date: 2017-01-10 10:28-0200\n"
+"Last-Translator: Adriano Rafael Gomes <adrianorg@debian.org>\n"
 "Language-Team: l10n Portuguese <debian-l10n-portuguese@lists.debian.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -374,19 +374,19 @@ msgstr "Veja /usr/share/doc/slapd/README.Debian.gz para mais detalhes."
 #. Choices
 #: ../slapd.templates:17001
 msgid "abort installation"
-msgstr ""
+msgstr "cancelar a instalação"
 
 #. Type: select
 #. Choices
 #: ../slapd.templates:17001
 msgid "continue regardless"
-msgstr ""
+msgstr "continuar independentemente"
 
 #. Type: select
 #. Description
 #: ../slapd.templates:17002
 msgid "Manual ppolicy schema update recommended"
-msgstr ""
+msgstr "Recomendada a atualização manual do esquema ppolicy"
 
 #. Type: select
 #. Description
@@ -400,6 +400,12 @@ msgid ""
 "use, the schema update should be applied on every server before continuing "
 "with the upgrade."
 msgstr ""
+"A nova versão da sobreposição \"Password Policy\" (ppolicy) exige que o "
+"esquema defina o tipo do atributo pwdMaxRecordedFailure, o qual não está "
+"presente no esquema atualmente em uso. É recomendado cancelar a atualização "
+"agora e atualizar o esquema ppolicy antes de atualizar o slapd. Se a "
+"replicação estiver em uso, a atualização do esquema deverá ser aplicada em "
+"cada servidor antes de continuar com a atualização."
 
 #. Type: select
 #. Description
@@ -409,6 +415,8 @@ msgstr ""
 msgid ""
 "An LDIF file has been generated with the changes required for the upgrade:"
 msgstr ""
+"Um arquivo LDIF foi gerado com as modificações necessárias para a "
+"atualização:"
 
 #. Type: select
 #. Description
@@ -419,6 +427,9 @@ msgid ""
 "so if slapd is using the default access control rules, these changes can be "
 "applied (after starting slapd) by using the command:"
 msgstr ""
+"então se o slapd estiver usando as regras padrão de controle de acesso, "
+"essas modificações podem ser aplicadas (depois de iniciar o slapd) usando o "
+"comando:"
 
 #. Type: select
 #. Description
@@ -428,6 +439,10 @@ msgid ""
 "will be added automatically, but the change will not be acted on by slapd "
 "overlays, and replication with other servers may be affected."
 msgstr ""
+"Se em vez disso você escolher continuar a instalação, o tipo do novo "
+"atributo será adicionado automaticamente, mas a modificação não sofrerá "
+"ações por sobreposições do slapd, e a replicação com outros servidores pode "
+"ser afetada."
 
 #~ msgid "Allow LDAPv2 protocol?"
 #~ msgstr "Permitir o protocolo LDAPv2?"

@@ -16,7 +16,7 @@ msgstr ""
 "Project-Id-Version: openldap\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2017-01-10 05:24+0000\n"
-"PO-Revision-Date: 2014-11-08 16:21+0100\n"
+"PO-Revision-Date: 2017-01-22 11:49+0100\n"
 "Last-Translator: Miroslav Kure <kurem@debian.cz>\n"
 "Language-Team: Czech <debian-l10n-czech@lists.debian.org>\n"
 "Language: cs\n"
@@ -366,19 +366,19 @@ msgstr "Více informací naleznete v /usr/share/doc/slapd/README.Debian.gz."
 #. Choices
 #: ../slapd.templates:17001
 msgid "abort installation"
-msgstr ""
+msgstr "přerušit instalaci"
 
 #. Type: select
 #. Choices
 #: ../slapd.templates:17001
 msgid "continue regardless"
-msgstr ""
+msgstr "přesto pokračovat"
 
 #. Type: select
 #. Description
 #: ../slapd.templates:17002
 msgid "Manual ppolicy schema update recommended"
-msgstr ""
+msgstr "Je doporučeno aktualizovat ppolicy schéma ručně"
 
 #. Type: select
 #. Description
@@ -392,6 +392,11 @@ msgid ""
 "use, the schema update should be applied on every server before continuing "
 "with the upgrade."
 msgstr ""
+"Nová verze politiky hesel (ppolicy) vyžaduje, aby schéma definovalo typ "
+"atributu pwdMaxRecordedFailure, který není v aktuálně používaném schématu "
+"přítomný. Doporučujeme nyní přerušit aktualizaci a aktualizovat ppolicy "
+"schéma ručně před samotnou aktualizací slapd. Pokud využíváte replikaci, "
+"měli byste před pokračováním aktualizovat schéma na všech serverech."
 
 #. Type: select
 #. Description
@@ -400,7 +405,7 @@ msgstr ""
 #: ../slapd.templates:17002
 msgid ""
 "An LDIF file has been generated with the changes required for the upgrade:"
-msgstr ""
+msgstr "Byl vytvořen LDIF soubor se změnami potřebnými pro aktualizaci:"
 
 #. Type: select
 #. Description
@@ -411,6 +416,8 @@ msgid ""
 "so if slapd is using the default access control rules, these changes can be "
 "applied (after starting slapd) by using the command:"
 msgstr ""
+"pokud slapd používá výchozí přístupová oprávnění, můžete změny aplikovat "
+"příkazem (po spuštění slapd):"
 
 #. Type: select
 #. Description
@@ -420,6 +427,9 @@ msgid ""
 "will be added automatically, but the change will not be acted on by slapd "
 "overlays, and replication with other servers may be affected."
 msgstr ""
+"Jestliže se rozhodnete pokračovat v instalaci, bude nový typ atributu "
+"přidán automaticky, avšak slapd overlaye tuto změnu nezaregistrují a může "
+"to mít vliv i na replikaci s ostatními servery."
 
 #~ msgid "Allow LDAPv2 protocol?"
 #~ msgstr "Povolit protokol LDAPv2?"

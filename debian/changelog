@@ -2,6 +2,36 @@ openldap (2.4.44+dfsg-4) UNRELEASED; urgency=medium
 
   * Improve the slapd/ppolicy_schema_needs_update debconf template. Thanks to 
     Justin B Rye for the review.
+  * Update Catalan debconf translation. (Closes: #851905)
+    Thanks to Innocent De Marchi.
+  * Update Czech debconf translation. (Closes: #852190)
+    Thanks to Miroslav Kure.
+  * Update Danish debconf translation. (Closes: #850859)
+    Thanks to Joe Dalton.
+  * Update German debconf translation. (Closes: #851480)
+    Thanks to Helge Kreutzmann.
+  * Update Basque debconf translation. (Closes: #850812)
+    Thanks to Iñaki Larrañaga Murgoitio.
+  * Update French debconf translation. (Closes: #852459)
+    Thanks to Jean-Pierre Giraud.
+  * Update Italian debconf translation. (Closes: #852074)
+    Thanks to Luca Monducci.
+  * Update Japanese debconf translation. (Closes: #851457)
+    Thanks to Kenshi Muto.
+  * Update Dutch debconf translation. (Closes: #852405)
+    Thanks to Frans Spiesschaert.
+  * Update Brazilian Portuguese debconf translation. (Closes: #852443)
+    Thanks to Adriano Rafael Gomes.
+  * Update Russian debconf translation. (Closes: #850833)
+    Thanks to Yuri Kozlov.
+  * Update Slovak debconf translation. (Closes: #850796)
+    Thanks to Ivan Masár.
+  * Update Swedish debconf translation. (Closes: #851168)
+    Thanks to Martin Bagge.
+  * Update Turkish debconf translation. (Closes: #851470)
+    Thanks to Atila KOÇ.
+  * Update Vietnamese debconf translation.
+    Thanks to Trần Ngọc Quân.
 
  -- Ryan Tandy <ryan@nardis.ca>  Sun, 08 Jan 2017 12:39:19 -0800
 

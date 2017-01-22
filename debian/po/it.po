@@ -1,13 +1,13 @@
 # Italian (it) translation of debconf templates for openldap
 # This file is distributed under the same license as the openldap package.
-# Luca Monducci <luca.mo@tiscali.it>, 2007-2014.
+# Luca Monducci <luca.mo@tiscali.it>, 2007-2017.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: openldap 2.4.40-2 italian debconf templates\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2017-01-10 05:24+0000\n"
-"PO-Revision-Date: 2014-11-01 11:45+0100\n"
+"PO-Revision-Date: 2017-01-21 11:42+0100\n"
 "Last-Translator: Luca Monducci <luca.mo@tiscali.it>\n"
 "Language-Team: Italian <debian-l10n-italian@lists.debian.org>\n"
 "Language: it\n"
@@ -28,7 +28,7 @@ msgid ""
 "If you enable this option, no initial configuration or database will be "
 "created for you."
 msgstr ""
-"Se si accetta, non verrà creata la configurazione iniziale né il database."
+"Se si accetta, non verranno creati la configurazione iniziale né il database."
 
 #. Type: select
 #. Choices
@@ -317,7 +317,7 @@ msgid ""
 "In any case, you should review the resulting database configuration for your "
 "needs. See /usr/share/doc/slapd/README.Debian.gz for more details."
 msgstr ""
-"In ogni caso è necessario rivedere la configurazione del database in base "
+"In ogni caso è opportuno rivedere la configurazione del database in base "
 "alle proprie necessità. Consultare /usr/share/doc/slapd/README.Debian.gz per "
 "maggiori informazioni."
 
@@ -364,19 +364,19 @@ msgstr ""
 #. Choices
 #: ../slapd.templates:17001
 msgid "abort installation"
-msgstr ""
+msgstr "interrompi l'installazione"
 
 #. Type: select
 #. Choices
 #: ../slapd.templates:17001
 msgid "continue regardless"
-msgstr ""
+msgstr "continua comunque"
 
 #. Type: select
 #. Description
 #: ../slapd.templates:17002
 msgid "Manual ppolicy schema update recommended"
-msgstr ""
+msgstr "Aggiornamento manuale dello schema ppolicy"
 
 #. Type: select
 #. Description
@@ -390,6 +390,12 @@ msgid ""
 "use, the schema update should be applied on every server before continuing "
 "with the upgrade."
 msgstr ""
+"La nuova versione dell'overlay Password Policy (ppolicy) richiede la "
+"definizione nello schema del tipo di attributo pwdMaxRecordedFailure il "
+"quale non è presente nello schema attualmente in uso. Si raccomanda di "
+"interrompere adesso l'aggiornamento e di preparare lo schema ppolicy prima "
+"di aggiornare slapd. Nel caso si utilizzi la replica, occorre preparare lo "
+"schema su ogni server prima di continuare con l'aggiornamento."
 
 #. Type: select
 #. Description
@@ -399,6 +405,7 @@ msgstr ""
 msgid ""
 "An LDIF file has been generated with the changes required for the upgrade:"
 msgstr ""
+"È stato generato un file LDIF con le necessarie modifiche allo schema:"
 
 #. Type: select
 #. Description
@@ -409,6 +416,9 @@ msgid ""
 "so if slapd is using the default access control rules, these changes can be "
 "applied (after starting slapd) by using the command:"
 msgstr ""
+"se slapd sta usando le regole di controllo d'accesso predefinite, le "
+"modifiche possono essere applicate (dopo aver avviato slapd) usando il "
+"comando:"
 
 #. Type: select
 #. Description
@@ -418,6 +428,9 @@ msgid ""
 "will be added automatically, but the change will not be acted on by slapd "
 "overlays, and replication with other servers may be affected."
 msgstr ""
+"Nel caso si decida di continuare l'installazione, il nuovo tipo di attributo "
+"verrà aggiunto automaticamente ma la modifica non agirà sul funzionamento "
+"degli overlay di slapd e potrebbe influenzare la replica con altri server."
 
 #~ msgid "Allow LDAPv2 protocol?"
 #~ msgstr "Abilitare il protocollo LDAPv2?"

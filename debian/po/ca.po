@@ -1,20 +1,20 @@
 # openldap po-debconf translation to Catalan.
 # This file is distributed under the same license as the openldap package.
-# Innocent De Marchi <tangram.peces@gmail.com>, 2011-2014.
+# Innocent De Marchi <tangram.peces@gmail.com>, 2011-2017.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: 2.4.40-2\n"
+"Project-Id-Version: openldap 2.4.44+dfsg-4\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2017-01-10 05:24+0000\n"
-"PO-Revision-Date: 2014-11-08 17:50+0100\n"
+"PO-Revision-Date: 2017-01-19 19:35+0100\n"
 "Last-Translator: Innocent De Marchi <tangram.peces@gmail.com>\n"
 "Language-Team: catalan <debian-l10n-catalan@lists.debian.org>\n"
 "Language: ca_ES\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.8.11\n"
 
 #. Type: boolean
 #. Description
@@ -366,19 +366,20 @@ msgstr "Consulteu «/usr/share/doc/slapd/README.Debian.gz» per a més detalls."
 #. Choices
 #: ../slapd.templates:17001
 msgid "abort installation"
-msgstr ""
+msgstr "aturar la instal·lació"
 
 #. Type: select
 #. Choices
 #: ../slapd.templates:17001
 msgid "continue regardless"
-msgstr ""
+msgstr "continua sense tenir en compte"
 
 #. Type: select
 #. Description
 #: ../slapd.templates:17002
 msgid "Manual ppolicy schema update recommended"
 msgstr ""
+"Es recomana l'actualització manual de la directiva de contrasenya («ppolicy»)"
 
 #. Type: select
 #. Description
@@ -392,6 +393,13 @@ msgid ""
 "use, the schema update should be applied on every server before continuing "
 "with the upgrade."
 msgstr ""
+"La nova versió de la superposició de directiva de contrasenya («ppolicy») "
+"requereix que l'esquema defineixi el tipus d'atribut "
+"«pwdMaxRecordedFailure», que no està inclòs en l'esquema actualment en ús. "
+"És recomana aturar ara l'actualització, i actualitzar la directiva de "
+"contrasenya abans d'actualitzar «slapd». Si la replicació està en marxa, "
+"l'actualització de l'esquema s'ha d'aplicar a cada servidor abans de "
+"continuar amb l'actualització."
 
 #. Type: select
 #. Description
@@ -401,6 +409,8 @@ msgstr ""
 msgid ""
 "An LDIF file has been generated with the changes required for the upgrade:"
 msgstr ""
+"Un s'ha generat un fitxer LDIF amb els canvis necessaris per a "
+"l'actualització:"
 
 #. Type: select
 #. Description
@@ -411,6 +421,8 @@ msgid ""
 "so if slapd is using the default access control rules, these changes can be "
 "applied (after starting slapd) by using the command:"
 msgstr ""
+"per que si «slapd» fa servir les regles d'accés predeterminades, aquests "
+"canvis es poden fer efectius (després d'iniciar «slapd») fent servir l'ordre:"
 
 #. Type: select
 #. Description
@@ -420,6 +432,10 @@ msgid ""
 "will be added automatically, but the change will not be acted on by slapd "
 "overlays, and replication with other servers may be affected."
 msgstr ""
+"En canvi, si decidiu continuar amb la instal·lació, el nou tipus d'atribut "
+"s'afegirà automàticament, però el canvi no es veurà afectat per les "
+"superposicions de «slapd», i la replicació amb altres servidors es pot veure "
+"afectada."
 
 #~ msgid "Allow LDAPv2 protocol?"
 #~ msgstr "Desitjau permetre el protocol LDAPv2?"

@@ -1,18 +1,18 @@
 # Danish translation openldap.
-# Copyright (C) 2014 openldap & nedenstående oversættere.
+# Copyright (C) 2017 openldap & nedenstående oversættere.
 # This file is distributed under the same license as the openldap package.
 # Claus Hindsgaul <claus.hindsgaul@gmail.com>, 2005, 2006.
-# Joe Hansen <joedalton2@yahoo.dk>, 2010, 2014.
+# Joe Hansen <joedalton2@yahoo.dk>, 2010, 2014, 2017.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: openldap\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2017-01-10 05:24+0000\n"
-"PO-Revision-Date: 2014-10-26 05:26+0100\n"
+"PO-Revision-Date: 2017-01-10 05:26+0100\n"
 "Last-Translator: Joe Hansen <joedalton2@yahoo.dk>\n"
-"Language-Team: Danish <debian-l10n-danish@lists.debian.org> \n"
-"Language: \n"
+"Language-Team: Danish <debian-l10n-danish@lists.debian.org>\n"
+"Language: da\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -359,19 +359,19 @@ msgstr "Se /usr/share/doc/slapd/README.Debian.gz for yderligere detaljer."
 #. Choices
 #: ../slapd.templates:17001
 msgid "abort installation"
-msgstr ""
+msgstr "afbryd installation"
 
 #. Type: select
 #. Choices
 #: ../slapd.templates:17001
 msgid "continue regardless"
-msgstr ""
+msgstr "fortsæt alligevel"
 
 #. Type: select
 #. Description
 #: ../slapd.templates:17002
 msgid "Manual ppolicy schema update recommended"
-msgstr ""
+msgstr "Manuel ppolicy-skemaopdatering anbefales"
 
 #. Type: select
 #. Description
@@ -385,6 +385,12 @@ msgid ""
 "use, the schema update should be applied on every server before continuing "
 "with the upgrade."
 msgstr ""
+"Den nye version af Password Policy-dækket (ppolicy) kræver skemaet for at "
+"definere attributtypen pwdMaxRecordedFailure, som ikke er til stede i "
+"skemaet i brug i øjeblikket. Det anbefales at afbryde opgraderingen nu, "
+"og opdatere ppolicy-skemaet før opgradering af slapd. Hvis replikering "
+"er i brug, så skal skemaopdateringen bruges på alle servere før "
+"opgraderingen fortsættes."
 
 #. Type: select
 #. Description
@@ -394,6 +400,7 @@ msgstr ""
 msgid ""
 "An LDIF file has been generated with the changes required for the upgrade:"
 msgstr ""
+"En LDIF-fil er blevet oprettet med ændringerne krævet for opgraderingen:"
 
 #. Type: select
 #. Description
@@ -404,6 +411,8 @@ msgid ""
 "so if slapd is using the default access control rules, these changes can be "
 "applied (after starting slapd) by using the command:"
 msgstr ""
+"så hvis slapd bruger standardreglerne for adgangskontrol, så kan disse "
+"ændringer anvendes (efter start af slapd) ved at bruge kommandoen:"
 
 #. Type: select
 #. Description
@@ -413,17 +422,8 @@ msgid ""
 "will be added automatically, but the change will not be acted on by slapd "
 "overlays, and replication with other servers may be affected."
 msgstr ""
+"Hvis du i stedet for vælger at fortsætte installationen, så vil den nye "
+"attributtype blive tilføjet automatisk, men der vil ikke blive handlet på "
+"ændringen af slapd-overdækker, og replikering med andre servere kan "
+"blive påvirket."
 
-#~ msgid "Allow LDAPv2 protocol?"
-#~ msgstr "Tillad LDAPv2-protokollen?"
-
-#~ msgid ""
-#~ "The obsolete LDAPv2 protocol is disabled by default in slapd. Programs "
-#~ "and users should upgrade to LDAPv3.  If you have old programs which can't "
-#~ "use LDAPv3, you should select this option and 'allow bind_v2' will be "
-#~ "added to your slapd.conf file."
-#~ msgstr ""
-#~ "Den forældede LDAPv2-protokol er deaktiveret som standard i slapd. "
-#~ "Programmer og brugere bør opgradere til LDAPv3. Hvis du har gamle "
-#~ "programmer, som ikke kan bruge LDAPv3, bør du vælgde denne indstilling og "
-#~ "'tillad bind_v2' vil blive tilføjet til din slapd.conf."
