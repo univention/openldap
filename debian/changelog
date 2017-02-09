@@ -32,6 +32,8 @@ openldap (2.4.44+dfsg-4) UNRELEASED; urgency=medium
     Thanks to Atila KOÇ.
   * Update Vietnamese debconf translation.
     Thanks to Trần Ngọc Quân.
+  * Update Build-Depends on debhelper to ensure shlibs files are installed at 
+    the expected time during build. (Closes: #854158)
 
  -- Ryan Tandy <ryan@nardis.ca>  Sun, 08 Jan 2017 12:39:19 -0800
 
