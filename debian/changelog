@@ -36,6 +36,9 @@ openldap (2.4.44+dfsg-4) UNRELEASED; urgency=medium
     the expected time during build. (Closes: #854158)
   * Update Portuguese debconf translation. (Closes: #859943)
     Thanks to Rui Branco and DebianPT.
+  * Dump the configuration and databases to LDIF before removing slapd, so 
+    that they are available if a newer version requiring migration is 
+    installed later. (Closes: #665199)
 
  -- Ryan Tandy <ryan@nardis.ca>  Sun, 08 Jan 2017 12:39:19 -0800
 

@@ -22,6 +22,10 @@ database_dumping_enabled() {						# {{{
 # Return success if yes.
 # Usage: if database_dumping_enabled; then ... fi
 
+	# If the package is being removed, dump unconditionally as we
+	# don't know whether the next version will require reload.
+	[ "$MODE" = remove ] && return 0
+
 	db_get slapd/dump_database
 	case "$RET" in
 	always)

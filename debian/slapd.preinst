@@ -94,13 +94,23 @@ preinst_check_config() {						# {{{
 # }}}
 
 # If we are upgrading from an old version then stop slapd and attempt to
-# slapcat out the data so we can use it in postinst to do the upgrade
+# slapcat out the data so we can use it in postinst to do the upgrade.
+# If slapd was removed and is being reinstalled, slapcat is not
+# available at this time, so the data should have been dumped before the
+# old slapd was removed.
 
 if [ "$MODE" = upgrade ]; then
 	dump_config
+fi
+
+if [ "$MODE" = upgrade ] || [ "$MODE" = install -a -n "$OLD_VERSION" ]; then
+	# Do not assume slapcat is available in this phase
 	if [ -d "$SLAPD_CONF" ]; then
 		preinst_check_config
 	fi
+fi
+
+if [ "$MODE" = upgrade ]; then
 	dump_databases
 fi
 
