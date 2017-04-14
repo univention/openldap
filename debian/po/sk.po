@@ -165,8 +165,8 @@ msgid ""
 "dc=example, dc=org' as base DN."
 msgstr ""
 "Meno domény (DNS) sa použije na vytvorenie základného DN adresára LDAP. "
-"Napríklad „foo.example.org“ vytvorí adresár so základným DN „dc=foo, dc="
-"example, dc=org“."
+"Napríklad „foo.example.org“ vytvorí adresár so základným DN „dc=foo, "
+"dc=example, dc=org“."
 
 #. Type: string
 #. Description
@@ -291,10 +291,6 @@ msgstr "Použiť backend databázy:"
 #. Type: select
 #. Description
 #: ../slapd.templates:15001
-#| msgid ""
-#| "The HDB backend is recommended. HDB and BDB use similar storage formats, "
-#| "but HDB adds support for subtree renames. Both support the same "
-#| "configuration options."
 msgid ""
 "HDB and BDB use similar storage formats, but HDB adds support for subtree "
 "renames. Both support the same configuration options."
@@ -305,10 +301,6 @@ msgstr ""
 #. Type: select
 #. Description
 #: ../slapd.templates:15001
-#| msgid ""
-#| "The HDB backend is recommended. HDB and BDB use similar storage formats, "
-#| "but HDB adds support for subtree renames. Both support the same "
-#| "configuration options."
 msgid ""
 "The MDB backend is recommended. MDB uses a new storage format and requires "
 "less configuration than BDB or HDB."
@@ -319,17 +311,13 @@ msgstr ""
 #. Type: select
 #. Description
 #: ../slapd.templates:15001
-#| msgid ""
-#| "In either case, you should review the resulting database configuration "
-#| "for your needs. See /usr/share/doc/slapd/README.DB_CONFIG.gz for more "
-#| "details."
 msgid ""
 "In any case, you should review the resulting database configuration for your "
 "needs. See /usr/share/doc/slapd/README.Debian.gz for more details."
 msgstr ""
 "V každom prípade by ste mali skontrolovať, či výsledné nastavenie databázy "
-"zodpovedá vašim potrebám. Ďalšie informácie nájdete v súbore "
-"/usr/share/doc/slapd/README.Debian.gz."
+"zodpovedá vašim potrebám. Ďalšie informácie nájdete v súbore /usr/share/doc/"
+"slapd/README.Debian.gz."
 
 #. Type: note
 #. Description
