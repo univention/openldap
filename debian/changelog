@@ -39,6 +39,8 @@ openldap (2.4.44+dfsg-4) UNRELEASED; urgency=medium
   * Dump the configuration and databases to LDIF before removing slapd, so 
     that they are available if a newer version requiring migration is 
     installed later. (Closes: #665199)
+  * When creating a new configuration with dpkg-reconfigure, back up the old 
+    configuration before overwriting it.
 
  -- Ryan Tandy <ryan@nardis.ca>  Sun, 08 Jan 2017 12:39:19 -0800
 

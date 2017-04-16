@@ -32,9 +32,7 @@ postinst_upgrade_configuration() {					# {{{
 # Usage: postinst_upgrade_configuration
 
 	# Better back up the config file in any case
-	echo -n "  Backing up $SLAPD_CONF in `database_dumping_destdir`... " >&2
 	backup_config_once
-	echo done. >&2
 
 	# Complete any config updates before trying to use slapadd
 	if [ -d "$SLAPD_CONF" ]; then

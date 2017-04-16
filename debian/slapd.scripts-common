@@ -452,6 +452,7 @@ create_new_configuration() {						# {{{
 	db_get slapd/backend
 	backend="`echo $RET|tr A-Z a-z`"
 
+	backup_config_once
 	if [ -e "/var/lib/ldap" ] && ! is_empty_dir /var/lib/ldap; then
 		echo >&2 "  Moving old database directory to /var/backups:"
 		move_old_database_away /var/lib/ldap
@@ -585,9 +586,11 @@ backup_config_once() {							# {{{
 	local backupdir
 
 	if [ -z "$FLAG_CONFIG_BACKED_UP" ]; then
-		backupdir=`database_dumping_destdir`
 		if [ -e "$SLAPD_CONF" ]; then
+			backupdir=`database_dumping_destdir`
+			echo -n "  Backing up $SLAPD_CONF in ${backupdir}... " >&2
 			cp -a "$SLAPD_CONF" "$backupdir"
+			echo done. >&2
 		fi
 		FLAG_CONFIG_BACKED_UP=yes
 	fi
