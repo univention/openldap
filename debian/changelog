@@ -1,4 +1,4 @@
-openldap (2.4.44+dfsg-4) UNRELEASED; urgency=medium
+openldap (2.4.44+dfsg-4) unstable; urgency=medium
 
   * Improve the slapd/ppolicy_schema_needs_update debconf template. Thanks to 
     Justin B Rye for the review.
@@ -42,7 +42,7 @@ openldap (2.4.44+dfsg-4) UNRELEASED; urgency=medium
   * When creating a new configuration with dpkg-reconfigure, back up the old 
     configuration before overwriting it.
 
- -- Ryan Tandy <ryan@nardis.ca>  Sun, 08 Jan 2017 12:39:19 -0800
+ -- Ryan Tandy <ryan@nardis.ca>  Sun, 16 Apr 2017 20:10:43 -0700
 
 openldap (2.4.44+dfsg-3) unstable; urgency=medium
 
