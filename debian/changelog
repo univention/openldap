@@ -1,13 +1,13 @@
-openldap (2.4.44+dfsg-5) UNRELEASED; urgency=medium
+openldap (2.4.44+dfsg-5) unstable; urgency=medium
 
-  * ITS-8644-wait-for-slapd-to-start-in-test064.patch: Fix an intermittently 
-    failing test by waiting for slapd to start before running tests.
-    (ITS#8644) (Closes: #770890)
+  * debian/patches/ITS-8644-wait-for-slapd-to-start-in-test064.patch: Fix an 
+    intermittently failing test by waiting for slapd to start before running 
+    tests. (ITS#8644) (Closes: #770890)
   * debian/patches/ITS-8655-paged-results-double-free.patch: Fix a double free 
     in the MDB backend on a search including the Paged Results control with a 
     page size of 0. (ITS#8655) (Closes: #863563)
 
- -- Ryan Tandy <ryan@nardis.ca>  Sun, 28 May 2017 09:33:14 -0700
+ -- Ryan Tandy <ryan@nardis.ca>  Sun, 28 May 2017 09:59:46 -0700
 
 openldap (2.4.44+dfsg-4) unstable; urgency=medium
 
