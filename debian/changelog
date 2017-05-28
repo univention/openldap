@@ -1,3 +1,11 @@
+openldap (2.4.44+dfsg-5) UNRELEASED; urgency=medium
+
+  * ITS-8644-wait-for-slapd-to-start-in-test064.patch: Fix an intermittently 
+    failing test by waiting for slapd to start before running tests.
+    (ITS#8644) (Closes: #770890)
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sun, 28 May 2017 09:33:14 -0700
+
 openldap (2.4.44+dfsg-4) unstable; urgency=medium
 
   * Improve the slapd/ppolicy_schema_needs_update debconf template. Thanks to 
