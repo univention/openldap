@@ -105,7 +105,7 @@ update_permissions() {	# {{{
 }
 # }}}
 update_databases_permissions() {	# {{{
-	get_suffix | while read suffix; do
+	get_suffix | while read -r suffix; do
 		dbdir=`get_directory "$suffix"`
 		update_permissions "$dbdir"
 	done
@@ -296,8 +296,8 @@ get_suffix() {								# {{{
 # }}}
 get_directory() {							# {{{
 # Returns the db directory for a given suffix
-	if [ -d "${SLAPD_CONF}" ] && get_suffix | grep -q "$1" ; then
-		sed -n 's/^olcDbDirectory: *//p' `grep -l "^olcSuffix: $1" ${SLAPD_CONF}/cn\=config/olcDatabase*.ldif`
+	if [ -d "${SLAPD_CONF}" ] && get_suffix | grep -Fq "$1" ; then
+		sed -n 's/^olcDbDirectory: *//p' `grep -Fl "^olcSuffix: $1" ${SLAPD_CONF}/cn\=config/olcDatabase*.ldif`
 	elif [ -f "${SLAPD_CONF}" ]; then
 		# Extract the directory for the given suffix ($1)
 		for f in `get_all_slapd_conf_files`; do
