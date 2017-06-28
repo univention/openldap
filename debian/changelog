@@ -1,9 +1,9 @@
-openldap (2.4.44+dfsg-7) UNRELEASED; urgency=medium
+openldap (2.4.44+dfsg-7) unstable; urgency=medium
 
   * Relax the dependency of libldap-2.4-2 on libldap-common to also permit 
     later versions. (Closes: #860774)
 
- -- Ryan Tandy <ryan@nardis.ca>  Tue, 27 Jun 2017 18:48:58 -0700
+ -- Ryan Tandy <ryan@nardis.ca>  Tue, 27 Jun 2017 18:53:12 -0700
 
 openldap (2.4.44+dfsg-6) unstable; urgency=medium
 
