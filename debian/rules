@@ -13,6 +13,7 @@ export RESOLV_MULTI = off
 DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 DEB_HOST_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_HOST_ARCH_OS ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
+DEB_HOST_ARCH ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 
 CONFIG		= $(shell grep -v "^\#" debian/configure.options)
 ifeq ($(DEB_HOST_ARCH_OS),hurd)
@@ -107,6 +108,13 @@ ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	$(MAKE) -C contrib/slapd-modules/lastbind CC=$(CC)
 	$(MAKE) -C contrib/slapd-modules/passwd/sha2 CC=$(CC)
 endif
+
+override_dh_auto_test:
+ifeq ($(DEB_HOST_ARCH),ppc64el)
+	# Disable test060-mt-host on ppc64el until #866122 is fixed.
+	rm -f tests/scripts/test060-mt-hot
+endif
+	dh_auto_test
 
 override_dh_auto_install:
 	dh_auto_install -- $(MAKEVARS)

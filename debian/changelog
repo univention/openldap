@@ -1,3 +1,10 @@
+openldap (2.4.44+dfsg-8) UNRELEASED; urgency=medium
+
+  * Disable test060-mt-hot on ppc64el temporarily to avoid failing tests until 
+    the underlying kernel bug #866122 is fixed.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sun, 16 Jul 2017 10:30:15 -0700
+
 openldap (2.4.44+dfsg-7) unstable; urgency=medium
 
   * Relax the dependency of libldap-2.4-2 on libldap-common to also permit 
