@@ -2,6 +2,9 @@ openldap (2.4.44+dfsg-8) UNRELEASED; urgency=medium
 
   * Disable test060-mt-hot on ppc64el temporarily to avoid failing tests until 
     the underlying kernel bug #866122 is fixed.
+  * Fix FTBFS with Heimdal 7.2.0: Drop patch heimdal-fix as the 
+    hdb_generate_key_set_password change was reverted in heimdal. Depend on an 
+    appropriate minimum version of heimdal.
 
  -- Ryan Tandy <ryan@nardis.ca>  Sun, 16 Jul 2017 10:30:15 -0700
 
