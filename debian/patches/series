@@ -23,6 +23,3 @@ switch-to-lt_dlopenadvise-to-get-RTLD_GLOBAL-set.diff
 no-bdb-ABI-second-guessing
 ITS6035-olcauthzregex-needs-restart.patch
 set-maintainer-name
-ITS-8554-kFreeBSD-is-like-BSD.patch
-ITS-8644-wait-for-slapd-to-start-in-test064.patch
-ITS-8655-paged-results-double-free.patch

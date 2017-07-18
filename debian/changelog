@@ -7,6 +7,13 @@ openldap (2.4.45+dfsg-1) UNRELEASED; urgency=medium
       (ITS#8648) (Closes: #860947) (LP: #1688575)
     - fixed syncrepl infinite looping with multi-master delta-syncrepl
       (ITS#8432) (Closes: #868753)
+  * Rebase patches to apply cleanly:
+    - do-not-second-guess-sonames
+    - no-AM_INIT_AUTOMAKE
+  * Drop patches applied upstream:
+    - ITS-8554-kFreeBSD-is-like-BSD.patch
+    - ITS-8644-wait-for-slapd-to-start-in-test064.patch
+    - ITS-8655-paged-results-double-free.patch
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 17 Jul 2017 20:30:07 -0700
 
