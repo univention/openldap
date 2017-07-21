@@ -61,7 +61,7 @@ get-orig-source:
 	rm -r openldap-$(VERSION)+dfsg
 	gzip -9 openldap_$(VERSION)+dfsg.orig.tar
 
-DH = dh $@ --with autoreconf --builddirectory=$(builddir) --parallel
+DH = dh $@ --builddirectory=$(builddir)
 .PHONY: build
 build:
 	$(DH)
