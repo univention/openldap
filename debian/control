@@ -24,7 +24,7 @@ Build-Depends: debhelper (>= 10),
                time <!stage1>,
                unixodbc-dev <!stage1>
 Build-Conflicts: libbind-dev, bind-dev, libicu-dev, autoconf2.13
-Standards-Version: 3.9.8
+Standards-Version: 4.0.0
 Homepage: http://www.openldap.org/
 Vcs-Git: https://anonscm.debian.org/git/pkg-openldap/openldap.git
 Vcs-Browser: https://anonscm.debian.org/git/pkg-openldap/openldap.git
