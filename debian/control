@@ -2,11 +2,9 @@ Source: openldap
 Section: net
 Priority: optional
 Maintainer: Debian OpenLDAP Maintainers <pkg-openldap-devel@lists.alioth.debian.org>
-Uploaders: Roland Bauerschmidt <rb@debian.org>,
- Steve Langasek <vorlon@debian.org>,
+Uploaders: Steve Langasek <vorlon@debian.org>,
  Torsten Landschoff <torsten@debian.org>,
  Matthijs Möhlmann <matthijs@cacholong.nl>,
- Timo Aaltonen <tjaalton@ubuntu.com>,
  Ryan Tandy <ryan@nardis.ca>
 Build-Depends: debhelper (>= 10),
                dpkg-dev (>= 1.17.14),

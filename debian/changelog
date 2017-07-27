@@ -28,6 +28,9 @@ openldap (2.4.45+dfsg-1) UNRELEASED; urgency=medium
     duplicate information from the source stanza.
   * Update Priority of slapd-smbk5pwd and libldap2-dev to optional to match 
     the archive.
+  * Remove retired developer, Roland Bauerschmidt, from Uploaders.
+    (Closes: #856422)
+  * Remove Timo Aaltonen from Uploaders, with his agreement.
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 17 Jul 2017 20:30:07 -0700
 
