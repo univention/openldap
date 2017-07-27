@@ -48,7 +48,6 @@ Description: OpenLDAP server (slapd)
  service.
 
 Package: slapd-smbk5pwd
-Priority: extra
 Architecture: any
 Build-Profiles: <!stage1>
 Depends: slapd (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
@@ -98,7 +97,6 @@ Description: OpenLDAP common files for libraries
 
 Package: libldap2-dev
 Section: libdevel
-Priority: extra
 Architecture: any
 Multi-Arch: same
 Conflicts: libldap-dev, libopenldap-dev
