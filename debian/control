@@ -101,19 +101,6 @@ Description: OpenLDAP common files for libraries
  These are common files for the run-time libraries for the OpenLDAP
  (Lightweight Directory Access Protocol) servers and clients.
 
-Package: libldap-2.4-2-dbg
-Section: debug
-Priority: extra
-Architecture: any
-Multi-Arch: same
-Depends: libldap-2.4-2 (= ${binary:Version}), ${misc:Depends}
-Description: Debugging information for OpenLDAP libraries
- This package provides detached debugging information for the OpenLDAP
- (Lightweight Directory Access Protocol) libraries. It is useful
- primarily to permit better backtraces and crash dump analysis after
- problems with the libraries. GDB will find this debug information
- automatically.
-
 Package: libldap2-dev
 Section: libdevel
 Priority: extra
@@ -127,16 +114,3 @@ Description: OpenLDAP development libraries
  This package allows development of LDAP applications using the OpenLDAP
  libraries. It includes headers, libraries and links to allow static and
  dynamic linking.
-
-Package: slapd-dbg
-Section: debug
-Priority: extra
-Architecture: any
-Build-Profiles: <!stage1>
-Depends: slapd (= ${binary:Version}), ${misc:Depends}
-Description: Debugging information for the OpenLDAP server (slapd)
- This package provides detached debugging information for the OpenLDAP
- (Lightweight Directory Access Protocol) server (slapd). It is useful
- primarily to permit better backtraces and crash dump analysis after
- problems with the libraries. GDB will find this debug information
- automatically.

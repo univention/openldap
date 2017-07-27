@@ -21,6 +21,8 @@ openldap (2.4.45+dfsg-1) UNRELEASED; urgency=medium
     - Drop dh-autoreconf from build-depends since debhelper requires it.
   * Add -Wno-format-extra-args to CFLAGS to reduce the noise in the build 
     logs, as this warning is emitted on each use of the Debug() macro.
+  * Drop libldap-2.4-4-dbg and slapd-dbg binary packages in favour of 
+    automatic dbgsym packages.
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 17 Jul 2017 20:30:07 -0700
 

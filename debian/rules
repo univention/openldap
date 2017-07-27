@@ -169,11 +169,11 @@ override_dh_fixperms-arch:
 endif
 
 override_dh_strip:
-	dh_strip -plibldap-2.4-2 --dbg-package=libldap-2.4-2-dbg
+	dh_strip -plibldap-2.4-2 --dbgsym-migration='libldap-2.4-2-dbg (<< 2.4.45+dfsg-1~)'
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
-	dh_strip -pslapd --dbg-package=slapd-dbg
+	dh_strip -pslapd --dbgsym-migration='slapd-dbg (<< 2.4.45+dfsg-1~)'
 endif
-	dh_strip -Nlibldap-2.4-2 -Nslapd
+	dh_strip --remaining-packages
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	# hardlink these so not confined by apparmor; do this here and not
 	# in dh_link so that dh_strip doesn't get confused and put the wrong
