@@ -35,6 +35,7 @@ openldap (2.4.45+dfsg-1) UNRELEASED; urgency=medium
     If gnutls_handshake() returns EAGAIN, call it again. Fixes TLS handshake 
     failures when the ServerHello message exceeds 16K.
     (ITS#8650) (Closes: #861838)
+  * Drop time from Build-Depends. The upstream testsuite no longer calls it.
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 17 Jul 2017 20:30:07 -0700
 
