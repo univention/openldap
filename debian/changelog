@@ -31,6 +31,10 @@ openldap (2.4.45+dfsg-1) UNRELEASED; urgency=medium
   * Remove retired developer, Roland Bauerschmidt, from Uploaders.
     (Closes: #856422)
   * Remove Timo Aaltonen from Uploaders, with his agreement.
+  * debian/patches/ITS8650-retry-gnutls_handshake-after-GNUTLS_E_AGAIN.patch: 
+    If gnutls_handshake() returns EAGAIN, call it again. Fixes TLS handshake 
+    failures when the ServerHello message exceeds 16K.
+    (ITS#8650) (Closes: #861838)
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 17 Jul 2017 20:30:07 -0700
 
