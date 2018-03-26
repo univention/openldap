@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2017 The OpenLDAP Foundation.
+ * Copyright 2008-2018 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -358,7 +358,9 @@ tlsg_session_accept( tls_session *session )
 	tlsg_session *s = (tlsg_session *)session;
 	int rc;
 
-	rc = gnutls_handshake( s->session );
+	for ( rc = gnutls_handshake ( s->session );
+	      rc == GNUTLS_E_INTERRUPTED || rc == GNUTLS_E_AGAIN;
+	      rc = gnutls_handshake ( s->session ) );
 	if ( rc == 0 && s->ctx->reqcert != LDAP_OPT_X_TLS_NEVER ) {
 		const gnutls_datum_t *peer_cert_list;
 		unsigned int list_size;
