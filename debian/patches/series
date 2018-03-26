@@ -23,4 +23,3 @@ switch-to-lt_dlopenadvise-to-get-RTLD_GLOBAL-set.diff
 no-bdb-ABI-second-guessing
 ITS6035-olcauthzregex-needs-restart.patch
 set-maintainer-name
-ITS8650-retry-gnutls_handshake-after-GNUTLS_E_AGAIN.patch

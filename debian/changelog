@@ -1,11 +1,17 @@
-openldap (2.4.45+dfsg-2) UNRELEASED; urgency=medium
+openldap (2.4.46+dfsg-1) UNRELEASED; urgency=medium
 
   * Move the repository to Salsa.
     Update debian/control Vcs-* fields.
   * Remove Matthijs Möhlmann from Uploaders. (Closes: #891308)
     Thank you Matthijs for your past contributions.
+  * New upstream release.
+    - fixed slapd out-of-sync issue with delta-MMR and memberof overlay
+      (ITS#8444) (Closes: #877166)
+  * Rebase patch no-AM_INIT_AUTOMAKE to apply cleanly.
+  * Drop patch ITS8650-retry-gnutls_handshake-after-GNUTLS_E_AGAIN, applied
+    upstream.
 
- -- Ryan Tandy <ryan@nardis.ca>  Sun, 25 Mar 2018 18:51:07 -0700
+ -- Ryan Tandy <ryan@nardis.ca>  Mon, 26 Mar 2018 02:47:39 +0000
 
 openldap (2.4.45+dfsg-1) unstable; urgency=medium
 
