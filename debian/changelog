@@ -10,6 +10,8 @@ openldap (2.4.46+dfsg-1) UNRELEASED; urgency=medium
   * Rebase patch no-AM_INIT_AUTOMAKE to apply cleanly.
   * Drop patch ITS8650-retry-gnutls_handshake-after-GNUTLS_E_AGAIN, applied
     upstream.
+  * Update Priority of libldap-2.4-2 and libldap-common to optional, matching
+    the archive override file.
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 26 Mar 2018 02:47:39 +0000
 

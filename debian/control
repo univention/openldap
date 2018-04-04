@@ -69,7 +69,6 @@ Description: OpenLDAP utilities
 
 Package: libldap-2.4-2
 Section: libs
-Priority: standard
 Architecture: any
 Multi-Arch: same
 Conflicts: ldap-utils (<= 2.1.23-1)
@@ -82,7 +81,6 @@ Description: OpenLDAP libraries
 
 Package: libldap-common
 Section: libs
-Priority: standard
 Architecture: all
 Multi-Arch: foreign
 Depends: ${misc:Depends}
