@@ -182,7 +182,7 @@ dump_databases() {							# {{{
 
 	dir=`database_dumping_destdir`
 	echo >&2 "  Dumping to $dir: "
-	(get_suffix | while read suffix; do
+	(get_suffix | while read -r suffix; do
 		dbdir=`get_directory "$suffix"`
 		if [ -n "$dbdir" ]; then
 			file="$dir/$suffix.ldif"
@@ -215,7 +215,7 @@ load_databases() {							# {{{
 	echo >&2 "  Loading from $dir: "
 	# restore by increasing suffix length due to possibly glued databases
 	get_suffix | awk '{ print length, $0 }' | sort -n | cut -d ' ' -f 2- \
-	| while read suffix; do
+	| while read -r suffix; do
 		dbdir=`get_directory "$suffix"`
 		if [ -z "$dbdir" ]; then
 			continue
@@ -267,7 +267,7 @@ EOF
 # }}}
 move_incompatible_databases_away() {					# {{{
 	echo >&2 "  Moving old database directories to /var/backups:"
-	(get_suffix | while read suffix; do
+	(get_suffix | while read -r suffix; do
 		dbdir=`get_directory "$suffix"`
 		move_old_database_away "$dbdir" "$suffix" <&5
 	done) 5<&0 </dev/null
@@ -297,7 +297,7 @@ get_suffix() {								# {{{
 get_directory() {							# {{{
 # Returns the db directory for a given suffix
 	if [ -d "${SLAPD_CONF}" ] && get_suffix | grep -Fq "$1" ; then
-		sed -n 's/^olcDbDirectory: *//p' `grep -Fl "^olcSuffix: $1" ${SLAPD_CONF}/cn\=config/olcDatabase*.ldif`
+		sed -n 's/^olcDbDirectory: *//p' `grep -Flx "olcSuffix: $1" ${SLAPD_CONF}/cn\=config/olcDatabase*.ldif`
 	elif [ -f "${SLAPD_CONF}" ]; then
 		# Extract the directory for the given suffix ($1)
 		for f in `get_all_slapd_conf_files`; do
