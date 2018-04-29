@@ -10,11 +10,11 @@ openldap (2.4.46+dfsg-1) UNRELEASED; urgency=medium
   * Rebase patch no-AM_INIT_AUTOMAKE to apply cleanly.
   * Drop patch ITS8650-retry-gnutls_handshake-after-GNUTLS_E_AGAIN, applied
     upstream.
-  * Update Priority of libldap-2.4-2 and libldap-common to optional, matching
-    the archive override file.
   * Really fix upgrades when the config contains backslash-escaped special
     characters. The previous fix was incomplete and didn't fully fix upgrades
     involving a database reload. (Closes: #864719)
+  * Update Standards-Version to 4.1.4.
+    - Change the Priority of libldap-2.4-2 and libldap-common to optional.
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 26 Mar 2018 02:47:39 +0000
 
