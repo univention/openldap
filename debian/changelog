@@ -1,4 +1,4 @@
-openldap (2.4.46+dfsg-1) UNRELEASED; urgency=medium
+openldap (2.4.46+dfsg-1) unstable; urgency=medium
 
   * Move the repository to Salsa.
     Update debian/control Vcs-* fields.
@@ -19,7 +19,7 @@ openldap (2.4.46+dfsg-1) UNRELEASED; urgency=medium
   * Override the binary-or-shlib-defines-rpath Lintian tag for slapd-smbk5pwd.
     The rpath is set by krb5-config.heimdal; see bug #868840.
 
- -- Ryan Tandy <ryan@nardis.ca>  Mon, 26 Mar 2018 02:47:39 +0000
+ -- Ryan Tandy <ryan@nardis.ca>  Thu, 03 May 2018 07:03:30 -0700
 
 openldap (2.4.45+dfsg-1) unstable; urgency=medium
 
