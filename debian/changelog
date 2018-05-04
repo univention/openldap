@@ -1,3 +1,10 @@
+openldap (2.4.46+dfsg-5) unstable; urgency=medium
+
+  * Restore slapd-smbk5pwd now that libldap is installable in unstable.
+    This reverts the changes from -3 and -4.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Fri, 04 May 2018 16:12:27 -0700
+
 openldap (2.4.46+dfsg-4) unstable; urgency=medium
 
   * Disable building the smbk5pwd plugin temporarily.
