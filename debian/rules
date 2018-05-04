@@ -103,7 +103,7 @@ override_dh_auto_configure:
 override_dh_auto_build:
 	dh_auto_build -- $(MAKEVARS)
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
-	$(MAKE) -C contrib/slapd-modules/smbk5pwd CC=$(CC)
+#	$(MAKE) -C contrib/slapd-modules/smbk5pwd CC=$(CC)
 	$(MAKE) -C contrib/slapd-modules/autogroup CC=$(CC)
 	$(MAKE) -C contrib/slapd-modules/lastbind CC=$(CC)
 	$(MAKE) -C contrib/slapd-modules/passwd/sha2 CC=$(CC)
@@ -119,7 +119,7 @@ endif
 override_dh_auto_install:
 	dh_auto_install -- $(MAKEVARS)
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
-	$(MAKE) -C contrib/slapd-modules/smbk5pwd install DESTDIR=$(installdir)
+#	$(MAKE) -C contrib/slapd-modules/smbk5pwd install DESTDIR=$(installdir)
 	$(MAKE) -C contrib/slapd-modules/autogroup install DESTDIR=$(installdir)
 	$(MAKE) -C contrib/slapd-modules/lastbind install DESTDIR=$(installdir)
 	$(MAKE) -C contrib/slapd-modules/passwd/sha2 install DESTDIR=$(installdir)

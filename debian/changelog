@@ -1,3 +1,9 @@
+openldap (2.4.46+dfsg-4) unstable; urgency=medium
+
+  * Disable building the smbk5pwd plugin temporarily.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Fri, 04 May 2018 08:06:58 -0700
+
 openldap (2.4.46+dfsg-3) unstable; urgency=medium
 
   * Build without heimdal temporarily to resolve BD-Uninstallable loop.
