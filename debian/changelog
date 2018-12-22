@@ -1,3 +1,11 @@
+openldap (2.4.47+dfsg-1) UNRELEASED; urgency=medium
+
+  * New upstream release.
+    - reverted GnuTLS handshake change in libldap as it regressed slapd
+      (Reopens: #861838)
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sat, 22 Dec 2018 02:39:48 +0000
+
 openldap (2.4.46+dfsg-5) unstable; urgency=medium
 
   * Restore slapd-smbk5pwd now that libldap is installable in unstable.
