@@ -3,6 +3,7 @@ openldap (2.4.47+dfsg-1) UNRELEASED; urgency=medium
   * New upstream release.
     - reverted GnuTLS handshake change in libldap as it regressed slapd
       (Reopens: #861838)
+  * Update Standards-Version to 4.2.1.
 
  -- Ryan Tandy <ryan@nardis.ca>  Sat, 22 Dec 2018 02:39:48 +0000
 
