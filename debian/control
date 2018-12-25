@@ -101,3 +101,13 @@ Description: OpenLDAP development libraries
  This package allows development of LDAP applications using the OpenLDAP
  libraries. It includes headers, libraries and links to allow static and
  dynamic linking.
+
+Package: slapi-dev
+Section: libdevel
+Architecture: any
+Build-Profiles: <!stage1>
+Depends: slapd (= ${binary:Version}), ${misc:Depends}
+Description: development libraries for OpenLDAP SLAPI plugin interface
+ This package allows development of plugins for the OpenLDAP slapd server
+ using the SLAPI interface.  It includes the headers and libraries needed
+ to build such plugins.
