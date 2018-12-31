@@ -2,6 +2,7 @@ openldap (2.4.47+dfsg-2) UNRELEASED; urgency=medium
 
   * Reintroduce slapi-dev binary package. (Closes: #711469)
     Thanks to Florian Schlichting.
+  * Do not call gnutls_global_set_mutex(). (Closes: #803197)
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 24 Dec 2018 12:14:43 -0800
 
