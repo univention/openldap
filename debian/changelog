@@ -7,6 +7,8 @@ openldap (2.4.47+dfsg-2) UNRELEASED; urgency=medium
     - Stop patching the clean rule in smbk5pwd's Makefile.
   * Explicitly list overlays and man pages installed by slapd package in
     slapd.install and slapd.manpages files.
+  * Set common variables for contrib Makefiles by make(1) command line instead
+    of patching every Makefile.
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 24 Dec 2018 12:14:43 -0800
 

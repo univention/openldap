@@ -37,6 +37,15 @@ slapddir	:= $(CURDIR)/debian/slapd/usr/sbin
 
 MAKEVARS	:= STRIP=
 
+# Standard variables used in contrib Makefiles.
+# We override these in make invocations rather than patch every one.
+CONTRIB_MAKEVARS := \
+	LDAP_BUILD='$(builddir)' \
+	OPT='$$(CFLAGS) $$(CPPFLAGS) $$(LDFLAGS)' \
+	prefix=/usr \
+	ldap_subdir=/ldap \
+	moduledir='$$(libdir)$$(ldap_subdir)'
+
 # These variables are used only by get-orig-source, which will normally only
 # be run by maintainers.
 VERSION = $(shell dpkg-parsechangelog |grep Version| sed 's/.*: //;s/\+dfsg//;s/-.*//')
@@ -106,7 +115,7 @@ override_dh_auto_build:
 	dh_auto_build -- $(MAKEVARS)
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	for mod in $(CONTRIB_MODULES); do \
-		dh_auto_build -Dcontrib/slapd-modules/$$mod -Bcontrib/slapd-modules/$$mod || exit $$?; \
+		dh_auto_build -Dcontrib/slapd-modules/$$mod -Bcontrib/slapd-modules/$$mod -- $(CONTRIB_MAKEVARS) || exit $$?; \
 	done
 endif
 
@@ -121,7 +130,7 @@ override_dh_auto_install:
 	dh_auto_install -- $(MAKEVARS)
 ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	for mod in $(CONTRIB_MODULES); do \
-		dh_auto_install -Dcontrib/slapd-modules/$$mod -Bcontrib/slapd-modules/$$mod || exit $$?; \
+		dh_auto_install -Dcontrib/slapd-modules/$$mod -Bcontrib/slapd-modules/$$mod -- $(CONTRIB_MAKEVARS) || exit $$?; \
 	done
 
 	# Empty the dependency_libs file in the .la files.
