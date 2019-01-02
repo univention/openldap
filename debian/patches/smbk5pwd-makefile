@@ -47,12 +47,3 @@
  
  .SUFFIXES: .c .o .lo
  
-@@ -55,7 +56,7 @@
- 	-rpath $(moduledir) -module -o $@ $? $(LIBS)
- 
- clean:
--	rm -rf *.o *.lo *.la .libs
-+	$(LIBTOOL) --mode=clean rm -f
- 
- install: $(PROGRAMS)
- 	mkdir -p $(DESTDIR)$(moduledir)

@@ -44,7 +44,7 @@ index 676d914..0042a49 100644
  
 @@ -58,9 +62,17 @@
  clean:
- 	$(LIBTOOL) --mode=clean rm -f
+ 	rm -rf *.o *.lo *.la .libs
  
 -install: $(PROGRAMS)
 +install: install-lib install-man FORCE
