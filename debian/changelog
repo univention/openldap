@@ -9,6 +9,9 @@ openldap (2.4.47+dfsg-2) UNRELEASED; urgency=medium
     slapd.install and slapd.manpages files.
   * Set common variables for contrib Makefiles by make(1) command line instead
     of patching every Makefile.
+  * Build and install more contrib plugins in a new slapd-contrib package:
+    - pw-apr1 and pw-netscape (Closes: #592362)
+    - pw-pbkdf2 (Closes: #794999)
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 24 Dec 2018 12:14:43 -0800
 
