@@ -47,20 +47,22 @@ Package: slapd-contrib
 Architecture: any
 Build-Profiles: <!stage1>
 Depends: slapd (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Provides: slapd-smbk5pwd
+Breaks: slapd-smbk5pwd (<< 2.4.47+dfsg-2~)
+Replaces: slapd-smbk5pwd (<< 2.4.47+dfsg-2~)
 Description: contributed plugins for OpenLDAP slapd
  This package contains a number of slapd overlays and plugins contributed by
  the OpenLDAP community. While distributed as part of OpenLDAP Software, they
  are not necessarily supported by the OpenLDAP Project.
 
 Package: slapd-smbk5pwd
-Architecture: any
+Architecture: all
+Section: oldlibs
 Build-Profiles: <!stage1>
-Depends: slapd (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
-Description: Keeps Samba and Kerberos passwords in sync within slapd.
- Extends the PasswordModify Extended Operation to update Kerberos keys
- and Samba password hashes for an LDAP user. The Kerberos support is
- written for Heimdal using its hdb-ldap backend. The Samba support is
- written using the Samba 3.0 LDAP schema.
+Depends: slapd-contrib, ${misc:Depends}
+Description: transitional package for slapd-contrib
+ This is a transitional package from slapd-smbk5pwd to slapd-contrib. It can be
+ safely removed.
 
 Package: ldap-utils
 Architecture: any

@@ -14,6 +14,9 @@ openldap (2.4.47+dfsg-2) UNRELEASED; urgency=medium
     - pw-pbkdf2 (Closes: #794999)
   * Import the slapo-pw-pbkdf2 man page from upstream git master and install
     it with the slapd-contrib package.
+  * Add smbk5pwd to slapd-contrib and turn slapd-smbk5pwd into a transitional
+    package. Drop smbk5pwd README since it now has a man page which is a
+    better resource for users.
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 24 Dec 2018 12:14:43 -0800
 

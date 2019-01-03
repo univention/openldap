@@ -158,12 +158,6 @@ endif
 	find $(installdir)/usr/share/man -name \*.8 \
 		| xargs perl -pi -e 's#(\.TH \w+ 8)C#$$1#'
 
-ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
-override_dh_install-arch:
-	dh_install
-	rm -rf $(CURDIR)/debian/slapd/usr/lib/ldap/smbk5pwd*
-endif
-
 override_dh_installinit:
 	dh_installinit -- "defaults 19 80"
 
