@@ -17,6 +17,8 @@ openldap (2.4.47+dfsg-2) UNRELEASED; urgency=medium
   * Add smbk5pwd to slapd-contrib and turn slapd-smbk5pwd into a transitional
     package. Drop smbk5pwd README since it now has a man page which is a
     better resource for users.
+    - Use Breaks to ensure that slapd is not upgraded in between removing the
+      old smbk5pwd module and installing the new one.
   * Include the apr1-atol.pl and apr1-lota.pl helper scripts in the
     slapd-contrib package as examples.
 

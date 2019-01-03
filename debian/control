@@ -60,6 +60,7 @@ Architecture: all
 Section: oldlibs
 Build-Profiles: <!stage1>
 Depends: slapd-contrib, ${misc:Depends}
+Breaks: slapd (<< 2.4.47+dfsg-2~)
 Description: transitional package for slapd-contrib
  This is a transitional package from slapd-smbk5pwd to slapd-contrib. It can be
  safely removed.
