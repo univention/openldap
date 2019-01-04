@@ -1,3 +1,25 @@
+--- a/contrib/slapd-modules/passwd/Makefile
++++ b/contrib/slapd-modules/passwd/Makefile
+@@ -13,7 +13,7 @@
+ INCS = $(LDAP_INC)
+ LIBS = $(LDAP_LIB)
+ 
+-PROGRAMS = pw-kerberos.la pw-netscape.la pw-radius.la pw-apr1.la
++PROGRAMS = pw-netscape.la pw-apr1.la
+ LTVER = 0:0:0
+ 
+ prefix=/usr/local
+--- a/contrib/slapd-modules/passwd/pbkdf2/Makefile
++++ b/contrib/slapd-modules/passwd/pbkdf2/Makefile
+@@ -12,7 +12,7 @@
+ #DEFS = -DSLAPD_PBKDF2_DEBUG
+ 
+ INCS = $(LDAP_INC)
+-LIBS = $(LDAP_LIB) -lcrypto
++LIBS = $(LDAP_LIB) -lnettle
+ 
+ PROGRAMS = pw-pbkdf2.la
+ LTVER = 0:0:0
 --- a/contrib/slapd-modules/smbk5pwd/Makefile
 +++ b/contrib/slapd-modules/smbk5pwd/Makefile
 @@ -19,10 +19,10 @@

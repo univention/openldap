@@ -21,6 +21,8 @@ openldap (2.4.47+dfsg-2) UNRELEASED; urgency=medium
       old smbk5pwd module and installing the new one.
   * Include the apr1-atol.pl and apr1-lota.pl helper scripts in the
     slapd-contrib package as examples.
+  * Merge remaining contrib Makefile patches into a single contrib-makefiles
+    patch.
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 24 Dec 2018 12:14:43 -0800
 
