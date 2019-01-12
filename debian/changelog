@@ -1,4 +1,4 @@
-openldap (2.4.47+dfsg-2) UNRELEASED; urgency=medium
+openldap (2.4.47+dfsg-2) unstable; urgency=medium
 
   * Reintroduce slapi-dev binary package. (Closes: #711469)
     Thanks to Florian Schlichting.
@@ -24,7 +24,7 @@ openldap (2.4.47+dfsg-2) UNRELEASED; urgency=medium
   * Merge remaining contrib Makefile patches into a single contrib-makefiles
     patch.
 
- -- Ryan Tandy <ryan@nardis.ca>  Mon, 24 Dec 2018 12:14:43 -0800
+ -- Ryan Tandy <ryan@nardis.ca>  Sat, 12 Jan 2019 11:18:03 -0800
 
 openldap (2.4.47+dfsg-1) unstable; urgency=medium
 
