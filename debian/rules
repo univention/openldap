@@ -41,7 +41,6 @@ MAKEVARS	:= STRIP=
 # We override these in make invocations rather than patch every one.
 CONTRIB_MAKEVARS := \
 	LDAP_BUILD='$(builddir)' \
-	OPT='$$(CFLAGS) $$(CPPFLAGS) $$(LDFLAGS)' \
 	prefix=/usr \
 	ldap_subdir=/ldap \
 	moduledir='$$(libdir)$$(ldap_subdir)'

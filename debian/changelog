@@ -1,3 +1,13 @@
+openldap (2.4.47+dfsg-3) UNRELEASED; urgency=medium
+
+  * Restore patches to contrib Makefiles to set CFLAGS, CPPFLAGS, and LDFLAGS
+    individually in the relevant command lines instead of overriding OPT. The
+    change to use OPT caused FTBFS on some ports arches where PIE enablement
+    uses spec files, by mixing compile-time and link-time flags.
+    (Closes: #919136)
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sun, 27 Jan 2019 16:06:44 -0800
+
 openldap (2.4.47+dfsg-2) unstable; urgency=medium
 
   * Reintroduce slapi-dev binary package. (Closes: #711469)

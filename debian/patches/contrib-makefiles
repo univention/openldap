@@ -9,6 +9,36 @@
  LTVER = 0:0:0
  
  prefix=/usr/local
+@@ -27,24 +27,24 @@
+ .SUFFIXES: .c .o .lo
+ 
+ .c.lo:
+-	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $<
++	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) $(CPPFLAGS) $(DEFS) $(INCS) -c $<
+ 
+ all: $(PROGRAMS)
+ 
+ pw-kerberos.la:	kerberos.lo
+-	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
++	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
+ 	-rpath $(moduledir) -module -o $@ $? -lkrb5
+ 
+ pw-netscape.la:	netscape.lo
+-	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
++	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
+ 	-rpath $(moduledir) -module -o $@ $?
+ 
+ pw-radius.la:	radius.lo
+-	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
++	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
+ 	-rpath $(moduledir) -module -o $@ $? -lradius
+ 
+ pw-apr1.la:	apr1.lo
+-	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
++	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
+ 	-rpath $(moduledir) -module -o $@ $?
+ 
+ clean:
 --- a/contrib/slapd-modules/passwd/pbkdf2/Makefile
 +++ b/contrib/slapd-modules/passwd/pbkdf2/Makefile
 @@ -12,7 +12,7 @@
@@ -20,6 +50,21 @@
  
  PROGRAMS = pw-pbkdf2.la
  LTVER = 0:0:0
+@@ -30,12 +30,12 @@
+ .SUFFIXES: .c .o .lo
+ 
+ .c.lo:
+-	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $<
++	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) $(CPPFLAGS) $(DEFS) $(INCS) -c $<
+ 
+ all:		$(PROGRAMS)
+ 
+ pw-pbkdf2.la: pw-pbkdf2.lo
+-	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
++	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
+ 	-rpath $(moduledir) -module -o $@ $? $(LIBS)
+ 
+ clean:
 --- a/contrib/slapd-modules/smbk5pwd/Makefile
 +++ b/contrib/slapd-modules/smbk5pwd/Makefile
 @@ -19,10 +19,10 @@
@@ -46,3 +91,69 @@
  
  PROGRAMS = smbk5pwd.la
  LTVER = 0:0:0
+@@ -46,12 +47,12 @@
+ .SUFFIXES: .c .o .lo
+ 
+ .c.lo:
+-	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $<
++	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) $(CPPFLAGS) $(DEFS) $(INCS) -c $<
+ 
+ all: $(PROGRAMS)
+ 
+ smbk5pwd.la:	smbk5pwd.lo
+-	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
++	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
+ 	-rpath $(moduledir) -module -o $@ $? $(LIBS)
+ 
+ clean:
+--- a/contrib/slapd-modules/autogroup/Makefile
++++ b/contrib/slapd-modules/autogroup/Makefile
+@@ -27,12 +27,12 @@
+ .SUFFIXES: .c .o .lo
+ 
+ .c.lo:
+-	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $<
++	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) $(CPPFLAGS) $(DEFS) $(INCS) -c $<
+ 
+ all: $(PROGRAMS)
+ 
+ autogroup.la: autogroup.lo
+-	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
++	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
+ 	-rpath $(moduledir) -module -o $@ $? $(LIBS)
+ 
+ clean:
+--- a/contrib/slapd-modules/lastbind/Makefile
++++ b/contrib/slapd-modules/lastbind/Makefile
+@@ -37,12 +37,12 @@
+ .SUFFIXES: .c .o .lo
+ 
+ .c.lo:
+-	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $<
++	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) $(CPPFLAGS) $(DEFS) $(INCS) -c $<
+ 
+ all: $(PROGRAMS)
+ 
+ lastbind.la: lastbind.lo
+-	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
++	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
+ 	-rpath $(moduledir) -module -o $@ $? $(LIBS)
+ 
+ clean:
+--- a/contrib/slapd-modules/passwd/sha2/Makefile
++++ b/contrib/slapd-modules/passwd/sha2/Makefile
+@@ -28,12 +28,12 @@
+ .SUFFIXES: .c .o .lo
+ 
+ .c.lo:
+-	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $<
++	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) $(CPPFLAGS) $(DEFS) $(INCS) -c $<
+ 
+ all:		$(PROGRAMS)
+ 
+ pw-sha2.la:	slapd-sha2.lo sha2.lo
+-	$(LIBTOOL) --mode=link $(CC) $(OPT) -version-info $(LTVER) \
++	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
+ 	-rpath $(moduledir) -module -o $@ $? $(LIBS)
+ 
+ clean:
