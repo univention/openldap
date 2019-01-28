@@ -5,6 +5,8 @@ openldap (2.4.47+dfsg-3) UNRELEASED; urgency=medium
     change to use OPT caused FTBFS on some ports arches where PIE enablement
     uses spec files, by mixing compile-time and link-time flags.
     (Closes: #919136)
+  * Fix architecture-specific path in smbk5pwd's binary-or-shlib-defines-rpath
+    Lintian override.
 
  -- Ryan Tandy <ryan@nardis.ca>  Sun, 27 Jan 2019 16:06:44 -0800
 
