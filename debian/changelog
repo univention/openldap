@@ -1,4 +1,4 @@
-openldap (2.4.47+dfsg-3) UNRELEASED; urgency=medium
+openldap (2.4.47+dfsg-3) unstable; urgency=medium
 
   * Restore patches to contrib Makefiles to set CFLAGS, CPPFLAGS, and LDFLAGS
     individually in the relevant command lines instead of overriding OPT. The
@@ -11,7 +11,7 @@ openldap (2.4.47+dfsg-3) UNRELEASED; urgency=medium
     needs to be checked in it.
   * Update Standards-Version to 4.3.0.
 
- -- Ryan Tandy <ryan@nardis.ca>  Sun, 27 Jan 2019 16:06:44 -0800
+ -- Ryan Tandy <ryan@nardis.ca>  Sat, 02 Feb 2019 10:30:10 -0800
 
 openldap (2.4.47+dfsg-2) unstable; urgency=medium
 
