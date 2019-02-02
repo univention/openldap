@@ -9,6 +9,7 @@ openldap (2.4.47+dfsg-3) UNRELEASED; urgency=medium
     Lintian override.
   * Skip exporting cn=config to LDIF in preinst for upgrades where nothing
     needs to be checked in it.
+  * Update Standards-Version to 4.3.0.
 
  -- Ryan Tandy <ryan@nardis.ca>  Sun, 27 Jan 2019 16:06:44 -0800
 
