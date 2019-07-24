@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2018 The OpenLDAP Foundation.
+ * Copyright 2003-2019 The OpenLDAP Foundation.
  * Portions Copyright 2003 by IBM Corporation.
  * Portions Copyright 2003-2008 by Howard Chu, Symas Corporation.
  * All rights reserved.
@@ -172,6 +172,7 @@ typedef struct logschema {
 	struct berval ls_newRdn;
 	struct berval ls_delRdn;
 	struct berval ls_newSup;
+	struct berval ls_controls;
 } logschema;
 
 static logschema changelog_sc = {
@@ -180,7 +181,8 @@ static logschema changelog_sc = {
 	BER_BVC("changes"),
 	BER_BVC("newRDN"),
 	BER_BVC("deleteOldRDN"),
-	BER_BVC("newSuperior")
+	BER_BVC("newSuperior"),
+	BER_BVC("controls")
 };
 
 static logschema accesslog_sc = {
@@ -189,7 +191,8 @@ static logschema accesslog_sc = {
 	BER_BVC("reqMod"),
 	BER_BVC("reqNewRDN"),
 	BER_BVC("reqDeleteOldRDN"),
-	BER_BVC("reqNewSuperior")
+	BER_BVC("reqNewSuperior"),
+	BER_BVC("reqControls")
 };
 
 static const char *
@@ -405,7 +408,7 @@ ldap_sync_search(
 	int rc;
 	int rhint;
 	char *base;
-	char **attrs, *lattrs[8];
+	char **attrs, *lattrs[9];
 	char *filter;
 	int attrsonly;
 	int scope;
@@ -417,7 +420,7 @@ ldap_sync_search(
 	/* If we're using a log but we have no state, then fallback to
 	 * normal mode for a full refresh.
 	 */
-	if ( si->si_syncdata && !si->si_syncCookie.numcsns ) {
+	if ( si->si_syncdata && !si->si_syncCookie.numcsns && !si->si_refreshDone ) {
 		si->si_logstate = SYNCLOG_FALLBACK;
 	}
 
@@ -434,8 +437,9 @@ ldap_sync_search(
 		lattrs[3] = ls->ls_newRdn.bv_val;
 		lattrs[4] = ls->ls_delRdn.bv_val;
 		lattrs[5] = ls->ls_newSup.bv_val;
-		lattrs[6] = slap_schema.si_ad_entryCSN->ad_cname.bv_val;
-		lattrs[7] = NULL;
+		lattrs[6] = ls->ls_controls.bv_val;
+		lattrs[7] = slap_schema.si_ad_entryCSN->ad_cname.bv_val;
+		lattrs[8] = NULL;
 
 		rhint = 0;
 		base = si->si_logbase.bv_val;
@@ -1194,6 +1198,7 @@ do_syncrep2(
 			if ( err == LDAP_SUCCESS
 				&& si->si_logstate == SYNCLOG_FALLBACK ) {
 				si->si_logstate = SYNCLOG_LOGGING;
+				si->si_refreshDone = 1;
 				rc = LDAP_SYNC_REFRESH_REQUIRED;
 				slap_resume_listeners();
 			} else {
@@ -2377,6 +2382,22 @@ syncrepl_message_to_op(
 			}
 		} else if ( !ber_bvstrcasecmp( &bv, &ls->ls_newSup ) ) {
 			sup = bvals[0];
+		} else if ( !ber_bvstrcasecmp( &bv, &ls->ls_controls ) ) {
+			int i;
+			struct berval rel_ctrl_bv;
+
+			(void)ber_str2bv( "{" LDAP_CONTROL_RELAX, 0, 0, &rel_ctrl_bv );
+			for ( i = 0; bvals[i].bv_val; i++ ) {
+				struct berval cbv, tmp;
+
+				ber_bvchr_post( &cbv, &bvals[i], '}' );
+				ber_bvchr_post( &tmp, &cbv, '{' );
+				ber_bvchr_pre( &cbv, &tmp, ' ' );
+				if ( cbv.bv_len == tmp.bv_len )		/* control w/o value */
+					ber_bvchr_pre( &cbv, &tmp, '}' );
+				if ( !ber_bvcmp( &cbv, &rel_ctrl_bv ) )
+					op->o_relax = SLAP_CONTROL_CRITICAL;
+			}
 		} else if ( !ber_bvstrcasecmp( &bv,
 			&slap_schema.si_ad_entryCSN->ad_cname ) )
 		{

@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2018 The OpenLDAP Foundation.
+ * Copyright 1998-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -118,6 +118,10 @@ ldap_int_tls_destroy( struct ldapoptions *lo )
 		LDAP_FREE( lo->ldo_tls_dhfile );
 		lo->ldo_tls_dhfile = NULL;
 	}
+	if ( lo->ldo_tls_ecname ) {
+		LDAP_FREE( lo->ldo_tls_ecname );
+		lo->ldo_tls_ecname = NULL;
+	}
 	if ( lo->ldo_tls_cacertfile ) {
 		LDAP_FREE( lo->ldo_tls_cacertfile );
 		lo->ldo_tls_cacertfile = NULL;
@@ -232,6 +236,10 @@ ldap_int_tls_init_ctx( struct ldapoptions *lo, int is_server )
 		lts.lt_dhfile = LDAP_STRDUP( lts.lt_dhfile );
 		__atoe( lts.lt_dhfile );
 	}
+	if ( lts.lt_ecname ) {
+		lts.lt_ecname = LDAP_STRDUP( lts.lt_ecname );
+		__atoe( lts.lt_ecname );
+	}
 #endif
 	lo->ldo_tls_ctx = ti->ti_ctx_new( lo );
 	if ( lo->ldo_tls_ctx == NULL ) {
@@ -257,6 +265,7 @@ error_exit:
 	LDAP_FREE( lts.lt_crlfile );
 	LDAP_FREE( lts.lt_cacertdir );
 	LDAP_FREE( lts.lt_dhfile );
+	LDAP_FREE( lts.lt_ecname );
 #endif
 	return rc;
 }
@@ -646,6 +655,10 @@ ldap_pvt_tls_get_option( LDAP *ld, int option, void *arg )
 		*(char **)arg = lo->ldo_tls_dhfile ?
 			LDAP_STRDUP( lo->ldo_tls_dhfile ) : NULL;
 		break;
+	case LDAP_OPT_X_TLS_ECNAME:
+		*(char **)arg = lo->ldo_tls_ecname ?
+			LDAP_STRDUP( lo->ldo_tls_ecname ) : NULL;
+		break;
 	case LDAP_OPT_X_TLS_CRLFILE:	/* GnuTLS only */
 		*(char **)arg = lo->ldo_tls_crlfile ?
 			LDAP_STRDUP( lo->ldo_tls_crlfile ) : NULL;
@@ -747,27 +760,31 @@ ldap_pvt_tls_set_option( LDAP *ld, int option, void *arg )
 		return 0;
 	case LDAP_OPT_X_TLS_CACERTFILE:
 		if ( lo->ldo_tls_cacertfile ) LDAP_FREE( lo->ldo_tls_cacertfile );
-		lo->ldo_tls_cacertfile = arg ? LDAP_STRDUP( (char *) arg ) : NULL;
+		lo->ldo_tls_cacertfile = (arg && *(char *)arg) ? LDAP_STRDUP( (char *) arg ) : NULL;
 		return 0;
 	case LDAP_OPT_X_TLS_CACERTDIR:
 		if ( lo->ldo_tls_cacertdir ) LDAP_FREE( lo->ldo_tls_cacertdir );
-		lo->ldo_tls_cacertdir = arg ? LDAP_STRDUP( (char *) arg ) : NULL;
+		lo->ldo_tls_cacertdir = (arg && *(char *)arg) ? LDAP_STRDUP( (char *) arg ) : NULL;
 		return 0;
 	case LDAP_OPT_X_TLS_CERTFILE:
 		if ( lo->ldo_tls_certfile ) LDAP_FREE( lo->ldo_tls_certfile );
-		lo->ldo_tls_certfile = arg ? LDAP_STRDUP( (char *) arg ) : NULL;
+		lo->ldo_tls_certfile = (arg && *(char *)arg) ? LDAP_STRDUP( (char *) arg ) : NULL;
 		return 0;
 	case LDAP_OPT_X_TLS_KEYFILE:
 		if ( lo->ldo_tls_keyfile ) LDAP_FREE( lo->ldo_tls_keyfile );
-		lo->ldo_tls_keyfile = arg ? LDAP_STRDUP( (char *) arg ) : NULL;
+		lo->ldo_tls_keyfile = (arg && *(char *)arg) ? LDAP_STRDUP( (char *) arg ) : NULL;
 		return 0;
 	case LDAP_OPT_X_TLS_DHFILE:
 		if ( lo->ldo_tls_dhfile ) LDAP_FREE( lo->ldo_tls_dhfile );
-		lo->ldo_tls_dhfile = arg ? LDAP_STRDUP( (char *) arg ) : NULL;
+		lo->ldo_tls_dhfile = (arg && *(char *)arg) ? LDAP_STRDUP( (char *) arg ) : NULL;
+		return 0;
+	case LDAP_OPT_X_TLS_ECNAME:
+		if ( lo->ldo_tls_ecname ) LDAP_FREE( lo->ldo_tls_ecname );
+		lo->ldo_tls_ecname = (arg && *(char *)arg) ? LDAP_STRDUP( (char *) arg ) : NULL;
 		return 0;
 	case LDAP_OPT_X_TLS_CRLFILE:	/* GnuTLS only */
 		if ( lo->ldo_tls_crlfile ) LDAP_FREE( lo->ldo_tls_crlfile );
-		lo->ldo_tls_crlfile = arg ? LDAP_STRDUP( (char *) arg ) : NULL;
+		lo->ldo_tls_crlfile = (arg && *(char *)arg) ? LDAP_STRDUP( (char *) arg ) : NULL;
 		return 0;
 	case LDAP_OPT_X_TLS_REQUIRE_CERT:
 		if ( !arg ) return -1;
@@ -795,7 +812,7 @@ ldap_pvt_tls_set_option( LDAP *ld, int option, void *arg )
 #endif
 	case LDAP_OPT_X_TLS_CIPHER_SUITE:
 		if ( lo->ldo_tls_ciphersuite ) LDAP_FREE( lo->ldo_tls_ciphersuite );
-		lo->ldo_tls_ciphersuite = arg ? LDAP_STRDUP( (char *) arg ) : NULL;
+		lo->ldo_tls_ciphersuite = (arg && *(char *)arg) ? LDAP_STRDUP( (char *) arg ) : NULL;
 		return 0;
 
 	case LDAP_OPT_X_TLS_PROTOCOL_MIN:
@@ -806,7 +823,7 @@ ldap_pvt_tls_set_option( LDAP *ld, int option, void *arg )
 		if ( ld != NULL )
 			return -1;
 		if ( lo->ldo_tls_randfile ) LDAP_FREE (lo->ldo_tls_randfile );
-		lo->ldo_tls_randfile = arg ? LDAP_STRDUP( (char *) arg ) : NULL;
+		lo->ldo_tls_randfile = (arg && *(char *)arg) ? LDAP_STRDUP( (char *) arg ) : NULL;
 		break;
 	case LDAP_OPT_X_TLS_NEWCTX:
 		if ( !arg ) return -1;
@@ -826,7 +843,7 @@ ldap_int_tls_start ( LDAP *ld, LDAPConn *conn, LDAPURLDesc *srv )
 	Sockbuf *sb;
 	char *host;
 	void *ssl;
-	int ret;
+	int ret, async;
 #ifdef LDAP_USE_NON_BLOCKING_TLS
 	struct timeval start_time_tv, tv, tv0;
 	ber_socket_t	sd = AC_SOCKET_ERROR;
@@ -853,8 +870,12 @@ ldap_int_tls_start ( LDAP *ld, LDAPConn *conn, LDAPURLDesc *srv )
 	/*
 	 * Use non-blocking io during SSL Handshake when a timeout is configured
 	 */
+	async = LDAP_BOOL_GET( &ld->ld_options, LDAP_BOOL_CONNECT_ASYNC );
 	if ( ld->ld_options.ldo_tm_net.tv_sec >= 0 ) {
-		ber_sockbuf_ctrl( sb, LBER_SB_OPT_SET_NONBLOCK, (void*)1 );
+		if ( !async ) {
+			/* if async, this has already been set */
+			ber_sockbuf_ctrl( sb, LBER_SB_OPT_SET_NONBLOCK, (void*)1 );
+		}
 		ber_sockbuf_ctrl( sb, LBER_SB_OPT_GET_FD, &sd );
 		tv = ld->ld_options.ldo_tm_net;
 		tv0 = tv;
@@ -888,8 +909,10 @@ ldap_int_tls_start ( LDAP *ld, LDAPConn *conn, LDAPURLDesc *srv )
 			ld->ld_errno = LDAP_TIMEOUT;
 			break;
 		} else {
-			/* ldap_int_poll called ldap_pvt_ndelay_off */
-			ber_sockbuf_ctrl( sb, LBER_SB_OPT_SET_NONBLOCK, (void*)1 );
+			/* ldap_int_poll called ldap_pvt_ndelay_off if not async */
+			if ( !async ) {
+				ber_sockbuf_ctrl( sb, LBER_SB_OPT_SET_NONBLOCK, (void*)1 );
+			}
 			ret = ldap_int_tls_connect( ld, conn, host );
 			if ( ret > 0 ) { /* need to call tls_connect once more */
 				struct timeval curr_time_tv, delta_tv;
@@ -936,7 +959,8 @@ ldap_int_tls_start ( LDAP *ld, LDAPConn *conn, LDAPURLDesc *srv )
 			}
 		}
 	}
-	if ( ld->ld_options.ldo_tm_net.tv_sec >= 0 ) {
+	/* Leave it nonblocking if async */
+	if ( !async && ld->ld_options.ldo_tm_net.tv_sec >= 0 ) {
 		ber_sockbuf_ctrl( sb, LBER_SB_OPT_SET_NONBLOCK, NULL );
 	}
 #endif /* LDAP_USE_NON_BLOCKING_TLS */

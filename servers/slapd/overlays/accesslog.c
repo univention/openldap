@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2018 The OpenLDAP Foundation.
+ * Copyright 2005-2019 The OpenLDAP Foundation.
  * Portions copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -1522,7 +1522,8 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 
 	e = accesslog_entry( op, rs, li, logop, &op2 );
 
-	attr_merge_one( e, ad_reqDN, &op->o_req_dn, &op->o_req_ndn );
+	if ( !BER_BVISNULL( &op->o_req_ndn ))
+		attr_merge_one( e, ad_reqDN, &op->o_req_dn, &op->o_req_ndn );
 
 	if ( rs->sr_text ) {
 		ber_str2bv( rs->sr_text, 0, 0, &bv );
@@ -1586,6 +1587,7 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 			if ( m->sml_values ) {
 				i += m->sml_numvals;
 			} else if ( m->sml_op == LDAP_MOD_DELETE ||
+				m->sml_op == SLAP_MOD_SOFTDEL ||
 				m->sml_op == LDAP_MOD_REPLACE )
 			{
 				i++;
@@ -1634,8 +1636,10 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 					char c_op;
 
 					switch ( m->sml_op ) {
-					case LDAP_MOD_ADD: c_op = '+'; break;
-					case LDAP_MOD_DELETE:	c_op = '-'; break;
+					case LDAP_MOD_ADD:	/* FALLTHRU */
+					case SLAP_MOD_SOFTADD: c_op = '+'; break;
+					case LDAP_MOD_DELETE: /* FALLTHRU */
+					case SLAP_MOD_SOFTDEL: c_op = '-'; break;
 					case LDAP_MOD_REPLACE:	c_op = '='; break;
 					case LDAP_MOD_INCREMENT:	c_op = '#'; break;
 
@@ -1648,6 +1652,7 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 					accesslog_val2val( m->sml_desc, b, c_op, &vals[i] );
 				}
 			} else if ( m->sml_op == LDAP_MOD_DELETE ||
+				m->sml_op == SLAP_MOD_SOFTDEL ||
 				m->sml_op == LDAP_MOD_REPLACE )
 			{
 				vals[i].bv_len = m->sml_desc->ad_cname.bv_len + 2;
@@ -1655,7 +1660,7 @@ static int accesslog_response(Operation *op, SlapReply *rs) {
 				ptr = lutil_strcopy( vals[i].bv_val,
 					m->sml_desc->ad_cname.bv_val );
 				*ptr++ = ':';
-				if ( m->sml_op == LDAP_MOD_DELETE ) {
+				if ( m->sml_op == LDAP_MOD_DELETE || m->sml_op == SLAP_MOD_SOFTDEL ) {
 					*ptr++ = '-';
 				} else {
 					*ptr++ = '=';
