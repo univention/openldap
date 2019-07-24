@@ -1,5 +1,8 @@
 #!/usr/bin/make -f
 
+include /usr/share/dpkg/architecture.mk
+include /usr/share/dpkg/pkg-info.mk
+
 # Set this variable if you're building packages outside of Debian and don't
 # want the checks for DFSG-freeness.
 #DFSG_NONFREE = 1
@@ -9,11 +12,6 @@ export DEB_BUILD_MAINT_OPTIONS := hardening=+pie,+bindnow
 
 # Workaround for bad glibc behavior when resolving localhost
 export RESOLV_MULTI = off
-
-DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
-DEB_HOST_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
-DEB_HOST_ARCH_OS ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
-DEB_HOST_ARCH ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 
 CONFIG		= $(shell grep -v "^\#" debian/configure.options)
 ifeq ($(DEB_HOST_ARCH_OS),hurd)
@@ -47,7 +45,7 @@ CONTRIB_MAKEVARS := \
 
 # These variables are used only by get-orig-source, which will normally only
 # be run by maintainers.
-VERSION = $(shell dpkg-parsechangelog |grep Version| sed 's/.*: //;s/\+dfsg//;s/-.*//')
+VERSION = $(subst +dfsg,,$(DEB_VERSION_UPSTREAM))
 URL     = http://www.openldap.org/software/download/OpenLDAP/openldap-release/
 
 # Download the upstream source and make changes as required for DFSG reasons.
