@@ -4,6 +4,9 @@ openldap (2.4.47+dfsg-4) UNRELEASED; urgency=medium
   * Add a systemd drop-in to set RemainAfterExit=no on the slapd service, so
     that systemd marks the service as dead after it crashes or is killed.
     Thanks to Heitor Alves de Siqueira. (Closes: #926657, LP: #1821343)
+  * Use more entropy for generating a random admin password, if none was set
+    during initial configuration. Thanks to Judicael Courant.
+    (Closes: #932270)
 
  -- Ryan Tandy <ryan@nardis.ca>  Tue, 23 Jul 2019 17:46:26 -0700
 

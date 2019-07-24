@@ -630,13 +630,13 @@ crypt_admin_pass() {							# {{{
 
 	db_get slapd/password1
 	if [ ! -z "$RET" ]; then
-		db_set slapd/internal/adminpw `create_password_hash "$RET"`
+		db_set slapd/internal/adminpw "$(create_password_hash "$RET")"
 	else
 
 		# Set the password.
-		adminpw=`generate_admin_pass`
-		db_set slapd/internal/generated_adminpw $adminpw
-		db_set slapd/internal/adminpw `create_password_hash "$adminpw"`
+		adminpw="$(generate_admin_pass)"
+		db_set slapd/internal/generated_adminpw "$adminpw"
+		db_set slapd/internal/adminpw "$(create_password_hash "$adminpw")"
 	fi
 }
 
@@ -644,20 +644,9 @@ generate_admin_pass() {
 # Generate a password, if no password given then generate one.
 # Usage: generate_admin_pass
 
-	perl << 'EOF'
-# --------
-sub generatePassword {
-	$length = shift;
-	$possible = 'abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-	$password = '';
-	while(length($password) < $length) {
-		$password.= substr($possible, (int(rand(length($possible)))), 1);
-	}
-	return $password;
-}
-print generatePassword(15);
-EOF
-# --------
+	# 15 bytes of /dev/urandom provide 120 random bits, assuming the entropy pool is full enough.
+	# Coding these 15 bytes in base64 returns a 20 characters long password.
+	head -c 15 /dev/urandom | base64 | tr -d '[:space:]'
 }
 
 wipe_admin_pass() {
