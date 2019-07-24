@@ -21,6 +21,7 @@ openldap (2.4.48+dfsg-1) UNRELEASED; urgency=medium
   * Declare R³: no.
   * Create a simple autopkgtest that tests installing slapd and connecting to
     it with an ldap tool.
+  * Install the new openldap.h header in libldap2-dev.
 
  -- Ryan Tandy <ryan@nardis.ca>  Wed, 24 Jul 2019 21:18:07 +0000
 
