@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2018 The OpenLDAP Foundation.
+ * Copyright 2000-2019 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -260,6 +260,7 @@ mdb_cf_cleanup( ConfigArgs *c )
 	}
 
 	if ( mdb->mi_flags & MDB_OPEN_INDEX ) {
+		mdb->mi_flags ^= MDB_OPEN_INDEX;
 		rc = mdb_attr_dbs_open( c->be, NULL, &c->reply );
 		if ( rc )
 			rc = LDAP_OTHER;
@@ -631,8 +632,8 @@ mdb_cf_gen( ConfigArgs *c )
 			c->argc - 1, &c->argv[1], &c->reply);
 
 		if( rc != LDAP_SUCCESS ) return 1;
-		mdb->mi_flags |= MDB_OPEN_INDEX;
 		if ( mdb->mi_flags & MDB_IS_OPEN ) {
+			mdb->mi_flags |= MDB_OPEN_INDEX;
 			c->cleanup = mdb_cf_cleanup;
 			if ( !mdb->mi_index_task ) {
 				/* Start the task as soon as we finish here. Set a long
