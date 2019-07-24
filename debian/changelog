@@ -1,5 +1,14 @@
-openldap (2.4.47+dfsg-4) UNRELEASED; urgency=medium
+openldap (2.4.48+dfsg-1) UNRELEASED; urgency=medium
 
+  * New upstream release.
+    - fixed slapd to restrict rootDN proxyauthz to its own databases
+      (CVE-2019-13057) (ITS#9038) (Closes: #932997)
+    - fixed slapd to enforce sasl_ssf ACL statement on every connection
+      (CVE-2019-13565) (ITS#9052) (Closes: #932998)
+    - added new openldap.h header with OpenLDAP specific libldap interfaces
+      (ITS#8671)
+    - updated lastbind overlay to support forwarding authTimestamp updates
+      (ITS#7721) (Closes: #880656)
   * Update Standards-Version to 4.4.0.
   * Add a systemd drop-in to set RemainAfterExit=no on the slapd service, so
     that systemd marks the service as dead after it crashes or is killed.
@@ -13,7 +22,7 @@ openldap (2.4.47+dfsg-4) UNRELEASED; urgency=medium
   * Create a simple autopkgtest that tests installing slapd and connecting to
     it with an ldap tool.
 
- -- Ryan Tandy <ryan@nardis.ca>  Tue, 23 Jul 2019 17:46:26 -0700
+ -- Ryan Tandy <ryan@nardis.ca>  Wed, 24 Jul 2019 21:18:07 +0000
 
 openldap (2.4.47+dfsg-3) unstable; urgency=medium
 
