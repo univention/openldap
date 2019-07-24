@@ -9,6 +9,7 @@ openldap (2.4.47+dfsg-4) UNRELEASED; urgency=medium
     (Closes: #932270)
   * Replace debian/rules calls to dpkg-architecture and dpkg-parsechangelog
     with variables provided by dpkg-dev includes.
+  * Declare R³: no.
 
  -- Ryan Tandy <ryan@nardis.ca>  Tue, 23 Jul 2019 17:46:26 -0700
 
