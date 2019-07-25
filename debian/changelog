@@ -1,4 +1,4 @@
-openldap (2.4.48+dfsg-1) UNRELEASED; urgency=medium
+openldap (2.4.48+dfsg-1) unstable; urgency=medium
 
   * New upstream release.
     - fixed slapd to restrict rootDN proxyauthz to its own databases
@@ -23,7 +23,7 @@ openldap (2.4.48+dfsg-1) UNRELEASED; urgency=medium
     it with an ldap tool.
   * Install the new openldap.h header in libldap2-dev.
 
- -- Ryan Tandy <ryan@nardis.ca>  Wed, 24 Jul 2019 21:18:07 +0000
+ -- Ryan Tandy <ryan@nardis.ca>  Thu, 25 Jul 2019 08:32:00 -0700
 
 openldap (2.4.47+dfsg-3) unstable; urgency=medium
 
