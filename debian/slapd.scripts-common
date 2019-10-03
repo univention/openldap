@@ -426,20 +426,6 @@ manual_configuration_wanted() {						# {{{
 	fi
 }
 # }}}
-copy_example_DB_CONFIG() {						# {{{
-# Copy an example DB_CONFIG file
-# copy_example_DB_CONFIG <directory>
-	local directory srcdir
-	
-	directory="$1"
-	srcdir="/usr/share/slapd"
-
-	if ! [ -f "${directory}/DB_CONFIG" ] && [ -d "$directory" ]; then
-		cp $srcdir/DB_CONFIG "${directory}/DB_CONFIG"
-	fi
-}
-
-# }}}
 create_new_configuration() {						# {{{
 # Create a new configuration and directory
 
