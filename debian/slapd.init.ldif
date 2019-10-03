@@ -50,22 +50,23 @@ objectClass: olcModuleList
 cn: module{0}
 # Where the dynamically loaded modules are stored
 olcModulePath: /usr/lib/ldap
-olcModuleLoad: back_@BACKEND@
+olcModuleLoad: back_mdb
 
 # Set defaults for the backend
-dn: olcBackend=@BACKEND@,cn=config
+dn: olcBackend=mdb,cn=config
 objectClass: olcBackendConfig
-olcBackend: @BACKEND@
+olcBackend: mdb
 
 # The database definition.
-dn: olcDatabase=@BACKEND@,cn=config
+dn: olcDatabase=mdb,cn=config
 objectClass: olcDatabaseConfig
-objectClass: @BACKENDOBJECTCLASS@
-olcDatabase: @BACKEND@
+objectClass: olcMdbConfig
+olcDatabase: mdb
+# Default to a 1 GiB database for compatibility with 32-bit systems.
+olcDbMaxSize: 1073741824
 # Checkpoint the database periodically in case of system
 # failure and to speed slapd shutdown.
 olcDbCheckpoint: 512 30
-@BACKENDOPTIONS@
 # Save the time that the entry gets modified, for database #1
 olcLastMod: TRUE
 # The base of your directory in database #1

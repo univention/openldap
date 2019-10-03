@@ -8,6 +8,8 @@ openldap (2.4.48+dfsg-2) UNRELEASED; urgency=medium
   * Backport proposed upstream patch to emit detailed messages about errors in
     the TLS configuration. (ITS#9086) (Closes: #837341)
   * slapd.scripts-common: Delete unused copy_example_DB_CONFIG function.
+  * Remove debconf support for choosing a database backend. Always use the
+    LMDB backend for new installs, as recommended by upstream.
 
  -- Ryan Tandy <ryan@nardis.ca>  Sat, 21 Sep 2019 15:47:54 -0700
 

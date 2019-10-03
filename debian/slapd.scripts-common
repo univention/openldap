@@ -429,7 +429,7 @@ manual_configuration_wanted() {						# {{{
 create_new_configuration() {						# {{{
 # Create a new configuration and directory
 
-	local basedn dc backend
+	local basedn dc
 
 	# For the domain really.argh.org we create the basedn 
 	# dc=really,dc=argh,dc=org with the dc entry dc: really
@@ -437,16 +437,13 @@ create_new_configuration() {						# {{{
 	basedn="dc=`echo $RET | sed 's/^\.//; s/\.$//; s/\./,dc=/g'`"
 	dc="`echo $RET | sed 's/^\.//; s/\..*$//'`"
 
-	db_get slapd/backend
-	backend="`echo $RET|tr A-Z a-z`"
-
 	backup_config_once
 	if [ -e "/var/lib/ldap" ] && ! is_empty_dir /var/lib/ldap; then
 		echo >&2 "  Moving old database directory to /var/backups:"
 		move_old_database_away /var/lib/ldap
 	fi
 	create_ldap_directories
-	create_new_slapd_conf "$basedn" "$backend"
+	create_new_slapd_conf "$basedn"
 	create_new_directory "$basedn" "$dc"
 
 	# Put the right permissions on this directory.
@@ -459,24 +456,12 @@ create_new_configuration() {						# {{{
 # }}}
 create_new_slapd_conf() {						# {{{
 # Create the new slapd.d directory (configuration)
-# Usage: create_new_slapd_conf <basedn> <backend>
+# Usage: create_new_slapd_conf <basedn>
 
-	local initldif failed basedn backend backendobjectclass backendoptions adminpass
+	local initldif failed basedn adminpass
 
 	# Fetch configuration
 	basedn="$1"
-	backend="$2"
-	if [ "$backend" = "mdb" ]; then
-		backendoptions="olcDbMaxSize: 1073741824"
-		backendobjectclass="olcMdbConfig"
-	else
-		backendoptions="olcDbConfig: set_cachesize 0 2097152 0\nolcDbConfig: set_lk_max_objects 1500\nolcDbConfig: set_lk_max_locks 1500\nolcDbConfig: set_lk_max_lockers 1500"
-		if [ "$backend" = "hdb" ]; then
-			backendobjectclass="olcHdbConfig"
-		else
-			backendobjectclass="olcBdbConfig"
-		fi
-	fi
 	db_get slapd/internal/adminpw
 	adminpass="$RET"
 
@@ -489,9 +474,6 @@ create_new_slapd_conf() {						# {{{
 	cat /usr/share/slapd/slapd.init.ldif > ${initldif}
 
 	# Change some defaults
-	sed -i -e "s|@BACKEND@|$backend|g" ${initldif}
-	sed -i -e "s|@BACKENDOBJECTCLASS@|$backendobjectclass|g" ${initldif}
-	sed -i -e "s|@BACKENDOPTIONS@|$backendoptions|g" ${initldif}
 	sed -i -e "s|@SUFFIX@|$basedn|g" ${initldif}
 	sed -i -e "s|@PASSWORD@|$adminpass|g" ${initldif}
 
