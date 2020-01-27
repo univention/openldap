@@ -17,7 +17,7 @@ CONFIG		= $(shell grep -v "^\#" debian/configure.options)
 ifeq ($(DEB_HOST_ARCH_OS),hurd)
 	CONFIG += --disable-bdb --disable-hdb --disable-mdb
 endif
-ifneq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
+ifneq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 	CONFIG += --disable-slapd
 endif
 
@@ -110,7 +110,7 @@ override_dh_auto_configure:
 
 override_dh_auto_build:
 	dh_auto_build -- $(MAKEVARS)
-ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
+ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 	for mod in $(CONTRIB_MODULES); do \
 		dh_auto_build -Dcontrib/slapd-modules/$$mod -Bcontrib/slapd-modules/$$mod -- $(CONTRIB_MAKEVARS) || exit $$?; \
 	done
@@ -125,7 +125,7 @@ endif
 
 override_dh_auto_install:
 	dh_auto_install -- $(MAKEVARS)
-ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
+ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 	for mod in $(CONTRIB_MODULES); do \
 		dh_auto_install -Dcontrib/slapd-modules/$$mod -Bcontrib/slapd-modules/$$mod -- $(CONTRIB_MAKEVARS) || exit $$?; \
 	done
@@ -158,7 +158,7 @@ endif
 override_dh_installinit:
 	dh_installinit -- "defaults 19 80"
 
-ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
+ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 override_dh_installman:
 	dh_installman
 	rm -f $(CURDIR)/debian/slapd/usr/share/man/man5/slapo-smbk5pwd.*
@@ -170,11 +170,9 @@ endif
 
 override_dh_strip:
 	dh_strip -plibldap-2.4-2 --dbgsym-migration='libldap-2.4-2-dbg (<< 2.4.45+dfsg-1~)'
-ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	dh_strip -pslapd --dbgsym-migration='slapd-dbg (<< 2.4.45+dfsg-1~)'
-endif
 	dh_strip --remaining-packages
-ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
+ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 	# hardlink these so not confined by apparmor; do this here and not
 	# in dh_link so that dh_strip doesn't get confused and put the wrong
 	# binary in the debug package.
@@ -189,17 +187,17 @@ override_dh_link:
 	done
 	dh_link
 
+ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 override_dh_makeshlibs:
-ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
 	echo "slapd:Provides=$$(objdump -p debian/slapd/usr/lib/$(DEB_HOST_MULTIARCH)/libslapi-*.so.* \
 		| sed -ne '/SONAME/ { s/[[:space:]]*SONAME[[:space:]]*//; \
 		                      s/\.so\./-/; p; q }' \
 	)" >> debian/slapd.substvars
 	dh_makeshlibs -pslapd -X/usr/lib/ldap/ -V "$$(sed -ne's/slapd:Provides=//p' debian/slapd.substvars)"
-endif
 	dh_makeshlibs --remaining-packages
+endif
 
-ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
+ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 override_dh_installdeb:
 	dh_installdeb
 	perl -w debian/dh_installscripts-common -p slapd
@@ -209,7 +207,7 @@ override_dh_auto_clean:
 	dh_auto_clean
 	# Update translation templates for debconf
 	debconf-updatepo
-ifeq ($(filter stage1,$(DEB_BUILD_PROFILES)),)
+ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 	# Remove our stripped schema from the upstream source area.
 	if [ -z "$(DFSG_NONFREE)" ]; then \
 	    set -e; for s in debian/schema/*.schema debian/schema/*.ldif; do \
