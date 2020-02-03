@@ -19,6 +19,8 @@ openldap (2.4.49+dfsg-1) UNRELEASED; urgency=medium
     foreign-arch slapd. Thanks to Andreas Hasenack.
   * Rename 'stage1' build profile to 'pkg.openldap.noslapd'.
     Thanks to Helmut Grohne. (Closes: #949722)
+  * Drop Build-Conflicts: libicu-dev as upstream's configure no longer tests
+    for or links with libicu.
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 03 Feb 2020 09:26:05 -0800
 
