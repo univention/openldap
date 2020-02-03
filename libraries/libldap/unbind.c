@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2019 The OpenLDAP Foundation.
+ * Copyright 1998-2020 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -134,6 +134,7 @@ ldap_ld_free(
 	/* Should already be closed by ldap_free_connection which knows not to free
 	 * this one */
 	ber_int_sb_destroy( ld->ld_sb );
+	LBER_FREE( ld->ld_sb );
 
 	LDAP_MUTEX_LOCK( &ld->ld_ldopts_mutex );
 

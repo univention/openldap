@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2019 The OpenLDAP Foundation.
+ * Copyright 1998-2020 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -5954,18 +5954,18 @@ again:
 	if( BER_BVISEMPTY( &tmp ) ) return LDAP_SUCCESS;
 
 	while( !BER_BVISEMPTY( &tmp ) && ( tmp.bv_val[0] == ' ' ) ) {
-		tmp.bv_len++;
-		tmp.bv_val--;
+		tmp.bv_len--;
+		tmp.bv_val++;
 	}
 	if( !BER_BVISEMPTY( &tmp ) && ( tmp.bv_val[0] == '$' ) ) {
-		tmp.bv_len++;
-		tmp.bv_val--;
+		tmp.bv_len--;
+		tmp.bv_val++;
 	} else {
 		return LDAP_INVALID_SYNTAX;
 	}
 	while( !BER_BVISEMPTY( &tmp ) && ( tmp.bv_val[0] == ' ' ) ) {
-		tmp.bv_len++;
-		tmp.bv_val--;
+		tmp.bv_len--;
+		tmp.bv_val++;
 	}
 
 	goto again;
