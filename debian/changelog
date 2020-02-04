@@ -22,6 +22,7 @@ openldap (2.4.49+dfsg-1) UNRELEASED; urgency=medium
   * Drop Build-Conflicts: libicu-dev as upstream's configure no longer tests
     for or links with libicu.
   * Note ITS#9126 recommendation in slapd.NEWS.
+  * Update Standards-Version to 4.5.0; no changes required.
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 03 Feb 2020 09:26:05 -0800
 

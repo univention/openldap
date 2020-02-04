@@ -20,7 +20,7 @@ Build-Depends: debhelper (>= 10),
                po-debconf,
                unixodbc-dev <!pkg.openldap.noslapd>
 Build-Conflicts: libbind-dev, bind-dev, autoconf2.13
-Standards-Version: 4.4.0
+Standards-Version: 4.5.0
 Homepage: http://www.openldap.org/
 Rules-Requires-Root: no
 Vcs-Git: https://salsa.debian.org/openldap-team/openldap.git
