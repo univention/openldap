@@ -11,15 +11,75 @@ Notes about Debian's slapd package
   the OpenLDAP Admin Guide for more information, including configuration
   examples for common use cases. <http://www.openldap.org/doc/admin24/>
 
-The OpenLDAP configuration
+Initial slapd configuration
 
-  Since version 2.4.23-3 the configuration of OpenLDAP has been changed to
-  /etc/ldap/slapd.d by default.  The OpenLDAP packages in Debian provide an
+  Upon installation the slapd package performs a number of tasks.  It
+  initializes the configuration database, stored in LDAP and rooted at
+  the DN "cn=config".  It creates an initial directory database with a
+  DN rooted at a suffix derived from the DNS domain configured in
+  debconf (e.g. "dc=example,dc=com").  The default backend for the
+  directory database is the MDB backend.  An administrative LDAP entry,
+  with a DN of "cn=admin,<suffix>", is added to the directory database.
+  This LDAP entry for the directory administrator is given the password
+  configured in debconf, or a randomly generated password if none was
+  set.
+
+  If desired, a new configuration and directory database can be
+  created by running, as root:
+
+    dpkg-reconfigure slapd
+
+  Caution: this command completely resets the configuration and all
+  LDAP directory data (saving a backup in /var/backups), resetting
+  slapd to a new initial state.
+
+  The configuration database ("cn=config") and directory database
+  ("dc=<domain>,dc=<tld>") have different permissions. Upon
+  installation, the Unix root user has permission to manage the slapd
+  configuration ("cn=config") database.  The LDAP directory
+  administrator entry ("cn=admin,<suffix>") has permission to manage
+  the directory database ("dc=<domain>,dc=<tld>"). This policy is
+  specific to Debian.
+
+  The directory administrator's password is stored in two places. The
+  password is in the olcRootPW attribute of the LDAP configuration
+  database's LDAP entry describing the directory database; the default
+  DN of this configuration entry is "olcDatabase={1}mdb,cn=config".
+  The password is also in the userPassword attribute of the LDAP
+  directory administrator entry itself; the default DN of the directory
+  administrator entry is "cn=admin,<suffix>".
+
+  If the administrator password needs to be changed, it should be
+  updated in both places.  The ldapmodify(1) and ldappasswd(1)
+  commands may be used, to update the "olcDatabase={1}mdb,cn=config"
+  entry and the "cn=admin,<suffix>" entry, respectively.  These
+  commands are found in the ldap-utils package.
+
+  Should you change the directory administrator's identity, be sure to
+  update the database configuration, the olcRootDN and olcRootPW
+  attributes of the "olcDatabase={1}mdb,cn=config" entry, as well as
+  add a directory administrator entry for the new administrator to the
+  "dc=<domain>,dc=<tld>" directory.
+
+Maintaining the slapd configuration
+
+  Since version 2.4.23-3 the default configuration of OpenLDAP has
+  been changed to "/etc/ldap/slapd.d"; configuration is stored in an
+  LDAP directory.  The OpenLDAP packages in Debian provide an
   automatic migration to the new configuration style. With the new
-  configuration style it is possible to change values on the fly without
-  restarting slapd.  Changes are made through the use of ldif files and
-  ldap{add,modify}.  In Debian you can use the following command to search
-  the configuration:
+  configuration style it is possible to change values on the fly
+  without restarting slapd.  Changes are made through the use of ldif
+  files and ldap{add,modify}.
+
+  Debian defaults to granting the Unix root user, and only the Unix
+  root user, administrative privileges to the configuration database.
+  The configuration database is stored in LDAP.  Administrative
+  privileges to the configuration database are granted to root when
+  the special SASL mechanism "EXTERNAL" is used for authentication.
+  The OpenLDAP client command option for this is "-Y EXTERNAL".
+
+  You can use the following shell command, as root, to search the
+  configuration:
 
       ldapsearch -Y EXTERNAL -H ldapi:/// -b "cn=config"
 
