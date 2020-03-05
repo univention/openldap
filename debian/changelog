@@ -3,6 +3,9 @@ openldap (2.4.49+dfsg-2) UNRELEASED; urgency=medium
   * slapd.README.Debian: Document the initial setup performed by slapd's
     maintainer scripts in more detail. Thanks to Karl O. Pinc.
     (Closes: #952501)
+  * Import upstream patch to fix slapd crashing in certain configurations when
+    a client attempts a login to a locked account.
+    (ITS#9171) (Closes: #953150)
 
  -- Ryan Tandy <ryan@nardis.ca>  Tue, 25 Feb 2020 15:44:18 -0800
 
