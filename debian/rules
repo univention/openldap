@@ -10,6 +10,10 @@ include /usr/share/dpkg/pkg-info.mk
 export DEB_CFLAGS_MAINT_APPEND := -Wall -Wno-format-extra-args -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 export DEB_BUILD_MAINT_OPTIONS := hardening=+pie,+bindnow
 
+# Configure calls AM_INIT_AUTOMAKE, but Automake fails as there is no Makefile.am.
+# Tell dh-autoreconf to skip automake.
+export AUTOMAKE = true
+
 # Workaround for bad glibc behavior when resolving localhost
 export RESOLV_MULTI = off
 
