@@ -2,6 +2,8 @@ openldap (2.4.49+dfsg-3) UNRELEASED; urgency=medium
 
   * Drop patch no-AM_INIT_AUTOMAKE. Instead, configure dh_autoreconf to skip
     automake by setting AUTOMAKE=/bin/true. (Closes: #864637)
+  * debian/patches/debian-version: Show Debian version, instead of upstream
+    version, in version strings.
 
  -- Ryan Tandy <ryan@nardis.ca>  Tue, 17 Mar 2020 17:45:12 +0000
 
