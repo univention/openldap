@@ -1,3 +1,10 @@
+openldap (2.4.49+dfsg-4) UNRELEASED; urgency=medium
+
+  * Annotate libsodium-dev dependency with <!pkg.openldap.noslapd>.
+    Thanks to Helmut Grohne. (Closes: #955993)
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sun, 05 Apr 2020 12:05:24 -0700
+
 openldap (2.4.49+dfsg-3) unstable; urgency=medium
 
   * Drop patch no-AM_INIT_AUTOMAKE. Instead, configure dh_autoreconf to skip
