@@ -13,6 +13,7 @@ argon2.patch
 contrib-makefiles
 smbk5pwd-makefile-manpage
 lastbind-makefile-manpage
+argon2-makefile-manpage
 ldap-conf-tls-cacertdir
 add-tlscacert-option-to-ldap-conf
 fix-build-top-mk
