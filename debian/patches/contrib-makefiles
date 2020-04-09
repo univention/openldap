@@ -159,6 +159,15 @@
  clean:
 --- a/contrib/slapd-modules/passwd/argon2/Makefile
 +++ b/contrib/slapd-modules/passwd/argon2/Makefile
+@@ -14,7 +14,7 @@
+ INCS = $(LDAP_INC)
+ LIBS = $(LDAP_LIB)
+ 
+-implementation = sodium
++implementation = argon2
+ 
+ ifeq ($(implementation),argon2)
+ LIBS += -largon2
 @@ -42,12 +42,12 @@
  .SUFFIXES: .c .o .lo
  
