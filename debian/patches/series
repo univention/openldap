@@ -23,3 +23,4 @@ ITS6035-olcauthzregex-needs-restart.patch
 set-maintainer-name
 ITS-9086-Add-debug-logging-for-more-GnuTLS-errors.patch
 ITS-9171-Insert-callback-in-the-right-place.patch
+ITS-8650-loop-on-incomplete-TLS-handshake.patch

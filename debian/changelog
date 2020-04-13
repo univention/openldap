@@ -9,6 +9,8 @@ openldap (2.4.49+dfsg-4) UNRELEASED; urgency=medium
     - libargon2 contains the specific functionality needed; libsodium is a
       larger library and contains many features not used here
     - libsodium does not support configuring the p= (parallelism) parameter
+  * Import upstream patch to properly retry gnutls_handshake() after it
+    returns GNUTLS_E_AGAIN. (ITS#8650) (Closes: #861838)
 
  -- Ryan Tandy <ryan@nardis.ca>  Sun, 05 Apr 2020 12:05:24 -0700
 
