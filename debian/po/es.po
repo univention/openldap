@@ -14,7 +14,7 @@
 # - Updates
 # Steve Langasek <vorlon@debian.org>, 2008
 # Francisco Javier Cuadrado <fcocuadrado@gmail.com>, 2009, 2010
-# Camaleón <noelamac@gmail.com>, 2014
+# Camaleón <noelamac@gmail.com>, 2014, 2020
 #
 # Traductores, si no conocen el formato PO, merece la pena leer la
 # documentación de gettext, especialmente las secciones dedicadas a este
@@ -39,15 +39,13 @@ msgstr ""
 "Project-Id-Version: openldap 2.4.23-3exp1\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2019-10-03 23:01+0000\n"
-"PO-Revision-Date: 2014-11-20 17:45+0100\n"
+"PO-Revision-Date: 2020-04-14 07:14+0000\n"
 "Last-Translator: Camaleón <noelamac@gmail.com>\n"
 "Language-Team: Debian Spanish <debian-l10n-spanish@lists.debian.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Virtaal 0.7.1\n"
 
 #. Type: boolean
 #. Description
@@ -361,19 +359,19 @@ msgstr "Consulte «/usr/share/doc/slapd/README.Debian.gz» para más detalles."
 #. Choices
 #: ../slapd.templates:16001
 msgid "abort installation"
-msgstr ""
+msgstr "cancelar la instalación"
 
 #. Type: select
 #. Choices
 #: ../slapd.templates:16001
 msgid "continue regardless"
-msgstr ""
+msgstr "continuar de todas formas"
 
 #. Type: select
 #. Description
 #: ../slapd.templates:16002
 msgid "Manual ppolicy schema update recommended"
-msgstr ""
+msgstr "Se recomienda actualizar manualmente el esquema ppolicy"
 
 #. Type: select
 #. Description
@@ -387,6 +385,13 @@ msgid ""
 "use, the schema update should be applied on every server before continuing "
 "with the upgrade."
 msgstr ""
+"La nueva versión de la superposición Password Policy (ppolicy) requiere que "
+"el esquema defina el tipo de atributo PwdMaxRecordedFailure, no disponible "
+"en el esquema que está actualmente en uso. Se recomienda cancelar la "
+"instalación ahora y actualizar el esquema ppolicy antes de actualizar la "
+"versión de slapd. Si usa la replicación, debe aplicar la actualización del "
+"esquema en cada servidor antes de continuar con la actualización de la "
+"versión."
 
 #. Type: select
 #. Description
@@ -396,6 +401,8 @@ msgstr ""
 msgid ""
 "An LDIF file has been generated with the changes required for the upgrade:"
 msgstr ""
+"Se ha generado un archivo LDIF con los cambios requeridos para la "
+"actualización:"
 
 #. Type: select
 #. Description
@@ -406,6 +413,8 @@ msgid ""
 "so if slapd is using the default access control rules, these changes can be "
 "applied (after starting slapd) by using the command:"
 msgstr ""
+"por lo que si slapd utiliza las reglas de control de acceso predeterminadas, "
+"puede aplicar estos cambios (después de iniciar slapd) utilizando la orden:"
 
 #. Type: select
 #. Description
@@ -415,112 +424,6 @@ msgid ""
 "will be added automatically, but the change will not be acted on by slapd "
 "overlays, and replication with other servers may be affected."
 msgstr ""
-
-#~ msgid "Database backend to use:"
-#~ msgstr "Motor de base de datos a utilizar:"
-
-#~ msgid ""
-#~ "HDB and BDB use similar storage formats, but HDB adds support for subtree "
-#~ "renames. Both support the same configuration options."
-#~ msgstr ""
-#~ "Los motores HDB y BDB utilizan formatos de almacenamiento semejantes, "
-#~ "pero HDB permite realizar cambios de nombre de subárboles («subtree "
-#~ "renames»). Los dos permiten las mismas opciones de configuración."
-
-#~ msgid ""
-#~ "The MDB backend is recommended. MDB uses a new storage format and "
-#~ "requires less configuration than BDB or HDB."
-#~ msgstr ""
-#~ "Se recomienda utilizar MDB. El motor MDB utiliza un nuevo formato de "
-#~ "almacenamiento y requiere menos configuración que BDB o HDB."
-
-#~ msgid ""
-#~ "In any case, you should review the resulting database configuration for "
-#~ "your needs. See /usr/share/doc/slapd/README.Debian.gz for more details."
-#~ msgstr ""
-#~ "En cualquier caso, debe revisar la configuración de la base de datos. "
-#~ "Consulte «/usr/share/doc/slapd/README.Debian.gz» para más detalles."
-
-#~ msgid "Allow LDAPv2 protocol?"
-#~ msgstr "¿Desea permitir el protocolo LDAPv2?"
-
-#~ msgid ""
-#~ "The obsolete LDAPv2 protocol is disabled by default in slapd. Programs "
-#~ "and users should upgrade to LDAPv3.  If you have old programs which can't "
-#~ "use LDAPv3, you should select this option and 'allow bind_v2' will be "
-#~ "added to your slapd.conf file."
-#~ msgstr ""
-#~ "El protocolo obsoleto LDAPv2 se ha desactivado de manera predeterminada "
-#~ "en slapd. Los programas y los usuarios deberían actualizarse a LDAPv3. "
-#~ "Debe seleccionar esta opción si aún tiene programas antiguos que no "
-#~ "utilicen LDAPv3. Si lo hace, se añadirá la opción «allow bind_v2» al "
-#~ "fichero de configuración «slapd.conf»."
-
-#~ msgid "slurpd is obsolete; replicas must be reconfigured by hand"
-#~ msgstr "slurpd es obsoleto; hay que configurar las réplicas a mano"
-
-#~ msgid ""
-#~ "One or more slurpd \"replica\" options were found in your slapd config "
-#~ "when upgrading.  Because slurpd is obsolete beginning with OpenLDAP 2.4, "
-#~ "you will need to migrate your replicas to use the syncrepl protocol "
-#~ "instead."
-#~ msgstr ""
-#~ "Se han encontrado una o más opciones de «replica» de slurpd en la "
-#~ "configuración de slapd durante la actualización. Ya que slurpd está "
-#~ "obsoleto desde la versión 2.4 de OpenLDAP, tendrá que migrar sus réplicas "
-#~ "para utilizar el protocolo syncrepl."
-
-#~ msgid ""
-#~ "The conversion from slurpd to the pull-based syncrepl protocol cannot be "
-#~ "done automatically and you will need to configure your replica servers by "
-#~ "hand.  Please see http://www.openldap.org/doc/admin24/syncrepl.html for "
-#~ "details."
-#~ msgstr ""
-#~ "La conversión desde slurpd al protocolo syncrepl no se puede realizar "
-#~ "automáticamente y tendrá que configurar sus servidores de réplica a mano. "
-#~ "Visite «http://www.openldap.org/doc/admin24/syncrepl.html» para más "
-#~ "información."
-
-#~ msgid "TLSCipherSuite values have changed"
-#~ msgstr "Los valores de TLSCipherSuite han cambiado"
-
-#~ msgid ""
-#~ "A \"TLSCipherSuite\" option was found in your slapd config when "
-#~ "upgrading. The values allowed for this option are determined by the SSL "
-#~ "implementation used, which has been changed from OpenSSL to GnuTLS.  As a "
-#~ "result, your existing TLSCipherSuite setting will not work with this "
-#~ "package."
-#~ msgstr ""
-#~ "Se ha encontrado una opción «TLSCipherSuite» en la configuración de slapd "
-#~ "durante la actualización. Los valores permitidos para esta opción vienen "
-#~ "determinados por la implementación de SSL utilizada, que ha cambiado de "
-#~ "OpenSSL a GnuTLS. Como resultado, su configuración actual de "
-#~ "TLSCipherSuite no funcionará con este paquete."
-
-#~ msgid ""
-#~ "This setting has been automatically commented out for you.  If you have "
-#~ "specific encryption needs that require this option to be re-enabled, see "
-#~ "the output of 'gnutls-cli -l' in the gnutls-bin package for the list of "
-#~ "ciphers supported by GnuTLS."
-#~ msgstr ""
-#~ "Este valor se ha comentado automáticamente. Si necesita alguna opción de "
-#~ "cifrado específica que requiera esta reactivar esta opción, consulte la "
-#~ "salida de «gnutls -cli -l», del paquete gnutls-bin, para la lista de "
-#~ "cifrados que puede utilizar GnuTLS."
-
-#~ msgid "Back up current database and create a new one?"
-#~ msgstr ""
-#~ "¿Desea crear una copia de seguridad de la base de datos actual y crear "
-#~ "una nueva?"
-
-#~ msgid ""
-#~ "The directory suffix (domain) you specified doesn't match the one "
-#~ "currently in /etc/ldap/slapd.conf. Changing the directory suffix requires "
-#~ "moving aside the current LDAP database and creating a new one. Please "
-#~ "confirm whether you want to back up and abandon the current database."
-#~ msgstr ""
-#~ "El sufijo de directorio (dominio) que ha especificado no coincide con el "
-#~ "que ahora está definido en «/etc/ldap/slapd.conf». Debe mover la base de "
-#~ "datos LDAP actual y crear una nueva si cambia el sufijo del directorio. "
-#~ "¿Está seguro de que quiere hacer una copia de seguridad de la base de "
-#~ "datos actual y dejar de utilizarla?"
+"Si decide continuar con la instalación, se añadirá el nuevo tipo de atributo "
+"automáticamente, pero el cambio no afectará a las superposiciones de slapd, "
+"lo que podría afectar a la replicación con otros servidores."

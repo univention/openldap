@@ -1,3 +1,10 @@
+openldap (2.4.49+dfsg-5) UNRELEASED; urgency=medium
+
+  * Update Spanish debconf translation.
+    Thanks to Camaleón. (Closes: #958869)
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sun, 26 Apr 2020 08:58:25 -0700
+
 openldap (2.4.49+dfsg-4) unstable; urgency=medium
 
   * Annotate libsodium-dev dependency with <!pkg.openldap.noslapd>.
