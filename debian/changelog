@@ -1,9 +1,13 @@
-openldap (2.4.49+dfsg-5) UNRELEASED; urgency=medium
+openldap (2.4.50+dfsg-1) UNRELEASED; urgency=medium
 
+  * New upstream release.
+    - Fixed slapd to limit depth of nested filters
+      (ITS#9202) (CVE-2020-12243)
+    - Drop patches included upstream: argon2.patch, ITS#9171, ITS#8650.
   * Update Spanish debconf translation.
     Thanks to Camaleón. (Closes: #958869)
 
- -- Ryan Tandy <ryan@nardis.ca>  Sun, 26 Apr 2020 08:58:25 -0700
+ -- Ryan Tandy <ryan@nardis.ca>  Tue, 28 Apr 2020 10:17:56 -0700
 
 openldap (2.4.49+dfsg-4) unstable; urgency=medium
 
