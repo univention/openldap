@@ -25,7 +25,7 @@ dnl ================================================================
 dnl Configure.in for OpenLDAP
 AC_COPYRIGHT([[Copyright 1998-2020 The OpenLDAP Foundation. All rights reserved.
 Restrictions apply, see COPYRIGHT and LICENSE files.]])
-AC_REVISION([$Id: b9cf43515fc1cb3f6d884525dde92e60d857b5a8 $])
+AC_REVISION([$Id: 37293e618797a957ebe6b5f7b9479e9165e1362b $])
 AC_INIT([OpenLDAP],,[http://www.openldap.org/its/])
 m4_define([AC_PACKAGE_BUGREPORT],[<http://www.openldap.org/its/>])
 AC_CONFIG_SRCDIR(build/version.sh)dnl
@@ -2259,6 +2259,9 @@ AC_CHECK_TYPES([ptrdiff_t])
 AC_CHECK_TYPE([socklen_t],,, [$ac_includes_default
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
+#ifdef HAVE_WINSOCK2
+#include <ws2tcpip.h>
 #endif])
 
 dnl socklen_t-like type in accept(), default socklen_t or int:
