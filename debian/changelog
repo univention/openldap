@@ -1,4 +1,4 @@
-openldap (2.4.50+dfsg-1) UNRELEASED; urgency=medium
+openldap (2.4.50+dfsg-1) unstable; urgency=medium
 
   * New upstream release.
     - Fixed slapd to limit depth of nested filters
@@ -7,7 +7,7 @@ openldap (2.4.50+dfsg-1) UNRELEASED; urgency=medium
   * Update Spanish debconf translation.
     Thanks to Camaleón. (Closes: #958869)
 
- -- Ryan Tandy <ryan@nardis.ca>  Tue, 28 Apr 2020 10:17:56 -0700
+ -- Ryan Tandy <ryan@nardis.ca>  Tue, 28 Apr 2020 10:18:12 -0700
 
 openldap (2.4.49+dfsg-4) unstable; urgency=medium
 
