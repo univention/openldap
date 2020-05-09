@@ -265,10 +265,6 @@ Modifications Compared to Upstream
   * slapd is configured to look in /etc/ldap/sasl2 in addition to
     /usr/lib/sasl2 for SASL configuration files.
 
-  * libldap has been patched to work around what may be a bug in GnuTLS in
-    calculating the length of subjectAltName in TLS certificates.  See
-    <http://bugs.debian.org/465197>.
-
   * The libldap library is patched to add two functions used by
     evolution-exchange for NTLM authentication to Active Directory.  See
     <http://bugs.debian.org/457374>.
