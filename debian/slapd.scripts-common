@@ -176,7 +176,7 @@ dump_databases() {							# {{{
 # If the user wants us to dump the databases they are dumped to the 
 # configured directory.
 
-	local db suffix file dir failed
+	local db suffix file dir failed slapcat_opts
 
 	database_dumping_enabled || return 0
 

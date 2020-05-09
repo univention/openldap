@@ -1,3 +1,13 @@
+openldap (2.4.50+dfsg-2) UNRELEASED; urgency=medium
+
+  * Merge some changes from Ubuntu:
+    - slapd.default, slapd.README.Debian: update to refer to slapd.d instead
+      of slapd.conf.
+    - debian/slapd.scripts-common: dump_databases: make slapcat_opts a local
+      variable.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Fri, 08 May 2020 18:25:27 -0700
+
 openldap (2.4.50+dfsg-1) unstable; urgency=medium
 
   * New upstream release.

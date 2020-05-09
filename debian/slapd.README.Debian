@@ -204,13 +204,12 @@ Running slapd under a Different UID/GID
 
   - Tell linux slapd can access configuration files -- usually:
 
-      chgrp <group> /etc/ldap/slapd.conf
-      chmod 0640 /etc/ldap/slapd.conf
+      chown -R <user>:<group> /etc/ldap/slapd.d
 
   - Tell linux slapd can access /var/run/slapd and write a PID file:
 
-       chgrp <group> /var/run/slapd
-       chmod 0770 /var/run/slapd
+      chgrp <group> /var/run/slapd
+      chmod 0770 /var/run/slapd
 
   - Start slapd -- /etc/init.d/slapd start
 
