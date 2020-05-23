@@ -14,6 +14,9 @@ export DEB_BUILD_MAINT_OPTIONS := hardening=+pie,+bindnow
 # Tell dh-autoreconf to skip automake.
 export AUTOMAKE = true
 
+# Expose maintainer address to build/mkversion (see debian/patches/set-maintainer-name)
+export DEB_MAINTAINER := $(shell sed -ne 's/Maintainer:\s\+//p' debian/control)
+
 # Expose DEB_VERSION to build/version.sh (see debian/patches/debian-version)
 export DEB_VERSION
 
