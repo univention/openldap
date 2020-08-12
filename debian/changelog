@@ -12,6 +12,8 @@ openldap (2.4.51+dfsg-1) UNRELEASED; urgency=medium
     from debian/control. (Closes: #960448)
   * Fix Torsten's email address in a historic debian/changelog entry to
     resolve a Lintian error (bogus-mail-host-in-debian-changelog).
+  * Rename debian/source.lintian-overrides to debian/source/lintian-overrides.
+    Fixes a Lintian pedantic tag (old-source-override-location).
 
  -- Ryan Tandy <ryan@nardis.ca>  Wed, 12 Aug 2020 09:09:55 -0700
 
