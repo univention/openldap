@@ -153,7 +153,7 @@ static struct berval * slap_uuidstr_from_normalized(
 static int syncrepl_add_glue_ancestors(
 	Operation* op, Entry *e );
 
-/* delta-mmr overlay handler */
+/* delta-mpr overlay handler */
 static int syncrepl_op_modify( Operation *op, SlapReply *rs );
 
 /* callback functions */
@@ -162,7 +162,7 @@ static int nonpresent_callback( Operation *, SlapReply * );
 
 static AttributeDescription *sync_descs[4];
 
-/* delta-mmr */
+/* delta-mpr */
 static AttributeDescription *ad_reqMod, *ad_reqDN;
 
 typedef struct logschema {
@@ -229,7 +229,7 @@ init_syncrepl(syncinfo_t *si)
 		overlay_register( &syncrepl_ov );
 	}
 
-	/* delta-MMR needs the overlay, nothing else does.
+	/* delta-MPR needs the overlay, nothing else does.
 	 * This must happen before accesslog overlay is configured.
 	 */
 	if ( si->si_syncdata &&
@@ -332,6 +332,7 @@ init_syncrepl(syncinfo_t *si)
 			attrs = (char**) ch_malloc( 3 * sizeof(char*) );
 			attrs[i++] = ch_strdup( "*" );
 			attrs[i++] = ch_strdup( "+" );
+			si->si_allattrs = si->si_allopattrs = 1;
 		} else if ( si->si_allattrs && !si->si_allopattrs ) {
 			for ( n = 0; sync_descs[ n ] != NULL; n++ ) ;
 			attrs = (char**) ch_malloc( (n+1)* sizeof(char*) );
@@ -501,6 +502,103 @@ ldap_sync_search(
 }
 
 static int
+merge_state( syncinfo_t *si )
+{
+	int i, j = 0, k, numcsns = 0, alloc = 0, changed = 0;
+	BerVarray new_ctxcsn = si->si_syncCookie.ctxcsn;
+	int *new_sids = NULL;
+
+	/* Count and set up sids */
+	for ( i=0; i < si->si_cookieState->cs_num; i++ ) {
+		if ( si->si_cookieState->cs_sids[i] == -1 ) {
+			continue;
+		}
+
+		for ( ; j < si->si_syncCookie.numcsns &&
+					si->si_syncCookie.sids[j] == -1;
+				j++ )
+			alloc = 1; /* Just skip over them */
+
+		for ( ; j < si->si_syncCookie.numcsns &&
+					si->si_syncCookie.sids[j] < si->si_cookieState->cs_sids[i];
+				j++ ) {
+			if ( si->si_syncCookie.sids[j] != -1 ) {
+				new_sids = ch_realloc( new_sids, (numcsns+1)*sizeof(int) );
+				new_sids[numcsns++] = si->si_syncCookie.sids[j];
+			}
+		}
+
+		if ( j < si->si_syncCookie.numcsns &&
+				si->si_syncCookie.sids[j] == si->si_cookieState->cs_sids[i] ) j++;
+
+		new_sids = ch_realloc( new_sids, (numcsns+1)*sizeof(int) );
+		new_sids[numcsns++] = si->si_cookieState->cs_sids[i];
+	}
+
+	for ( ; j < si->si_syncCookie.numcsns; j++ ) {
+		if ( si->si_syncCookie.sids[j] != -1 ) {
+			new_sids = ch_realloc( new_sids, (numcsns+1)*sizeof(int) );
+			new_sids[numcsns++] = si->si_syncCookie.sids[j];
+		}
+	}
+
+	if ( alloc || numcsns != si->si_syncCookie.numcsns ) {
+		/* Short circuit allocations if we don't need to start over */
+		alloc = 1;
+		new_ctxcsn = ch_calloc( numcsns + 1, sizeof( BerValue ) );
+	}
+
+	i = j = 0;
+	for ( k=0; k < numcsns; k++ ) {
+		while ( i < si->si_cookieState->cs_num &&
+				si->si_cookieState->cs_sids[i] < new_sids[k] )
+			i++;
+
+		while ( j < si->si_syncCookie.numcsns &&
+				si->si_syncCookie.sids[j] < new_sids[k] )
+			j++;
+
+		if ( j < si->si_syncCookie.numcsns &&
+				si->si_cookieState->cs_sids[i] == si->si_syncCookie.sids[j] ) {
+			assert( si->si_cookieState->cs_sids[i] == new_sids[k] );
+			if ( !bvmatch( &si->si_syncCookie.ctxcsn[j],
+					&si->si_cookieState->cs_vals[i] )) {
+				ber_bvreplace( &new_ctxcsn[k], &si->si_cookieState->cs_vals[i] );
+				changed = 1;
+			} else if ( alloc ) {
+				ber_dupbv( &new_ctxcsn[k], &si->si_syncCookie.ctxcsn[j] );
+			}
+			i++;
+			j++;
+		} else if ( si->si_cookieState->cs_sids[i] == new_sids[k] ) {
+			changed = 1;
+			ber_bvreplace( &new_ctxcsn[k], &si->si_cookieState->cs_vals[i] );
+			i++;
+		} else {
+			if ( alloc ) {
+				ber_dupbv( &new_ctxcsn[k], &si->si_syncCookie.ctxcsn[j] );
+			}
+			j++;
+		}
+	}
+	assert( i == si->si_cookieState->cs_num );
+	assert( j == si->si_syncCookie.numcsns );
+
+	si->si_syncCookie.numcsns = numcsns;
+	if ( alloc ) {
+		changed = 1;
+		ch_free( si->si_syncCookie.sids );
+		si->si_syncCookie.sids = new_sids;
+
+		ber_bvarray_free( si->si_syncCookie.ctxcsn );
+		si->si_syncCookie.ctxcsn = new_ctxcsn;
+	} else {
+		ch_free( new_sids );
+	}
+	return changed;
+}
+
+static int
 check_syncprov(
 	Operation *op,
 	syncinfo_t *si )
@@ -570,29 +668,8 @@ check_syncprov(
 			ber_bvarray_dup_x( &si->si_syncCookie.ctxcsn,
 				si->si_cookieState->cs_vals, NULL );
 			changed = 1;
-		} else {
-			for (i=0; !BER_BVISNULL( &si->si_syncCookie.ctxcsn[i] ); i++) {
-				/* bogus, just dup everything */
-				if ( si->si_syncCookie.sids[i] == -1 ) {
-					ber_bvarray_free( si->si_syncCookie.ctxcsn );
-					ber_bvarray_dup_x( &si->si_syncCookie.ctxcsn,
-						si->si_cookieState->cs_vals, NULL );
-					changed = 1;
-					break;
-				}
-				for (j=0; j<si->si_cookieState->cs_num; j++) {
-					if ( si->si_syncCookie.sids[i] !=
-						si->si_cookieState->cs_sids[j] )
-						continue;
-					if ( bvmatch( &si->si_syncCookie.ctxcsn[i],
-						&si->si_cookieState->cs_vals[j] ))
-						break;
-					ber_bvreplace( &si->si_syncCookie.ctxcsn[i],
-						&si->si_cookieState->cs_vals[j] );
-					changed = 1;
-					break;
-				}
-			}
+		} else if ( merge_state( si ) ) {
+			changed = 1;
 		}
 	}
 	if ( changed ) {
@@ -1180,9 +1257,7 @@ do_syncrep2(
 				 *	1) err code : LDAP_BUSY ...
 				 *	2) on err policy : stop service, stop sync, retry
 				 */
-				if ( refreshDeletes == 0 && match < 0 &&
-					err == LDAP_SUCCESS &&
-					syncCookie_req.numcsns == syncCookie.numcsns )
+				if ( refreshDeletes == 0 && match < 0 && err == LDAP_SUCCESS )
 				{
 					syncrepl_del_nonpresent( op, si, NULL,
 						&syncCookie, m );
@@ -1358,8 +1433,7 @@ do_syncrep2(
 
 				if ( match < 0 ) {
 					if ( si->si_refreshPresent == 1 &&
-						si_tag != LDAP_TAG_SYNC_NEW_COOKIE &&
-						syncCookie_req.numcsns == syncCookie.numcsns ) {
+						si_tag != LDAP_TAG_SYNC_NEW_COOKIE ) {
 						syncrepl_del_nonpresent( op, si, NULL,
 							&syncCookie, m );
 					}
@@ -1512,10 +1586,10 @@ do_syncrepl(
 	 * in use. This may be complicated by the use of the glue
 	 * overlay.
 	 *
-	 * Typically there is a single syncprov mastering the entire
+	 * Typically there is a single syncprov controlling the entire
 	 * glued tree. In that case, our contextCSN updates should
-	 * go to the master DB. But if there is no syncprov on the
-	 * master DB, then nothing special is needed here.
+	 * go to the primary DB. But if there is no syncprov on the
+	 * primary DB, then nothing special is needed here.
 	 *
 	 * Alternatively, there may be individual syncprov overlays
 	 * on each glued branch. In that case, each syncprov only
@@ -1808,6 +1882,8 @@ syncrepl_accesslog_mods(
 
 		if ( !mod || ad != mod->sml_desc || op != mod->sml_op ) {
 			mod = (Modifications *) ch_malloc( sizeof( Modifications ) );
+			if ( op == LDAP_MOD_ADD && is_at_single_value( ad->ad_type ))
+				op = LDAP_MOD_REPLACE;
 			mod->sml_flags = 0;
 			mod->sml_op = op;
 			mod->sml_next = NULL;
@@ -2458,7 +2534,7 @@ syncrepl_message_to_op(
 			OpExtraSync oes;
 			op->orm_modlist = modlist;
 			op->o_bd = si->si_wbe;
-			/* delta-mmr needs additional checks in syncrepl_op_modify */
+			/* delta-mpr needs additional checks in syncrepl_op_modify */
 			if ( SLAP_MULTIMASTER( op->o_bd )) {
 				oes.oe.oe_key = (void *)syncrepl_message_to_op;
 				oes.oe_si = si;
@@ -2788,6 +2864,7 @@ static struct berval generic_filterstr = BER_BVC("(objectclass=*)");
  * operational attributes from the entry, and do a regular ModDN.
  */
 typedef struct dninfo {
+	syncinfo_t *si;
 	Entry *new_entry;
 	struct berval dn;
 	struct berval ndn;
@@ -3010,6 +3087,7 @@ syncrepl_entry(
 	op->o_callback = &cb;
 	cb.sc_response = dn_callback;
 	cb.sc_private = &dni;
+	dni.si = si;
 	dni.new_entry = entry;
 	dni.modlist = modlist;
 
@@ -3489,7 +3567,7 @@ syncrepl_del_nonpresent(
 	slap_callback	cb = { NULL };
 	struct nonpresent_entry *np_list, *np_prev;
 	int rc;
-	AttributeName	an[2];
+	AttributeName	an[3]; /* entryUUID, entryCSN, NULL */
 
 	struct berval pdn = BER_BVNULL;
 	struct berval csn;
@@ -3548,16 +3626,18 @@ syncrepl_del_nonpresent(
 		AttributeAssertion mmaa;
 		SlapReply rs_search = {REP_RESULT};
 
-		memset( &an[0], 0, 2 * sizeof( AttributeName ) );
+		memset( &an[0], 0, 3 * sizeof( AttributeName ) );
 		an[0].an_name = slap_schema.si_ad_entryUUID->ad_cname;
 		an[0].an_desc = slap_schema.si_ad_entryUUID;
+		an[1].an_name = slap_schema.si_ad_entryCSN->ad_cname;
+		an[1].an_desc = slap_schema.si_ad_entryCSN;
 		op->ors_attrs = an;
 		op->ors_slimit = SLAP_NO_LIMIT;
 		op->ors_tlimit = SLAP_NO_LIMIT;
 		op->ors_limit = NULL;
 		op->ors_attrsonly = 0;
 		op->ors_filter = filter_dup( si->si_filter, op->o_tmpmemctx );
-		/* In multimaster, updates can continue to arrive while
+		/* In multi-provider, updates can continue to arrive while
 		 * we're searching. Limit the search result to entries
 		 * older than our newest cookie CSN.
 		 */
@@ -4164,7 +4244,10 @@ attr_cmp( Operation *op, Attribute *old, Attribute *new,
 		/* some values were added */
 		if ( nn && no < o ) {
 			mod = ch_malloc( sizeof( Modifications ) );
-			mod->sml_op = LDAP_MOD_ADD;
+			if ( is_at_single_value( old->a_desc->ad_type ))
+				mod->sml_op = LDAP_MOD_REPLACE;
+			else
+				mod->sml_op = LDAP_MOD_ADD;
 			mod->sml_flags = 0;
 			mod->sml_desc = old->a_desc;
 			mod->sml_type = mod->sml_desc->ad_cname;
@@ -4292,6 +4375,39 @@ void syncrepl_diff_entry( Operation *op, Attribute *old, Attribute *new,
 	*ml = NULL;
 }
 
+/* shallow copy attrs, excluding non-replicated attrs */
+static Attribute *
+attrs_exdup( Operation *op, dninfo *dni, Attribute *attrs )
+{
+	int i;
+	Attribute *tmp, *anew;
+
+	if ( attrs == NULL ) return NULL;
+
+	/* count attrs */
+	for ( tmp = attrs,i=0; tmp; tmp=tmp->a_next ) i++;
+
+	anew = op->o_tmpalloc( i * sizeof(Attribute), op->o_tmpmemctx );
+	for ( tmp = anew; attrs; attrs=attrs->a_next ) {
+		int flag = is_at_operational( attrs->a_desc->ad_type ) ? dni->si->si_allopattrs :
+			dni->si->si_allattrs;
+		if ( !flag && !ad_inlist( attrs->a_desc, dni->si->si_anlist ))
+			continue;
+		if ( dni->si->si_exattrs && ad_inlist( attrs->a_desc, dni->si->si_exanlist ))
+			continue;
+		*tmp = *attrs;
+		tmp->a_next = tmp+1;
+		tmp++;
+	}
+	if ( tmp == anew ) {
+		/* excluded everything */
+		op->o_tmpfree( anew, op->o_tmpmemctx );
+		return NULL;
+	}
+	tmp[-1].a_next = NULL;
+	return anew;
+}
+
 static int
 dn_callback(
 	Operation*	op,
@@ -4414,9 +4530,13 @@ dn_callback(
 					 */
 				}
 
-				syncrepl_diff_entry( op, rs->sr_entry->e_attrs,
-					dni->new_entry->e_attrs, &dni->mods, dni->modlist,
-					is_ctx );
+				{
+					Attribute *old = attrs_exdup( op, dni, rs->sr_entry->e_attrs );
+					syncrepl_diff_entry( op, old,
+						dni->new_entry->e_attrs, &dni->mods, dni->modlist,
+						is_ctx );
+					op->o_tmpfree( old, op->o_tmpmemctx );
+				}
 			}
 		}
 	} else if ( rs->sr_type == REP_RESULT ) {
@@ -4440,6 +4560,7 @@ nonpresent_callback(
 	int count = 0;
 	char *present_uuid = NULL;
 	struct nonpresent_entry *np_entry;
+	struct sync_cookie *syncCookie = op->o_controls[slap_cids.sc_LDAPsync];
 
 	if ( rs->sr_type == REP_RESULT ) {
 		count = presentlist_free( si->si_presentlist );
@@ -4467,11 +4588,34 @@ nonpresent_callback(
 		}
 
 		if ( present_uuid == NULL ) {
-			np_entry = (struct nonpresent_entry *)
-				ch_calloc( 1, sizeof( struct nonpresent_entry ) );
-			np_entry->npe_name = ber_dupbv( NULL, &rs->sr_entry->e_name );
-			np_entry->npe_nname = ber_dupbv( NULL, &rs->sr_entry->e_nname );
-			LDAP_LIST_INSERT_HEAD( &si->si_nonpresentlist, np_entry, npe_link );
+			int covered = 1; /* covered by our new contextCSN? */
+
+			/* TODO: This can go once we can build a filter that takes care of
+			 * the check for us */
+			a = attr_find( rs->sr_entry->e_attrs, slap_schema.si_ad_entryCSN );
+			if ( a ) {
+				int i, sid = slap_parse_csn_sid( &a->a_nvals[0] );
+				if ( sid != -1 ) {
+					covered = 0;
+					for ( i=0; i < syncCookie->numcsns && syncCookie->sids[i] <= sid; i++ ) {
+						if ( syncCookie->sids[i] == sid &&
+								ber_bvcmp( &a->a_nvals[0], &syncCookie->ctxcsn[i] ) <= 0 ) {
+							covered = 1;
+						}
+					}
+				}
+			}
+
+			if ( covered ) {
+				np_entry = (struct nonpresent_entry *)
+					ch_calloc( 1, sizeof( struct nonpresent_entry ) );
+				np_entry->npe_name = ber_dupbv( NULL, &rs->sr_entry->e_name );
+				np_entry->npe_nname = ber_dupbv( NULL, &rs->sr_entry->e_nname );
+				LDAP_LIST_INSERT_HEAD( &si->si_nonpresentlist, np_entry, npe_link );
+				Debug( LDAP_DEBUG_SYNC, "nonpresent_callback: %s "
+					"adding entry %s to non-present list\n",
+					si->si_ridtxt, np_entry->npe_name->bv_val, 0 );
+			}
 
 		} else {
 			presentlist_delete( &si->si_presentlist, &a->a_nvals[0] );
