@@ -10,6 +10,8 @@ openldap (2.4.51+dfsg-1) UNRELEASED; urgency=medium
     slapd.README.Debian. The patch referred to was dropped in 2.4.7-6.
   * debian/patches/set-maintainer-name: Extract maintainer address dynamically
     from debian/control. (Closes: #960448)
+  * Fix Torsten's email address in a historic debian/changelog entry to
+    resolve a Lintian error (bogus-mail-host-in-debian-changelog).
 
  -- Ryan Tandy <ryan@nardis.ca>  Wed, 12 Aug 2020 09:09:55 -0700
 
@@ -2241,7 +2243,7 @@ openldap2 (2.2.18-0.pre2) experimental; urgency=low
     + debian/rules (binary-arch): Run dh_fixperms to fix the permissions 
       on shared libraries.
 
- -- Torsten Landschoff <torsten@pulsar.galaxy>  Thu, 13 Jan 2005 11:53:28 +0100
+ -- Torsten Landschoff <torsten@debian.org>  Thu, 13 Jan 2005 11:53:28 +0100
 
 openldap2 (2.2.18-0.pre1) experimental; urgency=low
 
