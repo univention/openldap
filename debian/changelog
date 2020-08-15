@@ -18,6 +18,8 @@ openldap (2.4.51+dfsg-1) UNRELEASED; urgency=medium
     slapo-pw-pbkdf2.5, which will be included upstream in a future release.
   * Remove the trailing whitespaces from debian/changelog. Fixes a Lintian
     pedantic tag (trailing-whitespace).
+  * Convert debian/po/de.po to UTF-8. Fixes a Lintian warning
+    (national-encoding).
 
  -- Ryan Tandy <ryan@nardis.ca>  Wed, 12 Aug 2020 09:09:55 -0700
 
