@@ -90,7 +90,7 @@ Pre-Depends: ${misc:Pre-Depends}
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Recommends: libldap-common
 Replaces: libldap2, libldap-2.3-0
-Description: OpenLDAP libraries 
+Description: OpenLDAP libraries
  These are the run-time libraries for the OpenLDAP (Lightweight Directory
  Access Protocol) servers and clients.
 

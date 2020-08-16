@@ -16,8 +16,8 @@ openldap (2.4.51+dfsg-1) UNRELEASED; urgency=medium
     Fixes a Lintian pedantic tag (old-source-override-location).
   * Override Lintian pedantic tag maintainer-manual-page for
     slapo-pw-pbkdf2.5, which will be included upstream in a future release.
-  * Remove the trailing whitespaces from debian/changelog. Fixes a Lintian
-    pedantic tag (trailing-whitespace).
+  * Remove the trailing whitespaces from debian/changelog, debian/control, and
+    debian/rules. Fixes a Lintian pedantic tag (trailing-whitespace).
   * Convert debian/po/de.po to UTF-8. Fixes a Lintian warning
     (national-encoding).
   * Relax libldap's dependency on libldap-common to Recommends.
