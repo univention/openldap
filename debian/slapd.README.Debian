@@ -18,11 +18,10 @@ Initial slapd configuration
   the DN "cn=config".  It creates an initial directory database with a
   DN rooted at a suffix derived from the DNS domain configured in
   debconf (e.g. "dc=example,dc=com").  The default backend for the
-  directory database is the MDB backend.  An administrative LDAP entry,
-  with a DN of "cn=admin,<suffix>", is added to the directory database.
-  This LDAP entry for the directory administrator is given the password
-  configured in debconf, or a randomly generated password if none was
-  set.
+  directory database is the MDB backend.  The root (administrative) DN
+  is set to "cn=admin,<suffix>". The root password is set to the
+  password configured in debconf, or a randomly generated password if
+  none was set.
 
   If desired, a new configuration and directory database can be
   created by running, as root:
@@ -36,30 +35,9 @@ Initial slapd configuration
   The configuration database ("cn=config") and directory database
   ("dc=<domain>,dc=<tld>") have different permissions. Upon
   installation, the Unix root user has permission to manage the slapd
-  configuration ("cn=config") database.  The LDAP directory
-  administrator entry ("cn=admin,<suffix>") has permission to manage
-  the directory database ("dc=<domain>,dc=<tld>"). This policy is
-  specific to Debian.
-
-  The directory administrator's password is stored in two places. The
-  password is in the olcRootPW attribute of the LDAP configuration
-  database's LDAP entry describing the directory database; the default
-  DN of this configuration entry is "olcDatabase={1}mdb,cn=config".
-  The password is also in the userPassword attribute of the LDAP
-  directory administrator entry itself; the default DN of the directory
-  administrator entry is "cn=admin,<suffix>".
-
-  If the administrator password needs to be changed, it should be
-  updated in both places.  The ldapmodify(1) and ldappasswd(1)
-  commands may be used, to update the "olcDatabase={1}mdb,cn=config"
-  entry and the "cn=admin,<suffix>" entry, respectively.  These
-  commands are found in the ldap-utils package.
-
-  Should you change the directory administrator's identity, be sure to
-  update the database configuration, the olcRootDN and olcRootPW
-  attributes of the "olcDatabase={1}mdb,cn=config" entry, as well as
-  add a directory administrator entry for the new administrator to the
-  "dc=<domain>,dc=<tld>" directory.
+  configuration ("cn=config") database.  The LDAP directory manager
+  ("cn=admin,<suffix>") has permission to manage the directory database
+  ("dc=<domain>,dc=<tld>"). This policy is specific to Debian.
 
 Maintaining the slapd configuration
 
@@ -89,6 +67,25 @@ Maintaining the slapd configuration
 
   For configuration options see the several manpages that exist or the
   documentation provided upstream.
+
+  To change the directory administrator's password, the olcRootPW
+  attribute of the database configuration must be updated. The new
+  password should be hashed using the slappasswd(8) command. Then, the
+  root user should update the attribute using ldapmodify(1):
+
+    ldapmodify -H ldapi:// -Y EXTERNAL << EOF
+    dn: olcDatabase={1}mdb,cn=config
+    changetype: modify
+    replace: olcRootPW
+    olcRootPW: <new hashed password>
+
+    EOF
+
+  Versions of slapd before 2.4.51+dfsg-1 additionally created a database
+  entry named the same as the rootDN (cn=admin,<suffix>) and having the
+  same password. If this entry exists in your directory, its password
+  must also be updated using ldappasswd(1), otherwise the old password
+  can still be used.
 
 Using the MDB Backend
 

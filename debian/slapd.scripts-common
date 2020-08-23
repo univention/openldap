@@ -526,12 +526,6 @@ create_new_directory() {						# {{{
 		o: $organization
 		dc: $dc
 
-		dn: cn=admin,$basedn
-		objectClass: simpleSecurityObject
-		objectClass: organizationalRole
-		cn: admin
-		description: LDAP administrator
-		userPassword: $adminpass
 	EOF
 
 	capture_diagnostics slapadd -F "${SLAPD_CONF}" -b "${basedn}" \

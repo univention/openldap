@@ -68,8 +68,7 @@ olcLastMod: TRUE
 olcSuffix: @SUFFIX@
 # Where the database file are physically stored for database #1
 olcDbDirectory: /var/lib/ldap
-# olcRootDN directive for specifying a superuser on the database. This
-# is needed for syncrepl.
+# Database superuser credentials
 olcRootDN: cn=admin,@SUFFIX@
 olcRootPW: @PASSWORD@
 # Indexing options for database #1

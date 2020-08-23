@@ -30,6 +30,9 @@ openldap (2.4.51+dfsg-1) UNRELEASED; urgency=medium
     installations it is still recommended to install libldap-common.
   * Append a timestamp to the backup directory created by dpkg-reconfigure.
     (Closes: #599585, #960449)
+  * Remove the redundant cn=admin,<suffix> entry from the default DIT for new
+    installs. For new installs going forward, the root credentials will be
+    stored in olcRootDN/olcRootPW only. (Closes: #821331)
 
  -- Ryan Tandy <ryan@nardis.ca>  Wed, 12 Aug 2020 09:09:55 -0700
 
