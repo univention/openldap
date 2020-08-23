@@ -1,4 +1,4 @@
-openldap (2.4.51+dfsg-1) UNRELEASED; urgency=medium
+openldap (2.4.51+dfsg-1) unstable; urgency=medium
 
   * New upstream release.
     - Add ldap_parse_password_expiring_control to libldap-2.4-2.symbols.
@@ -41,7 +41,7 @@ openldap (2.4.51+dfsg-1) UNRELEASED; urgency=medium
     Many deployments do not use SASL at all, and therefore SASL mechanisms are
     not needed "in all but unusual installations".
 
- -- Ryan Tandy <ryan@nardis.ca>  Wed, 12 Aug 2020 09:09:55 -0700
+ -- Ryan Tandy <ryan@nardis.ca>  Sun, 23 Aug 2020 11:09:57 -0700
 
 openldap (2.4.50+dfsg-1) unstable; urgency=medium
 
