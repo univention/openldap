@@ -28,6 +28,8 @@ openldap (2.4.51+dfsg-1) UNRELEASED; urgency=medium
     build starts, due to the transitive build-dependency on libldap.
     Although libldap works fine without libldap-common, in normal
     installations it is still recommended to install libldap-common.
+  * Append a timestamp to the backup directory created by dpkg-reconfigure.
+    (Closes: #599585, #960449)
 
  -- Ryan Tandy <ryan@nardis.ca>  Wed, 12 Aug 2020 09:09:55 -0700
 

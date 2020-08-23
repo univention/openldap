@@ -231,7 +231,7 @@ load_databases() {							# {{{
 
 		# If there is an old DB_CONFIG file, restore it before
 		# running slapadd
-		backupdir="$(compute_backup_path -n "$dbdir" "$suffix")"
+		backupdir="$(compute_backup_path -n "$suffix")"
 		if [ -e "$backupdir"/DB_CONFIG ]; then
 			cp -a "$backupdir"/DB_CONFIG "$dbdir"/
 		fi
@@ -341,29 +341,31 @@ I==1 { I=0 }
 
 compute_backup_path() {							# {{{
 # Compute the path to backup a database directory
-# Usage: compute_backup_path [-n] <dir> <basedn>
+# This is used when backing up actual database files, either just before 
+# reloading a dump, or before generating a new configuration.
+# The directory used for dumping and reloading LDIF across upgrades, as 
+# well as for backing up the configuration before upgrading, is computed 
+# by database_dumping_destdir().
+# Usage: compute_backup_path [-n] <basedn>
 
 # XXX: should ask the user via debconf
+# or maybe just use database_dumping_destdir
 
-	local dirname basedn ok_exists
+	local basedn ok_exists
 	if [ "$1" = "-n" ]; then
 		ok_exists=yes
 		shift
 	fi
-	dirname="$1"
-	basedn="$2"
+	basedn="$1"
 
-	# Computing the name of the backup directory from the old version, 
-	# the suffix etc. all makes me feel worried. I'd rather have a 
-	# directory name which is not going to exist. So the simple 
-	# scheme we are using now is to compute the filename from the 
-	# directory name and appending date and time. And we check if it
-	# exists to be really sure...  -- Torsten
-
-	local target
-	local id
-	id="$OLD_VERSION"
-	[ -n "$id" ] || id=`date +%Y%m%d-%H%M%S`
+	local id target
+	if [ "$MODE" = reconfigure ] || [ "$DEBCONF_RECONFIGURE" ]; then
+		# reconfigure: use OLD_VERSION plus a timestamp.
+		id="${OLD_VERSION:+$OLD_VERSION-}$(date +%Y%m%d-%H%M%S)"
+	else
+		# install/upgrade: use OLD_VERSION or a timestamp, not both.
+		id="${OLD_VERSION:-$(date +%Y%m%d-%H%M%S)}"
+	fi
 	target="/var/backups/$basedn-$id.ldapdb"
 	if [ -e "$target" ] && [ -z "$ok_exists" ]; then
 		echo >&2
@@ -399,7 +401,7 @@ move_old_database_away() {						# {{{
 	# include mount points as well anyway, but it's much less likely.
 	db_get slapd/move_old_database
 	if [ "$RET" = true ]; then
-		backupdir="$(compute_backup_path "$databasedir" "$suffix")"
+		backupdir="$(compute_backup_path "$suffix")"
 		printf '  - directory %s... ' "$suffix" >&2
 		mkdir -p "$backupdir"
 		find -H "$databasedir" -mindepth 1 -maxdepth 1 -type f \
