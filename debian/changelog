@@ -33,6 +33,12 @@ openldap (2.4.51+dfsg-1) UNRELEASED; urgency=medium
   * Remove the redundant cn=admin,<suffix> entry from the default DIT for new
     installs. For new installs going forward, the root credentials will be
     stored in olcRootDN/olcRootPW only. (Closes: #821331)
+  * Change slapd's Suggests: ldap-utils to Recommends. While any LDAP client
+    suffices, ldap-utils contains the standard tools recommended by upstream
+    for basic administration and management.
+  * Relax Recommends: libsasl2-modules to Suggests on slapd and ldap-utils.
+    Many deployments do not use SASL at all, and therefore SASL mechanisms are
+    not needed "in all but unusual installations".
 
  -- Ryan Tandy <ryan@nardis.ca>  Wed, 12 Aug 2020 09:09:55 -0700
 
