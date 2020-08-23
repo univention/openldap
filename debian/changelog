@@ -1,6 +1,7 @@
 openldap (2.4.51+dfsg-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+    - Add ldap_parse_password_expiring_control to libldap-2.4-2.symbols.
   * Merge some changes from Ubuntu:
     - slapd.default, slapd.README.Debian: update to refer to slapd.d instead
       of slapd.conf.
