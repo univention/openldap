@@ -407,34 +407,30 @@ tlso_ctx_init( struct ldapoptions *lo, struct ldaptls *lt, int is_server )
 		DH_free( dh );
 	}
 
-	if ( is_server && lo->ldo_tls_ecname ) {
+	if ( lo->ldo_tls_ecname ) {
 #ifdef OPENSSL_NO_EC
 		Debug( LDAP_DEBUG_ANY,
 			"TLS: Elliptic Curves not supported.\n", 0,0,0 );
 		return -1;
 #else
-		EC_KEY *ecdh;
-
-		int nid = OBJ_sn2nid( lt->lt_ecname );
-		if ( nid == NID_undef ) {
+		if ( !SSL_CTX_set1_curves_list( ctx, lt->lt_ecname )) {
 			Debug( LDAP_DEBUG_ANY,
-				"TLS: could not use EC name `%s'.\n",
+				"TLS: could not set EC name `%s'.\n",
 				lo->ldo_tls_ecname,0,0);
 			tlso_report_error();
 			return -1;
 		}
-		ecdh = EC_KEY_new_by_curve_name( nid );
-		if ( ecdh == NULL ) {
+	/*
+	 * This is a NOP in OpenSSL 1.1.0 and later, where curves are always
+	 * auto-negotiated.
+	 */
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+		if ( SSL_CTX_set_ecdh_auto( ctx, 1 ) <= 0 ) {
 			Debug( LDAP_DEBUG_ANY,
-				"TLS: could not generate key for EC name `%s'.\n",
-				lo->ldo_tls_ecname,0,0);
-			tlso_report_error();
-			return -1;
+				"TLS: could not enable automatic EC negotiation.\n", 0, 0, 0 );
 		}
-		SSL_CTX_set_tmp_ecdh( ctx, ecdh );
-		SSL_CTX_set_options( ctx, SSL_OP_SINGLE_ECDH_USE );
-		EC_KEY_free( ecdh );
 #endif
+#endif	/* OPENSSL_NO_EC */
 	}
 
 	if ( tlso_opt_trace ) {
@@ -624,6 +620,7 @@ tlso_session_chkhost( LDAP *ld, tls_session *sess, const char *name_in )
 {
 	tlso_session *s = (tlso_session *)sess;
 	int i, ret = LDAP_LOCAL_ERROR;
+	int chkSAN = ld->ld_options.ldo_tls_require_san, gotSAN = 0;
 	X509 *x;
 	const char *name;
 	char *ptr;
@@ -662,7 +659,8 @@ tlso_session_chkhost( LDAP *ld, tls_session *sess, const char *name_in )
 	if ((ptr = strrchr(name, '.')) && isdigit((unsigned char)ptr[1])) {
 		if (inet_aton(name, (struct in_addr *)&addr)) ntype = IS_IP4;
 	}
-	
+
+	if (chkSAN) {
 	i = X509_get_ext_by_NID(x, NID_subject_alt_name, -1);
 	if (i >= 0) {
 		X509_EXTENSION *ex;
@@ -675,6 +673,7 @@ tlso_session_chkhost( LDAP *ld, tls_session *sess, const char *name_in )
 			char *domain = NULL;
 			GENERAL_NAME *gn;
 
+			gotSAN = 1;
 			if (ntype == IS_DNS) {
 				domain = strchr(name, '.');
 				if (domain) {
@@ -731,6 +730,41 @@ tlso_session_chkhost( LDAP *ld, tls_session *sess, const char *name_in )
 			if (i < n) {	/* Found a match */
 				ret = LDAP_SUCCESS;
 			}
+		}
+	}
+	}
+	if (ret != LDAP_SUCCESS && chkSAN) {
+		switch(chkSAN) {
+		case LDAP_OPT_X_TLS_DEMAND:
+		case LDAP_OPT_X_TLS_HARD:
+			if (!gotSAN) {
+				Debug( LDAP_DEBUG_ANY,
+					"TLS: unable to get subjectAltName from peer certificate.\n", 0, 0, 0 );
+				ret = LDAP_CONNECT_ERROR;
+				if ( ld->ld_error ) {
+					LDAP_FREE( ld->ld_error );
+				}
+				ld->ld_error = LDAP_STRDUP(
+					_("TLS: unable to get subjectAltName from peer certificate"));
+				goto done;
+			}
+			/* FALLTHRU */
+		case LDAP_OPT_X_TLS_TRY:
+			if (gotSAN) {
+				Debug( LDAP_DEBUG_ANY, "TLS: hostname (%s) does not match "
+					"subjectAltName in certificate.\n",
+					name, 0, 0 );
+				ret = LDAP_CONNECT_ERROR;
+				if ( ld->ld_error ) {
+					LDAP_FREE( ld->ld_error );
+				}
+				ld->ld_error = LDAP_STRDUP(
+					_("TLS: hostname does not match subjectAltName in peer certificate"));
+				goto done;
+			}
+			break;
+		case LDAP_OPT_X_TLS_ALLOW:
+			break;
 		}
 	}
 
@@ -796,9 +830,10 @@ no_cn:
 				LDAP_FREE( ld->ld_error );
 			}
 			ld->ld_error = LDAP_STRDUP(
-				_("TLS: hostname does not match CN in peer certificate"));
+				_("TLS: hostname does not match name in peer certificate"));
 		}
 	}
+done:
 	X509_free(x);
 	return ret;
 }

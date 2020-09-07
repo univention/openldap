@@ -25,7 +25,7 @@ dnl ================================================================
 dnl Configure.in for OpenLDAP
 AC_COPYRIGHT([[Copyright 1998-2020 The OpenLDAP Foundation. All rights reserved.
 Restrictions apply, see COPYRIGHT and LICENSE files.]])
-AC_REVISION([$Id: 37293e618797a957ebe6b5f7b9479e9165e1362b $])
+AC_REVISION([$Id: 1c7bad4c0b18f9e988c4b161a996f5078917430e $])
 AC_INIT([OpenLDAP],,[http://www.openldap.org/its/])
 m4_define([AC_PACKAGE_BUGREPORT],[<http://www.openldap.org/its/>])
 AC_CONFIG_SRCDIR(build/version.sh)dnl
@@ -1164,6 +1164,13 @@ if test $ol_with_tls = openssl || test $ol_with_tls = auto ; then
 	AC_CHECK_HEADERS(openssl/ssl.h)
 
 	if test $ac_cv_header_openssl_ssl_h = yes ; then
+		AC_PREPROC_IFELSE([AC_LANG_SOURCE(
+			[[#include <openssl/opensslv.h>]
+			[#if OPENSSL_VERSION_NUMBER < 0x1000200fL]
+			[#error "OpenSSL is too old"]
+			[#endif]])],
+			, [AC_MSG_FAILURE([OpenSSL 1.0.2a or newer required])])
+
 		AC_CHECK_LIB(ssl, SSL_CTX_set_msg_callback,
 			[have_openssl=yes
 			need_rsaref=no], [have_openssl=no],
