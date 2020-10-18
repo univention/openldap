@@ -1,6 +1,7 @@
 openldap (2.4.53+dfsg-2) UNRELEASED; urgency=medium
 
   * Change upstream Homepage and get-orig-source URLs to HTTPS.
+  * Create debian/gbp.conf.
 
  -- Ryan Tandy <ryan@nardis.ca>  Sun, 18 Oct 2020 08:51:30 -0700
 
