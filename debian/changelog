@@ -1,3 +1,10 @@
+openldap (2.4.55+dfsg-1) unstable; urgency=medium
+
+  * New upstream release.
+    - Fixed slapd normalization handling with modrdn (ITS#9370)
+
+ -- Ryan Tandy <ryan@nardis.ca>  Tue, 27 Oct 2020 21:07:29 -0700
+
 openldap (2.4.54+dfsg-1) unstable; urgency=medium
 
   * New upstream release.
