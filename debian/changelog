@@ -2,9 +2,9 @@ openldap (2.4.56+dfsg-1) unstable; urgency=medium
 
   * New upstream release.
     - Fixed slapd abort due to assertion failure in Certificate List syntax
-      validation (ITS#9383)
+      validation (ITS#9383) (CVE-2020-25709)
     - Fixed slapd abort due to assertion failure in CSN normalization with
-      invalid input (ITS#9384)
+      invalid input (ITS#9384) (CVE-2020-25710)
 
  -- Ryan Tandy <ryan@nardis.ca>  Wed, 11 Nov 2020 09:13:56 -0800
 
