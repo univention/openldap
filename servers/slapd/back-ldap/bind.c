@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2020 The OpenLDAP Foundation.
+ * Copyright 1999-2021 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -2120,7 +2120,7 @@ ldap_back_is_proxy_authz( Operation *op, SlapReply *rs, ldap_back_send_t sendok,
 	}
 
 	if ( !( li->li_idassert_flags & LDAP_BACK_AUTH_OVERRIDE )) {
-		if ( op->o_tag == LDAP_REQ_BIND ) {
+		if ( op->o_tag == LDAP_REQ_BIND && ( sendok & LDAP_BACK_SENDERR )) {
 			if ( !BER_BVISEMPTY( &ndn )) {
 				dobind = 0;
 				goto done;

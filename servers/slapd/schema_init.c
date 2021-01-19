@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -281,6 +281,9 @@ certificateValidate( Syntax *syntax, struct berval *in )
 	ber_tag_t tag;
 	ber_len_t len;
 	ber_int_t version = SLAP_X509_V1;
+
+	if ( BER_BVISNULL( in ) || BER_BVISEMPTY( in ))
+		return LDAP_INVALID_SYNTAX;
 
 	ber_init2( ber, in, LBER_USE_DER );
 	tag = ber_skip_tag( ber, &len );	/* Signed wrapper */
@@ -2940,12 +2943,14 @@ UUIDNormalize(
 
 	if ( SLAP_MR_IS_DENORMALIZE( usage ) ) {
 		/* NOTE: must be a normalized UUID */
-		assert( val->bv_len == 16 );
+		if( val->bv_len != 16 )
+			return LDAP_INVALID_SYNTAX;
 
 		normalized->bv_val = slap_sl_malloc( LDAP_LUTIL_UUIDSTR_BUFSIZE, ctx );
 		normalized->bv_len = lutil_uuidstr_from_normalized( val->bv_val,
 			val->bv_len, normalized->bv_val, LDAP_LUTIL_UUIDSTR_BUFSIZE );
-		assert( normalized->bv_len == STRLENOF( "BADBADBA-DBAD-0123-4567-BADBADBADBAD" ) );
+		if( normalized->bv_len != STRLENOF( "BADBADBA-DBAD-0123-4567-BADBADBADBAD" ) )
+			return LDAP_INVALID_SYNTAX;
 
 		return LDAP_SUCCESS;
 	}
@@ -3191,7 +3196,7 @@ serialNumberAndIssuerCheck(
 
 	if( in->bv_len < 3 ) return LDAP_INVALID_SYNTAX;
 
-	if( in->bv_val[0] != '{' && in->bv_val[in->bv_len-1] != '}' ) {
+	if( in->bv_val[0] != '{' || in->bv_val[in->bv_len-1] != '}' ) {
 		/* Parse old format */
 		is->bv_val = ber_bvchr( in, '$' );
 		if( BER_BVISNULL( is ) ) return LDAP_INVALID_SYNTAX;
@@ -3222,7 +3227,7 @@ serialNumberAndIssuerCheck(
 			HAVE_ALL = ( HAVE_ISSUER | HAVE_SN )
 		} have = HAVE_NONE;
 
-		int numdquotes = 0;
+		int numdquotes = 0, gotquote;
 		struct berval x = *in;
 		struct berval ni;
 		x.bv_val++;
@@ -3264,11 +3269,12 @@ serialNumberAndIssuerCheck(
 				is->bv_val = x.bv_val;
 				is->bv_len = 0;
 
-				for ( ; is->bv_len < x.bv_len; ) {
+				for ( gotquote=0; is->bv_len < x.bv_len; ) {
 					if ( is->bv_val[is->bv_len] != '"' ) {
 						is->bv_len++;
 						continue;
 					}
+					gotquote = 1;
 					if ( is->bv_val[is->bv_len+1] == '"' ) {
 						/* double dquote */
 						numdquotes++;
@@ -3277,6 +3283,8 @@ serialNumberAndIssuerCheck(
 					}
 					break;
 				}
+				if ( !gotquote ) return LDAP_INVALID_SYNTAX;
+
 				x.bv_val += is->bv_len + 1;
 				x.bv_len -= is->bv_len + 1;
 
@@ -3801,7 +3809,7 @@ issuerAndThisUpdateCheck(
 
 	if ( in->bv_len < STRLENOF( "{issuer \"\",thisUpdate \"YYMMDDhhmmssZ\"}" ) ) return LDAP_INVALID_SYNTAX;
 
-	if ( in->bv_val[0] != '{' && in->bv_val[in->bv_len-1] != '}' ) {
+	if ( in->bv_val[0] != '{' || in->bv_val[in->bv_len-1] != '}' ) {
 		return LDAP_INVALID_SYNTAX;
 	}
 
@@ -3880,7 +3888,7 @@ issuerAndThisUpdateCheck(
 				/* empty */;
 			}
 
-			if ( x.bv_val[0] != '"' ) return LDAP_INVALID_SYNTAX;
+			if ( !x.bv_len || x.bv_val[0] != '"' ) return LDAP_INVALID_SYNTAX;
 			x.bv_val++;
 			x.bv_len--;
 
@@ -4294,7 +4302,7 @@ serialNumberAndIssuerSerialCheck(
 	if ( in->bv_len < 3 ) return LDAP_INVALID_SYNTAX;
 
 	/* no old format */
-	if ( in->bv_val[0] != '{' && in->bv_val[in->bv_len-1] != '}' ) return LDAP_INVALID_SYNTAX;
+	if ( in->bv_val[0] != '{' || in->bv_val[in->bv_len-1] != '}' ) return LDAP_INVALID_SYNTAX;
 
 	x.bv_val++;
 	x.bv_len -= 2;
@@ -5064,9 +5072,8 @@ csnValidate(
 	int		rc;
 
 	assert( in != NULL );
-	assert( !BER_BVISNULL( in ) );
 
-	if ( BER_BVISEMPTY( in ) ) {
+	if ( BER_BVISNULL( in ) || BER_BVISEMPTY( in ) ) {
 		return LDAP_INVALID_SYNTAX;
 	}
 
