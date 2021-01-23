@@ -1,3 +1,9 @@
+openldap (2.4.57+dfsg-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sat, 23 Jan 2021 08:57:07 -0800
+
 openldap (2.4.56+dfsg-1) unstable; urgency=medium
 
   * New upstream release.
