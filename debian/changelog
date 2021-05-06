@@ -39,6 +39,7 @@ openldap (2.5.4+dfsg-1~exp1) UNRELEASED; urgency=medium
     - Disable the new load balancer daemon (lloadd) for now.
     - Disable systemd service notification support for now.
   * Add Build-Depends: pkg-config, required for autoreconf.
+  * Add upstream patch to fix SLAPI compilation. (ITS#9544)
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 24 May 2021 09:16:30 -0700
 
