@@ -188,7 +188,7 @@ ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 endif
 
 override_dh_link:
-	for pkg in libldap2-dev libldap-2.4-2; do \
+	for pkg in libldap-dev libldap-2.4-2; do \
 		sed -e"s/\$${DEB_HOST_MULTIARCH}/$(DEB_HOST_MULTIARCH)/g" < debian/$$pkg.links.in > debian/$$pkg.links; \
 	done
 	dh_link
