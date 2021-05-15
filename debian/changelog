@@ -1,3 +1,9 @@
+openldap (2.4.57+dfsg-3) unstable; urgency=medium
+
+  * Link smbk5pwd with -lkrb5. (Closes: #988565)
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sat, 15 May 2021 16:03:34 -0700
+
 openldap (2.4.57+dfsg-2) unstable; urgency=medium
 
   * Fix slapd assertion failure in Certificate List Exact Assertion validation

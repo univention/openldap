@@ -76,8 +76,8 @@
  
 -HEIMDAL_INC = -I/usr/heimdal/include
 -HEIMDAL_LIB = -L/usr/heimdal/lib -lkrb5 -lkadm5srv
-+HEIMDAL_INC = $(shell krb5-config.heimdal --cflags kadm-server)
-+HEIMDAL_LIB = $(shell krb5-config.heimdal --libs kadm-server)
++HEIMDAL_INC = $(shell krb5-config.heimdal --cflags krb5 kadm-server)
++HEIMDAL_LIB = $(shell krb5-config.heimdal --libs krb5 kadm-server)
  
  LIBTOOL = $(LDAP_BUILD)/libtool
  CC = gcc
