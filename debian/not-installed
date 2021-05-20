@@ -1,0 +1,33 @@
+# we have our own default config files in debian/
+etc/ldap/DB_CONFIG.example
+etc/ldap/ldap.conf.default
+etc/ldap/slapd.conf
+etc/ldap/slapd.conf.default
+etc/ldap/slapd.ldif
+etc/ldap/slapd.ldif.default
+var/lib/ldap/DB_CONFIG.example
+
+# libtool archives are not installed for public libraries
+usr/lib/*/*.la
+
+# we install symlinks to libldap_r in place of non-reentrant libldap
+usr/lib/*/libldap.*
+usr/lib/*/libldap-2.4.*
+
+# static libslapi is not installed
+usr/lib/*/libslapi.a
+
+# static builds of slapd modules are not installed
+usr/lib/ldap/*.a
+
+# these are handled specially in debian/rules
+usr/sbin/slapacl
+usr/sbin/slapadd
+usr/sbin/slapauth
+usr/sbin/slapcat
+usr/sbin/slapdn
+usr/sbin/slapindex
+usr/sbin/slapmodify
+usr/sbin/slappasswd
+usr/sbin/slapschema
+usr/sbin/slaptest
