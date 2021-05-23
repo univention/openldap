@@ -36,7 +36,7 @@
 #define SLAPD_TOOLS
 #include "slap.h"
 #include "lutil.h"
-#include "config.h"
+#include "slap-config.h"
 
 typedef struct gluenode {
 	BackendDB *gn_be;
@@ -225,8 +225,7 @@ glue_op_func ( Operation *op, SlapReply *rs )
 {
 	slap_overinst	*on = (slap_overinst *)op->o_bd->bd_info;
 	BackendDB *b0 = op->o_bd;
-	BackendInfo *bi0 = op->o_bd->bd_info;
-	BI_op_modify **func;
+	BackendInfo *bi0 = op->o_bd->bd_info, *bi1;
 	slap_operation_t which = op_bind;
 	int rc;
 
@@ -247,11 +246,9 @@ glue_op_func ( Operation *op, SlapReply *rs )
 	default: assert( 0 ); break;
 	}
 
-	func = &op->o_bd->bd_info->bi_op_bind;
-	if ( func[which] )
-		rc = func[which]( op, rs );
-	else
-		rc = SLAP_CB_BYPASS;
+	bi1 = op->o_bd->bd_info;
+	rc = (&bi1->bi_op_bind)[ which ] ?
+		(&bi1->bi_op_bind)[ which ]( op, rs ) : SLAP_CB_BYPASS;
 
 	op->o_bd = b0;
 	op->o_bd->bd_info = bi0;
@@ -785,7 +782,7 @@ glue_tool_entry_open (
 				if ( id != NOID ) {
 					Debug( LDAP_DEBUG_ANY,
 						"glue_tool_entry_open: subordinate database suffix entry DN=\"%s\" also present in superior database rooted at DN=\"%s\"\n",
-						gi->gi_n[i].gn_be->be_suffix[0].bv_val, bd->be_suffix[0].bv_val, 0 );
+						gi->gi_n[i].gn_be->be_suffix[0].bv_val, bd->be_suffix[0].bv_val );
 					return LDAP_OTHER;
 				}
 			}
@@ -1271,7 +1268,7 @@ glue_db_init(
 	if ( SLAP_GLUE_SUBORDINATE( be )) {
 		Debug( LDAP_DEBUG_ANY, "glue: backend %s is already subordinate, "
 			"cannot have glue overlay!\n",
-			be->be_suffix[0].bv_val, 0, 0 );
+			be->be_suffix[0].bv_val );
 		return LDAP_OTHER;
 	}
 
@@ -1330,7 +1327,7 @@ glue_db_destroy (
 	glueinfo		*gi = (glueinfo *)on->on_bi.bi_private;
 
 	free (gi);
-	return SLAP_CB_CONTINUE;
+	return 0;
 }
 
 static int
@@ -1448,7 +1445,7 @@ glue_sub_attach( int online )
 		}
 		if ( !be ) {
 			Debug( LDAP_DEBUG_ANY, "glue: no superior found for sub %s!\n",
-				ga->ga_be->be_suffix[0].bv_val, 0, 0 );
+				ga->ga_be->be_suffix[0].bv_val );
 			/* allow this for now, assume a superior will
 			 * be added later
 			 */
@@ -1479,7 +1476,7 @@ glue_sub_add( BackendDB *be, int advert, int online )
 	if ( overlay_is_inst( be, "glue" )) {
 		Debug( LDAP_DEBUG_ANY, "glue: backend %s already has glue overlay, "
 			"cannot be a subordinate!\n",
-			be->be_suffix[0].bv_val, 0, 0 );
+			be->be_suffix[0].bv_val );
 		return LDAP_OTHER;
 	}
 	SLAP_DBFLAGS( be ) |= SLAP_DBFLAG_GLUE_SUBORDINATE;

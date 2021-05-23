@@ -425,7 +425,7 @@ dnNormalize(
 	assert( val != NULL );
 	assert( out != NULL );
 
-	Debug( LDAP_DEBUG_TRACE, ">>> dnNormalize: <%s>\n", val->bv_val ? val->bv_val : "", 0, 0 );
+	Debug( LDAP_DEBUG_TRACE, ">>> dnNormalize: <%s>\n", val->bv_val ? val->bv_val : "" );
 
 	if ( val->bv_len != 0 ) {
 		LDAPDN		dn = NULL;
@@ -464,7 +464,7 @@ dnNormalize(
 		ber_dupbv_x( out, val, ctx );
 	}
 
-	Debug( LDAP_DEBUG_TRACE, "<<< dnNormalize: <%s>\n", out->bv_val ? out->bv_val : "", 0, 0 );
+	Debug( LDAP_DEBUG_TRACE, "<<< dnNormalize: <%s>\n", out->bv_val ? out->bv_val : "" );
 
 	return LDAP_SUCCESS;
 }
@@ -481,7 +481,7 @@ rdnNormalize(
 	assert( val != NULL );
 	assert( out != NULL );
 
-	Debug( LDAP_DEBUG_TRACE, ">>> dnNormalize: <%s>\n", val->bv_val ? val->bv_val : "", 0, 0 );
+	Debug( LDAP_DEBUG_TRACE, ">>> dnNormalize: <%s>\n", val->bv_val ? val->bv_val : "" );
 	if ( val->bv_len != 0 ) {
 		LDAPRDN		rdn = NULL;
 		int		rc;
@@ -522,7 +522,7 @@ rdnNormalize(
 		ber_dupbv_x( out, val, ctx );
 	}
 
-	Debug( LDAP_DEBUG_TRACE, "<<< dnNormalize: <%s>\n", out->bv_val ? out->bv_val : "", 0, 0 );
+	Debug( LDAP_DEBUG_TRACE, "<<< dnNormalize: <%s>\n", out->bv_val ? out->bv_val : "" );
 
 	return LDAP_SUCCESS;
 }
@@ -537,7 +537,7 @@ dnPretty(
 	assert( val != NULL );
 	assert( out != NULL );
 
-	Debug( LDAP_DEBUG_TRACE, ">>> dnPretty: <%s>\n", val->bv_val ? val->bv_val : "", 0, 0 );
+	Debug( LDAP_DEBUG_TRACE, ">>> dnPretty: <%s>\n", val->bv_val ? val->bv_val : "" );
 
 	if ( val->bv_len == 0 ) {
 		ber_dupbv_x( out, val, ctx );
@@ -579,7 +579,7 @@ dnPretty(
 		}
 	}
 
-	Debug( LDAP_DEBUG_TRACE, "<<< dnPretty: <%s>\n", out->bv_val ? out->bv_val : "", 0, 0 );
+	Debug( LDAP_DEBUG_TRACE, "<<< dnPretty: <%s>\n", out->bv_val ? out->bv_val : "" );
 
 	return LDAP_SUCCESS;
 }
@@ -594,7 +594,7 @@ rdnPretty(
 	assert( val != NULL );
 	assert( out != NULL );
 
-	Debug( LDAP_DEBUG_TRACE, ">>> rdnPretty: <%s>\n", val->bv_val ? val->bv_val : "", 0, 0 );
+	Debug( LDAP_DEBUG_TRACE, ">>> rdnPretty: <%s>\n", val->bv_val ? val->bv_val : "" );
 
 	if ( val->bv_len == 0 ) {
 		ber_dupbv_x( out, val, ctx );
@@ -638,7 +638,7 @@ rdnPretty(
 		}
 	}
 
-	Debug( LDAP_DEBUG_TRACE, "<<< dnPretty: <%s>\n", out->bv_val ? out->bv_val : "", 0, 0 );
+	Debug( LDAP_DEBUG_TRACE, "<<< dnPretty: <%s>\n", out->bv_val ? out->bv_val : "" );
 
 	return LDAP_SUCCESS;
 }
@@ -657,7 +657,7 @@ dnPrettyNormalDN(
 
 	Debug( LDAP_DEBUG_TRACE, ">>> dn%sDN: <%s>\n", 
 			flags == SLAP_LDAPDN_PRETTY ? "Pretty" : "Normal", 
-			val->bv_val ? val->bv_val : "", 0 );
+			val->bv_val ? val->bv_val : "" );
 
 	if ( val->bv_len == 0 ) {
 		return LDAP_SUCCESS;
@@ -687,8 +687,7 @@ dnPrettyNormalDN(
 	}
 
 	Debug( LDAP_DEBUG_TRACE, "<<< dn%sDN\n", 
-			flags == SLAP_LDAPDN_PRETTY ? "Pretty" : "Normal",
-			0, 0 );
+			flags == SLAP_LDAPDN_PRETTY ? "Pretty" : "Normal" );
 
 	return LDAP_SUCCESS;
 }
@@ -707,7 +706,7 @@ dnPrettyNormal(
 	assert( val != NULL );
 	assert( pretty != NULL );
 	assert( normal != NULL );
-	Debug( LDAP_DEBUG_TRACE, ">>> dnPrettyNormal: <%s>\n", val->bv_val ? val->bv_val : "", 0, 0 );
+	Debug( LDAP_DEBUG_TRACE, ">>> dnPrettyNormal: <%s>\n", val->bv_val ? val->bv_val : "" );
 
 	if ( val->bv_len == 0 ) {
 		ber_dupbv_x( pretty, val, ctx );
@@ -772,7 +771,7 @@ dnPrettyNormal(
 
 	Debug( LDAP_DEBUG_TRACE, "<<< dnPrettyNormal: <%s>, <%s>\n",
 		pretty->bv_val ? pretty->bv_val : "",
-		normal->bv_val ? normal->bv_val : "", 0 );
+		normal->bv_val ? normal->bv_val : "" );
 
 	return LDAP_SUCCESS;
 }
@@ -1132,8 +1131,7 @@ rdn_validate( struct berval *rdn )
 
 /* build_new_dn:
  *
- * Used by back-bdb back_modrdn to create the new dn of entries being
- * renamed.
+ * Used to create the new dn of entries being renamed.
  *
  * new_dn = parent (p_dn) + separator + rdn (newrdn) + null.
  */
@@ -1304,7 +1302,7 @@ dnX509normalize( void *x509_name, struct berval *out )
 
 	Debug( LDAP_DEBUG_TRACE,
 		"dnX509Normalize: <%s> (%d)\n",
-		BER_BVISNULL( out ) ? "(null)" : out->bv_val, rc, 0 );
+		BER_BVISNULL( out ) ? "(null)" : out->bv_val, rc );
 
 	return rc;
 }

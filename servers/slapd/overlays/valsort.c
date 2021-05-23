@@ -33,7 +33,7 @@
 #include <ac/ctype.h>
 
 #include "slap.h"
-#include "config.h"
+#include "slap-config.h"
 #include "lutil.h"
 
 #define	VALSORT_ASCEND	0
@@ -314,14 +314,14 @@ valsort_response( Operation *op, SlapReply *rs )
 				if ( !ptr ) {
 					Debug(LDAP_DEBUG_TRACE, "weights missing from attr %s "
 						"in entry %s\n", vi->vi_ad->ad_cname.bv_val,
-						rs->sr_entry->e_name.bv_val, 0 );
+						rs->sr_entry->e_name.bv_val );
 					break;
 				}
 				index[i] = strtol( ptr+1, &end, 0 );
 				if ( *end != '}' ) {
 					Debug(LDAP_DEBUG_TRACE, "weights misformatted "
 						"in entry %s\n", 
-						rs->sr_entry->e_name.bv_val, 0, 0 );
+						rs->sr_entry->e_name.bv_val );
 					break;
 				}
 				/* Strip out weights */
@@ -407,7 +407,7 @@ valsort_add( Operation *op, SlapReply *rs )
 			ptr = ber_bvchr(&a->a_vals[i], '{' );
 			if ( !ptr ) {
 				Debug(LDAP_DEBUG_TRACE, "weight missing from attribute %s\n",
-					vi->vi_ad->ad_cname.bv_val, 0, 0);
+					vi->vi_ad->ad_cname.bv_val );
 				send_ldap_error( op, rs, LDAP_CONSTRAINT_VIOLATION,
 					"weight missing from attribute" );
 				return rs->sr_err;
@@ -415,7 +415,7 @@ valsort_add( Operation *op, SlapReply *rs )
 			strtol( ptr+1, &end, 0 );
 			if ( *end != '}' ) {
 				Debug(LDAP_DEBUG_TRACE, "weight is misformatted in %s\n",
-					vi->vi_ad->ad_cname.bv_val, 0, 0);
+					vi->vi_ad->ad_cname.bv_val );
 				send_ldap_error( op, rs, LDAP_CONSTRAINT_VIOLATION,
 					"weight is misformatted" );
 				return rs->sr_err;
@@ -454,7 +454,7 @@ valsort_modify( Operation *op, SlapReply *rs )
 			ptr = ber_bvchr(&ml->sml_values[i], '{' );
 			if ( !ptr ) {
 				Debug(LDAP_DEBUG_TRACE, "weight missing from attribute %s\n",
-					vi->vi_ad->ad_cname.bv_val, 0, 0);
+					vi->vi_ad->ad_cname.bv_val );
 				send_ldap_error( op, rs, LDAP_CONSTRAINT_VIOLATION,
 					"weight missing from attribute" );
 				return rs->sr_err;
@@ -462,7 +462,7 @@ valsort_modify( Operation *op, SlapReply *rs )
 			strtol( ptr+1, &end, 0 );
 			if ( *end != '}' ) {
 				Debug(LDAP_DEBUG_TRACE, "weight is misformatted in %s\n",
-					vi->vi_ad->ad_cname.bv_val, 0, 0);
+					vi->vi_ad->ad_cname.bv_val );
 				send_ldap_error( op, rs, LDAP_CONSTRAINT_VIOLATION,
 					"weight is misformatted" );
 				return rs->sr_err;
@@ -545,6 +545,7 @@ int valsort_initialize( void )
 	int rc;
 
 	valsort.on_bi.bi_type = "valsort";
+	valsort.on_bi.bi_flags = SLAPO_BFLAG_SINGLE;
 	valsort.on_bi.bi_db_destroy = valsort_destroy;
 	valsort.on_bi.bi_db_open = valsort_db_open;
 
@@ -559,7 +560,7 @@ int valsort_initialize( void )
 		SLAP_CTRL_SEARCH | SLAP_CTRL_HIDE, NULL, valsort_parseCtrl,
 		&valsort_cid );
 	if ( rc != LDAP_SUCCESS ) {
-		Debug( LDAP_DEBUG_ANY, "Failed to register control %d\n", rc, 0, 0 );
+		Debug( LDAP_DEBUG_ANY, "Failed to register control %d\n", rc );
 		return rc;
 	}
 
