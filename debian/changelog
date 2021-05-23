@@ -1,3 +1,9 @@
+openldap (2.4.57+dfsg-4) UNRELEASED; urgency=medium
+
+  * Add a superficial autopkgtest for smbk5pwd.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sun, 23 May 2021 08:49:56 -0700
+
 openldap (2.4.57+dfsg-3) unstable; urgency=medium
 
   * Link smbk5pwd with -lkrb5. (Closes: #988565)
