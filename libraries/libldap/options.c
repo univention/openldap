@@ -71,8 +71,7 @@ static const LDAPAPIFeatureInfo features[] = {
 		LDAP_API_FEATURE_X_OPENLDAP_REENTRANT
 	},
 #endif
-#if defined( LDAP_API_FEATURE_X_OPENLDAP_THREAD_SAFE ) && \
-	defined( LDAP_THREAD_SAFE )
+#ifdef LDAP_API_FEATURE_X_OPENLDAP_THREAD_SAFE
 	{	/* OpenLDAP Thread Safe */
 		LDAP_FEATURE_INFO_VERSION,
 		"X_OPENLDAP_THREAD_SAFE",
@@ -111,8 +110,6 @@ ldap_get_option(
 	}
 
 	if(ld != NULL) {
-		assert( LDAP_VALID( ld ) );
-
 		if( !LDAP_VALID( ld ) ) {
 			return LDAP_OPT_ERROR;
 		}
@@ -151,10 +148,21 @@ ldap_get_option(
 				int i;
 				info->ldapai_extensions = LDAP_MALLOC(sizeof(char *) *
 					sizeof(features)/sizeof(LDAPAPIFeatureInfo));
+				if ( info->ldapai_extensions == NULL ) {
+					rc = LDAP_NO_MEMORY;
+					break;
+				}
 
 				for(i=0; features[i].ldapaif_name != NULL; i++) {
 					info->ldapai_extensions[i] =
 						LDAP_STRDUP(features[i].ldapaif_name);
+					if ( info->ldapai_extensions[i] == NULL ) {
+						rc = LDAP_NO_MEMORY;
+						break;
+					}
+				}
+				if ( features[i].ldapaif_name != NULL ) {
+					break; /* LDAP_NO_MEMORY */
 				}
 
 				info->ldapai_extensions[i] = NULL;
@@ -247,6 +255,17 @@ ldap_get_option(
 
 	case LDAP_OPT_HOST_NAME:
 		* (char **) outvalue = ldap_url_list2hosts(lo->ldo_defludp);
+		rc = LDAP_OPT_SUCCESS;
+		break;
+
+	case LDAP_OPT_SOCKET_BIND_ADDRESSES:
+		if ( lo->ldo_local_ip_addrs.local_ip_addrs == NULL ) {
+			* (void **) outvalue = NULL;
+		}
+		else {
+			* (char **) outvalue =
+				LDAP_STRDUP( lo->ldo_local_ip_addrs.local_ip_addrs );
+		}
 		rc = LDAP_OPT_SUCCESS;
 		break;
 
@@ -379,6 +398,11 @@ ldap_get_option(
 		rc = LDAP_OPT_SUCCESS;
 		break;
 
+	case LDAP_OPT_KEEPCONN:
+		* (int *) outvalue = (int) LDAP_BOOL_GET(lo, LDAP_BOOL_KEEPCONN);
+		rc = LDAP_OPT_SUCCESS;
+		break;
+
 	case LDAP_OPT_X_KEEPALIVE_IDLE:
 		* (int *) outvalue = lo->ldo_keepalive_idle;
 		rc = LDAP_OPT_SUCCESS;
@@ -403,12 +427,6 @@ ldap_get_option(
 #endif
 #ifdef HAVE_CYRUS_SASL
 		if ( ldap_int_sasl_get_option( ld, option, outvalue ) == 0 ) {
-			rc = LDAP_OPT_SUCCESS;
-			break;
-		}
-#endif
-#ifdef HAVE_GSSAPI
-		if ( ldap_int_gssapi_get_option( ld, option, outvalue ) == 0 ) {
 			rc = LDAP_OPT_SUCCESS;
 			break;
 		}
@@ -494,6 +512,14 @@ ldap_set_option(
 		rc = LDAP_OPT_SUCCESS;
 		break;
 
+	case LDAP_OPT_KEEPCONN:
+		if(invalue == LDAP_OPT_OFF) {
+			LDAP_BOOL_CLR(lo, LDAP_BOOL_KEEPCONN);
+		} else {
+			LDAP_BOOL_SET(lo, LDAP_BOOL_KEEPCONN);
+		}
+		rc = LDAP_OPT_SUCCESS;
+		break;
 	/* options which can withstand invalue == NULL */
 	case LDAP_OPT_SERVER_CONTROLS: {
 			LDAPControl *const *controls =
@@ -575,6 +601,43 @@ ldap_set_option(
 				if (lo->ldo_defludp != NULL)
 					ldap_free_urllist(lo->ldo_defludp);
 				lo->ldo_defludp = ludlist;
+			}
+			break;
+		}
+
+	case LDAP_OPT_SOCKET_BIND_ADDRESSES: {
+			const char *source_ip = (const char *) invalue;
+			char **source_ip_lst = NULL;
+
+			ldapsourceip temp_source_ip;
+			memset( &temp_source_ip, 0, sizeof( ldapsourceip ) );
+			rc = LDAP_OPT_SUCCESS;
+			if( source_ip == NULL ) {
+				if ( ld->ld_options.ldo_local_ip_addrs.local_ip_addrs ) {
+					LDAP_FREE( ld->ld_options.ldo_local_ip_addrs.local_ip_addrs );
+					memset( &ld->ld_options.ldo_local_ip_addrs, 0,
+						sizeof( ldapsourceip ) );
+				}
+			}
+			else {
+				source_ip_lst = ldap_str2charray( source_ip, " " );
+
+				if ( source_ip_lst == NULL )
+					rc =  LDAP_NO_MEMORY;
+
+				if( rc == LDAP_OPT_SUCCESS ) {
+					rc = ldap_validate_and_fill_sourceip ( source_ip_lst,
+						&temp_source_ip );
+					ldap_charray_free( source_ip_lst );
+				}
+				if ( rc == LDAP_OPT_SUCCESS ) {
+					if ( lo->ldo_local_ip_addrs.local_ip_addrs != NULL ) {
+						LDAP_FREE( lo->ldo_local_ip_addrs.local_ip_addrs );
+						lo->ldo_local_ip_addrs.local_ip_addrs = NULL;
+					}
+					lo->ldo_local_ip_addrs = temp_source_ip;
+					lo->ldo_local_ip_addrs.local_ip_addrs = LDAP_STRDUP( source_ip );
+				}
 			}
 			break;
 		}
@@ -799,12 +862,6 @@ ldap_set_option(
 			return ( LDAP_OPT_SUCCESS );
 		}
 #endif
-#ifdef HAVE_GSSAPI
-		if ( ldap_int_gssapi_set_option( ld, option, (void *)invalue ) == 0 ) {
-			LDAP_MUTEX_UNLOCK( &lo->ldo_mutex );
-			return ( LDAP_OPT_SUCCESS );
-		}
-#endif
 		/* bad param */
 		break;	/* LDAP_OPT_ERROR */
 	}
@@ -882,6 +939,11 @@ ldap_set_option(
 			/* setting pushes the callback */
 			ldaplist *ll;
 			ll = LDAP_MALLOC( sizeof( *ll ));
+			if ( ll == NULL ) {
+				rc = LDAP_NO_MEMORY;
+				break;
+			}
+
 			ll->ll_data = (void *)invalue;
 			ll->ll_next = lo->ldo_conn_cbs;
 			lo->ldo_conn_cbs = ll;

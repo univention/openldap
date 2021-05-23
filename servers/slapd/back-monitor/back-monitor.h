@@ -24,7 +24,7 @@
 
 #include <ldap_pvt.h>
 #include <ldap_pvt_thread.h>
-#include <avl.h>
+#include <ldap_avl.h>
 #include <slap.h>
 
 LDAP_BEGIN_DECL
@@ -315,6 +315,7 @@ typedef struct monitor_extra_t {
 		struct berval *modify );
 	monitor_entry_t * (*entrypriv_create)( void );
 	int (*register_subsys_late)( monitor_subsys_t *ms );
+	Entry * (*entry_get_unlocked)( struct berval *ndn );
 } monitor_extra_t;
 
 LDAP_END_DECL

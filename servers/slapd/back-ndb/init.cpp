@@ -28,7 +28,7 @@
 #include <sys/stat.h>
 #include "back-ndb.h"
 #include <lutil.h>
-#include "config.h"
+#include "slap-config.h"
 
 extern "C" {
 	static BI_db_init ndb_db_init;
@@ -359,9 +359,7 @@ ndb_back_initialize(
 		LDAP_CONTROL_POST_READ,
 		LDAP_CONTROL_SUBENTRIES,
 		LDAP_CONTROL_X_PERMISSIVE_MODIFY,
-#ifdef LDAP_X_TXN
-		LDAP_CONTROL_X_TXN_SPEC,
-#endif
+		LDAP_CONTROL_TXN_SPEC,
 		NULL
 	};
 

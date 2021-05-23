@@ -29,7 +29,7 @@
 #include "ac/socket.h"
 
 #include "slap.h"
-#include "config.h"
+#include "slap-config.h"
 
 #include "lutil.h"
 
@@ -533,7 +533,7 @@ deref_db_init( BackendDB *be, ConfigReply *cr)
 		if ( rc != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_ANY,
 				"deref_init: Failed to register control (%d)\n",
-				rc, 0, 0 );
+				rc );
 			return rc;
 		}
 	}
@@ -564,6 +564,7 @@ int
 deref_initialize(void)
 {
 	deref.on_bi.bi_type = "deref";
+	deref.on_bi.bi_flags = SLAPO_BFLAG_SINGLE;
 	deref.on_bi.bi_db_init = deref_db_init;
 	deref.on_bi.bi_db_open = deref_db_open;
 #ifdef SLAP_CONFIG_DELETE

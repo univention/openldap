@@ -535,12 +535,13 @@ dupent_initialize( void )
 	if ( rc != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_ANY,
 			"dupent_initialize: Failed to register control (%d)\n",
-			rc, 0, 0 );
+			rc );
 		return -1;
 	}
 
 	dupent.on_bi.bi_type = "dupent";
 
+	dupent.on_bi.bi_flags = SLAPO_BFLAG_SINGLE;
 	dupent.on_bi.bi_op_search = dupent_op_search;
 
 	return overlay_register( &dupent );

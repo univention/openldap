@@ -15,7 +15,7 @@
  * <http://www.OpenLDAP.org/license.html>.
  */
 /* This work was initially developed by Kurt D. Zeilenga for
- * inclusion in OpenLDAP Software based, in part, on publically
+ * inclusion in OpenLDAP Software based, in part, on publicly
  * available works (as noted below).
  */
 
@@ -36,7 +36,7 @@
 
 /*
  * lutil_entropy() provides nbytes of entropy in buf.
- * Quality offerred is suitable for one-time uses, such as "once" keys.
+ * Quality offered is suitable for one-time uses, such as "once" keys.
  * Values may not be suitable for multi-time uses.
  *
  * Note:  Callers are encouraged to provide additional bytes of

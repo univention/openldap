@@ -106,8 +106,8 @@ map_ldap_parse(
 
 	if ( argc < 1 ) {
 		Debug( LDAP_DEBUG_ANY,
-				"[%s:%d] ldap map needs URI\n%s",
-				fname, lineno, "" );
+				"[%s:%d] ldap map needs URI\n",
+				fname, lineno );
 		free( data );
 		return NULL;
 	}
@@ -146,7 +146,7 @@ map_ldap_parse(
 		if ( data->lm_lud->lud_attrs[ 1 ] != NULL ) {
 			Debug( LDAP_DEBUG_ANY,
 				"[%s:%d] only one attribute allowed in URI\n",
-				fname, lineno, 0 );
+				fname, lineno );
 			map_ldap_free( data );
 			return NULL;
 		}

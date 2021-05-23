@@ -57,8 +57,8 @@ int cancel_extop( Operation *op, SlapReply *rs )
 		return LDAP_PROTOCOL_ERROR;
 	}
 
-	Statslog( LDAP_DEBUG_STATS, "%s CANCEL msg=%d\n",
-		op->o_log_prefix, opid, 0, 0, 0 );
+	Debug( LDAP_DEBUG_STATS, "%s CANCEL msg=%d\n",
+		op->o_log_prefix, opid );
 
 	if ( opid < 0 ) {
 		rs->sr_text = "message ID invalid";
