@@ -8,6 +8,7 @@ openldap (2.5.4+dfsg-1~exp1) UNRELEASED; urgency=medium
       applications that still link with -lldap_r.
     - The Berkeley DB backends, slapd-bdb(5) and slapd-hdb(5), have been
       removed.
+    - The shell backend, slapd-shell(5), has been removed.
     - The argon2 password module has been promoted from contrib to core.
   * Add a superficial autopkgtest for smbk5pwd.
   * Update Standards-Version to 4.5.1; no changes needed.
