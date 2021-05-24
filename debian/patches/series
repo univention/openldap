@@ -1,6 +1,5 @@
 debian-version
 man-slapd 
-evolution-ntlm
 slapi-errorlog-file 
 ldapi-socket-place 
 wrong-database-location 
