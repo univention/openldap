@@ -39,6 +39,11 @@ openldap (2.5.4+dfsg-1~exp1) UNRELEASED; urgency=medium
     - Enable the argon2 password hashing module.
     - Disable the new load balancer daemon (lloadd) for now.
     - Disable systemd service notification support for now.
+  * debian/schema: Sync with upstream.
+    - core.{schema,ldif}: Update description of deltaCRL.
+    - cosine.schema, pmi.schema: spelling fixes.
+    - namedobject.schema: Added.
+    - ppolicy.schema: Removed upstream, dropped.
   * Add Build-Depends: pkg-config, required for autoreconf.
   * Add upstream patch to fix SLAPI compilation. (ITS#9544)
   * Move the argon2 password module from slapd-contrib to slapd.
