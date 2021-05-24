@@ -25,7 +25,7 @@ export RESOLV_MULTI = off
 
 CONFIG		= $(shell grep -v "^\#" debian/configure.options)
 ifeq ($(DEB_HOST_ARCH_OS),hurd)
-	CONFIG += --disable-bdb --disable-hdb --disable-mdb
+	CONFIG += --disable-mdb
 endif
 ifneq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 	CONFIG += --disable-slapd

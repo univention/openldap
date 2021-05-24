@@ -6,6 +6,8 @@ openldap (2.5.4+dfsg-1~exp1) UNRELEASED; urgency=medium
     - libldap_r has been merged into libldap. The Debian package will continue
       to install a libldap_r.so symlink for backwards compatibility with
       applications that still link with -lldap_r.
+    - The Berkeley DB backends, slapd-bdb(5) and slapd-hdb(5), have been
+      removed.
     - The argon2 password module has been promoted from contrib to core.
   * Add a superficial autopkgtest for smbk5pwd.
   * Update Standards-Version to 4.5.1; no changes needed.
@@ -55,6 +57,11 @@ openldap (2.5.4+dfsg-1~exp1) UNRELEASED; urgency=medium
     - Install the real libldap instead of a symlink to libldap_r.
     - Symlink libldap_r.{a,so} to libldap for backwards compatibility.
     - Drop the shlibs file, no longer needed.
+  * Remove references to removed BDB backends.
+    - Drop Build-Depends: libdb5.3-dev.
+    - Drop arch-specific configure options to disable those backends on Hurd.
+    - Delete example DB_CONFIG file and README.DB_CONFIG.
+    - Remove information about Berkeley DB from slapd README.
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 24 May 2021 09:16:30 -0700
 

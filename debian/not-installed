@@ -1,11 +1,9 @@
 # we have our own default config files in debian/
-etc/ldap/DB_CONFIG.example
 etc/ldap/ldap.conf.default
 etc/ldap/slapd.conf
 etc/ldap/slapd.conf.default
 etc/ldap/slapd.ldif
 etc/ldap/slapd.ldif.default
-var/lib/ldap/DB_CONFIG.example
 
 # libtool archives are not installed for public libraries
 usr/lib/*/*.la

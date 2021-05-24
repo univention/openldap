@@ -1,10 +1,8 @@
 usr/share/man/man5/slapd.*.5
 usr/share/man/man8/slap*.8
 
-usr/share/man/man5/slapd-bdb.5
 usr/share/man/man5/slapd-config.5
 usr/share/man/man5/slapd-dnssrv.5
-usr/share/man/man5/slapd-hdb.5
 usr/share/man/man5/slapd-ldap.5
 usr/share/man/man5/slapd-ldif.5
 usr/share/man/man5/slapd-mdb.5
