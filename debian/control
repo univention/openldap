@@ -109,8 +109,8 @@ Section: libdevel
 Architecture: any
 Multi-Arch: same
 Provides: libldap2-dev
-Breaks: libldap2-dev (<< 2.4.57+dfsg-4~)
-Replaces: libldap2-dev (<< 2.4.57+dfsg-4~)
+Breaks: libldap2-dev (<< 2.5.4+dfsg-1~)
+Replaces: libldap2-dev (<< 2.5.4+dfsg-1~)
 Depends: libldap-2.4-2 (= ${binary:Version}), ${misc:Depends}
 Description: OpenLDAP development libraries
  This package allows development of LDAP applications using the OpenLDAP

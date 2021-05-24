@@ -1,5 +1,8 @@
-openldap (2.4.57+dfsg-4) UNRELEASED; urgency=medium
+openldap (2.5.4+dfsg-1~exp1) UNRELEASED; urgency=medium
 
+  * New upstream release.
+    - Changing olcAuthzRegexp dynamically is supported. (Closes: #761407)
+    - Support for LANMAN password hashes has been removed. (Closes: #988033)
   * Add a superficial autopkgtest for smbk5pwd.
   * Update Standards-Version to 4.5.1; no changes needed.
   * Upgrade to debhelper compat level 12.
@@ -22,7 +25,7 @@ openldap (2.4.57+dfsg-4) UNRELEASED; urgency=medium
   * Stop disabling test060-mt-hot on ppc64el. The underlying kernel bug
     (#866122) is fixed in all relevant suites by now.
 
- -- Ryan Tandy <ryan@nardis.ca>  Sun, 23 May 2021 08:49:56 -0700
+ -- Ryan Tandy <ryan@nardis.ca>  Mon, 24 May 2021 09:16:30 -0700
 
 openldap (2.4.57+dfsg-3) unstable; urgency=medium
 
