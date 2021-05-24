@@ -27,6 +27,17 @@ openldap (2.5.4+dfsg-1~exp1) UNRELEASED; urgency=medium
   * Drop evolution-ntlm patch. (Closes: #457374)
   * Drop patches applied or superseded upstream.
   * Update or refresh remaining patches as needed.
+  * debian/configure.options:
+    - Refresh with new `./configure --help' output.
+    - Drop directory options set automatically by debhelper: --prefix,
+      --sysconfdir, --localstatedir, and --mandir.
+    - Enable the perl and sql backends explicitly. They are deprecated and
+      --enable-backends= no longer includes them.
+    - Disable the experimental wiredtiger backend.
+    - Disable the autoca overlay. It does not support GnuTLS yet.
+    - Enable the argon2 password hashing module.
+    - Disable the new load balancer daemon (lloadd) for now.
+    - Disable systemd service notification support for now.
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 24 May 2021 09:16:30 -0700
 
