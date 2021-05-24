@@ -3,17 +3,6 @@ Move the default slapd database location to /var/lib/ldap instead of
 
 Debian-specific.
 
---- a/doc/man/man5/slapd-bdb.5
-+++ b/doc/man/man5/slapd-bdb.5
-@@ -131,7 +131,7 @@ Specify the directory where the BDB file
- associated indexes live.
- A separate directory must be specified for each database.
- The default is
--.BR LOCALSTATEDIR/openldap\-data .
-+.BR LOCALSTATEDIR/lib/ldap .
- .TP
- .B dirtyread
- Allow reads of modified but not yet committed data.
 --- a/doc/man/man5/slapd.conf.5
 +++ b/doc/man/man5/slapd.conf.5
 @@ -2007,7 +2007,7 @@ suffix    "dc=our\-domain,dc=com"

@@ -25,6 +25,7 @@ openldap (2.5.4+dfsg-1~exp1) UNRELEASED; urgency=medium
   * Stop disabling test060-mt-hot on ppc64el. The underlying kernel bug
     (#866122) is fixed in all relevant suites by now.
   * Drop evolution-ntlm patch. (Closes: #457374)
+  * Drop patches applied or superseded upstream.
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 24 May 2021 09:16:30 -0700
 
