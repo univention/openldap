@@ -10,10 +10,6 @@ var/lib/ldap/DB_CONFIG.example
 # libtool archives are not installed for public libraries
 usr/lib/*/*.la
 
-# we install symlinks to libldap_r in place of non-reentrant libldap
-usr/lib/*/libldap.*
-usr/lib/*/libldap-2.4.*
-
 # static libslapi is not installed
 usr/lib/*/libslapi.a
 

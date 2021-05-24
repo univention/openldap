@@ -1,4 +1,0 @@
-package-name-doesnt-match-sonames liblber-2.4-2 libldap-r-2.4-2
-# #687022
-lacks-unversioned-link-to-shared-library usr/lib/*/liblber-2.4.so.* usr/lib/*/liblber-*.so
-lacks-unversioned-link-to-shared-library usr/lib/*/libldap_r-2.4.so.* usr/lib/*/libldap_r-*.so

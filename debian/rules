@@ -168,7 +168,6 @@ override_dh_fixperms-arch:
 endif
 
 override_dh_strip:
-	dh_strip -plibldap-2.4-2 --dbgsym-migration='libldap-2.4-2-dbg (<< 2.4.45+dfsg-1~)'
 	dh_strip -pslapd --dbgsym-migration='slapd-dbg (<< 2.4.45+dfsg-1~)'
 	dh_strip --remaining-packages
 ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
@@ -181,9 +180,7 @@ ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 endif
 
 override_dh_link:
-	for pkg in libldap-dev libldap-2.4-2; do \
-		sed -e"s/\$${DEB_HOST_MULTIARCH}/$(DEB_HOST_MULTIARCH)/g" < debian/$$pkg.links.in > debian/$$pkg.links; \
-	done
+	sed -e"s/\$${DEB_HOST_MULTIARCH}/$(DEB_HOST_MULTIARCH)/g" < debian/libldap-dev.links.in > debian/libldap-dev.links
 	dh_link
 
 ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
