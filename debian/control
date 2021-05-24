@@ -18,6 +18,7 @@ Build-Depends: debhelper-compat (= 12),
                libwrap0-dev <!pkg.openldap.noslapd>,
                nettle-dev <!pkg.openldap.noslapd>,
                perl:any,
+               pkg-config (>= 0.29),
                po-debconf,
                unixodbc-dev <!pkg.openldap.noslapd>
 Build-Conflicts: libbind-dev, bind-dev, autoconf2.13
