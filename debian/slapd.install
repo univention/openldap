@@ -10,6 +10,8 @@ usr/lib/ldap/back_*.la
 
 usr/lib/ldap/accesslog*.so*
 usr/lib/ldap/accesslog.la
+usr/lib/ldap/argon2*.so*
+usr/lib/ldap/argon2.la
 usr/lib/ldap/auditlog*.so*
 usr/lib/ldap/auditlog.la
 usr/lib/ldap/constraint*.so*

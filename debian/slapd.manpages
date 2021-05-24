@@ -41,5 +41,7 @@ usr/share/man/man5/slapo-translucent.5
 usr/share/man/man5/slapo-unique.5
 usr/share/man/man5/slapo-valsort.5
 
+usr/share/man/man5/slappw-argon2.5
+
 # contrib modules installed in main package
 usr/share/man/man5/slapo-lastbind.5

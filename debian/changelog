@@ -3,6 +3,7 @@ openldap (2.5.4+dfsg-1~exp1) UNRELEASED; urgency=medium
   * New upstream release.
     - Changing olcAuthzRegexp dynamically is supported. (Closes: #761407)
     - Support for LANMAN password hashes has been removed. (Closes: #988033)
+    - The argon2 password module has been promoted from contrib to core.
   * Add a superficial autopkgtest for smbk5pwd.
   * Update Standards-Version to 4.5.1; no changes needed.
   * Upgrade to debhelper compat level 12.
@@ -40,6 +41,8 @@ openldap (2.5.4+dfsg-1~exp1) UNRELEASED; urgency=medium
     - Disable systemd service notification support for now.
   * Add Build-Depends: pkg-config, required for autoreconf.
   * Add upstream patch to fix SLAPI compilation. (ITS#9544)
+  * Move the argon2 password module from slapd-contrib to slapd.
+    - Add upstream patch to fix argon2 installation.
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 24 May 2021 09:16:30 -0700
 
