@@ -13,6 +13,7 @@ openldap (2.5.4+dfsg-1~exp1) UNRELEASED; urgency=medium
     - New backend: slapd-asyncmeta(5).
     - New core overlays: slapd-homedir(5), slapd-otp(5), and
       slapd-remoteauth(5).
+    - The ppolicy schema has been merged into the slapo-ppolicy(5) module.
     - The argon2 password module has been promoted from contrib to core.
   * Add a superficial autopkgtest for smbk5pwd.
   * Update Standards-Version to 4.5.1; no changes needed.
@@ -80,6 +81,7 @@ openldap (2.5.4+dfsg-1~exp1) UNRELEASED; urgency=medium
     - ldapvc(1): undocumented tool supporting the vc overlay (contrib)
     - lloadd(8) and lloadd.conf(5) man pages
     - slapd-wt(5) and slapo-autoca(5) man pages
+  * Delete obsolete ppolicy.schema and ppolicy.ldif conffiles on upgrade.
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 24 May 2021 09:16:30 -0700
 
