@@ -51,6 +51,8 @@ openldap (2.5.4+dfsg-1~exp1) UNRELEASED; urgency=medium
   * debian/rules:
     - Enable all current and future hardening flags.
     - Use the new STRIP_OPTS variable to disable stripping.
+    - Drop -Wno-format-extra-args from DEB_CFLAGS_MAINT_APPEND.
+      The Debug macro has been changed upstream to use variadic args.
   * debian/schema: Sync with upstream.
     - core.{schema,ldif}: Update description of deltaCRL.
     - cosine.schema, pmi.schema: spelling fixes.
