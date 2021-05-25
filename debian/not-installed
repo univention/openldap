@@ -5,6 +5,9 @@ etc/ldap/slapd.conf.default
 etc/ldap/slapd.ldif
 etc/ldap/slapd.ldif.default
 
+# undocumented (ITS#9549), supports vc overlay (contrib, not packaged)
+usr/bin/ldapvc
+
 # libtool archives are not installed for public libraries
 usr/lib/*/*.la
 
@@ -25,3 +28,12 @@ usr/sbin/slapmodify
 usr/sbin/slappasswd
 usr/sbin/slapschema
 usr/sbin/slaptest
+
+# lloadd is not packaged yet
+usr/share/man/man5/lloadd.conf.5
+usr/share/man/man8/lloadd.8
+
+# man pages for modules we don't build
+usr/share/man/man5/slapd-wt.5
+usr/share/man/man5/slapo-autoca.5
+usr/share/man/man5/slapd-pw-radius.5

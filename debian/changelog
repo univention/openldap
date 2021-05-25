@@ -3,12 +3,16 @@ openldap (2.5.4+dfsg-1~exp1) UNRELEASED; urgency=medium
   * New upstream release.
     - Changing olcAuthzRegexp dynamically is supported. (Closes: #761407)
     - Support for LANMAN password hashes has been removed. (Closes: #988033)
+    - Added pkg-config files for liblber and libldap. (Closes: #670824)
     - libldap_r has been merged into libldap. The Debian package will continue
       to install a libldap_r.so symlink for backwards compatibility with
       applications that still link with -lldap_r.
     - The Berkeley DB backends, slapd-bdb(5) and slapd-hdb(5), have been
       removed.
     - The shell backend, slapd-shell(5), has been removed.
+    - New backend: slapd-asyncmeta(5).
+    - New core overlays: slapd-homedir(5), slapd-otp(5), and
+      slapd-remoteauth(5).
     - The argon2 password module has been promoted from contrib to core.
   * Add a superficial autopkgtest for smbk5pwd.
   * Update Standards-Version to 4.5.1; no changes needed.
@@ -63,6 +67,14 @@ openldap (2.5.4+dfsg-1~exp1) UNRELEASED; urgency=medium
     - Drop arch-specific configure options to disable those backends on Hurd.
     - Delete example DB_CONFIG file and README.DB_CONFIG.
     - Remove information about Berkeley DB from slapd README.
+  * Install new slapmodify(8) tool as a hard link to slapd(8).
+  * Install new man pages: slapo-deref(5), slapo-pw-pbkdf2(5), and
+    slapo-pw-sha2(5).
+    - Drop debian/slapo-pw-pbkdf2.5, included upstream.
+  * Add unpackaged files to debian/not-installed:
+    - ldapvc(1): undocumented tool supporting the vc overlay (contrib)
+    - lloadd(8) and lloadd.conf(5) man pages
+    - slapd-wt(5) and slapo-autoca(5) man pages
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 24 May 2021 09:16:30 -0700
 

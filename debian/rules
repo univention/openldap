@@ -174,7 +174,7 @@ ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 	# hardlink these so not confined by apparmor; do this here and not
 	# in dh_link so that dh_strip doesn't get confused and put the wrong
 	# binary in the debug package.
-	for f in slapacl slapadd slapauth slapcat slapdn slapindex slappasswd slaptest slapschema ; do \
+	for f in slapacl slapadd slapauth slapcat slapdn slapindex slapmodify slappasswd slapschema slaptest; do \
 	    ln -f $(slapddir)/slapd $(slapddir)/$$f ; \
 	done
 endif
