@@ -13,6 +13,7 @@ openldap (2.4.57+dfsg-4) UNRELEASED; urgency=medium
   * Follow renamed Lintian tags:
     - dev-pkg-without-shlib-symlink => lacks-unversioned-link-to-shared-library
     - binary-or-shlib-defines-rpath => custom-library-search-path
+  * Enable all current and future hardening flags via hardening=+all.
 
  -- Ryan Tandy <ryan@nardis.ca>  Sun, 23 May 2021 08:49:56 -0700
 
