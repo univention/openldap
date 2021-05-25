@@ -7,6 +7,12 @@ openldap (2.4.57+dfsg-4) UNRELEASED; urgency=medium
   * Run dh_missing --fail-missing during build.
     - Add debian/not-installed.
   * Drop debian/tmp/ prefix from paths in *.install and *.manpages.
+  * Override Lintian false positives:
+    * slapd: lacks-unversioned-link-to-shared-library. See #687022.
+    * libldap-2.4-2: shared-library-not-shipped.
+  * Follow renamed Lintian tags:
+    - dev-pkg-without-shlib-symlink => lacks-unversioned-link-to-shared-library
+    - binary-or-shlib-defines-rpath => custom-library-search-path
 
  -- Ryan Tandy <ryan@nardis.ca>  Sun, 23 May 2021 08:49:56 -0700
 
