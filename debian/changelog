@@ -6,6 +6,7 @@ openldap (2.4.57+dfsg-4) UNRELEASED; urgency=medium
     - Remove debian/compat, add Build-Depends: debhelper-compat.
   * Run dh_missing --fail-missing during build.
     - Add debian/not-installed.
+  * Drop debian/tmp/ prefix from paths in *.install and *.manpages.
 
  -- Ryan Tandy <ryan@nardis.ca>  Sun, 23 May 2021 08:49:56 -0700
 
