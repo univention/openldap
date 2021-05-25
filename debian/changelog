@@ -27,7 +27,6 @@ openldap (2.5.4+dfsg-1~exp1) UNRELEASED; urgency=medium
   * Follow renamed Lintian tags:
     - dev-pkg-without-shlib-symlink => lacks-unversioned-link-to-shared-library
     - binary-or-shlib-defines-rpath => custom-library-search-path
-  * Enable all current and future hardening flags via hardening=+all.
   * Rename libldap2-dev to libldap-dev (Policy 8.4). Keep libldap2-dev as a
     transitional package for now.
     - Drop ancient Conflicts/Replaces: libopenldap-dev.
@@ -49,6 +48,9 @@ openldap (2.5.4+dfsg-1~exp1) UNRELEASED; urgency=medium
     - Enable the argon2 password hashing module.
     - Disable the new load balancer daemon (lloadd) for now.
     - Disable systemd service notification support for now.
+  * debian/rules:
+    - Enable all current and future hardening flags.
+    - Use the new STRIP_OPTS variable to disable stripping.
   * debian/schema: Sync with upstream.
     - core.{schema,ldif}: Update description of deltaCRL.
     - cosine.schema, pmi.schema: spelling fixes.

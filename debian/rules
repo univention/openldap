@@ -43,8 +43,6 @@ installdir	:= $(CURDIR)/debian/tmp
 builddir	:= $(CURDIR)/debian/build
 slapddir	:= $(CURDIR)/debian/slapd/usr/sbin
 
-MAKEVARS	:= STRIP=
-
 # Standard variables used in contrib Makefiles.
 # We override these in make invocations rather than patch every one.
 CONTRIB_MAKEVARS := \
@@ -119,7 +117,7 @@ override_dh_auto_configure:
 	dh_auto_configure -- $(CONFIG)
 
 override_dh_auto_build:
-	dh_auto_build -- $(MAKEVARS)
+	dh_auto_build
 ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 	for mod in $(CONTRIB_MODULES); do \
 		dh_auto_build -Dcontrib/slapd-modules/$$mod -Bcontrib/slapd-modules/$$mod -- $(CONTRIB_MAKEVARS) || exit $$?; \
@@ -127,7 +125,7 @@ ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 endif
 
 override_dh_auto_install:
-	dh_auto_install -- $(MAKEVARS)
+	dh_auto_install -- STRIP_OPTS=
 ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 	for mod in $(CONTRIB_MODULES); do \
 		dh_auto_install -Dcontrib/slapd-modules/$$mod -Bcontrib/slapd-modules/$$mod -- $(CONTRIB_MAKEVARS) || exit $$?; \
