@@ -53,6 +53,7 @@ openldap (2.5.4+dfsg-1~exp1) UNRELEASED; urgency=medium
     - Use the new STRIP_OPTS variable to disable stripping.
     - Drop -Wno-format-extra-args from DEB_CFLAGS_MAINT_APPEND.
       The Debug macro has been changed upstream to use variadic args.
+    - Override OPT variable to empty for contrib modules.
   * debian/schema: Sync with upstream.
     - core.{schema,ldif}: Update description of deltaCRL.
     - cosine.schema, pmi.schema: spelling fixes.

@@ -47,6 +47,7 @@ slapddir	:= $(CURDIR)/debian/slapd/usr/sbin
 # We override these in make invocations rather than patch every one.
 CONTRIB_MAKEVARS := \
 	LDAP_BUILD='$(builddir)' \
+	OPT= \
 	prefix=/usr \
 	ldap_subdir=/ldap \
 	moduledir='$$(libdir)$$(ldap_subdir)'
