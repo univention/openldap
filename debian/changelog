@@ -82,6 +82,9 @@ openldap (2.5.4+dfsg-1~exp1) UNRELEASED; urgency=medium
     - lloadd(8) and lloadd.conf(5) man pages
     - slapd-wt(5) and slapo-autoca(5) man pages
   * Delete obsolete ppolicy.schema and ppolicy.ldif conffiles on upgrade.
+  * Dump and reload slapd-mdb(5) databases on upgrade from 2.4.
+    - Call dh_installinit with --no-restart-after-upgrade to ensure slapd is
+      stopped before dumping the old database.
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 24 May 2021 09:16:30 -0700
 
