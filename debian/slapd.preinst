@@ -111,6 +111,11 @@ preinst_check_config() {						# {{{
 # available at this time, so the data should have been dumped before the
 # old slapd was removed.
 
+# dh_installinit currently does not stop the service in preinst (#989155)
+if [ "$MODE" = upgrade ] && [ -x /etc/init.d/slapd ]; then
+	invoke-rc.d slapd stop || exit 1
+fi
+
 if [ "$MODE" = upgrade ] || [ "$MODE" = install -a -n "$OLD_VERSION" ]; then
 	preinst_check_config
 fi
