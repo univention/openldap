@@ -113,13 +113,6 @@ ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 	done
 endif
 
-override_dh_auto_test:
-ifeq ($(DEB_HOST_ARCH),ppc64el)
-	# Disable test060-mt-host on ppc64el until #866122 is fixed.
-	rm -f tests/scripts/test060-mt-hot
-endif
-	dh_auto_test
-
 override_dh_auto_install:
 	dh_auto_install -- $(MAKEVARS)
 ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)

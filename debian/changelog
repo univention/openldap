@@ -11,6 +11,8 @@ openldap (2.4.59+dfsg-1) UNRELEASED; urgency=medium
       the right thing for us.
   * Update Standards-Version to 4.6.0; no changes required.
   * Add a superficial autopkgtest for smbk5pwd.
+  * Stop disabling test060-mt-hot on ppc64el. The underlying kernel bug
+    (#866122) is fixed in all relevant suites by now.
 
  -- Ryan Tandy <ryan@nardis.ca>  Thu, 26 Aug 2021 19:27:12 -0700
 
