@@ -19,6 +19,8 @@ openldap (2.4.57+dfsg-4) UNRELEASED; urgency=medium
     - Drop ancient Conflicts/Replaces: libopenldap-dev.
   * Prune implied or unneeded directories from debian/*.dirs.
     - Stop installing empty /var/lib/slapd directory. (Closes: #714174)
+  * Stop disabling test060-mt-hot on ppc64el. The underlying kernel bug
+    (#866122) is fixed in all relevant suites by now.
 
  -- Ryan Tandy <ryan@nardis.ca>  Sun, 23 May 2021 08:49:56 -0700
 
