@@ -1,4 +1,4 @@
-openldap (2.5.4+dfsg-1~exp1) UNRELEASED; urgency=medium
+openldap (2.5.4+dfsg-1~exp1) experimental; urgency=medium
 
   * New upstream release.
     - Changing olcAuthzRegexp dynamically is supported. (Closes: #761407)
@@ -86,7 +86,7 @@ openldap (2.5.4+dfsg-1~exp1) UNRELEASED; urgency=medium
     - Call dh_installinit with --no-restart-after-upgrade to ensure slapd is
       stopped before dumping the old database.
 
- -- Ryan Tandy <ryan@nardis.ca>  Mon, 24 May 2021 09:16:30 -0700
+ -- Ryan Tandy <ryan@nardis.ca>  Sun, 30 May 2021 08:41:25 -0700
 
 openldap (2.4.57+dfsg-3) unstable; urgency=medium
 
