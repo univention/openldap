@@ -13,5 +13,3 @@ add-tlscacert-option-to-ldap-conf
 fix-build-top-mk
 switch-to-lt_dlopenadvise-to-get-RTLD_GLOBAL-set.diff
 set-maintainer-name
-ITS-9544-fix-9511-patch.patch
-ITS-9548-Ensure-modules-in-the-pwmods-directory-get-.patch
