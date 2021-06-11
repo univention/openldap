@@ -4,7 +4,7 @@ dnl	to configure the system for the local environment.
 AC_INIT(neoXldap.c)
 # $OpenLDAP$
 
-AC_REVISION([$Id$])
+AC_REVISION([$Id: 16b135293616700c63077e9a1a601681d4442fdd $])
 
 NEO_VERSION=2.0
 NEO_MAJOR_VERSION=2
