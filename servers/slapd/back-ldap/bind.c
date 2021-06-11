@@ -703,6 +703,11 @@ ldap_back_prepare_conn( ldapconn_t *lc, Operation *op, SlapReply *rs, ldap_back_
 	/* turn on network keepalive, if configured so */
 	slap_client_keepalive(ld, &li->li_tls.sb_keepalive);
 
+	if ( li->li_tls.sb_tcp_user_timeout > 0 ) {
+		ldap_set_option( ld, LDAP_OPT_TCP_USER_TIMEOUT,
+				&li->li_tls.sb_tcp_user_timeout );
+	}
+
 #ifdef HAVE_TLS
 	if ( LDAP_BACK_CONN_ISPRIV( lc ) ) {
 		/* See "rationale" comment in ldap_back_getconn() */
@@ -1223,7 +1228,7 @@ ldap_back_quarantine(
 			break;
 
 		default:
-			break;
+			goto done;
 		}
 
 		li->li_isquarantined = LDAP_BACK_FQ_YES;
