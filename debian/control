@@ -50,7 +50,7 @@ Architecture: any
 Build-Profiles: <!pkg.openldap.noslapd>
 Depends: slapd (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
 Provides: slapd-smbk5pwd
-Breaks: slapd-smbk5pwd (<< 2.4.47+dfsg-2~)
+Breaks: slapd-smbk5pwd (<< 2.4.47+dfsg-2~), slapd (<< 2.5.4+dfsg-1~)
 Replaces: slapd-smbk5pwd (<< 2.4.47+dfsg-2~)
 Description: contributed plugins for OpenLDAP slapd
  This package contains a number of slapd overlays and plugins contributed by

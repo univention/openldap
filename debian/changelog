@@ -2,6 +2,8 @@ openldap (2.5.5+dfsg-1~exp1) UNRELEASED; urgency=medium
 
   * New upstream release.
     - Drop patches applied upstream: ITS#9544, ITS#9548.
+  * Mark slapd-contrib as breaking the old version of slapd to reduce the
+    chance of upgrade failure due to slapd-contrib being unpacked first.
 
  -- Ryan Tandy <ryan@nardis.ca>  Fri, 11 Jun 2021 09:28:54 -0700
 
