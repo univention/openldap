@@ -13,6 +13,10 @@ openldap (2.5.5+dfsg-1~exp1) experimental; urgency=medium
      - New core overlays: slapd-homedir(5), slapd-otp(5), and
        slapd-remoteauth(5).
 
+   * Changes:
+     - The ppolicy module now provides its own built-in schema.
+       The external ppolicy schema has been removed.
+
    You can find the upstream announcement containing the full list of
    changes in the 2.5.x series at
    <https://www.openldap.org/software/release/announce.html>.
