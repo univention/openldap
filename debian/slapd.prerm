@@ -8,6 +8,15 @@ set -e
 # various helper functions and $OLD_VERSION and $SLAPD_CONF
 #SCRIPTSCOMMON#
 
+# dh_installinit's --error-handler option requires that the
+# error-handling function be defined in the prerm and postinst
+# scripts.  This function is declared here as a formality, but we do
+# not want to ignore the init script failure during the prerm phase.
+ignore_init_failure() {							# {{{
+	:
+}
+# }}}
+
 #DEBHELPER#
 
 # Dump config and data to LDIF before removing slapd.

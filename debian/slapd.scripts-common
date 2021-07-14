@@ -136,7 +136,7 @@ error while running slaptest:
 EOF
 			release_diagnostics "    "
 			rm -rf /etc/ldap/slapd.d
-			exit 1
+			return 1
 		fi
 
 		# Backup the old slapd.conf
@@ -252,7 +252,7 @@ load_databases() {							# {{{
 	error while running slapadd:
 EOF
 			release_diagnostics "    "
-			exit 1
+			return 1
 		fi
 		echo "done." >&2
 

@@ -21,6 +21,16 @@ openldap (2.5.5+dfsg-1~exp1) experimental; urgency=medium
    changes in the 2.5.x series at
    <https://www.openldap.org/software/release/announce.html>.
 
+   In certain situations, it is possible that the post-installation
+   scripts will not be able to successfully migrate your current
+   installation to new formats (e.g., when you are using an old
+   backend like BDB/HDB).  If this happens, you will be notified about
+   the failure and the slapd service will NOT be (re)started; you will
+   then have to take manual action in order to migrate your data and
+   start the service.  Please look at the README.Debian file (under
+   /usr/share/doc/slapd/) for more instructions on how to cope with
+   some of the most problematic cases.
+
  -- Ryan Tandy <ryan@nardis.ca>  Fri, 11 Jun 2021 11:43:15 -0700
 
 openldap (2.4.49+dfsg-1) unstable; urgency=medium

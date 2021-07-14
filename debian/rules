@@ -158,7 +158,7 @@ endif
 		| xargs perl -pi -e 's#(\.TH \w+ 8)C#$$1#'
 
 override_dh_installinit:
-	dh_installinit --no-restart-after-upgrade -- "defaults 19 80"
+	dh_installinit --no-restart-after-upgrade --error-handler=ignore_init_failure -- "defaults 19 80"
 
 ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 override_dh_fixperms-arch:

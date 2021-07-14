@@ -299,3 +299,13 @@ Unsafe access control rule installed by default in previous versions
   slapd.access(5) man page.
 
  -- Ryan Tandy <ryan@nardis.ca>, Mon, 20 Oct 2014 11:45:20 -0700
+
+Migrating your data to OpenLDAP 2.5.x
+
+  OpenLDAP 2.5.x has removed support for various old backends, like
+  BDB, HDB and shell.  This means that if you tried to update your
+  slapd package from 2.4.x to 2.5.x and were using one of these
+  backends, the post-installation scripts likely failed to migrate
+  your data and you were left with a non-functional slapd service.
+
+  ......CONTINUE HERE.......
