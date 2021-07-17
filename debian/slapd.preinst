@@ -82,14 +82,10 @@ preinst_check_config() {						# {{{
 		return 0
 	fi
 
+	# Locate the file exported by dump_config.
 	# If slapd was previously removed and a newer version is being
 	# installed, the config must have already been dumped during
 	# remove, or we cannot proceed.
-	if [ "$MODE" = upgrade ]; then
-		dump_config
-	fi
-
-	# Locate the file exported by dump_config.
 	local dumped_ldif="$(database_dumping_destdir)/cn=config.ldif"
 	if [ ! -f "$dumped_ldif" ]; then
 		echo "Expected to find a configuration backup in $dumped_ldif but it is missing. Please retry the upgrade." >&2
@@ -114,6 +110,13 @@ preinst_check_config() {						# {{{
 # dh_installinit currently does not stop the service in preinst (#989155)
 if [ "$MODE" = upgrade ] && [ -x /etc/init.d/slapd ]; then
 	invoke-rc.d slapd stop || exit 1
+fi
+
+# Dump the config database before upgrading to 2.5.
+# If the upgrade fails due to needing manual config changes, the LDIF
+# export is the preferred format for making those changes.
+if [ "$MODE" = upgrade ] && previous_version_older '2.5.5+dfsg-1~'; then
+	dump_config
 fi
 
 if [ "$MODE" = upgrade ] || [ "$MODE" = install -a -n "$OLD_VERSION" ]; then
