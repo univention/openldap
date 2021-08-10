@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2021-07-26 21:45-0400\n"
+"POT-Creation-Date: 2021-08-10 03:58+0000\n"
 "PO-Revision-Date: 2017-01-21 16:28+0100\n"
 "Last-Translator: Jean-Pierre Giraud <jean-pierregiraud@neuf.fr>\n"
 "Language-Team: French <debian-l10n-french@lists.debian.org>\n"
@@ -424,23 +424,6 @@ msgid ""
 "tasks. This probably means that the slapd package could not automatically "
 "migrate one or more LDAP databases, or that a backend being used by the "
 "current OpenLDAP installation is not supported anymore."
-msgstr ""
-
-#. Type: note
-#. Description
-#: ../slapd.templates:17001
-msgid ""
-"For example, OpenLDAP 2.5.x has deprecated and removed support for the "
-"following backends:"
-msgstr ""
-
-#. Type: note
-#. Description
-#: ../slapd.templates:17001
-msgid ""
-" - BDB\n"
-" - HDB\n"
-" - Shell"
 msgstr ""
 
 #. Type: note
