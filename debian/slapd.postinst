@@ -192,9 +192,9 @@ else
 		# current configuration.  This can mean many things,
 		# but usually it means that the user is using an
 		# unsupported backend.
-                #
-                # We need to:
-                #
+		#
+		# We need to:
+		#
 		# - Set the FAILED_TO_UPGRADE_CONFIGURATION to 1, in
 		#   order to signal that there has been a problem
 		#   while upgrading the configuration and the
@@ -202,9 +202,9 @@ else
 		#   interefere with a possible dist-upgrade operation
 		#   (see the "ignore_init_failure" function).
 		#
-                # - Display a critical notice to the user letting
-                #   him/her know that manual action must be taken
-                #   before the slapd can be started again.
+		# - Display a critical notice to the user letting
+		#   him/her know that manual action must be taken
+		#   before the slapd can be started again.
 		#
 		# Note that the slapd service will fail to start after
 		# this, but that should be gracefully handled by
