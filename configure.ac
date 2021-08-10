@@ -25,7 +25,7 @@ dnl ================================================================
 dnl Configure.in for OpenLDAP
 AC_COPYRIGHT([[Copyright 1998-2021 The OpenLDAP Foundation. All rights reserved.
 Restrictions apply, see COPYRIGHT and LICENSE files.]])
-AC_REVISION([$Id: 2aac5271417c42d282d2cba67638e629aec8f362 $])
+AC_REVISION([$Id: c8892a2009b69f5948d96e4a90b672eeb1ded5e1 $])
 AC_INIT([OpenLDAP],,[https://bugs.openldap.org],,[https://www.openldap.org])
 AC_CONFIG_SRCDIR(build/version.sh)dnl
 dnl ----------------------------------------------------------------
@@ -3112,13 +3112,18 @@ fi
 
 OL_VERSIONED_SYMBOLS=""
 if test $ol_enable_versioning != no; then
-	LDVS=`$LD --help < /dev/null 2>/dev/null | grep version-script`
+	LDVS=`$LD --help < /dev/null 2>/dev/null | grep gnu-version-script`
 	if test -z "$LDVS"; then
-		if test $ol_enable_versioning = "yes" ; then
-			AC_MSG_ERROR([Library symbol versioning requested but not supported])
+		LDVS=`$LD --help < /dev/null 2>/dev/null | grep version-script`
+		if test -z "$LDVS"; then
+			if test $ol_enable_versioning = "yes" ; then
+				AC_MSG_ERROR([Library symbol versioning requested but not supported])
+			fi
+		else
+			OL_VERSIONED_SYMBOLS="-Wl,--version-script="
 		fi
 	else
-		OL_VERSIONED_SYMBOLS="-Wl,--version-script="
+		OL_VERSIONED_SYMBOLS="-z gnu-version-script="
 	fi
 fi
 

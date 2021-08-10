@@ -23,7 +23,7 @@
 <DIV CLASS="title">
 <H1 CLASS="doc-title">OpenLDAP Software 2.5 Administrator's Guide</H1>
 <ADDRESS CLASS="doc-author">The OpenLDAP Project &lt;<A HREF="https://www.openldap.org/">https://www.openldap.org/</A>&gt;</ADDRESS>
-<ADDRESS CLASS="doc-modified">3 June 2021</ADDRESS>
+<ADDRESS CLASS="doc-modified">27 July 2021</ADDRESS>
 <BR CLEAR="All">
 </DIV>
 <DIV CLASS="contents">
@@ -100,7 +100,9 @@
 <BR>
 <A HREF="#Database-specific Directives">5.2.5. Database-specific Directives</A>
 <BR>
-<A HREF="#MDB Database Directives">5.2.6. MDB Database Directives</A></UL>
+<A HREF="#MDB Backend Directives">5.2.6. MDB Backend Directives</A>
+<BR>
+<A HREF="#MDB Database Directives">5.2.7. MDB Database Directives</A></UL>
 <BR>
 <A HREF="#Configuration Example">5.3. Configuration Example</A>
 <BR>
@@ -123,7 +125,9 @@
 <BR>
 <A HREF="#General Database Directives">6.2.3. General Database Directives</A>
 <BR>
-<A HREF="#MDB Database Directives">6.2.4. MDB Database Directives</A></UL>
+<A HREF="#MDB Backend Directives">6.2.4. MDB Backend Directives</A>
+<BR>
+<A HREF="#MDB Database Directives">6.2.5. MDB Database Directives</A></UL>
 <BR>
 <A HREF="#Configuration File Example">6.3. Configuration File Example</A></UL>
 <BR>
@@ -1874,6 +1878,14 @@ olcObjectClasses: ( 1.1.3 NAME 'testObject'
 </TR>
 <TR>
 <TD>
+<TT>asyncmet</TT>
+</TD>
+<TD>
+a       Asynchronous Metadirectory backend
+</TD>
+</TR>
+<TR>
+<TD>
 <TT>config</TT>
 </TD>
 <TD>
@@ -1917,7 +1929,7 @@ Memory-Mapped DB backend
 <TT>meta</TT>
 </TD>
 <TD>
-Meta Directory backend
+Metadirectory backend
 </TD>
 </TR>
 <TR>
@@ -1926,6 +1938,22 @@ Meta Directory backend
 </TD>
 <TD>
 Monitor backend
+</TD>
+</TR>
+<TR>
+<TD>
+<TT>ndb</TT>
+</TD>
+<TD>
+MySQL NDB backend
+</TD>
+</TR>
+<TR>
+<TD>
+<TT>null</TT>
+</TD>
+<TD>
+Null backend
 </TD>
 </TR>
 <TR>
@@ -1946,10 +1974,18 @@ Perl Programmable backend
 </TR>
 <TR>
 <TD>
-<TT>shell</TT>
+<TT>relay</TT>
 </TD>
 <TD>
-Shell (extern program) backend
+Relay backend
+</TD>
+</TR>
+<TR>
+<TD>
+<TT>sock</TT>
+</TD>
+<TD>
+Socket backend
 </TD>
 </TR>
 <TR>
@@ -1960,18 +1996,27 @@ Shell (extern program) backend
 SQL Programmable backend
 </TD>
 </TR>
+<TR>
+<TD>
+<TT>wt</TT>
+</TD>
+<TD>
+WiredTiger backend
+</TD>
+</TR>
 </TABLE>
 
 <P>Example:</P>
 <PRE>
         olcBackend: mdb
 </PRE>
-<P>There are no other directives defined for this entry.  Specific backend types may define additional attributes for their particular use but so far none have ever been defined.  As such, these directives usually do not appear in any actual configurations.</P>
+<P>This marks the beginning of a new <TERM>MDB</TERM> backend definition. At present, only back-mdb implements any options of this type, so this setting is not needed for any other backends.</P>
 <H4><A NAME="Sample Entry">5.2.4.2. Sample Entry</A></H4>
 <PRE>
  dn: olcBackend=mdb,cn=config
  objectClass: olcBackendConfig
  olcBackend: mdb
+ olcBkMdbIdlExp: 16
 </PRE>
 <H3><A NAME="Database-specific Directives">5.2.5. Database-specific Directives</A></H3>
 <P>Directives in this section are supported by every type of database. Database entries must have the <TT>olcDatabaseConfig</TT> objectClass.</P>
@@ -2115,21 +2160,28 @@ objectClass: olcDatabaseConfig
 olcDatabase: config
 olcRootDN: cn=Manager,dc=example,dc=com
 </PRE>
-<H3><A NAME="MDB Database Directives">5.2.6. MDB Database Directives</A></H3>
+<H3><A NAME="MDB Backend Directives">5.2.6. MDB Backend Directives</A></H3>
+<P>Directives in this category only apply to the <TERM>MDB</TERM> database backend. They will apply to all &quot;database mdb&quot; instances in the configuration. For a complete reference of MDB backend configuration directives, see <EM>slapd-mdb</EM>(5).</P>
+<H4><A NAME="olcBkMdbIdlExp &lt;exponent&gt;">5.2.6.1. olcBkMdbIdlExp &lt;exponent&gt;</A></H4>
+<P>Specify a power of 2 for the maximum size of an index slot. The default is 16, yielding a maximum slot size of 2^16 or 65536. The specified value must be in the range of 16-31.</P>
+<P>This setting helps with the case where certain search filters are slow to return results due to an index slot having collapsed to a range value.  This occurs when the number of candidate entries that match the filter for the index slot exceed the configured slot size.</P>
+<P>If this setting is decreased on a server with existing <TERM>MDB</TERM> databases, each db will immediately need its indices to be rebuilt while slapd is offline with the &quot;slapindex -q -t&quot; command.</P>
+<P>If this setting is increased on a server with existing <TERM>MDB</TERM> databases, each db will need its indices rebuilt to take advantage of the change for indices that have already been converted to ranges.</P>
+<H3><A NAME="MDB Database Directives">5.2.7. MDB Database Directives</A></H3>
 <P>Directives in this category apply to the <TERM>MDB</TERM> database backend. They are used in an olcDatabase entry in addition to the generic database directives defined above.  For a complete reference of MDB configuration directives, see <EM>slapd-mdb</EM>(5). In addition to the <TT>olcDatabaseConfig</TT> objectClass, MDB database entries must have the <TT>olcMdbConfig</TT> objectClass.</P>
-<H4><A NAME="olcDbDirectory: &lt;directory&gt;">5.2.6.1. olcDbDirectory: &lt;directory&gt;</A></H4>
+<H4><A NAME="olcDbDirectory: &lt;directory&gt;">5.2.7.1. olcDbDirectory: &lt;directory&gt;</A></H4>
 <P>This directive specifies the directory where the MDB files containing the database and associated indices live.</P>
 <P>Default:</P>
 <PRE>
         olcDbDirectory: /usr/local/var/openldap-data
 </PRE>
-<H4><A NAME="olcDbCheckpoint: &lt;kbyte&gt; &lt;min&gt;">5.2.6.2. olcDbCheckpoint: &lt;kbyte&gt; &lt;min&gt;</A></H4>
+<H4><A NAME="olcDbCheckpoint: &lt;kbyte&gt; &lt;min&gt;">5.2.7.2. olcDbCheckpoint: &lt;kbyte&gt; &lt;min&gt;</A></H4>
 <P>This directive specifies the frequency for flushing the database disk buffers. This directive is only needed if the <EM>olcDbNoSync</EM> option is <TT>TRUE</TT>. The checkpoint will occur if either &lt;kbyte&gt; data has been written or &lt;min&gt; minutes have passed since the last checkpoint. Both arguments default to zero, in which case they are ignored. When the &lt;min&gt; argument is non-zero, an internal task will run every &lt;min&gt; minutes to perform the checkpoint. Note: currently the _kbyte_ setting is unimplemented.</P>
 <P>Example:</P>
 <PRE>
         olcDbCheckpoint: 1024 10
 </PRE>
-<H4><A NAME="olcDbEnvFlags: {nosync,nometasync,writemap,mapasync,nordahead}">5.2.6.3. olcDbEnvFlags: {nosync,nometasync,writemap,mapasync,nordahead}</A></H4>
+<H4><A NAME="olcDbEnvFlags: {nosync,nometasync,writemap,mapasync,nordahead}">5.2.7.3. olcDbEnvFlags: {nosync,nometasync,writemap,mapasync,nordahead}</A></H4>
 <P>This option specifies flags for finer-grained control of  the  LMDB  library's operation.</P>
 <UL>
 <LI><TT>nosync</TT>: This is exactly the same as the dbnosync directive.
@@ -2137,7 +2189,7 @@ olcRootDN: cn=Manager,dc=example,dc=com
 <LI><TT>writemap</TT>: Use a writable memory map instead of just read-only. This speeds up write operations but makes the database vulnerable to corruption in case any bugs in slapd cause stray writes into the mmap region.
 <LI><TT>mapasync</TT>: When using a writable memory map and performing flushes on each commit, use an asynchronous flush instead of a synchronous flush (the default). This option has no effect if writemap has not been set. It also has no effect if nosync is set.
 <LI><TT>nordahead</TT>: Turn off file readahead. Usually the OS performs readahead on every read request. This usually boosts read performance but can be harmful to random access read performance if the system's memory is full and the DB is larger than RAM. This option is not implemented on Windows.</UL>
-<H4><A NAME="olcDbIndex: {&lt;attrlist&gt; | default} [pres,eq,approx,sub,none]">5.2.6.4. olcDbIndex: {&lt;attrlist&gt; | default} [pres,eq,approx,sub,none]</A></H4>
+<H4><A NAME="olcDbIndex: {&lt;attrlist&gt; | default} [pres,eq,approx,sub,none]">5.2.7.4. olcDbIndex: {&lt;attrlist&gt; | default} [pres,eq,approx,sub,none]</A></H4>
 <P>This directive specifies the indices to maintain for the given attribute. If only an <TT>&lt;attrlist&gt;</TT> is given, the default indices are maintained. The index keywords correspond to the common types of matches that may be used in an LDAP search filter.</P>
 <P>Example:</P>
 <PRE>
@@ -2156,30 +2208,35 @@ olcRootDN: cn=Manager,dc=example,dc=com
 </PRE>
 <P>Additional indices should be configured corresponding to the most common searches that are used on the database. Presence indexing should not be configured for an attribute unless the attribute occurs very rarely in the database, and presence searches on the attribute occur very frequently during normal use of the directory. Most applications don't use presence searches, so usually presence indexing is not very useful.</P>
 <P>If this setting is changed while slapd is running, an internal task will be run to generate the changed index data. All server operations can continue as normal while the indexer does its work.  If slapd is stopped before the index task completes, indexing will have to be manually completed using the slapindex tool.</P>
-<H4><A NAME="olcDbMaxReaders: &lt;integer&gt;">5.2.6.5. olcDbMaxReaders: &lt;integer&gt;</A></H4>
+<H4><A NAME="olcDbMaxEntrySize: &lt;bytes&gt;">5.2.7.5. olcDbMaxEntrySize: &lt;bytes&gt;</A></H4>
+<P>Specify the maximum size of an entry in bytes. Attempts to store an entry larger than this size will be rejected with the error LDAP_ADMINLIMIT_EXCEEDED. The default is 0, which is unlimited.</P>
+<H4><A NAME="olcDbMaxReaders: &lt;integer&gt;">5.2.7.6. olcDbMaxReaders: &lt;integer&gt;</A></H4>
 <P>This directive specifies the maximum number of threads that may have concurrent read access to the database. Tools such as slapcat count as a single thread, in addition to threads in any active slapd processes. The default is 126.</P>
-<H4><A NAME="olcDbMaxSize: &lt;bytes&gt;">5.2.6.6. olcDbMaxSize: &lt;bytes&gt;</A></H4>
+<H4><A NAME="olcDbMaxSize: &lt;bytes&gt;">5.2.7.7. olcDbMaxSize: &lt;bytes&gt;</A></H4>
 <P>This directive specifies the maximum size of the database in bytes. A memory map of this size is allocated at startup time and the database will not be allowed to grow beyond this size. The default is 10485760 bytes (10MB). This setting may be changed upward if the configured limit needs to be increased.</P>
 <P><HR WIDTH="80%" ALIGN="Left">
 <STRONG>Note: </STRONG>It is important to set this to as large a value as possible, (relative to anticipated growth of the actual data over time) since growing the size later may not be practical when the system is under heavy load.
 <HR WIDTH="80%" ALIGN="Left"></P>
-<H4><A NAME="olcDbMode: { &lt;octal&gt; | &lt;symbolic&gt; }">5.2.6.7. olcDbMode: { &lt;octal&gt; | &lt;symbolic&gt; }</A></H4>
+<H4><A NAME="olcDbMode: { &lt;octal&gt; | &lt;symbolic&gt; }">5.2.7.8. olcDbMode: { &lt;octal&gt; | &lt;symbolic&gt; }</A></H4>
 <P>This directive specifies the file protection mode that newly created database index files should have. This can be in the form <TT>0600</TT> or <TT>-rw-------</TT></P>
 <P>Default:</P>
 <PRE>
         olcDbMode: 0600
 </PRE>
-<H4><A NAME="olcDbRtxnsize: &lt;entries&gt;">5.2.6.8. olcDbRtxnsize: &lt;entries&gt;</A></H4>
+<H4><A NAME="olcDbMultival: { &lt;attrlist&gt; | default } &lt;integer&gt; hi,&lt;integer&gt; lo">5.2.7.9. olcDbMultival: { &lt;attrlist&gt; | default } &lt;integer&gt; hi,&lt;integer&gt; lo</A></H4>
+<P>Specify the number of values for which a multivalued attribute is stored in a separate table. Normally entries are stored as a single blob inside the database. When an entry gets very large or contains attributes with a very large number of values, modifications on that entry may get very slow. Splitting the large attributes out to a separate table can improve the performance of modification operations. The threshold is specified as a pair of integers. If the number of values exceeds the hi threshold the values will be split out. If a modification deletes enough values to bring an attribute below the lo threshold the values will be removed from the separate table and merged back into the main entry blob. The threshold can be set for a specific list of attributes, or the default can be configured for all other attributes. The default value for both hi and lo thresholds is UINT_MAX, which keeps all attributes in the main blob.</P>
+<P>In addition to increasing write performance of operations the use of multival can also decrease fragmentation of the primary <TERM>MDB</TERM> database.</P>
+<H4><A NAME="olcDbRtxnsize: &lt;entries&gt;">5.2.7.10. olcDbRtxnsize: &lt;entries&gt;</A></H4>
 <P>This directive specifies the maximum number of entries to process in a single read transaction when executing a large search. Long-lived read transactions prevent old database pages from being reused in write transactions, and so can cause significant growth of the database file when there is heavy write traffic. This setting causes the read transaction in large searches to be released and reacquired after the given number of entries has been read, to give writers the opportunity to reclaim old database pages. The default is 10000.</P>
-<H4><A NAME="olcDbSearchStack: &lt;integer&gt;">5.2.6.9. olcDbSearchStack: &lt;integer&gt;</A></H4>
+<H4><A NAME="olcDbSearchStack: &lt;integer&gt;">5.2.7.11. olcDbSearchStack: &lt;integer&gt;</A></H4>
 <P>Specify the depth of the stack used for search filter evaluation. Search filters are evaluated on a stack to accommodate nested <TT>AND</TT> / <TT>OR</TT> clauses. An individual stack is allocated for each server thread. The depth of the stack determines how complex a filter can be evaluated without requiring any additional memory allocation. Filters that are nested deeper than the search stack depth will cause a separate stack to be allocated for that particular search operation. These separate allocations can have a major negative impact on server performance, but specifying too much stack will also consume a great deal of memory. Each search uses 512K bytes per level on a 32-bit machine, or 1024K bytes per level on a 64-bit machine. The default stack depth is 16, thus 8MB or 16MB per thread is used on 32 and 64 bit machines, respectively. Also the 512KB size of a single stack slot is set by a compile-time constant which may be changed if needed; the code must be recompiled for the change to take effect.</P>
 <P>Default:</P>
 <PRE>
         olcDbSearchStack: 16
 </PRE>
-<H4><A NAME="olcDbNosync: { TRUE | FALSE }">5.2.6.10. olcDbNosync: { TRUE | FALSE }</A></H4>
+<H4><A NAME="olcDbNosync: { TRUE | FALSE }">5.2.7.12. olcDbNosync: { TRUE | FALSE }</A></H4>
 <P>This directive causes on-disk database contents to not be immediately synchronized with in memory changes upon change.  Setting this option to <TT>TRUE</TT> may improve performance at the expense of data integrity.</P>
-<H4><A NAME="Sample Entry">5.2.6.11. Sample Entry</A></H4>
+<H4><A NAME="Sample Entry">5.2.7.13. Sample Entry</A></H4>
 <PRE>
 dn: olcDatabase=mdb,cn=config
 objectClass: olcDatabaseConfig
@@ -2666,6 +2723,22 @@ only messages that get logged regardless of configured log level
 </TR>
 <TR>
 <TD>
+<TT>asyncmet</TT>
+</TD>
+<TD>
+a       Asynchronous Metadirectory backend
+</TD>
+</TR>
+<TR>
+<TD>
+<TT>config</TT>
+</TD>
+<TD>
+Slapd configuration backend
+</TD>
+</TR>
+<TR>
+<TD>
 <TT>dnssrv</TT>
 </TD>
 <TD>
@@ -2682,6 +2755,14 @@ Lightweight Directory Access Protocol (Proxy) backend
 </TR>
 <TR>
 <TD>
+<TT>ldif</TT>
+</TD>
+<TD>
+Lightweight Data Interchange Format backend
+</TD>
+</TR>
+<TR>
+<TD>
 <TT>mdb</TT>
 </TD>
 <TD>
@@ -2693,7 +2774,7 @@ Memory-Mapped DB backend
 <TT>meta</TT>
 </TD>
 <TD>
-Meta Directory backend
+Metadirectory backend
 </TD>
 </TR>
 <TR>
@@ -2702,6 +2783,22 @@ Meta Directory backend
 </TD>
 <TD>
 Monitor backend
+</TD>
+</TR>
+<TR>
+<TD>
+<TT>ndb</TT>
+</TD>
+<TD>
+MySQL NDB backend
+</TD>
+</TR>
+<TR>
+<TD>
+<TT>null</TT>
+</TD>
+<TD>
+Null backend
 </TD>
 </TR>
 <TR>
@@ -2722,10 +2819,18 @@ Perl Programmable backend
 </TR>
 <TR>
 <TD>
-<TT>shell</TT>
+<TT>relay</TT>
 </TD>
 <TD>
-Shell (extern program) backend
+Relay backend
+</TD>
+</TR>
+<TR>
+<TD>
+<TT>sock</TT>
+</TD>
+<TD>
+Socket backend
 </TD>
 </TR>
 <TR>
@@ -2736,13 +2841,22 @@ Shell (extern program) backend
 SQL Programmable backend
 </TD>
 </TR>
+<TR>
+<TD>
+<TT>wt</TT>
+</TD>
+<TD>
+WiredTiger backend
+</TD>
+</TR>
 </TABLE>
 
 <P>Example:</P>
 <PRE>
         backend mdb
+        idlexp 16
 </PRE>
-<P>This marks the beginning of a new <TERM>MDB</TERM> backend definition.</P>
+<P>This marks the beginning of a new <TERM>MDB</TERM> backend definition. At present, only back-mdb implements any options of this type, so this setting is not needed for any other backends.</P>
 <H3><A NAME="General Database Directives">6.2.3. General Database Directives</A></H3>
 <P>Directives in this section apply only to the database in which they are defined. They are supported by every type of database.</P>
 <H4><A NAME="database &lt;type&gt;">6.2.3.1. database &lt;type&gt;</A></H4>
@@ -2860,23 +2974,30 @@ SQL Programmable backend
 <PRE>
         updateref       ldap://provider.example.net
 </PRE>
-<H3><A NAME="MDB Database Directives">6.2.4. MDB Database Directives</A></H3>
+<H3><A NAME="MDB Backend Directives">6.2.4. MDB Backend Directives</A></H3>
+<P>Directives in this category only apply to the <TERM>MDB</TERM> database backend. They will apply to all &quot;database mdb&quot; instances in the configuration. For a complete reference of MDB backend configuration directives, see <EM>slapd-mdb</EM>(5).</P>
+<H4><A NAME="idlexp &lt;exponent&gt;">6.2.4.1. idlexp &lt;exponent&gt;</A></H4>
+<P>Specify a power of 2 for the maximum size of an index slot. The default is 16, yielding a maximum slot size of 2^16 or 65536. The specified value must be in the range of 16-31.</P>
+<P>This setting helps with the case where certain search filters are slow to return results due to an index slot having collapsed to a range value.  This occurs when the number of candidate entries that match the filter for the index slot exceed the configured slot size.</P>
+<P>If this setting is decreased on a server with existing <TERM>MDB</TERM> databases, each db will immediately need its indices to be rebuilt while slapd is offline with the &quot;slapindex -q -t&quot; command.</P>
+<P>If this setting is increased on a server with existing <TERM>MDB</TERM> databases, each db will need its indices rebuilt to take advantage of the change for indices that have already been converted to ranges.</P>
+<H3><A NAME="MDB Database Directives">6.2.5. MDB Database Directives</A></H3>
 <P>Directives in this category only apply to the <TERM>MDB</TERM> database backend. That is, they must follow a &quot;database mdb&quot; line and come before any subsequent &quot;backend&quot; or &quot;database&quot; lines. For a complete reference of MDB configuration directives, see <EM>slapd-mdb</EM>(5).</P>
-<H4><A NAME="directory &lt;directory&gt;">6.2.4.1. directory &lt;directory&gt;</A></H4>
+<H4><A NAME="directory &lt;directory&gt;">6.2.5.1. directory &lt;directory&gt;</A></H4>
 <P>This directive specifies the directory where the MDB files containing the database and associated indices live.</P>
 <P>Default:</P>
 <PRE>
         directory /usr/local/var/openldap-data
 </PRE>
-<H4><A NAME="checkpoint &lt;kbyte&gt; &lt;min&gt;">6.2.4.2. checkpoint &lt;kbyte&gt; &lt;min&gt;</A></H4>
+<H4><A NAME="checkpoint &lt;kbyte&gt; &lt;min&gt;">6.2.5.2. checkpoint &lt;kbyte&gt; &lt;min&gt;</A></H4>
 <P>This directive specifies the frequency for flushing the database disk buffers. This directive is only needed if the <EM>dbnosync</EM> option is <TT>TRUE</TT>. The checkpoint will occur if either &lt;kbyte&gt; data has been written or &lt;min&gt; minutes have passed since the last checkpoint. Both arguments default to zero, in which case they are ignored. When the &lt;min&gt; argument is non-zero, an internal task will run every &lt;min&gt; minutes to perform the checkpoint. Note: currently the _kbyte_ setting is unimplemented.</P>
 <P>Example:</P>
 <PRE>
    checkpoint: 1024 10
 </PRE>
-<H4><A NAME="dbnosync: { TRUE | FALSE }">6.2.4.3. dbnosync: { TRUE | FALSE }</A></H4>
+<H4><A NAME="dbnosync: { TRUE | FALSE }">6.2.5.3. dbnosync: { TRUE | FALSE }</A></H4>
 <P>This directive causes on-disk database contents to not be immediately synchronized with in memory changes upon change.  Setting this option to <TT>TRUE</TT> may improve performance at the expense of data integrity.</P>
-<H4><A NAME="envflags: {nosync,nometasync,writemap,mapasync,nordahead}">6.2.4.4. envflags: {nosync,nometasync,writemap,mapasync,nordahead}</A></H4>
+<H4><A NAME="envflags: {nosync,nometasync,writemap,mapasync,nordahead}">6.2.5.4. envflags: {nosync,nometasync,writemap,mapasync,nordahead}</A></H4>
 <P>This option specifies flags for finer-grained control of  the  LMDB  library's operation.</P>
 <UL>
 <LI><TT>nosync</TT>: This is exactly the same as the dbnosync directive.
@@ -2884,7 +3005,7 @@ SQL Programmable backend
 <LI><TT>writemap</TT>: Use a writable memory map instead of just read-only. This speeds up write operations but makes the database vulnerable to corruption in case any bugs in slapd cause stray writes into the mmap region.
 <LI><TT>mapasync</TT>: When using a writable memory map and performing flushes on each commit, use an asynchronous flush instead of a synchronous flush (the default). This option has no effect if writemap has not been set. It also has no effect if nosync is set.
 <LI><TT>nordahead</TT>: Turn off file readahead. Usually the OS performs readahead on every read request. This usually boosts read performance but can be harmful to random access read performance if the system's memory is full and the DB is larger than RAM. This option is not implemented on Windows.</UL>
-<H4><A NAME="index: {&lt;attrlist&gt; | default} [pres,eq,approx,sub,none]">6.2.4.5. index: {&lt;attrlist&gt; | default} [pres,eq,approx,sub,none]</A></H4>
+<H4><A NAME="index: {&lt;attrlist&gt; | default} [pres,eq,approx,sub,none]">6.2.5.5. index: {&lt;attrlist&gt; | default} [pres,eq,approx,sub,none]</A></H4>
 <P>This directive specifies the indices to maintain for the given attribute. If only an <TT>&lt;attrlist&gt;</TT> is given, the default indices are maintained. The index keywords correspond to the common types of matches that may be used in an LDAP search filter.</P>
 <P>Example:</P>
 <PRE>
@@ -2902,28 +3023,33 @@ SQL Programmable backend
    index: objectClass eq
 </PRE>
 <P>Additional indices should be configured corresponding to the most common searches that are used on the database. Presence indexing should not be configured for an attribute unless the attribute occurs very rarely in the database, and presence searches on the attribute occur very frequently during normal use of the directory. Most applications don't use presence searches, so usually presence indexing is not very useful.</P>
-<H4><A NAME="maxreaders: &lt;integer&gt;">6.2.4.6. maxreaders: &lt;integer&gt;</A></H4>
+<H4><A NAME="maxentrysize: &lt;bytes&gt;">6.2.5.6. maxentrysize: &lt;bytes&gt;</A></H4>
+<P>Specify the maximum size of an entry in bytes. Attempts to store an entry larger than this size will be rejected with the error LDAP_ADMINLIMIT_EXCEEDED. The default is 0, which is unlimited.</P>
+<H4><A NAME="maxreaders: &lt;integer&gt;">6.2.5.7. maxreaders: &lt;integer&gt;</A></H4>
 <P>This directive specifies the maximum number of threads that may have concurrent read access to the database. Tools such as slapcat count as a single thread, in addition to threads in any active slapd processes. The default is 126.</P>
-<H4><A NAME="maxsize: &lt;bytes&gt;">6.2.4.7. maxsize: &lt;bytes&gt;</A></H4>
+<H4><A NAME="maxsize: &lt;bytes&gt;">6.2.5.8. maxsize: &lt;bytes&gt;</A></H4>
 <P>This directive specifies the maximum size of the database in bytes. A memory map of this size is allocated at startup time and the database will not be allowed to grow beyond this size. The default is 10485760 bytes (10MB). This setting may be changed upward if the configured limit needs to be increased.</P>
 <P><HR WIDTH="80%" ALIGN="Left">
 <STRONG>Note: </STRONG>It is important to set this to as large a value as possible, (relative to anticipated growth of the actual data over time) since growing the size later may not be practical when the system is under heavy load.
 <HR WIDTH="80%" ALIGN="Left"></P>
-<H4><A NAME="mode: { &lt;octal&gt; | &lt;symbolic&gt; }">6.2.4.8. mode: { &lt;octal&gt; | &lt;symbolic&gt; }</A></H4>
+<H4><A NAME="mode: { &lt;octal&gt; | &lt;symbolic&gt; }">6.2.5.9. mode: { &lt;octal&gt; | &lt;symbolic&gt; }</A></H4>
 <P>This directive specifies the file protection mode that newly created database index files should have. This can be in the form <TT>0600</TT> or <TT>-rw-------</TT></P>
 <P>Default:</P>
 <PRE>
    mode: 0600
 </PRE>
-<H4><A NAME="rtxnsize: &lt;entries&gt;">6.2.4.9. rtxnsize: &lt;entries&gt;</A></H4>
+<H4><A NAME="multival: { &lt;attrlist&gt; | default } &lt;integer&gt; hi,&lt;integer&gt; lo">6.2.5.10. multival: { &lt;attrlist&gt; | default } &lt;integer&gt; hi,&lt;integer&gt; lo</A></H4>
+<P>Specify the number of values for which a multivalued attribute is stored in a separate table. Normally entries are stored as a single blob inside the database. When an entry gets very large or contains attributes with a very large number of values, modifications on that entry may get very slow. Splitting the large attributes out to a separate table can improve the performance of modification operations. The threshold is specified as a pair of integers. If the number of values exceeds the hi threshold the values will be split out. If a modification deletes enough values to bring an attribute below the lo threshold the values will be removed from the separate table and merged back into the main entry blob. The threshold can be set for a specific list of attributes, or the default can be configured for all other attributes. The default value for both hi and lo thresholds is UINT_MAX, which keeps all attributes in the main blob.</P>
+<P>In addition to increasing write performance of operations the use of multival can also decrease fragmentation of the primary <TERM>MDB</TERM> database.</P>
+<H4><A NAME="rtxnsize: &lt;entries&gt;">6.2.5.11. rtxnsize: &lt;entries&gt;</A></H4>
 <P>This directive specifies the maximum number of entries to process in a single read transaction when executing a large search. Long-lived read transactions prevent old database pages from being reused in write transactions, and so can cause significant growth of the database file when there is heavy write traffic. This setting causes the read transaction in large searches to be released and reacquired after the given number of entries has been read, to give writers the opportunity to reclaim old database pages. The default is 10000.</P>
-<H4><A NAME="searchstack: &lt;integer&gt;">6.2.4.10. searchstack: &lt;integer&gt;</A></H4>
+<H4><A NAME="searchstack: &lt;integer&gt;">6.2.5.12. searchstack: &lt;integer&gt;</A></H4>
 <P>Specify the depth of the stack used for search filter evaluation. Search filters are evaluated on a stack to accommodate nested <TT>AND</TT> / <TT>OR</TT> clauses. An individual stack is allocated for each server thread. The depth of the stack determines how complex a filter can be evaluated without requiring any additional memory allocation. Filters that are nested deeper than the search stack depth will cause a separate stack to be allocated for that particular search operation. These separate allocations can have a major negative impact on server performance, but specifying too much stack will also consume a great deal of memory. Each search uses 512K bytes per level on a 32-bit machine, or 1024K bytes per level on a 64-bit machine. The default stack depth is 16, thus 8MB or 16MB per thread is used on 32 and 64 bit machines, respectively. Also the 512KB size of a single stack slot is set by a compile-time constant which may be changed if needed; the code must be recompiled for the change to take effect.</P>
 <P>Default:</P>
 <PRE>
    searchstack: 16
 </PRE>
-<H4><A NAME="Sample Entry">6.2.4.11. Sample Entry</A></H4>
+<H4><A NAME="Sample Entry">6.2.5.13. Sample Entry</A></H4>
 <PRE>
 database mdb
 suffix: &quot;dc=example,dc=com&quot;
