@@ -230,10 +230,6 @@ Modifications Compared to Upstream
   * slapd is configured to look in /etc/ldap/sasl2 in addition to
     /usr/lib/sasl2 for SASL configuration files.
 
-  * The libldap library is patched to add two functions used by
-    evolution-exchange for NTLM authentication to Active Directory.  See
-    <http://bugs.debian.org/457374>.
-
   * Several paths have been adjusted to fit Debian file permissions and
     for Filesystem Hierarchy Standard compliance, namely:
     - The ldapi socket is in /var/run/slapd

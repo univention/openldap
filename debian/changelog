@@ -3,6 +3,7 @@ openldap (2.5.6+dfsg-1~exp1) UNRELEASED; urgency=medium
   [ Ryan Tandy ]
   * New upstream release.
   * Export the cn=config database to LDIF format before upgrading from 2.4.
+  * slapd.README.Debian: Remove text about the dropped evolution-ntlm patch.
 
   [ Sergio Durigan Junior ]
   * Implement the "escape hatch" mechanism.
