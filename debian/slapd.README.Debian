@@ -296,12 +296,129 @@ Unsafe access control rule installed by default in previous versions
 
  -- Ryan Tandy <ryan@nardis.ca>, Mon, 20 Oct 2014 11:45:20 -0700
 
-Migrating your data to OpenLDAP 2.5.x
+Migrating your installation to OpenLDAP 2.5.x
 
-  OpenLDAP 2.5.x has removed support for various old backends, like
-  BDB, HDB and shell.  This means that if you tried to update your
-  slapd package from 2.4.x to 2.5.x and were using one of these
-  backends, the post-installation scripts likely failed to migrate
-  your data and you were left with a non-functional slapd service.
+  OpenLDAP 2.5 is a major new release and includes several incompatible
+  changes as described in the upstream ANNOUNCEMENT file. Depending on
+  your configuration, completing the upgrade from 2.4.x might require
+  manual intervention.
 
-  ......CONTINUE HERE.......
+  The package upgrade process first exports your databases to LDIF
+  format using slapcat(8), then updates the slapd package, and finally
+  imports the LDIF files using slapadd(8). If the slapadd process fails,
+  it must be completed manually after resolving whatever issues caused
+  the failure.
+
+  By default, the Debian package uses LDAP-based configuration
+  (cn=config). To resolve configuration issues with a cn=config
+  database, follow the steps below to reload the config database from an
+  LDIF file. If you use a slapd.conf configuration file, configuration
+  issues can be resolved by just editing that file.
+
+  The following steps assume your configuration database is stored in
+  the default location (/etc/ldap/slapd.d).
+
+  1. Locate the backup LDIF file exported by the upgrade process:
+
+       /var/backups/slapd-<OLDVERSION>/cn=config.ldif
+
+     Make a copy of this file for working on.
+
+  2. Edit your copy of cn=config.ldif to fix the issues noted by
+     slapadd, such as removed or renamed modules or backends. See below
+     for suggestions for some specific issues.
+
+  3. Move away or delete the contents of /etc/ldap/slapd.d, so that it
+     is an empty directory.
+
+  4. Load your edited cn=config.ldif into the cn=config database:
+
+       slapadd -F/etc/ldap/slapd.d -n0 -l cn=config.ldif
+
+  5. If the slapadd command failed, go back to step 2.
+
+  6. After the slapadd command succeeds, change the permissions on the
+     slapd.d directory to be owned by the openldap user:
+
+       chown -R openldap:openldap /etc/ldap/slapd.d
+
+  Now you can proceed with reloading the remaining databases. For each
+  configured database:
+
+  1. Locate the backup LDIF file exported by the upgrade process:
+
+       /var/backups/slapd-<OLDVERSION>/<SUFFIX>.ldif
+
+     where <SUFFIX> is the database suffix such as dc=example,dc=com.
+
+  2. Ensure the directory where the database is stored (for example
+     /var/lib/ldap) is empty. By default the upgrade process moves away
+     the database files to a directory named
+     /var/backups/<SUFFIX>-<OLDVERSION>.ldapdb.
+
+  3. Reload the data using slapadd:
+
+       slapadd -l /var/backups/slapd-<OLDVERSION>/<SUFFIX>.ldif
+
+  4. Make sure the slapadd command succeeded, and then change the
+     permissions on the data directory:
+
+       chown -R openldap:openldap /var/lib/ldap
+
+  After all of your databases have been reloaded successfully, you
+  should be able to start the slapd service again.
+
+Known issues for OpenLDAP 2.5.x upgrades
+
+  BDB/HDB backends removed: migrating to LMDB backend
+
+  The slapd-bdb(5) and slapd-hdb(5) backends have been removed. These
+  were configured by default in older versions of the slapd package. If
+  you are still using one of these backends, slapadd fails with the
+  following message:
+
+    lt_dlopenext failed: (back_hdb) file not found
+
+  You have to change to the LMDB backend. Edit the exported
+  configuration LDIF as described above, and make the following changes:
+
+  1. Change olcModuleLoad: back_bdb or back_hdb to back_mdb.
+  2. If you have an olcBackend: bdb or hdb entry, change it to mdb, or
+     delete it if you don't have to override any global LMDB settings.
+  2. For each configured BDB or HDB database:
+    - Change objectClass: olcBdbConfig or olcHdbConfig to olcMdbConfig.
+      Also update structuralObjectClass.
+    - Change olcDatabase: bdb or hdb to mdb. Also update the attribute
+      in the DN, for example: olcDatabase={1}mdb,cn=config.
+    - Delete any olcDbConfig attributes.
+    - Add the olcDbMaxSize attribute to set the maximum size of the
+      database, in bytes. If not configured, the default is 10 MiB.
+
+  ppolicy schema changed to internal
+
+  The slapo-ppolicy(5) module now includes its schema compiled into the
+  module code itself. The external schema is no longer used, and
+  conflicts with the internal copy. If you have the ppolicy schema
+  loaded, slapadd fails with the following message:
+
+    olcAttributeTypes: value #0 olcAttributeTypes: Duplicate attributeType: "1.3.6.1.4.1.42.2.27.8.1.1"
+
+  Edit the exported configuration LDIF as described above. Remove the
+  entire ppolicy schema entry. That is, delete from the line like:
+
+    dn: cn={4}ppolicy,cn=schema,cn=config
+
+  all the way to the next blank line.
+
+  argon2 module renamed
+
+  The pw-argon2 contrib passwd module was promoted to core and was
+  renamed to argon2. If your config loads the module by its old name,
+  slapadd fails with the following message:
+
+    lt_dlopenext failed: (pw-argon2) file not found
+
+  Edit the exported configuration LDIF as described above. Change
+  olcModuleLoad: pw-argon2 to argon2.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Sat, 14 Aug 2021 15:03:31 -0700

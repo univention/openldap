@@ -3,7 +3,9 @@ openldap (2.5.6+dfsg-1~exp1) UNRELEASED; urgency=medium
   [ Ryan Tandy ]
   * New upstream release.
   * Export the cn=config database to LDIF format before upgrading from 2.4.
-  * slapd.README.Debian: Remove text about the dropped evolution-ntlm patch.
+  * slapd.README.Debian:
+    - Remove text about the dropped evolution-ntlm patch.
+    - Add guidance for recovering from upgrade failures.
 
   [ Sergio Durigan Junior ]
   * Implement the "escape hatch" mechanism.
@@ -23,8 +25,6 @@ openldap (2.5.6+dfsg-1~exp1) UNRELEASED; urgency=medium
       to handle possible errors with the init script.
     - d/slapd.NEWS: Add excerpt mentioning that the postinst script might
       error out if it can't migrate the existing (old) database backend.
-    - d/slapd.README.Debian: Add section explaining how to migrate the
-      database backend to a 2.5.x-compatible one.
 
  -- Ryan Tandy <ryan@nardis.ca>  Mon, 09 Aug 2021 20:50:37 -0700
 
