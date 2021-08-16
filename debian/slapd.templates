@@ -120,40 +120,6 @@ _Description: slapcat failure during upgrade
  Then move the database files back to a backup area and then try running
  slapadd from ${location}.
 
-Template: slapd/ppolicy_schema_needs_update
-Type: select
-__Choices: abort installation, continue regardless
-DefaultChoice: abort installation
-#flag:comment:2
-# "ppolicy" and "pwdMaxRecordedFailure" are not translatable.
-#flag:comment:3
-# This paragraph is followed by the path to the generated file (not
-# translatable). The sentence continues in the following paragraph.
-#flag:comment:5
-# This paragraph continues the sentence started in the previous
-# paragraph. It is followed by a command line.
-#flag:translate!:4,6
-_Description: Manual ppolicy schema update recommended
- The new version of the Password Policy (ppolicy) overlay requires the
- schema to define the pwdMaxRecordedFailure attribute type, which is not
- present in the schema currently in use. It is recommended to abort the
- upgrade now, and to update the ppolicy schema before upgrading slapd.
- If replication is in use, the schema update should be applied on every
- server before continuing with the upgrade.
- .
- An LDIF file has been generated with the changes required for the upgrade:
- .
- ${ldif}
- .
- so if slapd is using the default access control rules, these changes can be
- applied (after starting slapd) by using the command:
- .
- ldapmodify -H ldapi:/// -Y EXTERNAL -f ${ldif}
- .
- If instead you choose to continue the installation, the new attribute
- type will be added automatically, but the change will not be acted on
- by slapd overlays, and replication with other servers may be affected.
-
 Template: slapd/postinst_error
 Type: note
 _Description: Error while performing post-installation tasks

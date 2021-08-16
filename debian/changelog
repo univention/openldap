@@ -8,6 +8,8 @@ openldap (2.5.6+dfsg-1~exp1) UNRELEASED; urgency=medium
     - Add guidance for recovering from upgrade failures.
   * Remove the debconf warning and README text about the unsafe ACL configured
     by default in versions before jessie.
+  * Remove upgrade code for adding the pwdMaxRecordedFailure attribute to the
+    ppolicy schema. It's obsolete since the schema has been internalized.
 
   [ Sergio Durigan Junior ]
   * Implement the "escape hatch" mechanism.

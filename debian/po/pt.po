@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap 2.4.44+dfsg-3\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2021-08-16 01:00+0000\n"
+"POT-Creation-Date: 2021-08-16 01:12+0000\n"
 "PO-Revision-Date: 2017-04-10 22:08+0000\n"
 "Last-Translator: Rui Branco - DebianPT <ruipb@debianpt.org>\n"
 "Language-Team: Portuguese <traduz@debianpt.org>\n"
@@ -288,87 +288,15 @@ msgstr ""
 "Depois mova os ficheiros da base de dados de volta para a área de backup e a "
 "seguir tente correr o slapadd a partir de ${location}."
 
-#. Type: select
-#. Choices
-#: ../slapd.templates:15001
-msgid "abort installation"
-msgstr "abortar a instalação"
-
-#. Type: select
-#. Choices
-#: ../slapd.templates:15001
-msgid "continue regardless"
-msgstr "continuar de qualquer forma "
-
-#. Type: select
-#. Description
-#: ../slapd.templates:15002
-msgid "Manual ppolicy schema update recommended"
-msgstr "Recomendada actualização manual do esquema ppolicy"
-
-#. Type: select
-#. Description
-#. "ppolicy" and "pwdMaxRecordedFailure" are not translatable.
-#: ../slapd.templates:15002
-msgid ""
-"The new version of the Password Policy (ppolicy) overlay requires the schema "
-"to define the pwdMaxRecordedFailure attribute type, which is not present in "
-"the schema currently in use. It is recommended to abort the upgrade now, and "
-"to update the ppolicy schema before upgrading slapd. If replication is in "
-"use, the schema update should be applied on every server before continuing "
-"with the upgrade."
-msgstr ""
-"A nova versão do overlay da politica de palavra-chave (ppolicy) requer ao "
-"esquema que seja definida um tipo de atributo pwdMaxRecordedFailure, o qual "
-"não está presente no esquema em uso. É recomendadoabortar a instalação neste "
-"momento, e actualizar o esquema ppolicy antes de actualizar o slapd. Se a "
-"replicação está em uso, a actualização do esquema deverá ser efectuada em "
-"cada servidor antes de continuar a actualização."
-
-#. Type: select
-#. Description
-#. This paragraph is followed by the path to the generated file (not
-#. translatable). The sentence continues in the following paragraph.
-#: ../slapd.templates:15002
-msgid ""
-"An LDIF file has been generated with the changes required for the upgrade:"
-msgstr ""
-"Um ficheiro LDIF foi criado com as alterações requeridas para a actualização:"
-
-#. Type: select
-#. Description
-#. This paragraph continues the sentence started in the previous
-#. paragraph. It is followed by a command line.
-#: ../slapd.templates:15002
-msgid ""
-"so if slapd is using the default access control rules, these changes can be "
-"applied (after starting slapd) by using the command:"
-msgstr ""
-"assim se o slapd estiver a usar as regras de controlo de acesso por "
-"predefinição, estas alterações podem ser aplicadas (depois de iniciar o "
-"slapd) ao usar o seguinte comando:"
-
-#. Type: select
-#. Description
-#: ../slapd.templates:15002
-msgid ""
-"If instead you choose to continue the installation, the new attribute type "
-"will be added automatically, but the change will not be acted on by slapd "
-"overlays, and replication with other servers may be affected."
-msgstr ""
-"Se escolher continuar a instalação, o novo tipo de atributo será "
-"automaticamente adicionado, mas a alteração não terá efeito nos overlays "
-"slapd, e replicação com outros servidores pode ser afectada."
-
 #. Type: note
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid "Error while performing post-installation tasks"
 msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid ""
 "There has been one or more errors while performing some post-installation "
 "tasks. This probably means that the slapd package could not automatically "
@@ -378,7 +306,7 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid ""
 "The maintainer script responsible for executing the post-installation tasks "
 "has exited, but the slapd service has NOT been (re)started. You will need to "
@@ -387,12 +315,60 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid ""
 "For more information on possible problematic scenarios and how to address "
 "them, please take a look at the README.Debian file (under /usr/share/doc/"
 "slapd/)."
 msgstr ""
+
+#~ msgid "abort installation"
+#~ msgstr "abortar a instalação"
+
+#~ msgid "continue regardless"
+#~ msgstr "continuar de qualquer forma "
+
+#~ msgid "Manual ppolicy schema update recommended"
+#~ msgstr "Recomendada actualização manual do esquema ppolicy"
+
+#~ msgid ""
+#~ "The new version of the Password Policy (ppolicy) overlay requires the "
+#~ "schema to define the pwdMaxRecordedFailure attribute type, which is not "
+#~ "present in the schema currently in use. It is recommended to abort the "
+#~ "upgrade now, and to update the ppolicy schema before upgrading slapd. If "
+#~ "replication is in use, the schema update should be applied on every "
+#~ "server before continuing with the upgrade."
+#~ msgstr ""
+#~ "A nova versão do overlay da politica de palavra-chave (ppolicy) requer ao "
+#~ "esquema que seja definida um tipo de atributo pwdMaxRecordedFailure, o "
+#~ "qual não está presente no esquema em uso. É recomendadoabortar a "
+#~ "instalação neste momento, e actualizar o esquema ppolicy antes de "
+#~ "actualizar o slapd. Se a replicação está em uso, a actualização do "
+#~ "esquema deverá ser efectuada em cada servidor antes de continuar a "
+#~ "actualização."
+
+#~ msgid ""
+#~ "An LDIF file has been generated with the changes required for the upgrade:"
+#~ msgstr ""
+#~ "Um ficheiro LDIF foi criado com as alterações requeridas para a "
+#~ "actualização:"
+
+#~ msgid ""
+#~ "so if slapd is using the default access control rules, these changes can "
+#~ "be applied (after starting slapd) by using the command:"
+#~ msgstr ""
+#~ "assim se o slapd estiver a usar as regras de controlo de acesso por "
+#~ "predefinição, estas alterações podem ser aplicadas (depois de iniciar o "
+#~ "slapd) ao usar o seguinte comando:"
+
+#~ msgid ""
+#~ "If instead you choose to continue the installation, the new attribute "
+#~ "type will be added automatically, but the change will not be acted on by "
+#~ "slapd overlays, and replication with other servers may be affected."
+#~ msgstr ""
+#~ "Se escolher continuar a instalação, o novo tipo de atributo será "
+#~ "automaticamente adicionado, mas a alteração não terá efeito nos overlays "
+#~ "slapd, e replicação com outros servidores pode ser afectada."
 
 #~ msgid "Potentially unsafe slapd access control configuration"
 #~ msgstr "Configuração de controlo de acesso ao slapd potencialmente insegura"

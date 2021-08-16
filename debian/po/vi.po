@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap 2.4.44+dfsg-4\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2021-08-16 01:00+0000\n"
+"POT-Creation-Date: 2021-08-16 01:12+0000\n"
 "PO-Revision-Date: 2017-02-09 13:57+0700\n"
 "Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
 "Language-Team: Vietnamese <debian-l10n-vietnamese@lists.debian.org>\n"
@@ -282,85 +282,15 @@ msgstr ""
 "Sau đó, hãy di chuyển các tập tin cơ sở dữ liệu sang một vùng sao lưu, và "
 "thử chạy trình slapadd từ vị trí “${location}”."
 
-#. Type: select
-#. Choices
-#: ../slapd.templates:15001
-msgid "abort installation"
-msgstr "hủy bỏ cài đặt"
-
-#. Type: select
-#. Choices
-#: ../slapd.templates:15001
-msgid "continue regardless"
-msgstr "vẫn tiếp tục"
-
-#. Type: select
-#. Description
-#: ../slapd.templates:15002
-msgid "Manual ppolicy schema update recommended"
-msgstr "Khuyến khích cập nhật lược đồ ppolicy"
-
-#. Type: select
-#. Description
-#. "ppolicy" and "pwdMaxRecordedFailure" are not translatable.
-#: ../slapd.templates:15002
-msgid ""
-"The new version of the Password Policy (ppolicy) overlay requires the schema "
-"to define the pwdMaxRecordedFailure attribute type, which is not present in "
-"the schema currently in use. It is recommended to abort the upgrade now, and "
-"to update the ppolicy schema before upgrading slapd. If replication is in "
-"use, the schema update should be applied on every server before continuing "
-"with the upgrade."
-msgstr ""
-"Phiên bản mới của overlay Chính sách Mật khẩu (ppolicy) cần lược đồ để định "
-"nghĩa kiểu thuộc tính pwdMaxRecordedFailure, cái mà không hiện diện trong "
-"lược đồ hiện đang dùng. Khuyến khích bạn bây giờ bãi bỏ nâng cấp, và cập "
-"nhật lược đồ trước khi nâng cấp slapd. Nếu bản sao đang dùng, cập nhật lược "
-"đồ có thể được áp dụng cho mọi máy phục vụ trước khi tiếp tục với nâng cấp."
-
-#. Type: select
-#. Description
-#. This paragraph is followed by the path to the generated file (not
-#. translatable). The sentence continues in the following paragraph.
-#: ../slapd.templates:15002
-msgid ""
-"An LDIF file has been generated with the changes required for the upgrade:"
-msgstr "Một tập tin LDIF đã được tạo với các thay đổi theo yêu cầu cập nhật:"
-
-#. Type: select
-#. Description
-#. This paragraph continues the sentence started in the previous
-#. paragraph. It is followed by a command line.
-#: ../slapd.templates:15002
-msgid ""
-"so if slapd is using the default access control rules, these changes can be "
-"applied (after starting slapd) by using the command:"
-msgstr ""
-"như vậy nếu slapd đang sử dụng các quy tắc điều khiển truy cập mặc định, "
-"những thay đổi có thể được áp dụng (sau khi khởi động slapd) bằng cách dùng "
-"lệnh:"
-
-#. Type: select
-#. Description
-#: ../slapd.templates:15002
-msgid ""
-"If instead you choose to continue the installation, the new attribute type "
-"will be added automatically, but the change will not be acted on by slapd "
-"overlays, and replication with other servers may be affected."
-msgstr ""
-"Nếu thay vào đó bạn chọn tiếp tục cài đặt, kiểu thuộc tính mới sẽ được thêm "
-"một cách tự động, nhưng thay đổi sẽ không được thực hiện trên các overlay "
-"slapd, và bản sao với các máy phục vụ khác có thể chịu tác động."
-
 #. Type: note
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid "Error while performing post-installation tasks"
 msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid ""
 "There has been one or more errors while performing some post-installation "
 "tasks. This probably means that the slapd package could not automatically "
@@ -370,7 +300,7 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid ""
 "The maintainer script responsible for executing the post-installation tasks "
 "has exited, but the slapd service has NOT been (re)started. You will need to "
@@ -379,12 +309,58 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid ""
 "For more information on possible problematic scenarios and how to address "
 "them, please take a look at the README.Debian file (under /usr/share/doc/"
 "slapd/)."
 msgstr ""
+
+#~ msgid "abort installation"
+#~ msgstr "hủy bỏ cài đặt"
+
+#~ msgid "continue regardless"
+#~ msgstr "vẫn tiếp tục"
+
+#~ msgid "Manual ppolicy schema update recommended"
+#~ msgstr "Khuyến khích cập nhật lược đồ ppolicy"
+
+#~ msgid ""
+#~ "The new version of the Password Policy (ppolicy) overlay requires the "
+#~ "schema to define the pwdMaxRecordedFailure attribute type, which is not "
+#~ "present in the schema currently in use. It is recommended to abort the "
+#~ "upgrade now, and to update the ppolicy schema before upgrading slapd. If "
+#~ "replication is in use, the schema update should be applied on every "
+#~ "server before continuing with the upgrade."
+#~ msgstr ""
+#~ "Phiên bản mới của overlay Chính sách Mật khẩu (ppolicy) cần lược đồ để "
+#~ "định nghĩa kiểu thuộc tính pwdMaxRecordedFailure, cái mà không hiện diện "
+#~ "trong lược đồ hiện đang dùng. Khuyến khích bạn bây giờ bãi bỏ nâng cấp, "
+#~ "và cập nhật lược đồ trước khi nâng cấp slapd. Nếu bản sao đang dùng, cập "
+#~ "nhật lược đồ có thể được áp dụng cho mọi máy phục vụ trước khi tiếp tục "
+#~ "với nâng cấp."
+
+#~ msgid ""
+#~ "An LDIF file has been generated with the changes required for the upgrade:"
+#~ msgstr ""
+#~ "Một tập tin LDIF đã được tạo với các thay đổi theo yêu cầu cập nhật:"
+
+#~ msgid ""
+#~ "so if slapd is using the default access control rules, these changes can "
+#~ "be applied (after starting slapd) by using the command:"
+#~ msgstr ""
+#~ "như vậy nếu slapd đang sử dụng các quy tắc điều khiển truy cập mặc định, "
+#~ "những thay đổi có thể được áp dụng (sau khi khởi động slapd) bằng cách "
+#~ "dùng lệnh:"
+
+#~ msgid ""
+#~ "If instead you choose to continue the installation, the new attribute "
+#~ "type will be added automatically, but the change will not be acted on by "
+#~ "slapd overlays, and replication with other servers may be affected."
+#~ msgstr ""
+#~ "Nếu thay vào đó bạn chọn tiếp tục cài đặt, kiểu thuộc tính mới sẽ được "
+#~ "thêm một cách tự động, nhưng thay đổi sẽ không được thực hiện trên các "
+#~ "overlay slapd, và bản sao với các máy phục vụ khác có thể chịu tác động."
 
 #~ msgid "Potentially unsafe slapd access control configuration"
 #~ msgstr "Cấu hình điều khiển truy cập slapd tiềm ẩn sự thiếu an toàn"

@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2021-08-16 01:00+0000\n"
+"POT-Creation-Date: 2021-08-16 01:12+0000\n"
 "PO-Revision-Date: 2017-01-15 13:46+0900\n"
 "Last-Translator: Kenshi Muto <kmuto@debian.org>\n"
 "Language-Team: Japanese <debian-japanese@lists.debian.org>\n"
@@ -282,84 +282,15 @@ msgstr ""
 "そして、データベースファイルをバックアップ領域に戻し、slapadd を ${location} "
 "から実行してみます。"
 
-#. Type: select
-#. Choices
-#: ../slapd.templates:15001
-msgid "abort installation"
-msgstr "インストールの中止"
-
-#. Type: select
-#. Choices
-#: ../slapd.templates:15001
-msgid "continue regardless"
-msgstr "かまわず続ける"
-
-#. Type: select
-#. Description
-#: ../slapd.templates:15002
-msgid "Manual ppolicy schema update recommended"
-msgstr "手動の ppolicy スキーマ更新の推奨"
-
-#. Type: select
-#. Description
-#. "ppolicy" and "pwdMaxRecordedFailure" are not translatable.
-#: ../slapd.templates:15002
-msgid ""
-"The new version of the Password Policy (ppolicy) overlay requires the schema "
-"to define the pwdMaxRecordedFailure attribute type, which is not present in "
-"the schema currently in use. It is recommended to abort the upgrade now, and "
-"to update the ppolicy schema before upgrading slapd. If replication is in "
-"use, the schema update should be applied on every server before continuing "
-"with the upgrade."
-msgstr ""
-"Password Policy (ppolicy) オーバレイの新しいバージョンは、現在使用しているス"
-"キーマに存在しない pwdMaxRecordedFailure 属性型をスキーマに定義する必要があり"
-"ます。アップグレードを今すぐ中止し、slapd をアップグレードする前に ppolicy ス"
-"キーマを更新することをお勧めします。レプリケーションが使われている場合、この"
-"アップグレードを続ける前にスキーマの更新を各サーバに適用しておくべきです。"
-
-#. Type: select
-#. Description
-#. This paragraph is followed by the path to the generated file (not
-#. translatable). The sentence continues in the following paragraph.
-#: ../slapd.templates:15002
-msgid ""
-"An LDIF file has been generated with the changes required for the upgrade:"
-msgstr "アップグレードに必要な変更付きの LDIF ファイルが生成されました:"
-
-#. Type: select
-#. Description
-#. This paragraph continues the sentence started in the previous
-#. paragraph. It is followed by a command line.
-#: ../slapd.templates:15002
-msgid ""
-"so if slapd is using the default access control rules, these changes can be "
-"applied (after starting slapd) by using the command:"
-msgstr ""
-"slapd がデフォルトのアクセス制御ルールを使っているのであれば、これらの変更は "
-"(slapd が開始した後に) 以下のコマンドによって適用できます:"
-
-#. Type: select
-#. Description
-#: ../slapd.templates:15002
-msgid ""
-"If instead you choose to continue the installation, the new attribute type "
-"will be added automatically, but the change will not be acted on by slapd "
-"overlays, and replication with other servers may be affected."
-msgstr ""
-"インストールを続けることを選ぶと、新しい属性型は自動的に追加されますが、この"
-"変更は slapd オーバレイで実行されず、他のサーバとのレプリケーションに影響する"
-"可能性があります。"
-
 #. Type: note
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid "Error while performing post-installation tasks"
 msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid ""
 "There has been one or more errors while performing some post-installation "
 "tasks. This probably means that the slapd package could not automatically "
@@ -369,7 +300,7 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid ""
 "The maintainer script responsible for executing the post-installation tasks "
 "has exited, but the slapd service has NOT been (re)started. You will need to "
@@ -378,12 +309,56 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid ""
 "For more information on possible problematic scenarios and how to address "
 "them, please take a look at the README.Debian file (under /usr/share/doc/"
 "slapd/)."
 msgstr ""
+
+#~ msgid "abort installation"
+#~ msgstr "インストールの中止"
+
+#~ msgid "continue regardless"
+#~ msgstr "かまわず続ける"
+
+#~ msgid "Manual ppolicy schema update recommended"
+#~ msgstr "手動の ppolicy スキーマ更新の推奨"
+
+#~ msgid ""
+#~ "The new version of the Password Policy (ppolicy) overlay requires the "
+#~ "schema to define the pwdMaxRecordedFailure attribute type, which is not "
+#~ "present in the schema currently in use. It is recommended to abort the "
+#~ "upgrade now, and to update the ppolicy schema before upgrading slapd. If "
+#~ "replication is in use, the schema update should be applied on every "
+#~ "server before continuing with the upgrade."
+#~ msgstr ""
+#~ "Password Policy (ppolicy) オーバレイの新しいバージョンは、現在使用している"
+#~ "スキーマに存在しない pwdMaxRecordedFailure 属性型をスキーマに定義する必要"
+#~ "があります。アップグレードを今すぐ中止し、slapd をアップグレードする前に "
+#~ "ppolicy スキーマを更新することをお勧めします。レプリケーションが使われてい"
+#~ "る場合、このアップグレードを続ける前にスキーマの更新を各サーバに適用してお"
+#~ "くべきです。"
+
+#~ msgid ""
+#~ "An LDIF file has been generated with the changes required for the upgrade:"
+#~ msgstr "アップグレードに必要な変更付きの LDIF ファイルが生成されました:"
+
+#~ msgid ""
+#~ "so if slapd is using the default access control rules, these changes can "
+#~ "be applied (after starting slapd) by using the command:"
+#~ msgstr ""
+#~ "slapd がデフォルトのアクセス制御ルールを使っているのであれば、これらの変更"
+#~ "は (slapd が開始した後に) 以下のコマンドによって適用できます:"
+
+#~ msgid ""
+#~ "If instead you choose to continue the installation, the new attribute "
+#~ "type will be added automatically, but the change will not be acted on by "
+#~ "slapd overlays, and replication with other servers may be affected."
+#~ msgstr ""
+#~ "インストールを続けることを選ぶと、新しい属性型は自動的に追加されますが、こ"
+#~ "の変更は slapd オーバレイで実行されず、他のサーバとのレプリケーションに影"
+#~ "響する可能性があります。"
 
 #~ msgid "Potentially unsafe slapd access control configuration"
 #~ msgstr "潜在的に安全でない slapd のアクセス制御設定です"
