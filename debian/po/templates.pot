@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: openldap\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
-"POT-Creation-Date: 2021-08-10 03:58+0000\n"
+"POT-Creation-Date: 2021-08-16 01:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -241,60 +241,28 @@ msgid ""
 "slapadd from ${location}."
 msgstr ""
 
-#. Type: note
-#. Description
-#: ../slapd.templates:15001
-msgid "Potentially unsafe slapd access control configuration"
-msgstr ""
-
-#. Type: note
-#. Description
-#: ../slapd.templates:15001
-msgid ""
-"One or more of the configured databases has an access control rule that "
-"allows users to modify most of their own attributes. This may be unsafe, "
-"depending on how the database is used."
-msgstr ""
-
-#. Type: note
-#. Description
-#. Translators: keep "by self write" and "to *" unchanged. These are part
-#. of the slapd configuration and are not translatable.
-#: ../slapd.templates:15001
-msgid ""
-"In the case of slapd access rules that begin with \"to *\", it is "
-"recommended to remove any instances of \"by self write\", so that users are "
-"only able to modify specifically allowed attributes."
-msgstr ""
-
-#. Type: note
-#. Description
-#: ../slapd.templates:15001
-msgid "See /usr/share/doc/slapd/README.Debian.gz for more details."
-msgstr ""
-
 #. Type: select
 #. Choices
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid "abort installation"
 msgstr ""
 
 #. Type: select
 #. Choices
-#: ../slapd.templates:16001
+#: ../slapd.templates:15001
 msgid "continue regardless"
 msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:16002
+#: ../slapd.templates:15002
 msgid "Manual ppolicy schema update recommended"
 msgstr ""
 
 #. Type: select
 #. Description
 #. "ppolicy" and "pwdMaxRecordedFailure" are not translatable.
-#: ../slapd.templates:16002
+#: ../slapd.templates:15002
 msgid ""
 "The new version of the Password Policy (ppolicy) overlay requires the schema "
 "to define the pwdMaxRecordedFailure attribute type, which is not present in "
@@ -308,7 +276,7 @@ msgstr ""
 #. Description
 #. This paragraph is followed by the path to the generated file (not
 #. translatable). The sentence continues in the following paragraph.
-#: ../slapd.templates:16002
+#: ../slapd.templates:15002
 msgid ""
 "An LDIF file has been generated with the changes required for the upgrade:"
 msgstr ""
@@ -317,7 +285,7 @@ msgstr ""
 #. Description
 #. This paragraph continues the sentence started in the previous
 #. paragraph. It is followed by a command line.
-#: ../slapd.templates:16002
+#: ../slapd.templates:15002
 msgid ""
 "so if slapd is using the default access control rules, these changes can be "
 "applied (after starting slapd) by using the command:"
@@ -325,7 +293,7 @@ msgstr ""
 
 #. Type: select
 #. Description
-#: ../slapd.templates:16002
+#: ../slapd.templates:15002
 msgid ""
 "If instead you choose to continue the installation, the new attribute type "
 "will be added automatically, but the change will not be acted on by slapd "
@@ -334,13 +302,13 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:16001
 msgid "Error while performing post-installation tasks"
 msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:16001
 msgid ""
 "There has been one or more errors while performing some post-installation "
 "tasks. This probably means that the slapd package could not automatically "
@@ -350,7 +318,7 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:16001
 msgid ""
 "The maintainer script responsible for executing the post-installation tasks "
 "has exited, but the slapd service has NOT been (re)started. You will need to "
@@ -359,7 +327,7 @@ msgstr ""
 
 #. Type: note
 #. Description
-#: ../slapd.templates:17001
+#: ../slapd.templates:16001
 msgid ""
 "For more information on possible problematic scenarios and how to address "
 "them, please take a look at the README.Debian file (under /usr/share/doc/"

@@ -6,6 +6,8 @@ openldap (2.5.6+dfsg-1~exp1) UNRELEASED; urgency=medium
   * slapd.README.Debian:
     - Remove text about the dropped evolution-ntlm patch.
     - Add guidance for recovering from upgrade failures.
+  * Remove the debconf warning and README text about the unsafe ACL configured
+    by default in versions before jessie.
 
   [ Sergio Durigan Junior ]
   * Implement the "escape hatch" mechanism.
