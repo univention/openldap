@@ -289,7 +289,7 @@ Migrating your installation to OpenLDAP 2.5.x
 
   4. Load your edited cn=config.ldif into the cn=config database:
 
-       slapadd -F/etc/ldap/slapd.d -n0 -l cn=config.ldif
+       slapadd -F/etc/ldap/slapd.d -n0 -l /var/backups/slapd-<OLDVERSION>/cn=config.ldif
 
   5. If the slapadd command failed, go back to step 2.
 
@@ -326,7 +326,7 @@ Migrating your installation to OpenLDAP 2.5.x
 
 Known issues for OpenLDAP 2.5.x upgrades
 
-  BDB/HDB backends removed: migrating to LMDB backend
+  * BDB/HDB backends removed: migrating to LMDB backend
 
   The slapd-bdb(5) and slapd-hdb(5) backends have been removed. These
   were configured by default in older versions of the slapd package. If
@@ -350,7 +350,7 @@ Known issues for OpenLDAP 2.5.x upgrades
     - Add the olcDbMaxSize attribute to set the maximum size of the
       database, in bytes. If not configured, the default is 10 MiB.
 
-  ppolicy schema changed to internal
+  * ppolicy schema changed to internal
 
   The slapo-ppolicy(5) module now includes its schema compiled into the
   module code itself. The external schema is no longer used, and
@@ -366,7 +366,7 @@ Known issues for OpenLDAP 2.5.x upgrades
 
   all the way to the next blank line.
 
-  argon2 module renamed
+  * argon2 module renamed
 
   The pw-argon2 contrib passwd module was promoted to core and was
   renamed to argon2. If your config loads the module by its old name,
