@@ -1,4 +1,4 @@
-openldap (2.4.59+dfsg-1) UNRELEASED; urgency=medium
+openldap (2.4.59+dfsg-1) unstable; urgency=medium
 
   * New upstream release.
   * Fix FTBFS with autoconf 2.71 (Closes: #993032):
@@ -14,7 +14,7 @@ openldap (2.4.59+dfsg-1) UNRELEASED; urgency=medium
   * Stop disabling test060-mt-hot on ppc64el. The underlying kernel bug
     (#866122) is fixed in all relevant suites by now.
 
- -- Ryan Tandy <ryan@nardis.ca>  Thu, 26 Aug 2021 19:27:12 -0700
+ -- Ryan Tandy <ryan@nardis.ca>  Fri, 27 Aug 2021 09:42:31 -0700
 
 openldap (2.4.57+dfsg-3) unstable; urgency=medium
 
