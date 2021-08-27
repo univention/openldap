@@ -1,3 +1,16 @@
+openldap (2.4.57+dfsg-4) UNRELEASED; urgency=medium
+
+  * Fix FTBFS with autoconf 2.71 (Closes: #993032):
+    - Backport upstream changes to support Autoconf 2.69 instead of simply
+      disabling automake in debian/rules. Fixes FTBFS due to autoreconf
+      thinking files required by Automake are missing, even though Automake is
+      not actually used.
+    - Stop running autoreconf in contrib/ldapc++ since we don't build it.
+    - Drop custom config.{guess,sub} handling. dh_update_autotools_config does
+      the right thing for us.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Fri, 27 Aug 2021 00:18:55 +0000
+
 openldap (2.4.57+dfsg-3) unstable; urgency=medium
 
   * Link smbk5pwd with -lkrb5. (Closes: #988565)

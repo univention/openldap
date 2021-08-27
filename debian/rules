@@ -10,10 +10,6 @@ include /usr/share/dpkg/pkg-info.mk
 export DEB_CFLAGS_MAINT_APPEND := -Wall -Wno-format-extra-args -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 export DEB_BUILD_MAINT_OPTIONS := hardening=+pie,+bindnow
 
-# Configure calls AM_INIT_AUTOMAKE, but Automake fails as there is no Makefile.am.
-# Tell dh-autoreconf to skip automake.
-export AUTOMAKE = true
-
 # Expose maintainer address to build/mkversion (see debian/patches/set-maintainer-name)
 export DEB_MAINTAINER := $(shell sed -ne 's/Maintainer:\s\+//p' debian/control)
 
@@ -85,15 +81,6 @@ build:
 	$(DH)
 %:
 	$(DH)
-
-# Only contrib/ldapc++ uses Automake, so special care is needed to update
-# config.guess and config.sub at the top level.
-autoreconf:
-	autoreconf -f -i . contrib/ldapc++
-	cp -f /usr/share/misc/config.guess /usr/share/misc/config.sub build/
-
-override_dh_autoreconf:
-	dh_autoreconf debian/rules -- autoreconf
 
 override_dh_auto_configure:
 	# Check if we include the RFCs, Internet-Drafts, or upstream schemas
