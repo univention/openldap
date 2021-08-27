@@ -9,6 +9,7 @@ openldap (2.4.59+dfsg-1) UNRELEASED; urgency=medium
     - Stop running autoreconf in contrib/ldapc++ since we don't build it.
     - Drop custom config.{guess,sub} handling. dh_update_autotools_config does
       the right thing for us.
+  * Update Standards-Version to 4.6.0; no changes required.
 
  -- Ryan Tandy <ryan@nardis.ca>  Thu, 26 Aug 2021 19:27:12 -0700
 
