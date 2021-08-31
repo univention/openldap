@@ -23,7 +23,7 @@
 <DIV CLASS="title">
 <H1 CLASS="doc-title">OpenLDAP Software 2.5 Administrator's Guide</H1>
 <ADDRESS CLASS="doc-author">The OpenLDAP Project &lt;<A HREF="https://www.openldap.org/">https://www.openldap.org/</A>&gt;</ADDRESS>
-<ADDRESS CLASS="doc-modified">27 July 2021</ADDRESS>
+<ADDRESS CLASS="doc-modified">18 August 2021</ADDRESS>
 <BR CLEAR="All">
 </DIV>
 <DIV CLASS="contents">
@@ -49,7 +49,9 @@
 <BR>
 <A HREF="#LDAP vs RDBMS">1.8. LDAP vs RDBMS</A>
 <BR>
-<A HREF="#What is slapd and what can it do">1.9. What is slapd and what can it do?</A></UL>
+<A HREF="#What is slapd and what can it do">1.9. What is slapd and what can it do?</A>
+<BR>
+<A HREF="#What is lloadd and what can it do">1.10. What is lloadd and what can it do?</A></UL>
 <BR>
 <A HREF="#A Quick-Start Guide">2. A Quick-Start Guide</A>
 <BR>
@@ -591,54 +593,70 @@
 <BR>
 <A HREF="#Waiters">20.4.13. Waiters</A></UL></UL>
 <BR>
-<A HREF="#Tuning">21. Tuning</A><UL>
-<A HREF="#Performance Factors">21.1. Performance Factors</A><UL>
-<A HREF="#Memory">21.1.1. Memory</A>
+<A HREF="#Load Balancing with lloadd">21. Load Balancing with lloadd</A><UL>
+<A HREF="#Overview">21.1. Overview</A>
 <BR>
-<A HREF="#Disks">21.1.2. Disks</A>
+<A HREF="#When to use the OpenLDAP load balancer">21.2. When to use the OpenLDAP load balancer</A>
 <BR>
-<A HREF="#Network Topology">21.1.3. Network Topology</A>
+<A HREF="#Runtime configurations">21.3. Runtime configurations</A>
 <BR>
-<A HREF="#Directory Layout Design">21.1.4. Directory Layout Design</A>
+<A HREF="#Build Notes">21.4. Build Notes</A>
 <BR>
-<A HREF="#Expected Usage">21.1.5. Expected Usage</A></UL>
+<A HREF="#Sample Runtime">21.5. Sample Runtime</A>
 <BR>
-<A HREF="#Indexes">21.2. Indexes</A><UL>
-<A HREF="#Understanding how a search works">21.2.1. Understanding how a search works</A>
+<A HREF="#Configuring load balancer">21.6. Configuring load balancer</A><UL>
+<A HREF="#Common configuration options">21.6.1. Common configuration options</A>
 <BR>
-<A HREF="#What to index">21.2.2. What to index</A>
+<A HREF="#Sample backend config">21.6.2. Sample backend config</A></UL></UL>
 <BR>
-<A HREF="#Presence indexing">21.2.3. Presence indexing</A>
+<A HREF="#Tuning">22. Tuning</A><UL>
+<A HREF="#Performance Factors">22.1. Performance Factors</A><UL>
+<A HREF="#Memory">22.1.1. Memory</A>
 <BR>
-<A HREF="#Equality indexing">21.2.4. Equality indexing</A>
+<A HREF="#Disks">22.1.2. Disks</A>
 <BR>
-<A HREF="#Substring indexing">21.2.5. Substring indexing</A></UL>
+<A HREF="#Network Topology">22.1.3. Network Topology</A>
 <BR>
-<A HREF="#Logging">21.3. Logging</A><UL>
-<A HREF="#What log level to use">21.3.1. What log level to use</A>
+<A HREF="#Directory Layout Design">22.1.4. Directory Layout Design</A>
 <BR>
-<A HREF="#What to watch out for">21.3.2. What to watch out for</A>
+<A HREF="#Expected Usage">22.1.5. Expected Usage</A></UL>
 <BR>
-<A HREF="#Improving throughput">21.3.3. Improving throughput</A></UL>
+<A HREF="#Indexes">22.2. Indexes</A><UL>
+<A HREF="#Understanding how a search works">22.2.1. Understanding how a search works</A>
 <BR>
-<A HREF="#{{slapd}}(8) Threads">21.4. <EM>slapd</EM>(8) Threads</A></UL>
+<A HREF="#What to index">22.2.2. What to index</A>
 <BR>
-<A HREF="#Troubleshooting">22. Troubleshooting</A><UL>
-<A HREF="#User or Software errors">22.1. User or Software errors?</A>
+<A HREF="#Presence indexing">22.2.3. Presence indexing</A>
 <BR>
-<A HREF="#Checklist">22.2. Checklist</A>
+<A HREF="#Equality indexing">22.2.4. Equality indexing</A>
 <BR>
-<A HREF="#OpenLDAP Bugs">22.3. OpenLDAP Bugs</A>
+<A HREF="#Substring indexing">22.2.5. Substring indexing</A></UL>
 <BR>
-<A HREF="#3rd party software error">22.4. 3rd party software error</A>
+<A HREF="#Logging">22.3. Logging</A><UL>
+<A HREF="#What log level to use">22.3.1. What log level to use</A>
 <BR>
-<A HREF="#How to contact the OpenLDAP Project">22.5. How to contact the OpenLDAP Project</A>
+<A HREF="#What to watch out for">22.3.2. What to watch out for</A>
 <BR>
-<A HREF="#How to present your problem">22.6. How to present your problem</A>
+<A HREF="#Improving throughput">22.3.3. Improving throughput</A></UL>
 <BR>
-<A HREF="#Debugging {{slapd}}(8)">22.7. Debugging <EM>slapd</EM>(8)</A>
+<A HREF="#{{slapd}}(8) Threads">22.4. <EM>slapd</EM>(8) Threads</A></UL>
 <BR>
-<A HREF="#Commercial Support">22.8. Commercial Support</A></UL>
+<A HREF="#Troubleshooting">23. Troubleshooting</A><UL>
+<A HREF="#User or Software errors">23.1. User or Software errors?</A>
+<BR>
+<A HREF="#Checklist">23.2. Checklist</A>
+<BR>
+<A HREF="#OpenLDAP Bugs">23.3. OpenLDAP Bugs</A>
+<BR>
+<A HREF="#3rd party software error">23.4. 3rd party software error</A>
+<BR>
+<A HREF="#How to contact the OpenLDAP Project">23.5. How to contact the OpenLDAP Project</A>
+<BR>
+<A HREF="#How to present your problem">23.6. How to present your problem</A>
+<BR>
+<A HREF="#Debugging {{slapd}}(8)">23.7. Debugging <EM>slapd</EM>(8)</A>
+<BR>
+<A HREF="#Commercial Support">23.8. Commercial Support</A></UL>
 <BR>
 <A HREF="#Changes Since Previous Release">A. Changes Since Previous Release</A><UL>
 <A HREF="#New Guide Sections">A.1. New Guide Sections</A>
@@ -686,7 +704,9 @@
 <BR>
 <A HREF="#hdb and bdb backends">B.7. hdb and bdb backends</A>
 <BR>
-<A HREF="#mdb backend">B.8. mdb backend</A></UL>
+<A HREF="#mdb backend">B.8. mdb backend</A>
+<BR>
+<A HREF="#Client utility changes">B.9. Client utility changes</A></UL>
 <BR>
 <A HREF="#Common errors encountered when using OpenLDAP Software">C. Common errors encountered when using OpenLDAP Software</A><UL>
 <A HREF="#Common causes of LDAP errors">C.1. Common causes of LDAP errors</A><UL>
@@ -1111,6 +1131,10 @@ Support Pages
 <P><EM>slapd</EM> includes support for <EM>LDAP Sync</EM>-based replication.</P>
 <P><B>Proxy Cache</B>: <EM>slapd</EM> can be configured as a caching LDAP proxy service.</P>
 <P><B>Configuration</B>: <EM>slapd</EM> is highly configurable through a single configuration file which allows you to change just about everything you'd ever want to change.  Configuration options have reasonable defaults, making your job much easier. Configuration can also be performed dynamically using LDAP itself, which greatly improves manageability.</P>
+<H2><A NAME="What is lloadd and what can it do">1.10. What is lloadd and what can it do?</A></H2>
+<P><EM>lloadd</EM>(8) is a daemon that provides an LDAPv3 load balancer service. It is responsible for distributing requests across a set of <EM>slapd</EM> instances.</P>
+<P>See the <A HREF="#Load Balancing with lloadd">Load Balancing with lloadd</A> chapter for information about how to configure and run <EM>lloadd</EM>(8).</P>
+<P>Alternatively, the load balancer can run as a module embedded inside of <EM>slapd</EM>.  This is also described in the <A HREF="#Load Balancing with lloadd">Load Balancing with lloadd</A> chapter.</P>
 <P></P>
 <HR>
 <H1><A NAME="A Quick-Start Guide">2. A Quick-Start Guide</A></H1>
@@ -2163,7 +2187,7 @@ olcRootDN: cn=Manager,dc=example,dc=com
 <H3><A NAME="MDB Backend Directives">5.2.6. MDB Backend Directives</A></H3>
 <P>Directives in this category only apply to the <TERM>MDB</TERM> database backend. They will apply to all &quot;database mdb&quot; instances in the configuration. For a complete reference of MDB backend configuration directives, see <EM>slapd-mdb</EM>(5).</P>
 <H4><A NAME="olcBkMdbIdlExp &lt;exponent&gt;">5.2.6.1. olcBkMdbIdlExp &lt;exponent&gt;</A></H4>
-<P>Specify a power of 2 for the maximum size of an index slot. The default is 16, yielding a maximum slot size of 2^16 or 65536. The specified value must be in the range of 16-31.</P>
+<P>Specify a power of 2 for the maximum size of an index slot. The default is 16, yielding a maximum slot size of 2^16 or 65536. The specified value must be in the range of 16-30.</P>
 <P>This setting helps with the case where certain search filters are slow to return results due to an index slot having collapsed to a range value.  This occurs when the number of candidate entries that match the filter for the index slot exceed the configured slot size.</P>
 <P>If this setting is decreased on a server with existing <TERM>MDB</TERM> databases, each db will immediately need its indices to be rebuilt while slapd is offline with the &quot;slapindex -q -t&quot; command.</P>
 <P>If this setting is increased on a server with existing <TERM>MDB</TERM> databases, each db will need its indices rebuilt to take advantage of the change for indices that have already been converted to ranges.</P>
@@ -2977,7 +3001,7 @@ WiredTiger backend
 <H3><A NAME="MDB Backend Directives">6.2.4. MDB Backend Directives</A></H3>
 <P>Directives in this category only apply to the <TERM>MDB</TERM> database backend. They will apply to all &quot;database mdb&quot; instances in the configuration. For a complete reference of MDB backend configuration directives, see <EM>slapd-mdb</EM>(5).</P>
 <H4><A NAME="idlexp &lt;exponent&gt;">6.2.4.1. idlexp &lt;exponent&gt;</A></H4>
-<P>Specify a power of 2 for the maximum size of an index slot. The default is 16, yielding a maximum slot size of 2^16 or 65536. The specified value must be in the range of 16-31.</P>
+<P>Specify a power of 2 for the maximum size of an index slot. The default is 16, yielding a maximum slot size of 2^16 or 65536. The specified value must be in the range of 16-30.</P>
 <P>This setting helps with the case where certain search filters are slow to return results due to an index slot having collapsed to a range value.  This occurs when the number of candidate entries that match the filter for the index slot exceed the configured slot size.</P>
 <P>If this setting is decreased on a server with existing <TERM>MDB</TERM> databases, each db will immediately need its indices to be rebuilt while slapd is offline with the &quot;slapindex -q -t&quot; command.</P>
 <P>If this setting is increased on a server with existing <TERM>MDB</TERM> databases, each db will need its indices rebuilt to take advantage of the change for indices that have already been converted to ranges.</P>
@@ -8380,29 +8404,150 @@ Database objects of instances of this backend
 <P>Add new monitored things here and discuss, referencing man pages and present examples</P>
 <P></P>
 <HR>
-<H1><A NAME="Tuning">21. Tuning</A></H1>
+<H1><A NAME="Load Balancing with lloadd">21. Load Balancing with lloadd</A></H1>
+<P>As covered in the <A HREF="#Replication">Replication</A> chapter, replication is a fundamental requirement for delivering a resilient enterprise deployment.  As such there's a need for an LDAPv3 capable load balancer to spread the load between the various directory instances.</P>
+<P><EM>lloadd</EM>(8) provides the capability to distribute LDAP v3 requests between a a set of running <EM>slapd</EM> instances.  It can run as a standalone daemon <EM>lloadd</EM>, or as an embedded module running inside of <EM>slapd</EM>.</P>
+<H2><A NAME="Overview">21.1. Overview</A></H2>
+<P><EM>lloadd</EM>(8) was designed to handle LDAP loads. It is protocol-aware and can balance LDAP loads on a per-operation basis rather than on a per-connection basis.</P>
+<P><EM>lloadd</EM>(8) distributes the load across a set of slapd instances. The client connects to the load balancer instance which forwards the request to one of the servers and returns the response back to the client.</P>
+<H2><A NAME="When to use the OpenLDAP load balancer">21.2. When to use the OpenLDAP load balancer</A></H2>
+<P>In general, the OpenLDAP load balancer spreads the load across configured backend servers.  It does not perform so-called intelligent routing. It does not understand semantics behind the operations being performed by the clients.</P>
+<P>More considerations:</P>
+<UL><UL>
+<LI>Servers are indistinguishable with respect to data contents.  The exact same copy of data resides on every server.
+<LI>Clients do not require 'sticky' sessions.
+<LI>The sequence of operations isn't important.  For example, read after update isn't required by the client.
+<LI>If your client can handle both connection pooling and load distribution then it's preferable to lloadd.
+<LI>Clients that require a consistent session (e.g. do writes), the best practice is to let them set up a direct session to one of the providers.  The read-only clients are still free to use lloadd.
+<LI>2.6 release of lloadd will include sticky sessions (coherency).</UL></UL>
+<H2><A NAME="Runtime configurations">21.3. Runtime configurations</A></H2>
+<P>It deploys in one of two ways:</P>
+<OL>
+<LI>Standalone daemon: <EM>lloadd </EM>
+<LI>Loaded into the slapd daemon as a module: <EM>lloadd.la </EM></OL>
+<P>It is recommended to run with the balancer module embedded in slapd because dynamic configuration (cn=config) and the monitor backend are then available.</P>
+<P><B>Sample load balancer scenario:</B></P>
+<P><CENTER><IMG SRC="load-balancer-scenario.png" ALIGN="center"></CENTER></P>
+<P ALIGN="Center">Figure: Load balancer sample scenario</P>
+<OL>
+<LI>The LDAP client submits an LDAP operation to the load balancer daemon.
+<LI>The load balancer forwards the request to one of the backend instances in its pool of servers.
+<LI>The backend slapd server processes the request and returns the response to the load balancer instance.
+<LI>The load balancer returns the response to the client.  The client's unaware that it's connecting to a load balancer instead of slapd.</OL>
+<H2><A NAME="Build Notes">21.4. Build Notes</A></H2>
+<P>To build the load balancer from source, follow the instructions in the <A HREF="#A Quick-Start Guide">A Quick-Start Guide</A> substituting the following commands:</P>
+<OL>
+<LI>To configure as standalone daemon:<UL>
+<TT>./configure --enable-balancer=yes</TT></UL>
+<LI>To configure as embedded module to slapd:<UL>
+<TT>./configure --enable-modules --enable-balancer=mod</TT></UL></OL>
+<H2><A NAME="Sample Runtime">21.5. Sample Runtime</A></H2>
+<OL>
+<LI>To run embedded as <EM>lloadd </EM> module:<UL>
+<TT> slapd [-h URLs]  [-f lloadd-config-file] [-u user] [-g group]</TT></UL><UL>
+<LI>the startup is the same as starting the <EM>slapd </EM> daemon.</UL><UL>
+<LI>URLs is for slapd management. The load balancer's listener URLs set in the configuration file or node. (more later)</UL>
+<LI>To run as standalone daemon:<UL>
+<TT> lloadd [-h URLs]  [-f lloadd-config-file] [-u user] [-g group]</TT></UL><UL>
+<LI>Other than a different daemon name, running standalone has the same options as starting <EM>slapd </EM>.</UL><UL>
+<LI>-h URLs specify the lloadd's interface directly, there is no management interface.</UL></OL>
+<P>For a complete list of options, checkout the man page <EM>lloadd.8 </EM></P>
+<H2><A NAME="Configuring load balancer">21.6. Configuring load balancer</A></H2>
+<H3><A NAME="Common configuration options">21.6.1. Common configuration options</A></H3>
+<P>Many of the same configuration options as slapd. For complete list, check the <EM>lloadd</EM>(5) man page.</P>
+<UL>
+&nbsp; <B>Edit the slapd.conf or cn=config configuration file</B>.</UL>
+<P>To configure your working <EM>lloadd</EM>(8) you need to make the following changes to your configuration file:</P>
+<OL>
+<LI>include <EM>core.schema </EM> (embedded only)
+<LI><EM>TLSShareSlapdCTX { on | off } </EM>
+<LI>Other common TLS slapd options
+<LI>Setup argsfile/pidfile
+<LI>Setup moduleload path (embedded mode only)
+<LI><EM>moduleload      lloadd.la </EM>
+<LI>loglevel, threads, ACL's
+<LI><EM>backend lload </EM> begin lloadd specific backend configurations
+<LI><EM>listen ldap://:PORT </EM> Specify listen port for load balancer
+<LI><EM>feature proxyauthz </EM> Use the proxy authZ control to forward client's identity
+<LI><EM>io-threads INT </EM> specify the number of threads to use for the connection manager.  The default is 1 and this is typically adequate for up to 16 CPU cores</OL>
+<H3><A NAME="Sample backend config">21.6.2. Sample backend config</A></H3>
+<P>Sample setup config for load balancer running in front of four slapd instances.</P>
+<PRE>
+backend lload
+
+# The Load Balancer manages its own sockets, so they have to be separate
+# from the ones slapd manages (as specified with the -h &quot;URLS&quot; option at
+# startup).
+listen ldap://:1389
+
+# Enable authorization tracking
+feature proxyauthz
+
+# Specify the number of threads to use for the connection manager.  The default is 1 and this is typically adequate for up to 16 CPU cores.
+# The value should be set to a power of 2:
+io-threads  2
+
+# If TLS is configured above, use the same context for the Load Balancer
+# If using cn=config, this can be set to false and different settings
+# can be used for the Load Balancer
+TLSShareSlapdCTX true
+
+# Authentication and other options (timeouts) shared between backends.
+bindconf bindmethod=simple
+         binddn=dc=example,dc=com credentials=secret
+         network-timeout=5
+         tls_cacert=&quot;/usr/local/etc/openldap/ca.crt&quot;
+         tls_cert=&quot;/usr/local/etc/openldap/host.crt&quot;
+         tls_key=&quot;/usr/local/etc/openldap/host.pem&quot;
+
+
+# List the backends we should relay operations to, they all have to be
+# practically indistinguishable. Only TLS settings can be specified on
+# a per-backend basis.
+
+backend-server uri=ldap://ldaphost01 starttls=critical retry=5000
+               max-pending-ops=50 conn-max-pending=10
+               numconns=10 bindconns=5
+backend-server uri=ldap://ldaphost02 starttls=critical retry=5000
+               max-pending-ops=50 conn-max-pending=10
+               numconns=10 bindconns=5
+backend-server uri=ldap://ldaphost03 starttls=critical retry=5000
+               max-pending-ops=50 conn-max-pending=10
+               numconns=10 bindconns=5
+backend-server uri=ldap://ldaphost04 starttls=critical retry=5000
+               max-pending-ops=50 conn-max-pending=10
+               numconns=10 bindconns=5
+
+#######################################################################
+# Monitor database
+#######################################################################
+database        monitor
+</PRE>
+<P></P>
+<HR>
+<H1><A NAME="Tuning">22. Tuning</A></H1>
 <P>This is perhaps one of the most important chapters in the guide, because if you have not tuned <EM>slapd</EM>(8) correctly or grasped how to design your directory and environment, you can expect very poor performance.</P>
 <P>Reading, understanding and experimenting using the instructions and information in the following sections, will enable you to fully understand how to tailor your directory server to your specific requirements.</P>
 <P>It should be noted that the following information has been collected over time from our community based FAQ. So obviously the benefit of this real world experience and advice should be of great value to the reader.</P>
-<H2><A NAME="Performance Factors">21.1. Performance Factors</A></H2>
+<H2><A NAME="Performance Factors">22.1. Performance Factors</A></H2>
 <P>Various factors can play a part in how your directory performs on your chosen hardware and environment. We will attempt to discuss these here.</P>
-<H3><A NAME="Memory">21.1.1. Memory</A></H3>
+<H3><A NAME="Memory">22.1.1. Memory</A></H3>
 <P>Scale your cache to use available memory and increase system memory if you can.</P>
-<H3><A NAME="Disks">21.1.2. Disks</A></H3>
+<H3><A NAME="Disks">22.1.2. Disks</A></H3>
 <P>Use fast filesystems, and conduct your own testing to see which filesystem types perform best with your workload. (On our own Linux testing, EXT2 and JFS tend to provide better write performance than everything else, including newer filesystems like EXT4, BTRFS, etc.)</P>
 <P>Use fast subsystems. Put each database on separate disks.</P>
-<H3><A NAME="Network Topology">21.1.3. Network Topology</A></H3>
+<H3><A NAME="Network Topology">22.1.3. Network Topology</A></H3>
 <P>http://www.openldap.org/faq/data/cache/363.html</P>
 <P>Drawing here.</P>
-<H3><A NAME="Directory Layout Design">21.1.4. Directory Layout Design</A></H3>
+<H3><A NAME="Directory Layout Design">22.1.4. Directory Layout Design</A></H3>
 <P>Reference to other sections and good/bad drawing here.</P>
-<H3><A NAME="Expected Usage">21.1.5. Expected Usage</A></H3>
+<H3><A NAME="Expected Usage">22.1.5. Expected Usage</A></H3>
 <P>Discussion.</P>
-<H2><A NAME="Indexes">21.2. Indexes</A></H2>
-<H3><A NAME="Understanding how a search works">21.2.1. Understanding how a search works</A></H3>
+<H2><A NAME="Indexes">22.2. Indexes</A></H2>
+<H3><A NAME="Understanding how a search works">22.2.1. Understanding how a search works</A></H3>
 <P>If you're searching on a filter that has been indexed, then the search reads the index and pulls exactly the entries that are referenced by the index. If the filter term has not been indexed, then the search must read every single entry in the target scope and test to see if each entry matches the filter. Obviously indexing can save a lot of work when it's used correctly.</P>
 <P>In back-mdb, indexes can only track a certain number of entries per key (by default that number is 2^16 = 65536). If more entries' values hash to this key, some/all of them will have to be represented by a range of candidates, making the index less useful over time as deletions cannot usually be tracked accurately.</P>
-<H3><A NAME="What to index">21.2.2. What to index</A></H3>
+<H3><A NAME="What to index">22.2.2. What to index</A></H3>
 <P>As a general rule, to make any use of indexes, you must set up an equality index on objectClass:</P>
 <PRE>
         index objectClass eq
@@ -8414,29 +8559,29 @@ Database objects of instances of this backend
 <P>Each attribute index can be tuned further by selecting the set of index types to generate. For example, substring and approximate search for organizations (o) may make little sense (and isn't like done very often). And searching for <EM>userPassword</EM> likely makes no sense what so ever.</P>
 <P>General rule: don't go overboard with indexes. Unused indexes must be maintained and hence can only slow things down.</P>
 <P>See <EM>slapd.conf</EM>(5) and <EM>slapdindex</EM>(8) for more information</P>
-<H3><A NAME="Presence indexing">21.2.3. Presence indexing</A></H3>
+<H3><A NAME="Presence indexing">22.2.3. Presence indexing</A></H3>
 <P>If your client application uses presence filters and if the target attribute exists on the majority of entries in your target scope, then all of those entries are going to be read anyway, because they are valid members of the result set. In a subtree where 100% of the entries are going to contain the same attributes, the presence index does absolutely NOTHING to benefit the search, because 100% of the entries match that presence filter. As an example, setting a presence index on objectClass provides no benefit since it is present on every entry.</P>
 <P>So the resource cost of generating the index is a complete waste of CPU time, disk, and memory. Don't do it unless you know that it will be used, and that the attribute in question occurs very infrequently in the target data.</P>
 <P>Almost no applications use presence filters in their search queries. Presence indexing is pointless when the target attribute exists on the majority of entries in the database. In most LDAP deployments, presence indexing should not be done, it's just wasted overhead.</P>
 <P>See the <EM>Logging</EM> section below on what to watch out for if you have a frequently searched for attribute that is unindexed.</P>
-<H3><A NAME="Equality indexing">21.2.4. Equality indexing</A></H3>
+<H3><A NAME="Equality indexing">22.2.4. Equality indexing</A></H3>
 <P>Similarly to presence indexes, equality indexes are most useful if the values searched for are uncommon. Most OpenLDAP indexes work by hashing the normalised value and using the hash as the key. Hashing behaviour depends on the matching rule syntax, some matching rules also implement indexers that help speed up inequality (lower than, ...) queries.</P>
 <P>Check the documentation and other parts of this guide if some indexes are mandatory - e.g. to enable replication, it is expected you index certain operational attributes, likewise if you rely on filters in ACL processing.</P>
 <P>Approximate indexes are usually identical to equality indexes unless a matching rule explicitly implements it. As of OpenLDAP 2.5, only directoryStringApproxMatch and IA5StringApproxMatch matchers and indexers are implemented, currently using soundex or metaphone, with metaphone being the default.</P>
-<H3><A NAME="Substring indexing">21.2.5. Substring indexing</A></H3>
+<H3><A NAME="Substring indexing">22.2.5. Substring indexing</A></H3>
 <P>Substring indexes work on splitting the value into short chunks and then indexing those in a similar way to how equality index does. The storage space needed to store all of this data is analogous to the amount of data being indexed, which makes the indexes extremely heavy-handed in most scenarios.</P>
-<H2><A NAME="Logging">21.3. Logging</A></H2>
-<H3><A NAME="What log level to use">21.3.1. What log level to use</A></H3>
+<H2><A NAME="Logging">22.3. Logging</A></H2>
+<H3><A NAME="What log level to use">22.3.1. What log level to use</A></H3>
 <P>The default of <EM>loglevel stats</EM> (256) is really the best bet. There's a corollary to this when problems *do* arise, don't try to trace them using syslog. Use the debug flag instead, and capture slapd's stderr output. syslog is too slow for debug tracing, and it's inherently lossy - it will throw away messages when it can't keep up. See <EM>slapd.conf</EM>(5) or <EM>slapd-config</EM>(5) for more information on how to configure the loglevel.</P>
 <P>Contrary to popular belief, <EM>loglevel 0</EM> is not ideal for production as you won't be able to track when problems first arise.</P>
-<H3><A NAME="What to watch out for">21.3.2. What to watch out for</A></H3>
+<H3><A NAME="What to watch out for">22.3.2. What to watch out for</A></H3>
 <P>The most common message you'll see that you should pay attention to is:</P>
 <PRE>
        &quot;&lt;= mdb_equality_candidates: (foo) index_param failed (18)&quot;
 </PRE>
 <P>That means that some application tried to use an equality filter (<EM>foo=&lt;somevalue&gt;</EM>) and attribute <EM>foo</EM> does not have an equality index. If you see a lot of these messages, you should add the index. If you see one every month or so, it may be acceptable to ignore it.</P>
 <P>The default syslog level is stats (256) which logs the basic parameters of each request; it usually produces 1-3 lines of output. On Solaris and systems that only provide synchronous syslog, you may want to turn it off completely, but usually you want to leave it enabled so that you'll be able to see index messages whenever they arise. On Linux you can configure syslogd to run asynchronously, in which case the performance hit for moderate syslog traffic pretty much disappears.</P>
-<H3><A NAME="Improving throughput">21.3.3. Improving throughput</A></H3>
+<H3><A NAME="Improving throughput">22.3.3. Improving throughput</A></H3>
 <P>You can improve logging performance on some systems by configuring syslog not to sync the file system with every write (<EM>man syslogd/syslog.conf</EM>). In Linux, you can prepend the log file name with a &quot;-&quot; in <EM>syslog.conf</EM>. For example, if you are using the default LOCAL4 logging you could try:</P>
 <PRE>
        # LDAP logs
@@ -8447,23 +8592,23 @@ Database objects of instances of this backend
        options { sync(n); };
 </PRE>
 <P>where n is the number of lines which will be buffered before a write.</P>
-<H2><A NAME="{{slapd}}(8) Threads">21.4. <EM>slapd</EM>(8) Threads</A></H2>
+<H2><A NAME="{{slapd}}(8) Threads">22.4. <EM>slapd</EM>(8) Threads</A></H2>
 <P><EM>slapd</EM>(8) can process requests via a configurable number of threads, which in turn affects the in/out rate of connections.</P>
 <P>This value should generally be a function of the number of &quot;real&quot; cores on the system, for example on a server with 2 CPUs with one core each, set this to 8, or 4 threads per real core.  This is a &quot;read&quot; maximized value. The more threads that are configured per core, the slower <EM>slapd</EM>(8) responds for &quot;read&quot; operations.  On the flip side, it appears to handle write operations faster in a heavy write/low read scenario.</P>
 <P>The upper bound for good read performance appears to be 16 threads (which also happens to be the default setting).</P>
 <P></P>
 <HR>
-<H1><A NAME="Troubleshooting">22. Troubleshooting</A></H1>
+<H1><A NAME="Troubleshooting">23. Troubleshooting</A></H1>
 <P>If you're having trouble using OpenLDAP, get onto the OpenLDAP-Software mailing list, or:</P>
 <UL>
 <LI>Browse the list archives at <A HREF="http://www.openldap.org/lists/#archives">http://www.openldap.org/lists/#archives</A>
 <LI>Search the FAQ at <A HREF="http://www.openldap.org/faq/">http://www.openldap.org/faq/</A>
 <LI>Search the Issue Tracking System at <A HREF="http://www.openldap.org/its/">http://www.openldap.org/its/</A></UL>
 <P>Chances are the problem has been solved and explained in detail many times before.</P>
-<H2><A NAME="User or Software errors">22.1. User or Software errors?</A></H2>
+<H2><A NAME="User or Software errors">23.1. User or Software errors?</A></H2>
 <P>More often than not, an error is caused by a configuration problem or a misunderstanding of what you are trying to implement and/or achieve.</P>
 <P>We will now attempt to discuss common user errors.</P>
-<H2><A NAME="Checklist">22.2. Checklist</A></H2>
+<H2><A NAME="Checklist">23.2. Checklist</A></H2>
 <P>The following checklist can help track down your problem. Please try to use if <B>before</B> posting to the list, or in the rare circumstances of reporting a bug.</P>
 <UL>
 &nbsp;</UL><OL>
@@ -8486,7 +8631,7 @@ Database objects of instances of this backend
 <BR>
 &nbsp;
 <LI><B>Have your certificates expired?</B></OL>
-<H2><A NAME="OpenLDAP Bugs">22.3. OpenLDAP Bugs</A></H2>
+<H2><A NAME="OpenLDAP Bugs">23.3. OpenLDAP Bugs</A></H2>
 <P>Sometimes you may encounter an actual OpenLDAP bug, in which case please visit our Issue Tracking system <A HREF="http://www.openldap.org/its/">http://www.openldap.org/its/</A> and report it. However, make sure it's not already a known bug or a common user problem.</P>
 <UL>
 <LI>bugs in historic versions of OpenLDAP will not be considered;
@@ -8496,22 +8641,22 @@ Database objects of instances of this backend
 <STRONG>Note: </STRONG>Our Issue Tracking system is <B>NOT</B> for OpenLDAP <B>Support</B>, please join our mailing Lists: <A HREF="http://www.openldap.org/lists/">http://www.openldap.org/lists/</A> for that.
 <HR WIDTH="80%" ALIGN="Left"></P>
 <P>The information you should provide in your bug report is discussed in our FAQ-O-MATIC at <A HREF="http://www.openldap.org/faq/data/cache/59.html">http://www.openldap.org/faq/data/cache/59.html</A></P>
-<H2><A NAME="3rd party software error">22.4. 3rd party software error</A></H2>
+<H2><A NAME="3rd party software error">23.4. 3rd party software error</A></H2>
 <P>The OpenLDAP Project only supports OpenLDAP software.</P>
 <P>You may however seek commercial support (<A HREF="http://www.openldap.org/support/">http://www.openldap.org/support/</A>) or join the general LDAP forum for non-commercial discussions and information relating to LDAP at: <A HREF="http://www.umich.edu/~dirsvcs/ldap/mailinglist.html">http://www.umich.edu/~dirsvcs/ldap/mailinglist.html</A></P>
-<H2><A NAME="How to contact the OpenLDAP Project">22.5. How to contact the OpenLDAP Project</A></H2>
+<H2><A NAME="How to contact the OpenLDAP Project">23.5. How to contact the OpenLDAP Project</A></H2>
 <UL>
 <LI>Mailing Lists: <A HREF="http://www.openldap.org/lists/">http://www.openldap.org/lists/</A>
 <LI>Project: <A HREF="http://www.openldap.org/project/">http://www.openldap.org/project/</A>
 <LI>Issue Tracking: <A HREF="http://www.openldap.org/its/">http://www.openldap.org/its/</A></UL>
-<H2><A NAME="How to present your problem">22.6. How to present your problem</A></H2>
-<H2><A NAME="Debugging {{slapd}}(8)">22.7. Debugging <EM>slapd</EM>(8)</A></H2>
+<H2><A NAME="How to present your problem">23.6. How to present your problem</A></H2>
+<H2><A NAME="Debugging {{slapd}}(8)">23.7. Debugging <EM>slapd</EM>(8)</A></H2>
 <P>After reading through the above sections and before e-mailing the OpenLDAP lists, you might want to try out some of the following to track down the cause of your problems:</P>
 <UL>
 <LI>A loglevel of stats (256) is generally a good first loglevel to use for getting information useful to list members on issues. This is the default loglevel if none is configured.
 <LI>Running <EM>slapd -d -1</EM> can often track down fairly simple issues, such as missing schemas and incorrect file permissions for the <EM>slapd</EM> user to things like certs
 <LI>Check your logs for errors, as discussed at <A HREF="http://www.openldap.org/faq/data/cache/358.html">http://www.openldap.org/faq/data/cache/358.html</A></UL>
-<H2><A NAME="Commercial Support">22.8. Commercial Support</A></H2>
+<H2><A NAME="Commercial Support">23.8. Commercial Support</A></H2>
 <P>The firms listed at <A HREF="http://www.openldap.org/support/">http://www.openldap.org/support/</A> offer technical support services catering to OpenLDAP community.</P>
 <P>The listing of any given firm should not be viewed as an endorsement or recommendation of any kind, nor as otherwise indicating there exists a business relationship or an affiliation between any listed firm and the OpenLDAP Foundation or the OpenLDAP Project or its contributors.</P>
 <P></P>
@@ -8565,6 +8710,7 @@ Database objects of instances of this backend
 <P>The following sections attempt to document the steps you will need to take in order to upgrade from the latest 2.4.x OpenLDAP version.</P>
 <P>The normal upgrade procedure, as discussed in the <A HREF="#Maintenance">Maintenance</A> section, should of course still be followed prior to doing any of this.</P>
 <H2><A NAME="{{B:cn=config}} olc* attributes">B.1. <B>cn=config</B> olc* attributes</A></H2>
+<P>The <EM>olcMirrorMode</EM> attribute has been renamed to <EM>olcMultiProvider</EM>.  Existing configurations will continue to work with the old parameter name, but it is advised to update to the new name as a part of the upgrade process.</P>
 <H2><A NAME="ppolicy overlay">B.2. ppolicy overlay</A></H2>
 <P>The overlay now implements version 10 of the ppolicy draft in full. This includes the notion of a password administrator where applicable (as determined by having a <EM>manage</EM> permission to the <EM>userPassword</EM> attribute) and skips certain processing when there is no valid policy in effect or where the operation is initiated by a password administrator. Many attributes are now tagged with <EM>NO-USER-MODIFICATION</EM> in the schema, requiring the use of <EM>relax</EM> control to modify them.</P>
 <P>In OpenLDAP 2.4 the <EM>slapo-ppolicy</EM>(5) overlay relied on a separate schema file to be included for it to function. This schema is now implemented internally in the slapo-ppolicy module. When upgrading <EM>slapd.conf</EM>(5) deployments the include statement for the schema must be removed.  For <EM>slapd-config</EM>(5) deployments, the config database must be exported via slapcat and the old ppolicy schema removed from the export.  The resulting config database can then be imported.</P>
@@ -8580,7 +8726,9 @@ Database objects of instances of this backend
 <H2><A NAME="hdb and bdb backends">B.7. hdb and bdb backends</A></H2>
 <P>The Berkeley DB based slapd-bdb and slapd-hdb backends have been removed from OpenLDAP 2.5. Deployments making use of these backends must migrate their configurations to use <EM>slapd-mdb</EM>(5) prior to upgrade.</P>
 <H2><A NAME="mdb backend">B.8. mdb backend</A></H2>
-<P>Due to database format changes between OpenLDAP 2.4 and OpenLDAP 2.5 it is mandatory for existing <EM>slapd-mdb</EM>(5) databases to be exported via an OpenLDAP 2.4 slapcat prior to upgrade. They must then be reloaded via an OpenLDAP 2.5 slapadd after the binaries are updated. It is also advised to determine if the new <EM>slapd-mdb</EM>(5) idlexp backend directive and/or the multival database directive should be added to the OpenLDAP 2.5 configuration prior to import.</P>
+<P>It is advised to determine if the new <EM>slapd-mdb</EM>(5) idlexp backend directive and/or the multival database directive should be added to the OpenLDAP 2.5 configuration as well as the existing global sortvals directive. Configuring any of these items requires that existing databases be reloaded for them to take full effect. This can be done separately from the overall upgrade from OpenLDAP 2.4 to OpenLDAP 2.5 if desired.</P>
+<H2><A NAME="Client utility changes">B.9. Client utility changes</A></H2>
+<P>The deprecated &quot;-h&quot; (host) and &quot;-p&quot; (port) options for the ldap client utilities have been removed. It is required to use a properly formatted LDAP URI with the &quot;-H&quot; option in OpenLDAP 2.5 and later.</P>
 <P></P>
 <HR>
 <H1><A NAME="Common errors encountered when using OpenLDAP Software">C. Common errors encountered when using OpenLDAP Software</A></H1>
