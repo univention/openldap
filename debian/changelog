@@ -1,4 +1,4 @@
-openldap (2.5.7+dfsg-1~exp1) UNRELEASED; urgency=medium
+openldap (2.5.7+dfsg-1~exp1) experimental; urgency=medium
 
   * New upstream release.
   * Don't run autoreconf in contrib/ldapc++. We don't build it, and it is not
@@ -10,7 +10,7 @@ openldap (2.5.7+dfsg-1~exp1) UNRELEASED; urgency=medium
   * Update Standards-Version to 4.6.0; no changes required.
   * debian/not-installed: Add the ldapvc.1 man page.
 
- -- Ryan Tandy <ryan@nardis.ca>  Mon, 30 Aug 2021 18:35:05 -0700
+ -- Ryan Tandy <ryan@nardis.ca>  Mon, 30 Aug 2021 18:54:25 -0700
 
 openldap (2.5.6+dfsg-1~exp1) experimental; urgency=medium
 
