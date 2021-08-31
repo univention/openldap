@@ -12,6 +12,10 @@ of course still be followed prior to doing any of this.
 
 H2: {{B:cn=config}} olc* attributes
 
+The {{olcMirrorMode}} attribute has been renamed to {{olcMultiProvider}}.  Existing configurations
+will continue to work with the old parameter name, but it is advised to update to the new name as a
+part of the upgrade process.
+
 H2: ppolicy overlay
 
 The overlay now implements version 10 of the ppolicy draft in full. This includes the notion of a password
@@ -59,7 +63,12 @@ of these backends must migrate their configurations to use {{slapd-mdb}}(5) prio
 
 H2: mdb backend
 
-Due to database format changes between OpenLDAP 2.4 and OpenLDAP 2.5 it is mandatory for existing {{slapd-mdb}}(5) databases
-to be exported via an OpenLDAP 2.4 slapcat prior to upgrade. They must then be reloaded via an OpenLDAP 2.5 slapadd after
-the binaries are updated. It is also advised to determine if the new {{slapd-mdb}}(5) idlexp backend directive and/or
-the multival database directive should be added to the OpenLDAP 2.5 configuration prior to import.
+It is advised to determine if the new {{slapd-mdb}}(5) idlexp backend directive and/or
+the multival database directive should be added to the OpenLDAP 2.5 configuration as well as the existing global
+sortvals directive. Configuring any of these items requires that existing databases be reloaded for them to take full
+effect. This can be done separately from the overall upgrade from OpenLDAP 2.4 to OpenLDAP 2.5 if desired.
+
+H2: Client utility changes
+
+The deprecated "-h" (host) and "-p" (port) options for the ldap client utilities have been removed. It is required to
+use a properly formatted LDAP URI with the "-H" option in OpenLDAP 2.5 and later.
