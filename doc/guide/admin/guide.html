@@ -23,7 +23,7 @@
 <DIV CLASS="title">
 <H1 CLASS="doc-title">OpenLDAP Software 2.5 Administrator's Guide</H1>
 <ADDRESS CLASS="doc-author">The OpenLDAP Project &lt;<A HREF="https://www.openldap.org/">https://www.openldap.org/</A>&gt;</ADDRESS>
-<ADDRESS CLASS="doc-modified">18 August 2021</ADDRESS>
+<ADDRESS CLASS="doc-modified">11 October 2021</ADDRESS>
 <BR CLEAR="All">
 </DIV>
 <DIV CLASS="contents">
@@ -219,7 +219,7 @@
 <BR>
 <A HREF="#Limiting who can do paged searches">9.5.4. Limiting who can do paged searches</A></UL>
 <BR>
-<A HREF="#Glued/Subordinate database configurations When using subordinate databases, it is necessary for any limits that are to be applied across the parent and its subordinates to be defined in both the parent and its subordinates. Otherwise the settings on the subordinate databases are not honored">9.6. Glued/Subordinate database configurations When using subordinate databases, it is necessary for any limits that are to be applied across the parent and its subordinates to be defined in both the parent and its subordinates. Otherwise the settings on the subordinate databases are not honored.</A>
+<A HREF="#Glued/Subordinate database configurations">9.6. Glued/Subordinate database configurations</A>
 <BR>
 <A HREF="#Further Information">9.7. Further Information</A></UL>
 <BR>
@@ -1411,7 +1411,7 @@ This command will search for and retrieve every entry in the database.</OL>
 <P>OpenLDAP Software will not be fully LDAPv3 compliant unless OpenLDAP's configure detects a usable Cyrus SASL installation.</P>
 <H3><A NAME="{{TERM[expand]Kerberos}}">4.2.3. <TERM>Kerberos Authentication Service</TERM></A></H3>
 <P>OpenLDAP clients and servers support <TERM>Kerberos</TERM> authentication services.  In particular, OpenLDAP supports the Kerberos V <TERM>GSS-API</TERM> <TERM>SASL</TERM> authentication mechanism known as the <TERM>GSSAPI</TERM> mechanism.  This feature requires, in addition to Cyrus SASL libraries, either <A HREF="https://github.com/heimdal/">Heimdal</A> or <A HREF="https://web.mit.edu/kerberos/">MIT Kerberos</A> V libraries.</P>
-<P>Heimdal Kerberos is available from <A HREF="http://www.pdc.kth.se/heimdal/">http://www.pdc.kth.se/heimdal/</A>. MIT Kerberos is available from <A HREF="http://web.mit.edu/kerberos/www/">http://web.mit.edu/kerberos/www/</A>.</P>
+<P>Heimdal Kerberos is available from <A HREF="https://github.com/heimdal/heimdal/">https://github.com/heimdal/heimdal/</A>. MIT Kerberos is available from <A HREF="http://web.mit.edu/kerberos/www/">http://web.mit.edu/kerberos/www/</A>.</P>
 <P>Use of strong authentication services, such as those provided by Kerberos, is highly recommended.</P>
 <H3><A NAME="Database Software">4.2.4. Database Software</A></H3>
 <P>OpenLDAP's <EM>slapd</EM>(8) <TERM>MDB</TERM> primary database backend uses the <TERM>LMDB</TERM> software included with the OpenLDAP source.  There is no need to download any additional software to have <EM>MDB</EM> support.</P>
@@ -2118,6 +2118,7 @@ WiredTiger backend
                 [filter=&lt;filter str&gt;]
                 [scope=sub|one|base]
                 [attrs=&lt;attr list&gt;]
+                [exattrs=&lt;attr list&gt;]
                 [attrsonly]
                 [sizelimit=&lt;limit&gt;]
                 [timelimit=&lt;limit&gt;]
@@ -2145,7 +2146,7 @@ WiredTiger backend
 <P>This directive specifies the current database as a consumer of the provider content by establishing the current <EM>slapd</EM>(8) as a replication consumer site running a syncrepl replication engine. The provider database is located at the provider site specified by the <TT>provider</TT> parameter. The consumer database is kept up-to-date with the provider content using the LDAP Content Synchronization protocol. See <A HREF="https://www.rfc-editor.org/rfc/rfc4533.txt">RFC4533</A> for more information on the protocol.</P>
 <P>The <TT>rid</TT> parameter is used for identification of the current <TT>syncrepl</TT> directive within the replication consumer server, where <TT>&lt;replica ID&gt;</TT> uniquely identifies the syncrepl specification described by the current <TT>syncrepl</TT> directive. <TT>&lt;replica ID&gt;</TT> is non-negative and is no more than three decimal digits in length.</P>
 <P>The <TT>provider</TT> parameter specifies the replication provider site containing the provider content as an LDAP URI. The <TT>provider</TT> parameter specifies a scheme, a host and optionally a port where the provider slapd instance can be found. Either a domain name or IP address may be used for &lt;hostname&gt;. Examples are <TT>ldap://provider.example.com:389</TT> or <TT>ldaps://192.168.1.1:636</TT>. If &lt;port&gt; is not given, the standard LDAP port number (389 or 636) is used. Note that the syncrepl uses a consumer-initiated protocol, and hence its specification is located on the consumer.</P>
-<P>The content of the syncrepl consumer is defined using a search specification as its result set. The consumer slapd will send search requests to the provider slapd according to the search specification. The search specification includes <TT>searchbase</TT>, <TT>scope</TT>, <TT>filter</TT>, <TT>attrs</TT>, <TT>attrsonly</TT>, <TT>sizelimit</TT>, and <TT>timelimit</TT> parameters as in the normal search specification. The <TT>searchbase</TT> parameter has no default value and must always be specified. The <TT>scope</TT> defaults to <TT>sub</TT>, the <TT>filter</TT> defaults to <TT>(objectclass=*)</TT>, <TT>attrs</TT> defaults to <TT>&quot;*,+&quot;</TT> to replicate all user and operational attributes, and <TT>attrsonly</TT> is unset by default. Both <TT>sizelimit</TT> and <TT>timelimit</TT> default to &quot;unlimited&quot;, and only positive integers or &quot;unlimited&quot; may be specified.</P>
+<P>The content of the syncrepl consumer is defined using a search specification as its result set. The consumer slapd will send search requests to the provider slapd according to the search specification. The search specification includes <TT>searchbase</TT>, <TT>scope</TT>, <TT>filter</TT>, <TT>attrs</TT>, <TT>exattrs</TT>, <TT>attrsonly</TT>, <TT>sizelimit</TT>, and <TT>timelimit</TT> parameters as in the normal search specification. The <TT>searchbase</TT> parameter has no default value and must always be specified. The <TT>scope</TT> defaults to <TT>sub</TT>, the <TT>filter</TT> defaults to <TT>(objectclass=*)</TT>, <TT>attrs</TT> defaults to <TT>&quot;*,+&quot;</TT> to replicate all user and operational attributes, and <TT>attrsonly</TT> is unset by default. Both <TT>sizelimit</TT> and <TT>timelimit</TT> default to &quot;unlimited&quot;, and only positive integers or &quot;unlimited&quot; may be specified. The <TT>exattrs</TT> option may also be used to specify attributes that should be omitted from incoming entries.</P>
 <P>The <TERM>LDAP Content Synchronization</TERM> protocol has two operation types: <TT>refreshOnly</TT> and <TT>refreshAndPersist</TT>. The operation type is specified by the <TT>type</TT> parameter. In the <TT>refreshOnly</TT> operation, the next synchronization search operation is periodically rescheduled at an interval time after each synchronization operation finishes. The interval is specified by the <TT>interval</TT> parameter. It is set to one day by default. In the <TT>refreshAndPersist</TT> operation, a synchronization search remains persistent in the provider <EM>slapd</EM> instance. Further updates to the provider will generate <TT>searchResultEntry</TT> to the consumer slapd as the search responses to the persistent synchronization search.</P>
 <P>If an error occurs during replication, the consumer will attempt to reconnect according to the retry parameter which is a list of the &lt;retry interval&gt; and &lt;# of retries&gt; pairs. For example, retry=&quot;60 10 300 3&quot; lets the consumer retry every 60 seconds for the first 10 times and then retry every 300 seconds for the next three times before stop retrying. + in &lt;#  of retries&gt; means indefinite number of retries until success.</P>
 <P>The schema checking can be enforced at the LDAP Sync consumer site by turning on the <TT>schemachecking</TT> parameter. If it is turned on, every replicated entry will be checked for its schema as the entry is stored on the consumer. Every entry in the consumer should contain those attributes required by the schema definition. If it is turned off, entries will be stored without checking schema conformance. The default is off.</P>
@@ -4692,7 +4693,8 @@ Members of a group
    limits users size.soft=5 size.hard=100 size.prtotal=disabled
    limits anonymous size.soft=2 size.hard=5 size.prtotal=disabled
 </PRE>
-<H2><A NAME="Glued/Subordinate database configurations When using subordinate databases, it is necessary for any limits that are to be applied across the parent and its subordinates to be defined in both the parent and its subordinates. Otherwise the settings on the subordinate databases are not honored">9.6. Glued/Subordinate database configurations When using subordinate databases, it is necessary for any limits that are to be applied across the parent and its subordinates to be defined in both the parent and its subordinates. Otherwise the settings on the subordinate databases are not honored.</A></H2>
+<H2><A NAME="Glued/Subordinate database configurations">9.6. Glued/Subordinate database configurations</A></H2>
+<P>When using subordinate databases, it is necessary for any limits that are to be applied across the parent and its subordinates to be defined in both the parent and its subordinates. Otherwise the settings on the subordinate databases are not honored.</P>
 <H2><A NAME="Further Information">9.7. Further Information</A></H2>
 <P>For further information please see <EM>slapd.conf</EM>(5), <EM>ldapsearch</EM>(1) and <EM>slapd.access</EM>(5)</P>
 <P></P>
@@ -4926,7 +4928,7 @@ Members of a group
 <P>It is heavily used by a lot of other <A HREF="#Backends">Backends</A> and <A HREF="#Overlays">Overlays</A>.</P>
 <H3><A NAME="back-ldap Configuration">11.1.2. back-ldap Configuration</A></H3>
 <P>As previously mentioned, <EM>slapd-ldap(5)</EM> is used behind the scenes by many other <A HREF="#Backends">Backends</A> and <A HREF="#Overlays">Overlays</A>. Some of them merely provide a few configuration directive themselves, but have available to the administrator the whole of the <EM>slapd-ldap(5)</EM> options.</P>
-<P>For example, the <A HREF="#Translucent Proxy">Translucent Proxy</A>, which retrieves entries from a remote LDAP server that can be partially overridden by the defined database, has only four specific <EM>translucent-</EM> directives, but can be configured using any of the normal <EM>slapd-ldap(5)</EM> options. See {[slapo-translucent(5)}} for details.</P>
+<P>For example, the <A HREF="#Translucent Proxy">Translucent Proxy</A>, which retrieves entries from a remote LDAP server that can be partially overridden by the defined database, has only four specific <EM>translucent-</EM> directives, but can be configured using any of the normal <EM>slapd-ldap(5)</EM> options. See <EM>slapo-translucent(5)</EM> for details.</P>
 <P>Other <A HREF="#Overlays">Overlays</A> allow you to tag directives in front of a normal <EM>slapd-ldap(5)</EM> directive. For example, the <EM>slapo-chain(5)</EM> overlay does this:</P>
 <P><EM>&quot;There are very few chain overlay specific directives; however, directives related to the instances of the ldap backend that may be implicitly instantiated by the overlay may assume a special meaning when used in conjunction with this overlay.  They are described in slapd-ldap(5), and they also need to be prefixed by chain-.&quot;</EM></P>
 <P>You may have also seen the <EM>slapd-ldap(5)</EM> backend used and described in the <A HREF="#Push Based">Push Based</A> <A HREF="#Replication">Replication</A> section of the guide.</P>
@@ -6916,7 +6918,7 @@ object identifier
 <P><HR WIDTH="80%" ALIGN="Left">
 <STRONG>Note: </STRONG>This is not the same as using a SASL mechanism to authenticate the LDAP session.
 <HR WIDTH="80%" ALIGN="Left"></P>
-<P>Pass-Through authentication works only with plaintext passwords, as used in the &quot;simple bind&quot; and &quot;SASL PLAIN&quot; authentication mechanisms.}}</P>
+<P>Pass-Through authentication works only with plaintext passwords, as used in the &quot;simple bind&quot; and &quot;SASL PLAIN&quot; authentication mechanisms.</P>
 <P>Pass-Through authentication is selective: it only affects users whose <EM>userPassword</EM> attribute has a value marked with the &quot;{SASL}&quot; scheme. The format of the attribute is:</P>
 <PRE>
  userPassword: {SASL}username@realm
@@ -7300,11 +7302,11 @@ object identifier
         certtool --generate-dh-params --bits &lt;numbits&gt; --outfile &lt;filename&gt;
 </PRE>
 <H4><A NAME="TLSECName &lt;name&gt;">16.2.1.8. TLSECName &lt;name&gt;</A></H4>
-<P>This directive specifies the curve to use for Elliptic Curve Diffie-Hellman ephemeral key exchange.  This is required in order to use ECDHE-based cipher suites in OpenSSL.  The names of supported curves may be shown using the following command</P>
+<P>This directive specifies the curve to use for Elliptic Curve Diffie-Hellman ephemeral key exchange.  This option is only needed to use ECDHE-based cipher suites in OpenSSL.  The names of supported curves may be shown using the following command</P>
 <PRE>
         openssl ecparam -list_curves
 </PRE>
-<P>This directive is not used for GnuTLS. For GnuTLS the curves may be specified in the ciphersuite.</P>
+<P>See the OpenSSL documentation for details. This directive is not used for GnuTLS. For GnuTLS the curves may be specified in the ciphersuite.</P>
 <H4><A NAME="TLSVerifyClient { never | allow | try | demand }">16.2.1.9. TLSVerifyClient { never | allow | try | demand }</A></H4>
 <P>This directive specifies what checks to perform on client certificates in an incoming TLS session, if any. This option is set to <TT>never</TT> by default, in which case the server never asks the client for a certificate. With a setting of <TT>allow</TT> the server will ask for a client certificate; if none is provided the session proceeds normally. If a certificate is provided but the server is unable to verify it, the certificate is ignored and the session proceeds normally, as if no certificate had been provided. With a setting of <TT>try</TT> the certificate is requested, and if none is provided, the session proceeds normally. If a certificate is provided and it cannot be verified, the session is immediately terminated. With a setting of <TT>demand</TT> the certificate is requested and a valid certificate must be provided, otherwise the session is immediately terminated.</P>
 <P><HR WIDTH="80%" ALIGN="Left">
@@ -7493,7 +7495,6 @@ object identifier
         syncprov-reloadhint &lt;TRUE|FALSE&gt;
 </PRE>
 <P>directive. It must be set TRUE when using the accesslog overlay for delta-based syncrepl replication support. The default is FALSE.</P>
-<P>The nonpresent option should only be configured if the overlay is being placed on top of a log database, such as when used with delta-syncrepl.</P>
 <P>The nonpresent option is configured by the</P>
 <PRE>
         syncprov-nopresent &lt;TRUE|FALSE&gt;
@@ -8060,7 +8061,7 @@ object identifier
 <H1><A NAME="Monitoring">20. Monitoring</A></H1>
 <P><EM>slapd</EM>(8) supports an optional <TERM>LDAP</TERM> monitoring interface you can use to obtain information regarding the current state of your <EM>slapd</EM> instance.  For instance, the interface allows you to determine how many clients are connected to the server currently. The monitoring information is provided by a specialized backend, the <EM>monitor</EM> backend.  A manual page, <EM>slapd-monitor</EM>(5) is available.</P>
 <P>When the monitoring interface is enabled, LDAP clients may be used to access information provided by the <EM>monitor</EM> backend, subject to access and other controls.</P>
-<P>When enabled, the <EM>monitor</EM> backend dynamically generates and returns objects in response to search requests in the <EM>cn=Monitor</EM> subtree.  Each object contains information about a particular aspect of the server.  The information is held in a combination of user applications and operational attributes.   This information can be access with <EM>ldapsearch(1)</EM>, with any general-purpose LDAP browser, or with specialized monitoring tools.  The <A HREF="#Accessing Monitoring Information">Accessing Monitoring Information</A> section provides a brief tutorial on how to use <EM>ldapsearch</EM>(1) to access monitoring information, while the <A HREF="#Monitor information">Monitor information</A> section details monitoring information base and its organization.</P>
+<P>When enabled, the <EM>monitor</EM> backend dynamically generates and returns objects in response to search requests in the <EM>cn=Monitor</EM> subtree.  Each object contains information about a particular aspect of the server.  The information is held in a combination of user applications and operational attributes.   This information can be accessed with <EM>ldapsearch(1)</EM>, with any general-purpose LDAP browser, or with specialized monitoring tools.  The <A HREF="#Accessing Monitoring Information">Accessing Monitoring Information</A> section provides a brief tutorial on how to use <EM>ldapsearch</EM>(1) to access monitoring information, while the <A HREF="#Monitor information">Monitor information</A> section details monitoring information base and its organization.</P>
 <P>While support for the monitor backend is included in default builds of slapd(8), this support requires some configuration to become active.  This may be done using either <TT>cn=config</TT> or <EM>slapd.conf</EM>(5).  The former is discussed in the <A HREF="#Monitor configuration via cn=config">Monitor configuration via cn=config</A> section of this of this chapter.  The latter is discussed in the <A HREF="#Monitor configuration via slapd.conf(5)">Monitor configuration via slapd.conf(5)</A> section of this chapter.  These sections assume monitor backend is built into <EM>slapd</EM> (e.g., <TT>--enable-monitor=yes</TT>, the default).  If the monitor backend was built as a module (e.g., <TT>--enable-monitor=mod</TT>, this module must loaded.  Loading of modules is discussed in the <A HREF="#Configuring slapd">Configuring slapd</A> and <A HREF="#The slapd Configuration File">The slapd Configuration File</A> chapters.</P>
 <H2><A NAME="Monitor configuration via cn=config(5)">20.1. Monitor configuration via cn=config(5)</A></H2>
 <P>The <EM>monitor backend</EM> is statically built into slapd and can be instantiated via ldapadd.</P>
@@ -8150,7 +8151,7 @@ object identifier
 <STRONG>Note: </STRONG>Examples in this section (and its subsections) have been trimmed to show only key information.
 <HR WIDTH="80%" ALIGN="Left"></P>
 <H3><A NAME="Backends">20.4.1. Backends</A></H3>
-<P>The <TT>cn=Backends,cn=Monitor</TT> object, itself, provides a list of available backends.  The list of available backends all builtin backends, as well as backends loaded by modules.  For example:</P>
+<P>The <TT>cn=Backends,cn=Monitor</TT> object provides a list of available backends.  The list of available backends includes all builtin backends, as well as those backends loaded by modules.  For example:</P>
 <PRE>
         dn: cn=Backends,cn=Monitor
         monitoredInfo: config
@@ -8406,7 +8407,7 @@ Database objects of instances of this backend
 <HR>
 <H1><A NAME="Load Balancing with lloadd">21. Load Balancing with lloadd</A></H1>
 <P>As covered in the <A HREF="#Replication">Replication</A> chapter, replication is a fundamental requirement for delivering a resilient enterprise deployment.  As such there's a need for an LDAPv3 capable load balancer to spread the load between the various directory instances.</P>
-<P><EM>lloadd</EM>(8) provides the capability to distribute LDAP v3 requests between a a set of running <EM>slapd</EM> instances.  It can run as a standalone daemon <EM>lloadd</EM>, or as an embedded module running inside of <EM>slapd</EM>.</P>
+<P><EM>lloadd</EM>(8) provides the capability to distribute LDAP v3 requests between a set of running <EM>slapd</EM> instances.  It can run as a standalone daemon <EM>lloadd</EM>, or as an embedded module running inside of <EM>slapd</EM>.</P>
 <H2><A NAME="Overview">21.1. Overview</A></H2>
 <P><EM>lloadd</EM>(8) was designed to handle LDAP loads. It is protocol-aware and can balance LDAP loads on a per-operation basis rather than on a per-connection basis.</P>
 <P><EM>lloadd</EM>(8) distributes the load across a set of slapd instances. The client connects to the load balancer instance which forwards the request to one of the servers and returns the response back to the client.</P>
