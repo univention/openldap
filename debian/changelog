@@ -1,6 +1,8 @@
 openldap (2.5.8+dfsg-1~exp1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * Update slapd-contrib's custom-library-search-path override to work with
+    Lintian 2.108.0.
 
  -- Ryan Tandy <ryan@nardis.ca>  Wed, 13 Oct 2021 16:42:25 -0700
 
