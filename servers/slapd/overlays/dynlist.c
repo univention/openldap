@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2021 The OpenLDAP Foundation.
+ * Copyright 2003-2022 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Pierangelo Masarati.
  * Portions Copyright 2008 Emmanuel Dreyfus.
  * All rights reserved.
@@ -887,6 +887,13 @@ dynlist_compare( Operation *op, SlapReply *rs )
 				 * the assertion is FALSE rather than
 				 * UNDEFINED */
 				rs->sr_err = LDAP_COMPARE_FALSE;
+
+				/* If also using static groups, fallback to
+				 * vanilla compare
+				 */
+				if ( dlm->dlm_static_oc )
+					return SLAP_CB_CONTINUE;
+
 				break;
 			}
 
@@ -1201,20 +1208,13 @@ dynlist_filter_stgroup( Operation *op, Filter *n, Attribute *a )
 	Filter *dnf, *orf = NULL;
 	int i;
 
-	if ( a->a_numvals == 1 && n->f_choice == SLAPD_FILTER_COMPUTED ) {
+	if ( a->a_numvals == 1 ) {
 		dnf = n;
-		dnf->f_next = NULL;
 	} else {
 		orf = n;
-		if ( n->f_choice != LDAP_FILTER_OR ) {
-			dnf = op->o_tmpalloc( sizeof(Filter), op->o_tmpmemctx );
-			*dnf = *n;
-			orf->f_choice = LDAP_FILTER_OR;
-			orf->f_next = NULL;
-			orf->f_list = dnf;
-		}
+		orf->f_choice = LDAP_FILTER_OR;
 		dnf = op->o_tmpalloc( sizeof(Filter), op->o_tmpmemctx );
-		dnf->f_next = orf->f_list;
+		dnf->f_next = NULL;
 		orf->f_list = dnf;
 	}
 

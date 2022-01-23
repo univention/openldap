@@ -2,7 +2,7 @@
 /* syncprov.c - syncrepl provider */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2021 The OpenLDAP Foundation.
+ * Copyright 2004-2022 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -843,24 +843,27 @@ again:
 static void free_resinfo( syncres *sr )
 {
 	syncres **st;
+	resinfo *ri = sr->s_info;
 	int freeit = 0;
-	ldap_pvt_thread_mutex_lock( &sr->s_info->ri_mutex );
+
+	ldap_pvt_thread_mutex_lock( &ri->ri_mutex );
 	for (st = &sr->s_info->ri_list; *st; st = &(*st)->s_rilist) {
 		if (*st == sr) {
 			*st = sr->s_rilist;
+			if ( !sr->s_info->ri_list )
+				freeit = 1;
+			sr->s_info = NULL;
 			break;
 		}
 	}
-	if ( !sr->s_info->ri_list )
-		freeit = 1;
-	ldap_pvt_thread_mutex_unlock( &sr->s_info->ri_mutex );
+	ldap_pvt_thread_mutex_unlock( &ri->ri_mutex );
 	if ( freeit ) {
-		ldap_pvt_thread_mutex_destroy( &sr->s_info->ri_mutex );
-		if ( sr->s_info->ri_e )
-			entry_free( sr->s_info->ri_e );
-		if ( !BER_BVISNULL( &sr->s_info->ri_cookie ))
-			ch_free( sr->s_info->ri_cookie.bv_val );
-		ch_free( sr->s_info );
+		ldap_pvt_thread_mutex_destroy( &ri->ri_mutex );
+		if ( ri->ri_e )
+			entry_free( ri->ri_e );
+		if ( !BER_BVISNULL( &ri->ri_cookie ))
+			ch_free( ri->ri_cookie.bv_val );
+		ch_free( ri );
 	}
 }
 
@@ -1546,6 +1549,10 @@ syncprov_op_cleanup( Operation *op, SlapReply *rs )
 	if ( !BER_BVISNULL( &opc->sdn ))
 		op->o_tmpfree( opc->sdn.bv_val, op->o_tmpmemctx );
 	op->o_callback = cb->sc_next;
+
+	if ( opc->ssres.s_info ) {
+		free_resinfo( &opc->ssres );
+	}
 	op->o_tmpfree(cb, op->o_tmpmemctx);
 
 	return 0;
@@ -2229,7 +2236,7 @@ syncprov_play_accesslog( Operation *op, SlapReply *rs, sync_control *srs,
 		.numcsns = numcsns,
 		.sids = sids,
 	};
-	struct berval oldestcsn = BER_BVNULL, newestcsn = ctxcsn[0],
+	struct berval oldestcsn = BER_BVNULL, newestcsn = BER_BVNULL,
 	basedn, filterpattern = BER_BVC(
 			"(&"
 				"(entryCSN>=%s)"
@@ -2246,15 +2253,9 @@ syncprov_play_accesslog( Operation *op, SlapReply *rs, sync_control *srs,
 	BackendDB *db;
 	Entry *e;
 	Attribute *a;
-	int i, rc = -1;
+	int *minsids, i, j = 0, rc = -1;
 
 	assert( !BER_BVISNULL( &si->si_logbase ) );
-
-	for ( i=1; i < numcsns; i++ ) {
-		if ( ber_bvcmp( &newestcsn, &ctxcsn[i] ) < 0 ) {
-			newestcsn = ctxcsn[i];
-		}
-	}
 
 	db = select_backend( &si->si_logbase, 0 );
 	if ( !db ) {
@@ -2277,12 +2278,57 @@ syncprov_play_accesslog( Operation *op, SlapReply *rs, sync_control *srs,
 		be_entry_release_rw( &fop, e, 0 );
 		return LDAP_NO_SUCH_ATTRIBUTE;
 	}
-	for ( i=0; i < a->a_numvals; i++ ) {
+
+	/*
+	 * If we got here:
+	 * - the consumer's cookie (srs->sr_state.ctxcsn) has the same sids in the
+	 *   same order as ctxcsn
+	 * - at least one of the cookie's csns is older than its ctxcsn counterpart
+	 *
+	 * Now prepare the filter, we want it to be the union of all the intervals
+	 * between the cookie and our contextCSN for each sid. Right now, we can't
+	 * specify them separately, so just pick the boundary CSNs of non-empty
+	 * intervals as a conservative overestimate.
+	 *
+	 * Also check accesslog can actually serve this query based on what's
+	 * stored in minCSN.
+	 */
+
+	assert( srs->sr_state.numcsns == numcsns );
+
+	minsids = slap_parse_csn_sids( a->a_nvals, a->a_numvals, op->o_tmpmemctx );
+	slap_sort_csn_sids( a->a_nvals, minsids, a->a_numvals, op->o_tmpmemctx );
+	for ( i=0, j=0; i < numcsns; i++ ) {
+		assert( srs->sr_state.sids[i] == sids[i] );
+		if ( ber_bvcmp( &srs->sr_state.ctxcsn[i], &ctxcsn[i] ) >= 0 ) {
+			/* Consumer is up to date for this sid */
+			continue;
+		}
+		for ( ; j < a->a_numvals && minsids[j] < sids[i]; j++ )
+			/* Find the right minCSN, if present */;
+		if ( j == a->a_numvals || minsids[j] != sids[i] ||
+				ber_bvcmp( &srs->sr_state.ctxcsn[i], &a->a_nvals[j] ) < 0 ) {
+			/* Consumer is missing changes for a sid and minCSN indicates we
+			 * can't replay all relevant history */
+			Debug( LDAP_DEBUG_SYNC, "%s syncprov_play_accesslog: "
+					"accesslog information inadequate for log replay on csn=%s\n",
+					op->o_log_prefix, srs->sr_state.ctxcsn[i].bv_val );
+			slap_sl_free( minsids, op->o_tmpmemctx );
+			be_entry_release_rw( &fop, e, 0 );
+			return 1;
+		}
 		if ( BER_BVISEMPTY( &oldestcsn ) ||
-				ber_bvcmp( &oldestcsn, &a->a_nvals[i] ) > 0 ) {
-			oldestcsn = a->a_nvals[i];
+				ber_bvcmp( &oldestcsn, &srs->sr_state.ctxcsn[i] ) > 0 ) {
+			oldestcsn = srs->sr_state.ctxcsn[i];
+		}
+		if ( BER_BVISEMPTY( &newestcsn ) ||
+				ber_bvcmp( &newestcsn, &ctxcsn[i] ) < 0 ) {
+			newestcsn = ctxcsn[i];
 		}
 	}
+	assert( !BER_BVISEMPTY( &oldestcsn ) && !BER_BVISEMPTY( &newestcsn ) &&
+			ber_bvcmp( &oldestcsn, &newestcsn ) < 0 );
+	slap_sl_free( minsids, op->o_tmpmemctx );
 
 	filter_escape_value_x( &op->o_req_ndn, &basedn, fop.o_tmpmemctx );
 	/* filter_escape_value_x sets output to BVNULL if input value is empty,
@@ -3195,8 +3241,15 @@ syncprov_op_search( Operation *op, SlapReply *rs )
 		if (srs->sr_state.numcsns != numcsns) {
 			/* consumer doesn't have the right number of CSNs */
 			Debug( LDAP_DEBUG_SYNC, "%s syncprov_op_search: "
-				"consumer cookie is missing a csn we track\n",
-				op->o_log_prefix );
+				"consumer cookie is missing a csn we track%s\n",
+				op->o_log_prefix, si->si_nopres ? ", rejecting" : "" );
+
+			if ( si->si_nopres ) {
+				rs->sr_err = LDAP_SYNC_REFRESH_REQUIRED;
+				rs->sr_text = "not enough information to resync, please use other means";
+				goto bailout;
+			}
+
 			changed = SS_CHANGED;
 			if ( srs->sr_state.ctxcsn ) {
 				ber_bvarray_free_x( srs->sr_state.ctxcsn, op->o_tmpmemctx );

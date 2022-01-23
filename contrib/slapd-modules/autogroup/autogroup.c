@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2021 The OpenLDAP Foundation.
+ * Copyright 2007-2022 The OpenLDAP Foundation.
  * Portions Copyright 2007 Michał Szulczyński.
  * Portions Copyright 2009 Howard Chu.
  * All rights reserved.
@@ -1970,7 +1970,7 @@ ag_cfgen( ConfigArgs *c )
 			}
 		}
 
-		if ( c->valx > 0 ) {
+		if ( c->valx >= 0 ) {
 			int	i;
 
 			for ( i = 0, agdp = &agi->agi_def ;
