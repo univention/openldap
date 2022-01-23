@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2021 The OpenLDAP Foundation.
+ * Copyright 2002-2022 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -82,6 +82,9 @@ wt_db_open( BackendDB *be, ConfigReply *cr )
 		return -1;
 	}
 
+	/* back-wt is always clean */
+	be->be_flags |= SLAP_DBFLAG_CLEAN;
+	
 	/* Open and create database */
 	rc = wiredtiger_open(wi->wi_home, NULL,
 						 wi->wi_config, &wi->wi_conn);

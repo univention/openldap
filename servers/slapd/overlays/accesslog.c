@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2021 The OpenLDAP Foundation.
+ * Copyright 2005-2022 The OpenLDAP Foundation.
  * Portions copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -66,6 +66,8 @@ typedef struct log_base {
 typedef struct log_info {
 	BackendDB *li_db;
 	struct berval li_db_suffix;
+	int li_open;
+
 	slap_mask_t li_ops;
 	int li_age;
 	int li_cycle;
@@ -639,6 +641,7 @@ log_old_lookup( Operation *op, SlapReply *rs )
 
 		/* Find the correct sid */
 		sid = slap_parse_csn_sid( &a->a_nvals[0] );
+		ldap_pvt_thread_mutex_lock( &li->li_log_mutex );
 		for ( i=0; i < li->li_numcsns; i++ ) {
 			if ( sid <= li->li_sids[i] ) break;
 		}
@@ -646,15 +649,18 @@ log_old_lookup( Operation *op, SlapReply *rs )
 			Debug( LDAP_DEBUG_ANY, "log_old_lookup: "
 					"csn=%s with sid not in minCSN set!\n",
 					a->a_nvals[0].bv_val );
+			slap_insert_csn_sids( (struct sync_cookie *)&li->li_mincsn, i,
+					sid, &a->a_nvals[0] );
+		} else {
+			/* Paranoid len check, normalized CSNs are always the same length */
+			if ( len > li->li_mincsn[i].bv_len )
+				len = li->li_mincsn[i].bv_len;
+			if ( ber_bvcmp( &li->li_mincsn[i], &a->a_nvals[0] ) < 0 ) {
+				pd->mincsn_updated = 1;
+				AC_MEMCPY( li->li_mincsn[i].bv_val, a->a_nvals[0].bv_val, len );
+			}
 		}
-
-		/* Paranoid len check, normalized CSNs are always the same length */
-		if ( len > li->li_mincsn[i].bv_len )
-			len = li->li_mincsn[i].bv_len;
-		if ( ber_bvcmp( &li->li_mincsn[i], &a->a_nvals[0] ) < 0 ) {
-			pd->mincsn_updated = 1;
-			AC_MEMCPY( li->li_mincsn[i].bv_val, a->a_nvals[0].bv_val, len );
-		}
+		ldap_pvt_thread_mutex_unlock( &li->li_log_mutex );
 	}
 	if ( pd->used >= pd->slots ) {
 		pd->slots += PURGE_INCREMENT;
@@ -731,9 +737,10 @@ accesslog_purge( void *ctx, void *arg )
 		if ( pd.mincsn_updated ) {
 			Modifications mod;
 			/* update context's minCSN to reflect oldest CSN */
+			ldap_pvt_thread_mutex_lock( &li->li_log_mutex );
 			mod.sml_numvals = li->li_numcsns;
 			mod.sml_values = li->li_mincsn;
-			mod.sml_nvalues = NULL;
+			mod.sml_nvalues = li->li_mincsn;
 			mod.sml_desc = ad_minCSN;
 			mod.sml_op = LDAP_MOD_REPLACE;
 			mod.sml_flags = SLAP_MOD_INTERNAL;
@@ -752,6 +759,7 @@ accesslog_purge( void *ctx, void *arg )
 						li->li_numcsns );
 				op->o_bd->be_modify( op, &rs );
 			}
+			ldap_pvt_thread_mutex_unlock( &li->li_log_mutex );
 		}
 
 		/* delete the expired entries */
@@ -982,7 +990,7 @@ log_cf_gen(ConfigArgs *c)
 					struct re_s *re = li->li_task;
 					if ( re )
 						re->interval.tv_sec = li->li_cycle;
-					else {
+					else if ( li->li_open ) {
 						ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
 						li->li_task = ldap_pvt_runqueue_insert( &slapd_rq,
 							li->li_cycle, accesslog_purge, li,
@@ -2298,6 +2306,7 @@ accesslog_db_root(
 	Entry *e;
 	int rc;
 
+	ldap_pvt_thread_mutex_lock( &li->li_log_mutex );
 	connection_fake_init( &conn, &opbuf, ctx );
 	op = &opbuf.ob_op;
 	op->o_bd = li->li_db;
@@ -2413,9 +2422,19 @@ accesslog_db_root(
 		if ( e == op->ora_e )
 			entry_free( e );
 	}
+	li->li_open = 1;
+	ldap_pvt_thread_mutex_unlock( &li->li_log_mutex );
+
 	ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
 	ldap_pvt_runqueue_stoptask( &slapd_rq, rtask );
 	ldap_pvt_runqueue_remove( &slapd_rq, rtask );
+
+	if ( li->li_age && li->li_cycle ) {
+		assert( li->li_task == NULL );
+		li->li_task = ldap_pvt_runqueue_insert( &slapd_rq,
+				li->li_cycle, accesslog_purge, li,
+				"accesslog_purge", li->li_db->be_suffix[0].bv_val );
+	}
 	ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
 
 	return NULL;
@@ -2459,6 +2478,30 @@ accesslog_db_open(
 	ldap_pvt_runqueue_insert( &slapd_rq, 3600, accesslog_db_root, on,
 		"accesslog_db_root", li->li_db->be_suffix[0].bv_val );
 	ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
+
+	return 0;
+}
+
+static int
+accesslog_db_close(
+	BackendDB *be,
+	ConfigReply *cr
+)
+{
+	slap_overinst *on = (slap_overinst *)be->bd_info;
+	log_info *li = on->on_bi.bi_private;
+	struct re_s *re = li->li_task;
+
+	li->li_open = 0;
+
+	if ( re ) {
+		li->li_task = NULL;
+		ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
+		if ( ldap_pvt_runqueue_isrunning( &slapd_rq, re ) )
+			ldap_pvt_runqueue_stoptask( &slapd_rq, re );
+		ldap_pvt_runqueue_remove( &slapd_rq, re );
+		ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
+	}
 
 	return 0;
 }
@@ -2629,6 +2672,7 @@ int accesslog_initialize()
 	accesslog.on_bi.bi_db_init = accesslog_db_init;
 	accesslog.on_bi.bi_db_destroy = accesslog_db_destroy;
 	accesslog.on_bi.bi_db_open = accesslog_db_open;
+	accesslog.on_bi.bi_db_close = accesslog_db_close;
 
 	accesslog.on_bi.bi_op_add = accesslog_op_mod;
 	accesslog.on_bi.bi_op_bind = accesslog_op_misc;
