@@ -2,6 +2,8 @@ openldap (2.5.11+dfsg-1~exp1) UNRELEASED; urgency=medium
 
   * New upstream release.
   * Add openssl to Build-Depends to enable more checks in test067-tls.
+  * Update slapd-contrib's custom-library-search-path override to work with
+    current Lintian.
 
  -- Ryan Tandy <ryan@nardis.ca>  Sat, 22 Jan 2022 17:25:27 -0800
 
