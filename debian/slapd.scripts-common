@@ -50,7 +50,7 @@ database_format_changed() {						# {{{
 # Return success if yes.
 # Usage: if database_format_changed; then
 
-	if dpkg --compare-versions "$OLD_VERSION" lt-nl 2.4.39-1; then
+	if dpkg --compare-versions "$OLD_VERSION" lt-nl 2.5; then
 		return 0
 	else
 		return 1
@@ -136,7 +136,7 @@ error while running slaptest:
 EOF
 			release_diagnostics "    "
 			rm -rf /etc/ldap/slapd.d
-			exit 1
+			return 1
 		fi
 
 		# Backup the old slapd.conf
@@ -252,7 +252,7 @@ load_databases() {							# {{{
 	error while running slapadd:
 EOF
 			release_diagnostics "    "
-			exit 1
+			return 1
 		fi
 		echo "done." >&2
 
@@ -694,33 +694,6 @@ is_empty_dir() {							# {{{
   	fi
 }
 
-# }}}
-
-find_old_ppolicy_schema() {						# {{{
-# Helper for the ppolicy schema update in 2.4.43. Checks whether the 
-# exported config includes an old version of the ppolicy schema that 
-# needs the new attribute added. If such a schema is found, echos its DN 
-# to stdout. If the schema is not loaded or is already up-to-date, 
-# returns nothing. The provided LDIF should have its lines unwrapped 
-# already.
-# Usage: ppolicy_dn="$(find_old_ppolicy_schema "$exported_ldif")"
-	local ppolicy_dn
-
-	# Is the ppolicy schema loaded?
-	if ! ppolicy_dn="$(grep '^dn: cn={[0-9]\+}ppolicy,cn=schema,cn=config$' "$1")"; then
-		return
-	fi
-
-	# Has the pwdMaxRecordedFailure attribute already been added?
-	# It might have been replicated from a newer server.
-	if grep -q '^olcAttributeTypes: .*NAME '\''pwdMaxRecordedFailure'\' "$1"; then
-		return
-	fi
-
-	# The schema is loaded and needs to be updated.
-	ppolicy_dn="${ppolicy_dn#dn: }"
-	echo "$ppolicy_dn"
-}
 # }}}
 
 # ===== Global variables ================================================ {{{
