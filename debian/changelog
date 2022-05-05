@@ -2,6 +2,10 @@ openldap (2.5.12+dfsg-1) UNRELEASED; urgency=medium
 
   * New upstream release.
     - Fixed SQL injection in back-sql (ITS#9815) (CVE-2022-29155)
+  * Update debconf translations:
+    - German, thanks to Helge Kreutzmann. (Closes: #1007728)
+    - Spanish, thanks to Camaleón. (Closes: #1008529)
+    - Dutch, thanks to Frans Spiesschaert. (Closes: #1010034)
 
  -- Ryan Tandy <ryan@nardis.ca>  Wed, 04 May 2022 16:38:03 -0700
 

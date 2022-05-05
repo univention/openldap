@@ -39,7 +39,7 @@ msgstr ""
 "Project-Id-Version: openldap 2.4.23-3exp1\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2021-08-16 01:12+0000\n"
-"PO-Revision-Date: 2020-04-14 07:14+0000\n"
+"PO-Revision-Date: 2022-03-25 16:13+0100\n"
 "Last-Translator: Camaleón <noelamac@gmail.com>\n"
 "Language-Team: Debian Spanish <debian-l10n-spanish@lists.debian.org>\n"
 "Language: es\n"
@@ -321,6 +321,7 @@ msgstr ""
 #: ../slapd.templates:15001
 msgid "Error while performing post-installation tasks"
 msgstr ""
+"Se produjo un error cuando se realizaban tareas posteriores a la instalación"
 
 #. Type: note
 #. Description
@@ -331,6 +332,10 @@ msgid ""
 "migrate one or more LDAP databases, or that a backend being used by the "
 "current OpenLDAP installation is not supported anymore."
 msgstr ""
+"Se han producido uno o más errores cuando se realizaban algunas tareas "
+"posteriores a la instalación. Es probable que el paquete slapd no haya "
+"podido migrar automáticamente una o más bases de datos OpenLDAP o que ya "
+"no se admita el motor que utiliza la instalación actual de OpenLDAP."
 
 #. Type: note
 #. Description
@@ -340,6 +345,9 @@ msgid ""
 "has exited, but the slapd service has NOT been (re)started. You will need to "
 "manually fix the problem and then start the service."
 msgstr ""
+"El guión de mantenimiento que se encarga de ejecutar las tareas posteriores a "
+"la instalación se ha cerrado, pero el servicio slapd NO ha sido reiniciado. "
+"Tendrá que corregir manualmente el problema y reiniciar el servicio."
 
 #. Type: note
 #. Description
@@ -349,6 +357,9 @@ msgid ""
 "them, please take a look at the README.Debian file (under /usr/share/doc/"
 "slapd/)."
 msgstr ""
+"Puede consultar el archivo README.Debian (disponible en «/usr/share/doc/"
+"slapd/») si desea obtener más información sobre escenarios problemáticos y "
+"cómo resolverlos."
 
 #~ msgid "abort installation"
 #~ msgstr "cancelar la instalación"

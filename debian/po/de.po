@@ -1,13 +1,13 @@
 # Translation of openldap debconf templates to German
-# Copyright (C) Helge Kreutzmann <debian@helgefjell.de>, 2006-2008, 2010, 2014, 2017.
+# Copyright (C) Helge Kreutzmann <debian@helgefjell.de>, 2006-2008, 2010, 2014, 2017, 2022.
 # This file is distributed under the same license as the openldap package.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: openldap 2.4.44+dfsg-4\n"
+"Project-Id-Version: openldap 2.5.11+dfsg-1\n"
 "Report-Msgid-Bugs-To: openldap@packages.debian.org\n"
 "POT-Creation-Date: 2021-08-16 01:12+0000\n"
-"PO-Revision-Date: 2017-01-15 14:12+0100\n"
+"PO-Revision-Date: 2022-03-15 20:36+0100\n"
 "Last-Translator: Helge Kreutzmann <debian@helgefjell.de>\n"
 "Language-Team: de <debian-l10n-german@lists.debian.org>\n"
 "Language: de\n"
@@ -297,7 +297,7 @@ msgstr ""
 #. Description
 #: ../slapd.templates:15001
 msgid "Error while performing post-installation tasks"
-msgstr ""
+msgstr "Fehler bei der Ausführung von Aufgaben nach der Installation"
 
 #. Type: note
 #. Description
@@ -308,6 +308,11 @@ msgid ""
 "migrate one or more LDAP databases, or that a backend being used by the "
 "current OpenLDAP installation is not supported anymore."
 msgstr ""
+"Es gab einen oder mehrere Fehler bei der Durchführung einiger Aufgaben nach "
+"der Installation. Das bedeutet wahrscheinlich, dass das Paket Slapd eine "
+"oder mehrere LDAP-Datenbanken nicht automatisch migrieren konnte oder dass "
+"ein Backend, dass von der aktuellen OpenLDAP-Installation verwandt wird, "
+"nicht mehr unterstützt wird."
 
 #. Type: note
 #. Description
@@ -317,6 +322,10 @@ msgid ""
 "has exited, but the slapd service has NOT been (re)started. You will need to "
 "manually fix the problem and then start the service."
 msgstr ""
+"Das für die Ausführung der Aufgaben nach der Installation zuständige "
+"Betreuerskript hat sich beendet, aber der Dienst Slapd wurde NICHT "
+"(neu)gestartet. Sie müssen das Problem manuell korrigieren und den Dienst "
+"dann starten."
 
 #. Type: note
 #. Description
@@ -326,6 +335,9 @@ msgid ""
 "them, please take a look at the README.Debian file (under /usr/share/doc/"
 "slapd/)."
 msgstr ""
+"Für weitere Informationen über mögliche problematische Szenarien und wie "
+"mit ihnen umgegangen werden kann, schauen Sie bitte in die Datei README."
+"Debian (unter /usr/share/doc/slapd/)."
 
 #~ msgid "abort installation"
 #~ msgstr "Installation abbrechen"
