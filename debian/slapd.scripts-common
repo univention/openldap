@@ -701,11 +701,7 @@ release_diagnostics() {							# {{{
 # prefixing each line.
 # Usage: release_diagnostics "prefix"
 
-	local script
-	script='
-		seek STDIN, 0, 0;
-		print "$ARGV[0]$_" while (<STDIN>);';
-	perl -e "$script" "$1" <&7
+	{ exec < /dev/stdin ; sed -e "s/^/$1/" ; } <&7
 }
 
 # }}}
