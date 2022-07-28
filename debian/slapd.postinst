@@ -38,11 +38,6 @@ postinst_upgrade_configuration() {					# {{{
 		fi
 	fi
 
-	# Move to slapd.d configuration style.
-	if ! migrate_to_slapd_d_style; then
-		return 1
-	fi
-
 	# One-time upgrade fix for olcAccess on cn=Subschema
 	if previous_version_older 2.4.23-5 && previous_version_newer 2.4.23-3 \
 	   && [ -e "$SLAPD_CONF/cn=config/olcDatabase={-1}frontend.ldif" ] \
