@@ -512,11 +512,6 @@ backup_config_once() {							# {{{
 }
 
 # }}}
-normalize_ldif() {							# {{{
-# Unwrap LDIF lines and strip comments.
-	perl -00 -pe 's/\n[ \t]//g; s/^#.*\n//mg' "$@"
-}
-# }}}
 
 
 set_defaults_for_unseen_entries() {					# {{{
