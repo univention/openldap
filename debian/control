@@ -21,7 +21,13 @@ Build-Depends: debhelper-compat (= 12),
                perl:any,
                pkg-config (>= 0.29),
                po-debconf,
-               unixodbc-dev <!pkg.openldap.noslapd>
+               unixodbc-dev <!pkg.openldap.noslapd>,
+# Needed for SASL/GSSAPI tests
+               krb5-admin-server <!nocheck>,
+               krb5-user <!nocheck>,
+               krb5-kdc <!nocheck>,
+               libsasl2-modules-gssapi-mit <!nocheck>,
+               sasl2-bin <!nocheck>,
 Build-Conflicts: libbind-dev, bind-dev, autoconf2.13
 Standards-Version: 4.6.0
 Homepage: https://www.openldap.org/
