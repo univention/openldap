@@ -4,7 +4,8 @@ Priority: optional
 Maintainer: Debian OpenLDAP Maintainers <pkg-openldap-devel@lists.alioth.debian.org>
 Uploaders: Steve Langasek <vorlon@debian.org>,
  Torsten Landschoff <torsten@debian.org>,
- Ryan Tandy <ryan@nardis.ca>
+ Ryan Tandy <ryan@nardis.ca>,
+ Sergio Durigan Junior <sergiodj@debian.org>
 Build-Depends: debhelper-compat (= 12),
                dpkg-dev (>= 1.17.14),
                groff-base,
