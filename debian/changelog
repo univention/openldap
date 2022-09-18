@@ -1,3 +1,14 @@
+openldap (2.5.13+dfsg-1) unstable; urgency=medium
+
+  * d/rules: Remove get-orig-source, now unnecessary.
+  * Check PGP signature when running uscan.
+  * d/watch: Modernize watch file; use repacksuffix.
+  * d/copyright: Update according to DEP-5.
+  * d/control: Add myself to Uploaders.
+  * New upstream release.
+
+ -- Sergio Durigan Junior <sergiodj@debian.org>  Sun, 18 Sep 2022 18:29:46 -0400
+
 openldap (2.5.12+dfsg-2) unstable; urgency=medium
 
   * Stop slapd explicitly in prerm as a workaround for #1006147, which caused
