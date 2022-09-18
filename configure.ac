@@ -25,7 +25,7 @@ dnl ================================================================
 dnl Configure.in for OpenLDAP
 AC_COPYRIGHT([[Copyright 1998-2022 The OpenLDAP Foundation. All rights reserved.
 Restrictions apply, see COPYRIGHT and LICENSE files.]])
-AC_REVISION([$Id: 63b192fdc3ddaf2eabc322c60cd7066c9252e1d8 $])
+AC_REVISION([$Id: 15bca89511fc428731cf9ab71a9b46e37511be67 $])
 AC_INIT([OpenLDAP],,[https://bugs.openldap.org],,[https://www.openldap.org])
 AC_CONFIG_SRCDIR(build/version.sh)dnl
 dnl ----------------------------------------------------------------
@@ -1022,7 +1022,14 @@ dnl ----------------------------------------------------------------
 AC_CHECK_HEADERS( sys/event.h )
 if test "${ac_cv_header_sys_event_h}" = yes; then
 AC_MSG_CHECKING(for kqueue system call)
-AC_RUN_IFELSE([AC_LANG_SOURCE([[int main(int argc, char **argv)
+AC_RUN_IFELSE([AC_LANG_SOURCE([[$ac_includes_default
+#ifdef HAVE_SYS_EVENT_H
+#include <sys/event.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+int main(int argc, char **argv)
 {
 	int kqfd = kqueue();
 	exit (kqfd == -1 ? 1 : 0);
