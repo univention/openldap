@@ -6,8 +6,8 @@ ldapadd -H ldapi:// -Y EXTERNAL -f /usr/share/doc/samba/examples/LDAP/samba.ldif
 schema2ldif /etc/ldap/schema/hdb.schema | ldapadd -H ldapi:// -Y EXTERNAL
 
 # Grant slapd access to the Heimdal master key
-chgrp openldap /var/lib/heimdal-kdc/*key
-chmod g+r /var/lib/heimdal-kdc/*key
+chgrp openldap /var/lib/heimdal-kdc /var/lib/heimdal-kdc/*key
+chmod g+rX /var/lib/heimdal-kdc /var/lib/heimdal-kdc/*key
 
 # Instantiate the smbk5pwd overlay
 ldapmodify -H ldapi:// -Y EXTERNAL << eof
