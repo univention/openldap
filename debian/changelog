@@ -5,6 +5,9 @@ openldap (2.5.13+dfsg-2) UNRELEASED; urgency=medium
     (Closes: #1020442)
   * d/source/lintian-overrides: Update more overrides to the new square
     brackets format.
+  * d/slapd-contrib.lintian-overrides: Remove unused
+    custom-library-search-path override now that krb5-config no longer sets
+    -rpath.
 
  -- Ryan Tandy <ryan@nardis.ca>  Fri, 23 Sep 2022 08:56:09 -0700
 
