@@ -3,8 +3,8 @@ openldap (2.5.13+dfsg-2) unstable; urgency=medium
   * d/tests/smbk5pwd: Grant slapd access to /var/lib/heimdal-kdc. Fixes the
     autopkgtest failure due to heimdal setting mode 700 on this directory.
     (Closes: #1020442)
-  * d/source/lintian-overrides: Update more overrides to the new square
-    brackets format.
+  * d/source/lintian-overrides: Add wildcards to make overrides compatible
+    with both older and newer versions of lintian.
   * d/slapd-contrib.lintian-overrides: Remove unused
     custom-library-search-path override now that krb5-config no longer sets
     -rpath.
