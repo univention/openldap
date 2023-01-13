@@ -1,3 +1,9 @@
+openldap (2.5.13+dfsg-3) UNRELEASED; urgency=medium
+
+  * Disable flaky test test063-delta-multiprovider. Mitigates #1010608.
+
+ -- Ryan Tandy <ryan@nardis.ca>  Fri, 13 Jan 2023 14:21:02 -0800
+
 openldap (2.5.13+dfsg-2) unstable; urgency=medium
 
   * d/tests/smbk5pwd: Grant slapd access to /var/lib/heimdal-kdc. Fixes the
