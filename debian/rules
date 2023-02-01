@@ -81,8 +81,14 @@ override_dh_auto_configure:
 override_dh_auto_build:
 	dh_auto_build
 ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
+	# passwd/sha2 needs special handling, see #1030716 and LP: #2000817
 	for mod in $(CONTRIB_MODULES); do \
-		dh_auto_build -Dcontrib/slapd-modules/$$mod -Bcontrib/slapd-modules/$$mod -- $(CONTRIB_MAKEVARS) || exit $$?; \
+		if [ "$$mod" = "passwd/sha2" ]; then \
+			EXTRA_OPT="-fno-strict-aliasing"; \
+		else \
+			EXTRA_OPT=""; \
+		fi; \
+		dh_auto_build -Dcontrib/slapd-modules/$$mod -Bcontrib/slapd-modules/$$mod -- $(CONTRIB_MAKEVARS) OPT+=$$EXTRA_OPT || exit $$?; \
 	done
 endif
 
