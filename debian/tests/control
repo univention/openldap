@@ -8,3 +8,4 @@ Restrictions: allow-stderr, isolation-container, needs-root, superficial
 
 Tests: sha2-contrib
 Depends: slapd, openssl
+Restrictions: superficial
