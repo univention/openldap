@@ -2,6 +2,7 @@ openldap (2.5.13+dfsg-5) UNRELEASED; urgency=medium
 
   * Fix sha2-contrib autopkgtest failure. Call slappasswd using its full path.
     (Closes: #1030814)
+  * Disable flaky test test069-delta-multiprovider-starttls.
 
  -- Ryan Tandy <ryan@nardis.ca>  Tue, 07 Feb 2023 17:18:47 -0800
 

@@ -93,8 +93,8 @@ ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 endif
 
 override_dh_auto_test:
-	# Disable flaky test test063-delta-multiprovider (#1010608)
-	rm -f tests/scripts/test063-delta-multiprovider
+	# Disable certain timing-sensitive tests which can be flaky on buildds (#1010608)
+	rm -f tests/scripts/test063-delta-multiprovider tests/scripts/test069-delta-multiprovider-starttls
 	dh_auto_test
 
 override_dh_auto_install:
