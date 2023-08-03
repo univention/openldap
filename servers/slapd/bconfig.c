@@ -5953,12 +5953,21 @@ config_back_add( Operation *op, SlapReply *rs )
 		}
 	}
 
+	/*
+	 * ITS#10045 Pre-check for abandon but be willing to handle that the
+	 * operation might be abandoned while waiting for the server to pause.
+	 */
 	if ( op->o_abandon ) {
 		rs->sr_err = SLAPD_ABANDON;
+		dopause = 0;
 		goto out;
 	}
 	if ( slap_pause_server() < 0 )
 		dopause = 0;
+	if ( op->o_abandon ) {
+		rs->sr_err = SLAPD_ABANDON;
+		goto unpause;
+	}
 
 	ldap_pvt_thread_rdwr_wlock( &cfb->cb_rwlock );
 
@@ -6011,6 +6020,8 @@ config_back_add( Operation *op, SlapReply *rs )
 
 out2:;
 	ldap_pvt_thread_rdwr_wunlock( &cfb->cb_rwlock );
+
+unpause:;
 	if ( dopause )
 		slap_unpause_server();
 
@@ -6490,12 +6501,21 @@ config_back_modify( Operation *op, SlapReply *rs )
 	slap_mods_opattrs( op, &op->orm_modlist, 1 );
 
 	if ( do_pause ) {
+		/*
+		 * ITS#10045 Pre-check for abandon but be willing to handle that the
+		 * operation might be abandoned while waiting for the server to pause.
+		 */
 		if ( op->o_abandon ) {
 			rs->sr_err = SLAPD_ABANDON;
+			do_pause = 0;
 			goto out;
 		}
 		if ( slap_pause_server() < 0 )
 			do_pause = 0;
+		if ( op->o_abandon ) {
+			rs->sr_err = SLAPD_ABANDON;
+			goto unpause;
+		}
 	}
 	ldap_pvt_thread_rdwr_wlock( &cfb->cb_rwlock );
 
@@ -6530,6 +6550,7 @@ config_back_modify( Operation *op, SlapReply *rs )
 	}
 
 	ldap_pvt_thread_rdwr_wunlock( &cfb->cb_rwlock );
+unpause:;
 	if ( do_pause )
 		slap_unpause_server();
 out:
@@ -6662,12 +6683,21 @@ config_back_modrdn( Operation *op, SlapReply *rs )
 		goto out;
 	}
 
+	/*
+	 * ITS#10045 Pre-check for abandon but be willing to handle that the
+	 * operation might be abandoned while waiting for the server to pause.
+	 */
 	if ( op->o_abandon ) {
 		rs->sr_err = SLAPD_ABANDON;
+		dopause = 0;
 		goto out;
 	}
 	if ( slap_pause_server() < 0 )
 		dopause = 0;
+	if ( op->o_abandon ) {
+		rs->sr_err = SLAPD_ABANDON;
+		goto unpause;
+	}
 
 	ldap_pvt_thread_rdwr_wlock( &cfb->cb_rwlock );
 
@@ -6737,6 +6767,7 @@ config_back_modrdn( Operation *op, SlapReply *rs )
 
 	ldap_pvt_thread_rdwr_wunlock( &cfb->cb_rwlock );
 
+unpause:
 	if ( dopause )
 		slap_unpause_server();
 out:
@@ -6773,6 +6804,11 @@ config_back_delete( Operation *op, SlapReply *rs )
 			dopause = 0;
 
 		ldap_pvt_thread_rdwr_wlock( &cfb->cb_rwlock );
+
+		if ( op->o_abandon ) {
+			rs->sr_err = SLAPD_ABANDON;
+			goto out2;
+		}
 
 		if ( ce->ce_type == Cft_Overlay ){
 			overlay_remove( ce->ce_be, (slap_overinst *)ce->ce_bi, op );
@@ -6941,7 +6977,6 @@ out:
 	return rs->sr_err;
 }
 
-/* no-op, we never free entries */
 int config_entry_release(
 	Operation *op,
 	Entry *e,
@@ -6961,6 +6996,8 @@ int config_entry_release(
 		} else {
 			entry_free( e );
 		}
+	} else {
+		entry_free( e );
 	}
 	return rc;
 }
@@ -6977,21 +7014,34 @@ int config_back_entry_get(
 {
 	CfBackInfo *cfb;
 	CfEntryInfo *ce, *last;
-	int rc = LDAP_NO_SUCH_OBJECT;
+	Entry *e = NULL;
+	int paused = 0, rc = LDAP_NO_SUCH_OBJECT;
 
 	cfb = (CfBackInfo *)op->o_bd->be_private;
 
+	if ( ldap_pvt_thread_pool_query( &connection_pool,
+			LDAP_PVT_THREAD_POOL_PARAM_PAUSED, &paused ) ) {
+		return -1;
+	}
+	if ( !paused ) {
+		ldap_pvt_thread_rdwr_rlock( &cfb->cb_rwlock );
+	}
 	ce = config_find_base( cfb->cb_root, ndn, &last );
 	if ( ce ) {
-		*ent = ce->ce_entry;
-		if ( *ent ) {
+		e = ce->ce_entry;
+		if ( e ) {
 			rc = LDAP_SUCCESS;
-			if ( oc && !is_entry_objectclass_or_sub( *ent, oc ) ) {
+			if ( oc && !is_entry_objectclass_or_sub( e, oc ) ) {
 				rc = LDAP_NO_SUCH_ATTRIBUTE;
-				*ent = NULL;
+				e = NULL;
 			}
 		}
 	}
+	if ( e ) {
+		*ent = entry_dup( e );
+	}
+	if ( !paused )
+		ldap_pvt_thread_rdwr_runlock( &cfb->cb_rwlock );
 
 	return rc;
 }

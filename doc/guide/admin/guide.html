@@ -23,7 +23,7 @@
 <DIV CLASS="title">
 <H1 CLASS="doc-title">OpenLDAP Software 2.5 Administrator's Guide</H1>
 <ADDRESS CLASS="doc-author">The OpenLDAP Project &lt;<A HREF="https://www.openldap.org/">https://www.openldap.org/</A>&gt;</ADDRESS>
-<ADDRESS CLASS="doc-modified">14 July 2022</ADDRESS>
+<ADDRESS CLASS="doc-modified">31 July 2023</ADDRESS>
 <BR CLEAR="All">
 </DIV>
 <DIV CLASS="contents">
@@ -5732,8 +5732,8 @@ Members of a group
         pcacheTemplate (&amp;(sn=)(givenName=)) 0 3600
         pcacheTemplate (&amp;(departmentNumber=)(secretary=*)) 0 3600
 
-        cachesize 20
         directory ./testrun/db.2.a
+        maxsize   1073741824
         index       objectClass eq
         index       cn,sn,uid,mail  pres,eq,sub
 </PRE>
@@ -5763,7 +5763,7 @@ Members of a group
    objectClass: olcPcacheDatabase
    olcDatabase: {0}mdb
    olcDbDirectory: ./testrun/db.2.a
-   olcDbCacheSize: 20
+   olcDbMaxSize: 1073741824
    olcDbIndex: objectClass eq
    olcDbIndex: cn,sn,uid,mail  pres,eq,sub
 </PRE>
