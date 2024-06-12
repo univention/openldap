@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * Portions Copyright 2007 by Howard Chu, Symas Corporation.
  * All rights reserved.
  *
@@ -45,8 +45,8 @@
 
 #include "ldap_rq.h"
 
-#ifdef HAVE_SYSTEMD_SD_DAEMON_H
-#include <systemd/sd-daemon.h>
+#ifdef HAVE_SYSTEMD
+#include "sd-notify.h"
 #endif
 
 #ifdef LDAP_PF_LOCAL

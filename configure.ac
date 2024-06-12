@@ -1,7 +1,7 @@
 dnl $OpenLDAP$
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
-dnl Copyright 1998-2022 The OpenLDAP Foundation.
+dnl Copyright 1998-2024 The OpenLDAP Foundation.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -23,9 +23,9 @@ define([AC_LIBTOOL_LANG_F77_CONFIG], [:])dnl
 define([AC_LIBTOOL_LANG_GCJ_CONFIG], [:])dnl
 dnl ================================================================
 dnl Configure.in for OpenLDAP
-AC_COPYRIGHT([[Copyright 1998-2022 The OpenLDAP Foundation. All rights reserved.
+AC_COPYRIGHT([[Copyright 1998-2024 The OpenLDAP Foundation. All rights reserved.
 Restrictions apply, see COPYRIGHT and LICENSE files.]])
-AC_REVISION([$Id: a4836a8a0218326643db20d8131fc717d1fc3edf $])
+AC_REVISION([$Id: a5548437ea246ecc6b6aacbf1da365276e287201 $])
 AC_INIT([OpenLDAP],,[https://bugs.openldap.org],,[https://www.openldap.org])
 AC_CONFIG_SRCDIR(build/version.sh)dnl
 dnl ----------------------------------------------------------------
@@ -97,7 +97,7 @@ AH_TOP([
 /* begin of portable.h.pre */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation
+ * Copyright 1998-2024 The OpenLDAP Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -639,7 +639,6 @@ MODULES_LIBS=
 SLAPI_LIBS=
 LIBSLAPI=
 AUTH_LIBS=
-SYSTEMD_LIBS=
 
 SLAPD_SLP_LIBS=
 SLAPD_GMP_LIBS=
@@ -738,8 +737,22 @@ if test $ol_enable_perl != no ; then
 		fi
 
 	else
-		PERL_CPPFLAGS="`$PERLBIN -MExtUtils::Embed -e ccopts`"
-		PERL_LDFLAGS="`$PERLBIN -MExtUtils::Embed -e ldopts|sed -e 's/ -lc / /' -e 's/ -lc$//'`"
+		PERL_CPPFLAGS=""
+		for opt in `$PERLBIN -MExtUtils::Embed -e ccopts`; do
+			case "$opt" in
+			"-flto=auto" | "-Wall" )
+				continue;;
+			esac
+			PERL_CPPFLAGS="$PERL_CPPFLAGS $opt"
+		done
+		PERL_LDFLAGS=""
+		for opt in `$PERLBIN" -MExtUtils::Embed -e ldopts`; do
+			case "$opt" in
+			"-lc" )
+				continue;;
+			esac
+			PERL_LDFLAGS="$PERL_LDFLAGS $opt"
+		done
 
 		if test x"$ol_enable_perl" = "xyes" ; then
 			SLAPD_PERL_LDFLAGS="$PERL_LDFLAGS"
@@ -2093,42 +2106,29 @@ dnl ----------------------------------------------------------------
 dnl
 dnl Check for systemd (only if we have a server)
 dnl
-WITH_SYSTEMD=no
 systemdsystemunitdir=
-ol_link_systemd=no
 if test $ol_enable_slapd = no && test $ol_enable_balancer != yes ; then
 	if test $ol_with_systemd != no ; then
 		AC_MSG_WARN([servers disabled, ignoring --with-systemd=$ol_with_systemd argument])
 		ol_with_systemd=no
 	fi
 fi
-if test $ol_with_systemd != no ; then
+
+if test $ol_with_systemd = auto; then
 	AC_CHECK_HEADERS(systemd/sd-daemon.h)
-
 	if test $ac_cv_header_systemd_sd_daemon_h = yes; then
-		AC_CHECK_LIB(systemd, sd_notify,
-			[ol_link_systemd="-lsystemd"])
+		ol_with_systemd=yes
 	fi
+fi
 
-	if test $ol_link_systemd = no ; then
-		if test $ol_with_systemd != auto ; then
-			AC_MSG_ERROR([Could not locate systemd])
+if test $ol_with_systemd = yes ; then
+	AC_DEFINE(HAVE_SYSTEMD,1,[define if you have systemd])
+	PKG_CHECK_VAR(systemdsystemunitdir, systemd, systemdsystemunitdir)
+	if test -z "$systemdsystemunitdir"; then
+		if test -d /usr/lib/systemd/system; then
+			systemdsystemunitdir=/usr/lib/systemd/system
 		else
-			AC_MSG_WARN([Could not locate systemd])
-			AC_MSG_WARN([systemd service notification not supported!])
-		fi
-	else
-		AC_DEFINE(HAVE_SYSTEMD,1,[define if you have systemd])
-		SYSTEMD_LIBS="$ol_link_systemd"
-		WITH_SYSTEMD=yes
-
-		PKG_CHECK_VAR(systemdsystemunitdir, systemd, systemdsystemunitdir)
-		if test -z "$systemdsystemunitdir"; then
-			if test -d /usr/lib/systemd/system; then
-				systemdsystemunitdir=/usr/lib/systemd/system
-			else
-				systemdsystemunitdir=/lib/systemd/system
-			fi
+			systemdsystemunitdir=/lib/systemd/system
 		fi
 	fi
 fi
@@ -3170,7 +3170,6 @@ AC_SUBST(WITH_SASL)
 AC_SUBST(WITH_TLS)
 AC_SUBST(WITH_MODULES_ENABLED)
 AC_SUBST(WITH_ACI_ENABLED)
-AC_SUBST(WITH_SYSTEMD)
 AC_SUBST(BUILD_THREAD)
 AC_SUBST(BUILD_LIBS_DYNAMIC)
 AC_SUBST(OL_VERSIONED_SYMBOLS)
@@ -3259,7 +3258,6 @@ AC_SUBST(SLAPI_LIBS)
 AC_SUBST(LIBSLAPI)
 AC_SUBST(AUTH_LIBS)
 AC_SUBST(ARGON2_LIBS)
-AC_SUBST(SYSTEMD_LIBS)
 
 AC_SUBST(SLAPD_SLP_LIBS)
 AC_SUBST(SLAPD_GMP_LIBS)
@@ -3334,7 +3332,7 @@ rm -f $BACKENDSC
 cat > $BACKENDSC << ENDX
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -3385,7 +3383,7 @@ rm -f $OVERLAYSC
 cat > $OVERLAYSC << ENDX
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

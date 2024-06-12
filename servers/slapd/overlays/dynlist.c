@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2022 The OpenLDAP Foundation.
+ * Copyright 2003-2024 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Pierangelo Masarati.
  * Portions Copyright 2008 Emmanuel Dreyfus.
  * All rights reserved.
@@ -1647,6 +1647,9 @@ dynlist_search2resp( Operation *op, SlapReply *rs )
 	dynlist_search_t *ds = op->o_callback->sc_private;
 	dynlist_name_t *dyn;
 	int rc;
+
+	if ( op->o_abandon )
+		return SLAP_CB_CONTINUE;
 
 	if ( rs->sr_type == REP_SEARCH && rs->sr_entry != NULL ) {
 		rc = SLAP_CB_CONTINUE;

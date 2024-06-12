@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2022 The OpenLDAP Foundation.
+ * Copyright 2002-2024 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002-2003 IBM Corporation.
  * All rights reserved.
  *
@@ -694,7 +694,7 @@ slapi_int_read_config(
 		int rc;
 		Slapi_PBlock *pPlugin;
 
-		pPlugin = plugin_pblock_new( iType, numPluginArgc, c->argv );
+		pPlugin = plugin_pblock_new( iType, numPluginArgc, c );
 		if (pPlugin == NULL) {
 			return 1;
 		}

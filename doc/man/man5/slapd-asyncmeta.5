@@ -1,5 +1,5 @@
 .TH SLAPD-ASYNCMETA 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2016-2022 The OpenLDAP Foundation.
+.\" Copyright 2016-2024 The OpenLDAP Foundation.
 .\" Portions Copyright 2016 Symas Corporation.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" $OpenLDAP$
@@ -402,15 +402,6 @@ before any target specification, it applies to all targets (by default,
 times);
 the global value can be overridden by redefinitions inside each target
 specification.
-
-.TP
-.B rewrite* ...
-The rewrite options are identical to the
-.B meta
-backend. See the
-.B REWRITING
-section of
-.B slapd\-meta(5).
 
 .TP
 .B subtree\-{exclude|include} "<rule>"
