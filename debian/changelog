@@ -399,6 +399,7 @@ openldap (2.5.19+dfsg-0+deb12u1) UNRELEASED; urgency=medium
 
   [ Ryan Tandy ]
   * debian/salsa-ci.yml: Enable Salsa CI pipeline.
+  * Add a superficial autopkgtest to ensure back_perl can be loaded.
   * Create an autopkgtest covering basic TLS functionality.
     Thanks to John Scott.
   * debian/copyright: Exclude doc/guide/admin/guide.html from the upstream
