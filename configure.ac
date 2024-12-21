@@ -25,7 +25,7 @@ dnl ================================================================
 dnl Configure.in for OpenLDAP
 AC_COPYRIGHT([[Copyright 1998-2024 The OpenLDAP Foundation. All rights reserved.
 Restrictions apply, see COPYRIGHT and LICENSE files.]])
-AC_REVISION([$Id: a5548437ea246ecc6b6aacbf1da365276e287201 $])
+AC_REVISION([$Id: 342e401a4a5458c9041d88d93339d1a352fce2b1 $])
 AC_INIT([OpenLDAP],,[https://bugs.openldap.org],,[https://www.openldap.org])
 AC_CONFIG_SRCDIR(build/version.sh)dnl
 dnl ----------------------------------------------------------------
@@ -746,7 +746,7 @@ if test $ol_enable_perl != no ; then
 			PERL_CPPFLAGS="$PERL_CPPFLAGS $opt"
 		done
 		PERL_LDFLAGS=""
-		for opt in `$PERLBIN" -MExtUtils::Embed -e ldopts`; do
+		for opt in `$PERLBIN -MExtUtils::Embed -e ldopts`; do
 			case "$opt" in
 			"-lc" )
 				continue;;
