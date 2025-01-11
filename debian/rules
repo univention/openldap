@@ -159,19 +159,19 @@ override_dh_link:
 	sed -e"s/\$${DEB_HOST_MULTIARCH}/$(DEB_HOST_MULTIARCH)/g" < debian/libldap-dev.links.in > debian/libldap-dev.links
 	dh_link
 
-ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 override_dh_makeshlibs:
+ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 	echo "slapd:Provides=$$(objdump -p debian/slapd/usr/lib/$(DEB_HOST_MULTIARCH)/libslapi-*.so.* \
 		| sed -ne '/SONAME/ { s/[[:space:]]*SONAME[[:space:]]*//; \
 		                      s/\.so\./-/; p; q }' \
 	)" >> debian/slapd.substvars
 	dh_makeshlibs -pslapd -X/usr/lib/ldap/ -V "$$(sed -ne's/slapd:Provides=//p' debian/slapd.substvars)"
-	dh_makeshlibs --remaining-packages
 endif
+	dh_makeshlibs --remaining-packages
 
-ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 override_dh_installdeb:
 	dh_installdeb
+ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 	perl -w debian/dh_installscripts-common -p slapd
 endif
 

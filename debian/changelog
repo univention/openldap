@@ -395,6 +395,8 @@ openldap (2.5.19+dfsg-0+deb12u1) UNRELEASED; urgency=medium
      clear C_EOF on cursor with MDB_FIRST_DUP
 
   [ Michael Tokarev ]
+  * d/rules: fix override_dh_makeshlibs & override_dh_installdeb conditionals
+    (was wrong, it is unclear how debhelper did cope with this)
   * d/rules: add LC_ALL=C for the build rule (makes the build reproducible)
   * d/rules: add slapdS.c to blhc ignore-line
   * d/gbp.conf: switch debian-branch to bookworm
