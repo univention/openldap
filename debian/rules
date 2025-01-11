@@ -192,6 +192,6 @@ ifeq ($(filter pkg.openldap.noslapd,$(DEB_BUILD_PROFILES)),)
 
 	# Clean the contrib directory
 	for mod in $(CONTRIB_MODULES); do \
-		dh_auto_clean -Dcontrib/slapd-modules/$$mod -Bcontrib/slapd-modules/$$mod || exit $?; \
+		dh_auto_clean -Dcontrib/slapd-modules/$$mod -Bcontrib/slapd-modules/$$mod || exit $$?; \
 	done
 endif
