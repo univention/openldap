@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2022 The OpenLDAP Foundation.
+ * Copyright 2003-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -265,7 +265,7 @@ retry:
 	}
 
 	ldap_pvt_thread_mutex_lock( &li->li_counter_mutex );
-	ldap_pvt_mp_add( li->li_ops_completed[ SLAP_OP_EXTENDED ], 1 );
+	ldap_pvt_mp_add_ulong( li->li_ops_completed[ SLAP_OP_EXTENDED ], 1 );
 	ldap_pvt_thread_mutex_unlock( &li->li_counter_mutex );
 
 	if ( freedn ) {
@@ -382,7 +382,7 @@ retry:
 	}
 
 	ldap_pvt_thread_mutex_lock( &li->li_counter_mutex );
-	ldap_pvt_mp_add( li->li_ops_completed[ SLAP_OP_EXTENDED ], 1 );
+	ldap_pvt_mp_add_ulong( li->li_ops_completed[ SLAP_OP_EXTENDED ], 1 );
 	ldap_pvt_thread_mutex_unlock( &li->li_counter_mutex );
 
 	/* these have to be freed anyway... */

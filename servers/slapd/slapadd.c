@@ -1,7 +1,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -172,7 +172,8 @@ again:
 				"database #%d (%s) not configured to hold \"%s\"",
 				progname, erec->lineno,
 				dbnum,
-				be->be_suffix[0].bv_val,
+				( be->be_suffix && be->be_suffix[0].bv_val ) ?
+					be->be_suffix[0].bv_val : "(null)",
 				e->e_dn );
 			if ( bd ) {
 				BackendDB *bdtmp;

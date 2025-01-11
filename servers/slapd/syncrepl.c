@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2022 The OpenLDAP Foundation.
+ * Copyright 2003-2024 The OpenLDAP Foundation.
  * Portions Copyright 2003 by IBM Corporation.
  * Portions Copyright 2003-2008 by Howard Chu, Symas Corporation.
  * All rights reserved.
@@ -527,7 +527,7 @@ start_refresh(syncinfo_t *si)
 }
 
 static int
-refresh_finished(syncinfo_t *si)
+refresh_finished(syncinfo_t *si, int reschedule)
 {
 	syncinfo_t *sie;
 	int removed = 0;
@@ -538,7 +538,7 @@ refresh_finished(syncinfo_t *si)
 		removed = 1;
 	}
 
-	if ( removed ) {
+	if ( removed && reschedule ) {
 		for ( sie = si->si_be->be_syncinfo; sie; sie = sie->si_next ) {
 			if ( sie->si_paused ) {
 				struct re_s* rtask = sie->si_re;
@@ -604,8 +604,10 @@ ldap_sync_search(
 			lattrs[2] = NULL;
 			rc = ldap_search_ext_s( si->si_ld, "", LDAP_SCOPE_BASE, generic_filterstr.bv_val, lattrs, 0,
 				NULL, NULL, NULL, si->si_slimit, &res );
-			if ( rc )
+			if ( rc ) {
+				ldap_msgfree( res );
 				return rc;
+			}
 			msg = ldap_first_message( si->si_ld, res );
 			if ( msg && ldap_msgtype( msg ) == LDAP_RES_SEARCH_ENTRY ) {
 				BerElement *ber = NULL;
@@ -1184,7 +1186,7 @@ do_syncrep1(
 	if ( rc == SYNC_BUSY ) {
 		return rc;
 	} else if ( rc != LDAP_SUCCESS ) {
-		refresh_finished( si );
+		refresh_finished( si, 1 );
 		Debug( LDAP_DEBUG_ANY, "do_syncrep1: %s "
 			"ldap_search_ext: %s (%d)\n",
 			si->si_ridtxt, ldap_err2string( rc ), rc );
@@ -1291,6 +1293,10 @@ get_pmutex(
 			if ( !ldap_pvt_thread_pool_pausecheck( &connection_pool ))
 				ldap_pvt_thread_yield();
 		}
+	}
+	if ( si->si_ctype < 0 ) {
+		ldap_pvt_thread_mutex_unlock( &si->si_cookieState->cs_pmutex );
+		return SYNC_SHUTDOWN;
 	}
 
 	return 0;
@@ -1846,7 +1852,7 @@ logerr:
 					}
 					ber_scanf( ber, /*"{"*/ "}" );
 					if ( refreshing && si->si_refreshDone ) {
-						refresh_finished( si );
+						refresh_finished( si, 1 );
 						refreshing = 0;
 					}
 					break;
@@ -1995,7 +2001,7 @@ done:
 			si->si_ridtxt, err, ldap_err2string( err ) );
 	}
 	if ( refreshing && ( rc || si->si_refreshDone ) ) {
-		refresh_finished( si );
+		refresh_finished( si, 1 );
 	}
 
 	slap_sync_cookie_free( &syncCookie, 0 );
@@ -2052,13 +2058,7 @@ do_syncrepl(
 
 	Debug( LDAP_DEBUG_TRACE, "=>do_syncrepl %s\n", si->si_ridtxt );
 
-	/* Don't get stuck here while a pause is initiated */
-	while ( ldap_pvt_thread_mutex_trylock( &si->si_mutex )) {
-		if ( slapd_shutdown )
-			return NULL;
-		if ( !ldap_pvt_thread_pool_pausecheck( &connection_pool ))
-			ldap_pvt_thread_yield();
-	}
+	ldap_pvt_thread_mutex_lock( &si->si_mutex );
 
 	si->si_too_old = 0;
 
@@ -5987,6 +5987,8 @@ syncinfo_free( syncinfo_t *sie, int free_all )
 		if ( !BER_BVISEMPTY( &sie->si_monitor_ndn )) {
 			syncrepl_monitor_del( sie );
 		}
+		ch_free( sie->si_lastCookieSent.bv_val );
+		ch_free( sie->si_lastCookieRcvd.bv_val );
 
 		if ( sie->si_ld ) {
 			if ( sie->si_conn ) {
@@ -6103,7 +6105,7 @@ syncinfo_free( syncinfo_t *sie, int free_all )
 		}
 		if ( sie->si_cookieState ) {
 			/* Could be called from do_syncrepl (server unpaused) */
-			refresh_finished( sie );
+			refresh_finished( sie, !free_all );
 
 			sie->si_cookieState->cs_ref--;
 			if ( !sie->si_cookieState->cs_ref ) {
@@ -7168,8 +7170,6 @@ syncrepl_monitor_del(
 		monitor_extra_t *mbe = mi->bi_extra;
 		mbe->unregister_entry( &si->si_monitor_ndn );
 	}
-	ch_free( si->si_lastCookieSent.bv_val );
-	ch_free( si->si_lastCookieRcvd.bv_val );
 	ch_free( si->si_monitor_ndn.bv_val );
 	return 0;
 }

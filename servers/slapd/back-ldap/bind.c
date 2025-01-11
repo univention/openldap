@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2022 The OpenLDAP Foundation.
+ * Copyright 1999-2024 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -268,7 +268,7 @@ retry:;
 	}
 
 	ldap_pvt_thread_mutex_lock( &li->li_counter_mutex );
-	ldap_pvt_mp_add( li->li_ops_completed[ SLAP_OP_BIND ], 1 );
+	ldap_pvt_mp_add_ulong( li->li_ops_completed[ SLAP_OP_BIND ], 1 );
 	ldap_pvt_thread_mutex_unlock( &li->li_counter_mutex );
 
 	ldap_back_controls_free( op, rs, &ctrls );
@@ -1443,7 +1443,7 @@ retry_lock:;
 				defaults );
 
 		ldap_pvt_thread_mutex_lock( &li->li_counter_mutex );
-		ldap_pvt_mp_add( li->li_ops_completed[ SLAP_OP_BIND ], 1 );
+		ldap_pvt_mp_add_ulong( li->li_ops_completed[ SLAP_OP_BIND ], 1 );
 		ldap_pvt_thread_mutex_unlock( &li->li_counter_mutex );
 
 		lutil_sasl_freedefs( defaults );
@@ -1496,7 +1496,7 @@ retry:;
 			NULL, NULL, &msgid );
 
 	ldap_pvt_thread_mutex_lock( &li->li_counter_mutex );
-	ldap_pvt_mp_add( li->li_ops_completed[ SLAP_OP_BIND ], 1 );
+	ldap_pvt_mp_add_ulong( li->li_ops_completed[ SLAP_OP_BIND ], 1 );
 	ldap_pvt_thread_mutex_unlock( &li->li_counter_mutex );
 
 	if ( rs->sr_err == LDAP_SERVER_DOWN ) {
@@ -2331,7 +2331,7 @@ ldap_back_proxy_authz_bind(
 		} while ( rs->sr_err == LDAP_SASL_BIND_IN_PROGRESS );
 
 		ldap_pvt_thread_mutex_lock( &li->li_counter_mutex );
-		ldap_pvt_mp_add( li->li_ops_completed[ SLAP_OP_BIND ], 1 );
+		ldap_pvt_mp_add_ulong( li->li_ops_completed[ SLAP_OP_BIND ], 1 );
 		ldap_pvt_thread_mutex_unlock( &li->li_counter_mutex );
 
 		switch ( rs->sr_err ) {
@@ -2442,7 +2442,7 @@ ldap_back_proxy_authz_bind(
 			-1, ( sendok | LDAP_BACK_BINDING ) );
 
 		ldap_pvt_thread_mutex_lock( &li->li_counter_mutex );
-		ldap_pvt_mp_add( li->li_ops_completed[ SLAP_OP_BIND ], 1 );
+		ldap_pvt_mp_add_ulong( li->li_ops_completed[ SLAP_OP_BIND ], 1 );
 		ldap_pvt_thread_mutex_unlock( &li->li_counter_mutex );
 		break;
 
