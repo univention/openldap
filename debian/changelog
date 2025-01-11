@@ -1,3 +1,404 @@
+openldap (2.5.19+dfsg-0+deb12u1) UNRELEASED; urgency=medium
+
+  * openldap 2.5.19 release:
+   - ITS#10272 https://bugs.openldap.org/show_bug.cgi?id=10272
+     Request all attributes from remote
+   - ITS#10155 https://bugs.openldap.org/show_bug.cgi?id=10155
+     manage option values more carefully
+   - ITS#10264 https://bugs.openldap.org/show_bug.cgi?id=10264
+     Free NoD data we stored locally
+   - ITS#10232 https://bugs.openldap.org/show_bug.cgi?id=10232
+     Reset cs_refreshing on config delete
+   - ITS#10248 https://bugs.openldap.org/show_bug.cgi?id=10248
+     Regression test script
+   - ITS#10248 https://bugs.openldap.org/show_bug.cgi?id=10248
+     Always generate a result on the original op
+   - ITS#10253 https://bugs.openldap.org/show_bug.cgi?id=10253
+     Fix incompatible pointer type with GnuTLS
+     Closes: #1078822
+   - ITS#10233 https://bugs.openldap.org/show_bug.cgi?id=10233
+     fix idl intersection
+   - ITS#10237 https://bugs.openldap.org/show_bug.cgi?id=10237
+     back-ldap: fix usage of multi-precision add for op counters
+   - ITS#10223 https://bugs.openldap.org/show_bug.cgi?id=10223
+     fix function call
+   - ITS#10231 https://bugs.openldap.org/show_bug.cgi?id=10231
+     slapadd: check for NULL suffix in error message
+   - ITS#10227 https://bugs.openldap.org/show_bug.cgi?id=10227
+     Asyncmeta will not reset a connection if a bind operation fails
+     with LDAP_OTHER, leaving the connection in invalid state
+   - ITS#10219 https://bugs.openldap.org/show_bug.cgi?id=10219
+     Modify of olcDisabled by removing and adding a value invokes
+     db_open twice
+   - ITS#9827 https://bugs.openldap.org/show_bug.cgi?id=9827
+     Use 7MB memory/5 iterations as default
+   - ITS#9827 https://bugs.openldap.org/show_bug.cgi?id=9827
+     update Argon2 defaults
+   - ITS#10224 https://bugs.openldap.org/show_bug.cgi?id=10224
+     libldap: check for OpenSSL EVP_Digest* failure
+   - ITS#10223 https://bugs.openldap.org/show_bug.cgi?id=10223
+     libldap: check for OpenSSL SSL_CTX_set_ciphersuites failure
+   - ITS#10221 https://bugs.openldap.org/show_bug.cgi?id=10221
+     Regenerate configure
+     Remove extraneous quote (LP: #2072976)
+
+  * openldap 2.5.18 release (LMDB 0.9.33):
+   - ITS#10216 https://bugs.openldap.org/show_bug.cgi?id=10216
+     libldap: fix OpenSSL channel binding digest
+   - ITS#10209 https://bugs.openldap.org/show_bug.cgi?id=10209
+     libldap: only use OPENSSL_INIT_NO_ATEXIT if it's defined
+   - ITS#10214 https://bugs.openldap.org/show_bug.cgi?id=10214
+     regenerate configure
+     Reduce library dependencies
+   - ITS#9921 https://bugs.openldap.org/show_bug.cgi?id=9921
+     fix vlvResult comment
+   - ITS#10084 https://bugs.openldap.org/show_bug.cgi?id=10084
+     Switch MECH default away from DIGEST-MD5
+   - ITS#10211 https://bugs.openldap.org/show_bug.cgi?id=10211
+     slapd: Fix peercred uid and gid format
+   - ITS#10206 https://bugs.openldap.org/show_bug.cgi?id=10206
+     Include <kadm5/private.h> for kadm5_s_init_with_password_ctx
+     Closes: #1039740
+   - ITS#10212 https://bugs.openldap.org/show_bug.cgi?id=10212
+     LMDB: better fix
+     LMDB: init txnid for read-only DBs
+   - ITS#10198 https://bugs.openldap.org/show_bug.cgi?id=10198
+     Win32 mdb_strerror - stop passing "ignored" parameter
+   - switch copyright years from 2022 to 2024 -- Happy New Year!
+   - ITS#10186 https://bugs.openldap.org/show_bug.cgi?id=10186
+     overlay response callbacks should ignore op->o_abandon
+   - ITS#10044 https://bugs.openldap.org/show_bug.cgi?id=10044
+     dynlist: check for abandon in search2resp
+   - ITS#10177 https://bugs.openldap.org/show_bug.cgi?id=10177
+     fix back-perl build for clang15 or later
+   - ITS#9952 https://bugs.openldap.org/show_bug.cgi?id=9952
+     TLS/OpenSSL: disable use of atexit()
+     Revert "ITS#9952 libldap: use atexit for TLS teardown"
+   - ITS#9037 https://bugs.openldap.org/show_bug.cgi?id=9037
+     mdb_page_search: fix error code when DBI record is missing
+   - ITS#10170 https://bugs.openldap.org/show_bug.cgi?id=10170
+     accesslog: skip response if not fully initialized yet
+   - ITS#10179 https://bugs.openldap.org/show_bug.cgi?id=10179
+     back-asyncmeta(5) man page incorrectly mentions rewrite
+   - ITS#10164 https://bugs.openldap.org/show_bug.cgi?id=10164
+     back-meta hangs when used with dynlist overlay
+   - ITS#10173 https://bugs.openldap.org/show_bug.cgi?id=10173
+     Populate li_minCSN on conversion
+   - ITS#10171 https://bugs.openldap.org/show_bug.cgi?id=10171
+     Explicitly cast private values
+   - ITS#9823 https://bugs.openldap.org/show_bug.cgi?id=9823
+     Move to a place that is better associated with accesslog
+   - slapo-autogroup: fix typo in Debug msg
+   - ITS#10165 https://bugs.openldap.org/show_bug.cgi?id=10165
+     back-meta fails to bind to target when proxying an internal operation
+   - ITS#10166 https://bugs.openldap.org/show_bug.cgi?id=10166
+     slapi: fix plugin.c plugin_pblock_new() usage
+
+  * openldap 2.5.17 release (LMDB 0.9.32):
+   - ITS#10139 https://bugs.openldap.org/show_bug.cgi?id=10139
+     back-config: Honour disclose in matchedDN handling
+   - ITS#10025 https://bugs.openldap.org/show_bug.cgi?id=10025
+     slapo-dynlist: add option to disable filter support
+   - ITS#10059 https://bugs.openldap.org/show_bug.cgi?id=10059
+     Add configuration example for slapo-homedir(5)
+   - ITS#10153 https://bugs.openldap.org/show_bug.cgi?id=10153
+     slapd(8) describe -T modify (slapmodify)
+   - ITS#10110 https://bugs.openldap.org/show_bug.cgi?id=10110
+     Do not skip backover for result entries
+   - ITS#10135 https://bugs.openldap.org/show_bug.cgi?id=10135
+     dynlist: fix search2resp callback context
+   - ITS#10130 https://bugs.openldap.org/show_bug.cgi?id=10130
+     Several callers of getpassphrase() ignore NULL returns
+   - ITS#10109 https://bugs.openldap.org/show_bug.cgi?id=10109
+     Pass operation to slap_get_csn()
+   - ITS#10137 https://bugs.openldap.org/show_bug.cgi?id=10137
+     LMDB: Allow users to define MDB_IDL_LOGN
+   - ITS#10145 https://bugs.openldap.org/show_bug.cgi?id=10145
+     ldap_url_parse_ext: fail earlier on bad URL enclosure
+   - ITS#10144 https://bugs.openldap.org/show_bug.cgi?id=10144
+     libldap: RDNs must contain at least 1 AVA
+   - ITS#10129 https://bugs.openldap.org/show_bug.cgi?id=10129
+     Fix lloadd.conf manpage
+   - ITS#10124 https://bugs.openldap.org/show_bug.cgi?id=10124
+     libldap: fix dhparam init with OpenSSL 3.x
+   - ITS#10125 https://bugs.openldap.org/show_bug.cgi?id=10125
+     mdb_load: fix cursor reinit in Append mode
+   - ITS#10089 https://bugs.openldap.org/show_bug.cgi?id=10089
+     Fix acl logging
+   - ITS#10123 https://bugs.openldap.org/show_bug.cgi?id=10123
+     Adjust our prototypes for both K&R and C2x compatibility
+   - ITS#10123 https://bugs.openldap.org/show_bug.cgi?id=10123
+     Add a missing include
+   - ITS#10100 https://bugs.openldap.org/show_bug.cgi?id=10100
+     fix Windows timestamps
+   - ITS#10094 https://bugs.openldap.org/show_bug.cgi?id=10094
+     libldap/OpenSSL: fix setting ciphersuites
+   - ITS#10117 https://bugs.openldap.org/show_bug.cgi?id=10117
+     build: fix slap-config.h decls for Windows DLLs
+   - ITS#10105 https://bugs.openldap.org/show_bug.cgi?id=10105
+     liblber lutil_debug: ensure msg ends with NL
+   - ITS#10101 https://bugs.openldap.org/show_bug.cgi?id=10101
+     libldap: fix double sb_close when first TLS connection fails
+   - Cleanup Windows build
+   - ITS#9378 https://bugs.openldap.org/show_bug.cgi?id=9378
+     Add replay tool
+   - ITS#9378 https://bugs.openldap.org/show_bug.cgi?id=9378
+     Add explicit replay logging
+   - ITS#10074 https://bugs.openldap.org/show_bug.cgi?id=10074
+     Fix type mismatches in lloadd
+   - ITS#10091 https://bugs.openldap.org/show_bug.cgi?id=10091
+     Do not allow dynlist being configured as global
+     Closes: #1040382
+   - ITS#10089 https://bugs.openldap.org/show_bug.cgi?id=10089
+     convert Debug to use config args
+   - ITS#10089 https://bugs.openldap.org/show_bug.cgi?id=10089
+     Use ConfigArgs in ACL parsing
+   - ITS#10089 https://bugs.openldap.org/show_bug.cgi?id=10089
+     Use ConfigArgs in slapi config parsing
+   - ITS#10089 https://bugs.openldap.org/show_bug.cgi?id=10089
+     Allow caller to determine if the process should exit or not
+     when the regex is found to be problematic.
+   - ITS#10083 https://bugs.openldap.org/show_bug.cgi?id=10083
+     Do not mess with a connection that's dying already
+   - ITS#10076 https://bugs.openldap.org/show_bug.cgi?id=10076
+     suffixmassage in back-asyncmeta does not handle empty
+     remote suffix correctly
+   - ITS#10070 https://bugs.openldap.org/show_bug.cgi?id=10070
+     Allow running without a valid resolv.conf file
+   - ITS#10068 https://bugs.openldap.org/show_bug.cgi?id=10068
+     keep our own copy of the DN
+   - ITS#9952 https://bugs.openldap.org/show_bug.cgi?id=9952
+     libldap: use atexit for TLS teardown
+   - ITS#10057 https://bugs.openldap.org/show_bug.cgi?id=10057
+     homedir: Fix config attribute name
+   - ITS#10095 https://bugs.openldap.org/show_bug.cgi?id=10095
+     partial revert of ITS#9278 2fd44e325195ae81664eb5dc36e7d265927c5ebc
+
+  * openldap 2.5.16 release:
+   - ITS#10067 https://bugs.openldap.org/show_bug.cgi?id=10067
+     Account for mods being optional
+   - ITS#10045 https://bugs.openldap.org/show_bug.cgi?id=10045
+     Make sure we only unpause when paused
+
+  * openldap 2.5.15 release (LMDB 0.9.31):
+   - ITS#10063 https://bugs.openldap.org/show_bug.cgi?id=10063
+     Regenerate configure
+     Fix typo in configure variable
+   - ITS#8447 https://bugs.openldap.org/show_bug.cgi?id=8447
+     fix cursor_put(MDB_CURRENT) on DUPSORT DB with different-sized data
+   - ITS#10023 https://bugs.openldap.org/show_bug.cgi?id=10023
+     libldap: fix asynch connects
+   - Fix hanging indent in slapo-ldap manpage
+   - Check slapadd result before continuing with test
+   - ITS#10039 https://bugs.openldap.org/show_bug.cgi?id=10039
+     Regenerate configure
+     Test for SSL_CTX_set_ciphersuites()
+   - fix typo in lload.conf.5 cerificate -> certificate
+   - ITS#10046 https://bugs.openldap.org/show_bug.cgi?id=10046
+     Update manpage
+   - ITS#10048 https://bugs.openldap.org/show_bug.cgi?id=10048
+     Improve regex config error handling
+   - ITS#9855 https://bugs.openldap.org/show_bug.cgi?id=9855
+     Adapt other contrib module's tests
+   - ITS#10041 https://bugs.openldap.org/show_bug.cgi?id=10041
+     Restrict group searching
+   - ITS#10033 https://bugs.openldap.org/show_bug.cgi?id=10033
+     Remove references to back-bdb/hdb cachesize parameter
+   - ITS#10045 https://bugs.openldap.org/show_bug.cgi?id=10045
+     Also check for abandon when things have settled
+   - ITS#10037 https://bugs.openldap.org/show_bug.cgi?id=10037
+     Update argon2 README
+   - ITS#10032 https://bugs.openldap.org/show_bug.cgi?id=10032
+     Use the correct ocs field
+   - ITS#10035 https://bugs.openldap.org/show_bug.cgi?id=10035
+     Fix setting TLSv1.3 ciphersuite
+   - ITS#9436 https://bugs.openldap.org/show_bug.cgi?id=9436 ,
+     ITS#10030 https://bugs.openldap.org/show_bug.cgi?id=10030
+     libldap: OpenSSL 3.0 compat
+   - ITS#10031 https://bugs.openldap.org/show_bug.cgi?id=10031
+     Adjust *err if we free it
+   - ITS#10028 https://bugs.openldap.org/show_bug.cgi?id=10028
+     crash with pwdMinDelay
+   - ITS#10016 https://bugs.openldap.org/show_bug.cgi?id=10016
+     slapo-syncprov: fix Abandon with active qtask
+   - ITS#9953 https://bugs.openldap.org/show_bug.cgi?id=9953
+     Check for push replication
+   - ITS#10004 https://bugs.openldap.org/show_bug.cgi?id=10004
+     librewrite: plug potential ld leak in ldapmap
+   - ITS#10003 https://bugs.openldap.org/show_bug.cgi?id=10003
+     ldap_open_internal_connection: fix mutex usage
+   - ITS#10000 https://bugs.openldap.org/show_bug.cgi?id=10000
+     slapd-watcher: plug potential leak
+   - ITS#9999 https://bugs.openldap.org/show_bug.cgi?id=9999
+     slapd-search: plug potential leak
+   - ITS#9998 https://bugs.openldap.org/show_bug.cgi?id=9998
+     slapd-mtread: plug potential leak
+   - ITS#9997 https://bugs.openldap.org/show_bug.cgi?id=9997
+     syncrepl: plug potential leak in changelog search
+   - ITS#9996 https://bugs.openldap.org/show_bug.cgi?id=9996
+     librewrite plug potential leak in ldapmap map_ldap_apply()
+   - ITS#9995 https://bugs.openldap.org/show_bug.cgi?id=9995
+     ldapdelete: plug potential search leak
+   - ITS#9989 https://bugs.openldap.org/show_bug.cgi?id=9989
+     Keep .pc files on «make clean»
+   - ITS#10011 https://bugs.openldap.org/show_bug.cgi?id=10011
+     Regenerate configure
+     servers: fix -Wstrict-prototypes
+   - ITS#10011 https://bugs.openldap.org/show_bug.cgi?id=10011
+     contrib: fix old-style K&R declarations
+   - ITS#10011 https://bugs.openldap.org/show_bug.cgi?id=10011
+     build: fix compatibility with stricter C99 compilers
+   - ITS#9990 https://bugs.openldap.org/show_bug.cgi?id=9990
+     Preserve callbacks added already
+
+  * openldap 2.5.14 release (LMDB 0.9.30):
+   - ITS#9718 https://bugs.openldap.org/show_bug.cgi?id=9718
+     Fix nonportable sed usage
+   - ITS#9985 https://bugs.openldap.org/show_bug.cgi?id=9985
+     Fix module name to pw-totp
+   - ITS#9991 https://bugs.openldap.org/show_bug.cgi?id=9991
+     send_ldap_ber: make sure we're only closing our own connection
+   - ITS#8102 https://bugs.openldap.org/show_bug.cgi?id=8102
+     Do not continue if deconfigured during pause
+   - ITS#9930 https://bugs.openldap.org/show_bug.cgi?id=9930
+     Do not reschedule consumers that are shutting down
+   - ITS#9045 https://bugs.openldap.org/show_bug.cgi?id=9045
+     rlock only if there may be other threads
+     Revert "Revert "ITS#9045 Do not share cn=config entries
+     with outside code""
+   - ITS#9930 https://bugs.openldap.org/show_bug.cgi?id=9930
+     Just wait until si_mutex is ready
+   - ITS#9983 https://bugs.openldap.org/show_bug.cgi?id=9983
+     Also fix c_refcnt sequencing
+   - ITS#9983 https://bugs.openldap.org/show_bug.cgi?id=9983
+     Rework op->o_refcnt decref sequencing
+   - ITS#9984 https://bugs.openldap.org/show_bug.cgi?id=9984
+     Keep listener base around even if not active
+   - Fix options for olcIndexHash64
+   - ITS#9976 https://bugs.openldap.org/show_bug.cgi?id=9976
+     doc: ldap_sasl_bind: mention ber_bvfree
+   - typo unsuccesSful, presense/presence, accessSlog
+   - ITS#9957 https://bugs.openldap.org/show_bug.cgi?id=9957
+     slapo-dynlist: more explicit config doc
+   - ITS#9966 https://bugs.openldap.org/show_bug.cgi?id=9966
+     slapo-pcache: fix crash in consistency_check
+   - ITS#9960 https://bugs.openldap.org/show_bug.cgi?id=9960
+     slapo-dynlist: mark internal searches as internal
+   - ITS#9880 https://bugs.openldap.org/show_bug.cgi?id=9880
+     slapo-accesslog: fix reqStart ordering filter
+   - ITS#9961 https://bugs.openldap.org/show_bug.cgi?id=9961
+     LMDB: fix MSVC error
+   - ITS#9121 https://bugs.openldap.org/show_bug.cgi?id=9121
+     dynlist: cleanup unused code
+   - ITS#9929 https://bugs.openldap.org/show_bug.cgi?id=9929
+     plug memleaks
+     preserve e_name for memberOf values
+     more performance tweaks
+     slapo-dynlist: more performance tweaks
+   - ITS#9955 https://bugs.openldap.org/show_bug.cgi?id=9955
+     liblunicode: fix buffer size in UTF8bvnormalize
+   - ITS#9947 https://bugs.openldap.org/show_bug.cgi?id=9947
+     Fix race in epoch.c and simplify
+   - ITS#9940 https://bugs.openldap.org/show_bug.cgi?id=9940
+     back-mdb: fully init empty DN in tool_entry_get
+   - ITS#9916 https://bugs.openldap.org/show_bug.cgi?id=9916
+     liblmdb: use alternate MDB_page2 struct for some accesses
+     Closes: #1020319
+   - ITS#9806 https://bugs.openldap.org/show_bug.cgi?id=9806
+     LMDB page_split: key threshold depends on page size
+   - ITS#9942 https://bugs.openldap.org/show_bug.cgi?id=9942
+     back-mdb: always release entries from Add ops
+   - ITS#9941 https://bugs.openldap.org/show_bug.cgi?id=9941
+     Fix asyncmeta manpage to clarify that only round-robin scheduling
+     is used for target connections
+   - ITS#9899 https://bugs.openldap.org/show_bug.cgi?id=9899
+     fix use of non-standard u_char/u_int types
+   - ITS#9937 https://bugs.openldap.org/show_bug.cgi?id=9937
+     libldap: fix put_simple_filter() with invalid filter
+   - ITS#9936 https://bugs.openldap.org/show_bug.cgi?id=9936
+     slapcat/slapschema: fix free of subtree cmdline option
+   - ITS#9935 https://bugs.openldap.org/show_bug.cgi?id=9935
+     slapd UTF8StringValidate: fix read past end of string
+   - ITS#9930 https://bugs.openldap.org/show_bug.cgi?id=9930
+     fix cn=config / write_waiter deadlock
+   - ITS#9925 https://bugs.openldap.org/show_bug.cgi?id=9925
+     Fix some ancient #ifdef checks
+   - ITS#9926 https://bugs.openldap.org/show_bug.cgi?id=9926
+     test085 additional fix
+   - ITS#9931 https://bugs.openldap.org/show_bug.cgi?id=9931
+     test scripts: fix BSD vs GNU date syntax
+   - ITS#9931 https://bugs.openldap.org/show_bug.cgi?id=9931
+     test082 fix sed portability
+   - ITS#9931 https://bugs.openldap.org/show_bug.cgi?id=9931
+     test scripts: fix BSD vs GNU date syntax
+   - ITS#9931 https://bugs.openldap.org/show_bug.cgi?id=9931
+     test079: fix ldapsearch invocations
+   - ITS#9929 https://bugs.openldap.org/show_bug.cgi?id=9929
+     dynlist: avoid unnecessary search for dynamic lists
+   - ITS#9926 https://bugs.openldap.org/show_bug.cgi?id=9926
+     drop symlinks from homedir testdata
+   - ITS#9926 https://bugs.openldap.org/show_bug.cgi?id=9926
+     Drop unneeded symlinks from source
+   - ITS#9915 https://bugs.openldap.org/show_bug.cgi?id=9915
+     Clarify quoting should only be used with slapd.conf configurations
+   - ITS#9917 https://bugs.openldap.org/show_bug.cgi?id=9917
+     Remove 'h' and 'p' from options[] in client tools
+   - ITS#9924 https://bugs.openldap.org/show_bug.cgi?id=9924
+     slapo-deref: plug memleak
+   - ITS#9919 https://bugs.openldap.org/show_bug.cgi?id=9919
+     Mark infrequently used functions as cold rather than
+     manually putting them in a separate section
+   - ITS#9892 https://bugs.openldap.org/show_bug.cgi?id=9892
+     Free operation data at the end of a transaction
+   - ITS#9030 https://bugs.openldap.org/show_bug.cgi?id=9030
+     Use sys/cachectl.h rather than asm/cachectl.h on mips
+   - Formatting fix for CHANGES file
+   - ITS#9339 https://bugs.openldap.org/show_bug.cgi?id=9339
+     Free remembered cookies on syncinfo free
+   - ITS#9437 https://bugs.openldap.org/show_bug.cgi?id=9437
+     Create testdir before we need it
+   - ITS#9908 https://bugs.openldap.org/show_bug.cgi?id=9908
+     slapd-tester: plug LDAP* leak on bind retries
+   - ITS#6035 https://bugs.openldap.org/show_bug.cgi?id=6035
+     Plug olcAuthIDRewrite cn=config leak
+   - ITS#9438 https://bugs.openldap.org/show_bug.cgi?id=9438
+     slapo-remoteauth: plug config leaks
+   - ITS#9897 https://bugs.openldap.org/show_bug.cgi?id=9897
+     fix dynlist to ignore entries with wrong objectclass
+   - ITS#9904 https://bugs.openldap.org/show_bug.cgi?id=9904
+     ldap_url_parsehosts: check for strdup failure
+     Closes: #1036995, CVE-2023-2953
+   - ITS#9894 https://bugs.openldap.org/show_bug.cgi?id=9894
+     Further fixes for 2.5
+     Fix build for 2.5 lloadd
+   - ITS#9904 https://bugs.openldap.org/show_bug.cgi?id=9904
+     ldif_open_url: check for ber_strdup failure
+   - ITS#9900 https://bugs.openldap.org/show_bug.cgi?id=9900
+     regenerate configure
+     configure.ac: fix bashism
+   - ITS#9901 https://bugs.openldap.org/show_bug.cgi?id=9901
+     libldap: fix non-std printf %p arguments
+   - ITS#9899 https://bugs.openldap.org/show_bug.cgi?id=9899
+     libldap: fix non-std syntax in cyrus.c
+   - ITS#9898 https://bugs.openldap.org/show_bug.cgi?id=9898
+     tests: fix slapd-addel non-std syntax
+   - ITS#9894 https://bugs.openldap.org/show_bug.cgi?id=9894
+     Regenerate configure
+     don't use gmake-specific features
+   - ITS#9895 https://bugs.openldap.org/show_bug.cgi?id=9895
+     slapd-mdb: raise MDB_INDICES from 128 to 256
+   - ITS#9860 https://bugs.openldap.org/show_bug.cgi?id=9860
+     ldapsearch: fix control memleaks
+   - lmdb: catch non-LMDB negative errors before strerror
+   - Fix spurious fallthru warning
+   - ITS#9723 https://bugs.openldap.org/show_bug.cgi?id=9723
+     clear C_EOF on cursor with MDB_FIRST_DUP
+
+  [ Michael Tokarev ]
+  * d/gbp.conf: switch debian-branch to bookworm
+
+ -- Michael Tokarev <mjt@tls.msk.ru>  Sat, 11 Jan 2025 12:54:42 +0300
+
 openldap (2.5.13+dfsg-5) unstable; urgency=medium
 
   * Fix sha2-contrib autopkgtest failure. Call slappasswd using its full path.
